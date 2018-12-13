@@ -8,6 +8,13 @@
 #
 # This file is part of Phoenix-RTOS.
 
+if [ $# -ne 3 ];
+then
+    echo "Usage: $(basename $0) username ip_address test_iterations"
+    echo "Tests network connection robustness by repeatedly 'downloading' file using SSH and calculating it's checksum"
+    exit
+fi
+
 USER=$1
 IP_ADDRESS=$2
 TEST_ITERATIONS=$3
