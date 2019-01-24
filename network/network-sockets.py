@@ -18,7 +18,11 @@ import random
 verbose = False
 
 def printUsage(progname):
-    print("Usage: {0} IP_ADDRESS_1:PORT_1 ITERATIONS_1 [IP_ADDRESS_2:PORT_2 ITERATIONS_2 [...]]".format(progname))
+    print("Usage: {0} IP_ADDRESS_1:PORT_1A[:PORT_1B[...]] ITERATIONS_1 [IP_ADDRESS_2:PORT_2A[:PORT_2B[...]] ITERATIONS_2 [...]]\n".format(progname))
+    print("Examples:")
+    print("\t{0} 10.255.10.31:22 10\n\t\tmake 10 connections on 10.255.10.31 port 22".format(progname))
+    print("\t{0} 10.255.10.31:22 10 10.255.10.32:22 20\n\t\tmake 10 connections on 10.255.10.31 port 22 and 20 connections on 10.255.10.32 port 22".format(progname))
+    print("\t{0} 10.255.10.31:22:80:443 15 10.255.10.32:21:22 100\n\t\tmake 15 connections per port (22, 80 and 443) on 10.255.10.31 and 100 connections per port (21 and 22) on 10.255.10.32".format(progname))
 
 def debug_print(message):
     if verbose == True:
@@ -145,11 +149,13 @@ if __name__ == "__main__":
     random.seed()
     testSetups = []
     for i in range(1, len(sys.argv), 2):
-        ipAddressAndPort = sys.argv[i].split(":")
-        ipAddress = ipAddressAndPort[0]
-        port = int(ipAddressAndPort[1])
+        ipAddressAndPorts = sys.argv[i].split(":")
+        ipAddress = ipAddressAndPorts[0]
         iterations = int(sys.argv[i + 1])
-        testSetups.append(SocketTestSetup(ipAddress, port, iterations))
+
+        for idx in range(1, len(ipAddressAndPorts)):
+            port = int(ipAddressAndPorts[idx])
+            testSetups.append(SocketTestSetup(ipAddress, port, iterations))
 
     for setup in testSetups:
         setup.scheduleEvents()
