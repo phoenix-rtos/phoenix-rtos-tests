@@ -1,17 +1,17 @@
 #
-# Makefile for libphoenix (test)
+# Makefile for libphoenix tests
 #
-# Copyright 2017 Phoenix Systems
-# Author: Pawel Pisarczyk
+# Copyright 2019 Phoenix Systems
+#
+# %LICENSE%
 #
 
 SIL ?= @
-MAKEFLAGS += --no-print-directory --output-sync
+MAKEFLAGS += --no-print-directory
 
-TARGET ?= arm-imx6ull
-#TARGET ?= armv7-stm32-tiramisu
 #TARGET ?= ia32-qemu
-#TARGET ?= riscv64
+#TARGET ?= armv7-stm32
+TARGET ?= arm-imx6ull
 
 TOPDIR := $(CURDIR)
 PREFIX_BUILD ?= ../_build/$(TARGET)
@@ -19,22 +19,68 @@ PREFIX_BUILD := $(abspath $(PREFIX_BUILD))
 BUILD_DIR ?= $(PREFIX_BUILD)/$(notdir $(TOPDIR))
 BUILD_DIR := $(abspath $(BUILD_DIR))
 
-include Makefile.targets
+# Compliation options for various architectures
+TARGET_FAMILY = $(firstword $(subst -, ,$(TARGET)-))
+include Makefile.$(TARGET_FAMILY)
 
-# install tests in separate directory
-PREFIX_PROG := $(PREFIX_BUILD)/prog/
-PREFIX_PROG_STRIPPED := $(PREFIX_BUILD)/prog.stripped/
+# build artifacts dir
+CURR_SUFFIX := $(patsubst $(TOPDIR)/%,%,$(abspath $(CURDIR))/)
+PREFIX_O := $(BUILD_DIR)/$(CURR_SUFFIX)
 
-SYSROOT := $(shell $(CC) $(CFLAGS) -print-sysroot)
-HEADERS_INSTALL_DIR := $(SYSROOT)/usr/include/
+# target install paths, can be provided exterally
+PREFIX_A ?= $(PREFIX_BUILD)/lib/
+PREFIX_H ?= $(PREFIX_BUILD)/include/
+PREFIX_PROG ?= $(PREFIX_BUILD)/prog/
+PREFIX_PROG_STRIPPED ?= $(PREFIX_BUILD)/prog.stripped/
 
-ifeq (/,$(SYSROOT))
-$(error Sysroot is not supported by Your toolchain. Use cross-toolchain to compile)
+CFLAGS += -I"$(PREFIX_H)"
+LDFLAGS += -L"$(PREFIX_A)"
+
+# add include path for auto-generated files
+CFLAGS += -I"$(BUILD_DIR)/$(CURR_SUFFIX)"
+
+ARCH =  $(SIL)@mkdir -p $(@D); \
+	(printf "AR  %-24s\n" "$(@F)"); \
+	$(AR) $(ARFLAGS) $@ $^ 2>/dev/null
+
+LINK = $(SIL)mkdir -p $(@D); \
+	(printf "LD  %-24s\n" "$(@F)"); \
+	$(LD) $(LDFLAGS) -o "$@"  $^ $(LDLIBS)
+
+HEADER = $(SIL)mkdir -p $(@D); \
+	(printf "HEADER %-24s\n" "$<"); \
+	cp -pR "$<" "$@"
+
+$(PREFIX_O)%.o: %.c
+	@mkdir -p $(@D)
+	$(SIL)(printf "CC  %-24s\n" "$<")
+	$(SIL)$(CC) -c $(CFLAGS) "$<" -o "$@"
+	$(SIL)$(CC) -M  -MD -MP -MF $(PREFIX_O)$*.c.d -MT "$@" $(CFLAGS) $<
+
+$(PREFIX_O)%.o: %.S
+	@mkdir -p $(@D)
+	$(SIL)(printf "ASM %s/%-24s\n" "$(notdir $(@D))" "$<")
+	$(SIL)$(CC) -c $(CFLAGS) "$<" -o "$@"
+	$(SIL)$(CC) -M  -MD -MP -MF $(PREFIX_O)$*.S.d -MT "$@" $(CFLAGS) $<
+
+$(PREFIX_PROG_STRIPPED)%: $(PREFIX_PROG)%
+	@mkdir -p $(@D)
+	@(printf "STR %-24s\n" "$(@F)")
+	$(SIL)$(STRIP) -o $@ $<
+
+.PHONY: clean
+clean:
+	@echo "rm -rf $(BUILD_DIR)"
+
+ifneq ($(filter clean,$(MAKECMDGOALS)),)
+	$(shell rm -rf $(BUILD_DIR))
 endif
-
-CFLAGS += -I"${HEADERS_INSTALL_DIR}"
-
-PROGS := test_mmap test_malloc test_threads test_str2num test_scanf test_msg test_env test_signals test_condwait psh
-
-# include after all dependencies are set
-include $(TOPDIR)/Makefile.rules
+T1 := $(filter-out clean all,$(MAKECMDGOALS))
+ifneq ($(T1),)
+	include $(T1)/Makefile
+.PHONY: $(T1)
+$(T1):
+	@echo >/dev/null
+else
+	include Makefile.$(TARGET)
+endif

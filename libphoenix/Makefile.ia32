@@ -1,0 +1,38 @@
+#
+# Makefile for libphoenix tests
+#
+# IA32 options
+#
+# Copyright 2018 Phoenix Systems
+#
+# %LICENSE%
+#
+
+CROSS ?= i386-pc-phoenix-
+
+SUBDIRS = src
+
+MKDEP = $(CROSS)gcc -MM
+MKDEPFLAGS = $(CFLAGS)
+
+CC = $(CROSS)gcc
+
+CFLAGS += -O2 -g -Wall -Wstrict-prototypes -I$(SRCDIR) -nostartfiles -nostdlib\
+	-m32 -mtune=generic -mno-mmx -mno-sse -fno-pic -fno-pie\
+	-fomit-frame-pointer -fno-strength-reduce -ffreestanding\
+	-DVERSION=\"$(VERSION)\" -DTARGET_IA32 -DARCH=\"arch/ia32/arch.h\"
+
+AR = $(CROSS)ar
+ARFLAGS = -r
+
+LD = $(CROSS)ld
+LDFLAGS = -m elf_i386
+GCCLIB := $(shell $(CC) $(CFLAGS) -print-libgcc-file-name)
+PHOENIXLIB := $(shell $(CC) $(CFLAGS) -print-file-name=libphoenix.a)
+LDLIBS := $(PHOENIXLIB) $(GCCLIB)
+
+OBJCOPY = $(CROSS)objcopy
+OBJDUMP = $(CROSS)objdump
+
+STRIP = $(CROSS)strip
+
