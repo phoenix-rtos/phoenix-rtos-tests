@@ -68,6 +68,12 @@ $(PREFIX_PROG_STRIPPED)%: $(PREFIX_PROG)%
 	@(printf "STR %-24s\n" "$(@F)")
 	$(SIL)$(STRIP) -o $@ $<
 
+
+include mem/Makefile
+include proc/Makefile
+include stdio/Makefile
+
+
 .PHONY: clean
 clean:
 	@echo "rm -rf $(BUILD_DIR)"
@@ -75,12 +81,6 @@ clean:
 ifneq ($(filter clean,$(MAKECMDGOALS)),)
 	$(shell rm -rf $(BUILD_DIR))
 endif
-T1 := $(filter-out clean all,$(MAKECMDGOALS))
-ifneq ($(T1),)
-	include $(T1)/Makefile
-.PHONY: $(T1)
-$(T1):
-	@echo >/dev/null
-else
-	include Makefile.$(TARGET)
-endif
+
+
+
