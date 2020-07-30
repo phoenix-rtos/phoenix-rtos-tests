@@ -72,6 +72,8 @@ $(PREFIX_PROG_STRIPPED)%: $(PREFIX_PROG)%
 include mem/Makefile
 include proc/Makefile
 include stdio/Makefile
+include disk/Makefile
+include fs/Makefile
 
 
 .PHONY: clean
