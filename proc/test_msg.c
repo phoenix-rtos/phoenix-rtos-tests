@@ -27,7 +27,7 @@ unsigned test_randsize(unsigned *seed, unsigned bufsz)
 	unsigned sz;
 
 	if (rand_r(seed) % 2)
-		sz = (rand_r(seed) % (bufsz / SIZE_PAGE)) * SIZE_PAGE;
+		sz = (rand_r(seed) % (bufsz / _PAGE_SIZE)) * _PAGE_SIZE;
 	else
 		sz = 1 + (rand_r(seed) % bufsz);
 
@@ -37,14 +37,14 @@ unsigned test_randsize(unsigned *seed, unsigned bufsz)
 
 unsigned test_offset(unsigned *seed, unsigned size, unsigned bufsz)
 {
-	unsigned offs = (bufsz - size) / SIZE_PAGE;
+	unsigned offs = (bufsz - size) / _PAGE_SIZE;
 
 	if (offs && rand_r(seed) % 2)
-		offs = (rand_r(seed) % offs) * SIZE_PAGE;
+		offs = (rand_r(seed) % offs) * _PAGE_SIZE;
 	else if (offs && rand_r(seed) % 10)
-		offs = SIZE_PAGE - (size & (SIZE_PAGE - 1));
+		offs = _PAGE_SIZE - (size & (_PAGE_SIZE - 1));
 	else if (offs && rand_r(seed) % 10)
-		offs = SIZE_PAGE - (size & (SIZE_PAGE - 1)) / 2;
+		offs = _PAGE_SIZE - (size & (_PAGE_SIZE - 1)) / 2;
 	else if (bufsz - size)
 		offs = rand_r(seed) % (bufsz - size);
 	else
@@ -57,7 +57,7 @@ unsigned test_offset(unsigned *seed, unsigned size, unsigned bufsz)
 int test_ping(unsigned seed, unsigned port, unsigned count)
 {
 	msg_t msg;
-	unsigned bufsz = 4 * SIZE_PAGE, offs[2], i, k;
+	unsigned bufsz = 4 * _PAGE_SIZE, offs[2], i, k;
 	void *buf[2];
 
 	printf("test_msg/ping: starting\n");
@@ -71,11 +71,14 @@ int test_ping(unsigned seed, unsigned port, unsigned count)
 	}
 
 	for (k = 0; !count || k < count; ++k) {
-		printf("\rtest_msg/ping: % 20d OK", k);
+
+		char s[128];
+		sprintf(s, "\rtest_msg/ping: % 20d OKK", k);
+		debug(s);
 
 		memset(&msg, 0, sizeof(msg));
 
-		msg.o.size = msg.i.size = test_randsize(&seed, bufsz);
+		msg.o.size = msg.i.size = 32 /*test_randsize(&seed, bufsz)*/;
 
 		msg.i.data = buf[0] + (offs[0] = test_offset(&seed, msg.i.size, bufsz));
 		msg.o.data = buf[1] + (offs[1] = test_offset(&seed, msg.o.size, bufsz));
@@ -87,6 +90,7 @@ int test_ping(unsigned seed, unsigned port, unsigned count)
 			printf("\ntest_msg/ping: send failed\n");
 			return 1;
 		}
+
 
 		if (msg.o.io.err < 0) {
 			printf("\ntest_msg/ping: pong returned error\n");
@@ -127,7 +131,7 @@ int test_ping(unsigned seed, unsigned port, unsigned count)
 int test_pong(unsigned port)
 {
 	msg_t msg;
-	unsigned rid;
+	unsigned long rid;
 
 	printf("test_msg/pong: starting\n");
 
@@ -154,8 +158,9 @@ int test_pong(unsigned port)
 int main(int argc, char **argv)
 {
 	oid_t oid;
-	char portname[] = "/test/msg";
+	char portname[] = "/tes_tmsg";
 	unsigned count = 0, seed = 123;
+	int err;
 
 	/* Wait for console */
 	while (write(1, "", 0) < 0)
@@ -165,16 +170,26 @@ int main(int argc, char **argv)
 	while (lookup("/", NULL, &oid) < 0)
 		usleep(10000);
 
-	if (lookup(portname, NULL, &oid) < 0) {
-		portCreate(&oid.port);
+	/* Create and register port */
+	portCreate(&oid.port);
 
-		if (portRegister(oid.port, portname, &oid) < 0) {
-			printf("test_msg/pong: can't register port %s!\n", portname);
-			return 1;
-		}
-
+	if ((err = portRegister(oid.port, portname, &oid)) >= 0) {
+		printf("[%d] Starting test_msg server\n", getpid());
+		fflush(stdout);
 		return test_pong(oid.port);
 	}
+
+	printf("[%d] test_msg/pong: can't register port %s %d!\n", getpid(), portname, err);
+	fflush(stdout);
+
+	if ((err = lookup(portname, NULL, &oid)) < 0) {
+		printf("[%d] test_msg/ping: can't found port at %s %d!\n", getpid(), portname, err);
+		fflush(stdout);
+		return err;
+	}
+
+	printf("Found server at %d\n", oid.port);
+	fflush(stdout);
 
 	if (argc > 1)
 		count = strtoul(argv[1], NULL, 10);

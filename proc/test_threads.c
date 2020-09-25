@@ -64,7 +64,7 @@ void test_threads_threads1(void)
 	}
 
 	beginthread(test_threads_rotthr1, 1, test_threads_common.stacks[1], stacksz, (void *)1);
-	beginthread(test_threads_rotthr1, 2, test_threads_common.stacks[2], stacksz, (void *)2);
+	beginthread(test_threads_rotthr1, 1, test_threads_common.stacks[2], stacksz, (void *)2);
 	beginthread(test_threads_rotthr1, 3, test_threads_common.stacks[3], stacksz, (void *)3);
 	beginthread(test_threads_rotthr1, 4, test_threads_common.stacks[4], stacksz, (void *)4);
 	beginthread(test_threads_rotthr1, 5, test_threads_common.stacks[5], stacksz, (void *)5);
@@ -147,14 +147,15 @@ int main(void)
 {
 	char *indicator = "o|/-\\|/-\\";
 	unsigned int i = 0;
+	char s[512];
 
 	printf("test_threads: Starting, main is at %p\n", main);
 
-	test_threads_threads2();
+	test_threads_threads1();
 
 	printf("\033[?25l");
 	for ( i = 0;; i++) {
-		printf("\rtest_threads: %2d %c %c %c %c %c %c %c  %02d %02d %02d %02d %02d %02d %02d",
+		sprintf(s, "\rtest_threads: %2d %c %c %c %c %c %c %c  %02d %02d %02d %02d %02d %02d %02d",
 			i % 100,
 			indicator[test_threads_common.rotations[1] % 8],
 			indicator[test_threads_common.rotations[2] % 8],
@@ -172,7 +173,9 @@ int main(void)
 			test_threads_common.rotations[6] % 100,
 			test_threads_common.rotations[7] % 100);
 
-		usleep(5000);
+		printf(s);
+		fflush(stdout);
+		usleep(500);
 	}
 
 	return 0;
