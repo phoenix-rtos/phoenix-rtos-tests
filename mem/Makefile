@@ -11,6 +11,9 @@ $(PREFIX_PROG)test_mmap: $(PREFIX_O)mem/test_mmap.o
 
 $(PREFIX_PROG)test_malloc: $(PREFIX_O)mem/test_malloc.o
 	$(LINK)
+
+$(PREFIX_PROG)test_memmove: $(PREFIX_O)mem/test_memmove.o
+	$(LINK)
 	
-all: $(addprefix $(PREFIX_PROG_STRIPPED), test_mmap test_malloc)
+all: $(addprefix $(PREFIX_PROG_STRIPPED), test_mmap test_malloc test_memmove)
 

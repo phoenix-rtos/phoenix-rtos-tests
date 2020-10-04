@@ -23,7 +23,8 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "test_common.h"
+
+#include "../test_common.h"
 
 #define SEED 1581072278
 #define BUF_LEN 4000

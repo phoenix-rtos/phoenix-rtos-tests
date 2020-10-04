@@ -6,7 +6,8 @@
 #include <sys/types.h>
 #include <string.h>
 #include <signal.h>
-#include "test_common.h"
+
+#include "../test_common.h"
 
 #define FILE_PATH "./fcntl_testfile"
 #define FILE_SIZE 200
