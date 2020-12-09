@@ -44,5 +44,5 @@ else
 	include mem/Makefile
 	include fs/Makefile
 	include disk/Makefile
-	
+	#include virtio/Makefile
 endif
