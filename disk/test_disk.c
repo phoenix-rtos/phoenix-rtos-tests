@@ -45,7 +45,7 @@ typedef struct timeval timeval_t;
 
 
 /* Calculates time delta in usec */
-static uint64_t test_disk_gettime(timeval_t *start, timeval_t *end)
+static uint64_t test_disk_time(timeval_t *start, timeval_t *end)
 {
 	timeval_t diff;
 
@@ -84,7 +84,7 @@ static int test_disk_lseek(int fd, uint64_t offs)
 
 
 /* Estimates disk size with 1MB accuracy */
-static uint64_t test_disk_getsize(int fd)
+static uint64_t test_disk_size(int fd)
 {
 	uint64_t offs = 0, step = 1 << 30;
 	char buff[BLOCK_SIZE];
@@ -127,7 +127,7 @@ static ssize_t test_disk_seektime(int fd, uint64_t offs)
 
 	gettimeofday(&end, NULL);
 
-	return test_disk_gettime(&start, &end);
+	return test_disk_time(&start, &end);
 }
 
 
@@ -160,7 +160,7 @@ static ssize_t test_disk_zonetime(int fd, uint64_t offs, char *buff, uint64_t le
 
 	gettimeofday(&end, NULL);
 
-	return test_disk_gettime(&start, &end);
+	return test_disk_time(&start, &end);
 }
 
 
@@ -207,7 +207,7 @@ static ssize_t test_disk_patterntime(int fd, uint64_t offs, uint64_t len, uint8_
 
 	gettimeofday(&end, NULL);
 
-	return test_disk_gettime(&start, &end);
+	return test_disk_time(&start, &end);
 }
 
 
@@ -263,18 +263,22 @@ static int test_disk_zone(int fd, uint64_t disksz, uint64_t blocksz)
 	offs = 0;
 	if (test_disk_lseek(fd, offs) < 0) {
 		fprintf(stderr, "test_disk: bad lseek at offs=%" PRIu64 "\n", offs);
+		munmap(buff, len);
 		return -EINVAL;
 	}
 
 	/* Catch permissions */
 	if (read(fd, buff, 512) != 512) {
 		fprintf(stderr, "test_disk: IO error at offs=%" PRIu64 "\n", offs);
+		munmap(buff, len);
 		return -EIO;
 	}
 
 	for (offs = 0; offs < disksz - len - 1024; offs += stride) {
-		if ((t = test_disk_zonetime(fd, offs, buff, len)) < 0)
+		if ((t = test_disk_zonetime(fd, offs, buff, len)) < 0) {
+			munmap(buff, len);
 			return t;
+		}
 		time += t / 1000;
 		nzones++;
 	}
@@ -323,8 +327,6 @@ static int test_disk_patternone(int fd, uint64_t disksz, uint8_t (*gen)(uint64_t
 	uint64_t offs, len, blocks = disksz / BLOCK_SIZE;
 	unsigned int i;
 
-	srand(time(NULL));
-
 	for (i = 0; i < PATTERN_POINTS; i++) {
 		offs = rand() % blocks;
 		len = rand() % PATTERN_MAX_LEN + 1;
@@ -344,6 +346,8 @@ static int test_disk_patternone(int fd, uint64_t disksz, uint8_t (*gen)(uint64_t
 static int test_disk_pattern(int fd, uint64_t disksz)
 {
 	int err;
+
+	srand(time(NULL));
 
 	printf("test_disk: testing pattern 0x00...\n");
 	if ((err = test_disk_patternone(fd, disksz, test_disk_pattern00)) < 0)
@@ -383,7 +387,10 @@ int main(int argc, char *argv[])
 		return -EINVAL;
 	}
 
-	size = test_disk_getsize(fd);
+	if (!(size = test_disk_size(fd))) {
+		fprintf(stderr, "test_disk: disk %s has less than 1MB of storage capacity required for the tests to run. Exiting...\n", argv[1]);
+		return EOK;
+	}
 	printf("test_disk: disk %s has %" PRIu64 "MB of storage capacity\n", argv[1], size / (1 << 20));
 
 	printf("test_disk: starting seek test...\n");
@@ -392,7 +399,7 @@ int main(int argc, char *argv[])
 	printf("test_disk: starting zone test...\n");
 	test_disk_zone(fd, size, 1 << 20);
 
-	/* Warning: destructive test, overwrites disk data */
+	/* Warning: destrsizeuctive test, overwrites disk data */
 	printf("test_disk: starting pattern test...\n");
 	test_disk_pattern(fd, size);
 
