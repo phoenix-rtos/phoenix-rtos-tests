@@ -1,0 +1,16 @@
+test:
+    type: unit
+    targets:
+        value: [host-pc]
+    tests:
+        - name: meterfs_allocate
+          exec: test_meterfs_allocate .emustorage
+    
+        - name: meterfs_openclose
+          exec: test_meterfs_openclose .emustorage
+    
+        - name: meterfs_writeread
+          exec: test_meterfs_writeread .emustorage
+    
+        - name: meterfs_miscellaneous
+          exec: test_meterfs_miscellaneous .emustorage
