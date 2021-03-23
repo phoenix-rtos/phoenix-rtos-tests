@@ -46,4 +46,8 @@ else
 	include fs/Makefile
 	include disk/Makefile
 	#include virtio/Makefile
+	include sample/helloworld/Makefile
+	include sample/test/Makefile
+	include sample/test/fails/Makefile
+
 endif

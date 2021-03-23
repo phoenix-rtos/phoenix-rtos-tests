@@ -1,0 +1,5 @@
+test:
+    syspage: helloworld
+    tests:
+        - name: helloworld
+          harness: test.py
