@@ -1,0 +1,6 @@
+test:
+    type: unit
+    tests:
+        - name: unit
+          syspage: test_setjmp
+
