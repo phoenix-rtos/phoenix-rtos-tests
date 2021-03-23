@@ -49,5 +49,6 @@ else
 	include sample/helloworld/Makefile
 	include sample/test/Makefile
 	include sample/test/fails/Makefile
+	include setjmp/Makefile
 
 endif
