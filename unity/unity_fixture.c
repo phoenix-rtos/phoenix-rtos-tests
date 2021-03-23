@@ -34,12 +34,13 @@ int UnityMain(int argc, const char* argv[], void (*runAllTests)(void))
     if (result != 0)
         return result;
 
+    UnityFixture.Verbose = 1;
+
     for (r = 0; r < UnityFixture.RepeatCount; r++)
     {
         UnityBegin(argv[0]);
         announceTestRun(r);
         runAllTests();
-        if (!UnityFixture.Verbose) UNITY_PRINT_EOL();
         UnityEnd();
     }
 
@@ -77,21 +78,6 @@ void UnityTestRunner(unityfunction* setup,
         Unity.TestFile = file;
         Unity.CurrentTestName = printableName;
         Unity.CurrentTestLineNumber = line;
-        if (UnityFixture.Verbose)
-        {
-            UnityPrint(printableName);
-        #ifndef UNITY_REPEAT_TEST_NAME
-            Unity.CurrentTestName = NULL;
-        #endif
-        }
-        else if (UnityFixture.Silent)
-        {
-            /* Do Nothing */
-        }
-        else
-        {
-            UNITY_OUTPUT_CHAR('.');
-        }
 
         Unity.NumberOfTests++;
         UnityPointer_Init();
@@ -124,6 +110,8 @@ void UnityIgnoreTest(const char* printableName, const char* group, const char* n
         if (UnityFixture.Verbose)
         {
             UnityPrint(printableName);
+            UnityPrint(" ");
+            UnityPrint(UnityStrIgnore);
             UNITY_PRINT_EOL();
         }
         else if (UnityFixture.Silent)
@@ -283,27 +271,35 @@ int UnityGetCommandLineOptions(int argc, const char* argv[])
 
 void UnityConcludeFixtureTest(void)
 {
+    UnityPrint(Unity.CurrentTestName);
+    UnityPrint(" ");
+
     if (Unity.CurrentTestIgnored)
     {
+        UnityPrint(UnityStrIgnore);
         Unity.TestIgnores++;
-        UNITY_PRINT_EOL();
     }
     else if (!Unity.CurrentTestFailed)
     {
         if (UnityFixture.Verbose)
         {
-            UnityPrint(" ");
             UnityPrint(UnityStrPass);
             UNITY_EXEC_TIME_STOP();
             UNITY_PRINT_EXEC_TIME();
-            UNITY_PRINT_EOL();
         }
     }
     else /* Unity.CurrentTestFailed */
     {
+        UnityPrint(UnityStrFail);
+        UnityPrint(" at ");
+        UnityPrint(Unity.TestFile);
+        UNITY_OUTPUT_CHAR(':');
+        UnityPrintNumber((UNITY_INT)Unity.CurrentAssertionLineNumber);
+
         Unity.TestFailures++;
-        UNITY_PRINT_EOL();
     }
+
+    UNITY_PRINT_EOL();
 
     Unity.CurrentTestFailed = 0;
     Unity.CurrentTestIgnored = 0;

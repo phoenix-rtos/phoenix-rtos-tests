@@ -48,7 +48,7 @@ int UnityMain(int argc, const char* argv[], void (*runAllTests)(void));
     void TEST_##group##_##name##_run(void);\
     void TEST_##group##_##name##_run(void)\
     {\
-        UnityIgnoreTest("IGNORE_TEST(" #group ", " #name ")", TEST_GROUP_##group, #name);\
+        UnityIgnoreTest("TEST(" #group ", " #name ")", TEST_GROUP_##group, #name);\
     }\
     void TEST_##group##_##name##_(void)
 

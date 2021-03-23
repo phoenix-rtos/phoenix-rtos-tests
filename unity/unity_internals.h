@@ -7,6 +7,8 @@
 #ifndef UNITY_INTERNALS_H
 #define UNITY_INTERNALS_H
 
+#define UNITY_INCLUDE_CONFIG_H
+
 #ifdef UNITY_INCLUDE_CONFIG_H
 #include "unity_config.h"
 #endif
@@ -462,6 +464,7 @@ struct UNITY_STORAGE_T
     const char* CurrentDetail2;
 #endif
     UNITY_LINE_TYPE CurrentTestLineNumber;
+    UNITY_LINE_TYPE CurrentAssertionLineNumber;
     UNITY_COUNTER_TYPE NumberOfTests;
     UNITY_COUNTER_TYPE TestFailures;
     UNITY_COUNTER_TYPE TestIgnores;
