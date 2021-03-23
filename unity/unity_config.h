@@ -1,0 +1,6 @@
+#ifndef UNITY_CONFIG_H
+#define UNITY_CONFIG_H
+
+#define UNITY_FIXTURE_NO_EXTRAS
+
+#endif /* UNITY_CONFIG_H */
