@@ -39,6 +39,7 @@ ifneq ($(T1),)
 $(T1):
 	@echo >/dev/null
 else
+	include unity/Makefile
 	include stdio/Makefile
 	include proc/Makefile
 	include mem/Makefile
