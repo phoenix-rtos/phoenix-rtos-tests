@@ -96,6 +96,7 @@ class TargetBuilder:
                           'clean',
                           'core',
                           'fs',
+                          'test',
                           'image',
                           'project'])
 
@@ -111,20 +112,6 @@ class IA32Builder(TargetBuilder):
     def prebuild_action(self, user_syspage=None, **kwargs):
         # We run test binaries from filesystem, set only default syspage
         self.env['SYSPAGE'] = " ".join(self.SYSPAGE[self.target])
-
-    def postbuild_action(self, user_syspage=None, **kwargs):
-        if not user_syspage:
-            return
-
-        logging.info(f"Installing {' '.join(user_syspage)} to filesystem for {self.target}\n")
-        build_dir = PHRTOS_PROJECT_DIR / f"_build/{self.target}/prog.stripped"
-        syspage_dir = pathlib.Path("/root/bin")
-
-        self.fs_mkdir(syspage_dir)
-        for prog in user_syspage:
-            self.fs_install(syspage_dir, build_dir / prog, 0o755)
-
-        self.run_command(['./phoenix-rtos-build/build.sh', 'image'])
 
 
 class TargetBuilderFactory:

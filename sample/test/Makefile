@@ -1,8 +1,15 @@
-$(PREFIX_PROG)sample_echo: $(PREFIX_O)sample/test/test-echo.o
+include sample/test/fails/Makefile
+
+HARNESS_PROGS := test-echo
+
+UNITY_PROGS := test-unity
+
+CURR_DIR := sample/test/
+
+INSTALL_PROGS += $(HARNESS_PROGS) $(UNITY_PROGS)
+
+$(addprefix $(PREFIX_PROG), $(HARNESS_PROGS)): $(PREFIX_PROG)%: $(PREFIX_O)$(CURR_DIR)%.o
 	$(LINK)
 
-$(PREFIX_PROG)sample_unity: $(PREFIX_O)sample/test/test-unity.o $(PREFIX_A)unity.a
+$(addprefix $(PREFIX_PROG), $(UNITY_PROGS)): $(PREFIX_PROG)%: $(PREFIX_O)$(CURR_DIR)%.o $(PREFIX_A)unity.a
 	$(LINK)
-
-all: $(addprefix $(PREFIX_PROG_STRIPPED), sample_echo sample_unity)
-

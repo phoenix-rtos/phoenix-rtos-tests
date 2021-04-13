@@ -1,18 +1,13 @@
-$(PREFIX_PROG)fail_output_1: $(PREFIX_O)sample/test/fails/test-fail-output-1.o
+HARNESS_PROGS := test-fail-output-1 test-fail-output-2 test-fail-exception
+
+UNITY_PROGS := test-fail-unity test-fail-unity-exc
+
+CURR_DIR := sample/test/fails/
+
+INSTALL_PROGS += $(HARNESS_PROGS) $(UNITY_PROGS)
+
+$(addprefix $(PREFIX_PROG), $(HARNESS_PROGS)): $(PREFIX_PROG)%: $(PREFIX_O)$(CURR_DIR)%.o
 	$(LINK)
 
-$(PREFIX_PROG)fail_output_2: $(PREFIX_O)sample/test/fails/test-fail-output-2.o
+$(addprefix $(PREFIX_PROG), $(UNITY_PROGS)): $(PREFIX_PROG)%: $(PREFIX_O)$(CURR_DIR)%.o $(PREFIX_A)unity.a
 	$(LINK)
-
-$(PREFIX_PROG)fail_exception: $(PREFIX_O)sample/test/fails/test-fail-exception.o
-	$(LINK)
-
-$(PREFIX_PROG)fail_unity: $(PREFIX_O)sample/test/fails/test-fail-unity.o $(PREFIX_A)unity.a
-	$(LINK)
-
-$(PREFIX_PROG)fail_unity_exception: $(PREFIX_O)sample/test/fails/test-fail-unity-exc.o $(PREFIX_A)unity.a
-	$(LINK)
-
-all: $(addprefix $(PREFIX_PROG_STRIPPED), fail_output_1 fail_output_2 fail_unity fail_exception \
-					fail_unity_exception)
-
