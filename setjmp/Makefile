@@ -1,4 +1,4 @@
-$(PREFIX_PROG)test_setjmp: $(PREFIX_O)setjmp/setjmp.o $(PREFIX_A)unity.a
+$(PREFIX_PROG)test-setjmp: $(PREFIX_O)setjmp/setjmp.o $(PREFIX_A)unity.a
 	$(LINK)
 
-all: $(addprefix $(PREFIX_PROG_STRIPPED), test_setjmp)
+INSTALL_PROGS += test-setjmp

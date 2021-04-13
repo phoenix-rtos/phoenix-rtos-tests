@@ -56,9 +56,9 @@ def parse_args():
                              "If flag is not used then runner searches for tests in "
                              "phoenix-rtos-tests directory. Flag can be used multiple times.")
 
-    parser.add_argument("--no-build",
+    parser.add_argument("--build",
                         default=False, action='store_true',
-                        help="Omit building step.")
+                        help="Runner will build all tests.")
 
     parser.add_argument("-l", "--log-level",
                         default='info',
@@ -85,7 +85,7 @@ def main():
 
     runner = TestsRunner(targets=args.target,
                          test_paths=args.test,
-                         build=not args.no_build)
+                         build=args.build)
 
     passed, failed, skipped = runner.run()
 
