@@ -1,10 +1,10 @@
 test:
     tests:
         - name: echo
-          syspage: test-echo
+          exec: test-echo
           harness: test-echo.py
 
         - name: unity
-          syspage: test-unity
+          exec: test-unity
           type: unit
 

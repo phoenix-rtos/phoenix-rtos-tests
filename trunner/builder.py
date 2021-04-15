@@ -27,8 +27,10 @@ class TargetBuilder:
         self.env = os.environ.copy()
         self.target = target
         self.fs_path = PHRTOS_PROJECT_DIR / f"_fs/{self.target}"
+
         self.env['TARGET'] = self.target
         self.env['CONSOLE'] = 'serial'
+        self.env['SYSPAGE'] = ' '.join(TargetBuilder.SYSPAGE[self.target])
 
     def __str__(self):
         return self.target
@@ -45,12 +47,6 @@ class TargetBuilder:
         abs_path = self.fs_path / path
         shutil.copy(file, abs_path)
         abs_path.joinpath(file.name).chmod(mode)
-
-    def prebuild_action(self, user_syspage=None, **kwargs):
-        pass
-
-    def postbuild_action(self, user_syspage=None, **kwargs):
-        pass
 
     def run_command(self, args, live_output=True, exit_at_error=True):
         proc = subprocess.Popen(
@@ -83,14 +79,7 @@ class TargetBuilder:
 
         return proc.returncode, out, err
 
-    def build(self, user_syspage=None):
-        syspage = user_syspage if user_syspage else []
-        syspage.extend(TargetBuilder.SYSPAGE[self.target])
-        syspage = list(set(syspage))
-        self.env['SYSPAGE'] = " ".join(syspage)
-
-        self.prebuild_action(user_syspage)
-
+    def build(self):
         logging.info(f"Building {self.env['TARGET']} with syspage: {self.env['SYSPAGE']}\n")
         self.run_command(['./phoenix-rtos-build/build.sh',
                           'clean',
@@ -99,27 +88,3 @@ class TargetBuilder:
                           'test',
                           'image',
                           'project'])
-
-        self.postbuild_action(user_syspage)
-
-
-class IA32Builder(TargetBuilder):
-    """This class builds image for the IA32 architecture"""
-
-    def __init__(self):
-        super().__init__('ia32-generic')
-
-    def prebuild_action(self, user_syspage=None, **kwargs):
-        # We run test binaries from filesystem, set only default syspage
-        self.env['SYSPAGE'] = " ".join(self.SYSPAGE[self.target])
-
-
-class TargetBuilderFactory:
-    """This class creates TargetBuilder based on a target name"""
-
-    @staticmethod
-    def create(target):
-        if target == 'ia32-generic':
-            return IA32Builder()
-
-        return TargetBuilder(target)

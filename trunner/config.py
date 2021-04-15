@@ -40,8 +40,8 @@ class YAMLParser:
         self.parsed_tests = []
 
     def parse_test_case(self, config):
-        allowed_keys = ('syspage', 'type', 'harness', 'name', 'ignore')
-        mandatory_keys = ('syspage', 'name')
+        allowed_keys = ('exec', 'type', 'harness', 'name', 'ignore')
+        mandatory_keys = ('exec', 'name')
 
         unnecessary_keys = set(config) - set(allowed_keys)
         if unnecessary_keys:

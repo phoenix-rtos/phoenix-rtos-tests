@@ -1,6 +1,6 @@
 import logging
 
-from .builder import TargetBuilderFactory
+from .builder import TargetBuilder
 from .config import YAMLParser
 from .device import QemuRunner, QEMU_CMD
 from .testcase import TestCaseFactory
@@ -48,12 +48,8 @@ class TestsRunner:
                 tests.append(test_case)
 
         if self.build:
-            for target, tests in self.tests_per_target.items():
-                target_builder = TargetBuilderFactory.create(target)
-
-                test_binaries = [test_case.exec_bin for test_case in tests]
-                test_binaries = list(set(test_binaries))
-                target_builder.build(test_binaries)
+            for target in self.tests_per_target:
+                TargetBuilder(target).build()
 
         for target, tests in self.tests_per_target.items():
             for test_case in tests:
