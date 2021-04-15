@@ -9,6 +9,9 @@ import yaml
 PHRTOS_PROJECT_DIR = pathlib.Path(os.getcwd())
 PHRTOS_TEST_DIR = PHRTOS_PROJECT_DIR / 'phoenix-rtos-tests'
 
+# Default time after pexpect will raise TIEMOUT exception if nothing matches an expected pattern
+PYEXPECT_TIMEOUT = 8
+
 def remove_prefix(string, prefix):
     if string.startswith(prefix):
         return string[len(prefix):]
@@ -40,7 +43,7 @@ class YAMLParser:
         self.parsed_tests = []
 
     def parse_test_case(self, config):
-        allowed_keys = ('exec', 'type', 'harness', 'name', 'ignore')
+        allowed_keys = ('exec', 'type', 'harness', 'name', 'ignore', 'timeout')
         mandatory_keys = ('exec', 'name')
 
         unnecessary_keys = set(config) - set(allowed_keys)
@@ -61,6 +64,7 @@ class YAMLParser:
         # If type is not known assume that it's a unit test
         config.setdefault('type', 'unit')
         config.setdefault('ignore', False)
+        config.setdefault('timeout', PYEXPECT_TIMEOUT)
 
         if not isinstance(config['ignore'], bool):
             config['ignore'] = False

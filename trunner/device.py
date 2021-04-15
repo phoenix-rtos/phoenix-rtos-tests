@@ -35,7 +35,7 @@ class DeviceRunner:
         except serial.SerialException as exc:
             raise exc
 
-        proc = pexpect.fdpexpect.fdspawn(self.serial, encoding='utf-8')
+        proc = pexpect.fdpexpect.fdspawn(self.serial, encoding='utf-8', timeout=test.timeout)
 
         try:
             test.handle(proc)
@@ -54,7 +54,7 @@ class QemuRunner:
         if test.skipped():
             return
 
-        proc = pexpect.spawn(self.qemu, args=self.args, encoding='utf-8')
+        proc = pexpect.spawn(self.qemu, args=self.args, encoding='utf-8', timeout=test.timeout)
 
         res = False
         try:

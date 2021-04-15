@@ -16,9 +16,10 @@ class TestCase:
     FAILED_TIMEOUT = "FAILED TIMEOUT"
     SKIPPED = "SKIPPED"
 
-    def __init__(self, name, target, exec_bin=None, status=None):
+    def __init__(self, name, target, timeout, exec_bin=None, status=None):
         self.name = name
         self.target = target
+        self.timeout = timeout
         self.exec_bin = exec_bin
         if not status:
             status = TestCase.FAILED
@@ -119,8 +120,8 @@ class TestCase:
 class TestCaseCustomHarness(TestCase):
     """The test case with user harness loaded from .py file"""
 
-    def __init__(self, name, target, harness_path, exec_bin=None, status=TestCase.FAILED):
-        super().__init__(name, target, exec_bin, status)
+    def __init__(self, name, target, timeout, harness_path, exec_bin=None, status=TestCase.FAILED):
+        super().__init__(name, target, timeout, exec_bin, status)
         self.load_module(harness_path)
 
     def load_module(self, path):
@@ -137,8 +138,8 @@ class TestCaseCustomHarness(TestCase):
 class TestCaseUnit(TestCase):
     """The test case representing Unity unit tests."""
 
-    def __init__(self, name, target, exec_bin, status=TestCase.FAILED):
-        super().__init__(name, target, exec_bin, status)
+    def __init__(self, name, target, timeout, exec_bin, status=TestCase.FAILED):
+        super().__init__(name, target, timeout, exec_bin, status)
         self.harness = UnitTestHarness.harness
         self.unit_test_results = []
 
@@ -176,6 +177,7 @@ class TestCaseFactory:
             return TestCaseUnit(
                     name=test['name'],
                     target=test['target'],
+                    timeout=test['timeout'],
                     exec_bin=test['exec'],
                     status=status
             )
@@ -183,6 +185,7 @@ class TestCaseFactory:
             return TestCaseCustomHarness(
                     name=test['name'],
                     target=test['target'],
+                    timeout=test['timeout'],
                     harness_path=test['harness'],
                     exec_bin=test['exec'],
                     status=status
