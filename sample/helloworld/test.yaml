@@ -1,5 +1,5 @@
 test:
-    syspage: test-helloworld
     tests:
         - name: main
           harness: test.py
+          exec: test-helloworld

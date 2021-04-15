@@ -2,5 +2,5 @@ test:
     type: unit
     tests:
         - name: unit
-          syspage: test-setjmp
+          exec: test-setjmp
 

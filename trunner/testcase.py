@@ -176,7 +176,7 @@ class TestCaseFactory:
             return TestCaseUnit(
                     name=test['name'],
                     target=test['target'],
-                    exec_bin=test['syspage'],
+                    exec_bin=test['exec'],
                     status=status
             )
         if test['type'] == 'harness':
@@ -184,7 +184,7 @@ class TestCaseFactory:
                     name=test['name'],
                     target=test['target'],
                     harness_path=test['harness'],
-                    exec_bin=test['syspage'],
+                    exec_bin=test['exec'],
                     status=status
             )
 
