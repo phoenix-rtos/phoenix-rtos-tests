@@ -1,0 +1,8 @@
+include unity/Makefile
+include stdio/Makefile
+include proc/Makefile
+include mem/Makefile
+include fs/Makefile
+include disk/Makefile
+include sample/Makefile
+include setjmp/Makefile
