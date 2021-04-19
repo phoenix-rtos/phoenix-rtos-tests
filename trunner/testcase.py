@@ -66,7 +66,7 @@ class TestCase:
         proc.sendline(f'/bin/{self.exec_bin}')
         proc.expect(f'/bin/{self.exec_bin}(.*)\n')
 
-    def handle_timeout(self, proc, exc):
+    def handle_error(self, proc, exc):
         self.status = TestCase.FAILED_TIMEOUT
 
         # Look for searched pattern
@@ -75,14 +75,14 @@ class TestCase:
         r_searched = r"[\d+]: (?:re.compile\()?'(.*)'\)?"
         searched_patterns = re.findall(r_searched, exc.value)
 
-        self.exception = 'Expected:\n'
+        self.exception += 'Expected:\n'
         for idx, pattern in enumerate(searched_patterns):
             self.exception += f'\t{idx}: {pattern}\n'
 
         got = proc.before.replace("\r", "")
         self.exception += f'Got:\n{got}\n'
 
-    def handle(self, proc):
+    def handle(self, proc, psh=True):
         if self.skipped():
             return True
 
@@ -91,7 +91,7 @@ class TestCase:
         if not self.harness:
             return False
 
-        if self.exec_bin:
+        if psh and self.exec_bin:
             try:
                 self.exec(proc)
             except pexpect.exceptions.TIMEOUT as exc:
@@ -104,9 +104,11 @@ class TestCase:
         try:
             res = self.harness(proc)
         except pexpect.exceptions.TIMEOUT as exc:
-            self.handle_timeout(proc, exc)
+            self.exception += 'Exception TIMEOUT\n'
+            self.handle_error(proc, exc)
         except pexpect.exceptions.EOF as exc:
-            logging.warning(f"Test {self.name} reached EOF\n {exc}\n")
+            self.exception += 'Exception EOF\n'
+            self.handle_error(proc, exc)
         except Exception as exc:
             logging.warning(f"Test {self.name} exception:\n {exc}\n")
             raise exc
@@ -152,8 +154,8 @@ class TestCaseUnit(TestCase):
             else:
                 logging.debug(f"\t{test}\n")
 
-    def handle(self, proc):
-        res = super().handle(proc)
+    def handle(self, proc, psh=True):
+        res = super().handle(proc, psh)
 
         if self.status == TestCase.PASSED:
             self.unit_test_results = res

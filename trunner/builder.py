@@ -5,13 +5,13 @@ import shutil
 import subprocess
 import sys
 
-from .config import PHRTOS_PROJECT_DIR
+from .config import PHRTOS_PROJECT_DIR, DEFAULT_TARGETS
 
 
 class TargetBuilder:
     """A base class that builds image needed to run all test cases"""
 
-    TARGETS = ('ia32-generic',)
+    TARGETS = DEFAULT_TARGETS
     SYSPAGE = {
         'ia32-generic': [
             'uart16550',

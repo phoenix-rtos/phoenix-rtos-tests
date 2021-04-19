@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 
 import argparse
+import logging
 import pathlib
 import sys
 
-import logging
+import trunner.config as config
 
-from trunner.builder import TargetBuilder
-from trunner.config import PHRTOS_TEST_DIR
 from trunner.test_runner import TestsRunner
 from trunner.tools.color import Color
 
@@ -45,7 +44,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-T", "--target",
-                        action='append', choices=TargetBuilder.TARGETS,
+                        action='append', choices=config.ALL_TARGETS,
                         help="Filter targets on which test will be built and run. "
                              "By default runs tests on all available targets. "
                              "Flag can be used multiple times.")
@@ -70,11 +69,11 @@ def parse_args():
     args.log_level = logging_level[args.log_level]
 
     if not args.test:
-        args.test = [PHRTOS_TEST_DIR]
+        args.test = [config.PHRTOS_TEST_DIR]
 
     if not args.target:
-        # Build on all available targets
-        args.target = TargetBuilder.TARGETS
+        # Run on all available targets
+        args.target = config.ALL_TARGETS
 
     return args
 

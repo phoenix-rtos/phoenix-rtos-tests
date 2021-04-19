@@ -64,3 +64,35 @@ class QemuRunner:
                 proc.kill(signal.SIGKILL)
             else:
                 proc.kill(signal.SIGTERM)
+
+
+class HostRunner:
+    """This class provides interface to run test case using host as a device."""
+
+    def run(self, test):
+        if test.skipped():
+            return
+
+        test_path = PHRTOS_PROJECT_DIR / f'_boot/{test.target}/{test.exec_bin}'
+
+        proc = pexpect.spawn(str(test_path), encoding='utf-8', timeout=test.timeout)
+
+        res = False
+        try:
+            res = test.handle(proc, psh=False)
+        finally:
+            if not res:
+                proc.kill(signal.SIGKILL)
+            else:
+                proc.kill(signal.SIGTERM)
+
+
+class RunnerFactory:
+    @staticmethod
+    def create(target):
+        if target == 'ia32-generic':
+            return QemuRunner(*QEMU_CMD[target])
+        if target == 'host-pc':
+            return HostRunner()
+
+        raise ValueError(f"Unknown Runner target: {target}")

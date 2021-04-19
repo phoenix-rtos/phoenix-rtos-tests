@@ -36,10 +36,10 @@ class UnitTestResult:
 class UnitTestHarness:
     """Class providing harness for parsing output of Unity tests"""
 
-    ASSERT = r"ASSERTION (.*):(\d+):(FAIL|INFO|IGNORE): (.*)\r"
+    ASSERT = r"ASSERTION (.*?):(\d+):(FAIL|INFO|IGNORE): (.*?)\r"
     RESULT = r"TEST\((\w+), (\w+)\) (PASS|IGNORE)"
     # Fail need to have its own regex due to greedy matching
-    RESULT_FAIL = r"TEST\((\w+), (\w+)\) (FAIL) at (.*):(\d+)\r"
+    RESULT_FAIL = r"TEST\((\w+), (\w+)\) (FAIL) at (.*?):(\d+)\r"
     FINAL = r"(\d+) Tests (\d+) Failures (\d+) Ignored"
 
     @staticmethod

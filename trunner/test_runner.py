@@ -2,7 +2,7 @@ import logging
 
 from .builder import TargetBuilder
 from .config import YAMLParser
-from .device import QemuRunner, QEMU_CMD
+from .device import RunnerFactory
 from .testcase import TestCaseFactory
 
 
@@ -10,11 +10,12 @@ class TestsRunner:
     """Class responsible for loading, building and running tests"""
 
     def __init__(self, targets, test_paths, build=True):
+        self.targets = targets
         self.test_configs = []
         self.test_paths = test_paths
         self.tests_per_target = {k: [] for k in targets}
         self.build = build
-        self.runners = {target: QemuRunner(*QEMU_CMD[target]) for target in targets}
+        self.runners = {target: RunnerFactory.create(target) for target in self.targets}
         self.passed = 0
         self.failed = 0
         self.skipped = 0
@@ -32,7 +33,7 @@ class TestsRunner:
     def parse_tests(self):
         self.test_configs = []
         for path in self.test_paths:
-            parser = YAMLParser(path)
+            parser = YAMLParser(path, self.targets)
             testcase_config = parser.parse_test_config()
             self.test_configs.extend(testcase_config)
             logging.debug(f"File {path} parsed successfuly\n")
@@ -42,13 +43,11 @@ class TestsRunner:
         self.parse_tests()
 
         for test_config in self.test_configs:
-            for target, tests in self.tests_per_target.items():
-                test_config['target'] = target
-                test_case = TestCaseFactory.create(test_config)
-                tests.append(test_case)
+            test = TestCaseFactory.create(test_config)
+            self.tests_per_target[test.target].append(test)
 
         if self.build:
-            for target in self.tests_per_target:
+            for target in self.targets:
                 TargetBuilder(target).build()
 
         for target, tests in self.tests_per_target.items():

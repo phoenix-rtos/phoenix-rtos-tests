@@ -3,8 +3,12 @@ test:
         - name: echo
           exec: test-echo
           harness: test-echo.py
+          targets:
+              include: [host-pc]
 
         - name: unity
           exec: test-unity
           type: unit
+          targets:
+              include: [host-pc]
 

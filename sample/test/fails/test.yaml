@@ -1,5 +1,9 @@
 test:
     ignore: true
+
+    targets:
+        include: [host-pc]
+
     tests:
         - name: fail-output-1
           exec: test-fail-output-1
@@ -20,4 +24,3 @@ test:
         - name: fail-unity-exception
           exec: test-fail-unity-exc
           type: unit
-
