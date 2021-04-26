@@ -59,7 +59,6 @@ class TestTarget:
         tests = parser.parse_test_config()
         assert not tests
 
-
     @pytest.mark.parametrize('target, expect_target', [
         (
             {},

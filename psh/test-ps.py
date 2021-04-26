@@ -8,6 +8,7 @@
     1     0  4 sleep   0.0   3ms    0:00      0   1 init
 """
 
+
 def harness(p):
     header_seen = False
     expected_tasks = ['[idle]', 'init', 'psh']
@@ -20,11 +21,11 @@ def harness(p):
         return False
 
     p.sendline('ps')
-    p.expect('ps(\r+)\n')
+    p.expect(r'ps(\r+)\n')
 
     while True:
         # Get prompt or new line
-        idx = p.expect(['\(psh\)\% ', '(.*)(\r+)\n'])
+        idx = p.expect([r'\(psh\)\% ', r'(.*)(\r+)\n'])
         if idx == 0:
             break
 
@@ -36,14 +37,14 @@ def harness(p):
             try:
                 pid, ppid, pr, state, cpu, wait, time, vmem, thr, task = line.split()
             except ValueError:
-                print(f'psh ps: wrong ps output')
+                print('psh ps: wrong ps output')
                 return False
 
             if task in expected_tasks:
                 expected_tasks.remove(task)
 
     if not header_seen:
-        print(f'psh ps: wrong header')
+        print('psh ps: wrong header')
 
     if expected_tasks:
         print(f'psh ps: not seen expected task: {", ".join(expected_tasks)}')
