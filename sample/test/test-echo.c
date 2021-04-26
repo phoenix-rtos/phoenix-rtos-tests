@@ -8,7 +8,9 @@ int main(int argc, char** argv)
 	printf("[Start test-1 example]\n");
 
 	while (c != '\n') {
-		read(STDIN_FILENO, &c, 1);
+		if (read(STDIN_FILENO, &c, 1) != 1)
+			return -1;
+
 		putchar(c);
 	}
 
