@@ -5,6 +5,7 @@ from collections import namedtuple
 
 File = namedtuple('File', ['name', 'owner', 'is_dir'])
 
+
 def ls(p, dir=''):
     files = []
 
@@ -25,7 +26,7 @@ def ls(p, dir=''):
         try:
             permissions, _, owner, _, _, _, _, _, name = line.split()
         except ValueError:
-            print(f'psh mkdir: wrong ls output')
+            print('psh mkdir: wrong ls output')
             return []
 
         # Name is printed with ascii escaped characters - remove them
@@ -39,18 +40,20 @@ def ls(p, dir=''):
 
     return files
 
+
 def mkdir(p, dir):
     p.sendline(f'mkdir {dir}')
     p.expect_exact(f'mkdir {dir}')
     p.expect_exact('\n')
 
-    idx = p.expect(['\(psh\)\% ', 'mkdir: failed to create (.*) directory'])
+    idx = p.expect([r'\(psh\)\% ', r'mkdir: failed to create (.*) directory'])
 
     if idx == 1:
         # Failed, read one more time (psh)%
         p.expect_exact('(psh)% ')
 
     return idx != 1
+
 
 def dir_present(dir, files):
     for file in files:
@@ -68,6 +71,7 @@ def dir_present(dir, files):
         return False
 
     return True
+
 
 def assert_dir_created(p, dir):
     if not mkdir(p, dir):
@@ -87,9 +91,10 @@ def assert_dir_created(p, dir):
 
     return dir_present(dir, files)
 
+
 def random_dirs(p, pool, count=20):
     if not mkdir(p, '/random_dirs'):
-        print(f'psh mkdir: failed to create /random_dirs')
+        print('psh mkdir: failed to create /random_dirs')
         return False
 
     dirs = {''.join(random.choices(pool, k=random.randint(8, 16))) for _ in range(count)}
@@ -103,7 +108,7 @@ def random_dirs(p, pool, count=20):
         return False
 
     if len(files) > len(dirs) + 2:      # +2 because of . and ..
-        print(f'psh ls: too many dirs')
+        print('psh ls: too many dirs')
         return False
 
     for dir in dirs:
@@ -111,6 +116,7 @@ def random_dirs(p, pool, count=20):
             return False
 
     return True
+
 
 def get_first_prompt(p):
     prompt = '\r\x1b[0J' + '(psh)% '
@@ -121,6 +127,7 @@ def get_first_prompt(p):
         return False
 
     return True
+
 
 def harness(p):
     chars = list(set(string.printable) - set(string.whitespace) - set('/'))
