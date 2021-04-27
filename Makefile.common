@@ -6,3 +6,4 @@ include fs/Makefile
 include disk/Makefile
 include sample/Makefile
 include setjmp/Makefile
+include initfini/Makefile

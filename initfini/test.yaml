@@ -1,0 +1,5 @@
+test:
+    tests:
+        - name: main
+          harness: test.py
+          exec: test-initfini
