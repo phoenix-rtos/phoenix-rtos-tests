@@ -79,7 +79,9 @@ class UnitTestHarness:
                 # Make sure if parsed infos are as expected
                 fail_no = len([t for t in test_results if t.status == UnitTestResult.FAIL])
                 ignore_no = len([t for t in test_results if t.status == UnitTestResult.IGNORE])
-                if (fail_no != fail or ignore_no != ignore or len(test_results) != total):
-                    raise ValueError("Unit test harness: results do not match")
+
+                assert fail_no == fail
+                assert ignore_no == ignore
+                assert len(test_results) == total
 
                 return test_results

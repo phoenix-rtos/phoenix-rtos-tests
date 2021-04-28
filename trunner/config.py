@@ -2,9 +2,9 @@ import logging
 import os
 import pathlib
 
-
 import yaml
 
+from .tools.text import remove_prefix
 
 PHRTOS_PROJECT_DIR = pathlib.Path(os.getcwd())
 PHRTOS_TEST_DIR = PHRTOS_PROJECT_DIR / 'phoenix-rtos-tests'
@@ -17,13 +17,6 @@ ALL_TARGETS = ['ia32-generic', 'host-pc']
 
 # Default targets used by parser if 'target' value is absent
 DEFAULT_TARGETS = [target for target in ALL_TARGETS if target != 'host-pc']
-
-
-def remove_prefix(string, prefix):
-    if string.startswith(prefix):
-        return string[len(prefix):]
-
-    return string
 
 
 class YAMLParserError(Exception):

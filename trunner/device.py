@@ -32,8 +32,9 @@ class DeviceRunner:
 
         try:
             self.serial = serial.Serial(self.port, baudrate=115200)
-        except serial.SerialException as exc:
-            raise exc
+        except serial.SerialException:
+            test.handle_exception()
+            return
 
         proc = pexpect.fdpexpect.fdspawn(self.serial, encoding='utf-8', timeout=test.timeout)
 
@@ -56,14 +57,10 @@ class QemuRunner:
 
         proc = pexpect.spawn(self.qemu, args=self.args, encoding='utf-8', timeout=test.timeout)
 
-        res = False
         try:
-            res = test.handle(proc)
+            test.handle(proc)
         finally:
-            if not res:
-                proc.kill(signal.SIGKILL)
-            else:
-                proc.kill(signal.SIGTERM)
+            proc.kill(signal.SIGTERM)
 
 
 class HostRunner:
@@ -75,16 +72,16 @@ class HostRunner:
 
         test_path = PHRTOS_PROJECT_DIR / f'_boot/{test.target}/{test.exec_bin}'
 
-        proc = pexpect.spawn(str(test_path), encoding='utf-8', timeout=test.timeout)
-
-        res = False
         try:
-            res = test.handle(proc, psh=False)
+            proc = pexpect.spawn(str(test_path), encoding='utf-8', timeout=test.timeout)
+        except pexpect.exceptions.ExceptionPexpect:
+            test.handle_exception()
+            return
+
+        try:
+            test.handle(proc, psh=False)
         finally:
-            if not res:
-                proc.kill(signal.SIGKILL)
-            else:
-                proc.kill(signal.SIGTERM)
+            proc.kill(signal.SIGTERM)
 
 
 class RunnerFactory:

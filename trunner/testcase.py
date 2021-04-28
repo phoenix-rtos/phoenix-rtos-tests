@@ -1,6 +1,8 @@
 import importlib.util
 import logging
 import re
+import sys
+import traceback
 
 import pexpect
 
@@ -66,7 +68,7 @@ class TestCase:
         proc.sendline(f'/bin/{self.exec_bin}')
         proc.expect(f'/bin/{self.exec_bin}(.*)\n')
 
-    def handle_error(self, proc, exc):
+    def handle_pyexpect_error(self, proc, exc):
         self.status = TestCase.FAILED_TIMEOUT
 
         # Look for searched pattern
@@ -75,46 +77,68 @@ class TestCase:
         r_searched = r"[\d+]: (?:re.compile\()?'(.*)'\)?"
         searched_patterns = re.findall(r_searched, exc.value)
 
-        self.exception += 'Expected:\n'
+        self.exception += Color.colorify('EXPECTED:\n', Color.BOLD)
         for idx, pattern in enumerate(searched_patterns):
             self.exception += f'\t{idx}: {pattern}\n'
 
         got = proc.before.replace("\r", "")
-        self.exception += f'Got:\n{got}\n'
+        self.exception += Color.colorify('GOT:\n', Color.BOLD)
+        self.exception += f'{got}\n'
+
+    def handle_assertion(self, proc, exc):
+        self.status = TestCase.FAILED
+
+        _, _, exc_traceback = sys.exc_info()
+        # Get rid off "self.harness()" call info
+        tb_info = traceback.format_tb(exc_traceback)[1:]
+
+        self.exception += Color.colorify(
+                'ASSERTION TRACEBACK (most recent call last):\n',
+                Color.BOLD
+        )
+        self.exception += ''.join(tb_info)
+
+        if exc.args:
+            self.exception += Color.colorify('ASSERTION MESSAGE:\n', Color.BOLD)
+            self.exception += f'{exc}\n'
+
+        if proc and proc.buffer:
+            got = proc.buffer.replace("\r", "")
+            self.exception += Color.colorify('READER BUFFER:\n', Color.BOLD)
+            self.exception += f'{got}\n'
+
+    def handle_exception(self):
+        self.exception = Color.colorify('EXCEPTION:\n', Color.BOLD)
+        self.exception += traceback.format_exc()
+        self.status = TestCase.FAILED
 
     def handle(self, proc, psh=True):
         if self.skipped():
-            return True
+            return
 
-        self.status = TestCase.FAILED
-
-        if not self.harness:
-            return False
+        self.status = TestCase.PASSED
 
         if psh and self.exec_bin:
             try:
                 self.exec(proc)
             except pexpect.exceptions.TIMEOUT as exc:
-                logging.info(f"{self.target}: Executing binary {self.exec_bin} failed!\n")
-                logging.debug(f"{exc}\n")
-                self.status = TestCase.FAILED_TIMEOUT
-                return False
+                self.exception = Color.colorify('Executing {self.exec_bin} failed!\n', Color.BOLD)
+                self.handle_pyexpect_error(proc, exc)
+                return
 
-        res = False
+        res = None
         try:
             res = self.harness(proc)
         except pexpect.exceptions.TIMEOUT as exc:
-            self.exception += 'Exception TIMEOUT\n'
-            self.handle_error(proc, exc)
+            self.exception += Color.colorify('EXCEPTION TIMEOUT\n', Color.BOLD)
+            self.handle_pyexpect_error(proc, exc)
         except pexpect.exceptions.EOF as exc:
-            self.exception += 'Exception EOF\n'
-            self.handle_error(proc, exc)
-        except Exception as exc:
-            logging.warning(f"Test {self.name} exception:\n {exc}\n")
-            raise exc
-
-        if res:
-            self.status = TestCase.PASSED
+            self.exception += Color.colorify('EXCEPTION EOF\n', Color.BOLD)
+            self.handle_pyexpect_error(proc, exc)
+        except AssertionError as exc:
+            self.handle_assertion(proc, exc)
+        except Exception:
+            self.handle_exception()
 
         return res
 
