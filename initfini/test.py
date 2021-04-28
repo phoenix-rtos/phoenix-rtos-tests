@@ -1,17 +1,12 @@
 def harness(p):
-    if 'Constructor 0' not in p.readline():
-        return False
+    scenario = [
+        'Constructor 0',
+        'Constructor 1',
+        'Main function',
+        'Destructor 1',
+        'Destructor 0'
+    ]
 
-    if 'Constructor 1' not in p.readline():
-        return False
-
-    if 'Main function' not in p.readline():
-        return False
-
-    if 'Destructor 1' not in p.readline():
-        return False
-
-    if 'Destructor 0' not in p.readline():
-        return False
-
-    return True
+    for expect in scenario:
+        line = p.readline().rstrip()
+        assert expect == line, f'Expected: {expect}, got: {line}'
