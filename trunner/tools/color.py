@@ -4,6 +4,7 @@ class Color:
     FAIL = '\033[91m'
     OK = '\033[92m'
     SKIP = '\033[93m'
+    BOLD = '\033[1m'
     END = '\033[0m'
 
     @staticmethod
