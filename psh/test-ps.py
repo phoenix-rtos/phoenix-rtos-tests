@@ -16,16 +16,14 @@ def harness(p):
     prompt = '\r\x1b[0J' + '(psh)% '
 
     got = p.read(len(prompt))
-    if got != prompt:
-        print(f'Expected:\n\t{prompt}\nGot:\n\t{got}')
-        return False
+    assert got == prompt, f'Expected:\n{prompt}\nGot:\n{got}'
 
     p.sendline('ps')
     p.expect(r'ps(\r+)\n')
 
     while True:
         # Get prompt or new line
-        idx = p.expect([r'\(psh\)\% ', r'(.*)(\r+)\n'])
+        idx = p.expect([r'\(psh\)\% ', r'(.*?)(\r+)\n'])
         if idx == 0:
             break
 
@@ -37,17 +35,10 @@ def harness(p):
             try:
                 pid, ppid, pr, state, cpu, wait, time, vmem, thr, task = line.split()
             except ValueError:
-                print('psh ps: wrong ps output')
-                return False
+                assert False, f'wrong ps output: {line}'
 
             if task in expected_tasks:
                 expected_tasks.remove(task)
 
-    if not header_seen:
-        print('psh ps: wrong header')
-
-    if expected_tasks:
-        print(f'psh ps: not seen expected task: {", ".join(expected_tasks)}')
-        return False
-
-    return True
+    assert header_seen, 'ps header not seen'
+    assert not expected_tasks, f'not seen expected task: {", ".join(expected_tasks)}'

@@ -6,7 +6,5 @@ def harness(p):
         val = int(p.match.group(0))
         unique_numbers.append(val)
 
-    if len(unique_numbers) != len(set(unique_numbers)):
-        return False
-
-    return True
+    assert len(unique_numbers) == len(set(unique_numbers)), \
+           f'expected unique sequence! Got: {unique_numbers}'

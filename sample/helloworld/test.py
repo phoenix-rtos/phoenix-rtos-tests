@@ -1,5 +1,2 @@
 def harness(p):
-    if 'Hello world!' not in p.readline():
-        return False
-
-    return True
+    assert 'Hello world!' in p.readline()
