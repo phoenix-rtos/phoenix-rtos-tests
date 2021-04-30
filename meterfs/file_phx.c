@@ -127,11 +127,15 @@ int file_allocate(const char *name, size_t sectors, size_t filesz, size_t record
 	msg_t msg;
 	meterfs_i_devctl_t *iptr = (meterfs_i_devctl_t *)msg.i.raw;
 	meterfs_o_devctl_t *optr = (meterfs_o_devctl_t *)msg.o.raw;
+	int len = 0;
 
 	file_prepareDevCtl(&msg);
 
 	iptr->type = meterfs_allocate;
-	strncpy(iptr->allocate.name, name, sizeof(iptr->allocate.name));
+	len = strnlen(name, sizeof(iptr.allocate.name));
+	memcpy(iptr.allocate.name, name, len);
+	if (len < sizeof(iptr.allocate.name))
+		iptr.allocate.name[len] = '\0';
 	iptr->allocate.sectors = sectors;
 	iptr->allocate.filesz = filesz;
 	iptr->allocate.recordsz = recordsz;
