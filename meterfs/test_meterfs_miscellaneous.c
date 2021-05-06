@@ -82,9 +82,24 @@ TEST(meterfs_miscellaneous, resize_getinfo)
 }
 
 
+/* Test case of resizing file to size bigger than allowed by sectors num. */
+TEST(meterfs_miscellaneous, resize_bigger)
+{
+	file_info_t pattern = { 2, 2000, 20, 0 };
+
+	common.fd = common_preallocOpenFile("file0", pattern.sectors, pattern.filesz, pattern.recordsz);
+	pattern.filesz = 8000;
+	pattern.recordsz = 40;
+	TEST_ASSERT_EQUAL(-EINVAL, file_resize(common.fd, pattern.filesz, pattern.recordsz));
+
+	TEST_ASSERT_EQUAL(0, file_close(common.fd));
+}
+
+
 TEST_GROUP_RUNNER(meterfs_miscellaneous)
 {
 	RUN_TEST_CASE(meterfs_miscellaneous, resize_getinfo);
+	RUN_TEST_CASE(meterfs_miscellaneous, resize_bigger);
 }
 
 
