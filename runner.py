@@ -64,6 +64,11 @@ def parse_args():
                         choices=logging_level,
                         help="Specify verbosity level. By default uses level info.")
 
+    parser.add_argument("-s", "--serial",
+                        default=config.DEVICE_SERIAL,
+                        help="Specify serial to communicate with device board. "
+                             "By default uses %(default)s.")
+
     args = parser.parse_args()
 
     args.log_level = logging_level[args.log_level]
@@ -74,6 +79,8 @@ def parse_args():
     if not args.target:
         # Run on all available targets
         args.target = config.ALL_TARGETS
+
+    config.DEVICE_SERIAL = args.serial
 
     return args
 

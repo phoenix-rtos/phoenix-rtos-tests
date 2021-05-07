@@ -50,6 +50,9 @@ class TestsRunner:
             for target in self.targets:
                 TargetBuilder(target).build()
 
+        for runner in self.runners.values():
+            runner.flash()
+
         for target, tests in self.tests_per_target.items():
             for test_case in tests:
                 test_case.log_test_started()

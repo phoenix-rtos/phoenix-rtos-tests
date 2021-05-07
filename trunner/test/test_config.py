@@ -66,7 +66,7 @@ class TestTarget:
         ),
         (
             {'include': ['host-pc']},
-            ALL_TARGETS
+            DEFAULT_TARGETS + ['host-pc'],
         ),
         (
             {'exclude': ['ia32-generic']},

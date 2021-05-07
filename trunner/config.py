@@ -13,10 +13,16 @@ PHRTOS_TEST_DIR = PHRTOS_PROJECT_DIR / 'phoenix-rtos-tests'
 PYEXPECT_TIMEOUT = 8
 
 # Available targets for test runner.
-ALL_TARGETS = ['ia32-generic', 'host-pc']
+ALL_TARGETS = ['ia32-generic', 'host-pc', 'armv7m7-imxrt106x']
 
 # Default targets used by parser if 'target' value is absent
-DEFAULT_TARGETS = [target for target in ALL_TARGETS if target != 'host-pc']
+DEFAULT_TARGETS = [target for target in ALL_TARGETS
+                   if target not in ('host-pc', 'armv7m7-imxrt106x')]
+
+DEVICE_TARGETS = ['armv7m7-imxrt106x']
+
+# Port to communicate with hardware board
+DEVICE_SERIAL = "/dev/ttyACM0"
 
 
 class YAMLParserError(Exception):
