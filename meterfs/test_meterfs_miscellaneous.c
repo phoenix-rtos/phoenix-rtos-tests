@@ -96,10 +96,31 @@ TEST(meterfs_miscellaneous, resize_bigger)
 }
 
 
+/* Test case of using lookup multiple times in a row. */
+TEST(meterfs_miscellaneous, multi_lookup)
+{
+	file_info_t info = { 2, 2000, 20, 0 };
+	char name[] = "file0";
+	int i;
+
+	TEST_ASSERT_EQUAL(0, file_allocate(name, info.sectors, info.filesz, info.recordsz));
+
+	for (i = 0; i < 5; ++i)
+		TEST_ASSERT_GREATER_OR_EQUAL(0, file_lookup(name));
+
+	snprintf(common.buffMsg, sizeof(common.buffMsg), "/%s", name);
+	common.fd = file_open(common.buffMsg);
+	TEST_ASSERT_GREATER_OR_EQUAL(0, common.fd);
+
+	TEST_ASSERT_EQUAL(0, file_close(common.fd));
+}
+
+
 TEST_GROUP_RUNNER(meterfs_miscellaneous)
 {
 	RUN_TEST_CASE(meterfs_miscellaneous, resize_getinfo);
 	RUN_TEST_CASE(meterfs_miscellaneous, resize_bigger);
+	RUN_TEST_CASE(meterfs_miscellaneous, multi_lookup);
 }
 
 
