@@ -1,4 +1,5 @@
-$(PREFIX_PROG)test-setjmp: $(PREFIX_O)setjmp/setjmp.o $(PREFIX_A)unity.a
-	$(LINK)
+NAME := test-setjmp
+LOCAL_SRCS := setjmp.c
+DEP_LIBS := unity
 
-INSTALL_PROGS += test-setjmp
+include $(binary.mk)

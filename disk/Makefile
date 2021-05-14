@@ -5,8 +5,4 @@
 #
 # %LICENSE%
 #
-
-$(PREFIX_PROG)test_disk: $(PREFIX_O)disk/test_disk.o
-	$(LINK)
-
-all: $(addprefix $(PREFIX_PROG_STRIPPED), test_disk)
+$(eval $(call add_test, test_disk))

@@ -1,4 +1,5 @@
-$(PREFIX_PROG)test-helloworld: $(PREFIX_O)sample/helloworld/main.o
-	$(LINK)
+NAME := test-helloworld
+LOCAL_SRCS := main.c
+include $(binary.mk)
 
-INSTALL_PROGS += test-helloworld
+SAMPLE_TESTS += test-helloworld

@@ -1,13 +1,8 @@
-HARNESS_PROGS := test-fail-output-1 test-fail-output-2 test-fail-exception
+$(eval $(call add_test, test-fail-output-1))
+$(eval $(call add_test, test-fail-output-2))
+$(eval $(call add_test, test-fail-exception))
 
-UNITY_PROGS := test-fail-unity test-fail-unity-exc
+$(eval $(call add_unity_test, test-fail-unity))
+$(eval $(call add_unity_test, test-fail-unity-exc))
 
-CURR_DIR := sample/test/fails/
-
-INSTALL_PROGS += $(HARNESS_PROGS) $(UNITY_PROGS)
-
-$(addprefix $(PREFIX_PROG), $(HARNESS_PROGS)): $(PREFIX_PROG)%: $(PREFIX_O)$(CURR_DIR)%.o
-	$(LINK)
-
-$(addprefix $(PREFIX_PROG), $(UNITY_PROGS)): $(PREFIX_PROG)%: $(PREFIX_O)$(CURR_DIR)%.o $(PREFIX_A)unity.a
-	$(LINK)
+SAMPLE_TESTS += test-fail-output-1 test-fail-output-2 test-fail-exception test-fail-unity test-fail-unity-exc

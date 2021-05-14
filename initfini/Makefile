@@ -1,4 +1,4 @@
-$(PREFIX_PROG)test-initfini: $(PREFIX_O)initfini/main.o
-	$(LINK)
+NAME := test-initfini
+LOCAL_SRCS := main.c
 
-INSTALL_PROGS += test-initfini
+include $(binary.mk)
