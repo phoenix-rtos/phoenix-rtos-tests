@@ -1,43 +1,37 @@
 #
-# Makefile for phoenix-rtos-devices
+# Makefile for phoenix-rtos-tests
 #
 # Copyright 2018, 2019 Phoenix Systems
 #
 # %LICENSE%
 #
 
-SIL ?= @
-MAKEFLAGS += --no-print-directory
-
-TARGET ?= ia32-generic
-
 include ../phoenix-rtos-build/Makefile.common
+# FIXME: this include should be done by Makefile.common
 include ../phoenix-rtos-build/Makefile.$(TARGET_SUFF)
 
-INSTALL_PROGS :=
+.DEFAULT_GOAL := all
 
-.PHONY: clean
-clean:
-	@echo "rm -rf $(BUILD_DIR)"
+# shortcut for unity dependence
+define add_unity_test
+$(call add_test,$(1),$(2),unity)
+endef
 
-ifneq ($(filter clean,$(MAKECMDGOALS)),)
-	$(shell rm -rf $(BUILD_DIR))
-endif
+# default path for the programs to be installed in rootfs
+DEFAULT_INSTALL_PATH := /bin
 
-T1 := $(filter-out clean all install,$(MAKECMDGOALS))
-ifneq ($(T1),)
-	include $(T1)/Makefile
-.PHONY: $(T1)
-$(T1): all
-else
-	include Makefile.$(TARGET_SUFF)
-endif
+# read out all components
+ALL_MAKES := $(shell find -mindepth 2 -name Makefile)
+include $(ALL_MAKES)
 
-PREFIX_INSTALL = $(PREFIX_ROOTFS)bin/
+# by default compile all tests, but allow custom values on per-TARGET_FAMILY basys
+# TODO: prepare tool which will read YAML files and return the components which should be compiled for a given platform
+# for now getting all components and removing tests working only on certain targets
+DEFAULT_COMPONENTS := $(filter-out test_meterfs_% test_virtio, $(ALL_COMPONENTS))
+-include Makefile.$(TARGET_FAMILY)
 
-$(addprefix $(PREFIX_INSTALL), $(INSTALL_PROGS)): $(PREFIX_INSTALL)% : $(PREFIX_PROG_STRIPPED)%
-	$(INSTALL_FS)
-
-all: $(addprefix $(PREFIX_PROG), $(INSTALL_PROGS))
-
-install: $(addprefix $(PREFIX_INSTALL), $(INSTALL_PROGS))
+# create generic targets
+.PHONY: all install clean
+all: $(DEFAULT_COMPONENTS)
+install: $(patsubst %,%-install,$(DEFAULT_COMPONENTS))
+clean: $(patsubst %,%-clean,$(ALL_COMPONENTS))

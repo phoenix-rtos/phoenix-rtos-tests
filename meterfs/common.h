@@ -18,7 +18,7 @@
 #include <errno.h>
 
 #include "file.h"
-#include "unity_fixture.h"
+#include <unity_fixture.h>
 
 typedef struct file_info_t {
 	size_t sectors;

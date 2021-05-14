@@ -1,3 +1,2 @@
-include unity/Makefile
-include sample/Makefile
-include meterfs/Makefile
+DEFAULT_COMPONENTS = $(filter test_meterfs_%,$(ALL_COMPONENTS))
+DEFAULT_COMPONENTS += $(SAMPLE_TESTS)

@@ -6,20 +6,26 @@
 # %LICENSE%
 #
 
-LIBS := unity
-OBJS_COMMON := common
 
+NAME := test_meterfs_common
+LOCAL_SRCS := common.c
+DEPS := unity
+
+TEST_LIBS :=
 ifeq ("$(TARGET)","host-pc")
-LIBS += host-flash libmeterfs libphoenix
-OBJS_COMMON += file_pc
+  TEST_LIBS += host-flash libmeterfs libphoenix
+  LOCAL_SRCS += file_pc.c
 else
-OBJS_COMMON += file_phx
+  LOCAL_SRCS += file_phx.c
 endif
 
-OBJS_COMMON := $(patsubst %, $(PREFIX_O)meterfs/%.o, $(OBJS_COMMON))
-LIBS := $(patsubst %, $(PREFIX_A)%.a, $(LIBS))
+include $(static-lib.mk)
 
-$(PREFIX_PROG)%: $(PREFIX_O)meterfs/%.o $(OBJS_COMMON) $(LIBS)
-	$(LINK)
+define add_meterfs_test
+$(call add_test,$(1),$$(TEST_LIBS),unity test_meterfs_common)
+endef
 
-INSTALL_PROGS += test_meterfs_allocate test_meterfs_openclose test_meterfs_writeread test_meterfs_miscellaneous
+$(eval $(call add_meterfs_test, test_meterfs_allocate))
+$(eval $(call add_meterfs_test, test_meterfs_openclose))
+$(eval $(call add_meterfs_test, test_meterfs_writeread))
+$(eval $(call add_meterfs_test, test_meterfs_miscellaneous))
