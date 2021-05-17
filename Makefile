@@ -7,8 +7,6 @@
 #
 
 include ../phoenix-rtos-build/Makefile.common
-# FIXME: this include should be done by Makefile.common
-include ../phoenix-rtos-build/Makefile.$(TARGET_SUFF)
 
 .DEFAULT_GOAL := all
 
