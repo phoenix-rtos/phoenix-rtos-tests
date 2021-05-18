@@ -19,7 +19,7 @@ endef
 DEFAULT_INSTALL_PATH := /bin
 
 # read out all components
-ALL_MAKES := $(shell find -mindepth 2 -name Makefile)
+ALL_MAKES := $(shell find . -mindepth 2 -name Makefile)
 include $(ALL_MAKES)
 
 # by default compile all tests, but allow custom values on per-TARGET_FAMILY basys
