@@ -18,7 +18,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <libgraph.h>
+#include <graph.h>
 
 #include "cursor.h"
 #include "font.h"
@@ -184,7 +184,7 @@ int test_logo(graph_t *graph, int step)
 			break;
 
 		default:
-			printf("test_libgraph: logo test not supported for selected graphics mode. Skipping...\n");
+			printf("test_graph: logo test not supported for selected graphics mode. Skipping...\n");
 			return EOK;
 	}
 
@@ -251,7 +251,7 @@ int test_cursor(graph_t *graph)
 	if ((err = graph_cursorset(graph, amask[0], xmask[0], 0xff000000, 0xffffffff)) < 0) {
 		if (err != -ENOTSUP)
 			return err;
-		printf("test_libgraph: hardware cursor not supported. Skipping...\n");
+		printf("test_graph: hardware cursor not supported. Skipping...\n");
 		return EOK;
 	}
 
@@ -328,55 +328,55 @@ int main(int argc, char *argv[])
 	}
 
 	if ((ret = graph_init()) < 0) {
-		fprintf(stderr, "test_libgraph: failed to initialize library\n");
+		fprintf(stderr, "test_graph: failed to initialize library\n");
 		return ret;
 	}
 
 	if ((ret = graph_open(&graph, adapter, 0x2000)) < 0) {
-		fprintf(stderr, "test_libgraph: failed to initialize graphics adapter\n");
+		fprintf(stderr, "test_graph: failed to initialize graphics adapter\n");
 		graph_done();
 		return ret;
 	}
 
 	do {
 		if ((ret = graph_mode(&graph, mode, freq)) < 0) {
-			fprintf(stderr, "test_libgraph: failed to set graphics mode\n");
+			fprintf(stderr, "test_graph: failed to set graphics mode\n");
 			break;
 		}
-		printf("test_libgraph: starting test in %ux%ux%u graphics mode\n", graph.width, graph.height, graph.depth << 3);
+		printf("test_graph: starting test in %ux%ux%u graphics mode\n", graph.width, graph.height, graph.depth << 3);
 
 		if ((ret = graph_rect(&graph, 0, 0, graph.width, graph.height, 0, GRAPH_QUEUE_HIGH)) < 0) {
-			fprintf(stderr, "test_libgraph: failed to clear screen\n");
+			fprintf(stderr, "test_graph: failed to clear screen\n");
 			break;
 		}
 
-		printf("test_libgraph: starting lines1 test...\n");
+		printf("test_graph: starting lines1 test...\n");
 		if ((ret = test_lines1(&graph, 64, 64, 2)) < 0) {
-			fprintf(stderr, "test_libgraph: lines1 test failed\n");
+			fprintf(stderr, "test_graph: lines1 test failed\n");
 			break;
 		}
 
-		printf("test_libgraph: starting lines2 test...\n");
+		printf("test_graph: starting lines2 test...\n");
 		if ((ret = test_lines2(&graph, 64, 64, 2)) < 0) {
-			fprintf(stderr, "test_libgraph: lines2 test failed\n");
+			fprintf(stderr, "test_graph: lines2 test failed\n");
 			break;
 		}
 
-		printf("test_libgraph: starting rectangles test...\n");
+		printf("test_graph: starting rectangles test...\n");
 		if ((ret = test_rectangles(&graph, 32, 32, 2)) < 0) {
-			fprintf(stderr, "test_libgraph: rectangles test failed\n");
+			fprintf(stderr, "test_graph: rectangles test failed\n");
 			break;
 		}
 
-		printf("test_libgraph: starting logo test...\n");
+		printf("test_graph: starting logo test...\n");
 		if ((ret = test_logo(&graph, 2)) < 0) {
-			fprintf(stderr, "test_libgraph: logo test failed\n");
+			fprintf(stderr, "test_graph: logo test failed\n");
 			break;
 		}
 
-		printf("test_libgraph: starting cursor test...\n");
+		printf("test_graph: starting cursor test...\n");
 		if ((ret = test_cursor(&graph)) < 0) {
-			fprintf(stderr, "test_libgraph: cursor test failed\n");
+			fprintf(stderr, "test_graph: cursor test failed\n");
 			break;
 		}
 	} while (0);
@@ -386,7 +386,7 @@ int main(int argc, char *argv[])
 	graph_done();
 
 	if (!ret)
-		printf("test_libgraph: test finished successfully\n");
+		printf("test_graph: test finished successfully\n");
 
 	return ret;
 }

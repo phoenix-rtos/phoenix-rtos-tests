@@ -15,7 +15,7 @@
 #ifndef _FONT_H_
 #define _FONT_H_
 
-#include <libgraph.h>
+#include <graph.h>
 
 
 /* VGAROM 16x32 font */
