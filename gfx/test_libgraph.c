@@ -303,7 +303,7 @@ int main(int argc, char *argv[])
 	graph_t graph;
 	int ret, c;
 
-	while ((c = getopt_long(argc, argv, "m:f:", longopts, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "m:f:h", longopts, NULL)) != -1) {
 		switch (c) {
 			case 0:
 				/* Graphics adapter */
@@ -344,6 +344,11 @@ int main(int argc, char *argv[])
 			break;
 		}
 		printf("test_libgraph: starting test in %ux%ux%u graphics mode\n", graph.width, graph.height, graph.depth << 3);
+
+		if ((ret = graph_rect(&graph, 0, 0, graph.width, graph.height, 0, GRAPH_QUEUE_HIGH)) < 0) {
+			fprintf(stderr, "test_libgraph: failed to clear screen\n");
+			break;
+		}
 
 		printf("test_libgraph: starting lines1 test...\n");
 		if ((ret = test_lines1(&graph, 64, 64, 2)) < 0) {
