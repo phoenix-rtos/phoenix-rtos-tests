@@ -14,7 +14,7 @@
 #include <errno.h>
 #include <stdio.h>
 
-#include <libvirtio.h>
+#include <virtio.h>
 
 
 /* VirtIO device descriptors */
@@ -133,7 +133,8 @@ static const char *name[] = {
 };
 
 
-static const char *test_virtio_name(virtio_dev_t *vdev, char *buff) {
+static const char *test_virtio_name(virtio_dev_t *vdev, char *buff)
+{
 	unsigned int id = vdev->info.id;
 
 	/* Convert legacy VirtIO PCI device ID */

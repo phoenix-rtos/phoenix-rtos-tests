@@ -6,4 +6,4 @@
 # %LICENSE%
 #
 
-$(eval $(call add_test, test_libgraph, libgraph libvga libvirtio))
+$(eval $(call add_test, test_graph, libgraph libvga libvirtio))
