@@ -17,6 +17,8 @@ static struct {
 	char buffRec[21];
 	char buffMsg[13];
 	char pattern[6];
+	char buffBigTX[1064];
+	char buffBigRX[1064];
 } common;
 
 static void cleanBuffs(void)
@@ -24,6 +26,24 @@ static void cleanBuffs(void)
 	memset(common.pattern, 0, sizeof(common.pattern));
 	memset(common.buffMsg, 0, sizeof(common.buffMsg));
 	memset(common.buffRec, 0, sizeof(common.buffRec));
+}
+
+
+static void turnCheck(int fd, file_info_t *info, char *bufftx, char *buffrx, unsigned int iterNum)
+{
+	int i;
+
+	if (iterNum >= 10000 || info->recordsz < 5)
+		return;
+
+	for (i = 0; i < iterNum; ++i) {
+		snprintf(bufftx, info->recordsz, "%04d", i);
+		TEST_ASSERT_EQUAL(info->recordsz, file_write(fd, bufftx, info->recordsz));
+
+		TEST_ASSERT_EQUAL(info->recordsz, file_read(fd, 0, buffrx, info->recordsz));
+
+		TEST_ASSERT_EQUAL_HEX8_ARRAY(bufftx, buffrx, info->recordsz);
+	}
 }
 
 
@@ -189,6 +209,32 @@ TEST(meterfs_writeread, many_records)
 }
 
 
+/* Test case of fulfilling all sectors and turning big file to the beginning. */
+TEST(meterfs_writeread, file_turn_big)
+{
+	file_info_t info = { 281, 1064, 1064, 0 };
+
+	common.fd = common_preallocOpenFile("file0", info.sectors, info.filesz, info.recordsz);
+
+	turnCheck(common.fd, &info, common.buffBigTX, common.buffBigRX, 1440);
+
+	TEST_ASSERT_EQUAL(0, file_close(common.fd));
+}
+
+
+/* Test case of fulfilling all sectors and turning small file to the beginning. */
+TEST(meterfs_writeread, file_turn_small)
+{
+	file_info_t info = { 2, 400, 400 };
+
+	common.fd = common_preallocOpenFile("file0", info.sectors, info.filesz, info.recordsz);
+
+	turnCheck(common.fd, &info, common.buffBigTX, common.buffBigRX, 1440);
+
+	TEST_ASSERT_EQUAL(0, file_close(common.fd));
+}
+
+
 TEST_GROUP_RUNNER(meterfs_writeread)
 {
 	RUN_TEST_CASE(meterfs_writeread, small_records);
@@ -196,6 +242,8 @@ TEST_GROUP_RUNNER(meterfs_writeread)
 	RUN_TEST_CASE(meterfs_writeread, big_records);
 	RUN_TEST_CASE(meterfs_writeread, file_end);
 	RUN_TEST_CASE(meterfs_writeread, many_records);
+	RUN_TEST_CASE(meterfs_writeread, file_turn_big);
+	RUN_TEST_CASE(meterfs_writeread, file_turn_small);
 }
 
 
