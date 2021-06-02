@@ -9,16 +9,14 @@ from .testcase import TestCaseFactory
 class TestsRunner:
     """Class responsible for loading, building and running tests"""
 
-    def __init__(self, targets, test_paths, build=True):
+    def __init__(self, targets, test_paths, build=True, flash=True):
         self.targets = targets
         self.test_configs = []
         self.test_paths = test_paths
         self.tests_per_target = {k: [] for k in targets}
         self.build = build
+        self.flash = flash
         self.runners = {target: RunnerFactory.create(target) for target in self.targets}
-        self.passed = 0
-        self.failed = 0
-        self.skipped = 0
 
     def search_for_tests(self):
         paths = []
@@ -50,8 +48,9 @@ class TestsRunner:
             for target in self.targets:
                 TargetBuilder(target).build()
 
-        for runner in self.runners.values():
-            runner.flash()
+        if self.flash:
+            for runner in self.runners.values():
+                runner.flash()
 
         for target, tests in self.tests_per_target.items():
             for test_case in tests:
@@ -59,11 +58,12 @@ class TestsRunner:
                 self.runners[target].run(test_case)
                 test_case.log_test_status()
 
+        passed, failed, skipped = 0, 0, 0
         for target, tests in self.tests_per_target.items():
             # Convert bools to int
             for test in tests:
-                self.passed += int(test.passed())
-                self.failed += int(test.failed())
-                self.skipped += int(test.skipped())
+                passed += int(test.passed())
+                failed += int(test.failed())
+                skipped += int(test.skipped())
 
-        return self.passed, self.failed, self.skipped
+        return passed, failed, skipped

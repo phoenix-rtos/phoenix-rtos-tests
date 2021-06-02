@@ -39,6 +39,9 @@ class TestCase:
         self.harness = None
         self.exception = ''
 
+    def fail(self):
+        self.status = TestCase.FAILED
+
     def skipped(self):
         return self.status == TestCase.SKIPPED
 
@@ -92,14 +95,15 @@ class TestCase:
         # Look for searched pattern
         # pexpect searcher object is cleared when timeout exception is raised
         # parse patterns directly from the exception message
-        r_searched = r"[\d+]: (?:re.compile\()?'(.*)'\)?"
+        r_searched = r"[\d+]: (?:re.compile\()?b?'(.*)'\)?"
         searched_patterns = re.findall(r_searched, exc.value)
 
         self.exception += Color.colorify('EXPECTED:\n', Color.BOLD)
         for idx, pattern in enumerate(searched_patterns):
             self.exception += f'\t{idx}: {pattern}\n'
 
-        got = proc.before.replace("\r", "")
+        got = str(proc.before)
+        got = got.replace("\r", "")
         self.exception += Color.colorify('GOT:\n', Color.BOLD)
         self.exception += f'{got}\n'
 
@@ -140,7 +144,7 @@ class TestCase:
             try:
                 self.exec_test(proc)
             except pexpect.exceptions.TIMEOUT as exc:
-                self.exception = Color.colorify('Executing {self.exec_bin} failed!\n', Color.BOLD)
+                self.exception = Color.colorify(f'Executing {self.exec_bin} failed!\n', Color.BOLD)
                 self.handle_pyexpect_error(proc, exc)
                 return
 
