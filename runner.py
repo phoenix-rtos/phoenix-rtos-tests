@@ -69,6 +69,10 @@ def parse_args():
                         help="Specify serial to communicate with device board. "
                              "By default uses %(default)s.")
 
+    parser.add_argument("--no-flash",
+                        default=False, action='store_true',
+                        help="Board will not be flashed by runner.")
+
     args = parser.parse_args()
 
     args.log_level = logging_level[args.log_level]
@@ -91,7 +95,8 @@ def main():
 
     runner = TestsRunner(targets=args.target,
                          test_paths=args.test,
-                         build=args.build)
+                         build=args.build,
+                         flash=not args.no_flash)
 
     passed, failed, skipped = runner.run()
 

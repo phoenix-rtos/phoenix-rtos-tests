@@ -4,11 +4,11 @@ test:
           exec: test-echo
           harness: test-echo.py
           targets:
-              include: [host-pc]
+              include: [host-pc, armv7m7-imxrt106x]
 
         - name: unity
           exec: test-unity
           type: unit
           targets:
-              include: [host-pc]
+              include: [host-pc, armv7m7-imxrt106x]
 
