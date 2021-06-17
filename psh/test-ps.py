@@ -1,3 +1,5 @@
+from psh.tools import run_psh, assert_only_prompt
+
 """
 (psh)% ps
   PID  PPID PR STATE  %CPU  WAIT    TIME   VMEM THR CMD
@@ -10,13 +12,12 @@
 
 
 def harness(p):
+    run_psh(p)
+    assert_only_prompt(p)
+
     header_seen = False
     expected_tasks = ['[idle]', 'init', 'psh']
     ps_header = 'PID PPID PR STATE %CPU WAIT TIME VMEM THR CMD'.split()
-    prompt = '\r\x1b[0J' + '(psh)% '
-
-    got = p.read(len(prompt))
-    assert got == prompt, f'Expected:\n{prompt}\nGot:\n{got}'
 
     p.sendline('ps')
     p.expect(r'ps(\r+)\n')
