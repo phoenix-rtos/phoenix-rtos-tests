@@ -4,7 +4,7 @@ import re
 import sys
 import traceback
 
-import pexpect
+from pexpect.exceptions import TIMEOUT, EOF
 
 from .harness import UnitTestHarness, UnitTestResult
 from .tools.color import Color
@@ -74,20 +74,34 @@ class TestCase:
             logging.info(exc_msg)
 
     def exec(self, proc):
-        proc.expect_exact('(psh)% ')
         proc.sendline(f'/bin/{self.exec_bin}')
         proc.expect(f'/bin/{self.exec_bin}(.*)\n')
 
     def sysexec(self, proc):
-        proc.expect_exact('(psh)% ')
         proc.sendline(f'sysexec ocram2 {self.exec_bin}')
         proc.expect(f'sysexec ocram2 {self.exec_bin}(.*)\n')
 
     def exec_test(self, proc):
-        if self.use_sysexec:
-            self.sysexec(proc)
-        else:
-            self.exec(proc)
+        try:
+            # Wait for a psh prompt
+            proc.expect_exact('(psh)% ')
+        except (TIMEOUT, EOF) as exc:
+            msg = 'Waiting for psh prompt failed!\n'
+            self.exception = Color.colorify(msg, Color.BOLD)
+            self.handle_pyexpect_error(proc, exc)
+            return
+
+        if self.exec_bin:
+            try:
+                if self.use_sysexec:
+                    self.sysexec(proc)
+                else:
+                    self.exec(proc)
+            except (TIMEOUT, EOF) as exc:
+                msg = f'Executing {self.exec_bin} failed!\n'
+                self.exception = Color.colorify(msg, Color.BOLD)
+                self.handle_pyexpect_error(proc, exc)
+                return
 
     def handle_pyexpect_error(self, proc, exc):
         self.status = TestCase.FAILED_TIMEOUT
@@ -140,22 +154,17 @@ class TestCase:
 
         self.status = TestCase.PASSED
 
-        if psh and self.exec_bin:
-            try:
-                self.exec_test(proc)
-            except pexpect.exceptions.TIMEOUT as exc:
-                self.exception = Color.colorify(f'Executing {self.exec_bin} failed!\n', Color.BOLD)
-                self.handle_pyexpect_error(proc, exc)
+        if psh:
+            self.exec_test(proc)
+            if self.failed():
                 return
 
         res = None
         try:
             res = self.harness(proc)
-        except pexpect.exceptions.TIMEOUT as exc:
-            self.exception += Color.colorify('EXCEPTION TIMEOUT\n', Color.BOLD)
-            self.handle_pyexpect_error(proc, exc)
-        except pexpect.exceptions.EOF as exc:
-            self.exception += Color.colorify('EXCEPTION EOF\n', Color.BOLD)
+        except (TIMEOUT, EOF) as exc:
+            msg = 'EXCEPTION ' + ('EOF' if isinstance(exc, EOF) else 'TIMEOUT') + '\n'
+            self.exception += Color.colorify(msg, Color.BOLD)
             self.handle_pyexpect_error(proc, exc)
         except AssertionError as exc:
             self.handle_assertion(proc, exc)
@@ -244,7 +253,7 @@ class TestCaseFactory:
                 name=test['name'],
                 target=test['target'],
                 timeout=test['timeout'],
-                exec_bin=test['exec'],
+                exec_bin=test.get('exec'),
                 use_sysexec=use_sysexec,
                 status=status
             )
@@ -254,7 +263,7 @@ class TestCaseFactory:
                 target=test['target'],
                 timeout=test['timeout'],
                 harness_path=test['harness'],
-                exec_bin=test['exec'],
+                exec_bin=test.get('exec'),
                 use_sysexec=use_sysexec,
                 status=status
             )
