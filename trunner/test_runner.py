@@ -1,7 +1,7 @@
 import logging
 
 from .builder import TargetBuilder
-from .config import YAMLParser
+from .config import TestCaseConfig, ParserArgs
 from .device import RunnerFactory
 from .testcase import TestCaseFactory
 
@@ -16,7 +16,7 @@ class TestsRunner:
         self.tests_per_target = {k: [] for k in targets}
         self.build = build
         self.flash = flash
-        self.runners = {target: RunnerFactory.create(target) for target in self.targets}
+        self.runners = None
 
     def search_for_tests(self):
         paths = []
@@ -31,12 +31,13 @@ class TestsRunner:
     def parse_tests(self):
         self.test_configs = []
         for path in self.test_paths:
-            parser = YAMLParser(path, self.targets)
-            testcase_config = parser.parse_test_config()
-            self.test_configs.extend(testcase_config)
+            args = ParserArgs(yaml_path=path, targets=self.targets)
+            config = TestCaseConfig.from_yaml(args)
+            self.test_configs.extend(config.tests)
             logging.debug(f"File {path} parsed successfuly\n")
 
     def run(self):
+        self.runners = {target: RunnerFactory.create(target) for target in self.targets}
         self.search_for_tests()
         self.parse_tests()
 
