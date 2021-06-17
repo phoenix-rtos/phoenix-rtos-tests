@@ -3,6 +3,8 @@ import string
 
 from collections import namedtuple
 
+from psh.tools import run_psh, assert_only_prompt
+
 File = namedtuple('File', ['name', 'owner', 'is_dir'])
 
 
@@ -102,7 +104,8 @@ def assert_first_prompt(p):
 def harness(p):
     chars = list(set(string.printable) - set(string.whitespace) - set('/'))
 
-    assert_first_prompt(p)
+    run_psh(p)
+    assert_only_prompt(p)
 
     assert_dir_created(p, 'example_dir')
     files = ls(p)
