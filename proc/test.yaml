@@ -1,0 +1,7 @@
+test:
+    tests:
+        - name: test_thread_rand
+          exec: test_thread_rand
+          type: unit
+          targets:
+              include: [armv7m7-imxrt106x]
