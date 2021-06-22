@@ -1,6 +1,7 @@
 import importlib.util
 import logging
 import re
+import shlex
 import sys
 import traceback
 
@@ -24,14 +25,14 @@ class TestCase:
         name,
         target,
         timeout,
-        exec_bin=None,
+        exec_cmd=None,
         use_sysexec=False,
         status=None
     ):
         self.name = name
         self.target = target
         self.timeout = timeout
-        self.exec_bin = exec_bin
+        self.exec_cmd = exec_cmd
         self.use_sysexec = use_sysexec
         if not status:
             status = TestCase.FAILED
@@ -74,12 +75,14 @@ class TestCase:
             logging.info(exc_msg)
 
     def exec(self, proc):
-        proc.sendline(f'/bin/{self.exec_bin}')
-        proc.expect(f'/bin/{self.exec_bin}(.*)\n')
+        cmd = ' '.join(shlex.quote(arg) for arg in self.exec_cmd)
+        proc.sendline(f'/bin/{cmd}')
+        proc.expect(f'/bin/{cmd}(.*)\n')
 
     def sysexec(self, proc):
-        proc.sendline(f'sysexec ocram2 {self.exec_bin}')
-        proc.expect(f'sysexec ocram2 {self.exec_bin}(.*)\n')
+        cmd = ' '.join(shlex.quote(arg) for arg in self.exec_cmd)
+        proc.sendline(f'sysexec ocram2 {cmd}')
+        proc.expect(f'sysexec ocram2 {cmd}(.*)\n')
 
     def exec_test(self, proc):
         try:
@@ -91,14 +94,14 @@ class TestCase:
             self.handle_pyexpect_error(proc, exc)
             return
 
-        if self.exec_bin:
+        if self.exec_cmd:
             try:
                 if self.use_sysexec:
                     self.sysexec(proc)
                 else:
                     self.exec(proc)
             except (TIMEOUT, EOF) as exc:
-                msg = f'Executing {self.exec_bin} failed!\n'
+                msg = f'Executing {self.exec_cmd} failed!\n'
                 self.exception = Color.colorify(msg, Color.BOLD)
                 self.handle_pyexpect_error(proc, exc)
                 return
@@ -183,11 +186,11 @@ class TestCaseCustomHarness(TestCase):
         target,
         timeout,
         harness_path,
-        exec_bin=None,
+        exec_cmd=None,
         use_sysexec=False,
         status=TestCase.FAILED
     ):
-        super().__init__(name, target, timeout, exec_bin, use_sysexec, status)
+        super().__init__(name, target, timeout, exec_cmd, use_sysexec, status)
         self.load_module(harness_path)
 
     def load_module(self, path):
@@ -209,11 +212,11 @@ class TestCaseUnit(TestCase):
         name,
         target,
         timeout,
-        exec_bin,
+        exec_cmd,
         use_sysexec=False,
         status=TestCase.FAILED
     ):
-        super().__init__(name, target, timeout, exec_bin, use_sysexec, status)
+        super().__init__(name, target, timeout, exec_cmd, use_sysexec, status)
         self.harness = UnitTestHarness.harness
         self.unit_test_results = []
 
@@ -253,7 +256,7 @@ class TestCaseFactory:
                 name=test['name'],
                 target=test['target'],
                 timeout=test['timeout'],
-                exec_bin=test.get('exec'),
+                exec_cmd=test.get('exec'),
                 use_sysexec=use_sysexec,
                 status=status
             )
@@ -263,7 +266,7 @@ class TestCaseFactory:
                 target=test['target'],
                 timeout=test['timeout'],
                 harness_path=test['harness'],
-                exec_bin=test.get('exec'),
+                exec_cmd=test.get('exec'),
                 use_sysexec=use_sysexec,
                 status=status
             )

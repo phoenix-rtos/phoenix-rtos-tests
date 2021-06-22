@@ -25,7 +25,7 @@ class TestPexpectException:
             name='xyz',
             target=ALL_TARGETS[0],
             timeout=3,
-            exec_bin='xyz'
+            exec_cmd=['xyz']
         )
 
     @pytest.fixture(scope="class")
@@ -125,7 +125,7 @@ class TestExceptionHandler:
             name='xyz',
             target=ALL_TARGETS[0],
             timeout=3,
-            exec_bin='xyz'
+            exec_cmd=['xyz']
         )
 
     def test_assert(self, testcase):
