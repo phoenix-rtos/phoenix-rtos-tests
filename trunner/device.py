@@ -258,7 +258,7 @@ class Runner:
     """Common interface for test runners"""
 
     def flash(self):
-        """Method used for flashing device with image containing tests."""
+        """Method used for flashing a device with the image containing tests."""
         pass
 
     def run(self, test):
@@ -376,8 +376,13 @@ class IMXRT106xRunner(DeviceRunner):
             with PloTalker(self.port) as plo:
                 self.boot()
                 plo.wait_prompt()
+
+                if not test.exec_cmd:
+                    # We got plo prompt, we are ready for sending the "go!" command.
+                    return True
+
                 with Phoenixd(self.phoenixd_port, dir=load_dir) as phd:
-                    plo.app('usb0', test.exec_bin, 'ocram2', 'ocram2')
+                    plo.app('usb0', test.exec_cmd[0], 'ocram2', 'ocram2')
         except (pexpect.exceptions.TIMEOUT, pexpect.exceptions.EOF, PloError) as exc:
             if isinstance(exc, PloError):
                 test.exception = str(exc)
@@ -430,10 +435,14 @@ class HostRunner(Runner):
         if test.skipped():
             return
 
-        test_path = PHRTOS_PROJECT_DIR / f'_boot/{test.target}/{test.exec_bin}'
-
+        test_bin = PHRTOS_PROJECT_DIR / '_boot' / test.target / test.exec_cmd[0]
         try:
-            proc = pexpect.spawn(str(test_path), encoding='utf-8', timeout=test.timeout)
+            proc = pexpect.spawn(
+                str(test_bin),
+                args=test.exec_cmd[1:],
+                encoding='utf-8',
+                timeout=test.timeout
+            )
         except pexpect.exceptions.ExceptionPexpect:
             test.handle_exception()
             return
