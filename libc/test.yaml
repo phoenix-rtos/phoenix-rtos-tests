@@ -1,0 +1,7 @@
+test:
+    type: unit
+    tests:
+        - name: unit
+          exec: test-libc
+          #FIXME: symlink tests will fail on non-rootfs targets
+
