@@ -18,7 +18,7 @@
 /* no need for forward declarations, RUN_TEST_GROUP does it by itself */
 void runner(void)
 {
-	//RUN_TEST_GROUP(resolve_path);
+	RUN_TEST_GROUP(resolve_path);
 }
 
 
