@@ -40,6 +40,10 @@ DEVICE_TARGETS = ['armv7m7-imxrt106x']
 DEVICE_SERIAL = "/dev/ttyACM0"
 
 
+def rootfs(target: str) -> Path:
+    return PHRTOS_PROJECT_DIR / '_fs' / target / 'root'
+
+
 class ParserError(Exception):
     pass
 
