@@ -428,6 +428,36 @@ TEST(resolve_path, symlink_loop)
 }
 
 
+/* check if "mv symlink xxx" changes name of the symlink and not the target file */
+TEST(resolve_path, symlink_rename)
+{
+	/* CWD = prefix */
+	TEST_ASSERT_EQUAL_INT(0, chdir(prefix));
+
+	unlink("symlink_old");
+	unlink("symlink_new");
+	unlink("real_file");
+
+	create_file("real_file", file_contents);
+
+	if (symlink("real_file", "symlink_old") < 0)
+		TEST_FAIL_MESSAGE(strerror(errno));
+
+	check_file_contents(file_contents, "symlink_old");
+
+	if (rename("symlink_old", "symlink_new") < 0)
+		TEST_FAIL_MESSAGE(strerror(errno));
+
+	check_file_contents(file_contents, "real_file");
+	check_file_open_errno(ENOENT, "symlink_old");
+	check_file_contents(file_contents, "symlink_new");
+
+	/* cleanup - WARN: if failed - not reached */
+	TEST_ASSERT_EQUAL_INT(0, unlink("symlink_new"));
+	TEST_ASSERT_EQUAL_INT(0, unlink("real_file"));
+}
+
+
 TEST_GROUP_RUNNER(resolve_path)
 {
 	RUN_TEST_CASE(resolve_path, canonicalize_abs_simple);
@@ -448,4 +478,5 @@ TEST_GROUP_RUNNER(resolve_path)
 	RUN_TEST_CASE(resolve_path, symlink_create_file);
 	RUN_TEST_CASE(resolve_path, symlink_dir);
 	RUN_TEST_CASE(resolve_path, symlink_loop);
+	RUN_TEST_CASE(resolve_path, symlink_rename);
 }
