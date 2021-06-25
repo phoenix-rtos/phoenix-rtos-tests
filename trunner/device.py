@@ -12,7 +12,7 @@ import serial
 
 try:
     import RPi.GPIO
-except ImportError:
+except (ImportError, RuntimeError):
     pass
 
 from .config import PHRTOS_PROJECT_DIR, DEVICE_SERIAL
