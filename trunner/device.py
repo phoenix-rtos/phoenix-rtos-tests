@@ -1,3 +1,4 @@
+import importlib
 import logging
 import os
 import signal
@@ -9,11 +10,6 @@ import time
 import pexpect
 import pexpect.fdpexpect
 import serial
-
-try:
-    import RPi.GPIO
-except (ImportError, RuntimeError):
-    pass
 
 from pexpect.exceptions import TIMEOUT, EOF
 
@@ -308,16 +304,17 @@ class GPIO:
 
     def __init__(self, pin):
         self.pin = pin
+        self.gpio = importlib.import_module('RPi.GPIO')
 
-        RPi.GPIO.setmode(RPi.GPIO.BCM)
-        RPi.GPIO.setwarnings(False)
-        RPi.GPIO.setup(self.pin, RPi.GPIO.OUT)
+        self.gpio.setmode(self.gpio.BCM)
+        self.gpio.setwarnings(False)
+        self.gpio.setup(self.pin, self.gpio.OUT)
 
     def high(self):
-        RPi.GPIO.output(self.pin, RPi.GPIO.HIGH)
+        self.gpio.output(self.pin, self.gpio.HIGH)
 
     def low(self):
-        RPi.GPIO.output(self.pin, RPi.GPIO.LOW)
+        self.gpio.output(self.pin, self.gpio.LOW)
 
 
 class IMXRT106xRunner(DeviceRunner):
