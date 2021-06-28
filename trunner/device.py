@@ -15,6 +15,8 @@ try:
 except (ImportError, RuntimeError):
     pass
 
+from pexpect.exceptions import TIMEOUT, EOF
+
 from .config import PHRTOS_PROJECT_DIR, DEVICE_SERIAL
 from .tools.color import Color
 
@@ -72,6 +74,14 @@ class Psu:
         if self.proc.returncode != 0:
             logging.error(f'Command {" ".join(self.proc.args)} with pid {self.proc.pid} failed!\n')
             raise Exception('Flashing IMXRT106x failed')
+
+
+def phd_error_msg(message, output):
+    msg = message
+    msg += Color.colorify('\nPHOENIXD OUTPUT:\n', Color.BOLD)
+    msg += output
+
+    return msg
 
 
 class PhoenixdError(Exception):
@@ -133,10 +143,10 @@ class Phoenixd:
 
         if self.wait_dispatcher:
             # Reader thread will notify us that message dispatcher has just started
-            dispatcher_ready = self.dispatcher_event.wait(timeout=10)
+            dispatcher_ready = self.dispatcher_event.wait(timeout=5)
             if not dispatcher_ready:
                 self.kill()
-                msg = f'message dispatcher did not start! Phoenixd output:\n{self.output()}'
+                msg = 'message dispatcher did not start!'
                 raise PhoenixdError(msg)
 
         return self.proc
@@ -149,9 +159,10 @@ class Phoenixd:
         return output
 
     def kill(self):
-        os.killpg(os.getpgid(self.proc.pid), signal.SIGTERM)
+        if self.proc.isalive():
+            os.killpg(os.getpgid(self.proc.pid), signal.SIGTERM)
         self.reader_thread.join(timeout=10)
-        if self.reader_thread.is_alive():
+        if self.proc.isalive():
             os.killpg(os.getpgid(self.proc.pid), signal.SIGKILL)
 
     def __enter__(self):
@@ -350,6 +361,8 @@ class IMXRT106xRunner(DeviceRunner):
         try:
             with PloTalker(self.port) as plo:
                 plo.wait_prompt()
+                # FIXME We should wait for usb0 dev
+                time.sleep(1)
                 with Phoenixd(self.phoenixd_port) as phd:
                     plo.copy_file2mem(
                         src='usb0',
@@ -357,11 +370,11 @@ class IMXRT106xRunner(DeviceRunner):
                         dst='flash1',
                         off=0
                     )
-        except (pexpect.exceptions.TIMEOUT, pexpect.exceptions.EOF, PloError) as exc:
+        except (TIMEOUT, EOF, PloError, PhoenixdError) as exc:
             exception = f'{exc}\n'
             if phd:
-                exception += Color.colorify('\nPHOENIXD OUTPUT:\n', Color.BOLD)
-                exception += phd.output()
+                exception = phd_error_msg(exception, phd.output())
+
             logging.info(exception)
             sys.exit(1)
 
@@ -383,8 +396,8 @@ class IMXRT106xRunner(DeviceRunner):
 
                 with Phoenixd(self.phoenixd_port, dir=load_dir) as phd:
                     plo.app('usb0', test.exec_cmd[0], 'ocram2', 'ocram2')
-        except (pexpect.exceptions.TIMEOUT, pexpect.exceptions.EOF, PloError) as exc:
-            if isinstance(exc, PloError):
+        except (TIMEOUT, EOF, PloError, PhoenixdError) as exc:
+            if isinstance(exc, PloError) or isinstance(exc, PhoenixdError):
                 test.exception = str(exc)
                 test.fail()
             else:  # TIMEOUT or EOF
@@ -392,8 +405,7 @@ class IMXRT106xRunner(DeviceRunner):
                 test.handle_pyexpect_error(plo.plo, exc)
 
             if phd:
-                test.exception += Color.colorify('\nPHOENIXD OUTPUT:\n', Color.BOLD)
-                test.exception += phd.output()
+                test.exception = phd_error_msg(test.exception, phd.output())
 
             return False
 
