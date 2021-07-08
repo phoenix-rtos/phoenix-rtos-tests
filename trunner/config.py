@@ -32,7 +32,7 @@ ALL_TARGETS = ['ia32-generic', 'host-pc', 'armv7m7-imxrt106x']
 
 # Default targets used by parser if 'target' value is absent
 DEFAULT_TARGETS = [target for target in ALL_TARGETS
-                   if target not in ('host-pc', 'armv7m7-imxrt106x')]
+                   if target not in ('host-pc')]
 
 DEVICE_TARGETS = ['armv7m7-imxrt106x']
 

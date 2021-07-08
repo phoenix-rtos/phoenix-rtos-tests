@@ -4,4 +4,5 @@ test:
           harness: test.py
           exec: test-helloworld
           targets:
-              include: [host-pc, armv7m7-imxrt106x]
+              include:
+                  - host-pc

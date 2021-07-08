@@ -2,13 +2,12 @@ test:
     tests:
         - name: prompt
           harness: test-prompt.py
-          targets:
-              include: [armv7m7-imxrt106x]
 
         - name: ps
           harness: test-ps.py
-          targets:
-              include: [armv7m7-imxrt106x]
 
         - name: mkdir
           harness: test-mkdir.py
+          targets:
+              exclude:
+                  - armv7m7-imxrt106x
