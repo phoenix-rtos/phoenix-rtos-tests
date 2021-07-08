@@ -19,6 +19,7 @@
 void runner(void)
 {
 	RUN_TEST_GROUP(resolve_path);
+	RUN_TEST_GROUP(file);
 }
 
 
