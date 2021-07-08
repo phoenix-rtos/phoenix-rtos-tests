@@ -4,4 +4,6 @@ test:
         - name: unit
           exec: test-libc
           #FIXME: symlink tests will fail on non-rootfs targets
+          targets:
+              exclude: [armv7m7-imxrt106x]
 

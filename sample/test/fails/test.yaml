@@ -2,7 +2,8 @@ test:
     ignore: true
 
     targets:
-        include: [host-pc]
+        # to test fails add your target here
+        value: []
 
     tests:
         - name: fail-output-1
