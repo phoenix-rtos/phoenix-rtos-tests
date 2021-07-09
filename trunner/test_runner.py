@@ -11,13 +11,14 @@ from .runners.common import Runner
 class TestsRunner:
     """Class responsible for loading, building and running tests"""
 
-    def __init__(self, targets, test_paths, serial, build=True, flash=True, log=False):
+    def __init__(self, targets, test_paths, serial, build=True, flash=True, log=False, long_test=False):
         self.targets = targets
         self.test_configs = []
         self.test_paths = test_paths
         self.tests_per_target = {k: [] for k in targets}
         self.build = build
         self.flash = flash
+        self.long_test = long_test
         self.runners = None
         self.serial = serial
         self.log = log
@@ -35,7 +36,7 @@ class TestsRunner:
     def parse_tests(self):
         self.test_configs = []
         for path in self.test_paths:
-            args = ParserArgs(yaml_path=path, targets=self.targets)
+            args = ParserArgs(yaml_path=path, targets=self.targets, long_test=self.long_test)
             config = TestCaseConfig.from_yaml(args)
             self.test_configs.extend(config.tests)
             logging.debug(f"File {path} parsed successfuly\n")
