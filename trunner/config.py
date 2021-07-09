@@ -65,11 +65,24 @@ def array_value(array: Dict[str, List[str]]) -> List[str]:
 @dataclass
 class ParserArgs:
     targets: List[str]
+    long_test: bool
     yaml_path: Path
     path: Path = field(init=False)
 
     def __post_init__(self):
         self.path = self.yaml_path.parent
+
+
+def filter_tests(tests: List['TestConfig'], args: ParserArgs) -> List['TestConfig']:
+    ''' Removes tests not needed in the current test campaign'''
+    filtered_tests = []
+    for test in tests:
+        if test['type'] == 'busybox' and not args.long_test:
+            continue
+        else:
+            filtered_tests.append(test)
+
+    return filtered_tests
 
 
 class Config(dict):
@@ -145,7 +158,7 @@ class TestConfig(Config):
 
 class ConfigParser:
     KEYWORDS: Tuple[str, ...] = ('exec', 'harness', 'ignore', 'name', 'targets', 'psh', 'timeout', 'type')
-    TEST_TYPES: Tuple[str, ...] = ('unit', 'harness')
+    TEST_TYPES: Tuple[str, ...] = ('unit', 'harness', 'busybox')
 
     def parse_keywords(self, config: Config) -> None:
         keywords = set(config)
@@ -297,6 +310,7 @@ class TestCaseConfig:
             main, tests = TestCaseConfig.extract_components(config)
             main = Config.from_dict(main)
             tests = [TestConfig.from_dict(test, main, args) for test in tests]
+            tests = filter_tests(tests, args)
             tests = [test.copy_per_target() for test in tests]
             tests = list(chain.from_iterable(tests))
         except ParserError as exc:

@@ -1,0 +1,113 @@
+test:
+    type: busybox
+    tests:
+        - name: busybox
+          exec: test_busybox busybox
+        - name: basename
+          exec: test_busybox basename
+        - name: bunzip2
+          ignore: True
+          exec: test_busybox bunzip2
+        - name: bzcat
+          exec: test_busybox bzcat
+        - name: cat
+          exec: test_busybox cat
+        - name: cmp
+          exec: test_busybox cmp
+        - name: cp
+          exec: test_busybox cp
+        - name: cut
+          exec: test_busybox cut
+        - name: date
+          ignore: True
+          exec: test_busybox date
+        - name: dd
+          ignore: True
+          exec: test_busybox dd
+        - name: diff
+          exec: test_busybox diff
+        - name: dirname
+          exec: test_busybox dirname
+        - name: echo
+          ignore: True
+          exec: test_busybox echo
+        - name: "false"
+          exec: test_busybox "false"
+        - name: find
+          exec: test_busybox find
+        - name: grep
+          ignore: True
+          exec: test_busybox grep
+        - name: gunzip
+          ignore: True
+          exec: test_busybox gunzip
+        - name: gzip
+          exec: test_busybox gzip
+        - name: head
+          exec: test_busybox head
+        - name: id
+          exec: test_busybox id
+        - name: ln
+          exec: test_busybox ln
+        - name: ls
+          exec: test_busybox ls
+        - name: md5sum
+          exec: test_busybox md5sum
+        - name: mkdir
+          exec: test_busybox mkdir
+        - name: mv
+          ignore: True
+          exec: test_busybox mv
+        - name: od
+          exec: test_busybox od
+        - name: paste
+          exec: test_busybox paste
+        - name: printf
+          ignore: True
+          exec: test_busybox printf
+        - name: pwd
+          exec: test_busybox pwd
+        - name: readlink
+          exec: test_busybox readlink
+        - name: rm
+          exec: test_busybox rm
+        - name: rmdir
+          exec: test_busybox rmdir
+        - name: sed
+          ignore: True
+          exec: test_busybox sed
+        - name: sha1sum
+          exec: test_busybox sha1sum
+        - name: sha256sum
+          exec: test_busybox sha256sum
+        - name: sha3sum
+          exec: test_busybox sha3sum
+        - name: sha512sum
+          exec: test_busybox sha512sum
+        - name: sort
+          exec: test_busybox sort
+        - name: tail
+          exec: test_busybox tail
+        - name: tar
+          ignore: True
+          exec: test_busybox tar
+        - name: tee
+          exec: test_busybox tee
+        - name: test
+          exec: test_busybox test
+        - name: touch
+          exec: test_busybox touch
+        - name: tr
+          exec: test_busybox tr
+        - name: "true"
+          exec: test_busybox "true"
+        - name: uniq
+          exec: test_busybox uniq
+        - name: wc
+          exec: test_busybox wc
+        - name: which
+          ignore: True
+          exec: test_busybox which
+        - name: xargs
+          ignore: True
+          exec: test_busybox xargs

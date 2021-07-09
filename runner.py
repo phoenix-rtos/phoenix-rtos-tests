@@ -78,6 +78,14 @@ def parse_args():
                         default=False, action='store_true',
                         help="Board will not be flashed by runner.")
 
+    # Add alternative option "--long-test" "" for long-test argument, which is False
+    # Needed for proper disabling long tests in gh actions
+    # because of problem with passing empty argument through gh workflows
+    parser.add_argument("--long-test",
+                        type=bool,
+                        nargs='?', default=False, const=True,
+                        help="Long tests will be run")
+
     args = parser.parse_args()
 
     args.log_level = logging_level[args.log_level]
@@ -107,7 +115,8 @@ def main():
                          build=args.build,
                          flash=not args.no_flash,
                          serial=(args.serial, args.baudrate),
-                         log=(args.log_level == logging.DEBUG)
+                         log=(args.log_level == logging.DEBUG),
+                         long_test=args.long_test
                          )
 
     passed, failed, skipped = runner.run()
