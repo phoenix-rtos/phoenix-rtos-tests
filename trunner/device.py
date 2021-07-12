@@ -35,6 +35,17 @@ def is_github_actions():
     return os.getenv('GITHUB_ACTIONS', False)
 
 
+def wait_for_dev(port, timeout=0):
+    asleep = 0
+
+    # naive wait for dev
+    while not os.path.exists(port):
+        time.sleep(0.5)
+        asleep += 0.5
+        if timeout and asleep >= timeout:
+            raise TimeoutError
+
+
 class Psu:
     """Wrapper for psu program"""
 
@@ -123,6 +134,11 @@ class Phoenixd:
             self.output_buffer += line
 
     def run(self):
+        try:
+            wait_for_dev(self.port, timeout=10)
+        except TimeoutError as exc:
+            raise PhoenixdError(f'couldn\'t find {self.port}') from exc
+
         # Use pexpect.spawn to run a process as PTY, so it will flush on a new line
         self.proc = pexpect.spawn(
             'phoenixd',
@@ -150,7 +166,7 @@ class Phoenixd:
     def output(self):
         output = self.output_buffer
         if is_github_actions():
-            output = '::group::Pheonixd\n' + output + '::endgroup::\n'
+            output = '::group::phoenixd\n' + output + '\n::endgroup::\n'
 
         return output
 
@@ -358,8 +374,6 @@ class IMXRT106xRunner(DeviceRunner):
         try:
             with PloTalker(self.port) as plo:
                 plo.wait_prompt()
-                # FIXME We should wait for usb0 dev
-                time.sleep(3)
                 with Phoenixd(self.phoenixd_port) as phd:
                     plo.copy_file2mem(
                         src='usb0',
