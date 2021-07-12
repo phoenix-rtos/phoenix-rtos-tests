@@ -359,7 +359,7 @@ class IMXRT106xRunner(DeviceRunner):
             with PloTalker(self.port) as plo:
                 plo.wait_prompt()
                 # FIXME We should wait for usb0 dev
-                time.sleep(1)
+                time.sleep(3)
                 with Phoenixd(self.phoenixd_port) as phd:
                     plo.copy_file2mem(
                         src='usb0',
