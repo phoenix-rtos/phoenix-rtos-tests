@@ -2,7 +2,6 @@ import importlib
 import logging
 import os
 import signal
-import subprocess
 import sys
 import threading
 import time
@@ -56,10 +55,10 @@ class Psu:
 
     def read_output(self):
         if is_github_actions():
-            logging.info('::group::psu\n')
+            logging.info('::group::Run psu\n')
 
         while True:
-            line = self.proc.stdout.readline().decode('utf-8')
+            line = self.proc.readline()
             if not line:
                 break
 
@@ -69,18 +68,19 @@ class Psu:
             logging.info('::endgroup::\n')
 
     def run(self):
-        self.proc = subprocess.Popen(
-            ['psu', f'{self.script}'],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL,
-            cwd=self.cwd
+        # Use pexpect.spawn to run a process as PTY, so it will flush on a new line
+        self.proc = pexpect.spawn(
+            'psu',
+            [f'{self.script}'],
+            cwd=self.cwd,
+            encoding='utf-8'
         )
 
         self.read_output()
         self.proc.wait()
-        if self.proc.returncode != 0:
-            logging.error(f'Command {" ".join(self.proc.args)} with pid {self.proc.pid} failed!\n')
-            raise Exception('Flashing IMXRT106x failed')
+        if self.proc.exitstatus != 0:
+            logging.error('psu failed!\n')
+            raise Exception('Flashing IMXRT106x failed!')
 
 
 def phd_error_msg(message, output):
@@ -166,7 +166,7 @@ class Phoenixd:
     def output(self):
         output = self.output_buffer
         if is_github_actions():
-            output = '::group::phoenixd\n' + output + '\n::endgroup::\n'
+            output = '::group::phoenixd output\n' + output + '\n::endgroup::\n'
 
         return output
 
@@ -368,11 +368,10 @@ class IMXRT106xRunner(DeviceRunner):
     def flash(self):
         self.boot(serial_downloader=True)
 
-        Psu(script=self.SDP).run()
-
         phd = None
         try:
             with PloTalker(self.port) as plo:
+                Psu(script=self.SDP).run()
                 plo.wait_prompt()
                 with Phoenixd(self.phoenixd_port) as phd:
                     plo.copy_file2mem(
