@@ -6,7 +6,7 @@
 # basic tools for psh related tests
 #
 # Copyright 2021 Phoenix Systems
-# Author: Jakub Sarzyński
+# Author: Jakub Sarzyński, Damian Loewnau
 #
 # This file is part of Phoenix-RTOS.
 #
@@ -14,6 +14,12 @@
 #
 
 import pexpect
+
+
+def assert_expected(p, cmd, expected, msg=''):
+    p.sendline(cmd)
+    p.expect_exact(cmd)
+    assert p.expect([expected, pexpect.TIMEOUT]) == 0, msg
 
 
 def run_psh(p):
