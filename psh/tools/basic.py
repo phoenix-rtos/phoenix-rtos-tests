@@ -1,3 +1,18 @@
+
+# Phoenix-RTOS
+#
+# phoenix-rtos-tests
+#
+# basic tools for psh related tests
+#
+# Copyright 2021 Phoenix Systems
+# Author: Jakub Sarzyński
+#
+# This file is part of Phoenix-RTOS.
+#
+# %LICENSE%
+#
+
 def run_psh(p):
     p.send('psh\r\n')
     p.expect(r'psh(\r+)\n')

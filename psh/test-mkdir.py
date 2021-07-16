@@ -3,7 +3,7 @@ import string
 
 from collections import namedtuple
 
-from psh.tools import run_psh, assert_only_prompt
+from psh.tools.basic import run_psh, assert_only_prompt
 
 File = namedtuple('File', ['name', 'owner', 'is_dir'])
 
