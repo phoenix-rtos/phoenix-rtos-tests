@@ -324,7 +324,7 @@ class GPIO:
 
         self.gpio.setmode(self.gpio.BCM)
         self.gpio.setwarnings(False)
-        self.gpio.setup(self.pin, self.gpio.OUT)
+        self.gpio.setup(self.pin, self.gpio.OUT, initial=self.gpio.LOW)
 
     def high(self):
         self.gpio.output(self.pin, self.gpio.HIGH)
@@ -351,6 +351,23 @@ class IMXRT106xRunner(DeviceRunner):
         self.reset_gpio = GPIO(17)
         self.reset_gpio.high()
         self.boot_gpio = GPIO(4)
+        self.ledr_gpio = GPIO(13)
+        self.ledg_gpio = GPIO(18)
+        self.ledb_gpio = GPIO(12)
+        self.ledb_gpio.high()
+
+    def led(self, color, state="on"):
+        if state == "on" or state == "off":
+            self.ledr_gpio.low()
+            self.ledg_gpio.low()
+            self.ledb_gpio.low()
+        if state == "on":
+            if color == "red":
+                self.ledr_gpio.high()
+            if color == "green":
+                self.ledg_gpio.high()
+            if color == "blue":
+                self.ledb_gpio.high()
 
     def reset(self):
         self.reset_gpio.low()
