@@ -10,6 +10,9 @@ test:
               value:
                   - ia32-generic
 
+        - name: autocompletion
+          harness: test-autocompletion.py
+
         - name: prompt
           harness: test-prompt.py
 
