@@ -1,5 +1,15 @@
 test:
     tests:
+        - name: auth
+          harness: test-auth.py
+
+        #FIXME - test-pshlogin.py is only for targets with root
+        - name: pshlogin
+          harness: test-pshlogin.py
+          targets:
+              value:
+                  - ia32-generic
+
         - name: prompt
           harness: test-prompt.py
 

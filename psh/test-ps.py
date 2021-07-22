@@ -1,4 +1,4 @@
-from psh.tools import run_psh, assert_only_prompt
+from psh.tools.basic import run_psh, assert_only_prompt
 
 """
 (psh)% ps
