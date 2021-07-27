@@ -175,8 +175,17 @@ TEST(resolve_path, missing_leaf)
 	check_null_and_errno(ENOENT, resolve_path("/etc/missing_file", NULL, 1, 0));
 	check_and_free_str("/etc/missing_file", resolve_path("/etc/missing_file", NULL, 1, 1));
 
+	check_and_free_str("/x", resolve_path("/x", NULL, 1, 1));
+	check_and_free_str("/etc/x", resolve_path("/etc/x", NULL, 1, 1));
+
 	check_null_and_errno(ENOENT, resolve_path("/etc/missing_dir/.", NULL, 1, 0));
-	check_and_free_str("/etc/missing_dir", resolve_path("/etc/missing_dir/.", NULL, 1, 1));
+	check_null_and_errno(ENOENT, resolve_path("/etc/missing_dir/.", NULL, 1, 1));
+}
+
+TEST(resolve_path, missing_branch)
+{
+	check_null_and_errno(ENOENT, resolve_path("/etc/missing_dir/missing_file", NULL, 1, 0));
+	check_null_and_errno(ENOENT, resolve_path("/etc/x/missing_file", NULL, 1, 0));
 }
 #endif
 
@@ -471,6 +480,7 @@ TEST_GROUP_RUNNER(resolve_path)
 
 #ifdef __phoenix__
 	RUN_TEST_CASE(resolve_path, missing_leaf);
+	RUN_TEST_CASE(resolve_path, missing_branch);
 #endif
 
 	RUN_TEST_CASE(resolve_path, symlink_abs);
