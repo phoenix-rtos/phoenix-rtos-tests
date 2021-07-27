@@ -81,8 +81,8 @@ class TestCase:
 
     def sysexec(self, proc):
         cmd = ' '.join(shlex.quote(arg) for arg in self.exec_cmd)
-        proc.sendline(f'sysexec ocram2 {cmd}')
-        proc.expect(f'sysexec ocram2 {cmd}(.*)\n')
+        proc.sendline(f'sysexec {cmd}')
+        proc.expect(f'sysexec {cmd}(.*)\n')
 
     def exec_test(self, proc):
         try:
