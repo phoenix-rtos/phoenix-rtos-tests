@@ -413,16 +413,19 @@ class IMXRT106xRunner(DeviceRunner):
             logging.error('Serial port not found!\n')
             sys.exit(1)
 
-    def boot(self, serial_downloader=False):
+    def reboot(self, serial_downloader=False, cut_power=False):
         if serial_downloader:
             self.boot_gpio.low()
         else:
             self.boot_gpio.high()
 
-        self._restart_by_jtag()
+        if cut_power:
+            self._restart_by_poweroff()
+        else:
+            self._restart_by_jtag()
 
     def flash(self):
-        self.boot(serial_downloader=True)
+        self.reboot(serial_downloader=True, cut_power=True)
 
         phd = None
         try:
@@ -444,16 +447,19 @@ class IMXRT106xRunner(DeviceRunner):
             logging.info(exception)
             sys.exit(1)
 
-        self.boot()
+        self.reboot(cut_power=True)
 
     def load(self, test):
         """Loads test ELF into syspage using plo"""
 
         phd = None
         load_dir = str(rootfs(test.target) / 'bin')
+        self.reboot(cut_power=True)
         try:
             with PloTalker(self.port) as plo:
-                self.boot()
+                # Because of powering all Rpi ports after powering the board,
+                # there is need to second reboot (without cut power) in order to capture all data
+                self.reboot(cut_power=False)
                 plo.wait_prompt()
 
                 if not test.exec_cmd:
