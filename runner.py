@@ -89,6 +89,18 @@ def parse_args():
     return args
 
 
+def print_summary_successed(runner):
+    print("Succeeded!")
+    if 'armv7m7-imxrt106x' in runner.targets:
+        runner.runners['armv7m7-imxrt106x'].led('green', 'on')
+
+
+def print_summary_failed(runner):
+    print("Failed!")
+    if 'armv7m7-imxrt106x' in runner.targets:
+        runner.runners['armv7m7-imxrt106x'].led('red', 'on')
+
+
 def main():
     args = parse_args()
     set_logger(args.log_level)
@@ -108,10 +120,10 @@ def main():
     logging.info(summary)
 
     if failed == 0:
-        print("Succeeded!")
+        print_summary_successed(runner)
         sys.exit(0)
     else:
-        print("Failed!")
+        print_summary_failed(runner)
         sys.exit(1)
 
 
