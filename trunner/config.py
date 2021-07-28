@@ -13,7 +13,9 @@ from typing import Dict, List, Tuple
 def resolve_phrtos_dir() -> Path:
     path = Path.cwd().absolute()
     try:
-        idx = path.parts.index('phoenix-rtos-project')
+        # Find last occurrence of phoenix-rtos-project
+        inverted_idx = path.parts[::-1].index('phoenix-rtos-project')
+        idx = len(path.parts) - 1 - inverted_idx
     except ValueError:
         print('Runner is lanuched not from the phoenix-rtos-project directory')
         return path
