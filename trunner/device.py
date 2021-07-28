@@ -9,6 +9,7 @@ import time
 import pexpect
 import pexpect.fdpexpect
 import serial
+import subprocess
 
 from pexpect.exceptions import TIMEOUT, EOF
 
@@ -336,7 +337,8 @@ class GPIO:
 class IMXRT106xRunner(DeviceRunner):
     """This class provides interface to run test case on IMXRT106x using RaspberryPi.
        GPIO 17 must be connected to the JTAG_nSRST (j21-15) (using an additional resistor 1,5k).
-       GPIO 4 must be connected to the SW7-3 (using a resistor 4,3k)."""
+       GPIO 4 must be connected to the SW7-3 (using a resistor 4,3k).
+       GPIO 2 must be connected to an appropriate IN pin in relay module"""
 
     SDP = 'plo-ram-armv7m7-imxrt106x.sdp'
     IMAGE = 'phoenix-armv7m7-imxrt106x.disk'
@@ -350,6 +352,8 @@ class IMXRT106xRunner(DeviceRunner):
         self.phoenixd_port = phoenixd_port
         self.reset_gpio = GPIO(17)
         self.reset_gpio.high()
+        self.power_gpio = GPIO(2)
+        self.power_gpio.high()
         self.boot_gpio = GPIO(4)
         self.ledr_gpio = GPIO(13)
         self.ledg_gpio = GPIO(18)
@@ -369,10 +373,45 @@ class IMXRT106xRunner(DeviceRunner):
             if color == "blue":
                 self.ledb_gpio.high()
 
-    def reset(self):
+    def _restart_by_jtag(self):
         self.reset_gpio.low()
         time.sleep(0.050)
         self.reset_gpio.high()
+
+    def _restart_by_poweroff(self):
+        f = open("/sys/bus/usb/drivers/usb/unbind", "w")
+        f.write("1-1.4")
+        f.close()
+        # without powering down rpi ports eval kit is partially powered through usb
+        rpi_ports_off = subprocess.run([
+            'uhubctl',
+            '-l', '2',
+            '-a', '0'],
+            stdout=subprocess.DEVNULL
+        )
+        if rpi_ports_off.returncode != 0:
+            logging.error('uhubctl failed!\n')
+            raise Exception('RPi ports power down failed!')
+
+        self.power_gpio.low()
+        time.sleep(0.500)
+        self.power_gpio.high()
+        time.sleep(0.500)
+        rpi_ports_on = subprocess.run([
+            'uhubctl',
+            '-l', '2',
+            '-a', '1'],
+            stdout=subprocess.DEVNULL
+        )
+        if rpi_ports_on.returncode != 0:
+            logging.error('uhubctl failed!\n')
+            raise Exception('RPi ports power up failed!')
+
+        try:
+            wait_for_dev(DEVICE_SERIAL, timeout=5)
+        except TimeoutError:
+            logging.error('Serial port not found!\n')
+            sys.exit(1)
 
     def boot(self, serial_downloader=False):
         if serial_downloader:
@@ -380,7 +419,7 @@ class IMXRT106xRunner(DeviceRunner):
         else:
             self.boot_gpio.high()
 
-        self.reset()
+        self._restart_by_jtag()
 
     def flash(self):
         self.boot(serial_downloader=True)
