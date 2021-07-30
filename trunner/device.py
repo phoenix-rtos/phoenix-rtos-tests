@@ -40,8 +40,8 @@ def wait_for_dev(port, timeout=0):
 
     # naive wait for dev
     while not os.path.exists(port):
-        time.sleep(0.5)
-        asleep += 0.5
+        time.sleep(0.01)
+        asleep += 0.01
         if timeout and asleep >= timeout:
             raise TimeoutError
 
