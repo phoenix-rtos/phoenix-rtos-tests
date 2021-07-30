@@ -20,6 +20,7 @@
 #include "sys/mman.h"
 #include "sys/threads.h"
 #include "sys/msg.h"
+#include "sys/debug.h"
 
 
 unsigned test_randsize(unsigned *seed, unsigned bufsz)
