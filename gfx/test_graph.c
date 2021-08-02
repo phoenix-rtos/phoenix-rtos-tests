@@ -288,9 +288,9 @@ void test_help(const char *prog)
 
 int main(int argc, char *argv[])
 {
-	graph_adapter_t adapter = GRAPH_ANY;
-	graph_mode_t mode = GRAPH_DEFMODE;
-	graph_freq_t freq = GRAPH_DEFFREQ;
+	int adapter = GRAPH_ANY;
+	int mode = GRAPH_DEFMODE;
+	int freq = GRAPH_DEFFREQ;
 	struct option longopts[] = {
 		{ "cirrus", no_argument, &adapter, GRAPH_CIRRUS },
 		{ "virtio-gpu", no_argument, &adapter, GRAPH_VIRTIOGPU },
