@@ -34,7 +34,7 @@ static void *worker(void *arg)
 
 static void *worker_busy(void *arg)
 {
-	printf("Busy worker thread %d created\n", (int)arg);
+	printf("Busy worker thread %d created\n", *(int *)arg);
 
 	usleep(100);
 
@@ -199,8 +199,7 @@ static int test_pthread_create_join_multiple(int num_threads)
 		pthread_attr_setschedparam(&attr, &param);
 		arg = i;
 
-		if ((err = pthread_create(&threads[i], &attr, worker_busy,(void *)arg))
-				!= EOK) {
+		if ((err = pthread_create(&threads[i], &attr, worker_busy, (void *)&arg)) != EOK) {
 			printf("Failed to create thread %d. Error: %d\n", i, err);
 			++failed;
 		}
@@ -214,7 +213,7 @@ static int test_pthread_create_join_multiple(int num_threads)
 			printf("Failed to join thread %d. Error: %d\n", i, err);
 			++failed;
 		}
-		else if ((int)result != arg) {
+		else if (*(int *)result != arg) {
 			printf("Wrong return value from thread %d\n", i);
 			++failed;
 		}
