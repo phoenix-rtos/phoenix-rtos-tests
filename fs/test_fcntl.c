@@ -67,10 +67,10 @@ int setlk_assert_vec(int fd, int test_len, const struct flock input_vector[], co
 				if (!verbose_test())
 					continue;
 				if (result == -1)
-					printf("[%d] F_SETLK failed, but expected to pass - l_start %d l_len %d l_type %s\n",
+					printf("[%d] F_SETLK failed, but expected to pass - l_start %ld l_len %ld l_type %s\n",
 						i, input_vector[i].l_start, input_vector[i].l_len, l_type_str[input_vector[i].l_type]);
 				else
-					printf("[%d] F_SETLK passed, but expected to fail - l_start %d l_len %d l_type %s\n",
+					printf("[%d] F_SETLK passed, but expected to fail - l_start %ld l_len %ld l_type %s\n",
 						i, input_vector[i].l_start, input_vector[i].l_len, l_type_str[input_vector[i].l_type]);
 			}
 		}
@@ -113,9 +113,9 @@ int getlk_assert(int fd, struct flock *input_fl, struct flock *output_fl)
 
 		/* print details */
 		if (result && verbose_test()){
-			printf("\nOutput: l_type %s , l_whence %d, l_start %d, l_len %d, l_pid %d\n",
+			printf("\nOutput: l_type %s , l_whence %d, l_start %ld, l_len %ld, l_pid %d\n",
 				l_type_str[input_fl->l_type], input_fl->l_whence, input_fl->l_start, input_fl->l_len, input_fl->l_pid);
-			printf("Expected: l_type %s , l_whence %d, l_start %d, l_len %d, l_pid %d\n",
+			printf("Expected: l_type %s , l_whence %d, l_start %ld, l_len %ld, l_pid %d\n",
 				l_type_str[output_fl->l_type], output_fl->l_whence, output_fl->l_start, output_fl->l_len, output_fl->l_pid);
 		}
 
