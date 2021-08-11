@@ -46,6 +46,18 @@ def wait_for_dev(port, timeout=0):
             raise TimeoutError
 
 
+def power_usb_ports(enable: bool):
+    uhubctl = subprocess.run([
+        'uhubctl',
+        '-l', '2',
+        '-a', f'{1 if enable else 0}'],
+        stdout=subprocess.DEVNULL
+    )
+    if uhubctl.returncode != 0:
+        logging.error('uhubctl failed!\n')
+        raise Exception('RPi usb ports powering up/down failed!')
+
+
 class Psu:
     """Wrapper for psu program"""
 
@@ -383,29 +395,13 @@ class IMXRT106xRunner(DeviceRunner):
         f.write("1-1.4")
         f.close()
         # without powering down rpi ports eval kit is partially powered through usb
-        rpi_ports_off = subprocess.run([
-            'uhubctl',
-            '-l', '2',
-            '-a', '0'],
-            stdout=subprocess.DEVNULL
-        )
-        if rpi_ports_off.returncode != 0:
-            logging.error('uhubctl failed!\n')
-            raise Exception('RPi ports power down failed!')
 
+        power_usb_ports(False)
         self.power_gpio.low()
         time.sleep(0.500)
         self.power_gpio.high()
         time.sleep(0.500)
-        rpi_ports_on = subprocess.run([
-            'uhubctl',
-            '-l', '2',
-            '-a', '1'],
-            stdout=subprocess.DEVNULL
-        )
-        if rpi_ports_on.returncode != 0:
-            logging.error('uhubctl failed!\n')
-            raise Exception('RPi ports power up failed!')
+        power_usb_ports(True)
 
         try:
             wait_for_dev(DEVICE_SERIAL, timeout=5)
