@@ -13,7 +13,7 @@ import subprocess
 
 from pexpect.exceptions import TIMEOUT, EOF
 
-from .config import PHRTOS_PROJECT_DIR, DEVICE_SERIAL, rootfs
+from .config import PHRTOS_PROJECT_DIR, DEVICE_SERIAL, DEVICE_SERIAL_USB, rootfs
 from .tools.color import Color
 
 
@@ -56,6 +56,19 @@ def power_usb_ports(enable: bool):
     if uhubctl.returncode != 0:
         logging.error('uhubctl failed!\n')
         raise Exception('RPi usb ports powering up/down failed!')
+
+
+def unbind_rpi_usb(port_address):
+    try:
+        with open('/sys/bus/usb/drivers/usb/unbind', 'w') as file:
+            file.write(port_address)
+    except PermissionError:
+        logging.error("/sys/bus/usb/drivers/usb/unbind: PermissionError\n\
+        If You launch test runner locally:\n\
+        Add 'sudo chmod a+w /sys/bus/usb/drivers/usb/unbind' to /etc/rc.local\n\
+        If You use Docker:\n\
+        Set the appropriate permissions\n")
+        sys.exit(1)
 
 
 class Psu:
@@ -391,10 +404,7 @@ class IMXRT106xRunner(DeviceRunner):
         self.reset_gpio.high()
 
     def _restart_by_poweroff(self):
-        f = open("/sys/bus/usb/drivers/usb/unbind", "w")
-        f.write("1-1.4")
-        f.close()
-        # without powering down rpi ports eval kit is partially powered through usb
+        unbind_rpi_usb(DEVICE_SERIAL_USB)
 
         power_usb_ports(False)
         self.power_gpio.low()
