@@ -13,6 +13,9 @@ test:
         - name: prompt
           harness: test-prompt.py
 
+        - name: autocompletion
+          harness: test-autocompletion.py
+
         - name: ps
           harness: test-ps.py
 
