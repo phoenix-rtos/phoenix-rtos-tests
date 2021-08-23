@@ -1,6 +1,8 @@
 test:
-    type: unit
     tests:
-        - name: unit
-          exec: test-pow
+        - name: unity
+          exec: test_pow
+          type: unit
+          targets:
+             include: [host-pc]
 
