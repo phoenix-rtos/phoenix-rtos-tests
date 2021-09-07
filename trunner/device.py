@@ -414,7 +414,7 @@ class IMXRT106xRunner(DeviceRunner):
         power_usb_ports(True)
 
         try:
-            wait_for_dev(DEVICE_SERIAL, timeout=7)
+            wait_for_dev(DEVICE_SERIAL, timeout=30)
         except TimeoutError:
             logging.error('Serial port not found!\n')
             sys.exit(1)
