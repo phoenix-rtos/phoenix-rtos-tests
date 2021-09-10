@@ -1,0 +1,7 @@
+test:
+    type: unit
+    tests:
+        - name: unit
+          exec: test_waitpid
+          targets:
+              exclude: [armv7m7-imxrt106x, armv7m7-imxrt117x]
