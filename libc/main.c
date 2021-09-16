@@ -21,6 +21,8 @@ void runner(void)
 	RUN_TEST_GROUP(getpwd);
 	RUN_TEST_GROUP(resolve_path);
 	RUN_TEST_GROUP(file);
+	RUN_TEST_GROUP(string_strlcpy);
+	RUN_TEST_GROUP(string_strlcat);
 }
 
 
