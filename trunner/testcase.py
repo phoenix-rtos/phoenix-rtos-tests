@@ -112,7 +112,7 @@ class TestCase:
         # Look for searched pattern
         # pexpect searcher object is cleared when timeout exception is raised
         # parse patterns directly from the exception message
-        r_searched = r"[\d+]: (?:re.compile\()?b?'(.*)'\)?"
+        r_searched = r"[\d+]: (?:re.compile\()?b?['\"](.*)['\"]\)?"
         searched_patterns = re.findall(r_searched, exc.value)
 
         self.exception += Color.colorify('EXPECTED:\n', Color.BOLD)
