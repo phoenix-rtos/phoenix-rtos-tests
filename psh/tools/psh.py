@@ -92,6 +92,22 @@ def assert_exec(pexpect_proc, prog, expected='', msg=''):
     assert_cmd(pexpect_proc, exec_cmd, expected, msg)
 
 
+def get_commands(pexpect_proc):
+    ''' Returns a list of available psh commands'''
+    commands = []
+    pexpect_proc.sendline('help')
+    idx = pexpect_proc.expect_exact(['help', pexpect.TIMEOUT])
+    assert idx == 0, "help command hasn't been sent properly"
+
+    while idx != 1:
+        idx = pexpect_proc.expect([r'(\w+)(\s+-.*?\n)', r'\(psh\)% '])
+        if idx == 0:
+            groups = pexpect_proc.match.groups()
+            commands.append(groups[0])
+
+    return commands
+
+
 def run(pexpect_proc):
     pexpect_proc.send('psh\r\n')
     pexpect_proc.expect(r'psh(\r+)\n')

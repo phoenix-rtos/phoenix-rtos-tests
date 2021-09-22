@@ -41,3 +41,6 @@ test:
               exclude:
                   - armv7m7-imxrt106x
                   - armv7m7-imxrt117x
+
+        - name: ls
+          harness: test-ls.py
