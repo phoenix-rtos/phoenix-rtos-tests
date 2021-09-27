@@ -1,6 +1,8 @@
 # Imports of available runners
 from .runners import HostRunner, QemuRunner, IMXRT106xRunner, STM32L4Runner
 
+from . import config
+
 from .config import PHRTOS_PROJECT_DIR, DEVICE_SERIAL_USB
 
 
@@ -19,6 +21,7 @@ QEMU_CMD = {
 class RunnerFactory:
     @staticmethod
     def create(target, serial):
+        config.CURRENT_TARGET = target
         if target == 'ia32-generic':
             return QemuRunner(*QEMU_CMD[target])
         if target == 'host-pc':
