@@ -19,6 +19,9 @@ test:
         - name: ps
           harness: test-ps.py
 
+        - name: cat
+          harness: test-cat.py
+
         - name: mkdir
           harness: test-mkdir.py
           targets:
