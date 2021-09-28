@@ -4,6 +4,9 @@ test:
       include: [riscv64-generic-qemu]
 
     tests:
+        - name: gibber
+          harness: test-gibber.py
+
         - name: auth
           harness: test-auth.py
 
