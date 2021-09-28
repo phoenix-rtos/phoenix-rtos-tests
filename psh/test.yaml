@@ -28,6 +28,9 @@ test:
               value:
                   - ia32-generic
 
+        - name: kill
+          harness: test-kill.py
+
         - name: mkdir
           harness: test-mkdir.py
           targets:
