@@ -1,5 +1,7 @@
 test:
     tests:
+        - name: gibber
+          harness: test-gibber.py
 
         - name: auth
           harness: test-auth.py
@@ -19,7 +21,7 @@ test:
 
         - name: autocompletion
           harness: test-autocompletion.py
-
+    
         - name: ps
           harness: test-ps.py
 

@@ -57,6 +57,12 @@ def assert_cmd(pexpect_proc, cmd, expected='', msg='', is_regex=False):
     assert pexpect_proc.expect([exp_regex, pexpect.TIMEOUT, pexpect.EOF]) == 0, msg
 
 
+def assert_unprintable(pexpect_proc, cmd, msg=''):
+    pexpect_proc.sendline(cmd)
+    exp_regex = EOL + PROMPT
+    assert pexpect_proc.expect([exp_regex, pexpect.TIMEOUT]) == 0, msg
+
+
 def assert_only_prompt(pexpect_proc):
     ''' Expect an erase in display ascii escape sequence and a prompt sign '''
     prompt = '\r\x1b[0J' + '(psh)% '
