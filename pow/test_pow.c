@@ -144,6 +144,12 @@ TEST(test_pow, tc8_normal_range)
 	TEST_ASSERT_EQUAL_DOUBLE(100.0, result);
 }
 
+TEST(test_pow, tc9_result_precision_test)
+{
+        double result = pow(2, 0.5);
+        TEST_ASSERT_DOUBLE_WITHIN(0.00009, 1.4142, result);
+        TEST_ASSERT_EQUAL_DOUBLE(sqrt(2), result);
+}
 
 TEST_GROUP_RUNNER(test_pow)
 {
@@ -155,6 +161,7 @@ TEST_GROUP_RUNNER(test_pow)
 	RUN_TEST_CASE(test_pow, tc6_exponent_max_value);
 	RUN_TEST_CASE(test_pow, tc7_exponent_bigger_than_max_value);
 	RUN_TEST_CASE(test_pow, tc8_normal_range);
+	RUN_TEST_CASE(test_pow, tc9_result_precision_test);
 }
 
 void runner(void)
