@@ -9,14 +9,18 @@ import time
 import pexpect
 import pexpect.fdpexpect
 import serial
+import subprocess
 
 from pexpect.exceptions import TIMEOUT, EOF
 
-from .config import PHRTOS_PROJECT_DIR, DEVICE_SERIAL, rootfs
+from .config import PHRTOS_PROJECT_DIR, DEVICE_SERIAL, DEVICE_SERIAL_USB, rootfs
 from .tools.color import Color
 
 
 _BOOT_DIR = PHRTOS_PROJECT_DIR / '_boot'
+_HOME_DIR = os.path.expanduser('~')
+_LOGFILE = _HOME_DIR + '/logfile.dat'
+
 
 QEMU_CMD = {
     'ia32-generic': (
@@ -34,15 +38,47 @@ def is_github_actions():
     return os.getenv('GITHUB_ACTIONS', False)
 
 
+def save_in_logfile(wait_time=0):
+    with open(_LOGFILE, "a") as f:
+        f.write(f'{wait_time}\n')
+
+
 def wait_for_dev(port, timeout=0):
     asleep = 0
 
     # naive wait for dev
     while not os.path.exists(port):
-        time.sleep(0.5)
-        asleep += 0.5
+        time.sleep(0.01)
+        asleep += 0.01
         if timeout and asleep >= timeout:
+            save_in_logfile(wait_time=asleep)
             raise TimeoutError
+    save_in_logfile(wait_time=asleep)
+
+
+def power_usb_ports(enable: bool):
+    uhubctl = subprocess.run([
+        'uhubctl',
+        '-l', '2',
+        '-a', f'{1 if enable else 0}'],
+        stdout=subprocess.DEVNULL
+    )
+    if uhubctl.returncode != 0:
+        logging.error('uhubctl failed!\n')
+        raise Exception('RPi usb ports powering up/down failed!')
+
+
+def unbind_rpi_usb(port_address):
+    try:
+        with open('/sys/bus/usb/drivers/usb/unbind', 'w') as file:
+            file.write(port_address)
+    except PermissionError:
+        logging.error("/sys/bus/usb/drivers/usb/unbind: PermissionError\n\
+        If You launch test runner locally:\n\
+        Add 'sudo chmod a+w /sys/bus/usb/drivers/usb/unbind' to /etc/rc.local\n\
+        If You use Docker:\n\
+        Set the appropriate permissions\n")
+        sys.exit(1)
 
 
 class Psu:
@@ -336,7 +372,8 @@ class GPIO:
 class IMXRT106xRunner(DeviceRunner):
     """This class provides interface to run test case on IMXRT106x using RaspberryPi.
        GPIO 17 must be connected to the JTAG_nSRST (j21-15) (using an additional resistor 1,5k).
-       GPIO 4 must be connected to the SW7-3 (using a resistor 4,3k)."""
+       GPIO 4 must be connected to the SW7-3 (using a resistor 4,3k).
+       GPIO 2 must be connected to an appropriate IN pin in relay module"""
 
     SDP = 'plo-ram-armv7m7-imxrt106x.sdp'
     IMAGE = 'phoenix-armv7m7-imxrt106x.disk'
@@ -350,6 +387,8 @@ class IMXRT106xRunner(DeviceRunner):
         self.phoenixd_port = phoenixd_port
         self.reset_gpio = GPIO(17)
         self.reset_gpio.high()
+        self.power_gpio = GPIO(2)
+        self.power_gpio.high()
         self.boot_gpio = GPIO(4)
         self.ledr_gpio = GPIO(13)
         self.ledg_gpio = GPIO(18)
@@ -369,21 +408,40 @@ class IMXRT106xRunner(DeviceRunner):
             if color == "blue":
                 self.ledb_gpio.high()
 
-    def reset(self):
+    def _restart_by_jtag(self):
         self.reset_gpio.low()
         time.sleep(0.050)
         self.reset_gpio.high()
 
-    def boot(self, serial_downloader=False):
+    def _restart_by_poweroff(self):
+        unbind_rpi_usb(DEVICE_SERIAL_USB)
+
+        power_usb_ports(False)
+        self.power_gpio.low()
+        time.sleep(0.500)
+        self.power_gpio.high()
+        time.sleep(0.500)
+        power_usb_ports(True)
+
+        try:
+            wait_for_dev(DEVICE_SERIAL, timeout=30)
+        except TimeoutError:
+            logging.error('Serial port not found!\n')
+            sys.exit(1)
+
+    def reboot(self, serial_downloader=False, cut_power=False):
         if serial_downloader:
             self.boot_gpio.low()
         else:
             self.boot_gpio.high()
 
-        self.reset()
+        if cut_power:
+            self._restart_by_poweroff()
+        else:
+            self._restart_by_jtag()
 
     def flash(self):
-        self.boot(serial_downloader=True)
+        self.reboot(serial_downloader=True, cut_power=True)
 
         phd = None
         try:
@@ -405,16 +463,19 @@ class IMXRT106xRunner(DeviceRunner):
             logging.info(exception)
             sys.exit(1)
 
-        self.boot()
+        self.reboot(cut_power=True)
 
     def load(self, test):
         """Loads test ELF into syspage using plo"""
 
         phd = None
         load_dir = str(rootfs(test.target) / 'bin')
+        self.reboot(cut_power=True)
         try:
             with PloTalker(self.port) as plo:
-                self.boot()
+                # Because of powering all Rpi ports after powering the board,
+                # there is need to second reboot (without cut power) in order to capture all data
+                self.reboot(cut_power=False)
                 plo.wait_prompt()
 
                 if not test.exec_cmd:
