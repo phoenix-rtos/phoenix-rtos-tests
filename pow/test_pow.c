@@ -35,7 +35,7 @@ TEST(test_pow, tc1_base_0_and_exponent_0)
 	
 }
 
-TEST(test_pow, tc2_base_0_exponent_less_than_0)
+TEST(test_pow, tc2_base_0_exponent_less_than_0_if_conditions_coverage)
 {
 	double result = pow(0.0, -1.0);
 	TEST_ASSERT_EQUAL_DOUBLE(INFINITY,  result);
@@ -45,6 +45,12 @@ TEST(test_pow, tc2_base_0_exponent_less_than_0)
 	TEST_ASSERT_EQUAL_DOUBLE(-INFINITY,  result);
 	TEST_ASSERT_EQUAL_INT(0, errno);
 	
+}
+
+TEST(test_pow, tc2_1_base_0_exponent_less_than_0_ANSI_C_implementation)
+{
+	double result = pow(0.0, -1.0);
+	TEST_ASSERT_EQUAL_INT(EDOM, errno);
 }
 
 TEST(test_pow, tc3_base_bigger_than_0_exponent_equal_zero)
@@ -70,10 +76,10 @@ TEST(test_pow, tc3_base_bigger_than_0_exponent_equal_zero)
 
 TEST(test_pow, tc4_domain_error)
 {
-	//double result = pow(-1.0, 0.5);
+//	double result = pow(-1.0, 0.5);
 	
-	//TEST_ASSERT_EQUAL_INT(EDOM, errno);
-	//TEST_ASSERT_EQUAL_DOUBLE(NAN, result);
+//	TEST_ASSERT_EQUAL_INT(0, errno);
+//	TEST_ASSERT_EQUAL_DOUBLE(0, result);
 	
 	
 	//result = pow(-DBL_MAX, -INT_MAX-0.5);
@@ -154,7 +160,8 @@ TEST(test_pow, tc9_result_precision_test)
 TEST_GROUP_RUNNER(test_pow)
 {
 	RUN_TEST_CASE(test_pow, tc1_base_0_and_exponent_0);
-	RUN_TEST_CASE(test_pow, tc2_base_0_exponent_less_than_0);
+	RUN_TEST_CASE(test_pow, tc2_base_0_exponent_less_than_0_if_conditions_coverage);
+	RUN_TEST_CASE(test_pow, tc2_1_base_0_exponent_less_than_0_ANSI_C_implementation);
 	RUN_TEST_CASE(test_pow, tc3_base_bigger_than_0_exponent_equal_zero);
 	RUN_TEST_CASE(test_pow, tc4_domain_error);
 	RUN_TEST_CASE(test_pow, tc5_negative_and_positive_exponent_intiger);
