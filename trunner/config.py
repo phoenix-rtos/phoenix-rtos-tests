@@ -45,10 +45,6 @@ DEVICE_SERIAL = "/dev/serial/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb
 DEVICE_SERIAL_USB = "1-1.4"
 
 
-def rootfs(target: str) -> Path:
-    return PHRTOS_PROJECT_DIR / '_fs' / target / 'root'
-
-
 class ParserError(Exception):
     pass
 

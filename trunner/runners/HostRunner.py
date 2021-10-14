@@ -1,4 +1,17 @@
-from .common import *
+#
+# Phoenix-RTOS test runner
+#
+# host-pc runner
+#
+# Copyright 2021 Phoenix SYstems
+# Authors: Jakub Sarzyński, Mateusz Niewiadomski, Damian Loewnau
+#
+
+import pexpect
+import signal
+
+from .common import Runner
+from .common import rootfs
 
 
 class HostRunner(Runner):

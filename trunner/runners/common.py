@@ -1,3 +1,12 @@
+#
+# Phoenix-RTOS test runner
+#
+# Common parts of phoenix-rtos test runners
+#
+# Copyright 2021 Phoenix SYstems
+# Authors: Jakub Sarzyński, Mateusz Niewiadomski, Damian Loewnau
+#
+
 import importlib
 import logging
 import os
@@ -11,16 +20,19 @@ import pexpect.fdpexpect
 import serial
 import subprocess
 
-from pexpect.exceptions import TIMEOUT, EOF
+from pathlib import Path
 
-sys.path.append('../trunner')
-from trunner.config import PHRTOS_PROJECT_DIR, DEVICE_SERIAL, DEVICE_SERIAL_USB, rootfs
+from trunner.config import PHRTOS_PROJECT_DIR
 from trunner.tools.color import Color
 
 
 _BOOT_DIR = PHRTOS_PROJECT_DIR / '_boot'
 _HOME_DIR = os.path.expanduser('~')
 _LOGFILE = _HOME_DIR + '/logfile.dat'
+
+
+def rootfs(target: str) -> Path:
+    return PHRTOS_PROJECT_DIR / '_fs' / target / 'root'
 
 
 def is_github_actions():
@@ -356,10 +368,3 @@ class GPIO:
 
     def low(self):
         self.gpio.output(self.pin, self.gpio.LOW)
-
-
-
-
-
-
-

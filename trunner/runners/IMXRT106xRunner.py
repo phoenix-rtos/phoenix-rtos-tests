@@ -1,4 +1,18 @@
-from .common import *
+#
+# Phoenix-RTOS test runner
+#
+# IMXRT1064 runner
+#
+# Copyright 2021 Phoenix SYstems
+# Authors: Jakub Sarzyński, Mateusz Niewiadomski, Damian Loewnau
+#
+
+import time
+import sys
+from pexpect.exceptions import TIMEOUT, EOF
+
+from .common import DeviceRunner, PloTalker, PloError, Psu, Phoenixd, PhoenixdError, GPIO, Color, logging
+from .common import unbind_rpi_usb, power_usb_ports, wait_for_dev, phd_error_msg, rootfs
 
 
 class IMXRT106xRunner(DeviceRunner):
@@ -13,10 +27,13 @@ class IMXRT106xRunner(DeviceRunner):
     def __init__(
         self,
         port,
-        phoenixd_port='/dev/serial/by-id/usb-Phoenix_Systems_plo_CDC_ACM-if00'
+        phoenixd_port='/dev/serial/by-id/usb-Phoenix_Systems_plo_CDC_ACM-if00',
+        is_cut_power_used=False
     ):
-        super().__init__(port)
+        super().__init__(port[0])
+        self.port_usb = port[1]
         self.phoenixd_port = phoenixd_port
+        self.is_cut_power_used = is_cut_power_used
         self.reset_gpio = GPIO(17)
         self.reset_gpio.high()
         self.power_gpio = GPIO(2)
@@ -46,7 +63,7 @@ class IMXRT106xRunner(DeviceRunner):
         self.reset_gpio.high()
 
     def _restart_by_poweroff(self):
-        unbind_rpi_usb(DEVICE_SERIAL_USB)
+        unbind_rpi_usb(self.port_usb)
 
         power_usb_ports(False)
         self.power_gpio.low()
@@ -56,7 +73,7 @@ class IMXRT106xRunner(DeviceRunner):
         power_usb_ports(True)
 
         try:
-            wait_for_dev(DEVICE_SERIAL, timeout=30)
+            wait_for_dev(self.port_usb, timeout=30)
         except TimeoutError:
             logging.error('Serial port not found!\n')
             sys.exit(1)
@@ -73,7 +90,7 @@ class IMXRT106xRunner(DeviceRunner):
             self._restart_by_jtag()
 
     def flash(self):
-        self.reboot(serial_downloader=True, cut_power=True)
+        self.reboot(serial_downloader=True, cut_power=self.is_cut_power_used)
 
         phd = None
         try:
@@ -95,19 +112,21 @@ class IMXRT106xRunner(DeviceRunner):
             logging.info(exception)
             sys.exit(1)
 
-        self.reboot(cut_power=True)
+        self.reboot(cut_power=self.is_cut_power_used)
 
     def load(self, test):
         """Loads test ELF into syspage using plo"""
 
         phd = None
         load_dir = str(rootfs(test.target) / 'bin')
-        self.reboot(cut_power=True)
+        self.reboot(cut_power=self.is_cut_power_used)
         try:
             with PloTalker(self.port) as plo:
                 # Because of powering all Rpi ports after powering the board,
                 # there is need to second reboot (without cut power) in order to capture all data
-                self.reboot(cut_power=False)
+                # (when using _restart_by_poweroff)
+                if self.is_cut_power_used:
+                    self.reboot(cut_power=False)
                 plo.wait_prompt()
 
                 if not test.exec_cmd:
