@@ -86,5 +86,7 @@ def harness(p):
     assert_hints(p, path='ls testenv/lorem/../', hints=['ipsum', 'lorem', 'loremipsum'])
     assert_hints(p, path='ls testenv/loremipsum/', hints=['amet', 'dolor', 'sit'])
 
+    assert_hints(p, path='dev/', hints=['ipsum', 'lorem', 'loremipsum'])
+
     # TODO Tests: backspace handling, symlink handling
     # TODO cleanup folders after tests
