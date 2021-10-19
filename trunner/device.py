@@ -381,10 +381,12 @@ class IMXRT106xRunner(DeviceRunner):
     def __init__(
         self,
         port,
-        phoenixd_port='/dev/serial/by-id/usb-Phoenix_Systems_plo_CDC_ACM-if00'
+        phoenixd_port='/dev/serial/by-id/usb-Phoenix_Systems_plo_CDC_ACM-if00',
+        is_cut_power_used=False
     ):
         super().__init__(port)
         self.phoenixd_port = phoenixd_port
+        self.is_cut_power_used = is_cut_power_used
         self.reset_gpio = GPIO(17)
         self.reset_gpio.high()
         self.power_gpio = GPIO(2)
@@ -441,7 +443,7 @@ class IMXRT106xRunner(DeviceRunner):
             self._restart_by_jtag()
 
     def flash(self):
-        self.reboot(serial_downloader=True, cut_power=True)
+        self.reboot(serial_downloader=True, cut_power=self.is_cut_power_used)
 
         phd = None
         try:
@@ -463,19 +465,21 @@ class IMXRT106xRunner(DeviceRunner):
             logging.info(exception)
             sys.exit(1)
 
-        self.reboot(cut_power=True)
+        self.reboot(cut_power=self.is_cut_power_used)
 
     def load(self, test):
         """Loads test ELF into syspage using plo"""
 
         phd = None
         load_dir = str(rootfs(test.target) / 'bin')
-        self.reboot(cut_power=True)
+        self.reboot(cut_power=self.is_cut_power_used)
         try:
             with PloTalker(self.port) as plo:
                 # Because of powering all Rpi ports after powering the board,
                 # there is need to second reboot (without cut power) in order to capture all data
-                self.reboot(cut_power=False)
+                # (when using _restart_by_poweroff)
+                if self.is_cut_power_used:
+                    self.reboot(cut_power=False)
                 plo.wait_prompt()
 
                 if not test.exec_cmd:
