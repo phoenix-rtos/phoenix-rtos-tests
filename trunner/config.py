@@ -30,7 +30,7 @@ PHRTOS_TEST_DIR = PHRTOS_PROJECT_DIR / 'phoenix-rtos-tests'
 PYEXPECT_TIMEOUT = 8
 
 # Available targets for test runner.
-ALL_TARGETS = ['ia32-generic', 'host-pc', 'armv7m7-imxrt106x']
+ALL_TARGETS = ['ia32-generic', 'host-pc', 'armv7m7-imxrt106x', 'stm32l4']
 
 # Default targets used by parser if 'target' value is absent
 DEFAULT_TARGETS = [target for target in ALL_TARGETS
