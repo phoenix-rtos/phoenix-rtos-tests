@@ -1,7 +1,5 @@
 # Imports of available runners
-from .runners.HostRunner import HostRunner
-from .runners.QemuRunner import QemuRunner
-from .runners.IMXRT106xRunner import IMXRT106xRunner
+from .runners import HostRunner, QemuRunner, IMXRT106xRunner
 
 from .config import PHRTOS_PROJECT_DIR, DEVICE_SERIAL, DEVICE_SERIAL_USB
 

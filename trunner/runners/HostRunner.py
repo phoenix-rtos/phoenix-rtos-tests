@@ -8,7 +8,6 @@
 #
 
 import pexpect
-import signal
 
 from .common import Runner
 from .common import rootfs
@@ -24,17 +23,12 @@ class HostRunner(Runner):
         test_path = rootfs(test.target) / 'bin' / test.exec_cmd[0]
 
         try:
-            proc = pexpect.spawn(
+            with pexpect.spawn(
                 str(test_path),
                 args=test.exec_cmd[1:],
-                encoding='utf-8',
-                timeout=test.timeout
-            )
+                encoding="utf-8",
+                timeout=test.timeout,
+            ) as proc:
+                test.handle(proc, psh=False)
         except pexpect.exceptions.ExceptionPexpect:
             test.handle_exception()
-            return
-
-        try:
-            test.handle(proc, psh=False)
-        finally:
-            proc.kill(signal.SIGTERM)
