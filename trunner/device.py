@@ -1,5 +1,5 @@
 # Imports of available runners
-from .runners import HostRunner, QemuRunner, IMXRT106xRunner
+from .runners import HostRunner, QemuRunner, IMXRT106xRunner, Stm32l4Runner
 
 from .config import PHRTOS_PROJECT_DIR, DEVICE_SERIAL, DEVICE_SERIAL_USB
 
@@ -25,5 +25,7 @@ class RunnerFactory:
             return HostRunner()
         if target == 'armv7m7-imxrt106x':
             return IMXRT106xRunner((DEVICE_SERIAL, DEVICE_SERIAL_USB))
+        if target == 'stm32l4':
+            return Stm32l4Runner('/dev/ttyACM0')
 
         raise ValueError(f"Unknown Runner target: {target}")

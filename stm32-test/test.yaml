@@ -1,0 +1,4 @@
+test:
+    tests:
+        - name: probe
+          harness: probe.py
