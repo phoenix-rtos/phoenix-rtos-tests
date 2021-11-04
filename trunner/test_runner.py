@@ -9,7 +9,7 @@ from .testcase import TestCaseFactory
 class TestsRunner:
     """Class responsible for loading, building and running tests"""
 
-    def __init__(self, targets, test_paths, build=True, flash=True):
+    def __init__(self, targets, test_paths, serial, build=True, flash=True):
         self.targets = targets
         self.test_configs = []
         self.test_paths = test_paths
@@ -17,6 +17,7 @@ class TestsRunner:
         self.build = build
         self.flash = flash
         self.runners = None
+        self.serial = serial
 
     def search_for_tests(self):
         paths = []
@@ -37,7 +38,7 @@ class TestsRunner:
             logging.debug(f"File {path} parsed successfuly\n")
 
     def run(self):
-        self.runners = {target: RunnerFactory.create(target) for target in self.targets}
+        self.runners = {target: RunnerFactory.create(target=target, serial=self.serial) for target in self.targets}
         self.search_for_tests()
         self.parse_tests()
 
