@@ -84,7 +84,8 @@ def parse_args():
         # Run on all available targets
         args.target = config.ALL_TARGETS
 
-    config.DEVICE_SERIAL = args.serial
+    if not args.serial:
+        args.serial = config.DEVICE_SERIAL
 
     return args
 
@@ -108,7 +109,8 @@ def main():
     runner = TestsRunner(targets=args.target,
                          test_paths=args.test,
                          build=args.build,
-                         flash=not args.no_flash)
+                         flash=not args.no_flash,
+                         serial=args.serial)
 
     passed, failed, skipped = runner.run()
 
