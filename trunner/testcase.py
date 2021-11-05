@@ -39,13 +39,9 @@ class TestCase:
         self.status = status
         self.harness = None
         self.exception = ''
-        self.type = None
 
     def fail(self):
         self.status = TestCase.FAILED
-
-    def skip(self):
-        self.status = TestCase.SKIPPED
 
     def skipped(self):
         return self.status == TestCase.SKIPPED
@@ -55,9 +51,6 @@ class TestCase:
 
     def passed(self):
         return self.status == TestCase.PASSED
-
-    def is_type(self, type):
-        return self.type == type
 
     def colored_status(self):
         if self.passed():
@@ -94,7 +87,6 @@ class TestCase:
     def exec_test(self, proc):
         try:
             # Wait for a psh prompt
-            proc.sendline('\n')
             proc.expect_exact('(psh)% ')
         except (TIMEOUT, EOF) as exc:
             msg = 'Waiting for psh prompt failed!\n'
@@ -200,7 +192,6 @@ class TestCaseCustomHarness(TestCase):
     ):
         super().__init__(name, target, timeout, exec_cmd, use_sysexec, status)
         self.load_module(harness_path)
-        self.type = 'harness'
 
     def load_module(self, path):
         self.spec = importlib.util.spec_from_file_location('harness', path.absolute())
@@ -228,7 +219,6 @@ class TestCaseUnit(TestCase):
         super().__init__(name, target, timeout, exec_cmd, use_sysexec, status)
         self.harness = UnitTestHarness.harness
         self.unit_test_results = []
-        self.type = 'unit'
 
     def log_test_status(self):
         super().log_test_status()

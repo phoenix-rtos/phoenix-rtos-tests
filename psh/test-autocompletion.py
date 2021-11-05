@@ -53,8 +53,6 @@ def assert_hints(p, path, hints):
 def harness(p):
     run_psh(p)
     assert_only_prompt(p)
-    p.send("\n")
-    assert_prompt(p)
 
     mkdir(p, 'etc')
 

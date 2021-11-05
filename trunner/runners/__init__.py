@@ -12,6 +12,6 @@
 from .HostRunner import HostRunner
 from .QemuRunner import QemuRunner
 from .IMXRT106xRunner import IMXRT106xRunner
-from .Stm32l4Runner import Stm32l4Runner
+from .STM32L4Runner import STM32L4Runner
 
-__all__ = ['HostRunner', 'QemuRunner', 'IMXRT106xRunner']
+__all__ = ['HostRunner', 'QemuRunner', 'IMXRT106xRunner', 'STM32L4Runner']
