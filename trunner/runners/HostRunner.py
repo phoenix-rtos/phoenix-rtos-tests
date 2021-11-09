@@ -16,6 +16,10 @@ from .common import rootfs
 class HostRunner(Runner):
     """This class provides interface to run test case using host as a device."""
 
+    def flash(self):
+        """No-op method for HostRunner, forced inheritance from Runner class"""
+        pass
+
     def run(self, test):
         if test.skipped():
             return
