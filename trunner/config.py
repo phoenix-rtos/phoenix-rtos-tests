@@ -30,22 +30,24 @@ PHRTOS_TEST_DIR = PHRTOS_PROJECT_DIR / 'phoenix-rtos-tests'
 PYEXPECT_TIMEOUT = 8
 
 # Available targets for test runner.
-ALL_TARGETS = ['ia32-generic', 'host-pc', 'armv7m7-imxrt106x', 'armv7m4-stm32l4']
+ALL_TARGETS = ['ia32-generic', 'host-pc', 'armv7m7-imxrt106x', 'armv7m7-imxrt117x', 'armv7m4-stm32l4']
 
 # Default targets used by parser if 'target' value is absent
 DEFAULT_TARGETS = [target for target in ALL_TARGETS
                    if target not in ('host-pc', 'armv7m4-stm32l4')]
 
-DEVICE_TARGETS = ['armv7m7-imxrt106x']
+DEVICE_TARGETS = ['armv7m7-imxrt106x', 'armv7m7-imxrt117x']
 
 CURRENT_TARGET = None
 
-# Port to communicate with hardware board
+# Port to communicate with hardware boards
 DEVICE_SERIAL_PORT = "/dev/serial/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.4:1.1"
 DEVICE_SERIAL_BAUDRATE = 115200
 
 # DEVICE_SERIAL USB port address
 DEVICE_SERIAL_USB = "1-1.4"
+
+PHOENIXD_PORT = '/dev/serial/by-id/usb-Phoenix_Systems_plo_CDC_ACM-if00'
 
 
 class ParserError(Exception):

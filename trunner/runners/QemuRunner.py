@@ -20,6 +20,10 @@ class QemuRunner(Runner):
         self.qemu = qemu
         self.args = args
 
+    def flash(self):
+        """No-op method for QemuRunner, forced inheritance from Runner class"""
+        pass
+
     def run(self, test):
         if test.skipped():
             return

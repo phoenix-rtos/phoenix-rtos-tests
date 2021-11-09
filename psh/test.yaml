@@ -33,3 +33,4 @@ test:
           targets:
               exclude:
                   - armv7m7-imxrt106x
+                  - armv7m7-imxrt117x

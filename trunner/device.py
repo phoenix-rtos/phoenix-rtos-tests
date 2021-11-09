@@ -1,7 +1,7 @@
 # Imports of available runners
-from .runners import HostRunner, QemuRunner, IMXRT106xRunner, STM32L4Runner
+from .runners import HostRunner, QemuRunner, IMXRT106xRunner, IMXRT117xRunner, STM32L4Runner
 
-from .config import PHRTOS_PROJECT_DIR, DEVICE_SERIAL_USB
+from .config import PHRTOS_PROJECT_DIR, DEVICE_SERIAL_USB, PHOENIXD_PORT
 
 
 QEMU_CMD = {
@@ -24,7 +24,9 @@ class RunnerFactory:
         if target == 'host-pc':
             return HostRunner()
         if target == 'armv7m7-imxrt106x':
-            return IMXRT106xRunner((serial, DEVICE_SERIAL_USB))
+            return IMXRT106xRunner((serial, DEVICE_SERIAL_USB), PHOENIXD_PORT, is_rpi_host=True)
+        if target == 'armv7m7-imxrt117x':
+            return IMXRT117xRunner(serial, PHOENIXD_PORT, is_rpi_host=True)
         if target == 'armv7m4-stm32l4':
             return STM32L4Runner(serial)
 
