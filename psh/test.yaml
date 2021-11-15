@@ -22,6 +22,12 @@ test:
         - name: cat
           harness: test-cat.py
 
+        - name: cat-shells
+          harness: test-cat-shells.py
+          targets:
+              value:
+                  - ia32-generic
+
         - name: mkdir
           harness: test-mkdir.py
           targets:

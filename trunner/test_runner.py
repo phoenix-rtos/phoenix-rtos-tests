@@ -1,5 +1,6 @@
 import logging
 
+from . import config
 from .builder import TargetBuilder
 from .config import TestCaseConfig, ParserArgs
 from .device import RunnerFactory
@@ -55,6 +56,7 @@ class TestsRunner:
                 runner.flash()
 
         for target, tests in self.tests_per_target.items():
+            config.CURRENT_TARGET = target
             for test_case in tests:
                 test_case.log_test_started()
                 self.runners[target].run(test_case)
