@@ -15,7 +15,7 @@
 import string
 import pexpect
 
-from psh.tools.basic import run_psh, assert_only_prompt, assert_prompt
+import psh.tools.psh as psh
 
 import psh.tools.login as logintools
 
@@ -35,19 +35,18 @@ def assert_auth(p):
 
 def harness(p):
     # Run psh
-    run_psh(p)
-    assert_only_prompt(p)
+    psh.init(p)
 
     # Check if auth app is available and login exit
     assert_auth(p)
     p.send(EOT)
-    assert_prompt(p, 'Cannot exit "auth" during login passing', timeout=1)
+    psh.assert_prompt(p, msg='Cannot exit "auth" during login passing', timeout=1)
 
     # Exiting auth during password
     assert_auth(p)
     p.send(cred_bad.user + '\n')
     p.send(EOT)
-    assert_prompt(p, 'Cannot exit "auth": password passing', timeout=1)
+    psh.assert_prompt(p, msg='Cannot exit "auth": password passing', timeout=1)
 
     # Good login
     assert_auth(p)
@@ -89,4 +88,4 @@ def harness(p):
     for i in range(len(cred_ok.passwd) + 9):  # test too many backspaces
         p.send(BACKSPACE)
     p.send(cred_ok.passwd + '\n')
-    assert_prompt(p, 'Login should pass but failed', timeout=1)
+    psh.assert_prompt(p, msg='Login should pass but failed', timeout=1)

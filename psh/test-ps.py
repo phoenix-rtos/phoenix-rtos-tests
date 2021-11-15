@@ -1,4 +1,4 @@
-from psh.tools.basic import run_psh, assert_only_prompt
+import psh.tools.psh as psh
 
 """
 (psh)% ps
@@ -12,8 +12,7 @@ from psh.tools.basic import run_psh, assert_only_prompt
 
 
 def harness(p):
-    run_psh(p)
-    assert_only_prompt(p)
+    psh.init(p)
 
     header_seen = False
     expected_tasks = ['[idle]', 'init', 'psh']

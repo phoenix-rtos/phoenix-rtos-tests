@@ -16,7 +16,7 @@ from collections import namedtuple
 
 import pexpect
 
-from psh.tools.basic import assert_prompt, assert_prompt_fail
+import psh.tools.psh as psh
 
 
 Credentials = namedtuple('Credentials', 'user passwd')
@@ -32,12 +32,12 @@ def log_in(p, login, passwd):
 
 def assert_login(p, login, passwd):
     log_in(p, login, passwd)
-    assert_prompt(p, 'Login should pass but failed', timeout=1)
+    psh.assert_prompt(p, msg='Login should pass but failed', timeout=1)
 
 
 def assert_login_fail(p, login, passwd):
     log_in(p, login, passwd)
-    assert_prompt_fail(p, 'Login should fail but passed', timeout=1)
+    psh.assert_prompt_fail(p, msg='Login should fail but passed', timeout=1)
 
 
 def assert_login_empty(p, login):
