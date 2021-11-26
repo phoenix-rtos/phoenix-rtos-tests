@@ -94,7 +94,7 @@ class IMXRT106xRunner(DeviceRunner):
 
         phd = None
         try:
-            with PloTalker(self.port) as plo:
+            with PloTalker(self.serial_port) as plo:
                 Psu(script=self.SDP).run()
                 plo.wait_prompt()
                 with Phoenixd(self.phoenixd_port) as phd:
@@ -121,7 +121,7 @@ class IMXRT106xRunner(DeviceRunner):
         load_dir = str(rootfs(test.target) / 'bin')
         self.reboot(cut_power=self.is_cut_power_used)
         try:
-            with PloTalker(self.port) as plo:
+            with PloTalker(self.serial_port) as plo:
                 # Because of powering all Rpi ports after powering the board,
                 # there is need to second reboot (without cut power) in order to capture all data
                 # (when using _restart_by_poweroff)

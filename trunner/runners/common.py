@@ -320,8 +320,9 @@ class Runner:
 class DeviceRunner(Runner):
     """This class provides interface to run test case using serial port"""
 
-    def __init__(self, port):
-        self.port = port
+    def __init__(self, serial):
+        self.serial_port = serial[0]
+        self.serial_baudrate = serial[1]
         self.serial = None
 
     def run(self, test):
@@ -329,7 +330,7 @@ class DeviceRunner(Runner):
             return
 
         try:
-            self.serial = serial.Serial(self.port, baudrate=115200)
+            self.serial = serial.Serial(self.serial_port, baudrate=self.serial_baudrate)
         except serial.SerialException:
             test.handle_exception()
             return

@@ -65,9 +65,14 @@ def parse_args():
                         help="Specify verbosity level. By default uses level info.")
 
     parser.add_argument("-s", "--serial",
-                        default=config.DEVICE_SERIAL,
+                        default=config.DEVICE_SERIAL_PORT,
                         help="Specify serial to communicate with device board. "
                              "By default uses %(default)s.")
+
+    parser.add_argument("-b", "--baudrate",
+                        default=config.DEVICE_SERIAL_BAUDRATE,
+                        help="Specify the connection speed of serial. "
+                             "By default uses 115200")
 
     parser.add_argument("--no-flash",
                         default=False, action='store_true',
@@ -85,7 +90,10 @@ def parse_args():
         args.target = config.ALL_TARGETS
 
     if not args.serial:
-        args.serial = config.DEVICE_SERIAL
+        args.serial = config.DEVICE_SERIAL_PORT
+
+    if not args.baudrate:
+        args.serial = config.DEVICE_SERIAL_BAUDRATE
 
     return args
 
@@ -110,7 +118,8 @@ def main():
                          test_paths=args.test,
                          build=args.build,
                          flash=not args.no_flash,
-                         serial=args.serial)
+                         serial=(args.serial, args.baudrate)
+                         )
 
     passed, failed, skipped = runner.run()
 
