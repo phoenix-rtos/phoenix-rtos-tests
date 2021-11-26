@@ -71,7 +71,7 @@ class STM32L4Runner(DeviceRunner):
             return
 
         try:
-            self.serial = serial.Serial(self.port, baudrate=115200)
+            self.serial = serial.Serial(self.serial_port, baudrate=self.serial_baudrate)
         except serial.SerialException:
             test.handle_exception()
             return
