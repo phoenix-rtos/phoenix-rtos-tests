@@ -45,9 +45,6 @@ DEVICE_SERIAL_BAUDRATE = 115200
 # DEVICE_SERIAL USB port address
 DEVICE_SERIAL_USB = "1-1.4"
 
-# Default psh prompt
-DEFAULT_PROMPT = '(psh)% '
-
 
 class ParserError(Exception):
     pass
@@ -112,7 +109,6 @@ class Config(dict):
     def setdefaults(self) -> None:
         self.setdefault('ignore', False)
         self.setdefault('type', 'unit')
-        self.setdefault('prompt', '(psh)% ')
         self.setdefault('psh', True)
         self.setdefault('timeout', PYEXPECT_TIMEOUT)
         self.setdefault_targets()
@@ -144,7 +140,7 @@ class TestConfig(Config):
 
 
 class ConfigParser:
-    KEYWORDS: Tuple[str, ...] = ('exec', 'harness', 'ignore', 'name', 'targets', 'psh', 'prompt', 'timeout', 'type')
+    KEYWORDS: Tuple[str, ...] = ('exec', 'harness', 'ignore', 'name', 'targets', 'psh', 'timeout', 'type')
     TEST_TYPES: Tuple[str, ...] = ('unit', 'harness')
 
     def parse_keywords(self, config: Config) -> None:
@@ -220,22 +216,11 @@ class ConfigParser:
 
         config['exec'] = shlex.split(exec_cmd)
 
-    def parse_prompt(self, config: Config) -> None:
-        prompt = config.get('prompt')
-        if not prompt:
-            return
-
     def parse_psh(self, config: Config) -> None:
-        psh = config.get('psh')
-        if not psh:
-            return
-        psh = str(psh).lower()
-        if psh == 'true':
-            config['psh'] = True
-        elif psh == 'false':
-            config['psh'] = False
-        else:
-            raise ParserError(f'psh value of {psh} is not "True" or "False"')
+        psh = config.get('psh', True)
+
+        if not isinstance(psh, bool):
+            raise ParserError(f'psh must be a boolean value (true/false) not {psh}')
 
     def parse(self, config: Config) -> None:
         self.parse_keywords(config)
@@ -245,7 +230,6 @@ class ConfigParser:
         self.parse_timeout(config)
         self.parse_ignore(config)
         self.parse_exec(config)
-        self.parse_prompt(config)
         self.parse_psh(config)
 
     def resolve_harness(self, config: Config, path: Path) -> None:

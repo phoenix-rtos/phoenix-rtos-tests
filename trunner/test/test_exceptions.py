@@ -25,7 +25,8 @@ class TestPexpectException:
             name='xyz',
             target=ALL_TARGETS[0],
             timeout=3,
-            exec_cmd=['xyz']
+            exec_cmd=['xyz'],
+            psh=False
         )
 
     @pytest.fixture(scope="class")
@@ -59,7 +60,7 @@ class TestPexpectException:
 
         proc = pexpect.fdpexpect.fdspawn(fifo_r, encoding='utf-8', timeout=1)
         testcase.harness = TestPexpectException.fake_harness
-        testcase.handle(proc, psh=False)
+        testcase.handle(proc)
 
         # Release lock for writer to close fifo
         lock.release()
@@ -90,7 +91,7 @@ class TestPexpectException:
 
         proc = pexpect.fdpexpect.fdspawn(fifo_r, encoding='utf-8')
         testcase.harness = TestPexpectException.fake_harness
-        testcase.handle(proc, psh=False)
+        testcase.handle(proc)
 
         fifo_r.close()
 
@@ -125,7 +126,8 @@ class TestExceptionHandler:
             name='xyz',
             target=ALL_TARGETS[0],
             timeout=3,
-            exec_cmd=['xyz']
+            exec_cmd=['xyz'],
+            psh=False
         )
 
     def test_assert(self, testcase):
@@ -133,7 +135,7 @@ class TestExceptionHandler:
             assert False
 
         testcase.harness = TestExceptionHandler.fake_harness(foo)
-        testcase.handle(proc=None, psh=False)
+        testcase.handle(proc=None)
 
         TestExceptionHandler.assert_exc_msg(testcase, ('harness', 'foo'))
 
@@ -142,7 +144,7 @@ class TestExceptionHandler:
             assert False, "boo has failed!"
 
         testcase.harness = TestExceptionHandler.fake_harness(foo)
-        testcase.handle(proc=None, psh=False)
+        testcase.handle(proc=None)
 
         TestExceptionHandler.assert_exc_msg(testcase, ('harness', 'foo'))
         assert "boo has failed!" in testcase.exception
@@ -152,7 +154,7 @@ class TestExceptionHandler:
             raise Exception("boo has failed!")
 
         testcase.harness = TestExceptionHandler.fake_harness(foo)
-        testcase.handle(proc=None, psh=False)
+        testcase.handle(proc=None)
 
         TestExceptionHandler.assert_exc_msg(testcase, ('harness', 'foo'))
         assert 'Exception: boo has failed!' in testcase.exception

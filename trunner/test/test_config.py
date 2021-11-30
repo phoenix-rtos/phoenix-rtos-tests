@@ -102,6 +102,26 @@ class Test_ConfigParser:
 
     @pytest.mark.parametrize('case, answer', [
         ({}, None),
+        ({'psh': True}, True),
+        ({'psh': False}, False),
+    ])
+    def test_psh_keyword(self, parser, case, answer):
+        test = TestConfig(case)
+        parser.parse_psh(test)
+        assert test.get('psh') == answer
+
+    @pytest.mark.parametrize('case', [
+        {'psh': 'false'},
+        {'psh': 1},
+        {'psh': 'yes'},
+    ])
+    def test_psh_keyword_exc(self, parser, case):
+        test = TestConfig(case)
+        with pytest.raises(ParserError):
+            parser.parse_psh(test)
+
+    @pytest.mark.parametrize('case, answer', [
+        ({}, None),
         ({'timeout': 1}, 1),
         ({'timeout': '10'}, 10),
         ({'timeout': 0}, 0),
