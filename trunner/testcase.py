@@ -9,7 +9,7 @@ from pexpect.exceptions import TIMEOUT, EOF
 
 from .harness import UnitTestHarness, UnitTestResult
 from .tools.color import Color
-from .config import DEFAULT_PROMPT, DEVICE_TARGETS
+from .config import DEVICE_TARGETS
 
 
 class TestCase:
@@ -26,7 +26,6 @@ class TestCase:
         target,
         timeout,
         psh=True,
-        prompt=DEFAULT_PROMPT,
         exec_cmd=None,
         use_sysexec=False,
         status=None
@@ -36,7 +35,6 @@ class TestCase:
         self.timeout = timeout
         self.exec_cmd = exec_cmd
         self.psh = psh
-        self.prompt = prompt
         self.use_sysexec = use_sysexec
         if not status:
             status = TestCase.FAILED
@@ -91,7 +89,7 @@ class TestCase:
     def exec_test(self, proc):
         try:
             # Wait for a prompt
-            proc.expect_exact(self.prompt)
+            proc.expect_exact('(psh)% ')
         except (TIMEOUT, EOF) as exc:
             msg = 'Waiting for psh prompt failed!\n'
             self.exception = Color.colorify(msg, Color.BOLD)
@@ -155,17 +153,13 @@ class TestCase:
         self.exception += traceback.format_exc()
         self.status = TestCase.FAILED
 
-    def handle(self, proc, psh=True):
+    def handle(self, proc):
         if self.skipped():
             return
 
         self.status = TestCase.PASSED
 
-        # override psh parameter if set to False
-        if self.psh is False:
-            psh = False
-
-        if psh:
+        if self.psh:
             self.exec_test(proc)
             if self.failed():
                 return
@@ -195,12 +189,11 @@ class TestCaseCustomHarness(TestCase):
         timeout,
         harness_path,
         psh=True,
-        prompt=DEFAULT_PROMPT,
         exec_cmd=None,
         use_sysexec=False,
         status=TestCase.FAILED
     ):
-        super().__init__(name, target, timeout, psh, prompt, exec_cmd, use_sysexec, status)
+        super().__init__(name, target, timeout, psh, exec_cmd, use_sysexec, status)
         self.load_module(harness_path)
 
     def load_module(self, path):
@@ -224,11 +217,10 @@ class TestCaseUnit(TestCase):
         timeout,
         exec_cmd,
         psh=True,
-        prompt=DEFAULT_PROMPT,
         use_sysexec=False,
         status=TestCase.FAILED
     ):
-        super().__init__(name, target, timeout, psh, prompt, exec_cmd, use_sysexec, status)
+        super().__init__(name, target, timeout, psh, exec_cmd, use_sysexec, status)
         self.harness = UnitTestHarness.harness
         self.unit_test_results = []
 
@@ -241,8 +233,8 @@ class TestCaseUnit(TestCase):
             else:
                 logging.debug(f"\t{test}\n")
 
-    def handle(self, proc, psh=True):
-        res = super().handle(proc, psh)
+    def handle(self, proc):
+        res = super().handle(proc)
 
         if self.status == TestCase.PASSED:
             self.unit_test_results = res
@@ -269,7 +261,6 @@ class TestCaseFactory:
                 target=test['target'],
                 timeout=test['timeout'],
                 psh=test['psh'],
-                prompt=test['prompt'],
                 exec_cmd=test.get('exec'),
                 use_sysexec=use_sysexec,
                 status=status
@@ -280,7 +271,6 @@ class TestCaseFactory:
                 target=test['target'],
                 timeout=test['timeout'],
                 psh=test['psh'],
-                prompt=test['prompt'],
                 harness_path=test['harness'],
                 exec_cmd=test.get('exec'),
                 use_sysexec=use_sysexec,

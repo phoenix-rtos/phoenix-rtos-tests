@@ -22,6 +22,9 @@ class HostRunner(Runner):
 
         test_path = rootfs(test.target) / 'bin' / test.exec_cmd[0]
 
+        # host-pc tests must not use psh prompt
+        test.psh = False
+
         try:
             with pexpect.spawn(
                 str(test_path),
@@ -29,6 +32,6 @@ class HostRunner(Runner):
                 encoding="utf-8",
                 timeout=test.timeout,
             ) as proc:
-                test.handle(proc, psh=False)
+                test.handle(proc)
         except pexpect.exceptions.ExceptionPexpect:
             test.handle_exception()
