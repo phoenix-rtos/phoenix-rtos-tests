@@ -14,6 +14,18 @@ on:
 
 # jobs
 jobs:
+  # getting hardware test targets from the file placed in phoenix-rtos-tests repository
+  get-hw-targets:
+    name: get hardware targets for testing
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get hardware test targets
+        id: get_file
+        run: |
+          echo "::set-output name=matrix::$(curl https://raw.githubusercontent.com/phoenix-rtos/phoenix-rtos-tests/damianloew/get_hw_targets_from_file/.github/hw_targets.json)"
+    outputs:
+      matrix: ${{ steps.get_file.outputs.matrix }}
+
   build:
     name: build image
     runs-on: ubuntu-latest
@@ -111,14 +123,14 @@ jobs:
           target: ${{ matrix.target }}
 
   test-hw:
-    needs: build
+    needs: ['build', 'get-hw-targets']
     name: run tests on hardware
     runs-on: ${{ matrix.target }}
     outputs:
       runner_result: ${{ steps.runner.outcome }}
     strategy:
       matrix:
-        target: ['armv7m7-imxrt106x']
+        target: ${{ fromJson(needs.get-hw-targets.outputs.matrix) }}
 
     steps:
       - name: Checkout phoenix-rtos-project
