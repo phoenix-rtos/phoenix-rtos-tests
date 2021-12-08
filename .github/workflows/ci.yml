@@ -11,6 +11,12 @@ on:
     branches:
       - master
       - 'feature/*'
+  workflow_call:
+    secrets:
+      CI_BOT_EMAIL_USERNAME:
+        required: true
+      CI_BOT_EMAIL_PASSWORD:
+        required: true
 
 # jobs
 jobs:
