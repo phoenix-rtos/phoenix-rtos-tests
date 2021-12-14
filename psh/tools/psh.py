@@ -18,7 +18,7 @@ import pexpect
 
 
 from trunner.config import CURRENT_TARGET, DEVICE_TARGETS
-
+from collections import namedtuple
 
 EOL = r'(\r+)\n'
 PROMPT = r'(\r+)\x1b\[0J' + r'\(psh\)% '
@@ -60,6 +60,42 @@ def assert_cmd(pexpect_proc, cmd, expected='', msg='', is_regex=False):
     exp_readable = _readable(exp_regex)
     msg = f'Expected output regex was: \n---\n{exp_readable}\n---\n' + msg
     assert pexpect_proc.expect([exp_regex, pexpect.TIMEOUT]) == 0, msg
+
+
+def ls(p, dir=''):
+    ''' Returns the named tuple with information about files present in the specified directory '''
+    File = namedtuple('File', ['name', 'owner', 'is_dir'])
+
+    p.sendline(f'ls -la {dir}')
+    p.expect_exact('ls -la')
+    if dir:
+        p.expect_exact(f' {dir}')
+
+    p.expect_exact('\n')
+
+    files = []
+    while True:
+        idx = p.expect([r'\(psh\)\% ', r'(.*?)(\r+)\n'])
+        if idx == 0:
+            break
+
+        line = p.match.group(0)
+
+        try:
+            permissions, _, owner, _, _, _, _, _, name = line.split()
+        except ValueError:
+            assert False, f'wrong ls output: {line}'
+
+        # Name is printed with ascii escaped characters - remove them
+        if name.startswith('\x1b[34m'):
+            name = name[5:]
+        if name.endswith('\x1b[0m'):
+            name = name[:-4]
+
+        f = File(name, owner, permissions[0] == 'd')
+        files.append(f)
+
+    return files
 
 
 def assert_unprintable(pexpect_proc, cmd, msg=''):
