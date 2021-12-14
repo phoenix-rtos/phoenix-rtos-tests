@@ -16,7 +16,19 @@ The python module `psh` makes writing harness tests easier. It provides the foll
 
 * `assert_exec(pexpect_proc, prog, expected='', msg='')` - Same as `assert_cmd`, but input is selected appropriately for the current target platform (using sysexec or /bin/prog_name). So for example instead of using `assert_cmd('/bin/psh')` or `assert_cmd('sysexec psh')` use `assert_exec(prog='psh')`.
 
-* `init(pexpect_proc)` - Runs psh and next, asserts the first prompt.
+* `ls(pexpect_proc, dir='')` -  Returns the list with named tuples containing information about files present in the specified directory - `dir`. Named tuple consists of following elements:
+  - `name` - name of the file in string format
+  - `owner`- owner of the file in string format
+  - `is_dir` - True, if the file is directory
+  - `date` - Date of last file's edition in the following tuple format: `(month, mday, time)`, for example `('Jan', '01', '00:01')`
+
+* `ls_simple(pexpect_proc, dir='')` - Returns list of file names from the specified directory - `dir`
+
+* `uptime(pexpect_proc)` - Returns tuple with time since start of a system in format: `hh:mm:ss`, for example `['01', '01', '00']`
+
+* `get_commands(pexpect_proc)` - Returns a list of available psh commands.
+
+* `init(pexpect_proc)` - runs psh and next, asserts the first prompt.
 
 The `pexpect_proc` argument is the [pexpect](https://pexpect.readthedocs.io/en/stable/api/index.html) process returned by `pexpect.spawn()` method. Each functional test has the spawned process passed in the argument, which is `p`, please see examples below.
 
@@ -30,10 +42,8 @@ The `pexpect_proc` argument is the [pexpect](https://pexpect.readthedocs.io/en/s
   def harness(p):
       psh.init(p)
       fname = 'nonexistentFile'
-      cmd = f'cat {fname}'
-      statement = f'cat: {fname} no such file'
 
-      psh.assert_cmd(p, cmd, expected=statement)
+      psh.assert_cmd(p, cmd=f'cat {fname}', expected=f'cat: {fname} no such file')
   ```
 
 
@@ -46,3 +56,4 @@ The `pexpect_proc` argument is the [pexpect](https://pexpect.readthedocs.io/en/s
       psh.init(p)
       expected = ('Hello', 'World')
       psh.assert_exec(p, 'helloworld', expected, "Hello World hasn't been displayed correctly")
+  ```
