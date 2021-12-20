@@ -60,3 +60,6 @@ test:
 
         - name: history
           harness: test-history.py
+
+        - name: exit
+          harness: test-exit.py
