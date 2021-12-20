@@ -18,6 +18,13 @@
 /* no need for forward declarations, RUN_TEST_GROUP does it by itself */
 void runner(void)
 {
+	RUN_TEST_GROUP(stdio_fopenfclose);
+	RUN_TEST_GROUP(stdio_line);
+	RUN_TEST_GROUP(stdio_getput);
+	RUN_TEST_GROUP(stdio_fileseek);
+	RUN_TEST_GROUP(stdio_fileop);
+	RUN_TEST_GROUP(stdio_bufs);
+
 	RUN_TEST_GROUP(getpwd);
 	RUN_TEST_GROUP(resolve_path);
 	RUN_TEST_GROUP(file);
