@@ -20,12 +20,6 @@ import psh.tools.psh as psh
 CHARS = list(set(string.printable) - set(string.whitespace) - set('/'))
 
 
-def get_rand_names(pool, count, min_chars=8, max_chars=16):
-    ''' Returns random names (with length between min_chars and max_chars) from characters pool'''
-    names = [''.join(random.choices(pool, k=random.randint(min_chars, max_chars))) for _ in range(count)]
-    return names
-
-
 def assert_present(name, files, dir=False):
     ''' Asserts that the `name` file/directory is present in the `files` named tuple'''
     for file in files:
@@ -79,3 +73,42 @@ def assert_random(p, pool, cmd, path, count=20):
             assert_present(name, files, dir=True)
         elif cmd == 'touch':
             assert_present(name, files, dir=False)
+
+
+def get_process_list(p):
+    header_seen = False
+    ps_header = 'PID PPID PR STATE %CPU WAIT TIME VMEM THR CMD'.split()
+    ps_list = []
+    oneline_pattern = r'(.*?)(\r+)\n'
+    p.sendline('ps')
+    p.expect(r'ps(\r+)\n')
+    while True:
+        idx = p.expect([r'\(psh\)% ', oneline_pattern])
+        if idx == 0:
+            break
+        line = p.match.group(1)
+        if not header_seen and line.split() == ps_header:
+            header_seen = True
+        else:
+            try:
+                pid, ppid, pr, state, cpu, wait, time, vmem, thr, task = line.split()
+            except ValueError:
+                assert False, f'wrong ps output: {line}'
+
+            ps_list.append({'pid': pid, 'task': task, 'state': state})
+
+    return ps_list
+
+
+def get_sleepy_psh_pid(p):
+    new = get_process_list(p)
+    for proc in new:
+        if (proc['task'] == 'psh' or proc['task'] == '/bin/psh') and proc['state'] == 'sleep':
+            return proc['pid']
+    return -1
+
+
+def get_rand_names(pool, count, min_chars=8, max_chars=16):
+    ''' Returns random names (with length between min_chars and max_chars) from characters pool'''
+    names = [''.join(random.choices(pool, k=random.randint(min_chars, max_chars))) for _ in range(count)]
+    return names

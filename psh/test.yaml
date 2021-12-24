@@ -64,5 +64,17 @@ test:
         - name: help
           harness: test-help.py
 
+        - name: mem-mmu
+          harness: test-mem-mmu.py
+          targets:
+              value:
+                  - ia32-generic
+
+        - name: mem-nommu
+          harness: test-mem-nommu.py
+          targets:
+              value:
+                  - armv7m7-imxrt106x
+
         - name: exit
           harness: test-exit.py
