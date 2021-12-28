@@ -25,6 +25,7 @@ void runner(void)
 	RUN_TEST_GROUP(stdio_fileop);
 	RUN_TEST_GROUP(stdio_bufs);
 
+	RUN_TEST_GROUP(stdio_format);
 	RUN_TEST_GROUP(getpwd);
 	RUN_TEST_GROUP(resolve_path);
 	RUN_TEST_GROUP(file);
