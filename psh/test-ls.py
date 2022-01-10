@@ -14,13 +14,6 @@
 
 import psh.tools.psh as psh
 
-esc_codes = {
-    'set_blue': r'\x1b\[34m',
-    'set_green': r'\033\[32m',
-    'set_yellowonblack': r'\033\[33;40m',
-    'reset_attributes': r'\x1b\[0m'
-}
-
 
 def create_testdir(p, files):
     # no assertion for creating directory properly, because testdir may already exists (no rm command)
@@ -51,14 +44,14 @@ def assert_ls_noarg(p, files):
     expected = r''
     for file in sorted(files):
         if file == 'dir':
-            expected += esc_codes['set_blue']
+            expected += psh.esc_codes['set_blue']
         if file[0] == '.':
             continue
         # last position
         if file == sorted(files)[len(files)-1]:
-            expected += f'{file}' + esc_codes['reset_attributes']
+            expected += f'{file}' + psh.esc_codes['reset_attributes']
         else:
-            expected += f'{file}  ' + esc_codes['reset_attributes']
+            expected += f'{file}  ' + psh.esc_codes['reset_attributes']
     # `expected` has to be treated as regex in order not to omit esc sequences, so last EOL has to be matched too
     expected = expected + psh.EOL
 
@@ -70,14 +63,14 @@ def assert_ls_1(p, files):
     expected = r''
     for file in sorted(files):
         if file == 'dir':
-            expected += esc_codes['set_blue']
+            expected += psh.esc_codes['set_blue']
         if file[0] == '.':
             continue
         # last position
         if file == sorted(files)[len(files)-1]:
-            expected += f'{file}' + esc_codes['reset_attributes']
+            expected += f'{file}' + psh.esc_codes['reset_attributes']
         else:
-            expected += f'{file}' + esc_codes['reset_attributes'] + psh.EOL
+            expected += f'{file}' + psh.esc_codes['reset_attributes'] + psh.EOL
     expected = expected + psh.EOL
 
     msg = 'Wrong content of listed directory, when calling `ls -1`'
@@ -85,21 +78,21 @@ def assert_ls_1(p, files):
 
 
 def assert_ls_a(p, files):
-    expected = esc_codes['set_blue'] \
+    expected = psh.esc_codes['set_blue'] \
         + '.  ' \
-        + esc_codes['reset_attributes'] \
-        + esc_codes['set_blue'] \
+        + psh.esc_codes['reset_attributes'] \
+        + psh.esc_codes['set_blue'] \
         + '..  ' \
-        + esc_codes['reset_attributes']
+        + psh.esc_codes['reset_attributes']
 
     for file in sorted(files):
         if file == 'dir':
-            expected += esc_codes['set_blue']
+            expected += psh.esc_codes['set_blue']
         # last position
         if file == sorted(files)[len(files)-1]:
-            expected += f'{file}' + esc_codes['reset_attributes']
+            expected += f'{file}' + psh.esc_codes['reset_attributes']
         else:
-            expected += f'{file}  ' + esc_codes['reset_attributes']
+            expected += f'{file}  ' + psh.esc_codes['reset_attributes']
     expected = expected + psh.EOL
 
     msg = 'Wrong content of listed directory, when calling `ls -a`'
@@ -107,7 +100,7 @@ def assert_ls_a(p, files):
 
 
 def assert_ls_d(p):
-    expected = esc_codes['set_blue'] + 'test_ls_dir' + esc_codes['reset_attributes']
+    expected = psh.esc_codes['set_blue'] + 'test_ls_dir' + psh.esc_codes['reset_attributes']
     expected = expected + psh.EOL
 
     msg = 'Wrong output, when calling `ls -d tested_directory`'
@@ -115,9 +108,9 @@ def assert_ls_d(p):
 
 
 def assert_ls_d_noarg(p):
-    expected = esc_codes['set_blue'] \
+    expected = psh.esc_codes['set_blue'] \
         + '.' \
-        + esc_codes['reset_attributes']
+        + psh.esc_codes['reset_attributes']
     expected = expected + psh.EOL
 
     msg = 'Wrong output, when calling `ls -d` without specified directory'
@@ -128,14 +121,14 @@ def assert_ls_f(p, files):
     expected = ''
     for file in files:
         if file == 'dir':
-            expected += esc_codes['set_blue']
+            expected += psh.esc_codes['set_blue']
         if file[0] == '.':
             continue
         # last position
         if file == files[len(files)-1]:
-            expected += f'{file}' + esc_codes['reset_attributes']
+            expected += f'{file}' + psh.esc_codes['reset_attributes']
         else:
-            expected += f'{file}  ' + esc_codes['reset_attributes']
+            expected += f'{file}  ' + psh.esc_codes['reset_attributes']
     expected = expected + psh.EOL
 
     msg = 'Wrong output, when calling `ls -f test_ls_dir`'
@@ -176,14 +169,14 @@ def assert_ls_r(p, files):
     hidd_files_nr = 1
     for file in sorted(files, reverse=True):
         if file == 'dir':
-            expected += esc_codes['set_blue']
+            expected += psh.esc_codes['set_blue']
         if file[0] == '.':
             continue
         # last position
         if file == sorted(files, reverse=True)[len(files)-1-hidd_files_nr]:
-            expected += f'{file}' + esc_codes['reset_attributes']
+            expected += f'{file}' + psh.esc_codes['reset_attributes']
         else:
-            expected += f'{file}  ' + esc_codes['reset_attributes']
+            expected += f'{file}  ' + psh.esc_codes['reset_attributes']
     expected = expected + psh.EOL
 
     msg = 'Wrong output, when calling `ls -r test_ls_dir`'
@@ -192,7 +185,7 @@ def assert_ls_r(p, files):
 
 def assert_ls_S(p, files):
     # dir size > empty files size
-    expected = esc_codes['set_blue'] + 'dir  ' + esc_codes['reset_attributes']
+    expected = psh.esc_codes['set_blue'] + 'dir  ' + psh.esc_codes['reset_attributes']
 
     for file in sorted(files):
         if file == 'dir':
@@ -200,9 +193,9 @@ def assert_ls_S(p, files):
         if file[0] == '.':
             continue
         if file == sorted(files)[len(files)-1]:
-            expected += f'{file}' + esc_codes['reset_attributes']
+            expected += f'{file}' + psh.esc_codes['reset_attributes']
         else:
-            expected += f'{file}  ' + esc_codes['reset_attributes']
+            expected += f'{file}  ' + psh.esc_codes['reset_attributes']
     expected = expected + psh.EOL
 
     msg = 'Wrong output, when calling `ls -S test_ls_dir`'
@@ -211,9 +204,9 @@ def assert_ls_S(p, files):
 
 def assert_ls_devcolor(p):
     # the following regex will match list of various devices
-    expected = f'(({esc_codes["set_yellowonblack"]}' \
+    expected = f'(({psh.esc_codes["set_yellowonblack"]}' \
                + r'(\S+)[ \t]*' \
-               + f'{esc_codes["reset_attributes"]}' \
+               + f'{psh.esc_codes["reset_attributes"]}' \
                + r')+' \
                + r'(\r+\n)' \
                + r')+'

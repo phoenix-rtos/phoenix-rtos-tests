@@ -44,3 +44,11 @@ test:
 
         - name: ls
           harness: test-ls.py
+
+        # test skipped because of issue #194
+        - name: ls-rootfs
+          harness: test-ls-rootfs.py
+          ignore: True
+          targets:
+              value:
+                  - ia32-generic
