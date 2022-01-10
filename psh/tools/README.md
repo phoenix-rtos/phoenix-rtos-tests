@@ -4,7 +4,7 @@
 
 The python module `psh` makes writing harness tests easier. It provides the following functions:
 
-* `assert_cmd(pexpect_proc, cmd, expected, msg, is_regex)` - Sends a specified command and asserts that it's displayed correctly with optional expected output and next prompt. The function also checks if there are no unwanted pieces of information. It's possible to pass a regex in the `expected` argument, but then `is_regex` has to be set True. Multi-line expected outputs have to be passed in a tuple, with lines in specific items. There is also a possibility to pass an additional message to print if the assertion fails. For a more readable assertion message in case that the test fails, the expected output is printed as regex, but in separate lines. So EOL, which is `r'(\r+)\n'` is replaced by `'\n'`.
+* `assert_cmd(pexpect_proc, cmd, expected, msg, is_regex)` - Sends a specified command and asserts that it's displayed correctly with optional expected output and next prompt. The function also checks if there are no unwanted pieces of information. It's possible to pass a regex in the `expected` argument, but then `is_regex` has to be set True. The regex should be passed as one raw string and match `EOL` after an expected output. Multi-line expected outputs have to be passed in a tuple, with lines in specific items. There is also a possibility to pass an additional message to print if the assertion fails. For a more readable assertion message in case that the test fails, the expected output is printed as regex, but in separate lines. So EOL, which is `r'(\r+)\n'` is replaced by `'\n'`.
 
 * `assert_only_prompt(pexpect_proc)` - assert psh prompt with the appropriate esc sequence.
 
