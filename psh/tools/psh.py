@@ -42,13 +42,15 @@ def assert_cmd(pexpect_proc, cmd, expected, msg='', is_regex=False):
     with optional expected output and next prompt'''
     pexpect_proc.sendline(cmd)
     cmd = re.escape(cmd)
-    exp_regex = ''
-    if not isinstance(expected, tuple):
-        expected = tuple((expected,))
-    for line in expected:
-        if not is_regex:
+    if is_regex:
+        exp_regex = expected
+    else:
+        exp_regex = ''
+        if not isinstance(expected, tuple):
+            expected = tuple((expected,))
+        for line in expected:
             line = re.escape(line)
-        exp_regex += line + EOL
+            exp_regex += line + EOL
 
     exp_regex = cmd + EOL + exp_regex + PROMPT
     exp_readable = _readable(exp_regex)
