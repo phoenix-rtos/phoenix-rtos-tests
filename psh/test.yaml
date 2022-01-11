@@ -76,5 +76,8 @@ test:
               value:
                   - armv7m7-imxrt106x
 
+        - name: uptime
+          harness: test-uptime.py
+
         - name: exit
           harness: test-exit.py
