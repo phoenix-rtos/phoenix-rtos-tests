@@ -16,8 +16,7 @@
 import re
 import pexpect
 
-
-from trunner.config import CURRENT_TARGET, DEVICE_TARGETS
+import trunner.config as config
 
 
 EOL = r'(\r+)\n'
@@ -84,7 +83,8 @@ def assert_prompt_fail(pexpect_proc, msg='', timeout=-1):
 def assert_exec(pexpect_proc, prog, expected='', msg=''):
     ''' Executes specified program and asserts that it's displayed correctly
     with optional expected output and next prompt'''
-    if CURRENT_TARGET in DEVICE_TARGETS:
+
+    if config.CURRENT_TARGET in config.DEVICE_TARGETS:
         exec_cmd = f'sysexec {prog}'
     else:
         exec_cmd = f'/bin/{prog}'
