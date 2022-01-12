@@ -32,6 +32,7 @@ void runner(void)
 	RUN_TEST_GROUP(unistd_uids);
 	RUN_TEST_GROUP(string_strlcpy);
 	RUN_TEST_GROUP(string_strlcat);
+	RUN_TEST_GROUP(unistd_fsdir);
 }
 
 
