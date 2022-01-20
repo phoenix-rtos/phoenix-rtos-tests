@@ -5,6 +5,7 @@ test:
           harness: test-echo.py
           targets:
               include: [host-pc]
+              exclude: [armv7m7-imxrt106x]
 
         - name: unity
           exec: test-unity
