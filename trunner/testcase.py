@@ -95,6 +95,8 @@ class TestCase:
             self.exception = Color.colorify(msg, Color.BOLD)
             self.handle_pyexpect_error(proc, exc)
             return
+        except UnicodeDecodeError:
+            self.handle_exception()
 
         if self.exec_cmd:
             try:
@@ -174,6 +176,8 @@ class TestCase:
         except AssertionError as exc:
             self.handle_assertion(proc, exc)
         except Exception:
+            self.handle_exception()
+        except UnicodeDecodeError:
             self.handle_exception()
 
         return res
