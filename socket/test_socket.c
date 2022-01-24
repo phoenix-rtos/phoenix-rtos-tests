@@ -25,16 +25,19 @@
 #include <sys/un.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <signal.h>
+#include <poll.h>
 
 #include "unity_fixture.h"
 
 
-#define MAX_FD_CNT        16
-#define CLOSE_LOOP_CNT    100
-#define SENDMSG_LOOP_CNT  100
-#define FORK_LOOP_CNT     100
-#define MAX_TRANSFER_CNT  (1024 * 16)
-#define TRANSFER_LOOP_CNT 100
+#define MAX_FD_CNT         16
+#define CLOSE_LOOP_CNT     100
+#define SENDMSG_LOOP_CNT   100
+#define FORK_LOOP_CNT      100
+#define MAX_TRANSFER_CNT   (1024 * 16)
+#define TRANSFER_LOOP_CNT  100
+#define CONNECTED_LOOP_CNT 10
 
 static char data[1024];
 static char buf[1024];
@@ -121,14 +124,14 @@ ssize_t unix_msg_recv(int sock, void *buf, size_t len, int *fd, size_t *fdcnt)
 }
 
 
-ssize_t unix_dgram_socket(char *name)
+ssize_t unix_named_socket(int type, const char *name)
 {
 	int fd;
 	struct sockaddr_un addr = { 0 };
 
 	unlink(name);
 
-	if ((fd = socket(AF_UNIX, SOCK_DGRAM, 0)) < 0)
+	if ((fd = socket(AF_UNIX, type, 0)) < 0)
 		return -1;
 
 	addr.sun_family = AF_UNIX;
@@ -140,6 +143,17 @@ ssize_t unix_dgram_socket(char *name)
 	}
 
 	return fd;
+}
+
+
+int unix_connect(int fd, const char *name)
+{
+	struct sockaddr_un addr = { 0 };
+
+	addr.sun_family = AF_UNIX;
+	strcpy(addr.sun_path, name);
+
+	return connect(fd, (struct sockaddr *)&addr, SUN_LEN(&addr));
 }
 
 
@@ -491,8 +505,8 @@ TEST(test_unix_socket, unix_close)
 	// TODO: check memory leak
 
 	for (i = 0; i < CLOSE_LOOP_CNT; ++i) {
-		if ((fd[0] = unix_dgram_socket("/tmp/test_close")) < 0)
-			FAIL("unix_dgram_socket");
+		if ((fd[0] = unix_named_socket(SOCK_DGRAM, "/tmp/test_close")) < 0)
+			FAIL("unix_named_socket");
 
 		n = close(fd[0]);
 		TEST_ASSERT(n == 0);
@@ -503,8 +517,8 @@ TEST(test_unix_socket, unix_close)
 		int sfd, rfd;
 		size_t rfdcnt;
 
-		if ((sfd = unix_dgram_socket("/tmp/test_close")) < 0)
-			FAIL("unix_dgram_socket");
+		if ((sfd = unix_named_socket(SOCK_DGRAM, "/tmp/test_close")) < 0)
+			FAIL("unix_named_socket");
 
 		if (socketpair(AF_UNIX, SOCK_STREAM, 0, fd) < 0)
 			FAIL("socketpair");
@@ -781,6 +795,236 @@ TEST(test_unix_socket, unix_transfer)
 }
 
 
+void unix_close_connected(int type)
+{
+	int fd[2];
+
+	if (socketpair(AF_UNIX, type, 0, fd) < 0)
+		FAIL("socketpair");
+
+	close(fd[0]);
+	close(fd[1]);
+}
+
+
+TEST(test_unix_socket, unix_close_connected)
+{
+	unsigned int i;
+
+	for (i = 0; i < CONNECTED_LOOP_CNT; ++i) {
+		unix_close_connected(SOCK_STREAM);
+		unix_close_connected(SOCK_DGRAM);
+		unix_close_connected(SOCK_SEQPACKET);
+	}
+}
+
+
+volatile int got_epipe;
+
+void sighandler(int sig)
+{
+	got_epipe = 1;
+}
+
+
+void unix_send_after_close(int type, int epipe, int err)
+{
+	int fd[2];
+	ssize_t n;
+
+	signal(SIGPIPE, sighandler);
+
+	if (socketpair(AF_UNIX, type, 0, fd) < 0)
+		FAIL("socketpair");
+
+	close(fd[1]);
+
+	got_epipe = 0;
+	n = send(fd[0], data, sizeof(data), 0);
+	TEST_ASSERT(got_epipe == epipe);
+	TEST_ASSERT(n == -1);
+	TEST_ASSERT(errno == err);
+
+	got_epipe = 0;
+	n = send(fd[0], data, sizeof(data), 0);
+	TEST_ASSERT(got_epipe == epipe);
+	TEST_ASSERT(n == -1);
+	TEST_ASSERT(errno == err);
+
+	close(fd[0]);
+
+	signal(SIGPIPE, SIG_DFL);
+}
+
+
+TEST(test_unix_socket, unix_send_after_close)
+{
+	unsigned int i;
+
+	for (i = 0; i < CONNECTED_LOOP_CNT; ++i) {
+		unix_send_after_close(SOCK_STREAM, 1, EPIPE);
+		unix_send_after_close(SOCK_DGRAM, 0, ECONNREFUSED);
+		unix_send_after_close(SOCK_SEQPACKET, 1, EPIPE);
+	}
+}
+
+
+void unix_recv_after_close(int type)
+{
+	int fd[2];
+	ssize_t n;
+
+	if (socketpair(AF_UNIX, type, 0, fd) < 0)
+		FAIL("socketpair");
+
+	close(fd[1]);
+
+	n = recv(fd[0], buf, sizeof(buf), 0);
+	TEST_ASSERT(n == 0); /* EOS */
+
+	close(fd[0]);
+
+	if (socketpair(AF_UNIX, type, 0, fd) < 0)
+		FAIL("socketpair");
+
+	n = send(fd[1], data, sizeof(data), 0);
+	TEST_ASSERT(n == sizeof(data));
+
+	close(fd[1]);
+
+	n = recv(fd[0], buf, sizeof(buf), 0);
+	TEST_ASSERT(n == sizeof(data));
+
+	n = recv(fd[0], buf, sizeof(buf), 0);
+	TEST_ASSERT(n == 0); /* EOS */
+
+	close(fd[0]);
+}
+
+
+TEST(test_unix_socket, unix_recv_after_close)
+{
+	unsigned int i;
+
+	for (i = 0; i < CONNECTED_LOOP_CNT; ++i) {
+		unix_recv_after_close(SOCK_STREAM);
+		unix_recv_after_close(SOCK_SEQPACKET);
+	}
+}
+
+
+void unix_connect_after_close(int type)
+{
+	int fd[3];
+	int rv;
+
+	if (socketpair(AF_UNIX, type, 0, fd) < 0)
+		FAIL("socketpair");
+
+	close(fd[1]);
+
+	if ((fd[2] = unix_named_socket(SOCK_DGRAM, "/tmp/test_connect_after_close")) < 0)
+		FAIL("unix_named_socket(SOCK_DGRAM, ");
+
+	rv = unix_connect(fd[0], "/tmp/test_connect_after_close");
+	TEST_ASSERT(rv == -1);
+	TEST_ASSERT(errno == EISCONN);
+
+	close(fd[0]);
+}
+
+
+TEST(test_unix_socket, unix_connect_after_close)
+{
+	unsigned int i;
+
+	for (i = 0; i < CONNECTED_LOOP_CNT; ++i) {
+		unix_recv_after_close(SOCK_STREAM);
+		unix_recv_after_close(SOCK_SEQPACKET);
+	}
+}
+
+
+void unix_poll(int type)
+{
+	int fd[2];
+	struct pollfd fds[2];
+	struct timespec ts[2];
+	int rv, ms;
+
+	fds[0].fd = 11111;
+	fds[1].fd = 22222;
+	fds[0].events = 0;
+	fds[1].events = 0;
+	fds[0].revents = 0;
+	fds[1].revents = 0;
+	rv = poll(fds, 2, 0);
+	TEST_ASSERT(rv == 2);
+	TEST_ASSERT(fds[0].revents == POLLNVAL);
+	TEST_ASSERT(fds[1].revents == POLLNVAL);
+
+	if (socketpair(AF_UNIX, type, 0, fd) < 0)
+		FAIL("socketpair");
+
+	fds[0].fd = fd[0];
+	fds[1].fd = fd[1];
+
+	clock_gettime(CLOCK_REALTIME, &ts[0]);
+	fds[0].events = POLLIN;
+	fds[1].events = POLLIN;
+	fds[0].revents = 0;
+	fds[1].revents = 0;
+	rv = poll(fds, 2, 300);
+	clock_gettime(CLOCK_REALTIME, &ts[1]);
+	ms = (ts[1].tv_sec - ts[0].tv_sec) * 1000 + (ts[1].tv_nsec - ts[0].tv_nsec) / 1000000;
+	TEST_ASSERT(rv == 0);
+	TEST_ASSERT(fds[0].revents == 0);
+	TEST_ASSERT(fds[1].revents == 0);
+	TEST_ASSERT(ms < 310);
+	TEST_ASSERT(ms > 290);
+
+	clock_gettime(CLOCK_REALTIME, &ts[0]);
+	fds[0].events = POLLIN | POLLOUT;
+	fds[1].events = POLLIN | POLLOUT;
+	fds[0].revents = 0;
+	fds[1].revents = 0;
+	rv = poll(fds, 2, 1000);
+	clock_gettime(CLOCK_REALTIME, &ts[1]);
+	ms = (ts[1].tv_sec - ts[0].tv_sec) * 1000 + (ts[1].tv_nsec - ts[0].tv_nsec) / 1000000;
+	TEST_ASSERT(rv == 2);
+	TEST_ASSERT(fds[0].revents == POLLOUT);
+	TEST_ASSERT(fds[1].revents == POLLOUT);
+	TEST_ASSERT(ms <= 1);
+
+	send(fd[0], data, sizeof(data), 0);
+	send(fd[1], data, sizeof(data), 0);
+
+	clock_gettime(CLOCK_REALTIME, &ts[0]);
+	fds[0].events = POLLIN;
+	fds[1].events = POLLIN;
+	fds[0].revents = 0;
+	fds[1].revents = 0;
+	rv = poll(fds, 2, 1000);
+	clock_gettime(CLOCK_REALTIME, &ts[1]);
+	ms = (ts[1].tv_sec - ts[0].tv_sec) * 1000 + (ts[1].tv_nsec - ts[0].tv_nsec) / 1000000;
+	TEST_ASSERT(rv == 2);
+	TEST_ASSERT(fds[0].revents == POLLIN);
+	TEST_ASSERT(fds[1].revents == POLLIN);
+	TEST_ASSERT(ms <= 1);
+
+	close(fd[0]);
+	close(fd[1]);
+}
+
+
+TEST(test_unix_socket, unix_poll)
+{
+	unix_poll(SOCK_STREAM);
+	unix_poll(SOCK_DGRAM);
+	unix_poll(SOCK_SEQPACKET);
+}
+
+
 TEST_GROUP(test_inet_socket);
 
 
@@ -903,6 +1147,11 @@ TEST_GROUP_RUNNER(test_unix_socket)
 	RUN_TEST_CASE(test_unix_socket, unix_msg_data_and_fd);
 	RUN_TEST_CASE(test_unix_socket, unix_msg_fork);
 	RUN_TEST_CASE(test_unix_socket, unix_transfer);
+	RUN_TEST_CASE(test_unix_socket, unix_close_connected);
+	RUN_TEST_CASE(test_unix_socket, unix_send_after_close);
+	RUN_TEST_CASE(test_unix_socket, unix_recv_after_close);
+	RUN_TEST_CASE(test_unix_socket, unix_connect_after_close);
+	RUN_TEST_CASE(test_unix_socket, unix_poll);
 }
 
 
