@@ -103,20 +103,32 @@ TEST(fopenfclose, fopenfclose_file)
 }
 
 
-TEST(fopenfclose, fopenfclose_specs)
+TEST(fopenfclose, fopenfclose_opendir)
 {
 	/* open directory */
 	assert_fopen_success("/dev/", "r");
 	assert_fopen_error("/dev/", "w", EISDIR);
+}
+
+TEST(fopenfclose, fopenfclose_zeropath)
+{
 	/* open null or zero path */
-	assert_fopen_error("", "r", EINVAL);   /* <POSIX incompliant>, errno should be ENOENT */
-	assert_fopen_error(NULL, "r", EINVAL); /* <POSIX incompliant>, errno should be ENOENT */
-	assert_fopen_error("", "w", EINVAL);   /* <POSIX incompliant>, errno should be ENOENT */
-	assert_fopen_error(NULL, "w", EINVAL); /* <POSIX incompliant>, errno should be ENOENT */
+	assert_fopen_error("", "r", ENOENT);
+	assert_fopen_error(NULL, "r", EINVAL);
+	assert_fopen_error("", "w", ENOENT);
+	assert_fopen_error(NULL, "w", EINVAL);
+}
+
+TEST(fopenfclose, fopenfclose_wrongflags)
+{
 	/* open with no flags/wrong flags/null flags */
 	assert_fopen_error(stdpath, "", EINVAL);
 	assert_fopen_error(stdpath, "phoenix-rtos", EINVAL);
 	assert_fopen_error(stdpath, NULL, EINVAL);
+}
+
+TEST(fopenfclose, fopenfclose_toolongname)
+{
 	/* open file with too long name */
 	assert_fopen_error(toolongpath, "w", ENAMETOOLONG);
 }
@@ -713,7 +725,10 @@ TEST(bufs, setvbuf_nobuffer)
 TEST_GROUP_RUNNER(readwrite)
 {
 	RUN_TEST_CASE(fopenfclose, fopenfclose_file);
-	RUN_TEST_CASE(fopenfclose, fopenfclose_specs);
+	RUN_TEST_CASE(fopenfclose, fopenfclose_opendir);
+	RUN_TEST_CASE(fopenfclose, fopenfclose_zeropath);
+	RUN_TEST_CASE(fopenfclose, fopenfclose_wrongflags);
+	RUN_TEST_CASE(fopenfclose, fopenfclose_toolongname);
 	RUN_TEST_CASE(fopenfclose, freopen_file);
 	RUN_TEST_CASE(fopenfclose, fdopen_file)
 
