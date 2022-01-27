@@ -122,8 +122,8 @@ class ARMV7M7Runner(DeviceRunner):
         try:
             self.reboot(cut_power=self.is_cut_power_used)
             with PloTalker(self.serial_port) as plo:
+                plo.interrupt_counting()
                 plo.wait_prompt()
-
                 if not test.exec_cmd:
                     # We got plo prompt, we are ready for sending the "go!" command.
                     return True
