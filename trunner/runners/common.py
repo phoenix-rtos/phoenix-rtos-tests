@@ -242,6 +242,12 @@ class PloTalker:
         obj.plo = pexpect_fd
         return obj
 
+    def interrupt_counting(self):
+        """ Interrupts timer counting to enter plo """
+        self.plo.expect_exact('Waiting for input', timeout=3)
+        self.plo.send('\r\n')
+        self.plo.expect_exact('\n')
+
     def open(self):
         try:
             self.serial = serial.Serial(self.port, baudrate=self.baudrate)
