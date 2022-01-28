@@ -329,7 +329,7 @@ TEST_SETUP(line)
 	/* file preparation */
 	fd = fopen(stdpath, "w+");
 	{
-		fputs("line1\nlineline2\nline3", fd);
+		fputs("line1\nlineline2\nline3\n\n", fd);
 	}
 	fclose(fd);
 }
@@ -343,19 +343,41 @@ TEST_TEAR_DOWN(line)
 TEST(line, getline_basic)
 {
 	char *line = NULL;
-	size_t len = 0;
+	size_t len = 1;
 
 	/* read using getline */
 	fd = fopen(stdpath, "r");
 	{
+		/* gerline with null buffer and misleading size */
 		TEST_ASSERT_EQUAL_INT(6, getline(&line, &len, fd));
 		TEST_ASSERT_EQUAL_STRING("line1\n", line);
+		/* new buffer shall be allocated of size at least strlen+1 */
+		TEST_ASSERT_GREATER_OR_EQUAL_INT(7, len);
 
+		/* getline with to small buffer */
 		TEST_ASSERT_EQUAL_INT(10, getline(&line, &len, fd));
 		TEST_ASSERT_EQUAL_STRING("lineline2\n", line);
+		/* buffer shall be reallocated of size at least strlen+1 */
+		TEST_ASSERT_GREATER_OR_EQUAL_INT(11, len);
 
-		TEST_ASSERT_EQUAL_INT(5, getline(&line, &len, fd));
-		TEST_ASSERT_EQUAL_STRING("line3", line);
+		/* getline with adequate buffer and character */
+		TEST_ASSERT_EQUAL_INT(6, getline(&line, &len, fd));
+		TEST_ASSERT_EQUAL_STRING("line3\n", line);
+		/* buffer shall not be reallocated, and stay at size at least as big as previusly*/
+		TEST_ASSERT_GREATER_OR_EQUAL_INT(11, len);
+
+		/* getline with adequate buffer, but only newline is read */
+		TEST_ASSERT_EQUAL_INT(1, getline(&line, &len, fd));
+		TEST_ASSERT_EQUAL_STRING("\n", line);
+		/* buffer shall not be reallocated, and stay at size at least as big as previusly*/
+		TEST_ASSERT_GREATER_OR_EQUAL_INT(11, len);
+
+		/* getline reading EOF */
+		TEST_ASSERT_EQUAL_INT(-1, getline(&line, &len, fd));
+		/* buffer shall not change from previous call */
+		TEST_ASSERT_EQUAL_STRING("\n", line);
+		/* buffer shall not be reallocated, and stay at size at least as big as previusly*/
+		TEST_ASSERT_GREATER_OR_EQUAL_INT(11, len);
 
 		free(line);
 	}
@@ -387,7 +409,7 @@ TEST(line, getline_allocated)
 	respectively, such that the object is large enough to hold the characters to be written to it, including the terminating NUL, 
 	and *n shall be set to the new size */
 	/* <posix incompliant> - value pointed to by *len argument should not change but is changed and equals strlen(line) */
-	TEST_IGNORE();
+	//TEST_IGNORE();
 
 	char *line = NULL;
 	size_t len = 50; /* allocated memory exceeds one demanded for a line that to be read */
@@ -425,7 +447,7 @@ TEST(line, getline_longline)
 	{
 		rewind(fd);
 		TEST_ASSERT_EQUAL_INT(1001, getline(&line, &len, fd));
-		TEST_ASSERT_EQUAL_INT(1001, len);
+		TEST_ASSERT_EQUAL_INT(1002, len);
 		TEST_ASSERT_EQUAL_INT(1001, strlen(line));
 		free(line);
 	}
