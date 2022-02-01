@@ -95,6 +95,9 @@ class TestCase:
             self.exception = Color.colorify(msg, Color.BOLD)
             self.handle_pyexpect_error(proc, exc)
             return
+        except UnicodeDecodeError as exc:
+            self.handle_unicode_error(proc, exc)
+            return
 
         if self.exec_cmd:
             try:
@@ -106,6 +109,9 @@ class TestCase:
                 msg = f'Executing {self.exec_cmd} failed!\n'
                 self.exception = Color.colorify(msg, Color.BOLD)
                 self.handle_pyexpect_error(proc, exc)
+                return
+            except UnicodeDecodeError:
+                self.handle_unicode_error(proc)
                 return
 
     def handle_pyexpect_error(self, proc, exc):
@@ -124,6 +130,17 @@ class TestCase:
         got = str(proc.before)
         got = got.replace("\r", "")
         self.exception += Color.colorify('GOT:\n', Color.BOLD)
+        self.exception += f'{got}\n'
+
+    def handle_unicode_error(self, proc, exc):
+        self.status = TestCase.FAILED
+        msg = 'Unicode Decode Error detected!\n'
+        self.exception = Color.colorify(msg, Color.BOLD)
+        self.exception += Color.colorify('STRING WITH NON-ASCII CHARACTER:\n', Color.BOLD)
+        self.exception += f'{exc.object}\n'
+        self.exception += Color.colorify('OUTPUT CAUGHT BEFORE EXCEPTION:\n', Color.BOLD)
+        got = str(proc.before)
+        got = got.replace("\r", "")
         self.exception += f'{got}\n'
 
     def handle_assertion(self, proc, exc):
@@ -171,6 +188,9 @@ class TestCase:
             msg = 'EXCEPTION ' + ('EOF' if isinstance(exc, EOF) else 'TIMEOUT') + '\n'
             self.exception += Color.colorify(msg, Color.BOLD)
             self.handle_pyexpect_error(proc, exc)
+        except UnicodeDecodeError as exc:
+            self.handle_unicode_error(proc, exc)
+            return
         except AssertionError as exc:
             self.handle_assertion(proc, exc)
         except Exception:
