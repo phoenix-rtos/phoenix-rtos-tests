@@ -183,7 +183,7 @@ TEST(meterfs_writeread, file_end)
 TEST(meterfs_writeread, many_records)
 {
 	int i;
-	file_info_t info = { 13, 36000, 12, 0 };
+	file_info_t info = { 16, 36000, 12, 0 };
 
 	common.fd = common_preallocOpenFile("file0", info.sectors, info.filesz, info.recordsz);
 
