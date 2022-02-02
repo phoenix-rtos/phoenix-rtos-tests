@@ -84,6 +84,8 @@ class STM32L4Runner(DeviceRunner):
             codec_errors='ignore',
             timeout=test.timeout
             )
+        if self.logpath:
+            proc.logfile = open(self.logpath, "a")
 
         # FIXME - race on start of Phoenix-RTOS between dummyfs and psh
         # flushing the buffer and sending newline

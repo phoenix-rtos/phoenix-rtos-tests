@@ -36,6 +36,8 @@ class HostRunner(Runner):
                 encoding="utf-8",
                 timeout=test.timeout,
             ) as proc:
+                if self.logpath:
+                    proc.logfile = open(self.logpath, "w")
                 test.handle(proc)
         except pexpect.exceptions.ExceptionPexpect:
             test.handle_exception()

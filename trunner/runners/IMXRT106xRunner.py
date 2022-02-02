@@ -30,8 +30,8 @@ class IMXRT106xRunner(ARMV7M7Runner):
     SDP = 'plo-ram-armv7m7-imxrt106x.sdp'
     IMAGE = 'phoenix-armv7m7-imxrt106x.disk'
 
-    def __init__(self, port, phoenixd_port, is_rpi_host=True):
-        super().__init__(port[0], is_rpi_host)
+    def __init__(self, port, phoenixd_port, is_rpi_host=True, log=False):
+        super().__init__(port[0], is_rpi_host, log)
         self.port_usb = port[1]
         self.phoenixd_port = phoenixd_port
         # restart by power off is temporarily disabled for this target

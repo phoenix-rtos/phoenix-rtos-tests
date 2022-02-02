@@ -16,7 +16,8 @@ from .common import Runner
 class QemuRunner(Runner):
     """This class provides interface to run test case using QEMU as a device."""
 
-    def __init__(self, qemu, args):
+    def __init__(self, qemu, args, log):
+        super().__init__(log)
         self.qemu = qemu
         self.args = args
 
@@ -29,6 +30,8 @@ class QemuRunner(Runner):
             return
 
         proc = pexpect.spawn(self.qemu, args=self.args, encoding='utf-8', timeout=test.timeout)
+        if self.logpath:
+            proc.logfile = open(self.logpath, "a")
 
         try:
             test.handle(proc)

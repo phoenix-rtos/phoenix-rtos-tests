@@ -11,7 +11,7 @@ from .runners.common import Runner
 class TestsRunner:
     """Class responsible for loading, building and running tests"""
 
-    def __init__(self, targets, test_paths, serial, build=True, flash=True):
+    def __init__(self, targets, test_paths, serial, build=True, flash=True, log=False):
         self.targets = targets
         self.test_configs = []
         self.test_paths = test_paths
@@ -20,6 +20,7 @@ class TestsRunner:
         self.flash = flash
         self.runners = None
         self.serial = serial
+        self.log = log
 
     def search_for_tests(self):
         paths = []
@@ -40,7 +41,11 @@ class TestsRunner:
             logging.debug(f"File {path} parsed successfuly\n")
 
     def run(self):
-        self.runners = {target: RunnerFactory.create(target=target, serial=self.serial) for target in self.targets}
+        self.runners = {target: RunnerFactory.create(
+            target=target,
+            serial=self.serial,
+            log=self.log
+            ) for target in self.targets}
         self.search_for_tests()
         self.parse_tests()
 

@@ -49,7 +49,7 @@ class ARMV7M7Runner(DeviceRunner):
     SDP = None
     IMAGE = None
 
-    def __init__(self, serial, is_rpi_host=True):
+    def __init__(self, serial, is_rpi_host=True, log=False):
         # has to be defined before super, because Runner constructor calls set_status, where it's used
         self.is_rpi_host = is_rpi_host
         if self.is_rpi_host:
@@ -60,7 +60,7 @@ class ARMV7M7Runner(DeviceRunner):
             self.boot_gpio = GPIO(4)
             self.leds = {'red': GPIO(13), 'green': GPIO(18), 'blue': GPIO(12)}
 
-        super().__init__(serial)
+        super().__init__(serial, log)
         # default values, redefined by specified target runners
         self.phoenixd_port = None
         self.is_cut_power_used = False
