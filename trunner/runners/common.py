@@ -258,7 +258,7 @@ class PloTalker:
             raise
 
         try:
-            self.plo = pexpect.fdpexpect.fdspawn(self.serial, timeout=8)
+            self.plo = pexpect.fdpexpect.fdspawn(self.serial, encoding='utf-8', timeout=8)
         except Exception:
             self.serial.close()
             raise

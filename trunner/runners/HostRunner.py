@@ -37,7 +37,7 @@ class HostRunner(Runner):
                 timeout=test.timeout,
             ) as proc:
                 if self.logpath:
-                    proc.logfile = open(self.logpath, "w")
+                    proc.logfile = open(self.logpath, "a")
                 test.handle(proc)
         except pexpect.exceptions.ExceptionPexpect:
             test.handle_exception()
