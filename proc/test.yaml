@@ -3,3 +3,6 @@ test:
         - name: test_thread_rand
           exec: test_thread_rand
           type: unit
+        - name: test_priority
+          exec: test_priority
+          harness: test_priority.py
