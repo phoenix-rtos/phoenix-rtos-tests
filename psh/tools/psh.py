@@ -84,7 +84,7 @@ def assert_exec(pexpect_proc, prog, expected='', msg=''):
     ''' Executes specified program and asserts that it's displayed correctly
     with optional expected output and next prompt'''
 
-    if config.CURRENT_TARGET in config.DEVICE_TARGETS:
+    if config.CURRENT_TARGET in config.SYSEXEC_TARGETS:
         exec_cmd = f'sysexec {prog}'
     else:
         exec_cmd = f'/bin/{prog}'

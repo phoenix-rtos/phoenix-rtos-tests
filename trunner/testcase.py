@@ -9,7 +9,7 @@ from pexpect.exceptions import TIMEOUT, EOF
 
 from .harness import UnitTestHarness, BusyboxTestHarness, UnitTestResult, BusyboxTestResult
 from .tools.color import Color
-from .config import DEVICE_TARGETS
+from .config import SYSEXEC_TARGETS
 
 
 class TestCase:
@@ -303,7 +303,7 @@ class TestCaseFactory:
     @staticmethod
     def create(test):
         status = TestCase.SKIPPED if test['ignore'] else TestCase.FAILED
-        use_sysexec = test['target'] in DEVICE_TARGETS
+        use_sysexec = test['target'] in SYSEXEC_TARGETS
 
         if test['type'] == 'unit':
             return TestCaseUnit(

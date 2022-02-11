@@ -1,6 +1,9 @@
 test:
-    tests:
+    targets:
+      #TODO: remove when zynq7000-qemu target will stop being experimental
+      include: [armv7a9-zynq7000-qemu]
 
+    tests:
         - name: auth
           harness: test-auth.py
 
@@ -41,6 +44,7 @@ test:
               exclude:
                   - armv7m7-imxrt106x
                   - armv7m7-imxrt117x
+                  - armv7a9-zynq7000-qemu
 
         - name: ls
           harness: test_ls.py

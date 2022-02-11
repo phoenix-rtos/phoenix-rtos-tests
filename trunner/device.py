@@ -1,19 +1,14 @@
 # Imports of available runners
 from .runners import HostRunner, QemuRunner, IMXRT106xRunner, IMXRT117xRunner, STM32L4Runner
 
-from .config import PHRTOS_PROJECT_DIR, DEVICE_SERIAL_USB, PHOENIXD_PORT
-
-
-QEMU_CMD = {
-    'ia32-generic': f'{PHRTOS_PROJECT_DIR}/scripts/ia32-generic-test.sh'
-}
+from .config import DEVICE_SERIAL_USB, PHOENIXD_PORT, QEMU_TARGETS
 
 
 class RunnerFactory:
     @staticmethod
     def create(target, serial, log=False):
-        if target == 'ia32-generic':
-            return QemuRunner(QEMU_CMD[target], log=log)
+        if target in QEMU_TARGETS:
+            return QemuRunner(target, log=log)
         if target == 'host-pc':
             return HostRunner(log=log)
         if target == 'armv7m7-imxrt106x':
