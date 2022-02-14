@@ -18,7 +18,7 @@ QEMU_CMD = {
 
 class RunnerFactory:
     @staticmethod
-    def create(target, serial, log):
+    def create(target, serial, log=False):
         if target == 'ia32-generic':
             return QemuRunner(*QEMU_CMD[target], log=log)
         if target == 'host-pc':
