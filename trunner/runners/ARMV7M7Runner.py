@@ -14,7 +14,7 @@ import select
 
 from pexpect.exceptions import TIMEOUT, EOF
 from trunner.tools.color import Color
-from .common import Psu, Phoenixd, PhoenixdError, PloError, PloTalker, DeviceRunner, Runner
+from .common import LOG_PATH, Psu, Phoenixd, PhoenixdError, PloError, PloTalker, DeviceRunner, Runner
 from .common import GPIO, phd_error_msg, rootfs
 
 
@@ -49,7 +49,7 @@ class ARMV7M7Runner(DeviceRunner):
     SDP = None
     IMAGE = None
 
-    def __init__(self, serial, is_rpi_host=True):
+    def __init__(self, serial, is_rpi_host=True, log=False):
         # has to be defined before super, because Runner constructor calls set_status, where it's used
         self.is_rpi_host = is_rpi_host
         if self.is_rpi_host:
@@ -59,8 +59,9 @@ class ARMV7M7Runner(DeviceRunner):
             self.power_gpio.high()
             self.boot_gpio = GPIO(4)
             self.leds = {'red': GPIO(13), 'green': GPIO(18), 'blue': GPIO(12)}
+            self.logpath = LOG_PATH
 
-        super().__init__(serial)
+        super().__init__(serial, log)
         # default values, redefined by specified target runners
         self.phoenixd_port = None
         self.is_cut_power_used = False
@@ -98,6 +99,8 @@ class ARMV7M7Runner(DeviceRunner):
         try:
             self.reboot(serial_downloader=True, cut_power=self.is_cut_power_used)
             with PloTalker(self.serial_port) as plo:
+                if self.logpath:
+                    plo.plo.logfile = open(self.logpath, "a")
                 Psu(script=self.SDP).run()
                 plo.wait_prompt()
                 with Phoenixd(self.phoenixd_port) as phd:
@@ -122,6 +125,8 @@ class ARMV7M7Runner(DeviceRunner):
         try:
             self.reboot(cut_power=self.is_cut_power_used)
             with PloTalker(self.serial_port) as plo:
+                if self.logpath:
+                    plo.plo.logfile = open(self.logpath, "a")
                 plo.interrupt_counting()
                 plo.wait_prompt()
                 if not test.exec_cmd:

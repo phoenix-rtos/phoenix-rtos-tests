@@ -28,6 +28,8 @@ from trunner.tools.color import Color
 
 _BOOT_DIR = PHRTOS_PROJECT_DIR / '_boot'
 
+LOG_PATH = '/tmp/phoenix_test.log'
+
 
 def rootfs(target: str) -> Path:
     return PHRTOS_PROJECT_DIR / '_fs' / target / 'root'
@@ -256,7 +258,7 @@ class PloTalker:
             raise
 
         try:
-            self.plo = pexpect.fdpexpect.fdspawn(self.serial, timeout=8)
+            self.plo = pexpect.fdpexpect.fdspawn(self.serial, encoding='utf-8', timeout=8)
         except Exception:
             self.serial.close()
             raise
@@ -318,10 +320,16 @@ class Runner(ABC):
     SUCCESS = 'SUCCESS'
     FAIL = 'FAIL'
 
-    def __init__(self):
+    def __init__(self, log=False):
         # Busy status is set from the start to the end of the specified runner's run
         self.status = Runner.BUSY
         self.set_status(self.status)
+        if log:
+            if os.path.exists(LOG_PATH):
+                os.remove(LOG_PATH)
+            self.logpath = LOG_PATH
+        else:
+            self.logpath = None
 
     def set_status(self, status):
         """Method for sygnalising a current runner status: busy/failed/succeeded"""
@@ -342,8 +350,8 @@ class Runner(ABC):
 class DeviceRunner(Runner):
     """This class provides interface to run tests on hardware targets using serial port"""
 
-    def __init__(self, serial):
-        super().__init__()
+    def __init__(self, serial, log=False):
+        super().__init__(log)
         self.serial_port = serial[0]
         self.serial_baudrate = serial[1]
         self.serial = None
@@ -359,6 +367,8 @@ class DeviceRunner(Runner):
             return
 
         proc = pexpect.fdpexpect.fdspawn(self.serial, encoding='utf-8', timeout=test.timeout)
+        if self.logpath:
+            proc.logfile = open(self.logpath, "a")
 
         try:
             PloTalker.from_pexpect(proc).go()

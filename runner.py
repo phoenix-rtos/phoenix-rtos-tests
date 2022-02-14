@@ -106,7 +106,8 @@ def main():
                          test_paths=args.test,
                          build=args.build,
                          flash=not args.no_flash,
-                         serial=(args.serial, args.baudrate)
+                         serial=(args.serial, args.baudrate),
+                         log=(args.log_level == logging.DEBUG)
                          )
 
     passed, failed, skipped = runner.run()
