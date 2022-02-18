@@ -28,7 +28,7 @@ class IMXRT117xRunner(ARMV7M7Runner):
     IMAGE = 'phoenix-armv7m7-imxrt117x.disk'
 
     def __init__(self, port, phoenixd_port, is_cut_power_used=False, is_rpi_host=True, log=False):
-        super().__init__(port, is_rpi_host)
+        super().__init__(port, is_rpi_host, log)
         self.phoenixd_port = phoenixd_port
         self.is_cut_power_used = is_cut_power_used
         self.flash_memory = 0
