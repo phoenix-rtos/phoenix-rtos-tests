@@ -33,7 +33,7 @@ class HostRunner(Runner):
             with pexpect.spawn(
                 str(test_path),
                 args=test.exec_cmd[1:],
-                encoding="utf-8",
+                encoding="ascii",
                 timeout=test.timeout,
             ) as proc:
                 if self.logpath:

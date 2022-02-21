@@ -103,7 +103,7 @@ class Psu:
             'psu',
             [f'{self.script}'],
             cwd=self.cwd,
-            encoding='utf-8'
+            encoding='ascii'
         )
 
         self.read_output()
@@ -176,7 +176,7 @@ class Phoenixd:
              '-b', str(self.baudrate),
              '-s', self.dir],
             cwd=self.cwd,
-            encoding='utf-8'
+            encoding='ascii'
         )
 
         self.dispatcher_event = threading.Event()
@@ -258,7 +258,7 @@ class PloTalker:
             raise
 
         try:
-            self.plo = pexpect.fdpexpect.fdspawn(self.serial, encoding='utf-8', timeout=8)
+            self.plo = pexpect.fdpexpect.fdspawn(self.serial, encoding='ascii', timeout=8)
         except Exception:
             self.serial.close()
             raise
@@ -366,7 +366,7 @@ class DeviceRunner(Runner):
             test.handle_exception()
             return
 
-        proc = pexpect.fdpexpect.fdspawn(self.serial, encoding='utf-8', timeout=test.timeout)
+        proc = pexpect.fdpexpect.fdspawn(self.serial, encoding='ascii', timeout=test.timeout)
         if self.logpath:
             proc.logfile = open(self.logpath, "a")
 

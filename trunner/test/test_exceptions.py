@@ -58,7 +58,7 @@ class TestPexpectException:
 
         fifo_r = open(self.FIFO, 'r')
 
-        proc = pexpect.fdpexpect.fdspawn(fifo_r, encoding='utf-8', timeout=1)
+        proc = pexpect.fdpexpect.fdspawn(fifo_r, encoding='ascii', timeout=1)
         testcase.harness = TestPexpectException.fake_harness
         testcase.handle(proc)
 
@@ -89,7 +89,7 @@ class TestPexpectException:
         # Wait for end of write to get EOF
         thread.join()
 
-        proc = pexpect.fdpexpect.fdspawn(fifo_r, encoding='utf-8')
+        proc = pexpect.fdpexpect.fdspawn(fifo_r, encoding='ascii')
         testcase.harness = TestPexpectException.fake_harness
         testcase.handle(proc)
 
