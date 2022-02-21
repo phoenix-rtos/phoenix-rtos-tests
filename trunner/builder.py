@@ -57,7 +57,7 @@ class TargetBuilder:
         )
 
         while live_output:
-            output = proc.stdout.readline().decode('utf-8')
+            output = proc.stdout.readline().decode('ascii')
             if proc.poll() is not None and output == '':
                 break
             if output:
@@ -69,9 +69,9 @@ class TargetBuilder:
         else:
             logging.debug(f"Command {' '.join(args)} for {self.target} success!\n")
 
-        logging.error(err.decode('utf-8'))
+        logging.error(err.decode('ascii'))
         if not live_output:
-            logging.info(out.decode('utf-8'))
+            logging.info(out.decode('ascii'))
 
         if proc.returncode != 0 and exit_at_error:
             sys.exit(1)

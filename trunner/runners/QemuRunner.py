@@ -29,7 +29,7 @@ class QemuRunner(Runner):
         if test.skipped():
             return
 
-        proc = pexpect.spawn(self.qemu, args=self.args, encoding='utf-8', timeout=test.timeout)
+        proc = pexpect.spawn(self.qemu, args=self.args, encoding='ascii', timeout=test.timeout)
         if self.logpath:
             proc.logfile = open(self.logpath, "a")
 
