@@ -90,29 +90,19 @@ class TestCase:
         try:
             # Wait for a prompt
             proc.expect_exact('(psh)% ')
+            if self.exec_cmd:
+                if self.use_sysexec:
+                    self.sysexec(proc)
+                else:
+                    self.exec(proc)
         except (TIMEOUT, EOF) as exc:
-            msg = 'Waiting for psh prompt failed!\n'
+            msg = "Execution of test binary failed!\n"
             self.exception = Color.colorify(msg, Color.BOLD)
             self.handle_pyexpect_error(proc, exc)
             return
         except UnicodeDecodeError as exc:
             self.handle_unicode_error(proc, exc)
             return
-
-        if self.exec_cmd:
-            try:
-                if self.use_sysexec:
-                    self.sysexec(proc)
-                else:
-                    self.exec(proc)
-            except (TIMEOUT, EOF) as exc:
-                msg = f'Executing {self.exec_cmd} failed!\n'
-                self.exception = Color.colorify(msg, Color.BOLD)
-                self.handle_pyexpect_error(proc, exc)
-                return
-            except UnicodeDecodeError:
-                self.handle_unicode_error(proc)
-                return
 
     def handle_pyexpect_error(self, proc, exc):
         self.status = TestCase.FAILED_TIMEOUT
