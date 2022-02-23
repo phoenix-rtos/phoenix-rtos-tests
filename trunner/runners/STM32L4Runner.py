@@ -16,8 +16,8 @@ import pexpect.fdpexpect
 import serial
 from pexpect import TIMEOUT
 
-from .common import DeviceRunner, Color
-from .common import _BOOT_DIR
+from .common import DeviceRunner, Color, GPIO
+from .common import _BOOT_DIR, LOG_PATH
 
 
 class STM32L4Runner(DeviceRunner):
@@ -25,6 +25,11 @@ class STM32L4Runner(DeviceRunner):
 
     The ST-Link programming board should be connected to USB port
     and a target should be connected to ST-Link and powered
+
+    Led gpios should be connected as follow (bcm numeration):
+    - red -> GPIO 22
+    - green -> GPIO 23
+    - blue -> GPIO 27
     """
 
     class oneByOne_fdspawn(pexpect.fdpexpect.fdspawn):
@@ -42,6 +47,14 @@ class STM32L4Runner(DeviceRunner):
                 ret += super().send(char)
                 time.sleep(0.03)
             return ret
+
+    def __init__(self, serial, log=False, is_rpi_host=True):
+        if is_rpi_host:
+            self.leds = {'red': GPIO(22), 'green': GPIO(23), 'blue': GPIO(27)}
+
+        super().__init__(serial, log, is_rpi_host=is_rpi_host)
+
+        self.logpath = LOG_PATH
 
     def flash(self):
         """ Flashing with openocd as a separate process """
@@ -65,6 +78,21 @@ class STM32L4Runner(DeviceRunner):
         if openocd_process.wait() != 0:
             print(Color.colorify("OpenOCD error: cannot flash target", Color.BOLD))
             sys.exit(1)
+
+    def set_status(self, status):
+        super().set_status(status)
+        if self.is_rpi_host:
+            if status in self.status_color:
+                self.set_led(self.status_color[status])
+
+    def set_led(self, color):
+        """Turn on the specified RGB LED's color."""
+        if color in self.leds:
+            for led_gpio in self.leds.values():
+                led_gpio.low()
+            self.leds[color].high()
+        else:
+            print(f'There is no specified led color: {color}')
 
     def run(self, test):
         if test.skipped():

@@ -350,11 +350,14 @@ class Runner(ABC):
 class DeviceRunner(Runner):
     """This class provides interface to run tests on hardware targets using serial port"""
 
-    def __init__(self, serial, log=False):
-        super().__init__(log)
+    status_color = {Runner.BUSY: 'blue', Runner.SUCCESS: 'green', Runner.FAIL: 'red'}
+
+    def __init__(self, serial, log=False, is_rpi_host=True):
         self.serial_port = serial[0]
         self.serial_baudrate = serial[1]
         self.serial = None
+        self.is_rpi_host = is_rpi_host
+        super().__init__(log)
 
     def run(self, test):
         if test.skipped():

@@ -28,6 +28,6 @@ class RunnerFactory:
         if target == 'armv7m7-imxrt117x':
             return IMXRT117xRunner(serial, PHOENIXD_PORT, is_rpi_host=True, log=log)
         if target == 'armv7m4-stm32l4':
-            return STM32L4Runner(serial, log=log)
+            return STM32L4Runner(serial, log=log, is_rpi_host=True)
 
         raise ValueError(f"Unknown Runner target: {target}")
