@@ -35,9 +35,11 @@ def assert_login(p, login, passwd):
     psh.assert_prompt(p, msg='Login should pass but failed', timeout=1)
 
 
-def assert_login_fail(p, login, passwd):
+def assert_login_fail(p, login, passwd, expect_psh_afterwards=False):
     log_in(p, login, passwd)
     psh.assert_prompt_fail(p, msg='Login should fail but passed', timeout=1)
+    if expect_psh_afterwards:
+        psh.assert_prompt(p, msg='Login should pass but failed')
 
 
 def assert_login_empty(p, login):

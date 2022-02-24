@@ -54,18 +54,18 @@ def harness(p):
 
     # Wrong credentials
     assert_auth(p)
-    logintools.assert_login_fail(p, cred_ok.user, cred_bad.passwd)
+    logintools.assert_login_fail(p, cred_ok.user, cred_bad.passwd, expect_psh_afterwards=True)
 
     assert_auth(p)
-    logintools.assert_login_fail(p, cred_bad.user, cred_ok.passwd)
+    logintools.assert_login_fail(p, cred_bad.user, cred_ok.passwd, expect_psh_afterwards=True)
     assert_auth(p)
-    logintools.assert_login_fail(p, cred_bad.user, cred_bad.passwd)
+    logintools.assert_login_fail(p, cred_bad.user, cred_bad.passwd, expect_psh_afterwards=True)
 
     # Empty Credentials
     assert_auth(p)
-    logintools.assert_login_fail(p, cred_ok.user, cred_empty.passwd)
+    logintools.assert_login_fail(p, cred_ok.user, cred_empty.passwd, expect_psh_afterwards=True)
     assert_auth(p)
-    logintools.assert_login_fail(p, cred_bad.user, cred_empty.passwd)
+    logintools.assert_login_fail(p, cred_bad.user, cred_empty.passwd, expect_psh_afterwards=True)
     assert_auth(p)
     logintools.assert_login_empty(p, cred_empty.user)
     p.send(EOT)  # assert_login_empty() with empty login does not go back to psh, exit needed
