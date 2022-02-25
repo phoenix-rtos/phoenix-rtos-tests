@@ -1,5 +1,6 @@
 test:
     tests:
+
         - name: auth
           harness: test-auth.py
 
@@ -9,6 +10,9 @@ test:
           targets:
               value:
                   - ia32-generic
+
+        - name: echo
+          harness: test-echo.py
 
         - name: prompt
           harness: test-prompt.py
