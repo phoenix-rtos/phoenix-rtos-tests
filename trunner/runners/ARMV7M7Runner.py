@@ -129,12 +129,13 @@ class ARMV7M7Runner(DeviceRunner):
                     plo.plo.logfile = open(self.logpath, "a")
                 plo.interrupt_counting()
                 plo.wait_prompt()
-                if not test.exec_cmd:
+                if not test.exec_cmd and not test.syspage_prog:
                     # We got plo prompt, we are ready for sending the "go!" command.
                     return True
 
                 with Phoenixd(self.target, self.phoenixd_port, dir=load_dir) as phd:
-                    plo.app('usb0', test.exec_cmd[0], 'ocram2', 'ocram2')
+                    prog = test.exec_cmd[0] if test.exec_cmd else test.syspage_prog
+                    plo.app('usb0', prog, 'ocram2', 'ocram2')
         except (TIMEOUT, EOF, PloError, PhoenixdError, RebootError) as exc:
             if isinstance(exc, TIMEOUT) or isinstance(exc, EOF):
                 test.exception = Color.colorify('EXCEPTION PLO\n', Color.BOLD)
