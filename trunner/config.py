@@ -171,7 +171,7 @@ class TestConfig(Config):
 
 
 class ConfigParser:
-    KEYWORDS: Tuple[str, ...] = ('exec', 'harness', 'ignore', 'name', 'targets', 'psh', 'timeout', 'type')
+    KEYWORDS: Tuple[str, ...] = ('syspage', 'exec', 'harness', 'ignore', 'name', 'targets', 'psh', 'timeout', 'type')
     TEST_TYPES: Tuple[str, ...] = ('unit', 'harness', 'busybox', 'mbedtls')
 
     def parse_keywords(self, config: Config) -> None:
@@ -246,6 +246,13 @@ class ConfigParser:
             return
 
         config['exec'] = shlex.split(exec_cmd)
+
+    def parse_syspage(self, config: Config) -> None:
+        syspage_prog = config.get('syspage')
+        if not syspage_prog:
+            return
+
+        config['syspage'] = shlex.split(syspage_prog)
 
     def parse_psh(self, config: Config) -> None:
         psh = config.get('psh', True)
