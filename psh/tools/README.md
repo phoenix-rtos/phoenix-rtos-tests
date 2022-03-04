@@ -4,7 +4,9 @@
 
 The python module `psh` makes writing harness tests easier. It provides the following functions:
 
-* `assert_cmd(pexpect_proc, cmd, expected='', msg='', is_regex=False)` - Sends a specified command and asserts that it's displayed correctly with optional expected output and next prompt. The function also checks if there are no unwanted pieces of information. It's possible to pass a regex in the `expected` argument, but then `is_regex` has to be set True. The regex should be passed as one raw string and match `EOL` after an expected output. Multi-line expected outputs have to be passed in a tuple, with lines in specific items. There is also a possibility to pass an additional message to print if the assertion fails. For a more readable assertion message in case that the test fails, the expected output is printed as regex, but in separate lines. So EOL, which is `r'(\r+)\n'` is replaced by `'\n'`.
+* `assert_cmd(pexpect_proc, cmd, expected='', msg='', is_regex=False)` - Sends a specified command and asserts that it's displayed correctly with optional expected output and next prompt. The function also checks if there are no unwanted pieces of information. It's possible to pass a regex in the `expected` argument, but then `is_regex` has to be set True. The regex should be passed as one raw string and match the new line after an expected output. Multi-line expected outputs shall to be passed in a tuple, with lines in specific items, but using `\n` is also supported. There is a possibility to pass an additional message to print if the assertion fails. The `\n` sequence shall be used as new lines in the `expected` argument, it's automatically replaced by a proper sequence used in psh.
+
+  For a more readable assertion message in case that the test fails, the expected output is printed as regex, but in separate lines. So EOL, which is `r'(\r+)\n'` is replaced by `'\n'`.
 
 * `assert_only_prompt(pexpect_proc)` - Assert psh prompt with the appropriate esc sequence.
 
@@ -12,7 +14,7 @@ The python module `psh` makes writing harness tests easier. It provides the foll
 
 * `assert_prompt_fail(pexpect_proc, msg='', timeout=-1)` - Assert, that there is no psh prompt in the read buffer.
 
-* `assert_exec(pexpect_proc, prog, expected='', msg='')` - Same as `assert_cmd`, but input is selected appropriately for the current target platform (using sysexec or /bin/prog_name). So for example instead of using `assert_cmd('/bin/psh')` or `assert_cmd('sysexec psh')` use `assert_exec(prog='psh')`.
+* `assert_exec(pexpect_proc, prog, expected='', msg='', is_regex=False)` - Same as `assert_cmd`, but input is selected appropriately for the current target platform (using sysexec or /bin/prog_name). So for example instead of using `assert_cmd('/bin/psh')` or `assert_cmd('sysexec psh')` use `assert_exec(prog='psh')`.
 
 * `init(pexpect_proc)` - Runs psh and next, asserts the first prompt.
 
@@ -35,13 +37,31 @@ The `pexpect_proc` argument is the [pexpect](https://pexpect.readthedocs.io/en/s
   ```
 
 
-* The multi-line assertion (assuming that `helloworld` is a binary which prints 'Hello\nWorld' is provided)
+* The multi-line assertion (assuming that `helloworld` is a binary which prints 'Hello\nWorld\n' is provided)
 
+  - Recommended solution:
+    ```python
+    import psh.tools.psh as psh
+
+    def harness(p):
+        psh.init(p)
+        expected = ('Hello', 'World')
+        psh.assert_exec(p, 'helloworld', expected, "Hello World hasn't been displayed correctly")
+    ```
+
+  - Also possible:
+    ```python
+    import psh.tools.psh as psh
+
+    def harness(p):
+        psh.init(p)
+        expected = 'Hello\nWorld'
+        psh.assert_exec(p, 'helloworld', expected, "Hello World hasn't been displayed correctly")
+    ```
+
+* Uptime format assertion using regex (last new line has to be matched)
   ```python
-  import psh.tools.psh as psh
-
   def harness(p):
-      psh.init(p)
-      expected = ('Hello', 'World')
-      psh.assert_exec(p, 'helloworld', expected, "Hello World hasn't been displayed correctly")
+    psh.init(p)
+    psh.assert_cmd(p, 'uptime', r'up \d\d:\d\d:\d\d\n', "Uptime command output format is wrong!", is_regex=True)
   ```

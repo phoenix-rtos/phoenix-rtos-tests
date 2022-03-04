@@ -41,14 +41,22 @@ def assert_cmd(pexpect_proc, cmd, expected='', msg='', is_regex=False):
     with optional expected output and next prompt'''
     pexpect_proc.sendline(cmd)
     cmd = re.escape(cmd)
+
+    if not (isinstance(expected, tuple) or isinstance(expected, list)):
+        expected = tuple((expected,))
     exp_regex = ''
-    if is_regex:
-        exp_regex = expected
-    elif expected != '':
-        if not (isinstance(expected, tuple) or isinstance(expected, list)):
-            expected = tuple((expected,))
+    if expected != ('',):
         for line in expected:
-            line = re.escape(line)
+            if is_regex and line == expected[-1]:
+                exp_regex += line.replace(r'\n', EOL)
+                break
+            if line[-1] == '\n': line = line[:-1]
+            if not is_regex: 
+                line = re.escape(line)
+                # escaped \n is '\\\n'
+                line = line.replace('\\\n', EOL)
+            else:
+                line = line.replace(r'\n', EOL)
             exp_regex += line + EOL
 
     exp_regex = cmd + EOL + exp_regex + PROMPT
@@ -80,7 +88,7 @@ def assert_prompt_fail(pexpect_proc, msg='', timeout=-1):
     assert idx != 0, msg
 
 
-def assert_exec(pexpect_proc, prog, expected='', msg=''):
+def assert_exec(pexpect_proc, prog, expected='', msg='', is_regex=False):
     ''' Executes specified program and asserts that it's displayed correctly
     with optional expected output and next prompt'''
 
@@ -89,7 +97,7 @@ def assert_exec(pexpect_proc, prog, expected='', msg=''):
     else:
         exec_cmd = f'/bin/{prog}'
 
-    assert_cmd(pexpect_proc, exec_cmd, expected, msg)
+    assert_cmd(pexpect_proc, exec_cmd, expected, msg, is_regex)
 
 
 def run(pexpect_proc):
