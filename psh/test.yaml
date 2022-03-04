@@ -22,6 +22,9 @@ test:
         - name: echo
           harness: test-echo.py
 
+        - name: date
+          harness: test-date.py
+
         - name: prompt
           harness: test-prompt.py
 
