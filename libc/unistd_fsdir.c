@@ -37,13 +37,19 @@ TEST_GROUP(unistd_fsdir);
 
 TEST_SETUP(unistd_fsdir)
 {
+	/* assert we are in root */
 	TEST_ASSERT_EQUAL_INT(0, chdir("/"));
 	TEST_ASSERT_NOT_NULL(getcwd(buf, 50));
 	TEST_ASSERT_EQUAL_STRING("/", buf);
+
+	/* clear buffer */
 	memset(buf, 0, 50);
+
+	/* clear/create file */
 	fd = fopen(filename, "w");
 	fclose(fd);
 
+	/* set too long path */
 	memset(toolongpath, 'a', PATH_MAX + 15);
 	toolongpath[PATH_MAX + 15] = '\0';
 }
@@ -68,7 +74,7 @@ TEST(unistd_fsdir, fsdir_getcwd)
 }
 
 
-TEST(unistd_fsdir, fsdir_chdir)
+TEST(unistd_fsdir, fsdir_chdir_todir)
 {
 	/* test chdir to some directory */
 	TEST_ASSERT_EQUAL_INT(0, chdir("/dev"));
@@ -76,69 +82,87 @@ TEST(unistd_fsdir, fsdir_chdir)
 	TEST_ASSERT_EQUAL_STRING("/dev", buf);
 
 	/* test chdir back to root */
+	TEST_ASSERT_EQUAL_INT(0, chdir("/dev"));
 	TEST_ASSERT_EQUAL_INT(0, chdir("/"));
 	TEST_ASSERT_NOT_NULL(getcwd(buf, 50));
 	TEST_ASSERT_EQUAL_STRING("/", buf);
+}
 
+
+TEST(unistd_fsdir, fsdir_chdir_toolongpath)
+{
 	/* test chdir with too long path */
 	TEST_ASSERT_EQUAL_INT(-1, chdir(toolongpath));
 	TEST_ASSERT_EQUAL_INT(ENAMETOOLONG, errno);
+}
 
+
+TEST(unistd_fsdir, fsdir_chdir_nonexistent)
+{
 	/* test chdir to nonexisting directory */
 	TEST_ASSERT_EQUAL_INT(-1, chdir("/not_existing_directory"));
 	TEST_ASSERT_EQUAL_INT(ENOENT, errno);
+}
 
-	/*
-		<posix incompliant> wrong errno setting if:
-		- path is empty
-		- path points to file
 
-		https://github.com/phoenix-rtos/phoenix-rtos-project/issues/287
-	*/
-	TEST_IGNORE();
-
+TEST(unistd_fsdir, fsdir_chdir_emptystring)
+{
 	/* test chdir to empty string */
 	TEST_ASSERT_EQUAL_INT(-1, chdir(""));
 	TEST_ASSERT_EQUAL_INT(ENOENT, errno);
+}
 
+
+TEST(unistd_fsdir, fsdir_chdir_tofile)
+{
 	/* test chdir to file */
 	TEST_ASSERT_EQUAL_INT(-1, chdir(filename));
 	TEST_ASSERT_EQUAL_INT(ENOTDIR, errno);
 }
 
 
-TEST(unistd_fsdir, fsdir_rmdir)
+TEST(unistd_fsdir, fsdir_rmdir_empty)
 {
 	/* test removing empty directory */
 	TEST_ASSERT_EQUAL_INT(0, mkdir(directoryname, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH));
 	TEST_ASSERT_EQUAL_INT(0, rmdir(directoryname));
+}
 
+
+TEST(unistd_fsdir, fsdir_rmdir_nonexistent)
+{
 	/* test rmdir on nonexisting directory*/
 	TEST_ASSERT_EQUAL_INT(-1, rmdir("/not_existing_directory"));
 	TEST_ASSERT_EQUAL_INT(ENOENT, errno);
+}
 
+
+TEST(unistd_fsdir, fsdir_rmdir_toolongpath)
+{
 	/* test rmdir with too long path */
 	TEST_ASSERT_EQUAL_INT(-1, rmdir(toolongpath));
 	TEST_ASSERT_EQUAL_INT(ENAMETOOLONG, errno);
+}
 
-	/*
-		<posix incompliant> wrong errno setting if:
-		- path is empty (wrong errno)
-		- path points to file (file is removed!)
-		- removing not empty directory (wrong errno)
 
-		https://github.com/phoenix-rtos/phoenix-rtos-project/issues/288
-	*/
-	TEST_IGNORE();
-
+TEST(unistd_fsdir, fsdir_rmdir_emptystring)
+{
 	/* test rmdir on empty string */
 	TEST_ASSERT_EQUAL_INT(-1, rmdir(""));
 	TEST_ASSERT_EQUAL_INT(ENOENT, errno);
+}
 
+
+TEST(unistd_fsdir, fsdir_rmdir_file)
+{
 	/* test rmdir on file */
 	TEST_ASSERT_EQUAL_INT(-1, rmdir(filename));
 	TEST_ASSERT_EQUAL_INT(ENOTDIR, errno);
+}
 
+
+TEST(unistd_fsdir, fsdir_rmdir_notempty)
+{
 	/* test removing not empty directory */
 	TEST_ASSERT_EQUAL_INT(0, mkdir(directoryname, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH));
 	chdir(directoryname);
@@ -146,6 +170,8 @@ TEST(unistd_fsdir, fsdir_rmdir)
 	chdir("/");
 	TEST_ASSERT_EQUAL_INT(-1, rmdir(directoryname));
 	TEST_ASSERT_EQUAL_INT(ENOTEMPTY, errno);
+
+	/* cleanup */
 	chdir(directoryname);
 	remove(filename);
 	chdir("/");
@@ -176,8 +202,20 @@ TEST(unistd_fsdir, fsdir_fchown)
 TEST_GROUP_RUNNER(unistd_fsdir)
 {
 	RUN_TEST_CASE(unistd_fsdir, fsdir_getcwd);
-	RUN_TEST_CASE(unistd_fsdir, fsdir_chdir);
-	RUN_TEST_CASE(unistd_fsdir, fsdir_rmdir);
+
+	RUN_TEST_CASE(unistd_fsdir, fsdir_chdir_todir);
+	RUN_TEST_CASE(unistd_fsdir, fsdir_chdir_toolongpath);
+	RUN_TEST_CASE(unistd_fsdir, fsdir_chdir_nonexistent);
+	RUN_TEST_CASE(unistd_fsdir, fsdir_chdir_emptystring);
+	RUN_TEST_CASE(unistd_fsdir, fsdir_chdir_tofile);
+
+	RUN_TEST_CASE(unistd_fsdir, fsdir_rmdir_empty);
+	RUN_TEST_CASE(unistd_fsdir, fsdir_rmdir_nonexistent);
+	RUN_TEST_CASE(unistd_fsdir, fsdir_rmdir_toolongpath);
+	RUN_TEST_CASE(unistd_fsdir, fsdir_rmdir_emptystring);
+	RUN_TEST_CASE(unistd_fsdir, fsdir_rmdir_file);
+	RUN_TEST_CASE(unistd_fsdir, fsdir_rmdir_notempty);
+
 	RUN_TEST_CASE(unistd_fsdir, fsdir_fchdir);
 	RUN_TEST_CASE(unistd_fsdir, fsdir_fchown);
 }
