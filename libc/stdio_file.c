@@ -52,16 +52,19 @@ Tets group for:
 fopen, fclose,
 fdopen, freopen
 */
-TEST_GROUP(fopenfclose);
+TEST_GROUP(stdio_fopenfclose);
 
-TEST_SETUP(fopenfclose)
+TEST_SETUP(stdio_fopenfclose)
 {
-	memset(toolongpath, 'a', PATH_MAX + 15);
-	toolongpath[PATH_MAX + 15] = '\0';
+	memset(toolongpath, 'a', sizeof(toolongpath));
+	toolongpath[sizeof(toolongpath) - 1] = '\0';
+
+	fd = NULL;
+	fd2 = NULL;
 }
 
 
-TEST_TEAR_DOWN(fopenfclose)
+TEST_TEAR_DOWN(stdio_fopenfclose)
 { /* empty */
 }
 
@@ -87,7 +90,7 @@ void assert_fopen_success(char *path, char *opts)
 }
 
 
-TEST(fopenfclose, fopenfclose_file)
+TEST(stdio_fopenfclose, stdio_fopenfclose_file)
 {
 	/* not existing file opening without creating */
 	assert_fopen_error(stdpath, "r", ENOENT);
@@ -103,14 +106,14 @@ TEST(fopenfclose, fopenfclose_file)
 }
 
 
-TEST(fopenfclose, fopenfclose_opendir)
+TEST(stdio_fopenfclose, stdio_fopenfclose_opendir)
 {
 	/* open directory */
 	assert_fopen_success("/dev/", "r");
 	assert_fopen_error("/dev/", "w", EISDIR);
 }
 
-TEST(fopenfclose, fopenfclose_zeropath)
+TEST(stdio_fopenfclose, stdio_fopenfclose_zeropath)
 {
 	/* open null or zero path */
 	assert_fopen_error("", "r", ENOENT);
@@ -119,7 +122,7 @@ TEST(fopenfclose, fopenfclose_zeropath)
 	assert_fopen_error(NULL, "w", EINVAL);
 }
 
-TEST(fopenfclose, fopenfclose_wrongflags)
+TEST(stdio_fopenfclose, stdio_fopenfclose_wrongflags)
 {
 	/* open with no flags/wrong flags/null flags */
 	assert_fopen_error(stdpath, "", EINVAL);
@@ -127,16 +130,17 @@ TEST(fopenfclose, fopenfclose_wrongflags)
 	assert_fopen_error(stdpath, NULL, EINVAL);
 }
 
-TEST(fopenfclose, fopenfclose_toolongname)
+TEST(stdio_fopenfclose, stdio_fopenfclose_toolongname)
 {
 	/* open file with too long name */
 	assert_fopen_error(toolongpath, "w", ENAMETOOLONG);
 }
 
 
-TEST(fopenfclose, freopen_file)
+TEST(stdio_fopenfclose, freopen_file)
 {
 	fd = fopen(stdpath, "w");
+	TEST_ASSERT_NOT_NULL(fd);
 	/* freopen() on opened file */
 	fd2 = freopen(stdpath, "w", fd);
 	{
@@ -144,22 +148,37 @@ TEST(fopenfclose, freopen_file)
 		TEST_ASSERT_NOT_NULL(fd2);
 		TEST_ASSERT_TRUE(fd == fd2);
 	}
-	fclose(fd);
+	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
 }
 
 
-TEST(fopenfclose, fdopen_file)
+TEST(stdio_fopenfclose, fdopen_file)
 {
 	fd = fopen(stdpath, "r");
+	TEST_ASSERT_NOT_NULL(fd);
 	{
+		filedes = -1;
 		TEST_ASSERT_NOT_NULL(fd);
 		filedes = fileno(fd);
 		TEST_ASSERT_GREATER_OR_EQUAL_INT(0, filedes);
 		fd2 = fdopen(filedes, "r");
 		TEST_ASSERT_NOT_NULL(fd2);
 	}
-	fclose(fd);
+	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
 }
+
+
+TEST_GROUP_RUNNER(stdio_fopenfclose)
+{
+	RUN_TEST_CASE(stdio_fopenfclose, stdio_fopenfclose_file);
+	RUN_TEST_CASE(stdio_fopenfclose, stdio_fopenfclose_opendir);
+	RUN_TEST_CASE(stdio_fopenfclose, stdio_fopenfclose_zeropath);
+	RUN_TEST_CASE(stdio_fopenfclose, stdio_fopenfclose_wrongflags);
+	RUN_TEST_CASE(stdio_fopenfclose, stdio_fopenfclose_toolongname);
+	RUN_TEST_CASE(stdio_fopenfclose, freopen_file);
+	RUN_TEST_CASE(stdio_fopenfclose, fdopen_file)
+}
+
 
 /* 
 Tets group for:
@@ -170,23 +189,24 @@ Tets group for:
 - ungetc,
 - puts, fputs, fgets
 */
-TEST_GROUP(getput);
+TEST_GROUP(stdio_getput);
 
-TEST_SETUP(getput)
+TEST_SETUP(stdio_getput)
 { /* empty */
 }
 
 
-TEST_TEAR_DOWN(getput)
+TEST_TEAR_DOWN(stdio_getput)
 { /* empty */
 }
 
 
-TEST(getput, fwritefread_basic)
+TEST(stdio_getput, fwritefread_basic)
 {
 	/* write some data to file using fwrite(), read it using fread(), assert end of file */
 	memset(buf, 0, 20);
 	fd = fopen(stdpath, "w+");
+	TEST_ASSERT_NOT_NULL(fd);
 	{
 		TEST_ASSERT_EQUAL_INT(5, fwrite(stdpath, sizeof(char), 5, fd));
 		rewind(fd);
@@ -194,32 +214,35 @@ TEST(getput, fwritefread_basic)
 		TEST_ASSERT_EQUAL_CHAR_ARRAY(stdpath, buf, 5);
 		TEST_ASSERT_EQUAL_INT(EOF, fgetc(fd));
 	}
-	fclose(fd);
+	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
 }
 
 
-TEST(getput, getput_basic)
+TEST(stdio_getput, getput_basic)
 {
 	/* Correct write */
 	fd = fopen(stdpath, "w");
+	TEST_ASSERT_NOT_NULL(fd);
 	{
 		TEST_ASSERT_EQUAL_INT('a', fputc('a', fd));
 		TEST_ASSERT_EQUAL_INT('b', putc('b', fd));
 	}
-	fclose(fd);
+	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
 
 	/* Correct read */
 	fd = fopen(stdpath, "r");
+	TEST_ASSERT_NOT_NULL(fd);
 	{
 		TEST_ASSERT_EQUAL_INT('a', fgetc(fd));
 		TEST_ASSERT_EQUAL_INT('b', getc(fd));
 		TEST_ASSERT_EQUAL_INT(EOF, fgetc(fd));
 		TEST_ASSERT_EQUAL_INT(EOF, getc(fd));
 	}
-	fclose(fd);
+	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
 
 	/* read from file open for writing */
 	fd = fopen(stdpath, "w");
+	TEST_ASSERT_NOT_NULL(fd);
 	{
 		TEST_ASSERT_EQUAL_INT('a', fputc('a', fd));
 		TEST_ASSERT_EQUAL_INT('b', fputc('b', fd));
@@ -230,45 +253,46 @@ TEST(getput, getput_basic)
 		TEST_ASSERT_EQUAL_INT(EOF, fgetc(fd));
 		TEST_ASSERT_EQUAL_INT(EBADF, errno);
 	}
-	fclose(fd);
+	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
 
 	/* Try to write to file open for reading */
 	fd = fopen(stdpath, "r");
+	TEST_ASSERT_NOT_NULL(fd);
 	{
 		TEST_ASSERT_EQUAL_INT(EOF, fputc('a', fd));
 		TEST_ASSERT_EQUAL_INT(EBADF, errno);
 		TEST_ASSERT_EQUAL_INT(EOF, fputc('a', fd));
 		TEST_ASSERT_EQUAL_INT(EBADF, errno);
 	}
-	fclose(fd);
+	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
 }
 
 
-TEST(getput, getsputs_basic)
+TEST(stdio_getput, getsputs_basic)
 {
 	/* reading/writing from file */
 	fd = fopen(stdpath, "w+");
+	TEST_ASSERT_NOT_NULL(fd);
 	{
 		TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fputs(stdpath, fd));
 		rewind(fd);
-		TEST_ASSERT_NOT_NULL(fgets(buf, 16, fd));
+		TEST_ASSERT_NOT_NULL(fgets(buf, sizeof(buf), fd));
 	}
-	fclose(fd);
+	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
 
 	/* reading from file not opened for reading */
 	fd = fopen(stdpath, "w");
+	TEST_ASSERT_NOT_NULL(fd);
 	{
 		TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fputs(stdpath, fd));
-		TEST_ASSERT_NULL(fgets(buf, 16, fd));
+		TEST_ASSERT_NULL(fgets(buf, sizeof(buf), fd));
 		TEST_ASSERT_EQUAL_INT(EBADF, errno);
 	}
-	fclose(fd);
-
-	fd = fopen(stdpath, "w+");
+	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
 }
 
 
-TEST(getput, getsputs_readonly)
+TEST(stdio_getput, getsputs_readonly)
 {
 	/* 
 	Upon successful completion, fputc() shall return the value it has written. 
@@ -280,141 +304,165 @@ TEST(getput, getsputs_readonly)
 	TEST_IGNORE();
 
 	fd = fopen(stdpath, "r");
+	TEST_ASSERT_NOT_NULL(fd);
 	{
 		TEST_ASSERT_EQUAL_INT(EOF, fputs(stdpath, fd)); /* <posix incompliance> returns 0, should EOF */
 		TEST_ASSERT_EQUAL_INT(EBADF, errno);
-		TEST_ASSERT_NOT_NULL(fgets(buf, 16, fd));
+		TEST_ASSERT_NOT_NULL(fgets(buf, sizeof(buf), fd));
 		TEST_ASSERT_EQUAL_CHAR_ARRAY(stdpath, buf, sizeof(stdpath));
-		TEST_ASSERT_NULL(fgets(buf, 16, fd));
+		TEST_ASSERT_NULL(fgets(buf, sizeof(buf), fd));
 	}
-	fclose(fd);
+	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
 }
 
 
-TEST(getput, ungetc_basic)
+TEST(stdio_getput, ungetc_basic)
 {
 	/* standard usage of ungetc */
 	fd = fopen(stdpath, "w");
-	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fputs(stdpath, fd));
-	fclose(fd);
+	TEST_ASSERT_NOT_NULL(fd);
+	{
+		TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fputs(stdpath, fd));
+	}
+	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
+
 	fd = fopen(stdpath, "r");
+	TEST_ASSERT_NOT_NULL(fd);
 	{
 		c = fgetc(fd);
 		TEST_ASSERT_EQUAL_INT((int)c, ungetc(c, fd));
 		TEST_ASSERT_EQUAL_PTR(buf, fgets(buf, sizeof(stdpath), fd));
 		TEST_ASSERT_EQUAL_STRING(stdpath, buf);
 	}
-	fclose(fd);
+	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
 
 	/*	EOF pushback test
 		If the value of c equals that of the macro EOF, 
 		the operation shall fail and the input stream shall be left unchanged. 
 	*/
 	fd = fopen(stdpath, "r");
+	TEST_ASSERT_NOT_NULL(fd);
 	{
 		TEST_ASSERT_EQUAL_INT(EOF, ungetc(EOF, fd));
 		TEST_ASSERT_EQUAL_INT(stdpath[0], fgetc(fd));
 	}
-	fclose(fd);
+	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
 }
+
+
+TEST_GROUP_RUNNER(stdio_getput)
+{
+	RUN_TEST_CASE(stdio_getput, fwritefread_basic);
+	RUN_TEST_CASE(stdio_getput, getput_basic);
+	RUN_TEST_CASE(stdio_getput, getsputs_basic);
+	RUN_TEST_CASE(stdio_getput, getsputs_readonly);
+	RUN_TEST_CASE(stdio_getput, ungetc_basic);
+}
+
 
 /*
 test group for:
 getline,
 */
-TEST_GROUP(line);
+#define LINE1 "line1\n"
+#define LINE2 "lineline2\n"
+#define LINE3 "line3\n"
+#define LINE4 "\n"
 
-TEST_SETUP(line)
+
+TEST_GROUP(stdio_line);
+
+TEST_SETUP(stdio_line)
 {
 	/* file preparation */
 	fd = fopen(stdpath, "w+");
+	TEST_ASSERT_NOT_NULL(fd);
 	{
-		fputs("line1\nlineline2\nline3\n\n", fd);
+		fputs(LINE1, fd);
+		fputs(LINE2, fd);
+		fputs(LINE3, fd);
+		fputs(LINE4, fd);
 	}
-	fclose(fd);
+	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
 }
 
 
-TEST_TEAR_DOWN(line)
+TEST_TEAR_DOWN(stdio_line)
 { /* empty */
 }
 
 
-TEST(line, getline_basic)
+TEST(stdio_line, getline_basic)
 {
 	char *line = NULL;
 	size_t len = 1;
 
 	/* read using getline */
 	fd = fopen(stdpath, "r");
+	TEST_ASSERT_NOT_NULL(fd);
 	{
 		/* gerline with null buffer and misleading size */
-		TEST_ASSERT_EQUAL_INT(6, getline(&line, &len, fd));
-		TEST_ASSERT_EQUAL_STRING("line1\n", line);
+		TEST_ASSERT_EQUAL_INT(sizeof(LINE1) - 1, getline(&line, &len, fd));
+		TEST_ASSERT_EQUAL_STRING(LINE1, line);
 		/* new buffer shall be allocated of size at least strlen+1 */
-		TEST_ASSERT_GREATER_OR_EQUAL_INT(7, len);
+		TEST_ASSERT_GREATER_OR_EQUAL_INT(sizeof(LINE1), len);
 
 		/* getline with to small buffer */
-		TEST_ASSERT_EQUAL_INT(10, getline(&line, &len, fd));
-		TEST_ASSERT_EQUAL_STRING("lineline2\n", line);
+		TEST_ASSERT_EQUAL_INT(sizeof(LINE2) - 1, getline(&line, &len, fd));
+		TEST_ASSERT_EQUAL_STRING(LINE2, line);
 		/* buffer shall be reallocated of size at least strlen+1 */
-		TEST_ASSERT_GREATER_OR_EQUAL_INT(11, len);
+		TEST_ASSERT_GREATER_OR_EQUAL_INT(sizeof(LINE2), len);
 
 		/* getline with adequate buffer and character */
-		TEST_ASSERT_EQUAL_INT(6, getline(&line, &len, fd));
-		TEST_ASSERT_EQUAL_STRING("line3\n", line);
+		TEST_ASSERT_EQUAL_INT(sizeof(LINE3) - 1, getline(&line, &len, fd));
+		TEST_ASSERT_EQUAL_STRING(LINE3, line);
 		/* buffer shall not be reallocated, and stay at size at least as big as previusly*/
-		TEST_ASSERT_GREATER_OR_EQUAL_INT(11, len);
+		TEST_ASSERT_GREATER_OR_EQUAL_INT(sizeof(LINE3), len);
 
 		/* getline with adequate buffer, but only newline is read */
-		TEST_ASSERT_EQUAL_INT(1, getline(&line, &len, fd));
-		TEST_ASSERT_EQUAL_STRING("\n", line);
+		TEST_ASSERT_EQUAL_INT(sizeof(LINE4) - 1, getline(&line, &len, fd));
+		TEST_ASSERT_EQUAL_STRING(LINE4, line);
 		/* buffer shall not be reallocated, and stay at size at least as big as previusly*/
-		TEST_ASSERT_GREATER_OR_EQUAL_INT(11, len);
+		TEST_ASSERT_GREATER_OR_EQUAL_INT(sizeof(LINE4), len);
 
 		/* getline reading EOF */
 		TEST_ASSERT_EQUAL_INT(-1, getline(&line, &len, fd));
 		/* buffer shall not change from previous call */
-		TEST_ASSERT_EQUAL_STRING("\n", line);
+		TEST_ASSERT_EQUAL_STRING(LINE4, line);
 		/* buffer shall not be reallocated, and stay at size at least as big as previusly*/
-		TEST_ASSERT_GREATER_OR_EQUAL_INT(11, len);
+		TEST_ASSERT_GREATER_OR_EQUAL_INT(sizeof(LINE4), len);
 
 		free(line);
 	}
-	fclose(fd);
+	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
 }
 
 
-TEST(line, getline_wronly)
+TEST(stdio_line, getline_wronly)
 {
 	char *line = NULL;
 	size_t len = 0;
 
 	/* read using getline from write-only file */
 	fd = fopen(stdpath, "a");
+	TEST_ASSERT_NOT_NULL(fd);
 	{
 		rewind(fd);
 		TEST_ASSERT_EQUAL_INT(-1, getline(&line, &len, fd));
 		TEST_ASSERT_EQUAL_INT(EBADF, errno);
 		TEST_ASSERT_NULL(line);
 	}
-	fclose(fd);
+	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
 }
 
 
-TEST(line, getline_allocated)
+TEST(stdio_line, getline_allocated)
 {
-	/* If *lineptr is a null pointer or if the object pointed to by *lineptr is of insufficient size, 
-	an object shall be allocated as if by malloc() or the object shall be reallocated as if by realloc(), 
-	respectively, such that the object is large enough to hold the characters to be written to it, including the terminating NUL, 
-	and *n shall be set to the new size */
-	/* <posix incompliant> - value pointed to by *len argument should not change but is changed and equals strlen(line) */
-	//TEST_IGNORE();
-
 	char *line = NULL;
 	size_t len = 50; /* allocated memory exceeds one demanded for a line that to be read */
 
 	fd = fopen(stdpath, "r");
+	TEST_ASSERT_NOT_NULL(fd);
 	{
 		line = malloc(len);
 		rewind(fd);
@@ -423,27 +471,29 @@ TEST(line, getline_allocated)
 		TEST_ASSERT_EQUAL_STRING("line1\n", line);
 		free(line);
 	}
-	fclose(fd);
+	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
 }
 
 
-TEST(line, getline_longline)
+TEST(stdio_line, getline_longline)
 {
 	char *line = NULL;
-	size_t len = 50; /* allocated memory exceeds one demanded for a line that to be read */
+	size_t len = 0; /* getline() shall be responsible for memory allocation */
 	int i;
 
-	/* prepare file with one long line */
+	/* prepare file with one long line of length 1000 + '\n' */
 	fd = fopen(stdpath, "w+");
+	TEST_ASSERT_NOT_NULL(fd);
 	{
 		for (i = 0; i < 100; i++) {
 			fputs("0123456789", fd);
 		}
 		fputc('\n', fd);
 	}
-	fclose(fd);
+	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
 
 	fd = fopen(stdpath, "r");
+	TEST_ASSERT_NOT_NULL(fd);
 	{
 		rewind(fd);
 		TEST_ASSERT_EQUAL_INT(1001, getline(&line, &len, fd));
@@ -451,33 +501,47 @@ TEST(line, getline_longline)
 		TEST_ASSERT_EQUAL_INT(1001, strlen(line));
 		free(line);
 	}
-	fclose(fd);
+	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
 }
+
+
+TEST_GROUP_RUNNER(stdio_line)
+{
+	RUN_TEST_CASE(stdio_line, getline_basic);
+	RUN_TEST_CASE(stdio_line, getline_wronly);
+	RUN_TEST_CASE(stdio_line, getline_allocated);
+	RUN_TEST_CASE(stdio_line, getline_longline)
+}
+
 
 /* 
 Test group for:
 fseek, fseeko, fsetpos(), rewind()
 ftell, ftello
 */
-TEST_GROUP(seek);
+TEST_GROUP(stdio_fileseek);
 
-TEST_SETUP(seek)
+TEST_SETUP(stdio_fileseek)
 {
 	fd = fopen(stdpath, "w+");
-	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fputs(stdpath, fd));
-	fclose(fd);
+	TEST_ASSERT_NOT_NULL(fd);
+	{
+		TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fputs(stdpath, fd));
+	}
+	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
 }
 
 
-TEST_TEAR_DOWN(seek)
+TEST_TEAR_DOWN(stdio_fileseek)
 { /* empty */
 }
 
 
-TEST(seek, seek_fseek)
+TEST(stdio_fileseek, seek_fseek)
 {
 	/* fseek() to SEEK_SET/CUR/END macros */
 	fd = fopen(stdpath, "a+");
+	TEST_ASSERT_NOT_NULL(fd);
 	{
 		TEST_ASSERT_NOT_NULL(fd);
 		TEST_ASSERT_EQUAL_INT(EOF, fgetc(fd));
@@ -492,14 +556,15 @@ TEST(seek, seek_fseek)
 		TEST_ASSERT_EQUAL_INT(0, fseek(fd, -1, SEEK_END));
 		TEST_ASSERT_EQUAL_INT(stdpath[sizeof(stdpath) - 2], fgetc(fd));
 	}
-	fclose(fd);
+	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
 }
 
 
-TEST(seek, seek_fseeko)
+TEST(stdio_fileseek, seek_fseeko)
 {
 	/* fseeko() to SEEK_SET/CUR/END macros */
 	fd = fopen(stdpath, "a+");
+	TEST_ASSERT_NOT_NULL(fd);
 	{
 		/* fallback to absolute beginning */
 		TEST_ASSERT_NOT_NULL(fd);
@@ -513,13 +578,13 @@ TEST(seek, seek_fseeko)
 		TEST_ASSERT_EQUAL_INT(0, (off_t)fseeko(fd, -1, SEEK_END));
 		TEST_ASSERT_EQUAL_INT(stdpath[sizeof(stdpath) - 2], fgetc(fd));
 	}
-	fclose(fd);
+	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
 }
 
 
-TEST(seek, seek_fsetpos)
+TEST(stdio_fileseek, seek_fsetpos)
 {
-	/* <posix incmpliance> function is not implemented in lubphoenix */
+	/* <posix incmpliance> function is not implemented in libphoenix */
 	/* The fsetpos() function shall set the file position and state indicators for the stream 
 	pointed to by stream according to the value of the object pointed to by pos, 
 	which the application shall ensure is a value obtained from an earlier call to fgetpos() on the same stream. 
@@ -528,7 +593,7 @@ TEST(seek, seek_fsetpos)
 }
 
 
-TEST(seek, seek_readonly)
+TEST(stdio_fileseek, seek_readonly)
 {
 	/* EBADF The file descriptor underlying the stream file is not open for writing ... */
 	/* <posix incompliant> returns 0, should EOF */
@@ -536,33 +601,36 @@ TEST(seek, seek_readonly)
 	TEST_IGNORE();
 
 	fd = fopen(stdpath, "r");
+	TEST_ASSERT_NOT_NULL(fd);
 	{
 		TEST_ASSERT_EQUAL_INT(EOF, fseek(fd, 0, SEEK_SET));
 		TEST_ASSERT_EQUAL_INT(EBADF, errno);
 		TEST_ASSERT_EQUAL_INT(EOF, fseeko(fd, 0, SEEK_SET));
 		TEST_ASSERT_EQUAL_INT(EBADF, errno);
 	}
-	fclose(fd);
+	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
 }
 
 
-TEST(seek, seek_rewind)
+TEST(stdio_fileseek, seek_rewind)
 {
-	/* Rewind to beggining of the file */
+	/* Rewind to beginning of the file */
 	fd = fopen(stdpath, "w+");
+	TEST_ASSERT_NOT_NULL(fd);
 	{
 		TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fputs(stdpath, fd));
 		rewind(fd);
 		TEST_ASSERT_EQUAL_INT(stdpath[0], fgetc(fd));
 	}
-	fclose(fd);
+	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
 }
 
 
-TEST(seek, seek_ftell)
+TEST(stdio_fileseek, seek_ftell)
 {
 	/* tell position in file after fseek() calls */
 	fd = fopen(stdpath, "w+");
+	TEST_ASSERT_NOT_NULL(fd);
 	{
 		TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fputs(stdpath, fd));
 		fseek(fd, 0, SEEK_SET);
@@ -572,40 +640,53 @@ TEST(seek, seek_ftell)
 		fgetc(fd);
 		TEST_ASSERT_EQUAL_INT(5, ftell(fd));
 	}
-	fclose(fd);
+	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
 }
+
+
+TEST_GROUP_RUNNER(stdio_fileseek)
+{
+	RUN_TEST_CASE(stdio_fileseek, seek_fseek);
+	RUN_TEST_CASE(stdio_fileseek, seek_fseeko);
+	RUN_TEST_CASE(stdio_fileseek, seek_fsetpos)
+	RUN_TEST_CASE(stdio_fileseek, seek_readonly);
+	RUN_TEST_CASE(stdio_fileseek, seek_rewind);
+	RUN_TEST_CASE(stdio_fileseek, seek_ftell);
+}
+
 
 /*
 Tets group for:
 fileno, feof, remove
 ferror, clearerr
 */
-TEST_GROUP(fileop);
+TEST_GROUP(stdio_fileop);
 
-TEST_SETUP(fileop)
+TEST_SETUP(stdio_fileop)
 { /* empty */
 }
 
 
-TEST_TEAR_DOWN(fileop)
+TEST_TEAR_DOWN(stdio_fileop)
 { /* empty */
 }
 
 
-TEST(fileop, fileop_fileno)
+TEST(stdio_fileop, fileop_fileno)
 {
 	fd = fopen(stdpath, "r");
 	TEST_ASSERT_NOT_NULL(fd);
 	{
 		TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fileno(fd));
 	}
-	fclose(fd);
+	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
 }
 
 
-TEST(fileop, fileop_feof)
+TEST(stdio_fileop, fileop_feof)
 {
 	fd = fopen(stdpath, "w+");
+	TEST_ASSERT_NOT_NULL(fd);
 	{
 		TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fputs(stdpath, fd));
 		TEST_ASSERT_EQUAL_INT(EOF, fgetc(fd));
@@ -613,16 +694,16 @@ TEST(fileop, fileop_feof)
 		rewind(fd);
 		TEST_ASSERT_EQUAL_INT(0, feof(fd));
 	}
-	fclose(fd);
+	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
 }
 
 
-TEST(fileop, fileop_remove)
+TEST(stdio_fileop, fileop_remove)
 {
 	/* fopen() a file and remove() it */
 	fd = fopen(stdpath, "w+");
 	TEST_ASSERT_NOT_NULL(fd);
-	fclose(fd);
+	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
 	remove(stdpath);
 	fd = fopen(stdpath, "r");
 	TEST_ASSERT_NULL(fd);
@@ -634,39 +715,51 @@ TEST(fileop, fileop_remove)
 }
 
 
-TEST(fileop, fileop_ferror)
+TEST(stdio_fileop, fileop_ferror)
 {
 	fd = fopen(stdpath, "w");
+	TEST_ASSERT_NOT_NULL(fd);
 	{
 		c = fgetc(fd);
 		TEST_ASSERT_GREATER_THAN_INT(0, ferror(fd));
 		clearerr(fd);
 		TEST_ASSERT_EQUAL_INT(0, ferror(fd));
 	}
-	fclose(fd);
+	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
 }
+
+
+TEST_GROUP_RUNNER(stdio_fileop)
+{
+	RUN_TEST_CASE(stdio_fileop, fileop_fileno);
+	RUN_TEST_CASE(stdio_fileop, fileop_feof);
+	RUN_TEST_CASE(stdio_fileop, fileop_ferror);
+}
+
 
 /*
 Test group for:
 setvbuf, setbuf, fflush()
 */
-TEST_GROUP(bufs);
+TEST_GROUP(stdio_bufs);
 
-TEST_SETUP(bufs)
+TEST_SETUP(stdio_bufs)
 {
 	fd = fopen(stdpath, "w+");
 	fd2 = fopen(stdpath, "r");
+	TEST_ASSERT_NOT_NULL(fd);
+	TEST_ASSERT_NOT_NULL(fd2);
 }
 
 
-TEST_TEAR_DOWN(bufs)
+TEST_TEAR_DOWN(stdio_bufs)
 {
-	fclose(fd2);
-	fclose(fd);
+	TEST_ASSERT_EQUAL_INT(0, fclose(fd2));
+	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
 }
 
 
-TEST(bufs, setbuf_basic)
+TEST(stdio_bufs, setbuf_basic)
 {
 	char buf2[BUFSIZ];
 
@@ -680,7 +773,7 @@ TEST(bufs, setbuf_basic)
 }
 
 
-TEST(bufs, setbuf_null)
+TEST(stdio_bufs, setbuf_null)
 {
 	/* after setbuf() read from file before and after flush */
 	setbuf(fd, NULL);
@@ -690,7 +783,7 @@ TEST(bufs, setbuf_null)
 }
 
 
-TEST(bufs, setvbuf_fullbuffer)
+TEST(stdio_bufs, setvbuf_fullbuffer)
 {
 	/* after setbuf() read from file before and after flush */
 	char buf2[8];
@@ -706,7 +799,7 @@ TEST(bufs, setvbuf_fullbuffer)
 }
 
 
-TEST(bufs, setvbuf_fullbuffer_overflow)
+TEST(stdio_bufs, setvbuf_fullbuffer_overflow)
 {
 	char buf2[8];
 
@@ -718,7 +811,7 @@ TEST(bufs, setvbuf_fullbuffer_overflow)
 }
 
 
-TEST(bufs, setvbuf_linebuffer)
+TEST(stdio_bufs, setvbuf_linebuffer)
 {
 	char buf2[8];
 
@@ -732,7 +825,7 @@ TEST(bufs, setvbuf_linebuffer)
 }
 
 
-TEST(bufs, setvbuf_nobuffer)
+TEST(stdio_bufs, setvbuf_nobuffer)
 {
 	char buf2[8];
 
@@ -744,42 +837,12 @@ TEST(bufs, setvbuf_nobuffer)
 }
 
 
-TEST_GROUP_RUNNER(readwrite)
+TEST_GROUP_RUNNER(stdio_bufs)
 {
-	RUN_TEST_CASE(fopenfclose, fopenfclose_file);
-	RUN_TEST_CASE(fopenfclose, fopenfclose_opendir);
-	RUN_TEST_CASE(fopenfclose, fopenfclose_zeropath);
-	RUN_TEST_CASE(fopenfclose, fopenfclose_wrongflags);
-	RUN_TEST_CASE(fopenfclose, fopenfclose_toolongname);
-	RUN_TEST_CASE(fopenfclose, freopen_file);
-	RUN_TEST_CASE(fopenfclose, fdopen_file)
-
-	RUN_TEST_CASE(line, getline_basic);
-	RUN_TEST_CASE(line, getline_wronly);
-	RUN_TEST_CASE(line, getline_allocated);
-	RUN_TEST_CASE(line, getline_longline)
-
-	RUN_TEST_CASE(getput, fwritefread_basic);
-	RUN_TEST_CASE(getput, getput_basic);
-	RUN_TEST_CASE(getput, getsputs_basic);
-	RUN_TEST_CASE(getput, getsputs_readonly);
-	RUN_TEST_CASE(getput, ungetc_basic);
-
-	RUN_TEST_CASE(seek, seek_fseek);
-	RUN_TEST_CASE(seek, seek_fseeko);
-	RUN_TEST_CASE(seek, seek_fsetpos)
-	RUN_TEST_CASE(seek, seek_readonly);
-	RUN_TEST_CASE(seek, seek_rewind);
-	RUN_TEST_CASE(seek, seek_ftell);
-
-	RUN_TEST_CASE(fileop, fileop_fileno);
-	RUN_TEST_CASE(fileop, fileop_feof);
-	RUN_TEST_CASE(fileop, fileop_ferror);
-
-	RUN_TEST_CASE(bufs, setbuf_basic);
-	RUN_TEST_CASE(bufs, setbuf_null);
-	RUN_TEST_CASE(bufs, setvbuf_fullbuffer);
-	RUN_TEST_CASE(bufs, setvbuf_fullbuffer_overflow);
-	RUN_TEST_CASE(bufs, setvbuf_linebuffer);
-	RUN_TEST_CASE(bufs, setvbuf_nobuffer);
+	RUN_TEST_CASE(stdio_bufs, setbuf_basic);
+	RUN_TEST_CASE(stdio_bufs, setbuf_null);
+	RUN_TEST_CASE(stdio_bufs, setvbuf_fullbuffer);
+	RUN_TEST_CASE(stdio_bufs, setvbuf_fullbuffer_overflow);
+	RUN_TEST_CASE(stdio_bufs, setvbuf_linebuffer);
+	RUN_TEST_CASE(stdio_bufs, setvbuf_nobuffer);
 }
