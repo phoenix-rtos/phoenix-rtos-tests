@@ -36,7 +36,9 @@ def harness(p):
                 pid, ppid, pr, state, cpu, wait, time, vmem, thr, task = line.split()
             except ValueError:
                 assert False, f'wrong ps output: {line}'
-
+            # handle for example /bin/psh
+            if task.endswith('psh'):
+                task = 'psh'
             if task in expected_tasks:
                 expected_tasks.remove(task)
 
