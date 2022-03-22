@@ -28,10 +28,9 @@
 
 FILE *fd;
 char buf[50];
-const char filename[] = "unistd_fsdir_file";
-const char directoryname[] = "unistd_fsdir_directory";
-int err;
-char toolongpath[PATH_MAX + 16];
+static const char filename[] = "unistd_fsdir_file";
+static const char directoryname[] = "unistd_fsdir_directory";
+static char toolongpath[PATH_MAX + 16];
 
 TEST_GROUP(unistd_fsdir);
 
