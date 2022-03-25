@@ -5,14 +5,7 @@ from .config import PHRTOS_PROJECT_DIR, DEVICE_SERIAL_USB, PHOENIXD_PORT
 
 
 QEMU_CMD = {
-    'ia32-generic': (
-        'qemu-system-i386',
-        [
-            '-hda', f'{PHRTOS_PROJECT_DIR}/_boot/phoenix-ia32-generic.disk',
-            '-nographic',
-            '-monitor', 'none'
-        ]
-    )
+    'ia32-generic': f'{PHRTOS_PROJECT_DIR}/scripts/ia32-generic-test.sh'
 }
 
 
@@ -20,7 +13,7 @@ class RunnerFactory:
     @staticmethod
     def create(target, serial, log=False):
         if target == 'ia32-generic':
-            return QemuRunner(*QEMU_CMD[target], log=log)
+            return QemuRunner(QEMU_CMD[target], log=log)
         if target == 'host-pc':
             return HostRunner(log=log)
         if target == 'armv7m7-imxrt106x':
