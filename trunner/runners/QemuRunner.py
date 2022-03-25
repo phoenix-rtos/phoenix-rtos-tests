@@ -16,10 +16,9 @@ from .common import Runner
 class QemuRunner(Runner):
     """This class provides interface to run test case using QEMU as a device."""
 
-    def __init__(self, qemu, args, log):
+    def __init__(self, qemu, log):
         super().__init__(log)
         self.qemu = qemu
-        self.args = args
 
     def flash(self):
         """No-op method for QemuRunner, forced inheritance from Runner class"""
@@ -29,7 +28,7 @@ class QemuRunner(Runner):
         if test.skipped():
             return
 
-        proc = pexpect.spawn(self.qemu, args=self.args, encoding='ascii', timeout=test.timeout)
+        proc = pexpect.spawn(self.qemu, encoding='ascii', timeout=test.timeout)
         if self.logpath:
             proc.logfile = open(self.logpath, "a")
 
