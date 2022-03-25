@@ -35,7 +35,10 @@ def harness(p):
             try:
                 pid, ppid, pr, state, cpu, wait, time, vmem, thr, task = line.split()
             except ValueError:
-                assert False, f'wrong ps output: {line}'
+                try:
+                    pid, ppid, pr, state, cpu, wait, time, vmem, thr, task, arguments = line.split()
+                except ValueError:
+                    assert False, f'wrong ps output: {line}'
             # handle for example /bin/psh
             if task.endswith('psh'):
                 task = 'psh'
