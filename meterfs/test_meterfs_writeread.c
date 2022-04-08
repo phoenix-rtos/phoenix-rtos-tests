@@ -43,6 +43,12 @@ static void turnCheck(int fd, file_info_t *info, char *bufftx, char *buffrx, uns
 		TEST_ASSERT_EQUAL(info->recordsz, file_read(fd, 0, buffrx, info->recordsz));
 
 		TEST_ASSERT_EQUAL_HEX8_ARRAY(bufftx, buffrx, info->recordsz);
+
+		if (info->recordsz > 2) {
+			memset(buffrx + 1, 'x', info->recordsz - 2);
+			TEST_ASSERT_EQUAL(info->recordsz - 2, file_read(fd, 1, buffrx + 1, info->recordsz - 2));
+			TEST_ASSERT_EQUAL_HEX8_ARRAY(bufftx, buffrx, info->recordsz);
+		}
 	}
 }
 
