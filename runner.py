@@ -65,7 +65,7 @@ def parse_args():
                         help="Specify verbosity level. By default uses level info.")
 
     parser.add_argument("-s", "--serial",
-                        default=config.DEVICE_SERIAL_PORT,
+                        default=config.DEVICE_SERIAL_PORT_NXP,
                         help="Specify serial to communicate with device board. "
                              "By default uses %(default)s.")
 
@@ -97,11 +97,12 @@ def parse_args():
         # Run on all available targets
         args.target = config.ALL_TARGETS
 
-    if not args.serial:
-        args.serial = config.DEVICE_SERIAL_PORT
+    # no support for running 2 device targets at once using one host
+    if 'armv7a9-zynq7000-zedboard' in args.target and args.serial != config.DEVICE_SERIAL_PORT_XYLINX :
+        args.serial = config.DEVICE_SERIAL_PORT_XYLINX
 
     if not args.baudrate:
-        args.serial = config.DEVICE_SERIAL_BAUDRATE
+        args.baudrate = config.DEVICE_SERIAL_BAUDRATE
 
     return args
 

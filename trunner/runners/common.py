@@ -41,9 +41,12 @@ def is_github_actions():
     return os.getenv('GITHUB_ACTIONS', False)
 
 
-def wait_for_dev(port, timeout=0):
+def wait_for_dev(port, timeout=0, wait_for_disappear=False):
     asleep = 0
 
+    if wait_for_disappear:
+        while os.path.exists(port):
+            continue
     # naive wait for dev
     while not os.path.exists(port):
         time.sleep(0.01)
@@ -221,7 +224,7 @@ class Phoenixd:
 
 class PloError(Exception):
     def __init__(self, message, expected):
-        msg = Color.colorify("PLO ERROR:\n", Color.BOLD)
+        msg = Color.colorify("PLO ERROR:", Color.BOLD)
         msg += str(message) + '\n'
         if expected:
             msg += Color.colorify("EXPECTED:\n", Color.BOLD)
@@ -233,11 +236,12 @@ class PloError(Exception):
 class PloTalker:
     """Interface to communicate with plo"""
 
-    def __init__(self, port, baudrate=115200):
+    def __init__(self, port, codec_errors='strict', baudrate=115200):
         self.port = port
         self.baudrate = baudrate
         self.serial = None
         self.plo = None
+        self.codec_errors = codec_errors
 
     @classmethod
     def from_pexpect(cls, pexpect_fd):
@@ -248,11 +252,14 @@ class PloTalker:
         obj.plo = pexpect_fd
         return obj
 
-    def interrupt_counting(self):
+    def send_empty(self):
+        self.plo.send('\r\n')
+
+    def interrupt_counting(self, catch_statement):
         """ Interrupts timer counting to enter plo """
-        self.plo.expect_exact('Waiting for input', timeout=3)
-        self.plo.send('\n')
-        self.plo.expect_exact('\n')
+        if catch_statement:
+            self.plo.expect_exact('Waiting for input', timeout=3)
+        self.send_empty()
 
     def open(self):
         try:
@@ -262,7 +269,11 @@ class PloTalker:
             raise
 
         try:
-            self.plo = pexpect.fdpexpect.fdspawn(self.serial, encoding='ascii', timeout=8)
+            self.plo = pexpect.fdpexpect.fdspawn(
+                                                self.serial,
+                                                encoding='ascii',
+                                                codec_errors=self.codec_errors,
+                                                timeout=8)
         except Exception:
             self.serial.close()
             raise
