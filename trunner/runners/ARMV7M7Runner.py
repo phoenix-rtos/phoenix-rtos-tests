@@ -15,7 +15,7 @@ import select
 from pexpect.exceptions import TIMEOUT, EOF
 from trunner.tools.color import Color
 from .common import LOG_PATH, Psu, Phoenixd, PhoenixdError, PloError, PloTalker, DeviceRunner, Runner
-from .common import GPIO, phd_error_msg, rootfs
+from .common import GPIO, phd_error_msg, rootfs, wait_for_dev
 
 
 def hostpc_reboot(serial_downloader=False):
@@ -49,7 +49,18 @@ class ARMV7M7Runner(DeviceRunner):
     SDP = None
     IMAGE = None
 
-    def __init__(self, target, serial, is_rpi_host=True, log=False):
+    def __init__(
+        self,
+        target,
+        serial,
+        is_rpi_host=True,
+        log=False,
+        disconnecting_serial=False,
+        noisy=False,
+        run_psu=True,
+        dest_code='ocram2',
+        dest_exec='ocram2'
+    ):
         # has to be defined before super, because Runner constructor calls set_status, where it's used
         self.is_rpi_host = is_rpi_host
         if self.is_rpi_host:
@@ -60,8 +71,18 @@ class ARMV7M7Runner(DeviceRunner):
             self.boot_gpio = GPIO(4)
             self.leds = {'red': GPIO(13), 'green': GPIO(18), 'blue': GPIO(12)}
             self.logpath = LOG_PATH
-
         super().__init__(target, serial, log)
+        self.disconnecting_serial = disconnecting_serial
+        self.noisy = noisy
+        self.run_psu = run_psu
+        # used for loading test binaries - destination memory for storing test code and execution
+        self.dest_code = dest_code
+        self.dest_exec = dest_exec
+        self.codec_errors = 'strict'
+        self.catch_waiting_statement = True
+        if self.noisy:
+            self.codec_errors = 'ignore'
+            self.catch_waiting_statement = False
         # default values, redefined by specified target runners
         self.phoenixd_port = None
         self.is_cut_power_used = False
@@ -97,11 +118,21 @@ class ARMV7M7Runner(DeviceRunner):
     def flash(self):
         phd = None
         try:
-            self.reboot(serial_downloader=True, cut_power=self.is_cut_power_used)
-            with PloTalker(self.serial_port) as plo:
+            if self.run_psu:
+                self.reboot(serial_downloader=True, cut_power=self.is_cut_power_used)
+            else:
+                # If plo isn't uploaded using psu, we will need to enter it from flash boot mode
+                self.reboot(serial_downloader=False, cut_power=self.is_cut_power_used)
+            if self.disconnecting_serial:
+                wait_for_dev(self.serial_port, timeout=8, wait_for_disappear=True)
+            with PloTalker(self.serial_port, codec_errors=self.codec_errors) as plo:
                 if self.logpath:
                     plo.plo.logfile = open(self.logpath, "a")
-                Psu(self.target, script=self.SDP).run()
+                if self.run_psu:
+                    Psu(self.target, script=self.SDP).run()
+                # after connecting back to serial - sending newline may be needed to see the prompt
+                elif self.disconnecting_serial:
+                    plo.interrupt_counting(self.catch_waiting_statement)
                 plo.wait_prompt()
                 with Phoenixd(self.target, self.phoenixd_port) as phd:
                     plo.copy_file2mem(
@@ -124,10 +155,13 @@ class ARMV7M7Runner(DeviceRunner):
         load_dir = str(rootfs(test.target) / 'bin')
         try:
             self.reboot(cut_power=self.is_cut_power_used)
-            with PloTalker(self.serial_port) as plo:
+            if self.disconnecting_serial:
+                # The serial port has to be available within ~2s to interrupt counting and enter plo
+                wait_for_dev(self.serial_port, timeout=1.9, wait_for_disappear=True)
+            with PloTalker(self.serial_port, codec_errors=self.codec_errors) as plo:
                 if self.logpath:
                     plo.plo.logfile = open(self.logpath, "a")
-                plo.interrupt_counting()
+                plo.interrupt_counting(self.catch_waiting_statement)
                 plo.wait_prompt()
                 if not test.exec_cmd and not test.syspage_prog:
                     # We got plo prompt, we are ready for sending the "go!" command.
@@ -135,7 +169,7 @@ class ARMV7M7Runner(DeviceRunner):
 
                 with Phoenixd(self.target, self.phoenixd_port, dir=load_dir) as phd:
                     prog = test.exec_cmd[0] if test.exec_cmd else test.syspage_prog
-                    plo.app('usb0', prog, 'ocram2', 'ocram2')
+                    plo.app('usb0', prog, self.dest_code, self.dest_exec)
         except (TIMEOUT, EOF, PloError, PhoenixdError, RebootError) as exc:
             if isinstance(exc, TIMEOUT) or isinstance(exc, EOF):
                 test.exception = Color.colorify('EXCEPTION PLO\n', Color.BOLD)

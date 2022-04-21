@@ -33,6 +33,7 @@ PYEXPECT_TIMEOUT = 8
 # FIXME: allow for running tests for a given target family (not project only)
 # e.g. run armv7m7-imxrt106x tests for armv7m7-imxrt106x-project
 ALL_TARGETS = ['armv7a9-zynq7000-qemu',
+               'armv7a9-zynq7000-zedboard',
                'armv7m4-stm32l4x6-nucleo',
                'armv7m7-imxrt106x-evk',
                'armv7m7-imxrt117x-evk',
@@ -55,7 +56,8 @@ LONG_TESTS = ['busybox', 'mbedtls', 'micropython_std', 'micropython_repl']
 CURRENT_TARGET = None
 
 # Port to communicate with hardware boards
-DEVICE_SERIAL_PORT = "/dev/serial/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.4:1.1"
+DEVICE_SERIAL_PORT_NXP = '/dev/serial/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.4:1.1'
+DEVICE_SERIAL_PORT_XYLINX = '/dev/serial/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.4:1.0'
 DEVICE_SERIAL_BAUDRATE = 115200
 
 # DEVICE_SERIAL USB port address
