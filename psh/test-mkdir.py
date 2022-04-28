@@ -58,7 +58,8 @@ def mkdir(p, dir):
 def assert_dir_present(dir, files):
     for file in files:
         if dir == file.name:
-            assert file.owner == 'root', f'{dir} not owned by root'
+            # TODO: enable after adding multiple user support
+            # assert file.owner == 'root', f'{dir} not owned by root'
             assert file.is_dir, f'{dir} is not directory'
             break
     else:

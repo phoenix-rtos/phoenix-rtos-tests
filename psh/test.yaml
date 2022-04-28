@@ -40,11 +40,6 @@ test:
 
         - name: mkdir
           harness: test-mkdir.py
-          targets:
-              exclude:
-                  - armv7m7-imxrt106x
-                  - armv7m7-imxrt117x
-                  - armv7a9-zynq7000-qemu
 
         - name: ls
           harness: test_ls.py
