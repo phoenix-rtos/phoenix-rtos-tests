@@ -13,6 +13,7 @@ import signal
 from .common import Runner
 from trunner.config import PHRTOS_PROJECT_DIR
 
+
 class QemuRunner(Runner):
     """This class provides interface to run test case using QEMU as a device."""
 

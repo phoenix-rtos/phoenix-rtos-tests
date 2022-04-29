@@ -112,7 +112,9 @@ def harness(p):
     assert files == ls(p, 'example_dir/..')
 
     assert_dir_created(p, 'example_dir/another_dir')
-    assert_dir_created(p, ''.join(chars))
+    # there are some targets, where max fname length equals 64
+    assert_dir_created(p, ''.join(chars[:50]))
+    assert_dir_created(p, ''.join(chars[50:]))
 
     assert_random_dirs(p, chars)
 
