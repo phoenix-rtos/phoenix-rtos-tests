@@ -51,7 +51,7 @@ TEST(test_waitpid, waitpid_wnohang)
 			}
 			/* child process j */
 			else if (!pid[j]) {
-				execv("/bin/test_waitpid", arg[j]);
+				execv("/bin/test-waitpid", arg[j]);
 				fprintf(stderr, "exec function failed: %s\n", strerror(errno));
 				_exit(EXIT_FAILURE);
 			}

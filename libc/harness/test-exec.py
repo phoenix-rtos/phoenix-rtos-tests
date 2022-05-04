@@ -16,7 +16,7 @@ import psh.tools.psh as psh
 
 
 def assert_execve_env_changed(p):
-    cmd = '/bin/test_exec 1'
+    cmd = '/bin/test-exec 1'
     expected = (('argc = 1',
                  'argv[0] = /bin/to_exec',
                  'environ[0] = TEST1=exec_value'))
@@ -26,7 +26,7 @@ def assert_execve_env_changed(p):
 
 
 def assert_execve_env_unchanged(p):
-    cmd = '/bin/test_exec 2'
+    cmd = '/bin/test-exec 2'
     expected = (('argc = 1',
                  'argv[0] = /bin/to_exec',
                  'environ[0] = TEST1=unchanged_value'))
@@ -36,7 +36,7 @@ def assert_execve_env_unchanged(p):
 
 
 def assert_execve_path_searched(p):
-    cmd = '/bin/test_exec 3'
+    cmd = '/bin/test-exec 3'
     expected = (('argc = 1',
                  'argv[0] = to_exec',
                  'environ[0] = PATH=/bin:/sbin:/usr/bin:/usr/sbin'))
@@ -46,7 +46,7 @@ def assert_execve_path_searched(p):
 
 
 def assert_execvpe_env_changed(p):
-    cmd = '/bin/test_exec 4'
+    cmd = '/bin/test-exec 4'
     expected = (('argc = 1',
                  'argv[0] = /bin/to_exec',
                  'environ[0] = TEST1=exec_value'))
@@ -56,7 +56,7 @@ def assert_execvpe_env_changed(p):
 
 
 def assert_execvpe_env_unchanged(p):
-    cmd = '/bin/test_exec 5'
+    cmd = '/bin/test-exec 5'
     expected = (('argc = 1',
                  'argv[0] = /bin/to_exec',
                  'environ[0] = TEST1=unchanged_value'))
@@ -66,7 +66,7 @@ def assert_execvpe_env_unchanged(p):
 
 
 def assert_execvpe_path_searched(p):
-    cmd = '/bin/test_exec 6'
+    cmd = '/bin/test-exec 6'
     expected = (('argc = 1',
                  'argv[0] = to_exec',
                  'environ[0] = PATH=/bin:/sbin:/usr/bin:/usr/sbin'))
@@ -76,7 +76,7 @@ def assert_execvpe_path_searched(p):
 
 
 def assert_execvp_env_unchanged(p):
-    cmd = '/bin/test_exec 7'
+    cmd = '/bin/test-exec 7'
     expected = (('argc = 1',
                  'argv[0] = /bin/to_exec',
                  'environ[0] = TEST1=unchanged_value'))
@@ -86,7 +86,7 @@ def assert_execvp_env_unchanged(p):
 
 
 def assert_execvp_path_searched(p):
-    cmd = '/bin/test_exec 8'
+    cmd = '/bin/test-exec 8'
     expected = (('argc = 1',
                  'argv[0] = to_exec',
                  'environ[0] = PATH=/bin:/sbin:/usr/bin:/usr/sbin'))
