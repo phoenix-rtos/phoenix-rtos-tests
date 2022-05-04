@@ -1,6 +1,6 @@
 test:
     tests:
         - name: exec
-          harness: test_exec.py
+          harness: test-exec.py
           targets:
               exclude: [armv7m7-imxrt106x, armv7m7-imxrt117x]

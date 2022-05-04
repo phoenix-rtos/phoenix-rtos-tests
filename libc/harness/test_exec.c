@@ -33,7 +33,7 @@ static void test_exec_execveEnv(bool changeEnv)
 		setenv("TEST1", "invalid_value", 1);
 		setenv("TEST2", "should_dissapear", 1);
 
-		if (execve("/bin/test_exec", arg, env) == -1) {
+		if (execve("/bin/test-exec", arg, env) == -1) {
 			fprintf(stderr, "execve function failed: %s\n", strerror(errno));
 
 			exit(EXIT_FAILURE);
@@ -42,7 +42,7 @@ static void test_exec_execveEnv(bool changeEnv)
 	else {
 		setenv("TEST1", "unchanged_value", 1);
 
-		if (execve("/bin/test_exec", arg, environ) == -1) {
+		if (execve("/bin/test-exec", arg, environ) == -1) {
 			fprintf(stderr, "execve function failed: %s\n", strerror(errno));
 
 			exit(EXIT_FAILURE);
@@ -57,7 +57,7 @@ static void test_exec_execvePath(void)
 
 	setenv("PATH", "/bin:/sbin:/usr/bin:/usr/sbin", 1);
 
-	if (execve("test_exec", arg, environ) == -1) {
+	if (execve("test-exec", arg, environ) == -1) {
 		fprintf(stderr, "execve function failed: %s\n", strerror(errno));
 
 		exit(EXIT_FAILURE);
@@ -73,7 +73,7 @@ static void test_exec_execvpeEnv(bool changeEnv)
 		setenv("TEST1", "invalid_value", 1);
 		setenv("TEST2", "should_dissapear", 1);
 
-		if (execvpe("/bin/test_exec", arg, env) == -1) {
+		if (execvpe("/bin/test-exec", arg, env) == -1) {
 			fprintf(stderr, "execvpe function failed: %s\n", strerror(errno));
 
 			exit(EXIT_FAILURE);
@@ -82,7 +82,7 @@ static void test_exec_execvpeEnv(bool changeEnv)
 	else {
 		setenv("TEST1", "unchanged_value", 1);
 
-		if (execvpe("/bin/test_exec", arg, environ) == -1) {
+		if (execvpe("/bin/test-exec", arg, environ) == -1) {
 			fprintf(stderr, "execvpe function failed: %s\n", strerror(errno));
 
 			exit(EXIT_FAILURE);
@@ -97,7 +97,7 @@ static void test_exec_execvpePath(void)
 
 	setenv("PATH", "/bin:/sbin:/usr/bin:/usr/sbin", 1);
 
-	if (execvpe("test_exec", arg, environ) == -1) {
+	if (execvpe("test-exec", arg, environ) == -1) {
 		fprintf(stderr, "execve function failed: %s\n", strerror(errno));
 
 		exit(EXIT_FAILURE);
@@ -111,7 +111,7 @@ static void test_exec_execvpEnv(void)
 
 	setenv("TEST1", "unchanged_value", 1);
 
-	if (execvp("/bin/test_exec", arg) == -1) {
+	if (execvp("/bin/test-exec", arg) == -1) {
 		fprintf(stderr, "execvp function failed: %s\n", strerror(errno));
 
 		exit(EXIT_FAILURE);
@@ -125,7 +125,7 @@ static void test_exec_execvpPath(void)
 
 	setenv("PATH", "/bin:/sbin:/usr/bin:/usr/sbin", 1);
 
-	if (execvp("test_exec", arg) == -1) {
+	if (execvp("test-exec", arg) == -1) {
 		fprintf(stderr, "execvp function failed: %s\n", strerror(errno));
 
 		exit(EXIT_FAILURE);

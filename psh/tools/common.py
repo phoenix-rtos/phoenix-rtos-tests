@@ -20,6 +20,7 @@ OPTIONAL_CONTROL_CODE = CONTROL_CODE + r'?'
 # acceptable separators: white spaces (wss) + CC, CC + wss, wss
 SEPARATOR_PATTERN = r'(?:' + CONTROL_CODE + r'|\s)+'
 
+
 def create_testdir(p, dirname):
     # TODO: has to be changed after adding rm implementation and removing test directories
     msg = '\n'.join(['Wrong output when creating a test directory!',
