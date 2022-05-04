@@ -13,8 +13,7 @@
 #
 
 import psh.tools.psh as psh
-from psh.test_ls import SEPARATOR_PATTERN
-from psh.tools.common import OPTIONAL_CONTROL_CODE, create_testdir
+from psh.tools.common import OPTIONAL_CONTROL_CODE, SEPARATOR_PATTERN, create_testdir
 
 
 ROOT_TEST_DIR = 'test_ls_rootfs_dir'

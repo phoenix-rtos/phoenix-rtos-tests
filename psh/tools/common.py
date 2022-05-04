@@ -17,7 +17,8 @@ import psh.tools.psh as psh
 # according to control sequence introducer pattern
 CONTROL_CODE = r'(\x1b\[[\x30-\x3F]*[\x20-\x2F]*[\x40-\x7E])'
 OPTIONAL_CONTROL_CODE = CONTROL_CODE + r'?'
-
+# acceptable separators: white spaces (wss) + CC, CC + wss, wss
+SEPARATOR_PATTERN = r'(?:' + CONTROL_CODE + r'|\s)+'
 
 def create_testdir(p, dirname):
     # TODO: has to be changed after adding rm implementation and removing test directories
