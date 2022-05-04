@@ -42,7 +42,7 @@ test:
           harness: test-mkdir.py
 
         - name: ls
-          harness: test_ls.py
+          harness: test-ls.py
 
         - name: ls-rootfs
           harness: test-ls-rootfs.py

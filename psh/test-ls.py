@@ -13,10 +13,8 @@
 #
 
 import psh.tools.psh as psh
-from psh.tools.common import CONTROL_CODE, OPTIONAL_CONTROL_CODE, create_testdir
+from psh.tools.common import OPTIONAL_CONTROL_CODE, SEPARATOR_PATTERN, create_testdir
 
-# acceptable separators: white spaces (wss) + CC, CC + wss, wss
-SEPARATOR_PATTERN = r'(?:' + CONTROL_CODE + r'|\s)+'
 FNAME_PATTERN = r'(?P<fname>\S+)'
 
 ROOT_TEST_DIR = 'test_ls_dir'
