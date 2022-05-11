@@ -223,12 +223,13 @@ class Phoenixd:
 
 
 class PloError(Exception):
-    def __init__(self, message, expected):
-        msg = Color.colorify("PLO ERROR:", Color.BOLD)
-        msg += str(message) + '\n'
+    def __init__(self, message, expected, cmd):
+        if not message:
+            message = "[no response]"
+        msg = f'{Color.BOLD}PLO ERROR:{Color.END} {message}\n' \
+              f'{Color.BOLD}CMD PASSED:{Color.END} {cmd}\n'
         if expected:
-            msg += Color.colorify("EXPECTED:\n", Color.BOLD)
-            msg += str(expected) + '\n'
+            msg += f'{Color.BOLD}EXPECTED:{Color.END} {str(expected)}\n'
 
         super().__init__(msg)
 
@@ -252,14 +253,11 @@ class PloTalker:
         obj.plo = pexpect_fd
         return obj
 
-    def send_empty(self):
-        self.plo.send('\r\n')
-
     def interrupt_counting(self, catch_statement):
         """ Interrupts timer counting to enter plo """
         if catch_statement:
             self.plo.expect_exact('Waiting for input', timeout=3)
-        self.send_empty()
+        self.plo.send('\r\n')
 
     def open(self):
         try:
@@ -292,29 +290,23 @@ class PloTalker:
     def wait_prompt(self, timeout=8):
         self.plo.expect_exact("(plo)% ", timeout=timeout)
 
-    def expect_prompt(self, timeout=8):
-        idx = self.plo.expect([r"\(plo\)% ", r"(.*?)\n"], timeout=timeout)
-        if idx == 1:
-            # Something else than prompt was printed, raise error
-            line = self.plo.match.group(0)
-            raise PloError(line, expected="(plo)% ")
-
-    def cmd(self, cmd, timeout=8):
-        # Plo requires only CR, when sending command
-        self.plo.send(cmd + '\r')
+    def assert_cmd(self, cmd, timeout=8):
+        self.plo.send(cmd + '\r\n')
         # Wait for an eoched command
         self.plo.expect_exact(cmd)
-        # There might be some ASCII escape characters, we wait only for a new line
-        self.plo.expect_exact('\n', timeout=timeout)
+        try:
+            self.plo.expect_exact('(plo)%', timeout=timeout)
+            if ("\x1b[31m" in self.plo.before):
+                raise PloError(self.plo.before, expected="(plo)% ", cmd=cmd)
+        except pexpect.TIMEOUT:
+            raise PloError(self.plo.before, expected="(plo)% ")
 
     def app(self, device, file, imap, dmap, exec=False):
         exec = '-x' if exec else ''
-        self.cmd(f'app {device} {exec} {file} {imap} {dmap}', timeout=30)
-        self.expect_prompt()
+        self.assert_cmd(f'app {device} {exec} {file} {imap} {dmap}', timeout=30)
 
     def copy(self, src, src_obj, dst, dst_obj, src_size='', dst_size=''):
-        self.cmd(f'copy {src} {src_obj} {src_size} {dst} {dst_obj} {dst_size}', timeout=60)
-        self.expect_prompt()
+        self.assert_cmd(f'copy {src} {src_obj} {src_size} {dst} {dst_obj} {dst_size}', timeout=60)
 
     def copy_file2mem(self, src, file, dst='flash1', off=0, size=0):
         self.copy(
