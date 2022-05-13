@@ -41,13 +41,14 @@ TEST_SETUP(unistd_file)
 	/* open a file */
 	fd = open(filename, O_RDWR | O_CREAT | O_TRUNC);
 	TEST_ASSERT_NOT_EQUAL_INT(-1, fd);
+	memset(buf, '\0', sizeof(buf));
 }
 
 
 TEST_TEAR_DOWN(unistd_file)
 {
 	memset(buf, '\0', sizeof(buf));
-	if (fd > 0)
+	if (fd >= 0)
 		TEST_ASSERT_EQUAL_INT(0, close(fd));
 	TEST_ASSERT_EQUAL_INT(0, remove(filename));
 }
@@ -98,10 +99,12 @@ TEST(unistd_file, file_write_zero)
 TEST(unistd_file, file_write_reopened)
 {
 	int sum;
+	int fdr;
 
 	/* reopen file descriptor and open another for reading */
 	fd2 = open(filename, O_WRONLY | O_CREAT | O_APPEND);
-	int fdr = open(filename, O_RDONLY);
+	TEST_ASSERT_GREATER_OR_EQUAL(0, fd2);
+	fdr = open(filename, O_RDONLY);
 	TEST_ASSERT_GREATER_OR_EQUAL(0, fdr);
 	{
 		/* write to the same file consecutively from two different file descriptors */
@@ -126,11 +129,12 @@ TEST(unistd_file, file_write_reopened)
 TEST(unistd_file, file_write_dup)
 {
 	int sum;
+	int fdr;
 
 	/* duplicate file descriptor and open another for reading */
 	fd2 = dup(fd);
 	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fd2);
-	int fdr = open(filename, O_RDONLY);
+	fdr = open(filename, O_RDONLY);
 	TEST_ASSERT_GREATER_OR_EQUAL(0, fdr);
 	{
 		/* write to the same file consecutively from descriptor and its copy */
@@ -143,6 +147,8 @@ TEST(unistd_file, file_write_dup)
 		TEST_ASSERT_EQUAL_STRING_LEN(LINE1, &buf[0], sizeof(LINE1) - 1);
 		TEST_ASSERT_EQUAL_STRING(LINE2, &buf[sizeof(LINE1) - 1]);
 	}
+	TEST_ASSERT_EQUAL_INT(0, close(fdr));
+	TEST_ASSERT_EQUAL_INT(0, close(fd2));
 }
 
 /* Test write() to closed descriptor */
@@ -340,14 +346,17 @@ TEST(unistd_file, file_lseek_espipe)
 		TEST_IGNORE();
 	}
 	else {
-		TEST_ASSERT_EQUAL_INT(-1, lseek(fd, 1, SEEK_SET));
+		TEST_ASSERT_EQUAL_INT(-1, lseek(p[0], 1, SEEK_SET));
 		TEST_ASSERT_EQUAL_INT(ESPIPE, errno);
 
-		TEST_ASSERT_EQUAL_INT(-1, lseek(fd, 1, SEEK_CUR));
+		TEST_ASSERT_EQUAL_INT(-1, lseek(p[0], 1, SEEK_CUR));
 		TEST_ASSERT_EQUAL_INT(ESPIPE, errno);
 
-		TEST_ASSERT_EQUAL_INT(-1, lseek(fd, 1, SEEK_END));
+		TEST_ASSERT_EQUAL_INT(-1, lseek(p[0], 1, SEEK_END));
 		TEST_ASSERT_EQUAL_INT(ESPIPE, errno);
+
+		close(p[0]);
+		close(p[1]);
 	}
 }
 
@@ -597,11 +606,6 @@ TEST(unistd_file, file_ftruncate_opened_eof)
 /* ftruncate()-ing file to negative length */
 TEST(unistd_file, file_ftruncate_einval)
 {
-	/* <posix incmpliance> ftruncate() able to successfully set negative file size
-
-	Issue link: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/363
-	*/
-	TEST_IGNORE();
 	TEST_ASSERT_EQUAL_INT(-1, ftruncate(fd, -1));
 	TEST_ASSERT_EQUAL_INT(EINVAL, errno);
 }
@@ -630,15 +634,6 @@ TEST(unistd_file, file_ftruncate_ebadf)
 /* ftruncate()-ing directory */
 TEST(unistd_file, file_ftruncate_eisdir)
 {
-	/* <posix incmpliance> truncate() wrong errno returned 
-
-	truncate() called on directory returns errno 22 (EINVAL)
-	instead of errno 21 (EISDIR)
-	
-	Issue link: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/362
-	*/
-	TEST_IGNORE();
-
 	TEST_ASSERT_EQUAL_INT(-1, truncate("bin", 0));
 	TEST_ASSERT_EQUAL_INT(EISDIR, errno);
 }
