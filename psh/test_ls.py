@@ -138,14 +138,6 @@ def assert_ls_r(p, files):
     psh.assert_cmd(p, f'ls -r {TEST_DIR_BASIC}', expected, msg, is_regex=True)
 
 
-def assert_ls_S(p, files):
-    # it's common that empty directories has larger size than empty files
-    size_sorted_files = list(sorted(files, key=lambda x: (0, x) if x == 'dir' else (1, x)))
-    expected = create_ordered_pattern(size_sorted_files)
-    msg = 'Wrong output, when calling `ls -S`'
-    psh.assert_cmd(p, f'ls -S {TEST_DIR_BASIC}', expected, msg, is_regex=True)
-
-
 def harness(p):
     listed_files = ('test1', 'test0', 'dir')
     to_create_files = ('.hidden',) + listed_files
@@ -164,4 +156,3 @@ def harness(p):
     assert_ls_h(p)
     assert_ls_l(p, listed_files)
     assert_ls_r(p, listed_files)
-    assert_ls_S(p, listed_files)

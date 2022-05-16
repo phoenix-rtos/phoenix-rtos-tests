@@ -65,6 +65,21 @@ def assert_ls_t(p):
     psh.assert_cmd(p, f'ls -t {ROOT_TEST_DIR}', expected_pattern, msg, is_regex=True)
 
 
+def assert_ls_S(p):
+    expected_pattern = r'.*?psh' + SEPARATOR_PATTERN + r'.*?empty_file' + SEPARATOR_PATTERN + r'.*?'
+    expected_pattern = expected_pattern + psh.EOL
+
+    psh.assert_cmd(p, 'touch /bin/empty_file', '', 'Wrong output when creating empty file!')
+
+    # TODO: use only newly created files, when it will be possible to write content to a file
+    psh.assert_cmd(
+        pexpect_proc=p,
+        cmd='ls -1S /bin',
+        expected=expected_pattern,
+        msg='Wrong output, when calling `ls -1S`',
+        is_regex=True)
+
+
 def assert_multi(p):
     files = []
     for i in range(20):
@@ -101,6 +116,6 @@ def harness(p):
     assert_extralong(p)
 
     psh_cmds = psh.get_commands(p)
-    if 'date' in psh_cmds:
-        assert_ls_t(p)
+    assert_ls_t(p)
+    assert_ls_S(p)
     assert_ls_pshcmds(p, psh_cmds)
