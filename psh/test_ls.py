@@ -39,15 +39,30 @@ def prepare_testdir(p, files):
     psh.assert_cmd(p, f'mkdir {TEST_DIR_BASIC}/dir', '', msg)
 
 
-def create_pattern(files, separate_lines=False):
+def create_unordered_pattern(files):
+    """ Create regex pattern for ls output
+    containing all files from the `files` list in any order """
+
+    filesCnt = len(files)
+    files = '|'.join(files)
+    pattern = f'({OPTIONAL_CONTROL_CODE}({files}){SEPARATOR_PATTERN})'
+    pattern += rf'{{{filesCnt}}}'
+
+    # ( optional CC + (file1|file2|filen) + ((wss) + CC)|(CC + wss)|(wss)) ){n}
+    # wss - white spaces, CC - control code
+    return pattern
+
+
+def create_ordered_pattern(files, separate_lines=False):
+    """ Create regex pattern for ls output
+    containing all files from the `files` list in the same order """
+
     newline_separator = OPTIONAL_CONTROL_CODE + r'(\r+\n)'
-    pattern = r''
-    for file in files:
-        pattern += OPTIONAL_CONTROL_CODE + f'{file}'
-        if separate_lines:
-            pattern += newline_separator
-        else:
-            pattern += SEPARATOR_PATTERN
+    sep = newline_separator if separate_lines else SEPARATOR_PATTERN
+    files = [OPTIONAL_CONTROL_CODE + file for file in files]
+    pattern = sep.join(files) + sep
+
+    # optional CC + file1 + ((wss) + CC)|(CC + wss)|(wss)) and same for next files
     return pattern
 
 
@@ -57,35 +72,35 @@ def assert_ls_err(p):
 
 
 def assert_ls_noarg(p, files):
-    expected = create_pattern(sorted(files))
+    expected = create_ordered_pattern(sorted(files))
     msg = 'Wrong content of listed directory, when calling ls without arguments'
     psh.assert_cmd(p, f'ls {TEST_DIR_BASIC}', expected, msg, is_regex=True)
 
 
 def assert_ls_1(p, files):
-    expected = create_pattern(sorted(files), separate_lines=True)
+    expected = create_ordered_pattern(sorted(files), separate_lines=True)
     msg = 'Wrong content of listed directory, when calling `ls -1`'
     psh.assert_cmd(p, f'ls -1 {TEST_DIR_BASIC}', expected, msg, is_regex=True)
 
 
 def assert_ls_a(p, files):
-    expected = create_pattern(sorted(files))
+    expected = create_ordered_pattern(sorted(files))
     msg = 'Wrong content of listed directory, when calling `ls -a`'
     psh.assert_cmd(p, f'ls -a {TEST_DIR_BASIC}', expected, msg, is_regex=True)
 
 
 def assert_ls_d(p):
-    expected = create_pattern([TEST_DIR_BASIC, ])
+    expected = create_ordered_pattern([TEST_DIR_BASIC, ])
     msg = 'Wrong output, when calling `ls -d tested_directory`'
     psh.assert_cmd(p, f'ls -d {TEST_DIR_BASIC}', expected, msg, is_regex=True)
 
-    expected = create_pattern(['.', ])
+    expected = create_ordered_pattern(['.', ])
     msg = 'Wrong output, when calling `ls -d` without specified directory'
     psh.assert_cmd(p, 'ls -d', expected, msg, is_regex=True)
 
 
 def assert_ls_f(p, files):
-    expected = create_pattern(files)
+    expected = create_unordered_pattern(files)
     msg = 'Wrong output, when calling `ls -f`'
     psh.assert_cmd(p, f'ls -f {TEST_DIR_BASIC}', expected, msg, is_regex=True)
 
@@ -118,7 +133,7 @@ def assert_ls_l(p, files):
 
 
 def assert_ls_r(p, files):
-    expected = create_pattern(sorted(files, reverse=True))
+    expected = create_ordered_pattern(sorted(files, reverse=True))
     msg = 'Wrong output, when calling `ls -r`'
     psh.assert_cmd(p, f'ls -r {TEST_DIR_BASIC}', expected, msg, is_regex=True)
 
@@ -126,7 +141,7 @@ def assert_ls_r(p, files):
 def assert_ls_S(p, files):
     # it's common that empty directories has larger size than empty files
     size_sorted_files = list(sorted(files, key=lambda x: (0, x) if x == 'dir' else (1, x)))
-    expected = create_pattern(size_sorted_files)
+    expected = create_ordered_pattern(size_sorted_files)
     msg = 'Wrong output, when calling `ls -S`'
     psh.assert_cmd(p, f'ls -S {TEST_DIR_BASIC}', expected, msg, is_regex=True)
 
