@@ -89,7 +89,11 @@ class TestCase:
     def exec_test(self, proc):
         try:
             # Wait for a prompt
-            proc.expect_exact('(psh)% ')
+            # On armv7a9-zynq7000-qemu jffs initialization may take to ~20s, that's why it's set to 25
+            if self.target == "armv7a9-zynq7000-qemu":
+                proc.expect_exact('(psh)% ', timeout=25)
+            else:
+                proc.expect_exact('(psh)% ')
             if self.exec_cmd:
                 if self.use_sysexec:
                     self.sysexec(proc)

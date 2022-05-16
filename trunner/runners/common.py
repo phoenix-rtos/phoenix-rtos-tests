@@ -366,7 +366,7 @@ class DeviceRunner(Runner):
             test.handle_exception()
             return
 
-        proc = pexpect.fdpexpect.fdspawn(self.serial, encoding='ascii', timeout=test.timeout)
+        proc = pexpect.fdpexpect.fdspawn(self.serial, encoding='utf-8', timeout=test.timeout)
         if self.logpath:
             proc.logfile = open(self.logpath, "a")
 
