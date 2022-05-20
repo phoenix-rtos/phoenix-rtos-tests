@@ -7,7 +7,8 @@ import traceback
 
 from pexpect.exceptions import TIMEOUT, EOF
 
-from .harness import UnitTestHarness, BusyboxTestHarness, UnitTestResult, BusyboxTestResult
+from .harness import UnitTestHarness, UnitTestResult
+from .long_test import LongTestResult, LongTestHarnessFactory, LONG_TESTS
 from .tools.color import Color
 from .config import SYSEXEC_TARGETS
 
@@ -261,11 +262,12 @@ class TestCaseUnit(TestCase):
         return res
 
 
-class TestCaseBusybox(TestCase):
-    """The test case representing Busybox test suite."""
+class TestCaseLong(TestCase):
+    """The test case representing Mbedtls test suite."""
 
     def __init__(
         self,
+        type,
         name,
         target,
         timeout,
@@ -275,14 +277,14 @@ class TestCaseBusybox(TestCase):
         status=TestCase.FAILED
     ):
         super().__init__(name, target, timeout, psh, exec_cmd, use_sysexec, status)
-        self.harness = BusyboxTestHarness.harness
         self.test_results = []
+        self.harness = LongTestHarnessFactory.create(type)
 
     def log_test_status(self):
         super().log_test_status()
 
         for test in self.test_results:
-            if test.status == BusyboxTestResult.FAIL:
+            if test.status == LongTestResult.FAIL:
                 logging.info(f"\t{test}\n")
             else:
                 logging.debug(f"\t{test}\n")
@@ -294,7 +296,7 @@ class TestCaseBusybox(TestCase):
             self.test_results = res
 
         for test in self.test_results:
-            if test.status == BusyboxTestResult.FAIL:
+            if test.status == LongTestResult.FAIL:
                 self.status = TestCase.FAILED
                 break
 
@@ -330,8 +332,9 @@ class TestCaseFactory:
                 use_sysexec=use_sysexec,
                 status=status
             )
-        if test['type'] == 'busybox':
-            return TestCaseBusybox(
+        if test['type'] in LONG_TESTS:
+            return TestCaseLong(
+                type=test['type'],
                 name=test['name'],
                 target=test['target'],
                 timeout=test['timeout'],

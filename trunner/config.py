@@ -9,6 +9,8 @@ import yaml
 from .tools.text import remove_prefix
 from typing import Dict, List, Tuple
 
+from .long_test import LONG_TESTS
+
 
 def resolve_phrtos_dir() -> Path:
     path = Path.cwd().absolute()
@@ -88,7 +90,7 @@ def filter_tests(tests: List['TestConfig'], args: ParserArgs) -> List['TestConfi
     ''' Removes tests not needed in the current test campaign'''
     filtered_tests = []
     for test in tests:
-        if test['type'] == 'busybox' and not args.long_test:
+        if test['type'] in LONG_TESTS and not args.long_test:
             continue
         else:
             filtered_tests.append(test)
