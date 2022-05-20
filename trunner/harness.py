@@ -33,35 +33,6 @@ class UnitTestResult:
         return res
 
 
-class BusyboxTestResult:
-    """Class representing results of execution of the Busybox test suite."""
-
-    PASS = 'PASS'
-    FAIL = 'FAIL'
-    IGNORE = 'SKIPPED'
-
-    def __init__(self, name, status, msg=''):
-        self.name = name
-        self.status = status
-        self.msg = msg
-
-    def __str__(self):
-        if self.status == BusyboxTestResult.PASS:
-            color = Color.OK
-        elif self.status == BusyboxTestResult.FAIL:
-            color = Color.FAIL
-        elif self.status == BusyboxTestResult.IGNORE:
-            color = Color.SKIP
-
-        status = Color.colorify(self.status, color)
-
-        res = f"{status}: {self.name}"
-        if self.status == BusyboxTestResult.FAIL:
-            res += '\n\t\tTest case verbose output from busybox test suite:\n'
-            res += f'{self.msg}'
-        return res
-
-
 class UnitTestHarness:
     """Class providing harness for parsing output of Unity tests"""
 
@@ -114,42 +85,3 @@ class UnitTestHarness:
                 assert len(test_results) == total
 
                 return test_results
-
-
-class BusyboxTestHarness:
-    """Class providing harness for parsing output of the Busybox test suite"""
-
-    RESULT = r"(PASS|SKIPPED|FAIL): (.+?)\r+\n"
-    FINAL = r"\*\*\*\*(The Busybox Test Suite completed|A single test of the Busybox Test Suite completed)\*\*\*\*\r+\n"
-    MESSAGE = r"(.*?)\r+\n"
-
-    @staticmethod
-    def harness(proc):
-        test_results = []
-        test = None
-        msg = ""
-
-        while True:
-            idx = proc.expect([
-                BusyboxTestHarness.RESULT,
-                BusyboxTestHarness.FINAL,
-                BusyboxTestHarness.MESSAGE
-            ], timeout=45)
-            groups = proc.match.groups()
-            if idx != 2 and test:
-                # We ended processing test result and message
-                if msg and test['status'] == 'FAIL':
-                    test['msg'] = msg
-                    msg = ''
-
-                test_results.append(BusyboxTestResult(**test))
-
-            if idx == 0:
-                test = dict(zip(('status', 'name'), groups))
-            elif idx == 1:
-                break
-            elif idx == 2:
-                line = groups[0]
-                msg += '\n\t\t' + line
-
-        return test_results
