@@ -12,7 +12,7 @@ class TargetBuilder:
 
     TARGETS = DEFAULT_TARGETS
     SYSPAGE = {
-        'ia32-generic': [
+        'ia32-generic-qemu': [
             'uart16550',
             'pc-ata',
             'psh'

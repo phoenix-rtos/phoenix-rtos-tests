@@ -76,7 +76,7 @@ class ARMV7M7Runner(DeviceRunner):
         self.reset_gpio.high()
 
     def rpi_reboot(self, serial_downloader=False, cut_power=False):
-        """Reboots a tested device using Raspberry Pi as host-pc."""
+        """Reboots a tested device using Raspberry Pi as host-generic-pc."""
         if serial_downloader:
             self.boot_gpio.low()
         else:

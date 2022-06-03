@@ -1,7 +1,7 @@
 test:
     targets:
-      #TODO: remove when zynq7000-qemu target will stop being experimental
-      include: [armv7a9-zynq7000-qemu]
+      #TODO: remove when armv7a9-zynq7000-qemu and riscv64-generic-qemu targets will stop being experimental
+      include: [armv7a9-zynq7000-qemu, riscv64-generic-qemu]
 
     tests:
         - name: auth
@@ -12,7 +12,7 @@ test:
           harness: test-pshlogin.py
           targets:
               value:
-                  - ia32-generic
+                  - ia32-generic-qemu
 
         - name: echo
           harness: test-echo.py
@@ -33,7 +33,7 @@ test:
           harness: test-cat-shells.py
           targets:
               value:
-                  - ia32-generic
+                  - ia32-generic-qemu
 
         - name: kill
           harness: test-kill.py
@@ -48,4 +48,4 @@ test:
           harness: test-ls-rootfs.py
           targets:
               value:
-                  - ia32-generic
+                  - ia32-generic-qemu

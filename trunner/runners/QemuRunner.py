@@ -18,8 +18,9 @@ class QemuRunner(Runner):
     """This class provides interface to run test case using QEMU as a device."""
 
     QEMU_CMD = {
-        'ia32-generic': f'{PHRTOS_PROJECT_DIR}/scripts/ia32-generic-test.sh',
-        'armv7a9-zynq7000-qemu': f'{PHRTOS_PROJECT_DIR}/scripts/armv7a9-zynq7000.sh'
+        'armv7a9-zynq7000-qemu': f'{PHRTOS_PROJECT_DIR}/scripts/armv7a9-zynq7000-qemu.sh',
+        'ia32-generic-qemu': f'{PHRTOS_PROJECT_DIR}/scripts/ia32-generic-qemu-test.sh',
+        'riscv64-generic-qemu': f'{PHRTOS_PROJECT_DIR}/scripts/riscv64-generic-qemu.sh'
     }
 
     def __init__(self, target, log):

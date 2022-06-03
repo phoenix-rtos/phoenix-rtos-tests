@@ -153,8 +153,8 @@ class Test_ConfigParser:
 
     @pytest.mark.parametrize('case, answer', [
         ({}, None),
-        ({'targets': {'value': ['ia32-generic']}},
-         {'value': ['ia32-generic']}),
+        ({'targets': {'value': ['ia32-generic-qemu']}},
+         {'value': ['ia32-generic-qemu']}),
     ])
     def test_targets_keyword(self, parser, case, answer):
         test = TestConfig(case)
@@ -163,8 +163,8 @@ class Test_ConfigParser:
 
     @pytest.mark.parametrize('case', [
         {'targets': {'value': ['invalid-target']}},
-        {'targets': {'target': ['ia32-generic']}},
-        {'targets': 'ia32-generic'},
+        {'targets': {'target': ['ia32-generic-qemu']}},
+        {'targets': 'ia32-generic-qemu'},
     ])
     def test_targets_keyword_exc(self, parser, case):
         test = TestConfig(case)

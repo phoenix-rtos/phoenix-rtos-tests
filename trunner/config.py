@@ -30,21 +30,24 @@ PHRTOS_TEST_DIR = PHRTOS_PROJECT_DIR / 'phoenix-rtos-tests'
 PYEXPECT_TIMEOUT = 8
 
 # Available targets for test runner.
-ALL_TARGETS = ['ia32-generic',
-               'armv7a9-zynq7000-qemu',
-               'host-pc',
-               'armv7m7-imxrt106x',
-               'armv7m7-imxrt117x',
-               'armv7m4-stm32l4']
+# FIXME: allow for running tests for a given target family (not project only)
+# e.g. run armv7m7-imxrt106x tests for armv7m7-imxrt106x-project
+ALL_TARGETS = ['armv7a9-zynq7000-qemu',
+               'armv7m4-stm32l4x6-nucleo',
+               'armv7m7-imxrt106x-evk',
+               'armv7m7-imxrt117x-evk',
+               'host-generic-pc',
+               'ia32-generic-qemu',
+               'riscv64-generic-qemu']
 
-EXPERIMENTAL_TARGETS = ['armv7m4-stm32l4', 'armv7a9-zynq7000-qemu']
+EXPERIMENTAL_TARGETS = ['armv7a9-zynq7000-qemu', 'armv7m4-stm32l4x6-nucleo', 'riscv64-generic-qemu']
 # Default targets used by parser if 'target' value is absent
 DEFAULT_TARGETS = [target for target in ALL_TARGETS
-                   if target not in EXPERIMENTAL_TARGETS + ['host-pc']]
+                   if target not in EXPERIMENTAL_TARGETS + ['host-generic-pc']]
 
-SYSEXEC_TARGETS = ['armv7m7-imxrt106x', 'armv7m7-imxrt117x', 'armv7a9-zynq7000-qemu']
+SYSEXEC_TARGETS = ['armv7a9-zynq7000-qemu', 'armv7m7-imxrt106x-evk', 'armv7m7-imxrt117x-evk', 'riscv64-generic-qemu']
 
-QEMU_TARGETS = ['ia32-generic', 'armv7a9-zynq7000-qemu']
+QEMU_TARGETS = ['armv7a9-zynq7000-qemu', 'ia32-generic-qemu', 'riscv64-generic-qemu']
 
 CURRENT_TARGET = None
 
