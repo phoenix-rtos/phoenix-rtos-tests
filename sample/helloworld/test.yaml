@@ -5,4 +5,4 @@ test:
           exec: test-helloworld
           targets:
               include:
-                  - host-pc
+                  - host-generic-pc

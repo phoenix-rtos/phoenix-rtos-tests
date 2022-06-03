@@ -31,7 +31,7 @@
 #include "common.h"
 
 /* Tests verifying correctness of resolving paths in libphoenix.
- * The same tests can be compiled for host-pc to verify our assumptions against glibc.
+ * The same tests can be compiled for host-generic-pc to verify our assumptions against glibc.
  */
 
 TEST_GROUP(resolve_path);

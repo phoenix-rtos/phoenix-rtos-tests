@@ -1,7 +1,7 @@
 test:
     type: unit
     targets:
-        value: [host-pc]
+        value: [host-generic-pc]
     tests:
         - name: meterfs_allocate
           exec: test_meterfs_allocate .emustorage

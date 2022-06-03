@@ -1,7 +1,7 @@
 #
 # Phoenix-RTOS test runner
 #
-# host-pc runner
+# host-generic-pc runner
 #
 # Copyright 2021 Phoenix SYstems
 # Authors: Jakub Sarzyński, Mateusz Niewiadomski, Damian Loewnau
@@ -26,7 +26,7 @@ class HostRunner(Runner):
 
         test_path = rootfs(test.target) / 'bin' / test.exec_cmd[0]
 
-        # host-pc tests must not use psh prompt
+        # host-generic-pc tests must not use psh prompt
         test.psh = False
 
         try:
