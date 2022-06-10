@@ -16,6 +16,9 @@ from .common import rootfs
 class HostRunner(Runner):
     """This class provides interface to run test case using host as a device."""
 
+    def __init__(self, target, log):
+        super().__init__(target, log)
+
     def flash(self):
         """No-op method for HostRunner, forced inheritance from Runner class"""
         pass

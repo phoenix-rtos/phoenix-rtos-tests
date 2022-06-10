@@ -49,7 +49,7 @@ class ARMV7M7Runner(DeviceRunner):
     SDP = None
     IMAGE = None
 
-    def __init__(self, serial, is_rpi_host=True, log=False):
+    def __init__(self, target, serial, is_rpi_host=True, log=False):
         # has to be defined before super, because Runner constructor calls set_status, where it's used
         self.is_rpi_host = is_rpi_host
         if self.is_rpi_host:
@@ -61,7 +61,7 @@ class ARMV7M7Runner(DeviceRunner):
             self.leds = {'red': GPIO(13), 'green': GPIO(18), 'blue': GPIO(12)}
             self.logpath = LOG_PATH
 
-        super().__init__(serial, log)
+        super().__init__(target, serial, log)
         # default values, redefined by specified target runners
         self.phoenixd_port = None
         self.is_cut_power_used = False
@@ -101,9 +101,9 @@ class ARMV7M7Runner(DeviceRunner):
             with PloTalker(self.serial_port) as plo:
                 if self.logpath:
                     plo.plo.logfile = open(self.logpath, "a")
-                Psu(script=self.SDP).run()
+                Psu(self.target, script=self.SDP).run()
                 plo.wait_prompt()
-                with Phoenixd(self.phoenixd_port) as phd:
+                with Phoenixd(self.target, self.phoenixd_port) as phd:
                     plo.copy_file2mem(
                         src='usb0',
                         file=self.IMAGE,
@@ -133,7 +133,7 @@ class ARMV7M7Runner(DeviceRunner):
                     # We got plo prompt, we are ready for sending the "go!" command.
                     return True
 
-                with Phoenixd(self.phoenixd_port, dir=load_dir) as phd:
+                with Phoenixd(self.target, self.phoenixd_port, dir=load_dir) as phd:
                     plo.app('usb0', test.exec_cmd[0], 'ocram2', 'ocram2')
         except (TIMEOUT, EOF, PloError, PhoenixdError, RebootError) as exc:
             if isinstance(exc, TIMEOUT) or isinstance(exc, EOF):

@@ -27,11 +27,11 @@ class IMXRT106xRunner(ARMV7M7Runner):
     GPIO 13 must be connected to a red pin of an RGB LED
     GPIO 18 must be connected to a green pin of an RGB LED"""
 
-    SDP = 'plo-ram-armv7m7-imxrt106x.sdp'
-    IMAGE = 'phoenix-armv7m7-imxrt106x.disk'
+    SDP = 'plo-ram.sdp'
+    IMAGE = 'phoenix.disk'
 
-    def __init__(self, port, phoenixd_port, is_rpi_host=True, log=False):
-        super().__init__(port[0], is_rpi_host, log)
+    def __init__(self, target, port, phoenixd_port, is_rpi_host=True, log=False):
+        super().__init__(target, port[0], is_rpi_host, log)
         self.port_usb = port[1]
         self.phoenixd_port = phoenixd_port
         # restart by power off is temporarily disabled for this target
