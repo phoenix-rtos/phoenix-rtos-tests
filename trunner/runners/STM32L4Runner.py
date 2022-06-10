@@ -17,7 +17,7 @@ import serial
 from pexpect import TIMEOUT
 
 from .common import DeviceRunner, Color
-from .common import _BOOT_DIR
+from .common import boot_dir
 
 
 class STM32L4Runner(DeviceRunner):
@@ -43,10 +43,13 @@ class STM32L4Runner(DeviceRunner):
                 time.sleep(0.03)
             return ret
 
+    def __init__(self, target, serial, log=False):
+        super().__init__(target, serial, log)
+
     def flash(self):
         """ Flashing with openocd as a separate process """
 
-        binary_path = os.path.join(_BOOT_DIR, 'phoenix-armv7m4-stm32l4x6.bin')
+        binary_path = os.path.join(boot_dir(self.target), 'phoenix-kernel.bin')
         openocd_cmd = [
             'openocd',
             '-f', 'interface/stlink.cfg',

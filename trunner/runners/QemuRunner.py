@@ -24,7 +24,7 @@ class QemuRunner(Runner):
     }
 
     def __init__(self, target, log):
-        super().__init__(log)
+        super().__init__(target, log)
         self.cmd = self.QEMU_CMD[target]
 
     def flash(self):

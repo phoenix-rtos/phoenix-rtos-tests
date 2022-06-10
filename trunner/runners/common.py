@@ -26,9 +26,11 @@ import serial
 from trunner.config import PHRTOS_PROJECT_DIR
 from trunner.tools.color import Color
 
-_BOOT_DIR = PHRTOS_PROJECT_DIR / '_boot'
-
 LOG_PATH = '/tmp/phoenix_test.log'
+
+
+def boot_dir(target: str) -> Path:
+    return PHRTOS_PROJECT_DIR / '_boot' / target
 
 
 def rootfs(target: str) -> Path:
@@ -78,9 +80,11 @@ def unbind_rpi_usb(port_address):
 class Psu:
     """Wrapper for psu program"""
 
-    def __init__(self, script, cwd=_BOOT_DIR):
-        self.script = script
+    def __init__(self, target, script, cwd=None):
+        if cwd is None:
+            cwd = boot_dir(target)
         self.cwd = cwd
+        self.script = script
         self.proc = None
 
     def read_output(self):
@@ -130,16 +134,19 @@ class Phoenixd:
 
     def __init__(
         self,
+        target,
         port,
         baudrate=460800,
         dir='.',
-        cwd=_BOOT_DIR,
+        cwd=None,
         wait_dispatcher=True
     ):
+        if cwd is None:
+            cwd = boot_dir(target)
+        self.cwd = cwd
         self.port = port
         self.baudrate = baudrate
         self.dir = dir
-        self.cwd = cwd
         self.proc = None
         self.reader_thread = None
         self.wait_dispatcher = wait_dispatcher
@@ -320,10 +327,11 @@ class Runner(ABC):
     SUCCESS = 'SUCCESS'
     FAIL = 'FAIL'
 
-    def __init__(self, log=False):
+    def __init__(self, target, log=False):
         # Busy status is set from the start to the end of the specified runner's run
         self.status = Runner.BUSY
         self.set_status(self.status)
+        self.target = target
         if log:
             if os.path.exists(LOG_PATH):
                 os.remove(LOG_PATH)
@@ -350,8 +358,8 @@ class Runner(ABC):
 class DeviceRunner(Runner):
     """This class provides interface to run tests on hardware targets using serial port"""
 
-    def __init__(self, serial, log=False):
-        super().__init__(log)
+    def __init__(self, target, serial, log=False):
+        super().__init__(target, log)
         self.serial_port = serial[0]
         self.serial_baudrate = serial[1]
         self.serial = None
