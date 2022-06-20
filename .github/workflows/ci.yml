@@ -11,6 +11,13 @@ on:
     branches:
       - master
       - 'feature/*'
+    inputs:
+      build_params:
+        type: string
+        description: "parameters to build.sh script"
+        default: 'core fs test project image'  # by default don't build ports
+        required: false
+
 
 jobs:
   call-ci:
