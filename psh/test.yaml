@@ -1,7 +1,7 @@
 test:
     targets:
-      #TODO: remove when armv7a9-zynq7000-qemu and riscv64-generic-qemu targets will stop being experimental
-      include: [armv7a9-zynq7000-qemu, riscv64-generic-qemu]
+      #TODO: remove when riscv64-generic-qemu target will stop being experimental
+      include: [riscv64-generic-qemu]
 
     tests:
         - name: auth
