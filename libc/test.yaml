@@ -4,5 +4,7 @@ test:
         - name: unit
           exec: test-libc
           #FIXME: symlink tests will fail on non-rootfs targets
+          # TODO: enable the test for armv7a9-zynq7000-qemu after resolving #445 issue
+          # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/445
           targets:
-              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk]
+              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7a9-zynq7000-qemu]

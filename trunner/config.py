@@ -40,12 +40,12 @@ ALL_TARGETS = ['armv7a9-zynq7000-qemu',
                'ia32-generic-qemu',
                'riscv64-generic-qemu']
 
-EXPERIMENTAL_TARGETS = ['armv7a9-zynq7000-qemu', 'armv7m4-stm32l4x6-nucleo', 'riscv64-generic-qemu']
+EXPERIMENTAL_TARGETS = ['armv7m4-stm32l4x6-nucleo', 'riscv64-generic-qemu']
 # Default targets used by parser if 'target' value is absent
 DEFAULT_TARGETS = [target for target in ALL_TARGETS
                    if target not in EXPERIMENTAL_TARGETS + ['host-generic-pc']]
 
-SYSEXEC_TARGETS = ['armv7a9-zynq7000-qemu', 'armv7m7-imxrt106x-evk', 'armv7m7-imxrt117x-evk', 'riscv64-generic-qemu']
+SYSEXEC_TARGETS = ['armv7m7-imxrt106x-evk', 'armv7m7-imxrt117x-evk', 'riscv64-generic-qemu']
 
 QEMU_TARGETS = ['armv7a9-zynq7000-qemu', 'ia32-generic-qemu', 'riscv64-generic-qemu']
 
