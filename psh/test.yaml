@@ -40,6 +40,11 @@ test:
 
         - name: kill
           harness: test-kill.py
+          targets:
+              # TODO: enable after resolving the #448 issue
+              # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/448
+              exclude:
+                  - armv7a9-zynq7000-qemu
 
         - name: mkdir
           harness: test-mkdir.py

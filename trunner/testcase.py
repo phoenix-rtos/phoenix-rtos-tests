@@ -94,7 +94,7 @@ class TestCase:
     def exec_test(self, proc):
         try:
             # Wait for a prompt
-            # On armv7a9-zynq7000-qemu jffs initialization may take to ~20s, that's why it's set to 25
+            # On armv7a9-zynq7000-qemu jffs initialization may take to ~25s, that's why it's set to 30
             # It's related to the #448 issue
             # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/448
 
