@@ -10,7 +10,7 @@ from pexpect.exceptions import TIMEOUT, EOF
 from .harnesses.factory import TestHarnessFactory
 
 from .tools.color import Color
-from .config import SYSEXEC_TARGETS, LONG_TESTS
+from .config import SYSEXEC_TARGETS, ASH_TARGETS, DEFAULT_PROMPT, ASH_PROMPT, LONG_TESTS
 
 
 class TestCase:
@@ -27,6 +27,7 @@ class TestCase:
         target,
         timeout,
         psh=True,
+        prompt=DEFAULT_PROMPT,
         exec_cmd=None,
         syspage_prog=None,
         use_sysexec=False,
@@ -38,6 +39,7 @@ class TestCase:
         self.exec_cmd = exec_cmd
         self.syspage_prog = syspage_prog
         self.psh = psh
+        self.prompt = prompt
         self.use_sysexec = use_sysexec
         if not status:
             status = TestCase.FAILED
@@ -93,10 +95,13 @@ class TestCase:
         try:
             # Wait for a prompt
             # On armv7a9-zynq7000-qemu jffs initialization may take to ~20s, that's why it's set to 25
+            # It's related to the #448 issue
+            # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/448
+
             if self.target == "armv7a9-zynq7000-qemu":
-                proc.expect_exact('(psh)% ', timeout=25)
+                proc.expect_exact(self.prompt, timeout=30)
             else:
-                proc.expect_exact('(psh)% ')
+                proc.expect_exact(self.prompt)
             if self.exec_cmd:
                 if self.use_sysexec:
                     self.sysexec(proc)
@@ -201,18 +206,20 @@ class TestCaseCustomHarness(TestCase):
 
     def __init__(
         self,
-        name,
-        target,
-        timeout,
-        harness_path,
-        psh=True,
-        exec_cmd=None,
-        syspage_prog=None,
-        use_sysexec=False,
-        status=TestCase.FAILED
+        args
     ):
-        super().__init__(name, target, timeout, psh, exec_cmd, syspage_prog, use_sysexec, status)
-        self.load_module(harness_path)
+        super().__init__(
+            args.name,
+            args.target,
+            args.timeout,
+            args.psh,
+            args.prompt,
+            args.exec_cmd,
+            args.syspage_prog,
+            args.use_sysexec,
+            args.status)
+
+        self.load_module(args.harness_path)
 
     def load_module(self, path):
         self.spec = importlib.util.spec_from_file_location('harness', path.absolute())
@@ -230,18 +237,20 @@ class TestCaseThirdParty(TestCase):
 
     def __init__(
         self,
-        type,
-        name,
-        target,
-        timeout,
-        exec_cmd,
-        syspage_prog=None,
-        psh=True,
-        use_sysexec=False,
-        status=TestCase.FAILED
+        args
     ):
-        super().__init__(name, target, timeout, psh, exec_cmd, syspage_prog, use_sysexec, status)
-        self.harness = TestHarnessFactory.create(type).harness
+        super().__init__(
+            args.name,
+            args.target,
+            args.timeout,
+            args.psh,
+            args.prompt,
+            args.exec_cmd,
+            args.syspage_prog,
+            args.use_sysexec,
+            args.status)
+
+        self.harness = TestHarnessFactory.create(args.type).harness
         self.test_results = []
 
     def log_test_status(self):
@@ -267,37 +276,41 @@ class TestCaseThirdParty(TestCase):
         return res
 
 
+class TestCaseArgs:
+    """Test case arguments """
+
+    def __init__(
+        self,
+        test
+    ):
+        status = TestCase.SKIPPED if test['ignore'] else TestCase.FAILED
+        use_sysexec = test['target'] in SYSEXEC_TARGETS
+        prompt = ASH_PROMPT if test['target'] in ASH_TARGETS else DEFAULT_PROMPT
+        harness_path = test['harness'] if 'harness' in test else None
+
+        self.type = test['type']
+        self.name = test['name']
+        self.target = test['target']
+        self.timeout = test['timeout']
+        self.exec_cmd = test.get('exec')
+        self.syspage_prog = test.get('syspage')
+        self.psh = test['psh']
+        self.prompt = prompt
+        self.use_sysexec = use_sysexec
+        self.status = status
+        self.harness_path = harness_path
+
+
 class TestCaseFactory:
     """Class responsible for creating TestCase based on a config loaded from YAML"""
 
     @staticmethod
     def create(test):
-        status = TestCase.SKIPPED if test['ignore'] else TestCase.FAILED
-        use_sysexec = test['target'] in SYSEXEC_TARGETS
+        args = TestCaseArgs(test)
 
         if test['type'] == 'unit' or test['type'] in LONG_TESTS:
-            return TestCaseThirdParty(
-                type=test['type'],
-                name=test['name'],
-                target=test['target'],
-                timeout=test['timeout'],
-                psh=test['psh'],
-                exec_cmd=test.get('exec'),
-                syspage_prog=test.get('syspage'),
-                use_sysexec=use_sysexec,
-                status=status
-            )
+            return TestCaseThirdParty(args)
         if test['type'] == 'harness':
-            return TestCaseCustomHarness(
-                name=test['name'],
-                target=test['target'],
-                timeout=test['timeout'],
-                psh=test['psh'],
-                harness_path=test['harness'],
-                exec_cmd=test.get('exec'),
-                syspage_prog=test.get('syspage'),
-                use_sysexec=use_sysexec,
-                status=status
-            )
+            return TestCaseCustomHarness(args)
 
         raise ValueError(f"Unknown TestCase type: {test['type']}")

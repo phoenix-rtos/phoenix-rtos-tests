@@ -49,8 +49,15 @@ SYSEXEC_TARGETS = ['armv7a9-zynq7000-qemu', 'armv7m7-imxrt106x-evk', 'armv7m7-im
 
 QEMU_TARGETS = ['armv7a9-zynq7000-qemu', 'ia32-generic-qemu', 'riscv64-generic-qemu']
 
+# Targets, where busybox ash starts by default
+ASH_TARGETS = ['armv7a9-zynq7000-qemu']
+
 # Tests intended to run in long test campaigns
 LONG_TESTS = ['busybox', 'mbedtls', 'micropython_std', 'micropython_repl']
+
+PSH_PROMPT = "(psh)% "
+DEFAULT_PROMPT = PSH_PROMPT
+ASH_PROMPT = "root@?:~ # "
 
 CURRENT_TARGET = None
 
