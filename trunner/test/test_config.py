@@ -356,10 +356,12 @@ class Test_TestConfig:
         targets_value = ['target1', 'target2']
         name = 'test'
         exec_bin = 'some_binary'
+        syspage_prog = 'some_prog'
 
         test = TestConfig({
             'name': name,
             'exec': exec_bin,
+            'syspage': syspage_prog,
             'targets': {'value': targets_value}
         })
 
@@ -368,6 +370,7 @@ class Test_TestConfig:
             answers.append(TestConfig({
                 'name': name,
                 'exec': exec_bin,
+                'syspage': syspage_prog,
                 'target': target
             }))
 
