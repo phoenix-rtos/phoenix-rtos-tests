@@ -179,7 +179,9 @@ test:
         - name: test_suite_psa_crypto_storage_format.v0
           exec: test_suite_psa_crypto_storage_format.v0 /mbedtls_test_configs/test_suite_psa_crypto_storage_format.v0.datax
         - name: test_suite_psa_its
-          ignore: True #issue #409
+          # skipped because of the #409 issue
+          # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/409
+          ignore: True
           exec: test_suite_psa_its /mbedtls_test_configs/test_suite_psa_its.datax
         - name: test_suite_random
           exec: test_suite_random /mbedtls_test_configs/test_suite_random.datax
@@ -188,12 +190,17 @@ test:
         - name: test_suite_shax
           exec: test_suite_shax /mbedtls_test_configs/test_suite_shax.datax
         - name: test_suite_ssl
+          # skipped because of the #456 issue
+          # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/456
+          ignore: True
           exec: test_suite_ssl /mbedtls_test_configs/test_suite_ssl.datax
         - name: test_suite_timing
           exec: test_suite_timing /mbedtls_test_configs/test_suite_timing.datax
         - name: test_suite_version
           exec: test_suite_version /mbedtls_test_configs/test_suite_version.datax
         - name: test_suite_x509parse
+          # skipped because of the need to set date before running
+          ignore: True
           exec: test_suite_x509parse /mbedtls_test_configs/test_suite_x509parse.datax
         - name: test_suite_x509write
           exec: test_suite_x509write /mbedtls_test_configs/test_suite_x509write.datax
