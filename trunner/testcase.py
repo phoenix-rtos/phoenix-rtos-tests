@@ -7,10 +7,11 @@ import traceback
 
 from pexpect.exceptions import TIMEOUT, EOF
 
-from .harness import UnitTestHarness, UnitTestResult
-from .long_test import LongTestResult, LongTestHarnessFactory, LONG_TESTS
+from .harnesses.factory import TestHarnessFactory
+from .harnesses.common import TestResult
+
 from .tools.color import Color
-from .config import SYSEXEC_TARGETS
+from .config import SYSEXEC_TARGETS, LONG_TESTS
 
 
 class TestCase:
@@ -222,48 +223,8 @@ class TestCaseCustomHarness(TestCase):
             raise ValueError(f"harness function has not been found in {path}")
 
 
-class TestCaseUnit(TestCase):
-    """The test case representing Unity unit tests."""
-
-    def __init__(
-        self,
-        name,
-        target,
-        timeout,
-        exec_cmd,
-        psh=True,
-        use_sysexec=False,
-        status=TestCase.FAILED
-    ):
-        super().__init__(name, target, timeout, psh, exec_cmd, use_sysexec, status)
-        self.harness = UnitTestHarness.harness
-        self.unit_test_results = []
-
-    def log_test_status(self):
-        super().log_test_status()
-
-        for test in self.unit_test_results:
-            if test.status == UnitTestResult.FAIL:
-                logging.info(f"\t{test}\n")
-            else:
-                logging.debug(f"\t{test}\n")
-
-    def handle(self, proc):
-        res = super().handle(proc)
-
-        if self.status == TestCase.PASSED:
-            self.unit_test_results = res
-
-        for test in self.unit_test_results:
-            if test.status == UnitTestResult.FAIL:
-                self.status = TestCase.FAILED
-                break
-
-        return res
-
-
-class TestCaseLong(TestCase):
-    """The test case representing Mbedtls test suite."""
+class TestCaseThirdParty(TestCase):
+    """The test case representing tests run by 3rd party frameworks """
 
     def __init__(
         self,
@@ -277,14 +238,14 @@ class TestCaseLong(TestCase):
         status=TestCase.FAILED
     ):
         super().__init__(name, target, timeout, psh, exec_cmd, use_sysexec, status)
+        self.harness = TestHarnessFactory.create(type)
         self.test_results = []
-        self.harness = LongTestHarnessFactory.create(type)
 
     def log_test_status(self):
         super().log_test_status()
 
         for test in self.test_results:
-            if test.status == LongTestResult.FAIL:
+            if test.status == TestResult.FAIL:
                 logging.info(f"\t{test}\n")
             else:
                 logging.debug(f"\t{test}\n")
@@ -296,7 +257,7 @@ class TestCaseLong(TestCase):
             self.test_results = res
 
         for test in self.test_results:
-            if test.status == LongTestResult.FAIL:
+            if test.status == TestResult.FAIL:
                 self.status = TestCase.FAILED
                 break
 
@@ -311,8 +272,9 @@ class TestCaseFactory:
         status = TestCase.SKIPPED if test['ignore'] else TestCase.FAILED
         use_sysexec = test['target'] in SYSEXEC_TARGETS
 
-        if test['type'] == 'unit':
-            return TestCaseUnit(
+        if test['type'] == 'unit' or test['type'] in LONG_TESTS:
+            return TestCaseThirdParty(
+                type=test['type'],
                 name=test['name'],
                 target=test['target'],
                 timeout=test['timeout'],
@@ -328,16 +290,6 @@ class TestCaseFactory:
                 timeout=test['timeout'],
                 psh=test['psh'],
                 harness_path=test['harness'],
-                exec_cmd=test.get('exec'),
-                use_sysexec=use_sysexec,
-                status=status
-            )
-        if test['type'] in LONG_TESTS:
-            return TestCaseLong(
-                type=test['type'],
-                name=test['name'],
-                target=test['target'],
-                timeout=test['timeout'],
                 exec_cmd=test.get('exec'),
                 use_sysexec=use_sysexec,
                 status=status
