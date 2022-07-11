@@ -1,7 +1,17 @@
-from .tools.color import Color
+#
+# Phoenix-RTOS test runner
+#
+# The harness for the Unity Test Framework
+#
+# Copyright 2022 Phoenix Systems
+# Authors: Damian Loewnau, Jakub Sarzyński
+#
+
+from trunner.tools.color import Color
+from .common import TestResult
 
 
-class UnitTestResult:
+class UnitTestResult(TestResult):
     """Class representing results of execution of a single Unity unit test."""
 
     PASS = 'PASS'
@@ -10,11 +20,9 @@ class UnitTestResult:
 
     def __init__(self, group, name, status, path='', line='', msg=''):
         self.group = group
-        self.name = name
-        self.status = status
         self.path = path
         self.line = line
-        self.msg = msg
+        super().__init__(name, status, msg)
 
     def __str__(self):
         if self.status == UnitTestResult.PASS:

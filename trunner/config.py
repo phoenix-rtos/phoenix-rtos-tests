@@ -9,8 +9,6 @@ import yaml
 from .tools.text import remove_prefix
 from typing import Dict, List, Tuple
 
-from .long_test import LONG_TESTS
-
 
 def resolve_phrtos_dir() -> Path:
     path = Path.cwd().absolute()
@@ -50,6 +48,9 @@ DEFAULT_TARGETS = [target for target in ALL_TARGETS
 SYSEXEC_TARGETS = ['armv7a9-zynq7000-qemu', 'armv7m7-imxrt106x-evk', 'armv7m7-imxrt117x-evk', 'riscv64-generic-qemu']
 
 QEMU_TARGETS = ['armv7a9-zynq7000-qemu', 'ia32-generic-qemu', 'riscv64-generic-qemu']
+
+# Tests intended to run in long test campaigns
+LONG_TESTS = ['busybox', 'mbedtls']
 
 CURRENT_TARGET = None
 
