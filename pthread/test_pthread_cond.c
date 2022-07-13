@@ -23,15 +23,19 @@
 #include "unity_fixture.h"
 #include "thread_functions.h"
 
+
 TEST_GROUP(test_pthread_cond);
+
 
 TEST_SETUP(test_pthread_cond)
 {
 }
 
+
 TEST_TEAR_DOWN(test_pthread_cond)
 {
 }
+
 
 TEST(test_pthread_cond, pthread_condattr_setclock)
 {
@@ -46,6 +50,7 @@ TEST(test_pthread_cond, pthread_condattr_setclock)
 	TEST_ASSERT_EQUAL(-EINVAL, pthread_condattr_setclock(&attr, CLOCK_REALTIME));
 }
 
+
 TEST(test_pthread_cond, pthread_condattr_setpshared)
 {
 	pthread_condattr_t attr;
@@ -59,11 +64,13 @@ TEST(test_pthread_cond, pthread_condattr_setpshared)
 	TEST_ASSERT_EQUAL(-EINVAL, pthread_condattr_setpshared(&attr, PTHREAD_PROCESS_SHARED));
 }
 
+
 TEST(test_pthread_cond, pthread_cond_init)
 {
 	pthread_cond_t cond;
 	TEST_ASSERT_EQUAL(EOK, pthread_cond_init(&cond, NULL));
 }
+
 
 TEST(test_pthread_cond, pthread_cond_wait_signal)
 {
@@ -85,6 +92,7 @@ TEST(test_pthread_cond, pthread_cond_wait_signal)
 	TEST_ASSERT_EQUAL(EOK, err_second.err2);
 	TEST_ASSERT_EQUAL(EOK, err_second.err3);
 }
+
 
 TEST(test_pthread_cond, pthread_cond_wait_broadcast)
 {
@@ -112,6 +120,7 @@ TEST(test_pthread_cond, pthread_cond_wait_broadcast)
 	TEST_ASSERT_EQUAL(EOK, err_third.err3);
 }
 
+
 TEST(test_pthread_cond, pthread_cond_timedwait_pass_signal)
 {
 	pthread_t first, second;
@@ -132,6 +141,7 @@ TEST(test_pthread_cond, pthread_cond_timedwait_pass_signal)
 	TEST_ASSERT_EQUAL(EOK, err_second.err2);
 	TEST_ASSERT_EQUAL(EOK, err_second.err3);
 }
+
 
 TEST(test_pthread_cond, pthread_cond_timedwait_fail_signal_incorrect_timeout)
 {
@@ -154,6 +164,7 @@ TEST(test_pthread_cond, pthread_cond_timedwait_fail_signal_incorrect_timeout)
 	TEST_ASSERT_EQUAL(EOK, err_second.err3);
 }
 
+
 TEST(test_pthread_cond, pthread_cond_timedwait_fail_signal_too_short_timeout)
 {
 	pthread_t first, second;
@@ -174,6 +185,7 @@ TEST(test_pthread_cond, pthread_cond_timedwait_fail_signal_too_short_timeout)
 	TEST_ASSERT_EQUAL(EOK, err_second.err2);
 	TEST_ASSERT_EQUAL(EOK, err_second.err3);
 }
+
 
 TEST(test_pthread_cond, pthread_cond_timedwait_pass_broadcast)
 {
@@ -201,6 +213,7 @@ TEST(test_pthread_cond, pthread_cond_timedwait_pass_broadcast)
 	TEST_ASSERT_EQUAL(EOK, err_third.err3);
 }
 
+
 TEST(test_pthread_cond, pthread_cond_timedwait_fail_broadcast_incorrect_timeout)
 {
 	pthread_t first, second, third;
@@ -226,6 +239,7 @@ TEST(test_pthread_cond, pthread_cond_timedwait_fail_broadcast_incorrect_timeout)
 	TEST_ASSERT_EQUAL(EOK, err_third.err2);
 	TEST_ASSERT_EQUAL(EOK, err_third.err3);
 }
+
 
 TEST(test_pthread_cond, pthread_cond_timedwait_fail_broadcast_too_short_timeout)
 {
@@ -253,6 +267,7 @@ TEST(test_pthread_cond, pthread_cond_timedwait_fail_broadcast_too_short_timeout)
 	TEST_ASSERT_EQUAL(EOK, err_third.err3);
 }
 
+
 TEST_GROUP_RUNNER(test_pthread_cond)
 {
 	RUN_TEST_CASE(test_pthread_cond, pthread_condattr_setclock);
@@ -268,10 +283,12 @@ TEST_GROUP_RUNNER(test_pthread_cond)
 	RUN_TEST_CASE(test_pthread_cond, pthread_cond_timedwait_fail_broadcast_too_short_timeout);
 }
 
+
 void runner(void)
 {
 	RUN_TEST_GROUP(test_pthread_cond);
 }
+
 
 int main(int argc, char const *argv[])
 {
