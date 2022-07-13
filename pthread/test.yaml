@@ -1,5 +1,0 @@
-test:
-    type: unit
-    tests:
-        - name: test_pthread_cond
-          exec: test_pthread_cond

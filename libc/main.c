@@ -34,6 +34,7 @@ void runner(void)
 	RUN_TEST_GROUP(string_strlcat);
 	RUN_TEST_GROUP(unistd_fsdir);
 	RUN_TEST_GROUP(wchar_wcscmp);
+	RUN_TEST_GROUP(test_pthread_cond);
 }
 
 

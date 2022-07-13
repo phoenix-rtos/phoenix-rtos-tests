@@ -3,7 +3,7 @@
  *
  * phoenix-rtos-tests
  *
- * test/pthread
+ * test/libc/pthread
  *
  * Copyright 2022 Phoenix Systems
  * Author: Lukasz Leczkowski
@@ -13,8 +13,8 @@
  * %LICENSE%
  */
 
-#ifndef _TEST_PTHREAD_THREAD_FUNCTIONS_H_
-#define _TEST_PTHREAD_THREAD_FUNCTIONS_H_
+#ifndef _TEST_PTHREAD_COND_FUNCTIONS_H_
+#define _TEST_PTHREAD_COND_FUNCTIONS_H_
 
 
 #include <sys/types.h>
@@ -55,4 +55,4 @@ void *increment_count_signal(void *args);
 void *increment_count_broadcast(void *args);
 
 
-#endif /* _TEST_PTHREAD_THREAD_FUNCTIONS_H_ */
+#endif /* _TEST_PTHREAD_COND_FUNCTIONS_H_ */
