@@ -20,6 +20,7 @@
 #include <pthread.h>
 #include <unistd.h>
 
+
 void *decrement_count_wait(void *args)
 {
 	thread_err_t *thread_err = (thread_err_t *)args;
@@ -30,6 +31,7 @@ void *decrement_count_wait(void *args)
 	thread_err->err3 = pthread_mutex_unlock(&thread_args.count_lock);
 	return NULL;
 }
+
 
 void *decrement_count_timed_wait_pass(void *args)
 {
@@ -45,9 +47,9 @@ void *decrement_count_timed_wait_pass(void *args)
 	return NULL;
 }
 
+
 void *decrement_count_timed_wait_fail_incorrect_timeout(void *args)
 {
-
 	thread_err_t *thread_err = (thread_err_t *)args;
 	struct timespec time;
 	clock_gettime(CLOCK_REALTIME, &time);
@@ -60,6 +62,7 @@ void *decrement_count_timed_wait_fail_incorrect_timeout(void *args)
 	thread_err->err3 = pthread_mutex_unlock(&thread_args.count_lock);
 	return NULL;
 }
+
 
 void *decrement_count_timed_wait_fail_too_short_timeout(void *args)
 {
@@ -76,6 +79,7 @@ void *decrement_count_timed_wait_fail_too_short_timeout(void *args)
 	return NULL;
 }
 
+
 void *increment_count_signal(void *args)
 {
 	thread_err_t *thread_err = (thread_err_t *)args;
@@ -88,6 +92,7 @@ void *increment_count_signal(void *args)
 	thread_err->err3 = pthread_mutex_unlock(&thread_args.count_lock);
 	return NULL;
 }
+
 
 void *increment_count_broadcast(void *args)
 {
