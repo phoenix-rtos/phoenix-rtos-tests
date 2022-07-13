@@ -3,7 +3,7 @@
  *
  * phoenix-rtos-tests
  *
- * test/pthread
+ * test/libc/pthread
  *
  * Copyright 2022 Phoenix Systems
  * Author: Lukasz Leczkowski
@@ -21,7 +21,7 @@
 #include <time.h>
 
 #include "unity_fixture.h"
-#include "thread_functions.h"
+#include "pthread_cond_test_functions.h"
 
 
 TEST_GROUP(test_pthread_cond);
@@ -44,6 +44,7 @@ TEST(test_pthread_cond, pthread_condattr_setclock)
 	TEST_ASSERT_EQUAL(EOK, pthread_condattr_setclock(&attr, CLOCK_MONOTONIC));
 
 	clockid_t clock;
+	/* Only 'CLOCK_MONOTONIC' supported */
 	TEST_ASSERT_EQUAL(EOK, pthread_condattr_getclock(&attr, &clock));
 	TEST_ASSERT_EQUAL(CLOCK_MONOTONIC, clock);
 	TEST_ASSERT_EQUAL(-EINVAL, pthread_condattr_setclock(&attr, CLOCK_MONOTONIC_RAW));
@@ -58,9 +59,9 @@ TEST(test_pthread_cond, pthread_condattr_setpshared)
 	TEST_ASSERT_EQUAL(EOK, pthread_condattr_setpshared(&attr, PTHREAD_PROCESS_PRIVATE));
 
 	int pshared;
+	/* Only 'PTHREAD_PROCESS_PRIVATE' supported */
 	TEST_ASSERT_EQUAL(EOK, pthread_condattr_getpshared(&attr, &pshared));
 	TEST_ASSERT_EQUAL(PTHREAD_PROCESS_PRIVATE, pshared);
-	TEST_ASSERT_EQUAL(PTHREAD_PROCESS_PRIVATE, 1);
 	TEST_ASSERT_EQUAL(-EINVAL, pthread_condattr_setpshared(&attr, PTHREAD_PROCESS_SHARED));
 }
 
@@ -270,9 +271,9 @@ TEST(test_pthread_cond, pthread_cond_timedwait_fail_broadcast_too_short_timeout)
 
 TEST_GROUP_RUNNER(test_pthread_cond)
 {
+	RUN_TEST_CASE(test_pthread_cond, pthread_cond_init);
 	RUN_TEST_CASE(test_pthread_cond, pthread_condattr_setclock);
 	RUN_TEST_CASE(test_pthread_cond, pthread_condattr_setpshared);
-	RUN_TEST_CASE(test_pthread_cond, pthread_cond_init);
 	RUN_TEST_CASE(test_pthread_cond, pthread_cond_wait_signal);
 	RUN_TEST_CASE(test_pthread_cond, pthread_cond_wait_broadcast);
 	RUN_TEST_CASE(test_pthread_cond, pthread_cond_timedwait_pass_signal);
@@ -281,17 +282,4 @@ TEST_GROUP_RUNNER(test_pthread_cond)
 	RUN_TEST_CASE(test_pthread_cond, pthread_cond_timedwait_pass_broadcast);
 	RUN_TEST_CASE(test_pthread_cond, pthread_cond_timedwait_fail_broadcast_incorrect_timeout);
 	RUN_TEST_CASE(test_pthread_cond, pthread_cond_timedwait_fail_broadcast_too_short_timeout);
-}
-
-
-void runner(void)
-{
-	RUN_TEST_GROUP(test_pthread_cond);
-}
-
-
-int main(int argc, char const *argv[])
-{
-	UnityMain(argc, argv, runner);
-	return 0;
 }
