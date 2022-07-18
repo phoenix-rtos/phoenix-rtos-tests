@@ -43,8 +43,10 @@ class MbedtlsTestHarness:
                     test['msg'] = msg
                     msg = ''
 
-                dots = re.search(r'\.+ ', test['name'])
-                test['name'] = test['name'][:dots.start() - 1]
+                # if there are dots after test name - remove them
+                dots = re.search(r' \.+ ', test['name'])
+                if dots:
+                    test['name'] = test['name'][:dots.start()]
 
                 test_results.append(TestResult(**test))
 

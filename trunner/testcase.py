@@ -8,7 +8,6 @@ import traceback
 from pexpect.exceptions import TIMEOUT, EOF
 
 from .harnesses.factory import TestHarnessFactory
-from .harnesses.common import TestResult
 
 from .tools.color import Color
 from .config import SYSEXEC_TARGETS, LONG_TESTS
@@ -245,7 +244,7 @@ class TestCaseThirdParty(TestCase):
         super().log_test_status()
 
         for test in self.test_results:
-            if test.status == TestResult.FAIL:
+            if test.status == test.FAIL:
                 logging.info(f"\t{test}\n")
             else:
                 logging.debug(f"\t{test}\n")
@@ -253,12 +252,12 @@ class TestCaseThirdParty(TestCase):
     def handle(self, proc):
         res = super().handle(proc)
 
-        if self.status == TestCase.PASSED:
+        if self.status == self.PASSED:
             self.test_results = res
 
         for test in self.test_results:
-            if test.status == TestResult.FAIL:
-                self.status = TestCase.FAILED
+            if test.status == test.FAIL:
+                self.status = self.FAILED
                 break
 
         return res

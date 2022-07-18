@@ -25,15 +25,15 @@ class TestResult:
     def __str__(self):
         color = Color.OK
 
-        if self.status == TestResult.FAIL:
+        if self.status == self.FAIL:
             color = Color.FAIL
-        elif self.status == TestResult.IGNORE:
+        elif self.status == self.IGNORE:
             color = Color.SKIP
 
         status = Color.colorify(self.status, color)
 
         res = f"{status}: {self.name}"
-        if self.status == TestResult.FAIL:
+        if self.status == self.FAIL:
             res += '\n\t\tOutput of the failed test case:\n\t\t---\n'
             res += f'{self.msg}'
             res += '\t\t---'
