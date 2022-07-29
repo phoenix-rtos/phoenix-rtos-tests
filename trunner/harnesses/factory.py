@@ -11,6 +11,7 @@ from .unity import UnitTestHarness
 from .busybox import BusyboxTestHarness
 from .mbedtls import MbedtlsTestHarness
 from .micropython import MicropythonStandardHarness
+from .micropython import MicropythonReplHarness
 
 
 class TestHarnessFactory:
@@ -24,5 +25,7 @@ class TestHarnessFactory:
             return MbedtlsTestHarness()
         if test_type == 'micropython_std':
             return MicropythonStandardHarness()
+        if test_type == 'micropython_repl':
+            return MicropythonReplHarness()
         else:
             raise ValueError(f"Unknown test type: {test_type}")

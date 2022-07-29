@@ -50,7 +50,7 @@ SYSEXEC_TARGETS = ['armv7a9-zynq7000-qemu', 'armv7m7-imxrt106x-evk', 'armv7m7-im
 QEMU_TARGETS = ['armv7a9-zynq7000-qemu', 'ia32-generic-qemu', 'riscv64-generic-qemu']
 
 # Tests intended to run in long test campaigns
-LONG_TESTS = ['busybox', 'mbedtls', 'micropython_std']
+LONG_TESTS = ['busybox', 'mbedtls', 'micropython_std', 'micropython_repl']
 
 CURRENT_TARGET = None
 
@@ -172,7 +172,7 @@ class TestConfig(Config):
 
 class ConfigParser:
     KEYWORDS: Tuple[str, ...] = ('syspage', 'exec', 'harness', 'ignore', 'name', 'targets', 'psh', 'timeout', 'type')
-    TEST_TYPES: Tuple[str, ...] = ('unit', 'harness', 'busybox', 'mbedtls', 'micropython_std')
+    TEST_TYPES: Tuple[str, ...] = ('unit', 'harness', 'busybox', 'mbedtls', 'micropython_std', 'micropython_repl')
 
     def parse_keywords(self, config: Config) -> None:
         keywords = set(config)
