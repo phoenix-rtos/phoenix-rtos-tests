@@ -131,3 +131,52 @@ class MicropythonStandardHarness:
                                f"Incorrect result!\n\nExpected result:\n{exp_output}\nTest result:\n{test_result}\n"))
 
         return test_output
+
+
+class MicropythonReplHarness:
+    """Class providing harness for testing MicroPython REPL"""
+
+    def send_micropython_cmd(self, cmd, proc):
+        proc.sendline(cmd)
+        proc.expect(UPYTH_PROMPT)
+
+        return proc.before + UPYTH_PROMPT
+
+    def harness(self, p):
+        tests_results = []
+
+        # At first echo prints path to the test
+        p.expect(PROMPT)
+        test_path = p.before
+
+        # sending cat with path to the test to get commands to insert in micropython terminal
+        cmd = "cat " + test_path
+        p.sendline(cmd)
+        p.expect(PROMPT)
+
+        script = p.before
+        script = script.split("\r\n")
+
+        # sending cat with path to the expected output from test
+        p.sendline(cmd + ".exp")
+        p.expect(PROMPT)
+
+        exp_output = p.before
+
+        test_output = []
+        test_output.append(self.send_micropython_cmd(MICROPYTHON, p))
+
+        for line in script:
+            test_output.append(self.send_micropython_cmd(line, p))
+
+        test_output = "".join(test_output)
+
+        expected_output_re = create_regex(exp_output)
+
+        if re.match(expected_output_re, test_output):
+            tests_results.append(TestResult(test_path, TestResult.PASS))
+        else:
+            tests_results.append(TestResult(test_path, TestResult.FAIL,
+                                 f"Incorrect output\n\nExpected result:\n{exp_output}\nTest result:\n{test_output}"))
+
+        return tests_results
