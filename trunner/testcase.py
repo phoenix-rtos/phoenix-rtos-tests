@@ -237,7 +237,7 @@ class TestCaseThirdParty(TestCase):
         status=TestCase.FAILED
     ):
         super().__init__(name, target, timeout, psh, exec_cmd, use_sysexec, status)
-        self.harness = TestHarnessFactory.create(type)
+        self.harness = TestHarnessFactory.create(type).harness
         self.test_results = []
 
     def log_test_status(self):
