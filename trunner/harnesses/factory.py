@@ -16,10 +16,10 @@ class TestHarnessFactory:
     @staticmethod
     def create(test_type):
         if test_type == 'unit':
-            return UnitTestHarness.harness
+            return UnitTestHarness()
         if test_type == 'busybox':
-            return BusyboxTestHarness.harness
+            return BusyboxTestHarness()
         if test_type == 'mbedtls':
-            return MbedtlsTestHarness.harness
+            return MbedtlsTestHarness()
         else:
             raise ValueError(f"Unknown test type: {test_type}")
