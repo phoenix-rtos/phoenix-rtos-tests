@@ -44,7 +44,8 @@ class STM32L4Runner(DeviceRunner):
             return ret
 
     def __init__(self, target, serial, log=False):
-        super().__init__(target, serial, log)
+        # Currently leds are not supported in this runner, that's why is_rpi_host is False
+        super().__init__(target, serial, is_rpi_host=False, log=log)
 
     def flash(self):
         """ Flashing with openocd as a separate process """

@@ -4,4 +4,4 @@ test:
         - name: unit
           exec: test-waitpid
           targets:
-              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7a9-zynq7000-zedboard]
+              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk]
