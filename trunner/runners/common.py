@@ -3,16 +3,15 @@
 #
 # Common parts of phoenix-rtos test runners
 #
-# Copyright 2021 Phoenix SYstems
+# Copyright 2021, 2022 Phoenix Systems
 # Authors: Jakub Sarzyński, Mateusz Niewiadomski, Damian Loewnau
 #
 
 import importlib
 import logging
 import os
-import signal
+
 import sys
-import threading
 import time
 
 from abc import ABC, abstractmethod
@@ -37,16 +36,9 @@ def rootfs(target: str) -> Path:
     return PHRTOS_PROJECT_DIR / '_fs' / target / 'root'
 
 
-def is_github_actions():
-    return os.getenv('GITHUB_ACTIONS', False)
-
-
-def wait_for_dev(port, timeout=0, wait_for_disappear=False):
+def wait_for_dev(port, timeout=0):
     asleep = 0
 
-    if wait_for_disappear:
-        while os.path.exists(port):
-            continue
     # naive wait for dev
     while not os.path.exists(port):
         time.sleep(0.01)
@@ -80,146 +72,11 @@ def unbind_rpi_usb(port_address):
         sys.exit(1)
 
 
-class Psu:
-    """Wrapper for psu program"""
-
-    def __init__(self, target, script, cwd=None):
-        if cwd is None:
-            cwd = boot_dir(target)
-        self.cwd = cwd
-        self.script = script
-        self.proc = None
-
-    def read_output(self):
-        if is_github_actions():
-            logging.info('::group::Run psu\n')
-
-        while True:
-            line = self.proc.readline()
-            if not line:
-                break
-
-            logging.info(line)
-
-        if is_github_actions():
-            logging.info('::endgroup::\n')
-
-    def run(self):
-        # Use pexpect.spawn to run a process as PTY, so it will flush on a new line
-        self.proc = pexpect.spawn(
-            'psu',
-            [f'{self.script}'],
-            cwd=self.cwd,
-            encoding='ascii'
-        )
-
-        self.read_output()
-        self.proc.wait()
-        if self.proc.exitstatus != 0:
-            logging.error('psu failed!\n')
-            raise Exception('Flashing failed!')
-
-
-def phd_error_msg(message, output):
-    msg = message
-    msg += Color.colorify('\nPHOENIXD OUTPUT:\n', Color.BOLD)
-    msg += output
-
-    return msg
-
-
-class PhoenixdError(Exception):
-    pass
-
-
-class Phoenixd:
-    """ Wrapper for phoenixd program"""
-
-    def __init__(
-        self,
-        target,
-        port,
-        dir='.',
-        cwd=None,
-        wait_dispatcher=True
-    ):
-        if cwd is None:
-            cwd = boot_dir(target)
-        self.cwd = cwd
-        self.port = port
-        self.dir = dir
-        self.proc = None
-        self.reader_thread = None
-        self.wait_dispatcher = wait_dispatcher
-        self.dispatcher_event = None
-        self.output_buffer = ''
-
-    def _reader(self):
-        """ This method is intended to be run as a separated thread. It reads output of proc
-            line by line and saves it in the output_buffer. Additionally, if wait_dispatcher is true,
-            it searches for a line stating that message dispatcher has started """
-
-        while True:
-            line = self.proc.readline()
-            if not line:
-                break
-
-            if self.wait_dispatcher and not self.dispatcher_event.is_set():
-                msg = f'Starting message dispatcher on [{self.port}]'
-                if msg in line:
-                    self.dispatcher_event.set()
-
-            self.output_buffer += line
-
-    def run(self):
-        try:
-            wait_for_dev(self.port, timeout=10)
-        except TimeoutError as exc:
-            raise PhoenixdError(f'couldn\'t find {self.port}') from exc
-
-        # Use pexpect.spawn to run a process as PTY, so it will flush on a new line
-        self.proc = pexpect.spawn(
-            'phoenixd',
-            ['-p', self.port,
-             '-s', self.dir],
-            cwd=self.cwd,
-            encoding='ascii'
-        )
-
-        self.dispatcher_event = threading.Event()
-        self.reader_thread = threading.Thread(target=self._reader)
-        self.reader_thread.start()
-
-        if self.wait_dispatcher:
-            # Reader thread will notify us that message dispatcher has just started
-            dispatcher_ready = self.dispatcher_event.wait(timeout=5)
-            if not dispatcher_ready:
-                self.kill()
-                msg = 'message dispatcher did not start!'
-                raise PhoenixdError(msg)
-
-        return self.proc
-
-    def output(self):
-        output = self.output_buffer
-        if is_github_actions():
-            output = '::group::phoenixd output\n' + output + '\n::endgroup::\n'
-
-        return output
-
-    def kill(self):
-        if self.proc.isalive():
-            os.killpg(os.getpgid(self.proc.pid), signal.SIGTERM)
-        self.reader_thread.join(timeout=10)
-        if self.proc.isalive():
-            os.killpg(os.getpgid(self.proc.pid), signal.SIGKILL)
-
-    def __enter__(self):
-        self.run()
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.kill()
+class RebootError(Exception):
+    def __init__(self, message):
+        msg = Color.colorify("REBOOT ERROR:\n", Color.BOLD)
+        msg += str(message) + '\n'
+        super().__init__(msg)
 
 
 class PloError(Exception):
@@ -237,12 +94,11 @@ class PloError(Exception):
 class PloTalker:
     """Interface to communicate with plo"""
 
-    def __init__(self, port, codec_errors='strict', baudrate=115200):
+    def __init__(self, port, baudrate=115200):
         self.port = port
         self.baudrate = baudrate
         self.serial = None
         self.plo = None
-        self.codec_errors = codec_errors
 
     @classmethod
     def from_pexpect(cls, pexpect_fd):
@@ -253,10 +109,9 @@ class PloTalker:
         obj.plo = pexpect_fd
         return obj
 
-    def interrupt_counting(self, catch_statement):
+    def interrupt_counting(self):
         """ Interrupts timer counting to enter plo """
-        if catch_statement:
-            self.plo.expect_exact('Waiting for input', timeout=3)
+        self.plo.expect_exact('Waiting for input', timeout=3)
         self.plo.send('\r\n')
 
     def open(self):
@@ -270,7 +125,6 @@ class PloTalker:
             self.plo = pexpect.fdpexpect.fdspawn(
                                                 self.serial,
                                                 encoding='ascii',
-                                                codec_errors=self.codec_errors,
                                                 timeout=8)
         except Exception:
             self.serial.close()
@@ -296,17 +150,18 @@ class PloTalker:
         self.plo.expect_exact(cmd)
         try:
             self.plo.expect_exact('(plo)%', timeout=timeout)
+            # red color means that, there was some error in plo
             if ("\x1b[31m" in self.plo.before):
                 raise PloError(self.plo.before, expected="(plo)% ", cmd=cmd)
         except pexpect.TIMEOUT:
-            raise PloError(self.plo.before, expected="(plo)% ")
+            raise PloError(self.plo.before, expected="(plo)% ", cmd=cmd)
 
     def app(self, device, file, imap, dmap, exec=False):
         exec = '-x' if exec else ''
         self.assert_cmd(f'app {device} {exec} {file} {imap} {dmap}', timeout=30)
 
     def copy(self, src, src_obj, dst, dst_obj, src_size='', dst_size=''):
-        self.assert_cmd(f'copy {src} {src_obj} {src_size} {dst} {dst_obj} {dst_size}', timeout=60)
+        self.assert_cmd(f'copy {src} {src_obj} {src_size} {dst} {dst_obj} {dst_size}', timeout=140)
 
     def copy_file2mem(self, src, file, dst='flash1', off=0, size=0):
         self.copy(
@@ -359,13 +214,17 @@ class Runner(ABC):
 class DeviceRunner(Runner):
     """This class provides interface to run tests on hardware targets using serial port"""
 
-    def __init__(self, target, serial, log=False):
+    status_color = {Runner.BUSY: 'blue', Runner.SUCCESS: 'green', Runner.FAIL: 'red'}
+
+    def __init__(self, target, serial, is_rpi_host, log=False):
+        if is_rpi_host:
+            self.leds = {'red': GPIO(13), 'green': GPIO(18), 'blue': GPIO(12)}
         super().__init__(target, log)
         self.serial_port = serial[0]
         self.serial_baudrate = serial[1]
         self.serial = None
 
-    def run(self, test):
+    def run(self, test, send_go=True):
         if test.skipped():
             return
 
@@ -380,10 +239,26 @@ class DeviceRunner(Runner):
             proc.logfile = open(self.logpath, "a")
 
         try:
-            PloTalker.from_pexpect(proc).go()
+            if send_go:
+                PloTalker.from_pexpect(proc).go()
             test.handle(proc)
         finally:
             self.serial.close()
+
+    def set_status(self, status):
+        super().set_status(status)
+        if self.is_rpi_host:
+            if status in self.status_color:
+                self.set_led(self.status_color[status])
+
+    def set_led(self, color):
+        """Turn on the specified RGB LED's color."""
+        if color in self.leds:
+            for led_gpio in self.leds.values():
+                led_gpio.low()
+            self.leds[color].high()
+        else:
+            print(f'There is no specified led color: {color}')
 
 
 class GPIO:

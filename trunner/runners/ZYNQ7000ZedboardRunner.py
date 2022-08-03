@@ -6,12 +6,30 @@
 # Copyright 2022 Phoenix Systems
 # Authors: Damian Loewnau
 
-from .ARMV7M7Runner import ARMV7M7Runner
-
+import select
+import sys
 import time
 
+from .common import DeviceRunner, GPIO, RebootError, LOG_PATH
+from .flasher import ZYNQ7000JtagFlasher
 
-class ZYNQ7000ZedboardRunner(ARMV7M7Runner):
+
+def hostpc_reboot(jtag_mode=False):
+    """Reboots a tested device by a human."""
+    if jtag_mode:
+        print("\n\tPlease change the board's boot mode to jtag, reset the board and press enter")
+    else:
+        print("\n\tPlease change the board's boot mode to Quad SPI flash if the current mode is different.\n\
+        Next, reset the board and press enter")
+    print("\tNote that You should press the enter key just after reset button")
+
+    if sys.stdin in select.select([sys.stdin], [], [], 30)[0]:
+        sys.stdin.readline()
+    else:
+        raise RebootError('It took too long to wait for a key pressing')
+
+
+class ZYNQ7000ZedboardRunner(DeviceRunner):
     """This class provides interface to run test case on ZYNQ7000Zedboard using RaspberryPi.
 
     Default configuration for running on Rpi:
@@ -22,19 +40,21 @@ class ZYNQ7000ZedboardRunner(ARMV7M7Runner):
     GPIO 13 must be connected to a red pin of an RGB LED
     GPIO 18 must be connected to a green pin of an RGB LED"""
 
-    IMAGE = 'phoenix-armv7a9-zynq7000-zedboard.disk'
+    IMAGE = 'phoenix.disk'
 
-    def __init__(self, port, phoenixd_port, is_rpi_host=True, log=False):
-        # output right after opening serial port may be noisy on this target
-        # serial port disappears after powering down a destination board
+    def __init__(self, target, port, phoenixd_port, is_rpi_host=True, log=False):
+        self.is_rpi_host = is_rpi_host
+        if self.is_rpi_host:
+            self.power_gpio = GPIO(2)
+            self.power_gpio.high()
+            self.boot_gpio = GPIO(4)
+            self.logpath = LOG_PATH
+
         super().__init__(
+                        target,
                         port,
                         is_rpi_host,
-                        log, disconnecting_serial=True,
-                        noisy=True,
-                        run_psu=False,
-                        dest_code='ddr',
-                        dest_exec='ddr')
+                        log,)
         self.phoenixd_port = phoenixd_port
         # Hardware test unit does not support jtag reset
         self.is_cut_power_used = True
@@ -42,6 +62,34 @@ class ZYNQ7000ZedboardRunner(ARMV7M7Runner):
 
     def _restart_by_poweroff(self):
         self.power_gpio.low()
-        time.sleep(0.350)
+        time.sleep(0.050)
         self.power_gpio.high()
-        time.sleep(0.350)
+        time.sleep(0.050)
+
+    def rpi_reboot(self, jtag_mode=False):
+        """Reboots a tested device using Raspberry Pi as host-generic-pc."""
+        if jtag_mode:
+            self.boot_gpio.low()
+        else:
+            self.boot_gpio.high()
+
+        self._restart_by_poweroff()
+
+    def reboot(self, jtag_mode=False):
+        """Reboots a tested device."""
+        if self.is_rpi_host:
+            self.rpi_reboot(jtag_mode)
+        else:
+            hostpc_reboot(jtag_mode)
+
+    def flash(self):
+        flasher = ZYNQ7000JtagFlasher(self)
+        flasher.flash()
+
+    def run(self, test):
+        if test.skipped():
+            return
+
+        self.reboot()
+        # Because of loading kernel after wait cmd, the system image starts automatically on this platform
+        super().run(test, send_go=False)
