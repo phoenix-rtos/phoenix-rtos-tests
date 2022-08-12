@@ -1,0 +1,5 @@
+test:
+  type: unit
+  tests:
+    - name: unit
+      exec: test-libcache
