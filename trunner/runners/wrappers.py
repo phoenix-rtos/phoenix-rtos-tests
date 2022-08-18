@@ -11,6 +11,7 @@ import logging
 import os
 import pexpect
 import signal
+import sys
 import threading
 
 from abc import ABC, abstractmethod
@@ -21,6 +22,24 @@ from .common import boot_dir, wait_for_dev
 
 def is_github_actions():
     return os.getenv('GITHUB_ACTIONS', False)
+
+
+def error_msg(progname, message, output):
+    progname = progname.upper()
+
+    msg = message
+    msg += Color.colorify(f'\n{progname} OUTPUT:\n', Color.BOLD)
+    msg += output
+
+    return msg
+
+
+def phd_warning_msg(message, warning):
+    msg = message
+    msg += Color.colorify('\nPHOENIXD WARNING:\n', Color.BOLD)
+    msg += warning
+
+    return msg
 
 
 class StandardWrapper(ABC):
@@ -132,8 +151,15 @@ class Gdb(StandardWrapper):
         if is_github_actions():
             logging.info('::group::Run gdb\n')
 
-        self.proc.expect_exact("(gdb) ")
+        # When using docker, the additional newline may be needed
+        idx = self.proc.expect_exact(["(gdb) ", "Type <RET> for more"])
 
+        if idx == 1:
+            logging.info(self.proc.before)
+            self.proc.send('\r\n')
+            idx = self.proc.expect_exact("(gdb) ")
+
+        # plo will be loaded after passing the continue command in gdb
         # TODO: investigate why send('c\r\n') does not work
         self.proc.send('c')
         self.proc.send('\r\n')
@@ -145,7 +171,7 @@ class Gdb(StandardWrapper):
             logging.info('::endgroup::\n')
 
     def run(self):
-        with GdbServer():
+        with GdbServer() as gdbserv:
             # Use pexpect.spawn to run a process as PTY, so it will flush on a new line
             self.proc = pexpect.spawn(
                 self.progname,
@@ -154,7 +180,16 @@ class Gdb(StandardWrapper):
                 encoding='ascii'
             )
 
-            self.read_output()
+            try:
+                self.read_output()
+            except (pexpect.TIMEOUT, pexpect.EOF):
+                exception = Color.colorify(f'\nGDB ERROR:', Color.BOLD)
+                exception += '\nGdb prompt not seen after executing loading script!'
+                exception = error_msg('gdb', exception, self.proc.before)
+                exception = error_msg('JlinkGdbServer', exception, gdbserv.output())
+
+                logging.info(exception)
+                sys.exit(1)
             self.proc.close()
 
     def close(self):
@@ -162,22 +197,6 @@ class Gdb(StandardWrapper):
         if self.proc.exitstatus != 0:
             logging.error('gdb failed!\n')
             raise Exception('Loading plo using gdb failed!')
-
-
-def phd_error_msg(message, output):
-    msg = message
-    msg += Color.colorify('\nPHOENIXD OUTPUT:\n', Color.BOLD)
-    msg += output
-
-    return msg
-
-
-def phd_warning_msg(message, warning):
-    msg = message
-    msg += Color.colorify('\nPHOENIXD WARNING:\n', Color.BOLD)
-    msg += warning
-
-    return msg
 
 
 class PhoenixdError(Exception):
