@@ -15,7 +15,7 @@ from pexpect.exceptions import TIMEOUT, EOF
 from trunner.tools.color import Color
 from .common import LOG_PATH, PloError, PloTalker, DeviceRunner
 from .common import GPIO, rootfs
-from .wrappers import Phoenixd, PhoenixdError, phd_error_msg
+from .wrappers import Phoenixd, PhoenixdError, error_msg
 from .flasher import NXPSerialFlasher
 
 
@@ -120,7 +120,7 @@ class ARMV7M7Runner(DeviceRunner):
                 test.exception = str(exc)
                 test.fail()
                 if phd:
-                    test.exception = phd_error_msg(test.exception, phd.output())
+                    test.exception = error_msg('phoenixd', test.exception, phd.output())
             return False
 
         return True
