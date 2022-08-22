@@ -50,11 +50,7 @@ class ZYNQ7000ZedboardRunner(DeviceRunner):
             self.boot_gpio = GPIO(4)
             self.logpath = LOG_PATH
 
-        super().__init__(
-                        target,
-                        port,
-                        is_rpi_host,
-                        log,)
+        super().__init__(target, port, is_rpi_host, log)
         self.phoenixd_port = phoenixd_port
         # Hardware test unit does not support jtag reset
         self.is_cut_power_used = True
