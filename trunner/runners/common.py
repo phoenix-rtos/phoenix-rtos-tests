@@ -26,6 +26,7 @@ from trunner.config import PHRTOS_PROJECT_DIR
 from trunner.tools.color import Color
 
 LOG_PATH = '/tmp/phoenix_test.log'
+LOG_PATH_PHOENIXD = '/tmp/phoenix_test_phoenixd.log'
 
 
 def boot_dir(target: str) -> Path:
@@ -122,10 +123,7 @@ class PloTalker:
             raise
 
         try:
-            self.plo = pexpect.fdpexpect.fdspawn(
-                                                self.serial,
-                                                encoding='ascii',
-                                                timeout=8)
+            self.plo = pexpect.fdpexpect.fdspawn(self.serial, encoding='ascii', timeout=8)
         except Exception:
             self.serial.close()
             raise
@@ -144,24 +142,25 @@ class PloTalker:
     def wait_prompt(self, timeout=8):
         self.plo.expect_exact("(plo)% ", timeout=timeout)
 
-    def assert_cmd(self, cmd, timeout=8):
+    def cmd(self, cmd, timeout=8):
         self.plo.send(cmd + '\r\n')
         # Wait for an eoched command
         self.plo.expect_exact(cmd)
         try:
             self.plo.expect_exact('(plo)%', timeout=timeout)
             # red color means that, there was some error in plo
-            if ("\x1b[31m" in self.plo.before):
+            if "\x1b[31m" in self.plo.before:
                 raise PloError(self.plo.before, expected="(plo)% ", cmd=cmd)
         except pexpect.TIMEOUT:
             raise PloError(self.plo.before, expected="(plo)% ", cmd=cmd)
 
     def app(self, device, file, imap, dmap, exec=False):
         exec = '-x' if exec else ''
-        self.assert_cmd(f'app {device} {exec} {file} {imap} {dmap}', timeout=30)
+        self.cmd(f'app {device} {exec} {file} {imap} {dmap}', timeout=30)
 
     def copy(self, src, src_obj, dst, dst_obj, src_size='', dst_size=''):
-        self.assert_cmd(f'copy {src} {src_obj} {src_size} {dst} {dst_obj} {dst_size}', timeout=140)
+        logging.info('Copying the system image, please wait...\n')
+        self.cmd(f'copy {src} {src_obj} {src_size} {dst} {dst_obj} {dst_size}', timeout=140)
 
     def copy_file2mem(self, src, file, dst='flash1', off=0, size=0):
         self.copy(
@@ -244,6 +243,8 @@ class DeviceRunner(Runner):
             test.handle(proc)
         finally:
             self.serial.close()
+            if os.path.exists(LOG_PATH_PHOENIXD):
+                os.remove(LOG_PATH_PHOENIXD)
 
     def set_status(self, status):
         super().set_status(status)

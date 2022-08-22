@@ -13,7 +13,7 @@ import sys
 
 from pexpect.exceptions import TIMEOUT, EOF
 from .common import PloError, PloTalker, RebootError
-from .wrappers import Psu, Gdb, Phoenixd, PhoenixdError, error_msg
+from .wrappers import Psu, Gdb, Phoenixd, PhoenixdError, GdbError, append_output
 
 
 class Flasher(ABC):
@@ -40,11 +40,11 @@ class Flasher(ABC):
                     )
 
             self.reboot(flashing_mode=False, cut_power=self.runner.is_cut_power_used)
-        except (TIMEOUT, EOF, PloError, PhoenixdError, RebootError) as exc:
+        except (TIMEOUT, EOF, PloError, PhoenixdError, GdbError, RebootError) as exc:
             exception = f'{exc}\n'
 
             if phd and not isinstance(exc, RebootError):
-                exception = error_msg('phoenixd', exception, phd.output())
+                exception = append_output('phoenixd', exception, phd.output())
 
             logging.info(exception)
             sys.exit(1)

@@ -11,35 +11,55 @@ import logging
 import os
 import pexpect
 import signal
-import sys
 import threading
 
 from abc import ABC, abstractmethod
 
 from trunner.tools.color import Color
-from .common import boot_dir, wait_for_dev
+from .common import boot_dir, wait_for_dev, LOG_PATH_PHOENIXD
 
 
 def is_github_actions():
     return os.getenv('GITHUB_ACTIONS', False)
 
 
-def error_msg(progname, message, output):
+def append_output(progname, message, output):
     progname = progname.upper()
 
     msg = message
     msg += Color.colorify(f'\n{progname} OUTPUT:\n', Color.BOLD)
-    msg += output
+    msg += f'------------------------\n{output}\n------------------------\n'
 
     return msg
 
 
-def phd_warning_msg(message, warning):
-    msg = message
-    msg += Color.colorify('\nPHOENIXD WARNING:\n', Color.BOLD)
-    msg += warning
+class PsuError(Exception):
+    def __init__(self, error):
 
-    return msg
+        msg = f'{Color.BOLD}PSU ERROR:{Color.END} {error}\n'
+        super().__init__(msg)
+
+
+class GdbError(Exception):
+    def __init__(self, error, gdb_output='', gdbserv_output=''):
+
+        msg = f'{Color.BOLD}GDB ERROR:{Color.END} {error}\n'
+        if gdb_output:
+            msg = append_output('gdb', msg, gdb_output)
+        if gdbserv_output:
+            msg = append_output('JlinkGdbServer', msg, gdbserv_output)
+
+        super().__init__(msg)
+
+
+class PhoenixdError(Exception):
+    def __init__(self, message, output=''):
+
+        msg = f'{Color.BOLD}PHOENIXD ERROR:{Color.END} {message}\n'
+        if output:
+            msg += f'{Color.BOLD}PHOENIXD OUTPUT:{Color.END}\n {output}\n'
+
+        super().__init__(msg)
 
 
 class StandardWrapper(ABC):
@@ -136,8 +156,7 @@ class Psu(StandardWrapper):
         self.read_output()
         self.proc.wait()
         if self.proc.exitstatus != 0:
-            logging.error('psu failed!\n')
-            raise Exception(' Loading plo using psu failed!')
+            raise PsuError(' Loading plo using psu failed, psu exit status was not equal 0!')
 
 
 class Gdb(StandardWrapper):
@@ -146,6 +165,9 @@ class Gdb(StandardWrapper):
     def __init__(self, target, file, script, cwd=None):
         args = [f'{file}', '-x', f'{script}']
         super().__init__(target, 'gdb-multiarch', args, cwd)
+        self.jlink_device = ''
+        if 'zynq7000' in target:
+            self.jlink_device = 'Zynq 7020'
 
     def read_output(self):
         if is_github_actions():
@@ -157,12 +179,9 @@ class Gdb(StandardWrapper):
         if idx == 1:
             logging.info(self.proc.before)
             self.proc.send('\r\n')
-            idx = self.proc.expect_exact("(gdb) ")
+            self.proc.expect_exact("(gdb) ")
 
-        # plo will be loaded after passing the continue command in gdb
-        # TODO: investigate why send('c\r\n') does not work
-        self.proc.send('c')
-        self.proc.send('\r\n')
+        self.proc.send('c\r\n')
 
         logging.info(f'{self.proc.before}\n')
         self.proc.close()
@@ -171,36 +190,29 @@ class Gdb(StandardWrapper):
             logging.info('::endgroup::\n')
 
     def run(self):
-        with GdbServer() as gdbserv:
+        with GdbServer(self.jlink_device) as gdbserv:
             # Use pexpect.spawn to run a process as PTY, so it will flush on a new line
             self.proc = pexpect.spawn(
                 self.progname,
                 self.args,
                 cwd=self.cwd,
-                encoding='ascii'
+                encoding='ascii',
+                timeout=8
             )
 
             try:
                 self.read_output()
-            except (pexpect.TIMEOUT, pexpect.EOF):
-                exception = Color.colorify(f'\nGDB ERROR:', Color.BOLD)
-                exception += '\nGdb prompt not seen after executing loading script!'
-                exception = error_msg('gdb', exception, self.proc.before)
-                exception = error_msg('JlinkGdbServer', exception, gdbserv.output())
+            except pexpect.TIMEOUT:
+                error = 'Prompt not seen after executing loading script!'
+                raise GdbError(error, gdb_output=self.proc.before, gdbserv_output=gdbserv.output())
 
-                logging.info(exception)
-                sys.exit(1)
             self.proc.close()
 
     def close(self):
         self.proc.close()
         if self.proc.exitstatus != 0:
             logging.error('gdb failed!\n')
-            raise Exception('Loading plo using gdb failed!')
-
-
-class PhoenixdError(Exception):
-    pass
+            raise GdbError('Loading plo using gdb failed, gdb exit status was not equal 0!')
 
 
 class Phoenixd(BackgroundWrapper):
@@ -222,45 +234,26 @@ class Phoenixd(BackgroundWrapper):
         self.port = port
         self.baudrate = baudrate
         self.dir = dir
-        self.wait_dispatcher = wait_dispatcher
         self.dispatcher_event = None
         self.long_flashing = long_flashing
+        self.phd_out_file = None
         super().__init__()
 
     def _reader(self):
-        """ This method is intended to be run as a separated thread. It reads output of proc
-            line by line and saves it in the output_buffer. Additionally, if wait_dispatcher is true,
-            it searches for a line stating that message dispatcher has started """
+        """ This method is intended to be run as a separated thread.
+        It searches for a line stating that message dispatcher has started
+        and then browses phoenixd output that may be needed for proper working """
 
-        while True:
-            line = self.proc.readline()
+        msg = f'Starting message dispatcher on [{self.port}]'
 
-            if not line:
-                break
-            self.output_buffer += line
+        try:
+            self.proc.expect_exact(msg, timeout=4)
+        except (pexpect.EOF, pexpect.TIMEOUT):
+            return self
+        self.dispatcher_event.set()
 
-            if self.wait_dispatcher and not self.dispatcher_event.is_set():
-                msg = f'Starting message dispatcher on [{self.port}]'
-                if msg in line:
-                    self.dispatcher_event.set()
-                    if self.long_flashing:
-                        break
-
-        # faster alternative for catching the whole output
-        if self.long_flashing:
-            last_msg = "ret=0"
-            try:
-                self.proc.expect_exact(last_msg, timeout=140)
-            # The exception will be caught in plo, we only have to provide phoenixd output
-            except (pexpect.EOF, pexpect.TIMEOUT):
-                warning = f"The last message ({last_msg}) hasn't been seen.' \
-                    'Probably the phoenixd program has been interrupted!\n"
-                self.output_buffer += self.proc.before
-                self.output_buffer = phd_warning_msg(self.output_buffer, warning)
-                return self
-
-            self.output_buffer += self.proc.before
-            self.output_buffer += last_msg
+        # Phoenixd requires reading its output constantly to work properly, especially during long copy operations
+        self.proc.expect(pexpect.EOF, timeout=None)
 
     def run(self):
         try:
@@ -275,29 +268,37 @@ class Phoenixd(BackgroundWrapper):
              '-b', str(self.baudrate),
              '-s', self.dir],
             cwd=self.cwd,
-            encoding='ascii',
+            encoding='ascii'
         )
+
+        # Using logfile for storing phoenixd output seems to be currently the best generic solution possible
+        self.phd_out_file = open(LOG_PATH_PHOENIXD, "w")
+        self.proc.logfile = self.phd_out_file
 
         self.dispatcher_event = threading.Event()
         self.reader_thread = threading.Thread(target=self._reader)
         self.reader_thread.start()
 
-        if self.wait_dispatcher:
-            # Reader thread will notify us that message dispatcher has just started
-            dispatcher_ready = self.dispatcher_event.wait(timeout=5)
-            if not dispatcher_ready:
-                self.kill()
-                msg = 'message dispatcher did not start!'
-                raise PhoenixdError(msg)
+        # Reader thread will notify us that message dispatcher has just started
+        dispatcher_ready = self.dispatcher_event.wait(timeout=5)
+        if not dispatcher_ready:
+            self.kill()
+            raise PhoenixdError('Message dispatcher did not start!', self.output_buffer)
 
         return self.proc
 
     def output(self):
-        output = self.output_buffer
+        self.phd_out_file = open(LOG_PATH_PHOENIXD, "r")
+        output = self.phd_out_file.read()
+        self.phd_out_file.close()
         if is_github_actions():
             output = '::group::phoenixd output\n' + output + '\n::endgroup::\n'
 
         return output
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.kill()
+        self.phd_out_file.close()
 
 
 class GdbServer(BackgroundWrapper):
@@ -305,7 +306,7 @@ class GdbServer(BackgroundWrapper):
 
     def __init__(
         self,
-        device='Zynq 7020'
+        device
     ):
         self.device = device
         super().__init__()
