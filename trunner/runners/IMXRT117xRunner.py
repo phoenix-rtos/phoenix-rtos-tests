@@ -31,7 +31,7 @@ class IMXRT117xRunner(ARMV7M7Runner):
         super().__init__(target, port, is_rpi_host, log)
         self.phoenixd_port = phoenixd_port
         self.is_cut_power_used = is_cut_power_used
-        self.flash_memory = 0
+        self.flash_bank = 0
 
     def _restart_by_poweroff(self):
         self.power_gpio.low()

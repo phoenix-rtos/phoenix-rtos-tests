@@ -39,7 +39,6 @@ class ARMV7M7Runner(DeviceRunner):
 
     # redefined by target runners
     SDP = None
-    IMAGE = None
 
     def __init__(self, target, serial, is_rpi_host=True, log=False):
         # has to be defined before super, because Runner constructor calls set_status, where it's used
@@ -50,11 +49,12 @@ class ARMV7M7Runner(DeviceRunner):
             self.power_gpio = GPIO(2)
             self.power_gpio.high()
             self.boot_gpio = GPIO(4)
-            self.logpath = LOG_PATH
+
         super().__init__(target, serial, is_rpi_host, log)
         # default values, redefined by specified target runners
         self.phoenixd_port = None
         self.is_cut_power_used = False
+        self.flash_bank = None
 
     def _restart_by_poweroff(self):
         pass
@@ -76,23 +76,30 @@ class ARMV7M7Runner(DeviceRunner):
         else:
             self._restart_by_jtag()
 
-    def reboot(self, serial_downloader=False, cut_power=False):
+    def reboot(self, flashing_mode=False):
         """Reboots a tested device."""
         if self.is_rpi_host:
-            self.rpi_reboot(serial_downloader, cut_power)
+            self.rpi_reboot(serial_downloader=flashing_mode, cut_power=self.is_cut_power_used)
         else:
-            hostpc_reboot(serial_downloader)
+            hostpc_reboot(serial_downloader=flashing_mode)
 
     def flash(self):
-        flasher = NXPSerialFlasher(self)
-        flasher.flash()
+        flasher = NXPSerialFlasher(
+            self.target,
+            self.serial_port,
+            self.phoenixd_port,
+            self.flash_bank,
+            self.logpath
+        )
+
+        flasher.flash(self.reboot)
 
     def load(self, test):
         """Loads test ELF into syspage using plo"""
         phd = None
         load_dir = str(rootfs(test.target) / 'bin')
         try:
-            self.reboot(cut_power=self.is_cut_power_used)
+            self.reboot()
             with PloTalker(self.serial_port) as plo:
                 if self.logpath:
                     plo.plo.logfile = open(self.logpath, "a")

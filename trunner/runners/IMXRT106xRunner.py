@@ -36,7 +36,7 @@ class IMXRT106xRunner(ARMV7M7Runner):
         self.phoenixd_port = phoenixd_port
         # restart by power off is temporarily disabled for this target
         self.is_cut_power_used = False
-        self.flash_memory = 1
+        self.flash_bank = 1
 
     def _restart_by_poweroff(self):
         unbind_rpi_usb(self.port_usb)

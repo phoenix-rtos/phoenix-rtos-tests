@@ -16,11 +16,7 @@ import threading
 from abc import ABC, abstractmethod
 
 from trunner.tools.color import Color
-from .common import boot_dir, wait_for_dev
-
-
-def is_github_actions():
-    return os.getenv('GITHUB_ACTIONS', False)
+from .common import boot_dir, wait_for_dev, is_github_actions
 
 
 def append_output(progname, message, output):
@@ -244,8 +240,9 @@ class Phoenixd(BackgroundWrapper):
 
         try:
             self.proc.expect_exact(msg, timeout=4)
+        # The main thread will catch that dispatcher didn't start
         except (pexpect.EOF, pexpect.TIMEOUT):
-            return self
+            return
         self.dispatcher_event.set()
 
         self.output_buffer = self.proc.before
