@@ -10,7 +10,6 @@
 import importlib
 import logging
 import os
-
 import sys
 import time
 
@@ -34,6 +33,10 @@ def boot_dir(target: str) -> Path:
 
 def rootfs(target: str) -> Path:
     return PHRTOS_PROJECT_DIR / '_fs' / target / 'root'
+
+
+def is_github_actions():
+    return os.getenv('GITHUB_ACTIONS', False)
 
 
 def wait_for_dev(port, timeout=0):
@@ -221,8 +224,9 @@ class DeviceRunner(Runner):
         self.serial_port = serial[0]
         self.serial_baudrate = serial[1]
         self.serial = None
+        self.send_go = True
 
-    def run(self, test, send_go=True):
+    def run(self, test):
         if test.skipped():
             return
 
@@ -237,7 +241,7 @@ class DeviceRunner(Runner):
             proc.logfile = open(self.logpath, "a")
 
         try:
-            if send_go:
+            if self.send_go:
                 PloTalker.from_pexpect(proc).go()
             test.handle(proc)
         finally:

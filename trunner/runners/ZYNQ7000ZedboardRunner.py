@@ -40,21 +40,20 @@ class ZYNQ7000ZedboardRunner(DeviceRunner):
     GPIO 13 must be connected to a red pin of an RGB LED
     GPIO 18 must be connected to a green pin of an RGB LED"""
 
-    IMAGE = 'phoenix.disk'
-
     def __init__(self, target, port, phoenixd_port, is_rpi_host=True, log=False):
         self.is_rpi_host = is_rpi_host
         if self.is_rpi_host:
             self.power_gpio = GPIO(2)
             self.power_gpio.high()
             self.boot_gpio = GPIO(4)
-            self.logpath = LOG_PATH
 
         super().__init__(target, port, is_rpi_host, log)
         self.phoenixd_port = phoenixd_port
         # Hardware test unit does not support jtag reset
         self.is_cut_power_used = True
-        self.flash_memory = 0
+        self.flash_bank = 0
+        # We don't enter plo, because we don't need to load tests (they are the part of the root fs)
+        self.send_go = False
 
     def _restart_by_poweroff(self):
         self.power_gpio.low()
@@ -71,21 +70,27 @@ class ZYNQ7000ZedboardRunner(DeviceRunner):
 
         self._restart_by_poweroff()
 
-    def reboot(self, jtag_mode=False):
+    def reboot(self, flashing_mode=False):
         """Reboots a tested device."""
         if self.is_rpi_host:
-            self.rpi_reboot(jtag_mode)
+            self.rpi_reboot(jtag_mode=flashing_mode)
         else:
-            hostpc_reboot(jtag_mode)
+            hostpc_reboot(jtag_mode=flashing_mode)
 
     def flash(self):
-        flasher = ZYNQ7000JtagFlasher(self)
-        flasher.flash()
+        flasher = ZYNQ7000JtagFlasher(
+            self.target,
+            self.serial_port,
+            self.phoenixd_port,
+            self.flash_bank,
+            self.logpath
+        )
+
+        flasher.flash(self.reboot)
 
     def run(self, test):
         if test.skipped():
             return
 
         self.reboot()
-        # Because of loading kernel after wait cmd, the system image starts automatically on this platform
-        super().run(test, send_go=False)
+        super().run(test)
