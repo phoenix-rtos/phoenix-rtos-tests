@@ -117,5 +117,5 @@ def get_commands(pexpect_proc):
 
 
 def run(pexpect_proc):
-    pexpect_proc.send('psh\r\n')
+    pexpect_proc.sendline('psh')
     pexpect_proc.expect(r'psh(\r+)\n')

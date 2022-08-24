@@ -8,6 +8,7 @@
 #
 
 import os
+import select
 import subprocess
 import sys
 import time
@@ -49,7 +50,7 @@ class STM32L4Runner(DeviceRunner):
     def flash(self):
         """ Flashing with openocd as a separate process """
 
-        binary_path = os.path.join(boot_dir(self.target), 'phoenix-kernel.bin')
+        binary_path = os.path.join(boot_dir(self.target), 'phoenix.disk')
         openocd_cmd = [
             'openocd',
             '-f', 'interface/stlink.cfg',
@@ -73,6 +74,9 @@ class STM32L4Runner(DeviceRunner):
         if test.skipped():
             return
 
+        # if not self.load(test):
+        #     return
+            
         try:
             self.serial = serial.Serial(self.serial_port, baudrate=self.serial_baudrate)
         except serial.SerialException:
@@ -87,17 +91,33 @@ class STM32L4Runner(DeviceRunner):
             codec_errors='ignore',
             timeout=test.timeout
             )
+
+        print('restart board')
+        if sys.stdin in select.select([sys.stdin], [], [], 30)[0]:
+            sys.stdin.readline()
+        else:
+            print('It took too long to wait for a key pressing')
+        print('after')
+        # proc = pexpect.fdpexpect.fdspawn(self.serial, encoding='utf8', timeout=test.timeout)
+
+        # time.sleep(3)
+
+        print('1')
+        # proc.expect('p')
+        # print('2')
+        # proc.expect_exact('(psh)% ')
+        # print('3')
         if self.logpath:
             proc.logfile = open(self.logpath, "a")
 
         # FIXME - race on start of Phoenix-RTOS between dummyfs and psh
         # flushing the buffer and sending newline
         # ensures that carret is in newline just after (psh)% prompt
-        flushed = ""
-        while not proc.expect([r'.+', TIMEOUT], timeout=0.1):
-            flushed += proc.match.group(0)
-        flushed = None
-        proc.send("\n")
+        # flushed = ""
+        # while not proc.expect([r'.+', TIMEOUT], timeout=0.1):
+        #     flushed += proc.match.group(0)
+        # flushed = None
+        # proc.send("\n")
 
         try:
             test.handle(proc)

@@ -1,4 +1,7 @@
 test:
+    targets:
+      #TODO: remove when riscv64-generic-qemu target will stop being experimental
+      include: [armv7m4-stm32l4x6-nucleo]
     type: unit
     tests:
         - name: unit

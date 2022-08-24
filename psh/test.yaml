@@ -1,7 +1,7 @@
 test:
     targets:
       #TODO: remove when riscv64-generic-qemu target will stop being experimental
-      include: [riscv64-generic-qemu]
+      include: [armv7m4-stm32l4x6-nucleo]
 
     tests:
         - name: gibber
