@@ -100,6 +100,25 @@ def assert_exec(pexpect_proc, prog, expected='', msg=''):
     assert_cmd(pexpect_proc, exec_cmd, expected, msg)
 
 
+def _get_exit_code(pexpect_proc):
+    pexpect_proc.sendline('echo $?')
+    msg = 'Checking passed command return code failed, one or more digits not found'
+    assert pexpect_proc.expect([rf'(\d+?){EOL}', pexpect.TIMEOUT, pexpect.EOF]) == 0, msg
+
+    exit_code = int(pexpect_proc.match.group(1))
+    assert_only_prompt(pexpect_proc)
+
+    return exit_code
+
+
+def assert_cmd_failed(pexpect_proc, ):
+    assert _get_exit_code(pexpect_proc) != 0, 'The exit status of last passed command equals 0!'
+
+
+def assert_cmd_successed(pexpect_proc):
+    assert _get_exit_code(pexpect_proc) == 0, 'The exit status of last passed command does not equal 0!'
+
+
 def get_commands(pexpect_proc):
     ''' Returns a list of available psh commands'''
     commands = []

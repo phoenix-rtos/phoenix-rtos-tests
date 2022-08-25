@@ -52,3 +52,6 @@ test:
           targets:
               value:
                   - ia32-generic-qemu
+
+        - name: history
+          harness: test-history.py
