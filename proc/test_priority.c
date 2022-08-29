@@ -130,9 +130,9 @@ static void test_priority_inversion(void *arg)
 	completion_wait(&priority_common.comp);
 
 	/* Join the threads */
-	threadJoin(0);
-	threadJoin(0);
-	threadJoin(0);
+	threadJoin(-1, 0);
+	threadJoin(-1, 0);
+	threadJoin(-1, 0);
 
 	/* Clean up completions */
 	completion_done(&priority_common.comp);
