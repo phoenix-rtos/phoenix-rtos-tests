@@ -96,7 +96,7 @@ TEST(threads_rand, test_1)
 
 	/* all threads should end in under one second */
 	for (i = 0; i < cthread; i++) {
-		err = threadJoin(0);
+		err = threadJoin(-1, 0);
 		TEST_ASSERT_GREATER_OR_EQUAL_INT(EOK, err);
 		joined++;
 	}
