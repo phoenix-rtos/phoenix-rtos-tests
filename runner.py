@@ -2,13 +2,36 @@
 
 import argparse
 import logging
+import pexpect
 import pathlib
+import re
 import sys
 
 import trunner.config as config
 
 from trunner.test_runner import TestsRunner
 from trunner.tools.color import Color
+
+
+def resolve_serial(unresolved):
+    resolved = ''
+    try:
+        with pexpect.spawn(
+            'ls /dev/serial/by-path/',
+            encoding="ascii",
+            timeout=3,
+        ) as proc:
+            # ser_port = self.serial_port.translate({ord(i): None for i in '/dev/serial'})
+            resolved = unresolved[20:]
+            resolved = re.escape(resolved)
+            proc.expect(rf'{resolved}[^\r\n]+')
+            resolved = f'/dev/serial/by-path/{proc.match[0]}'
+    except:
+        print(f'Serial port with the default path prefix printed below not found!\n{unresolved}\n' \
+            'Please change the socket or consider passing `--serial` argument')
+        sys.exit(1)
+
+    return resolved
 
 
 def set_logger(level=logging.INFO):
@@ -65,7 +88,6 @@ def parse_args():
                         help="Specify verbosity level. By default uses level info.")
 
     parser.add_argument("-s", "--serial",
-                        default=config.DEVICE_SERIAL_PORT,
                         help="Specify serial to communicate with device board. "
                              "By default uses %(default)s.")
 
@@ -98,7 +120,7 @@ def parse_args():
         args.target = config.ALL_TARGETS
 
     if not args.serial:
-        args.serial = config.DEVICE_SERIAL_PORT
+        args.serial = resolve_serial(config.DEVICE_SERIAL_PORT_PREFIX)
 
     if not args.baudrate:
         args.serial = config.DEVICE_SERIAL_BAUDRATE

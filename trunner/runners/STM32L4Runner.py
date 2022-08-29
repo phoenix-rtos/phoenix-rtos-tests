@@ -16,10 +16,12 @@ import time
 
 import pexpect.fdpexpect
 import serial
-from pexpect import TIMEOUT
+from pexpect.exceptions import TIMEOUT, EOF
 
 from .common import DeviceRunner, Color, RebootError, GPIO
 from .common import boot_dir
+from .common import LOG_PATH, Psu, Phoenixd, PhoenixdError, PloError, PloTalker, DeviceRunner, Runner, RebootError
+from .common import GPIO, phd_error_msg, rootfs
 
 
 def hostpc_reboot():
@@ -117,6 +119,7 @@ class STM32L4Runner(DeviceRunner):
 
     def load(self, test):
         """Loads test ELF into syspage using plo"""
+        # return True
         self.reboot(cut_power=self.is_cut_power_used)
         # phd = None
         # load_dir = str(rootfs(test.target) / 'bin')
@@ -154,26 +157,7 @@ class STM32L4Runner(DeviceRunner):
             return
             
         try:
-            with pexpect.spawn(
-                'ls /dev/serial/by-path/',
-                encoding="ascii",
-                timeout=3,
-            ) as proc:
-                # ser_port = self.serial_port.translate({ord(i): None for i in '/dev/serial'})
-                ser_port = self.serial_port[20:]
-                print(ser_port)
-                ser_port = re.escape(ser_port)
-                # proc.expect(r'dev') #proc.expect(r'/dev/serial/by\-path/platform\-fd500000\.pcie\-pci\-0000:01:00\.0\-usb\-0:1\.4:1\.') # proc.expect(f'{ser_port}')
-                proc.expect(rf'{ser_port}[^\r\n]+')
-                print(repr(proc.after))
-                print(f'proc.match = {proc.match}')
-                print(f'proc.match[0] = {proc.match[0]}')
-                ser_port = f'/dev/serial/by-path/{proc.match[0]}'
-
-                # sys.exit(1)
-
-
-            self.serial = serial.Serial(ser_port, baudrate=self.serial_baudrate)
+            self.serial = serial.Serial(self.serial_port, baudrate=self.serial_baudrate)
         except serial.SerialException:
             test.handle_exception()
             return
