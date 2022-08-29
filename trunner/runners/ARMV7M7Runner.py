@@ -14,7 +14,7 @@ import select
 
 from pexpect.exceptions import TIMEOUT, EOF
 from trunner.tools.color import Color
-from .common import LOG_PATH, Psu, Phoenixd, PhoenixdError, PloError, PloTalker, DeviceRunner, Runner
+from .common import LOG_PATH, Psu, Phoenixd, PhoenixdError, PloError, PloTalker, DeviceRunner, Runner, RebootError
 from .common import GPIO, phd_error_msg, rootfs
 
 
@@ -31,13 +31,6 @@ def hostpc_reboot(serial_downloader=False):
         sys.stdin.readline()
     else:
         raise RebootError('It took too long to wait for a key pressing')
-
-
-class RebootError(Exception):
-    def __init__(self, message):
-        msg = Color.colorify("REBOOT ERROR:\n", Color.BOLD)
-        msg += str(message) + '\n'
-        super().__init__(msg)
 
 
 class ARMV7M7Runner(DeviceRunner):

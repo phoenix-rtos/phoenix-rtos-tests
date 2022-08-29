@@ -17,8 +17,20 @@ import pexpect.fdpexpect
 import serial
 from pexpect import TIMEOUT
 
-from .common import DeviceRunner, Color
+from .common import DeviceRunner, Color, RebootError, GPIO
 from .common import boot_dir
+
+
+def hostpc_reboot():
+    """Reboots a tested device by a human."""
+
+    print("Please reset the board by pressing `RESET B2` button and press enter")
+    print("\tNote that You should press the enter key just after reset button")
+
+    if sys.stdin in select.select([sys.stdin], [], [], 30)[0]:
+        sys.stdin.readline()
+    else:
+        raise RebootError('It took too long to wait for a key pressing')
 
 
 class STM32L4Runner(DeviceRunner):
@@ -45,8 +57,41 @@ class STM32L4Runner(DeviceRunner):
             return ret
 
     def __init__(self, target, serial, log=False):
+        self.is_rpi_host = True
+        self.is_cut_power_used = False # True #False
+        if self.is_rpi_host:
+            self.reset_gpio = GPIO(17)
+            self.reset_gpio.high()
+            self.power_gpio = GPIO(2)
+            self.power_gpio.high()
         super().__init__(target, serial, log)
 
+    def _restart_by_jtag(self):
+        self.reset_gpio.low()
+        time.sleep(0.050)
+        self.reset_gpio.high()
+
+    def _restart_by_poweroff(self):
+        self.power_gpio.low()
+        time.sleep(0.050)
+        self.power_gpio.high()
+        time.sleep(0.050)
+
+    def rpi_reboot(self, cut_power=False):
+        """Reboots a tested device using Raspberry Pi as host-generic-pc."""
+        if cut_power:
+            # pass
+            self._restart_by_poweroff()
+        else:
+            self._restart_by_jtag()
+
+    def reboot(self, cut_power=False):
+        """Reboots a tested device."""
+        if self.is_rpi_host:
+            self.rpi_reboot(cut_power)
+        else:
+            hostpc_reboot()
+    
     def flash(self):
         """ Flashing with openocd as a separate process """
 
@@ -70,12 +115,43 @@ class STM32L4Runner(DeviceRunner):
             print(Color.colorify("OpenOCD error: cannot flash target", Color.BOLD))
             sys.exit(1)
 
+    def load(self, test):
+        """Loads test ELF into syspage using plo"""
+        self.reboot(cut_power=self.is_cut_power_used)
+        # phd = None
+        # load_dir = str(rootfs(test.target) / 'bin')
+        # try:
+        #     self.reboot(cut_power=self.is_cut_power_used)
+        #     with PloTalker(self.serial_port) as plo:
+        #         if self.logpath:
+        #             plo.plo.logfile = open(self.logpath, "a")
+        #         plo.interrupt_counting()
+        #         plo.wait_prompt()
+        #         if not test.exec_cmd:
+        #             # We got plo prompt, we are ready for sending the "go!" command.
+        #             return True
+
+        #         with Phoenixd(self.target, self.phoenixd_port, dir=load_dir) as phd:
+        #             plo.app('usb0', test.exec_cmd[0], 'ocram2', 'ocram2')
+        # except (TIMEOUT, EOF, PloError, PhoenixdError, RebootError) as exc:
+        #     if isinstance(exc, TIMEOUT) or isinstance(exc, EOF):
+        #         test.exception = Color.colorify('EXCEPTION PLO\n', Color.BOLD)
+        #         test.handle_pyexpect_error(plo.plo, exc)
+        #     else:  # RebootError, PloError or PhoenixdError
+        #         test.exception = str(exc)
+        #         test.fail()
+        #         if phd:
+        #             test.exception = phd_error_msg(test.exception, phd.output())
+        #     return False
+
+        return True
+
     def run(self, test):
         if test.skipped():
             return
 
-        # if not self.load(test):
-        #     return
+        if not self.load(test):
+            return
             
         try:
             self.serial = serial.Serial(self.serial_port, baudrate=self.serial_baudrate)
@@ -92,17 +168,17 @@ class STM32L4Runner(DeviceRunner):
             timeout=test.timeout
             )
 
-        print('restart board')
-        if sys.stdin in select.select([sys.stdin], [], [], 30)[0]:
-            sys.stdin.readline()
-        else:
-            print('It took too long to wait for a key pressing')
-        print('after')
+        # print('restart board')
+        # if sys.stdin in select.select([sys.stdin], [], [], 30)[0]:
+        #     sys.stdin.readline()
+        # else:
+        #     print('It took too long to wait for a key pressing')
+        # print('after')
         # proc = pexpect.fdpexpect.fdspawn(self.serial, encoding='utf8', timeout=test.timeout)
 
         # time.sleep(3)
 
-        print('1')
+        # print('1')
         # proc.expect('p')
         # print('2')
         # proc.expect_exact('(psh)% ')

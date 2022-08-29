@@ -77,6 +77,14 @@ def unbind_rpi_usb(port_address):
         sys.exit(1)
 
 
+class RebootError(Exception):
+    def __init__(self, message):
+        msg = Color.colorify("REBOOT ERROR:\n", Color.BOLD)
+        msg += str(message) + '\n'
+        super().__init__(msg)
+
+
+
 class Psu:
     """Wrapper for psu program"""
 
