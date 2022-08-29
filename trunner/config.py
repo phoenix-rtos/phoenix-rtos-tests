@@ -55,7 +55,7 @@ LONG_TESTS = ['busybox', 'mbedtls', 'micropython_std', 'micropython_repl']
 CURRENT_TARGET = None
 
 # Port to communicate with hardware boards
-DEVICE_SERIAL_PORT = "/dev/serial/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.4:1.1"
+DEVICE_SERIAL_PORT = "/dev/serial/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.4:1."
 DEVICE_SERIAL_BAUDRATE = 115200
 
 # DEVICE_SERIAL USB port address
