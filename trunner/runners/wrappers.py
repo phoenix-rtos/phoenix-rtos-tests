@@ -16,7 +16,7 @@ import threading
 from abc import ABC, abstractmethod
 
 from trunner.tools.color import Color
-from .common import boot_dir, wait_for_dev, LOG_PATH_PHOENIXD
+from .common import boot_dir, wait_for_dev
 
 
 def is_github_actions():
@@ -225,8 +225,6 @@ class Phoenixd(BackgroundWrapper):
         baudrate=460800,
         dir='.',
         cwd=None,
-        wait_dispatcher=True,
-        long_flashing=False
     ):
         if cwd is None:
             cwd = boot_dir(target)
@@ -235,8 +233,6 @@ class Phoenixd(BackgroundWrapper):
         self.baudrate = baudrate
         self.dir = dir
         self.dispatcher_event = None
-        self.long_flashing = long_flashing
-        self.phd_out_file = None
         super().__init__()
 
     def _reader(self):
@@ -252,8 +248,13 @@ class Phoenixd(BackgroundWrapper):
             return self
         self.dispatcher_event.set()
 
+        self.output_buffer = self.proc.before
+
         # Phoenixd requires reading its output constantly to work properly, especially during long copy operations
         self.proc.expect(pexpect.EOF, timeout=None)
+
+        # EOF occurs always after killing the phoenixd process
+        self.output_buffer += self.proc.before
 
     def run(self):
         try:
@@ -271,10 +272,6 @@ class Phoenixd(BackgroundWrapper):
             encoding='ascii'
         )
 
-        # Using logfile for storing phoenixd output seems to be currently the best generic solution possible
-        self.phd_out_file = open(LOG_PATH_PHOENIXD, "w")
-        self.proc.logfile = self.phd_out_file
-
         self.dispatcher_event = threading.Event()
         self.reader_thread = threading.Thread(target=self._reader)
         self.reader_thread.start()
@@ -288,17 +285,15 @@ class Phoenixd(BackgroundWrapper):
         return self.proc
 
     def output(self):
-        self.phd_out_file = open(LOG_PATH_PHOENIXD, "r")
-        output = self.phd_out_file.read()
-        self.phd_out_file.close()
         if is_github_actions():
-            output = '::group::phoenixd output\n' + output + '\n::endgroup::\n'
+            output = '::group::phoenixd output\n' + self.output_buffer + '\n::endgroup::\n'
+        else:
+            output = self.output_buffer
 
         return output
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.kill()
-        self.phd_out_file.close()
 
 
 class GdbServer(BackgroundWrapper):

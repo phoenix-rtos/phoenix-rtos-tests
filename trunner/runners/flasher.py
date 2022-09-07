@@ -32,7 +32,7 @@ class Flasher(ABC):
 
                 self.upload_plo(plo)
 
-                with Phoenixd(self.runner.target, self.runner.phoenixd_port, long_flashing=self.long_flashing) as phd:
+                with Phoenixd(self.target, self.phoenixd_port) as phd:
                     plo.copy_file2mem(
                         src='usb0',
                         file=self.runner.IMAGE,

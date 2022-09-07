@@ -26,7 +26,6 @@ from trunner.config import PHRTOS_PROJECT_DIR
 from trunner.tools.color import Color
 
 LOG_PATH = '/tmp/phoenix_test.log'
-LOG_PATH_PHOENIXD = '/tmp/phoenix_test_phoenixd.log'
 
 
 def boot_dir(target: str) -> Path:
@@ -243,8 +242,6 @@ class DeviceRunner(Runner):
             test.handle(proc)
         finally:
             self.serial.close()
-            if os.path.exists(LOG_PATH_PHOENIXD):
-                os.remove(LOG_PATH_PHOENIXD)
 
     def set_status(self, status):
         super().set_status(status)
