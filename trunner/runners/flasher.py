@@ -13,7 +13,7 @@ import sys
 
 from pexpect.exceptions import TIMEOUT, EOF
 from .common import PloError, PloTalker, RebootError
-from .wrappers import Psu, Gdb, Phoenixd, PhoenixdError, GdbError, append_output
+from .utils import Psu, Gdb, Phoenixd, PhoenixdError, GdbError, append_output
 from trunner.config import PHRTOS_PROJECT_DIR
 
 
