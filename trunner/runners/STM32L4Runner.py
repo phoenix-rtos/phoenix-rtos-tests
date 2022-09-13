@@ -21,8 +21,235 @@ from pexpect.exceptions import TIMEOUT, EOF
 from .common import DeviceRunner, Color, RebootError, GPIO
 from .common import boot_dir
 from .common import LOG_PATH, Psu, Phoenixd, PhoenixdError, PloError, PloTalker, DeviceRunner, Runner, RebootError
-from .common import GPIO, phd_error_msg, rootfs
+from .common import GPIO, phd_error_msg, rootfs, is_github_actions
 
+
+import threading
+from abc import ABC, abstractmethod
+import signal
+import logging
+
+
+def append_output(progname, message, output):
+    progname = progname.upper()
+
+    msg = message
+    msg += Color.colorify(f'\n{progname} OUTPUT:\n', Color.BOLD)
+    msg += f'------------------------\n{output}\n------------------------\n'
+
+    return msg
+
+
+class BackgroundProcessHandler(ABC):
+    """ Handler for the specific process intended to run in background"""
+
+    def __init__(
+        self
+    ):
+        self.proc = None
+        self.output_buffer = ''
+        self.reader_thread = None
+
+    @abstractmethod
+    def _reader(self):
+        """ This method is intended to read the program output in separate thread"""
+        pass
+
+    @abstractmethod
+    def run(self):
+        """ This method is intended to run the program"""
+        pass
+
+    @abstractmethod
+    def output(self):
+        """ This method is intended to store the program output"""
+        pass
+
+    def kill(self):
+        if self.proc.isalive():
+            os.killpg(os.getpgid(self.proc.pid), signal.SIGTERM)
+        self.reader_thread.join(timeout=10)
+        if self.proc.isalive():
+            os.killpg(os.getpgid(self.proc.pid), signal.SIGKILL)
+
+    def __enter__(self):
+        self.run()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.kill()
+
+
+class OpenocdGdbServer(BackgroundProcessHandler):
+    """ Handler for OpenocdGdbServer process"""
+
+    def __init__(
+        self,
+    ):
+        super().__init__()
+        self.listening_event = threading.Event()
+
+    def _reader(self):
+        """ This method is intended to be run as a separated thread. It reads output of proc
+            line by line and saves it in the output_buffer."""
+
+        while True:
+            line = self.proc.readline()
+            if not line:
+                break
+
+            if 'Info : Listening on port 3333 for gdb connections' in line:
+                self.listening_event.set()
+
+            self.output_buffer += line
+
+    def run(self):
+        # Use pexpect.spawn to run a process as PTY, so it will flush on a new line
+        self.proc = pexpect.spawn(
+            'openocd',
+            ['-f', 'interface/stlink.cfg',
+             '-f', 'target/stm32l4x.cfg',
+             '-c', 'reset_config srst_only srst_nogate connect_assert_srst',
+             '-c', 'init;reset'],
+            encoding='ascii'
+        )
+        print('after running openocd!!!')
+
+        self.reader_thread = threading.Thread(target=self._reader)
+        self.reader_thread.start()
+
+        listening_ready = self.listening_event.wait(timeout=5)
+        if not listening_ready:
+            self.kill()
+            print('openocd gdb listening did not start')
+
+        return self.proc
+
+    def output(self):
+        output = self.output_buffer
+        if is_github_actions():
+            output = '::group::gdbserver output\n' + output + '\n::endgroup::\n'
+
+        return output
+
+
+
+class ProcessHandler(ABC):
+    """Handler for the specific process"""
+
+    def __init__(self, target, progname, args, cwd=None):
+        if cwd is None:
+            cwd = boot_dir(target)
+        self.progname = progname
+        self.args = args
+        self.cwd = cwd
+        self.proc = None
+
+    @abstractmethod
+    def read_output(self):
+        """ This method is intended to read the program output"""
+        pass
+
+    @abstractmethod
+    def run(self):
+        """ This method is intended to run the program"""
+        pass
+
+
+class GdbError(Exception):
+    def __init__(self, error, gdb_output='', gdbserv_output=''):
+
+        msg = f'{Color.BOLD}GDB ERROR:{Color.END} {error}\n'
+        if gdb_output:
+            msg = append_output('gdb', msg, gdb_output)
+        if gdbserv_output:
+            msg = append_output('JlinkGdbServer', msg, gdbserv_output)
+
+        super().__init__(msg)
+
+
+class Gdb(ProcessHandler):
+    """Handler for gdb-multiarch process"""
+
+    def __init__(self, target, file=None, script=None, cwd=None):
+        args = [] #args = [f'{file}', '-x', f'{script}']
+        super().__init__(target, 'gdb-multiarch', args, cwd)
+        self.jlink_device = ''
+        if 'zynq7000' in target:
+            self.jlink_device = 'Zynq 7020'
+
+    def read_output(self):
+        if is_github_actions():
+            logging.info('::group::Run gdb\n')
+
+        # When using docker, the additional newline may be needed
+        idx = self.proc.expect_exact(["(gdb) ", "Type <RET> for more"])
+
+        if idx == 1:
+            logging.info(self.proc.before)
+            self.proc.send('\r\n')
+            self.proc.expect_exact("(gdb) ")
+
+        self.proc.send('c\r\n')
+
+        logging.info(f'{self.proc.before}\n')
+        self.proc.close()
+
+        if is_github_actions():
+            logging.info('::endgroup::\n')
+
+    def expect_prompt(self):
+        self.proc.expect_exact("(gdb) ")
+
+    def connect(self, port):
+        self.proc.sendline(f'target remote localhost: {port}')
+        self.expect_prompt()
+
+    def load(self, load_dir, addr):
+        self.proc.sendline(f'restore {load_dir}/test-setjmp binary {addr}')
+        self.proc.expect_exact("Restoring binary file")
+        self.expect_prompt()
+
+    def go(self):
+        self.proc.sendline("c")
+        self.proc.expect_exact("Continuing.")
+
+    def run(self, load_dir):
+        # with OpenocdGdbServer() as gdbserv:
+            # Use pexpect.spawn to run a process as PTY, so it will flush on a new line
+        self.proc = pexpect.spawn(
+            self.progname,
+            encoding='ascii',
+            timeout=8
+        )
+        self.proc.logfile = open("/tmp/gdb_log", "a")
+
+
+        try:
+            self.expect_prompt()
+            self.connect(port=3333)
+            self.load(load_dir, addr=0x20030000)
+            self.go()
+        except pexpect.TIMEOUT:
+            print('gdb failed')
+            print(self.proc.before)
+        # When closing right after continuing plo will get stuck
+        time.sleep(0.5)
+        self.close()
+
+    def close(self):
+        self.proc.close()
+        if self.proc.exitstatus != 0:
+            logging.error('gdb failed!\n')
+            raise GdbError('Loading plo using gdb failed, gdb exit status was not equal 0!')
+
+
+    def kill(self):
+        if self.proc.isalive():
+            os.killpg(os.getpgid(self.proc.pid), signal.SIGTERM)
+        # self.reader_thread.join(timeout=10)
+        if self.proc.isalive():
+            os.killpg(os.getpgid(self.proc.pid), signal.SIGKILL)
 
 def hostpc_reboot():
     """Reboots a tested device by a human."""
@@ -119,33 +346,51 @@ class STM32L4Runner(DeviceRunner):
 
     def load(self, test):
         """Loads test ELF into syspage using plo"""
-        # return True
-        self.reboot(cut_power=self.is_cut_power_used)
-        # phd = None
-        # load_dir = str(rootfs(test.target) / 'bin')
-        # try:
-        #     self.reboot(cut_power=self.is_cut_power_used)
-        #     with PloTalker(self.serial_port) as plo:
-        #         if self.logpath:
-        #             plo.plo.logfile = open(self.logpath, "a")
-        #         plo.interrupt_counting()
-        #         plo.wait_prompt()
-        #         if not test.exec_cmd:
-        #             # We got plo prompt, we are ready for sending the "go!" command.
-        #             return True
+        load_dir = str(rootfs(test.target) / 'bin')
+        try:
+            self.reboot(cut_power=self.is_cut_power_used)
+            if not test.exec_cmd:
+                return True
+            with OpenocdGdbServer() as openocd:
+                with PloTalker(self.serial_port, replaced_fdspawn=self.oneByOne_fdspawn) as plo:
+                    if self.logpath:
+                        plo.plo.logfile = open(self.logpath, "a")
+                    plo.interrupt_counting()
+                    plo.wait_prompt()
+                    # plo.close()
+                    Gdb(self.target).run(load_dir)
 
-        #         with Phoenixd(self.target, self.phoenixd_port, dir=load_dir) as phd:
-        #             plo.app('usb0', test.exec_cmd[0], 'ocram2', 'ocram2')
-        # except (TIMEOUT, EOF, PloError, PhoenixdError, RebootError) as exc:
-        #     if isinstance(exc, TIMEOUT) or isinstance(exc, EOF):
-        #         test.exception = Color.colorify('EXCEPTION PLO\n', Color.BOLD)
-        #         test.handle_pyexpect_error(plo.plo, exc)
-        #     else:  # RebootError, PloError or PhoenixdError
-        #         test.exception = str(exc)
-        #         test.fail()
-        #         if phd:
-        #             test.exception = phd_error_msg(test.exception, phd.output())
-        #     return False
+                    # print('run gdb and connect to gdb server')
+                    # time.sleep(10)
+                    # print('ok it should be ready')
+
+
+                    # gdb.close()
+                    # plo.close()
+                    # plo2 = plo.open()
+                    if not test.exec_cmd:
+                        # We got plo prompt, we are ready for sending the "go!" command.
+                        return True
+                    # time.sleep(5)
+                    print('before sending help')
+                    plo.plo.send('help\r\n')
+                    plo.plo.send('\r\n')
+                    # plo.plo.send('\r\n')
+                    plo.plo.expect_exact('plo')
+                    print('it has plo prompt!!')
+                    # plo.cmd('help')
+                    plo.cmd('alias test-setjmp 0x30000 0x3600')
+                    # plo.cmd('app ram test-setjmp hello ram ram')
+                    plo.app('ram', test.exec_cmd[0], 'ram', 'ram')
+        except (TIMEOUT, EOF, PloError, RebootError) as exc:
+            if isinstance(exc, TIMEOUT) or isinstance(exc, EOF):
+                test.exception = Color.colorify('EXCEPTION PLO\n', Color.BOLD)
+                test.handle_pyexpect_error(plo.plo, exc)
+            else:  # RebootError, PloError or PhoenixdError
+                test.exception = str(exc)
+                test.exception += 'opencod output------------' + openocd.output() + '----------------'
+                test.fail()
+            return False
 
         return True
 
@@ -155,50 +400,64 @@ class STM32L4Runner(DeviceRunner):
 
         if not self.load(test):
             return
+        super().run(test, replaced_fdspawn=self.oneByOne_fdspawn)
+
+
+
+
+
+
+
+
+        # if test.skipped():
+        #     return
+
+        # if not self.load(test):
+        #     return
             
-        try:
-            self.serial = serial.Serial(self.serial_port, baudrate=self.serial_baudrate)
-        except serial.SerialException:
-            test.handle_exception()
-            return
+        # try:
+        #     self.serial = serial.Serial(self.serial_port, baudrate=self.serial_baudrate)
+        # except serial.SerialException:
+        #     test.handle_exception()
+        #     return
 
-        # Create pexpect.fdpexpect.fdspawn with modified send() by using oneByOne_fdspawn class
-        # codec_errors='ignore' - random light may cause out-of-ascii characters to appear when using optical port
-        proc = self.oneByOne_fdspawn(
-            self.serial,
-            encoding='ascii',
-            codec_errors='ignore',
-            timeout=test.timeout
-            )
+        # # Create pexpect.fdpexpect.fdspawn with modified send() by using oneByOne_fdspawn class
+        # # codec_errors='ignore' - random light may cause out-of-ascii characters to appear when using optical port
+        # proc = self.oneByOne_fdspawn(
+        #     self.serial,
+        #     encoding='ascii',
+        #     codec_errors='ignore',
+        #     timeout=test.timeout
+        #     )
 
-        # print('restart board')
-        # if sys.stdin in select.select([sys.stdin], [], [], 30)[0]:
-        #     sys.stdin.readline()
-        # else:
-        #     print('It took too long to wait for a key pressing')
-        # print('after')
-        # proc = pexpect.fdpexpect.fdspawn(self.serial, encoding='utf8', timeout=test.timeout)
+        # # print('restart board')
+        # # if sys.stdin in select.select([sys.stdin], [], [], 30)[0]:
+        # #     sys.stdin.readline()
+        # # else:
+        # #     print('It took too long to wait for a key pressing')
+        # # print('after')
+        # # proc = pexpect.fdpexpect.fdspawn(self.serial, encoding='utf8', timeout=test.timeout)
 
-        # time.sleep(3)
+        # # time.sleep(3)
 
-        # print('1')
-        # proc.expect('p')
-        # print('2')
-        # proc.expect_exact('(psh)% ')
-        # print('3')
-        if self.logpath:
-            proc.logfile = open(self.logpath, "a")
+        # # print('1')
+        # # proc.expect('p')
+        # # print('2')
+        # # proc.expect_exact('(psh)% ')
+        # # print('3')
+        # if self.logpath:
+        #     proc.logfile = open(self.logpath, "a")
 
-        # FIXME - race on start of Phoenix-RTOS between dummyfs and psh
-        # flushing the buffer and sending newline
-        # ensures that carret is in newline just after (psh)% prompt
-        # flushed = ""
-        # while not proc.expect([r'.+', TIMEOUT], timeout=0.1):
-        #     flushed += proc.match.group(0)
-        # flushed = None
-        # proc.send("\n")
+        # # FIXME - race on start of Phoenix-RTOS between dummyfs and psh
+        # # flushing the buffer and sending newline
+        # # ensures that carret is in newline just after (psh)% prompt
+        # # flushed = ""
+        # # while not proc.expect([r'.+', TIMEOUT], timeout=0.1):
+        # #     flushed += proc.match.group(0)
+        # # flushed = None
+        # # proc.send("\n")
 
-        try:
-            test.handle(proc)
-        finally:
-            self.serial.close()
+        # try:
+        #     test.handle(proc)
+        # finally:
+        #     self.serial.close()

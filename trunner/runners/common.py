@@ -244,11 +244,12 @@ class PloError(Exception):
 class PloTalker:
     """Interface to communicate with plo"""
 
-    def __init__(self, port, baudrate=115200):
+    def __init__(self, port, baudrate=115200, replaced_fdspawn=None):
         self.port = port
         self.baudrate = baudrate
         self.serial = None
         self.plo = None
+        self.replaced_fdspawn = replaced_fdspawn
 
     @classmethod
     def from_pexpect(cls, pexpect_fd):
@@ -273,7 +274,12 @@ class PloTalker:
             raise
 
         try:
-            self.plo = pexpect.fdpexpect.fdspawn(self.serial, encoding='ascii', timeout=8)
+            if not self.replaced_fdspawn:
+                self.plo = pexpect.fdpexpect.fdspawn(self.serial, encoding='ascii', codec_errors='ignore', timeout=8)
+            else:
+                print('replaced!!')
+                self.plo = self.replaced_fdspawn(self.serial, encoding='ascii', codec_errors='ignore', timeout=8)
+
         except Exception:
             self.serial.close()
             raise
@@ -300,7 +306,7 @@ class PloTalker:
             raise PloError(line, expected="(plo)% ")
 
     def cmd(self, cmd, timeout=8):
-        self.plo.send(cmd + '\r\n')
+        self.plo.sendline(cmd + '\r\n')
         # Wait for an eoched command
         self.plo.expect_exact(cmd)
         # There might be some ASCII escape characters, we wait only for a new line
@@ -372,7 +378,7 @@ class DeviceRunner(Runner):
         self.serial_baudrate = serial[1]
         self.serial = None
 
-    def run(self, test):
+    def run(self, test, replaced_fdspawn=None):
         if test.skipped():
             return
 
@@ -382,7 +388,10 @@ class DeviceRunner(Runner):
             test.handle_exception()
             return
 
-        proc = pexpect.fdpexpect.fdspawn(self.serial, encoding='utf-8', timeout=test.timeout)
+        if not replaced_fdspawn:
+            proc = pexpect.fdpexpect.fdspawn(self.serial, encoding='utf-8', timeout=test.timeout)
+        else:
+            proc = replaced_fdspawn(self.serial, encoding='utf-8', timeout=test.timeout)
         if self.logpath:
             proc.logfile = open(self.logpath, "a")
 
