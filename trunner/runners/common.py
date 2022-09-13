@@ -391,7 +391,8 @@ class DeviceRunner(Runner):
         if not replaced_fdspawn:
             proc = pexpect.fdpexpect.fdspawn(self.serial, encoding='utf-8', timeout=test.timeout)
         else:
-            proc = replaced_fdspawn(self.serial, encoding='utf-8', timeout=test.timeout)
+            # there are some non utf characters before printing plo init logs
+            proc = replaced_fdspawn(self.serial, encoding='utf-8', codec_errors='ignore', timeout=test.timeout)
         if self.logpath:
             proc.logfile = open(self.logpath, "a")
 

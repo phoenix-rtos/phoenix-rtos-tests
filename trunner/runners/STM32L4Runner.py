@@ -40,6 +40,26 @@ def append_output(progname, message, output):
     return msg
 
 
+def count_psize(binary_path: str, page_size, page_mask):
+    wc = subprocess.run(['wc', '-c', binary_path], capture_output=True)
+    out = wc.stdout.decode()
+    print(out)
+    m = re.search(r'(\d+?)\s', out)
+    bytes = m.group(0)
+    prog_size = (int(bytes) + page_size - 1) & page_mask
+
+    print(hex(prog_size))
+    return prog_size
+    # print('----')
+    # print(m.group(0))
+    # print('----------')
+    # print(wc.stdout)
+    # print('---------')
+    # re.match
+
+
+
+
 class BackgroundProcessHandler(ABC):
     """ Handler for the specific process intended to run in background"""
 
@@ -205,8 +225,8 @@ class Gdb(ProcessHandler):
         self.proc.sendline(f'target remote localhost: {port}')
         self.expect_prompt()
 
-    def load(self, load_dir, addr):
-        self.proc.sendline(f'restore {load_dir}/test-setjmp binary {addr}')
+    def load(self, test_path, addr):
+        self.proc.sendline(f'restore {test_path} binary {addr}')
         self.proc.expect_exact("Restoring binary file")
         self.expect_prompt()
 
@@ -214,7 +234,7 @@ class Gdb(ProcessHandler):
         self.proc.sendline("c")
         self.proc.expect_exact("Continuing.")
 
-    def run(self, load_dir):
+    def run(self, test_path):
         # with OpenocdGdbServer() as gdbserv:
             # Use pexpect.spawn to run a process as PTY, so it will flush on a new line
         self.proc = pexpect.spawn(
@@ -228,7 +248,7 @@ class Gdb(ProcessHandler):
         try:
             self.expect_prompt()
             self.connect(port=3333)
-            self.load(load_dir, addr=0x20030000)
+            self.load(test_path, addr=0x20030000)
             self.go()
         except pexpect.TIMEOUT:
             print('gdb failed')
@@ -269,6 +289,9 @@ class STM32L4Runner(DeviceRunner):
     The ST-Link programming board should be connected to USB port
     and a target should be connected to ST-Link and powered
     """
+
+    SIZE_PAGE=0x200
+    PAGE_MASK=0xfffffe00
 
     class oneByOne_fdspawn(pexpect.fdpexpect.fdspawn):
         """ Workaround for Phoenix-RTOS on stm32l4 targets not processing characters fast enough
@@ -323,42 +346,45 @@ class STM32L4Runner(DeviceRunner):
             hostpc_reboot()
     
     def flash(self):
-        """ Flashing with openocd as a separate process """
-        binary_path = os.path.join(boot_dir(self.target), 'phoenix.disk')
-        openocd_cmd = [
-            'openocd',
-            '-f', 'interface/stlink.cfg',
-            '-f', 'target/stm32l4x.cfg',
-            '-c', "reset_config srst_only srst_nogate connect_assert_srst",
-            '-c',  "program {progname} 0x08000000 verify reset exit".format(progname=binary_path)
-            ]
+        pass
+        # """ Flashing with openocd as a separate process """
+        # binary_path = os.path.join(boot_dir(self.target), 'phoenix.disk')
+        # openocd_cmd = [
+        #     'openocd',
+        #     '-f', 'interface/stlink.cfg',
+        #     '-f', 'target/stm32l4x.cfg',
+        #     '-c', "reset_config srst_only srst_nogate connect_assert_srst",
+        #     '-c',  "program {progname} 0x08000000 verify reset exit".format(progname=binary_path)
+        #     ]
 
-        # openocd prints important information (counterintuitively) on stderr, not stdout. However pipe both for user
-        openocd_process = subprocess.Popen(
-            openocd_cmd,
-            stdout=sys.stdout.fileno(),
-            stderr=sys.stdout.fileno()
-            )
+        # # openocd prints important information (counterintuitively) on stderr, not stdout. However pipe both for user
+        # openocd_process = subprocess.Popen(
+        #     openocd_cmd,
+        #     stdout=sys.stdout.fileno(),
+        #     stderr=sys.stdout.fileno()
+        #     )
 
-        if openocd_process.wait() != 0:
-            print(Color.colorify("OpenOCD error: cannot flash target", Color.BOLD))
-            sys.exit(1)
+        # if openocd_process.wait() != 0:
+        #     print(Color.colorify("OpenOCD error: cannot flash target", Color.BOLD))
+        #     sys.exit(1)
 
     def load(self, test):
         """Loads test ELF into syspage using plo"""
         load_dir = str(rootfs(test.target) / 'bin')
         try:
             self.reboot(cut_power=self.is_cut_power_used)
-            if not test.exec_cmd:
-                return True
             with OpenocdGdbServer() as openocd:
                 with PloTalker(self.serial_port, replaced_fdspawn=self.oneByOne_fdspawn) as plo:
                     if self.logpath:
                         plo.plo.logfile = open(self.logpath, "a")
                     plo.interrupt_counting()
                     plo.wait_prompt()
+                    if not test.exec_cmd and not test.syspage_prog:
+                        return True
                     # plo.close()
-                    Gdb(self.target).run(load_dir)
+                    prog = test.exec_cmd[0] if test.exec_cmd else test.syspage_prog
+                    test_path = f'{load_dir}/{prog}'
+                    Gdb(self.target).run(test_path)
 
                     # print('run gdb and connect to gdb server')
                     # time.sleep(10)
@@ -368,9 +394,6 @@ class STM32L4Runner(DeviceRunner):
                     # gdb.close()
                     # plo.close()
                     # plo2 = plo.open()
-                    if not test.exec_cmd:
-                        # We got plo prompt, we are ready for sending the "go!" command.
-                        return True
                     # time.sleep(5)
                     print('before sending help')
                     plo.plo.send('help\r\n')
@@ -379,9 +402,14 @@ class STM32L4Runner(DeviceRunner):
                     plo.plo.expect_exact('plo')
                     print('it has plo prompt!!')
                     # plo.cmd('help')
-                    plo.cmd('alias test-setjmp 0x30000 0x3600')
+                    # print(f'test.exec_cmd[0] = {test.exec_cmd[0]}')
+
+                    psize = count_psize(f'{test_path}', self.SIZE_PAGE, self.PAGE_MASK)
+                    print(f'alias {prog} 0x30000 {psize}')
+                    plo.cmd(f'alias {prog} 0x30000 {psize}')
                     # plo.cmd('app ram test-setjmp hello ram ram')
-                    plo.app('ram', test.exec_cmd[0], 'ram', 'ram')
+
+                    plo.app('ram', prog, 'ram', 'ram')
         except (TIMEOUT, EOF, PloError, RebootError) as exc:
             if isinstance(exc, TIMEOUT) or isinstance(exc, EOF):
                 test.exception = Color.colorify('EXCEPTION PLO\n', Color.BOLD)
