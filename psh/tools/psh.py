@@ -18,9 +18,14 @@ import pexpect
 
 import trunner.config as config
 
+from collections import namedtuple
+
 EOL = r'(\r+)\n'
 EOT = '\x04'
 PROMPT = r'(\r+)\x1b\[0J' + r'\(psh\)% '
+# according to control sequence introducer pattern
+CONTROL_CODE = r'(\x1b\[[\x30-\x3F]*[\x20-\x2F]*[\x40-\x7E])'
+OPTIONAL_CONTROL_CODE = CONTROL_CODE + r'?'
 
 
 def _readable(exp_regex):
@@ -54,6 +59,7 @@ def assert_cmd(pexpect_proc, cmd, expected='', msg='', is_regex=False):
 def assert_prompt_after_cmd(pexpect_proc, cmd, msg=''):
     pexpect_proc.sendline(cmd)
     exp_regex = EOL + PROMPT
+    msg = f'Prompt not seen after sending the following command: {cmd}'
     assert pexpect_proc.expect([exp_regex, pexpect.TIMEOUT]) == 0, msg
 
     return pexpect_proc.before
@@ -97,7 +103,7 @@ def assert_exec(pexpect_proc, prog, expected='', msg=''):
     assert_cmd(pexpect_proc, exec_cmd, expected, msg)
 
 
-def _get_exit_code(pexpect_proc):
+def get_exit_code(pexpect_proc):
     pexpect_proc.sendline('echo $?')
     msg = 'Checking passed command return code failed, one or more digits not found'
     assert pexpect_proc.expect([rf'(\d+?){EOL}', pexpect.TIMEOUT, pexpect.EOF]) == 0, msg
@@ -108,12 +114,93 @@ def _get_exit_code(pexpect_proc):
     return exit_code
 
 
-def assert_cmd_failed(pexpect_proc, ):
-    assert _get_exit_code(pexpect_proc) != 0, 'The exit status of last passed command equals 0!'
+def assert_cmd_failed(pexpect_proc):
+    assert get_exit_code(pexpect_proc) != 0, 'The exit status of last passed command equals 0!'
 
 
 def assert_cmd_successed(pexpect_proc):
-    assert _get_exit_code(pexpect_proc) == 0, 'The exit status of last passed command does not equal 0!'
+    assert get_exit_code(pexpect_proc) == 0, 'The exit status of last passed command does not equal 0!'
+
+
+def ls(pexpect_proc, dir=''):
+    ''' Returns the list with named tuples containing information about files present in the specified directory '''
+    File = namedtuple('File', ['name', 'owner', 'is_dir', 'date'])
+    Date = namedtuple('Date', ['month', 'mday', 'time'])
+
+    pexpect_proc.sendline(f'ls -la {dir}')
+    pexpect_proc.expect_exact('ls -la')
+    if dir:
+        pexpect_proc.expect_exact(f' {dir}')
+
+    pexpect_proc.expect_exact('\n')
+
+    files = []
+    while True:
+        idx = pexpect_proc.expect([r'\(psh\)\% ', r'([^\r\n]+(\r+\n))'])
+        if idx == 0:
+            break
+
+        line = pexpect_proc.match.group(0)
+        # temporary solution to match line with missing `---` in owner position (issue #254)
+        if '    ---' in line:
+            line = line.replace('    ---', '--- ---')
+        try:
+            permissions, _, owner, _, _, month, mday, time, name = line.split()
+        except ValueError:
+            assert False, f'wrong ls output: {line}'
+
+        # Name is printed with ascii escape characters - remove them
+        esc_sequences = re.findall(CONTROL_CODE, name)
+
+        for seq in esc_sequences:
+            name = name.replace(seq, '')
+
+        f = File(name, owner, permissions[0] == 'd', Date(month, mday, time))
+        files.append(f)
+
+    return files
+
+
+def uptime(pexpect_proc):
+    ''' Returns tuple with time since start of a system in format: hh:mm:ss'''
+    Time = namedtuple('Time', ['hour', 'minute', 'second'])
+    pexpect_proc.sendline('uptime')
+    idx = pexpect_proc.expect_exact(['uptime', pexpect.TIMEOUT, pexpect.EOF])
+    assert idx == 0, "uptime command hasn't been sent properly"
+
+    while idx != 1:
+        idx = pexpect_proc.expect([
+            r'up (\d+):(\d+):(\d+).*?\n',
+            r'\(psh\)\% '])
+        if idx == 0:
+            groups = pexpect_proc.match.groups()
+    hour, minute, second = groups
+    time = Time(hour, minute, second)
+
+    return time
+
+
+def ls_simple(pexpect_proc, dir=''):
+    ''' Returns list of file names from the specified directory'''
+    files = []
+    pexpect_proc.sendline(f'ls -1 {dir}')
+    idx = pexpect_proc.expect_exact([f'ls -1 {dir}', pexpect.TIMEOUT, pexpect.EOF])
+    assert idx == 0, f"ls {dir} command hasn't been sent properly"
+
+    while True:
+        idx = pexpect_proc.expect([r'\(psh\)\% ', r'((?P<fname>[^\r\n]+)(\r+\n))'])
+        if idx == 0:
+            break
+        else:
+            file = pexpect_proc.match.group('fname')
+            # Name is printed with ascii escape characters - remove them
+            esc_sequences = re.findall(CONTROL_CODE, file)
+            for seq in esc_sequences:
+                file = file.replace(seq, '')
+
+            files.append(file)
+
+    return files
 
 
 def get_commands(pexpect_proc):

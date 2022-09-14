@@ -13,7 +13,8 @@
 #
 
 import psh.tools.psh as psh
-from psh.tools.common import OPTIONAL_CONTROL_CODE, SEPARATOR_PATTERN, create_testdir
+from psh.tools.psh import OPTIONAL_CONTROL_CODE
+from psh.tools.common import SEPARATOR_PATTERN, create_testdir
 
 FNAME_PATTERN = r'(?P<fname>\S+)'
 

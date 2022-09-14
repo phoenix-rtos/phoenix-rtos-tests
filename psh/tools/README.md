@@ -16,9 +16,11 @@ The python module `psh` makes writing harness tests easier. It provides the foll
 
 * `assert_exec(pexpect_proc, prog, expected='', msg='')` - Same as `assert_cmd`, but input is selected appropriately for the current target platform (using sysexec or /bin/prog_name). So for example instead of using `assert_cmd('/bin/psh')` or `assert_cmd('sysexec psh')` use `assert_exec(prog='psh')`.
 
-* `assert_cmd_failed` - Asserts that the exit code of previously sent command didn't equal 0.
+* `get_exit_code(pexpect_proc)` - Returns the exit code of previously sent command.
 
-* `assert_cmd_passed` - Asserts that the exit code of previously sent command equaled 0.
+* `assert_cmd_failed(pexpect_proc)` - Asserts that the exit code of previously sent command didn't equal 0.
+
+* `assert_cmd_passed(pexpect_proc)` - Asserts that the exit code of previously sent command equaled 0.
 
 * `init(pexpect_proc)` - Runs psh and next, asserts its first prompt.
 
