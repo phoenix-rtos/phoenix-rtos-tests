@@ -44,6 +44,9 @@ test:
         - name: mkdir
           harness: test-mkdir.py
 
+        - name: touch
+          harness: test-touch.py
+
         - name: ls
           harness: test-ls.py
 
