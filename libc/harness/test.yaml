@@ -2,5 +2,6 @@ test:
     tests:
         - name: exec
           harness: test-exec.py
+          # test-exec is intended to run on rootfs targets
           targets:
-              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk]
+              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo]

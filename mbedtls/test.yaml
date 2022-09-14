@@ -1,7 +1,7 @@
 test:
     type: mbedtls
     targets:
-      exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk]
+      exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo]
     tests:
         - name: test_suite_aes.cbc
           exec: test_suite_aes.cbc /mbedtls_test_configs/test_suite_aes.cbc.datax

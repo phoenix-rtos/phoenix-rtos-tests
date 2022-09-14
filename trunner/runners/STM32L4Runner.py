@@ -346,27 +346,26 @@ class STM32L4Runner(DeviceRunner):
             hostpc_reboot()
     
     def flash(self):
-        pass
-        # """ Flashing with openocd as a separate process """
-        # binary_path = os.path.join(boot_dir(self.target), 'phoenix.disk')
-        # openocd_cmd = [
-        #     'openocd',
-        #     '-f', 'interface/stlink.cfg',
-        #     '-f', 'target/stm32l4x.cfg',
-        #     '-c', "reset_config srst_only srst_nogate connect_assert_srst",
-        #     '-c',  "program {progname} 0x08000000 verify reset exit".format(progname=binary_path)
-        #     ]
+        """ Flashing with openocd as a separate process """
+        binary_path = os.path.join(boot_dir(self.target), 'phoenix.disk')
+        openocd_cmd = [
+            'openocd',
+            '-f', 'interface/stlink.cfg',
+            '-f', 'target/stm32l4x.cfg',
+            '-c', "reset_config srst_only srst_nogate connect_assert_srst",
+            '-c',  "program {progname} 0x08000000 verify reset exit".format(progname=binary_path)
+            ]
 
-        # # openocd prints important information (counterintuitively) on stderr, not stdout. However pipe both for user
-        # openocd_process = subprocess.Popen(
-        #     openocd_cmd,
-        #     stdout=sys.stdout.fileno(),
-        #     stderr=sys.stdout.fileno()
-        #     )
+        # openocd prints important information (counterintuitively) on stderr, not stdout. However pipe both for user
+        openocd_process = subprocess.Popen(
+            openocd_cmd,
+            stdout=sys.stdout.fileno(),
+            stderr=sys.stdout.fileno()
+            )
 
-        # if openocd_process.wait() != 0:
-        #     print(Color.colorify("OpenOCD error: cannot flash target", Color.BOLD))
-        #     sys.exit(1)
+        if openocd_process.wait() != 0:
+            print(Color.colorify("OpenOCD error: cannot flash target", Color.BOLD))
+            sys.exit(1)
 
     def load(self, test):
         """Loads test ELF into syspage using plo"""
