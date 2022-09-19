@@ -34,7 +34,7 @@ void upyth_errMsg(const char *msg)
 }
 
 
-char *upyth_concat(const char *str1, const char *str2)
+char *upyth_concat(char *str1, const char *str2)
 {
 	int len;
 	char *res;
@@ -53,7 +53,7 @@ int upyth_optionsGet(const char *path, char **options)
 {
 	FILE *f;
 	char *line = NULL;
-	int lineLen = 0;
+	size_t lineLen = 0;
 	int optionsLen;
 	char *newLine;
 
