@@ -23,6 +23,13 @@
 #include <pthread.h>
 #include <fcntl.h>
 
+
+#define LIBCACHE_ADDR_DUMMY  LIBCACHE_SRC_MEM_SIZE / 2 /* Filler address to test error checks */
+#define LIBCACHE_ADDR_OFF_57 0x8d279ULL                /* Offset = 57 to check multi-line write */
+#define LIBCACHE_ADDR_OFF_27 0xa401bULL
+#define LIBCACHE_ADDR_INT    0x8d278ULL /* Address with offset divisible by sizeof(int) for proper integer alignment in cache line */
+
+
 TEST_GROUP(test_init);
 
 TEST_SETUP(test_init)
@@ -71,7 +78,7 @@ TEST(test_init, cache_init_sizeModLineSizeNotZero)
 	TEST_ASSERT_NULL(cache);
 }
 
-TEST(test_init, cache_init_sizeModLineSizeZero)
+TEST(test_init, cache_init_linesNotDivisibleByNumWays)
 {
 	size_t size = 1026, lineSize = 19; /* size % lineSize = 0, (size / lineSize) % LIBCACHE_NUM_WAYS = 2 */
 	cachectx_t *cache = NULL;
@@ -99,7 +106,7 @@ TEST_GROUP_RUNNER(test_init)
 	RUN_TEST_CASE(test_init, cache_init_sizeZero);
 	RUN_TEST_CASE(test_init, cache_init_lineSizeZero);
 	RUN_TEST_CASE(test_init, cache_init_sizeModLineSizeNotZero);
-	RUN_TEST_CASE(test_init, cache_init_sizeModLineSizeZero);
+	RUN_TEST_CASE(test_init, cache_init_linesNotDivisibleByNumWays);
 	RUN_TEST_CASE(test_init, cache_init_sizesNotZero);
 }
 
@@ -136,6 +143,8 @@ TEST_GROUP(test_read_write);
 
 TEST_SETUP(test_read_write)
 {
+	ops.readCb = test_readCb;
+	ops.writeCb = test_writeCb;
 	offBitsNum = LOG2(LIBCACHE_LINE_SIZE);
 	offMask = ((uint64_t)1 << offBitsNum) - 1;
 }
@@ -150,7 +159,7 @@ TEST(test_read_write, cache_write_nullBuff)
 	ssize_t writeCount = 0;
 	cachectx_t *cache = NULL;
 	size_t count = 10 * sizeof(char);
-	uint64_t addr = 1143552ULL;
+	uint64_t addr = LIBCACHE_ADDR_DUMMY;
 	char *buffer = NULL;
 
 	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_CACHE_SIZE, LIBCACHE_LINE_SIZE, &ops);
@@ -169,7 +178,7 @@ TEST(test_read_write, cache_write_wrongPolicy)
 	ssize_t writeCount = 0;
 	cachectx_t *cache = NULL;
 	size_t count = 10 * sizeof(char);
-	uint64_t addr = 1143552ULL;
+	uint64_t addr = LIBCACHE_ADDR_DUMMY;
 	char *buffer = NULL;
 	int policy = -2;
 
@@ -190,7 +199,7 @@ TEST(test_read_write, cache_writeNothing)
 	ssize_t writeCount = 0;
 	cachectx_t *cache = NULL;
 	size_t count = 0;
-	uint64_t addr = 1143552ULL;
+	uint64_t addr = LIBCACHE_ADDR_DUMMY;
 	char *buffer = NULL;
 
 	buffer = "^$^$%^^%^$%";
@@ -250,7 +259,7 @@ TEST(test_read_write, cache_writeData)
 	ssize_t writeCount = 0;
 	cachectx_t *cache = NULL;
 	size_t count = 10 * sizeof(char);
-	uint64_t addr = 1143552ULL;
+	uint64_t addr = LIBCACHE_ADDR_OFF_57;
 	char *buffer = NULL;
 
 	buffer = "^#$^#$^%%$";
@@ -271,7 +280,7 @@ TEST(test_read_write, cache_readNullBuff)
 	ssize_t readCount = 0;
 	cachectx_t *cache = NULL;
 	size_t count = 1 * sizeof(char);
-	uint64_t addr = 1343542ULL;
+	uint64_t addr = LIBCACHE_ADDR_DUMMY;
 	void *buffer = NULL;
 
 	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_CACHE_SIZE, LIBCACHE_LINE_SIZE, &ops);
@@ -290,11 +299,11 @@ TEST(test_read_write, cache_readNothing)
 	ssize_t writeCount = 0, readCount = 0;
 	cachectx_t *cache = NULL;
 	size_t countWrite = 10 * sizeof(char), countRead = 0 * sizeof(char);
-	uint64_t addr = 1343542ULL;
+	uint64_t addr = LIBCACHE_ADDR_DUMMY;
 	char *bufferW = NULL, *bufferR = NULL;
 
 	bufferW = "^#$^#$^%%$";
-	bufferR = calloc(countWrite, sizeof(char));
+	bufferR = malloc(countWrite);
 	TEST_ASSERT_NOT_NULL(bufferR);
 
 	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_CACHE_SIZE, LIBCACHE_LINE_SIZE, &ops);
@@ -366,7 +375,7 @@ TEST(test_read_write, cache_readData)
 	ssize_t writeCount = 0, readCount = 0;
 	cachectx_t *cache = NULL;
 	size_t count = 10 * sizeof(char);
-	uint64_t addr = 1343542ULL;
+	uint64_t addr = LIBCACHE_ADDR_OFF_57;
 	char *bufferW = NULL, *bufferR = NULL;
 
 	bufferW = "^#$^#$^%%$";
@@ -395,7 +404,7 @@ TEST(test_read_write, cache_writeThrough)
 	int ret = -1;
 	ssize_t writeCount = -1, readCount = -1;
 	cachectx_t *cache = NULL;
-	uint64_t addr = 1256339ULL, offset = addr & offMask;
+	uint64_t addr = LIBCACHE_ADDR_OFF_57, offset = addr & offMask;
 	size_t count = 127 * sizeof(char);
 	size_t remainder = 0, flushed = 0;
 	char *buffer, *actual, *expected;
@@ -436,7 +445,7 @@ TEST(test_read_write, cache_writeBack)
 	int ret = -1;
 	ssize_t writeCount = -1, readCount = -1;
 	cachectx_t *cache = NULL;
-	uint64_t addr = 1156339ULL, offset = addr & offMask;
+	uint64_t addr = LIBCACHE_ADDR_OFF_57, offset = addr & offMask;
 	size_t count = 127 * sizeof(char);
 	size_t remainder = 0, flushed = 0;
 	char *buffer, *actual, *expected;
@@ -444,8 +453,8 @@ TEST(test_read_write, cache_writeBack)
 	buffer = "^#$%^$#%^&$#&^*$(^*&^)_)_(++(_)_(*)(&^%^*%^$#%$@#$@!# @!$#$#%$ $#%##$^$#%^#$$!@!*!!~~~!@#@$$_#@_+$ 4#$%#$%#%#$%^^#$^$#^#$^%@#$$";
 
 	remainder = (count - (LIBCACHE_LINE_SIZE - offset)) % LIBCACHE_LINE_SIZE;
-	flushed = offset + count + (LIBCACHE_LINE_SIZE - remainder);
-	actual = calloc(flushed, sizeof(char));
+	flushed = (offset + count + (LIBCACHE_LINE_SIZE - remainder)) * sizeof(char);
+	actual = malloc(flushed);
 	TEST_ASSERT_NOT_NULL(actual);
 	expected = malloc(flushed);
 	TEST_ASSERT_NOT_NULL(expected);
@@ -506,12 +515,13 @@ TEST_TEAR_DOWN(test_threads)
 TEST(test_threads, thread_write)
 {
 	int ret;
+	void *temp = NULL;
 	cachectx_t *cache = NULL;
-	ssize_t readCount = -1;
+	ssize_t readCount = -1, *buff;
 	pthread_t thread1, thread2, thread3, thread4;
 	test_write_args_t args1, args2, args3, args4;
 	char *actual1, *actual2, *actual3, *actual4;
-	uint64_t addr1 = 1343542ULL, addr2 = 1143542ULL, addr3 = 1243542ULL, addr4 = 943542ULL;
+	uint64_t addr1 = 0x632dbULL, addr2 = 0x8b97bULL, addr3 = 0x97ccbULL, addr4 = 0x702dbULL;
 	char *expected1, *expected2, *expected3, *expected4;
 	size_t count1 = 127 * sizeof(char), count2 = 144 * sizeof(char), count3 = 154 * sizeof(char), count4 = 138 * sizeof(char);
 
@@ -537,14 +547,29 @@ TEST(test_threads, thread_write)
 	ret = pthread_create(&thread4, NULL, &test_cache_write, (void *)&args4);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
-	ret = pthread_join(thread1, NULL);
+	ret = pthread_join(thread1, &temp);
 	TEST_ASSERT_EQUAL_INT(0, ret);
-	ret = pthread_join(thread2, NULL);
+	buff = (ssize_t *)temp;
+	TEST_ASSERT_EQUAL_INT(args1.count, *buff);
+	free(temp);
+
+	ret = pthread_join(thread2, &temp);
 	TEST_ASSERT_EQUAL_INT(0, ret);
-	ret = pthread_join(thread3, NULL);
+	buff = (ssize_t *)temp;
+	TEST_ASSERT_EQUAL_INT(args2.count, *buff);
+	free(temp);
+
+	ret = pthread_join(thread3, &temp);
 	TEST_ASSERT_EQUAL_INT(0, ret);
-	ret = pthread_join(thread4, NULL);
+	buff = (ssize_t *)temp;
+	TEST_ASSERT_EQUAL_INT(args3.count, *buff);
+	free(temp);
+
+	ret = pthread_join(thread4, &temp);
 	TEST_ASSERT_EQUAL_INT(0, ret);
+	buff = (ssize_t *)temp;
+	TEST_ASSERT_EQUAL_INT(args4.count, *buff);
+	free(temp);
 
 	actual1 = malloc(count1);
 	TEST_ASSERT_NOT_NULL(actual1);
@@ -597,12 +622,13 @@ TEST(test_threads, thread_write)
 
 TEST(test_threads, thread_read)
 {
-	ssize_t readCount = -1;
+	ssize_t readCount = -1, *buff;
 	int ret1, ret2;
+	void *temp = NULL;
 	char *buffer1, *buffer2, *buffer3, *buffer4;
 	pthread_t thread1, thread2;
 	test_read_args_t args1, args2;
-	uint64_t addr1 = 1343542ULL, addr2 = 943542ULL;
+	uint64_t addr1 = LIBCACHE_ADDR_OFF_27, addr2 = 0x732dbULL;
 	cachectx_t *cache;
 	size_t count1 = 164 * sizeof(char);
 	size_t count2 = 10 * sizeof(char);
@@ -623,10 +649,17 @@ TEST(test_threads, thread_read)
 	ret2 = pthread_create(&thread2, NULL, &test_cache_read, (void *)&args2);
 	TEST_ASSERT_EQUAL_INT(0, ret2);
 
-	ret1 = pthread_join(thread1, NULL);
+	ret1 = pthread_join(thread1, &temp);
 	TEST_ASSERT_EQUAL_INT(0, ret1);
-	ret2 = pthread_join(thread2, NULL);
+	buff = (ssize_t *)temp;
+	TEST_ASSERT_EQUAL_INT(args1.count, *buff);
+	free(temp);
+
+	ret2 = pthread_join(thread2, &temp);
 	TEST_ASSERT_EQUAL_INT(0, ret2);
+	buff = (ssize_t *)temp;
+	TEST_ASSERT_EQUAL_INT(args2.count, *buff);
+	free(temp);
 
 	ret1 = cache_deinit(cache);
 	TEST_ASSERT_EQUAL_INT(EOK, ret1);
@@ -662,6 +695,8 @@ TEST_GROUP(test_flush);
 
 TEST_SETUP(test_flush)
 {
+	ops.readCb = test_readCb;
+	ops.writeCb = test_writeCb;
 	offBitsNum = LOG2(LIBCACHE_LINE_SIZE);
 	offMask = ((uint64_t)1 << offBitsNum) - 1;
 }
@@ -674,12 +709,12 @@ TEST(test_flush, cache_flush_badAddrRange)
 {
 	int ret;
 	cachectx_t *cache;
-	uint64_t addr1 = 135322ULL, addr2 = 125322ULL;
+	uint64_t begAddr = LIBCACHE_ADDR_DUMMY, endAddr = LIBCACHE_ADDR_DUMMY / 2;
 
 	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_CACHE_SIZE, LIBCACHE_LINE_SIZE, &ops);
 	TEST_ASSERT_NOT_NULL(cache);
 
-	ret = cache_flush(cache, addr1, addr2);
+	ret = cache_flush(cache, begAddr, endAddr);
 	TEST_ASSERT_EQUAL_INT(-EINVAL, ret);
 
 	ret = cache_deinit(cache);
@@ -690,12 +725,12 @@ TEST(test_flush, cache_flush_addrOutOfScope)
 {
 	int ret;
 	cachectx_t *cache;
-	uint64_t addr1 = LIBCACHE_SRC_MEM_SIZE + 10, addr2 = addr1 + 10;
+	uint64_t begAddr = LIBCACHE_SRC_MEM_SIZE + 10, endAddr = begAddr + 10;
 
 	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_CACHE_SIZE, LIBCACHE_LINE_SIZE, &ops);
 	TEST_ASSERT_NOT_NULL(cache);
 
-	ret = cache_flush(cache, addr1, addr2);
+	ret = cache_flush(cache, begAddr, endAddr);
 	TEST_ASSERT_EQUAL_INT(-EINVAL, ret);
 
 	ret = cache_deinit(cache);
@@ -708,7 +743,7 @@ TEST(test_flush, cache_flush_addrPartiallyInScope)
 	ssize_t writeCount, readCount;
 	cachectx_t *cache;
 	char *buffer1, *buffer2;
-	uint64_t addr1 = LIBCACHE_SRC_MEM_SIZE - 72;
+	uint64_t begAddr = LIBCACHE_SRC_MEM_SIZE - 72;
 	size_t count = 64 * sizeof(char);
 
 	buffer1 = "^#$%^$#%^&$#&$!@!*!!~~~!@#@$$_#@_+$ 4#$%#$%#%#$%^^#$^$#^#$^%@#$$";
@@ -716,14 +751,14 @@ TEST(test_flush, cache_flush_addrPartiallyInScope)
 	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_CACHE_SIZE, LIBCACHE_LINE_SIZE, &ops);
 	TEST_ASSERT_NOT_NULL(cache);
 
-	writeCount = cache_write(cache, addr1, buffer1, 64, LIBCACHE_WRITE_BACK);
+	writeCount = cache_write(cache, begAddr, buffer1, 64, LIBCACHE_WRITE_BACK);
 	TEST_ASSERT_EQUAL_INT(count, writeCount);
 
 	ret = cache_flush(cache, LIBCACHE_SRC_MEM_SIZE - 10, LIBCACHE_SRC_MEM_SIZE + 30);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	buffer2 = malloc(count);
-	readCount = test_readCb(addr1, buffer2, count, NULL);
+	readCount = test_readCb(begAddr, buffer2, count, NULL);
 	TEST_ASSERT_EQUAL_INT(count, readCount);
 
 	free(buffer2);
@@ -738,7 +773,7 @@ TEST(test_flush, cache_flush_lines)
 	ssize_t writeCount, readCount;
 	cachectx_t *cache;
 	char *buffer1, *buffer2, *actual1, *actual2, *expected1, *expected2;
-	uint64_t addr1 = 1343542ULL, addr2 = 1344542ULL, offset1, offset2;
+	uint64_t begAddr = LIBCACHE_ADDR_OFF_57, endAddr = LIBCACHE_ADDR_OFF_27, offset1, offset2;
 	size_t count1 = 213 * sizeof(char), count2 = 57 * sizeof(char);
 	size_t remainder1, flushed1, remainder2, flushed2;
 
@@ -748,13 +783,13 @@ TEST(test_flush, cache_flush_lines)
 	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_CACHE_SIZE, LIBCACHE_LINE_SIZE, &ops);
 	TEST_ASSERT_NOT_NULL(cache);
 
-	writeCount = cache_write(cache, addr1, buffer1, count1, LIBCACHE_WRITE_BACK);
+	writeCount = cache_write(cache, begAddr, buffer1, count1, LIBCACHE_WRITE_BACK);
 	TEST_ASSERT_EQUAL_INT(count1, writeCount);
-	writeCount = cache_write(cache, addr2, buffer2, count2, LIBCACHE_WRITE_BACK);
+	writeCount = cache_write(cache, endAddr, buffer2, count2, LIBCACHE_WRITE_BACK);
 	TEST_ASSERT_EQUAL_INT(count2, writeCount);
 
-	offset1 = addr1 & offMask;
-	offset2 = addr2 & offMask;
+	offset1 = begAddr & offMask;
+	offset2 = endAddr & offMask;
 	remainder1 = (count1 - (LIBCACHE_LINE_SIZE - offset1)) % LIBCACHE_LINE_SIZE;
 	remainder2 = (count2 - (LIBCACHE_LINE_SIZE - offset2)) % LIBCACHE_LINE_SIZE;
 	flushed1 = (offset1 + count1 + (LIBCACHE_LINE_SIZE - remainder1)) * sizeof(char);
@@ -769,22 +804,22 @@ TEST(test_flush, cache_flush_lines)
 	actual2 = malloc(flushed2);
 	TEST_ASSERT_NOT_NULL(actual2);
 
-	ret = cache_flush(cache, addr1, addr2 + LIBCACHE_LINE_SIZE);
+	ret = cache_flush(cache, begAddr, endAddr + LIBCACHE_LINE_SIZE);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
-	readCount = test_readCb(addr1 - offset1, expected1, flushed1, NULL);
+	readCount = test_readCb(begAddr - offset1, expected1, flushed1, NULL);
 	TEST_ASSERT_EQUAL_INT(flushed1, readCount);
 	memcpy(expected1 + offset1, buffer1, count1);
 
-	readCount = test_readCb(addr2 - offset2, expected2, flushed2, NULL);
+	readCount = test_readCb(endAddr - offset2, expected2, flushed2, NULL);
 	TEST_ASSERT_EQUAL_INT(flushed2, readCount);
 	memcpy(expected2 + offset2, buffer2, count2);
 
-	readCount = test_readCb(addr1 - offset1, actual1, flushed1, NULL);
+	readCount = test_readCb(begAddr - offset1, actual1, flushed1, NULL);
 	TEST_ASSERT_EQUAL_INT(flushed1, readCount);
 	TEST_ASSERT_EQUAL_MEMORY(expected1, actual1, flushed1);
 
-	readCount = test_readCb(addr2 - offset2, actual2, flushed2, NULL);
+	readCount = test_readCb(endAddr - offset2, actual2, flushed2, NULL);
 	TEST_ASSERT_EQUAL_INT(flushed2, readCount);
 	TEST_ASSERT_EQUAL_MEMORY(expected2, actual2, flushed2);
 
@@ -809,6 +844,8 @@ TEST_GROUP(test_inv);
 
 TEST_SETUP(test_inv)
 {
+	ops.readCb = test_readCb;
+	ops.writeCb = test_writeCb;
 }
 
 TEST_TEAR_DOWN(test_inv)
@@ -819,11 +856,11 @@ TEST(test_inv, cache_invalidate_badAddrRange)
 {
 	int ret;
 	cachectx_t *cache;
-	uint64_t addr1 = 135322ULL, addr2 = 125322ULL;
+	uint64_t begAddr = LIBCACHE_ADDR_DUMMY, endAddr = LIBCACHE_ADDR_DUMMY / 2;
 
 	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_CACHE_SIZE, LIBCACHE_LINE_SIZE, &ops);
 
-	ret = cache_invalidate(cache, addr1, addr2);
+	ret = cache_invalidate(cache, begAddr, endAddr);
 	TEST_ASSERT_EQUAL_INT(-EINVAL, ret);
 
 	ret = cache_deinit(cache);
@@ -834,11 +871,11 @@ TEST(test_inv, cache_invalidate_addrOutOfScope)
 {
 	int ret;
 	cachectx_t *cache;
-	uint64_t addr1 = LIBCACHE_SRC_MEM_SIZE + 10, addr2 = addr1 + 10;
+	uint64_t begAddr = LIBCACHE_SRC_MEM_SIZE + 10, endAddr = begAddr + 10;
 
 	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_CACHE_SIZE, LIBCACHE_LINE_SIZE, &ops);
 
-	ret = cache_invalidate(cache, addr1, addr2);
+	ret = cache_invalidate(cache, begAddr, endAddr);
 	TEST_ASSERT_EQUAL_INT(-EINVAL, ret);
 
 	ret = cache_deinit(cache);
@@ -851,7 +888,7 @@ TEST(test_inv, cache_invalidate_addrPartiallyInScope)
 	ssize_t writeCount;
 	cachectx_t *cache;
 	char *buffer;
-	uint64_t addr1 = LIBCACHE_SRC_MEM_SIZE - 64;
+	uint64_t addr = LIBCACHE_SRC_MEM_SIZE - 64;
 
 	size_t count = 64 * sizeof(char);
 
@@ -860,7 +897,7 @@ TEST(test_inv, cache_invalidate_addrPartiallyInScope)
 	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_CACHE_SIZE, LIBCACHE_LINE_SIZE, &ops);
 	TEST_ASSERT_NOT_NULL(cache);
 
-	writeCount = cache_write(cache, addr1, buffer, 64, LIBCACHE_WRITE_BACK);
+	writeCount = cache_write(cache, addr, buffer, 64, LIBCACHE_WRITE_BACK);
 	TEST_ASSERT_EQUAL_INT(count, writeCount);
 
 	ret = cache_invalidate(cache, LIBCACHE_SRC_MEM_SIZE - 10, LIBCACHE_SRC_MEM_SIZE + 30);
@@ -874,7 +911,7 @@ TEST(test_inv, cache_invalidate_lines)
 {
 	int ret;
 	ssize_t readCount, writeCount;
-	uint64_t addr = 1032424ULL;
+	uint64_t addr = 0x7e074ULL;
 	cachectx_t *cache;
 	char *buffer1, *buffer2, *actual, *expected;
 	size_t count1 = 64 * sizeof(char), count2 = 15 * sizeof(char);
@@ -901,6 +938,7 @@ TEST(test_inv, cache_invalidate_lines)
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	actual = malloc(count1);
+	TEST_ASSERT_NOT_NULL(actual);
 	readCount = cache_read(cache, addr, actual, count1);
 	TEST_ASSERT_EQUAL_INT(count1, readCount);
 	TEST_ASSERT_EQUAL_MEMORY(expected, actual, count1);
@@ -938,7 +976,7 @@ TEST(test_callback_err, cache_write_writeCallbackErr)
 	int ret = -1;
 	ssize_t writeCount;
 	cachectx_t *cache = NULL;
-	uint64_t addr = 1256339ULL;
+	uint64_t addr = LIBCACHE_ADDR_DUMMY;
 	char *buffer;
 	size_t count = 14 * sizeof(char);
 
@@ -960,7 +998,7 @@ TEST(test_callback_err, cache_write_readCallbackErr)
 	int ret = -1;
 	ssize_t writeCount;
 	cachectx_t *cache = NULL;
-	uint64_t addr = 1116339ULL;
+	uint64_t addr = LIBCACHE_ADDR_DUMMY;
 	char *bufferW;
 	size_t count = 14 * sizeof(char);
 
@@ -982,7 +1020,7 @@ TEST(test_callback_err, cache_read_readCallbackErr)
 	int ret = -1;
 	ssize_t readCount;
 	cachectx_t *cache = NULL;
-	uint64_t addr = 1116339ULL;
+	uint64_t addr = LIBCACHE_ADDR_DUMMY;
 	char *bufferR;
 	size_t count = 14 * sizeof(char);
 
@@ -1004,7 +1042,7 @@ TEST(test_callback_err, cache_flushCallbackErr)
 {
 	int ret;
 	ssize_t writeCount;
-	uint64_t addr = 1343542ULL;
+	uint64_t addr = LIBCACHE_ADDR_DUMMY;
 	cachectx_t *cache;
 	char *buffer;
 	size_t count = 213 * sizeof(char);
@@ -1052,7 +1090,7 @@ TEST(test_integers, cache_write_integers)
 	int i, ret = -1;
 	cachectx_t *cache;
 	ssize_t writeCount, readCount;
-	uint64_t addr = 1156336ULL;
+	uint64_t addr = LIBCACHE_ADDR_INT;
 	size_t num = 47;
 	size_t count = num * sizeof(int);
 	int expected[num], actual[num];
@@ -1082,7 +1120,7 @@ TEST(test_integers, cache_read_integers)
 	int ret = -1;
 	cachectx_t *cache;
 	ssize_t readCount = 0;
-	uint64_t addr = 1156336ULL;
+	uint64_t addr = LIBCACHE_ADDR_INT;
 	size_t num = 37;
 	int expected[num], actual[num];
 	size_t count = num * sizeof(int);

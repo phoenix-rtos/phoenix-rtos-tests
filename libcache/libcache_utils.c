@@ -89,22 +89,22 @@ ssize_t test_writeCbErr(uint64_t offset, const void *buffer, size_t count, cache
 
 void *test_cache_write(void *args)
 {
-	ssize_t written = -1;
+	ssize_t *ret;
 	test_write_args_t *arguments = args;
 
-	written = cache_write(arguments->cache, arguments->addr, arguments->buffer, arguments->count, arguments->policy);
-	TEST_ASSERT_EQUAL_INT(arguments->count, written);
+	ret = malloc(sizeof(ssize_t));
+	*ret = cache_write(arguments->cache, arguments->addr, arguments->buffer, arguments->count, arguments->policy);
 
-	return NULL;
+	return (void *)ret;
 }
 
 void *test_cache_read(void *args)
 {
-	ssize_t read = -1;
+	ssize_t *ret;
 	test_read_args_t *arguments = args;
 
-	read = cache_read(arguments->cache, arguments->addr, arguments->buffer, arguments->count);
-	TEST_ASSERT_EQUAL_INT(arguments->count, read);
+	ret = malloc(sizeof(ssize_t));
+	*ret = cache_read(arguments->cache, arguments->addr, arguments->buffer, arguments->count);
 
-	return NULL;
+	return (void *)ret;
 }
