@@ -23,38 +23,70 @@
 #include <unistd.h>
 
 
-void test_genCharFile(void)
+int test_genCharFile(void)
 {
+	int i, ret = -1;
 	FILE *file;
-	int i;
 	char num;
 
-	file = fopen("/var/read.txt", "w");
-	fseek(file, 0, SEEK_SET);
+	/* TODO: remove temporary solution with access function
+	 *  necessary to work around the issue:
+	 *  https://github.com/phoenix-rtos/phoenix-rtos-project/issues/507
+	 */
+	if (access("/var/libcache_test_char.txt", F_OK) != 0) {
+		file = fopen("/var/libcache_test_char.txt", "w");
+		if (!file) {
+			perror("Unable to open /var/libcache_test_char.txt\n");
+			ret = -1;
+		}
+		else {
+			fseek(file, 0, SEEK_SET);
 
-	for (i = 0; i < LIBCACHE_SRC_MEM_SIZE; ++i) {
-		num = rand();
-		fwrite_unlocked(&num, sizeof(char), 1, file);
+			for (i = 0; i < LIBCACHE_SRC_MEM_SIZE; ++i) {
+				num = rand();
+				fwrite_unlocked(&num, sizeof(char), 1, file);
+			}
+
+			fclose(file);
+
+			ret = EOK;
+		}
 	}
 
-	fclose(file);
+	return ret;
 }
 
-void test_genIntFile(void)
+int test_genIntFile(void)
 {
+	int i, ret = -1;
 	FILE *file;
-	int i;
 	int num;
 
-	file = fopen("/var/read.txt", "w");
-	fseek(file, 0, SEEK_SET);
+	/* TODO: remove temporary solution with access function
+	 *  necessary to work around the issue:
+	 *  https://github.com/phoenix-rtos/phoenix-rtos-project/issues/507
+	 */
+	if (access("/var/libcache_test_int.txt", F_OK) != 0) {
+		file = fopen("/var/libcache_test_int.txt", "w");
+		if (!file) {
+			perror("Unable to open /var/libcache_test_char.txt\n");
+			ret = -1;
+		}
+		else {
+			fseek(file, 0, SEEK_SET);
 
-	for (i = 0; i < LIBCACHE_SRC_MEM_SIZE / 4; ++i) {
-		num = rand();
-		fwrite_unlocked(&num, sizeof(int), 1, file);
+			for (i = 0; i < LIBCACHE_SRC_MEM_SIZE / 4; ++i) {
+				num = rand();
+				fwrite_unlocked(&num, sizeof(int), 1, file);
+			}
+
+			fclose(file);
+
+			ret = EOK;
+		}
 	}
 
-	fclose(file);
+	return ret;
 }
 
 ssize_t test_readCb(uint64_t offset, void *buffer, size_t count, cache_devCtx_t *ctx)

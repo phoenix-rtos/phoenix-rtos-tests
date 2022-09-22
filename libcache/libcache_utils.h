@@ -20,9 +20,9 @@
 #include "cache.h"
 
 
-#define LIBCACHE_SRC_MEM_SIZE 0xad000ULL /* Imitates the maximum capacity of cached source memory */
-#define LIBCACHE_CACHE_SIZE   2048       /* Size of whole cache table in bytes */
-#define LIBCACHE_LINE_SIZE    64         /* in bytes */
+#define LIBCACHE_SRC_MEM_SIZE 0x2800ULL /* Imitates the maximum capacity of cached source memory */
+#define LIBCACHE_CACHE_SIZE   2048      /* Size of whole cache table in bytes */
+#define LIBCACHE_LINE_SIZE    64        /* in bytes */
 
 #define LOG2(x) ((uint8_t)(8 * sizeof(unsigned long) - __builtin_clzl((x)) - 1))
 
@@ -56,11 +56,11 @@ cache_ops_t ops;
 
 
 /* Generates a file that simulates a cached source memory and fills it with random chars */
-extern void test_genCharFile(void);
+extern int test_genCharFile(void);
 
 
 /* Generates a file that simulates a cached source memory and fills it with random ints */
-extern void test_genIntFile(void);
+extern int test_genIntFile(void);
 
 
 extern ssize_t test_readCb(uint64_t offset, void *buffer, size_t count, cache_devCtx_t *ctx);
