@@ -44,56 +44,46 @@ TEST_TEAR_DOWN(test_init)
 
 TEST(test_init, cache_init_srcMemSizeZero)
 {
-	size_t srcMemSize = 0, size = 2048, lineSize = 64;
+	size_t srcMemSize = 0, lineSize = 64, linesCnt = 32;
 	cachectx_t *cache = NULL;
 
-	cache = cache_init(srcMemSize, size, lineSize, &ops);
-	TEST_ASSERT_NULL(cache);
-}
-
-TEST(test_init, cache_init_sizeZero)
-{
-	size_t size = 0, lineSize = 64;
-	cachectx_t *cache = NULL;
-
-	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, size, lineSize, &ops);
+	cache = cache_init(srcMemSize, lineSize, linesCnt, &ops);
 	TEST_ASSERT_NULL(cache);
 }
 
 TEST(test_init, cache_init_lineSizeZero)
 {
-	size_t size = 2048, lineSize = 0;
+	size_t lineSize = 0, linesCnt = 32;
 	cachectx_t *cache = NULL;
 
-	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, size, lineSize, &ops);
+	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, lineSize, linesCnt, &ops);
 	TEST_ASSERT_NULL(cache);
 }
 
-TEST(test_init, cache_init_sizeModLineSizeNotZero)
+TEST(test_init, cache_init_linesCntZero)
 {
-	size_t size = 1754, lineSize = 17; /* size % lineSize = 3, (int)(size / lineSize) % LIBCACHE_NUM_WAYS = 3 */
+	size_t lineSize = 64, linesCnt = 0;
 	cachectx_t *cache = NULL;
 
-	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, size, lineSize, &ops);
+	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, lineSize, linesCnt, &ops);
 	TEST_ASSERT_NULL(cache);
 }
 
-TEST(test_init, cache_init_linesNotDivisibleByNumWays)
+TEST(test_init, cache_init_linesCntNotDivisibleByNumWays)
 {
-	size_t size = 1026, lineSize = 19; /* size % lineSize = 0, (size / lineSize) % LIBCACHE_NUM_WAYS = 2 */
+	size_t lineSize = 64, linesCnt = 19;
 	cachectx_t *cache = NULL;
 
-	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, size, lineSize, &ops);
+	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, lineSize, linesCnt, &ops);
 	TEST_ASSERT_NULL(cache);
 }
 
 TEST(test_init, cache_init_sizesNotZero)
 {
 	int ret = -1;
-	size_t size = LIBCACHE_CACHE_SIZE, lineSize = LIBCACHE_LINE_SIZE;
 	cachectx_t *cache = NULL;
 
-	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, size, lineSize, &ops);
+	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_LINE_SIZE, LIBCACHE_LINES_CNT, &ops);
 	TEST_ASSERT_NOT_NULL(cache);
 
 	ret = cache_deinit(cache);
@@ -103,10 +93,9 @@ TEST(test_init, cache_init_sizesNotZero)
 TEST_GROUP_RUNNER(test_init)
 {
 	RUN_TEST_CASE(test_init, cache_init_srcMemSizeZero);
-	RUN_TEST_CASE(test_init, cache_init_sizeZero);
 	RUN_TEST_CASE(test_init, cache_init_lineSizeZero);
-	RUN_TEST_CASE(test_init, cache_init_sizeModLineSizeNotZero);
-	RUN_TEST_CASE(test_init, cache_init_linesNotDivisibleByNumWays);
+	RUN_TEST_CASE(test_init, cache_init_linesCntZero);
+	RUN_TEST_CASE(test_init, cache_init_linesCntNotDivisibleByNumWays);
 	RUN_TEST_CASE(test_init, cache_init_sizesNotZero);
 }
 
@@ -127,7 +116,7 @@ TEST(test_deinit, cache_deinit_initalizedCache)
 	int ret;
 	cachectx_t *cache;
 
-	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_CACHE_SIZE, LIBCACHE_LINE_SIZE, &ops);
+	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_LINE_SIZE, LIBCACHE_LINES_CNT, &ops);
 	TEST_ASSERT_NOT_NULL(cache);
 
 	ret = cache_deinit(cache);
@@ -162,7 +151,7 @@ TEST(test_read_write, cache_write_nullBuff)
 	uint64_t addr = LIBCACHE_ADDR_DUMMY;
 	char *buffer = NULL;
 
-	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_CACHE_SIZE, LIBCACHE_LINE_SIZE, &ops);
+	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_LINE_SIZE, LIBCACHE_LINES_CNT, &ops);
 	TEST_ASSERT_NOT_NULL(cache);
 
 	writeCount = cache_write(cache, addr, buffer, count, LIBCACHE_WRITE_BACK);
@@ -183,7 +172,7 @@ TEST(test_read_write, cache_write_wrongPolicy)
 	int policy = -2;
 
 	buffer = "^#$^#$^%%$";
-	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_CACHE_SIZE, LIBCACHE_LINE_SIZE, &ops);
+	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_LINE_SIZE, LIBCACHE_LINES_CNT, &ops);
 	TEST_ASSERT_NOT_NULL(cache);
 
 	writeCount = cache_write(cache, addr, buffer, count, policy);
@@ -203,7 +192,7 @@ TEST(test_read_write, cache_writeNothing)
 	char *buffer = NULL;
 
 	buffer = "^$^$%^^%^$%";
-	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_CACHE_SIZE, LIBCACHE_LINE_SIZE, &ops);
+	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_LINE_SIZE, LIBCACHE_LINES_CNT, &ops);
 	TEST_ASSERT_NOT_NULL(cache);
 
 	writeCount = cache_write(cache, addr, buffer, count, LIBCACHE_WRITE_THROUGH);
@@ -221,7 +210,7 @@ TEST(test_read_write, cache_write_addrOutOfScope)
 	size_t count = 16 * sizeof(char);
 	char *buffer;
 
-	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_CACHE_SIZE, LIBCACHE_LINE_SIZE, &ops);
+	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_LINE_SIZE, LIBCACHE_LINES_CNT, &ops);
 	TEST_ASSERT_NOT_NULL(cache);
 
 	buffer = "FSDGSGDGSDGDSGDF";
@@ -241,7 +230,7 @@ TEST(test_read_write, cache_write_addrPartiallyInScope)
 	size_t count = 16 * sizeof(char);
 	char *buffer;
 
-	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_CACHE_SIZE, LIBCACHE_LINE_SIZE, &ops);
+	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_LINE_SIZE, LIBCACHE_LINES_CNT, &ops);
 	TEST_ASSERT_NOT_NULL(cache);
 
 	buffer = "FSDGSGDGSDGDSGDF";
@@ -264,7 +253,7 @@ TEST(test_read_write, cache_writeData)
 
 	buffer = "^#$^#$^%%$";
 
-	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_CACHE_SIZE, LIBCACHE_LINE_SIZE, &ops);
+	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_LINE_SIZE, LIBCACHE_LINES_CNT, &ops);
 	TEST_ASSERT_NOT_NULL(cache);
 
 	writeCount = cache_write(cache, addr, buffer, count, LIBCACHE_WRITE_THROUGH);
@@ -283,7 +272,7 @@ TEST(test_read_write, cache_readNullBuff)
 	uint64_t addr = LIBCACHE_ADDR_DUMMY;
 	void *buffer = NULL;
 
-	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_CACHE_SIZE, LIBCACHE_LINE_SIZE, &ops);
+	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_LINE_SIZE, LIBCACHE_LINES_CNT, &ops);
 	TEST_ASSERT_NOT_NULL(cache);
 
 	readCount = cache_read(cache, addr, buffer, count);
@@ -306,7 +295,7 @@ TEST(test_read_write, cache_readNothing)
 	bufferR = malloc(countWrite);
 	TEST_ASSERT_NOT_NULL(bufferR);
 
-	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_CACHE_SIZE, LIBCACHE_LINE_SIZE, &ops);
+	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_LINE_SIZE, LIBCACHE_LINES_CNT, &ops);
 	TEST_ASSERT_NOT_NULL(cache);
 
 	writeCount = cache_write(cache, addr, bufferW, countWrite, LIBCACHE_WRITE_THROUGH);
@@ -330,7 +319,7 @@ TEST(test_read_write, cache_read_addrOutOfScope)
 	size_t count = 16 * sizeof(char);
 	char *buffer;
 
-	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_CACHE_SIZE, LIBCACHE_LINE_SIZE, &ops);
+	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_LINE_SIZE, LIBCACHE_LINES_CNT, &ops);
 	TEST_ASSERT_NOT_NULL(cache);
 
 	buffer = malloc(count);
@@ -351,7 +340,7 @@ TEST(test_read_write, cache_read_addrPartiallyInScope)
 	size_t count = 16 * sizeof(char);
 	char *bufferW, *bufferR;
 
-	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_CACHE_SIZE, LIBCACHE_LINE_SIZE, &ops);
+	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_LINE_SIZE, LIBCACHE_LINES_CNT, &ops);
 	TEST_ASSERT_NOT_NULL(cache);
 
 	bufferW = "FSDGSGDGSDGDSGDF";
@@ -382,7 +371,7 @@ TEST(test_read_write, cache_readData)
 	bufferR = malloc(count);
 	TEST_ASSERT_NOT_NULL(bufferR);
 
-	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_CACHE_SIZE, LIBCACHE_LINE_SIZE, &ops);
+	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_LINE_SIZE, LIBCACHE_LINES_CNT, &ops);
 	TEST_ASSERT_NOT_NULL(cache);
 
 	writeCount = cache_write(cache, addr, bufferW, count, LIBCACHE_WRITE_THROUGH);
@@ -418,7 +407,7 @@ TEST(test_read_write, cache_writeThrough)
 	expected = malloc(flushed);
 	TEST_ASSERT_NOT_NULL(expected);
 
-	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_CACHE_SIZE, LIBCACHE_LINE_SIZE, &ops);
+	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_LINE_SIZE, LIBCACHE_LINES_CNT, &ops);
 	TEST_ASSERT_NOT_NULL(cache);
 
 	writeCount = cache_write(cache, addr, buffer, count, LIBCACHE_WRITE_THROUGH);
@@ -459,7 +448,7 @@ TEST(test_read_write, cache_writeBack)
 	expected = malloc(flushed);
 	TEST_ASSERT_NOT_NULL(expected);
 
-	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_CACHE_SIZE, LIBCACHE_LINE_SIZE, &ops);
+	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_LINE_SIZE, LIBCACHE_LINES_CNT, &ops);
 	TEST_ASSERT_NOT_NULL(cache);
 
 	writeCount = cache_write(cache, addr, buffer, count, LIBCACHE_WRITE_BACK);
@@ -530,7 +519,7 @@ TEST(test_threads, thread_write)
 	expected3 = "PHOENIXRTOSPHOENIXRTOSPHOENIXRTOSPHOENIXRTOSPHOENIXRTOSPHOENIXRTOSPHOENIXRTOSPHOENIXRTOSPHOENIXRTOSPHOENIXRTOSPHOENIXRTOSPHOENIXRTOSPHOENIXRTOSPHOENIXRTOS";
 	expected4 = "QAZWSXEDCRFVTGBYHNUJMIKOLPPLOKMIJNUHBYGVTFCRDXESZWAQZXCVBNMASDFGHJKLQWERTYUIOPPOIUYTREWHAQLKJHGFDSAMNBVCXZ[;.[';/.]'/,12332445435324535R43";
 
-	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_CACHE_SIZE, LIBCACHE_LINE_SIZE, &ops);
+	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_LINE_SIZE, LIBCACHE_LINES_CNT, &ops);
 	TEST_ASSERT_NOT_NULL(cache);
 
 	args1 = (test_write_args_t) { .cache = cache, .addr = addr1, .buffer = expected1, .count = count1, .policy = LIBCACHE_WRITE_THROUGH };
@@ -638,7 +627,7 @@ TEST(test_threads, thread_read)
 	buffer3 = malloc(count1 * sizeof(char));
 	buffer4 = malloc(count2 * sizeof(char));
 
-	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_CACHE_SIZE, LIBCACHE_LINE_SIZE, &ops);
+	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_LINE_SIZE, LIBCACHE_LINES_CNT, &ops);
 	TEST_ASSERT_NOT_NULL(cache);
 
 	args1 = (test_read_args_t) { .cache = cache, .addr = addr1, .buffer = buffer1, .count = count1 * sizeof(char) };
@@ -664,7 +653,7 @@ TEST(test_threads, thread_read)
 	ret1 = cache_deinit(cache);
 	TEST_ASSERT_EQUAL_INT(EOK, ret1);
 
-	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_CACHE_SIZE, LIBCACHE_LINE_SIZE, &ops);
+	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_LINE_SIZE, LIBCACHE_LINES_CNT, &ops);
 	TEST_ASSERT_NOT_NULL(cache);
 
 	readCount = cache_read(cache, addr1, buffer3, count1);
@@ -711,7 +700,7 @@ TEST(test_flush, cache_flush_badAddrRange)
 	cachectx_t *cache;
 	uint64_t begAddr = LIBCACHE_ADDR_DUMMY, endAddr = LIBCACHE_ADDR_DUMMY / 2;
 
-	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_CACHE_SIZE, LIBCACHE_LINE_SIZE, &ops);
+	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_LINE_SIZE, LIBCACHE_LINES_CNT, &ops);
 	TEST_ASSERT_NOT_NULL(cache);
 
 	ret = cache_flush(cache, begAddr, endAddr);
@@ -727,7 +716,7 @@ TEST(test_flush, cache_flush_addrOutOfScope)
 	cachectx_t *cache;
 	uint64_t begAddr = LIBCACHE_SRC_MEM_SIZE + 10, endAddr = begAddr + 10;
 
-	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_CACHE_SIZE, LIBCACHE_LINE_SIZE, &ops);
+	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_LINE_SIZE, LIBCACHE_LINES_CNT, &ops);
 	TEST_ASSERT_NOT_NULL(cache);
 
 	ret = cache_flush(cache, begAddr, endAddr);
@@ -748,7 +737,7 @@ TEST(test_flush, cache_flush_addrPartiallyInScope)
 
 	buffer1 = "^#$%^$#%^&$#&$!@!*!!~~~!@#@$$_#@_+$ 4#$%#$%#%#$%^^#$^$#^#$^%@#$$";
 
-	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_CACHE_SIZE, LIBCACHE_LINE_SIZE, &ops);
+	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_LINE_SIZE, LIBCACHE_LINES_CNT, &ops);
 	TEST_ASSERT_NOT_NULL(cache);
 
 	writeCount = cache_write(cache, begAddr, buffer1, 64, LIBCACHE_WRITE_BACK);
@@ -780,7 +769,7 @@ TEST(test_flush, cache_flush_lines)
 	buffer1 = "^&%$^*&^%*&(&*()*(*)_()*^&%#@$^$^%%$^$%^@%$^%#@$^^$#%^$#&$&$%&$#&$#&$%&^%^^@!!!!!@%$%#^#$%^$#%^&$#&^*$(^*&^)_)_(++(_)_(*)(&^%^*%^$#%$@#$@!# @!$#$#%$ $#%##$^$#%^#$$!@!*!!~~~!@#@$$_#@_+$ 4#$%#$%#%#$%^^#$^$#^#$^%@#$$";
 	buffer2 = "HGESGEDRFEROFRELBFGHCZSSDQWQREERWEWTREYTYTRHGFVCCXGGHFHTR";
 
-	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_CACHE_SIZE, LIBCACHE_LINE_SIZE, &ops);
+	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_LINE_SIZE, LIBCACHE_LINES_CNT, &ops);
 	TEST_ASSERT_NOT_NULL(cache);
 
 	writeCount = cache_write(cache, begAddr, buffer1, count1, LIBCACHE_WRITE_BACK);
@@ -858,7 +847,7 @@ TEST(test_inv, cache_invalidate_badAddrRange)
 	cachectx_t *cache;
 	uint64_t begAddr = LIBCACHE_ADDR_DUMMY, endAddr = LIBCACHE_ADDR_DUMMY / 2;
 
-	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_CACHE_SIZE, LIBCACHE_LINE_SIZE, &ops);
+	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_LINE_SIZE, LIBCACHE_LINES_CNT, &ops);
 
 	ret = cache_invalidate(cache, begAddr, endAddr);
 	TEST_ASSERT_EQUAL_INT(-EINVAL, ret);
@@ -873,7 +862,7 @@ TEST(test_inv, cache_invalidate_addrOutOfScope)
 	cachectx_t *cache;
 	uint64_t begAddr = LIBCACHE_SRC_MEM_SIZE + 10, endAddr = begAddr + 10;
 
-	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_CACHE_SIZE, LIBCACHE_LINE_SIZE, &ops);
+	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_LINE_SIZE, LIBCACHE_LINES_CNT, &ops);
 
 	ret = cache_invalidate(cache, begAddr, endAddr);
 	TEST_ASSERT_EQUAL_INT(-EINVAL, ret);
@@ -894,7 +883,7 @@ TEST(test_inv, cache_invalidate_addrPartiallyInScope)
 
 	buffer = "^#$%^$#%^&$#&$!@!*!!~~~!@#@$$_#@_+$ 4#$%#$%#%#$%^^#$^$#^#$^%@#$$";
 
-	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_CACHE_SIZE, LIBCACHE_LINE_SIZE, &ops);
+	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_LINE_SIZE, LIBCACHE_LINES_CNT, &ops);
 	TEST_ASSERT_NOT_NULL(cache);
 
 	writeCount = cache_write(cache, addr, buffer, 64, LIBCACHE_WRITE_BACK);
@@ -916,7 +905,7 @@ TEST(test_inv, cache_invalidate_lines)
 	char *buffer1, *buffer2, *actual, *expected;
 	size_t count1 = 64 * sizeof(char), count2 = 15 * sizeof(char);
 
-	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_CACHE_SIZE, LIBCACHE_LINE_SIZE, &ops);
+	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_LINE_SIZE, LIBCACHE_LINES_CNT, &ops);
 	TEST_ASSERT_NOT_NULL(cache);
 
 	buffer1 = malloc(count1);
@@ -983,7 +972,7 @@ TEST(test_callback_err, cache_write_writeCallbackErr)
 	buffer = "FFE%^E^^W$%#@$";
 
 	ops.writeCb = test_writeCbErr;
-	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_CACHE_SIZE, LIBCACHE_LINE_SIZE, &ops);
+	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_LINE_SIZE, LIBCACHE_LINES_CNT, &ops);
 	TEST_ASSERT_NOT_NULL(cache);
 
 	writeCount = cache_write(cache, addr, buffer, count, LIBCACHE_WRITE_THROUGH);
@@ -1005,7 +994,7 @@ TEST(test_callback_err, cache_write_readCallbackErr)
 	bufferW = "FFE%^E^^W$%#@$";
 
 	ops.readCb = test_readCbErr;
-	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_CACHE_SIZE, LIBCACHE_LINE_SIZE, &ops);
+	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_LINE_SIZE, LIBCACHE_LINES_CNT, &ops);
 	TEST_ASSERT_NOT_NULL(cache);
 
 	writeCount = cache_write(cache, addr, bufferW, count, LIBCACHE_WRITE_THROUGH);
@@ -1025,7 +1014,7 @@ TEST(test_callback_err, cache_read_readCallbackErr)
 	size_t count = 14 * sizeof(char);
 
 	ops.readCb = test_readCbErr;
-	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_CACHE_SIZE, LIBCACHE_LINE_SIZE, &ops);
+	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_LINE_SIZE, LIBCACHE_LINES_CNT, &ops);
 	TEST_ASSERT_NOT_NULL(cache);
 
 	bufferR = malloc(count);
@@ -1050,7 +1039,7 @@ TEST(test_callback_err, cache_flushCallbackErr)
 	buffer = "^&%$^*&^%*&(&*()*(*)_()*^&%#@$^$^%%$^$%^@%$^%#@$^^$#%^$#&$&$%&$#&$#&$%&^%^^@!!!!!@%$%#^#$%^$#%^&$#&^*$(^*&^)_)_(++(_)_(*)(&^%^*%^$#%$@#$@!# @!$#$#%$ $#%##$^$#%^#$$!@!*!!~~~!@#@$$_#@_+$ 4#$%#$%#%#$%^^#$^$#^#$^%@#$$";
 
 	ops.writeCb = test_writeCbErr;
-	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_CACHE_SIZE, LIBCACHE_LINE_SIZE, &ops);
+	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_LINE_SIZE, LIBCACHE_LINES_CNT, &ops);
 	TEST_ASSERT_NOT_NULL(cache);
 
 	writeCount = cache_write(cache, addr, buffer, count, LIBCACHE_WRITE_BACK);
@@ -1096,7 +1085,7 @@ TEST(test_integers, cache_write_integers)
 	int expected[num], actual[num];
 	int *ptr = &expected[0];
 
-	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_CACHE_SIZE, LIBCACHE_LINE_SIZE, &ops);
+	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_LINE_SIZE, LIBCACHE_LINES_CNT, &ops);
 	TEST_ASSERT_NOT_NULL(cache);
 
 	for (i = 0; i < num; ++i) {
@@ -1125,7 +1114,7 @@ TEST(test_integers, cache_read_integers)
 	int expected[num], actual[num];
 	size_t count = num * sizeof(int);
 
-	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_CACHE_SIZE, LIBCACHE_LINE_SIZE, &ops);
+	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_LINE_SIZE, LIBCACHE_LINES_CNT, &ops);
 	TEST_ASSERT_NOT_NULL(cache);
 
 	readCount = test_readCb(addr, expected, count, NULL);
@@ -1153,6 +1142,8 @@ void runner(void)
 	 * https://github.com/phoenix-rtos/phoenix-rtos-project/issues/507
 	 */
 	int ret = -1;
+
+	ops.ctx = NULL; /* Empty device driver context */
 
 	ret = test_genCharFile();
 	/* FIXME: workaround, test should fail */

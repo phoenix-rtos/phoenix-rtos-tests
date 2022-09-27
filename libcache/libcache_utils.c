@@ -36,20 +36,24 @@ int test_genCharFile(void)
 	if (access("/var/libcache_test_char.txt", F_OK) != 0) {
 		file = fopen("/var/libcache_test_char.txt", "w");
 		if (!file) {
-			perror("Unable to open /var/libcache_test_char.txt\n");
+			fprintf(stderr, "Unable to open /var/libcache_test_char.txt\n");
 			ret = -1;
 		}
 		else {
-			fseek(file, 0, SEEK_SET);
-
-			for (i = 0; i < LIBCACHE_SRC_MEM_SIZE; ++i) {
-				num = rand();
-				fwrite_unlocked(&num, sizeof(char), 1, file);
+			if (fseek(file, 0, SEEK_SET) != 0) {
+				fprintf(stderr, "fseek() fail in %s\n", __FILE__);
+				fclose(file);
+				ret = -1;
 			}
+			else {
+				for (i = 0; i < LIBCACHE_SRC_MEM_SIZE; ++i) {
+					num = rand();
+					fwrite_unlocked(&num, sizeof(char), 1, file);
+				}
+				fclose(file);
 
-			fclose(file);
-
-			ret = EOK;
+				ret = EOK;
+			}
 		}
 	}
 
@@ -69,20 +73,25 @@ int test_genIntFile(void)
 	if (access("/var/libcache_test_int.txt", F_OK) != 0) {
 		file = fopen("/var/libcache_test_int.txt", "w");
 		if (!file) {
-			perror("Unable to open /var/libcache_test_char.txt\n");
+			fprintf(stderr, "Unable to open /var/libcache_test_char.txt\n");
 			ret = -1;
 		}
 		else {
-			fseek(file, 0, SEEK_SET);
-
-			for (i = 0; i < LIBCACHE_SRC_MEM_SIZE / 4; ++i) {
-				num = rand();
-				fwrite_unlocked(&num, sizeof(int), 1, file);
+			if (fseek(file, 0, SEEK_SET) != 0) {
+				fprintf(stderr, "fseek() fail in %s\n", __FILE__);
+				fclose(file);
+				ret = -1;
 			}
+			else {
+				for (i = 0; i < LIBCACHE_SRC_MEM_SIZE / 4; ++i) {
+					num = rand();
+					fwrite_unlocked(&num, sizeof(int), 1, file);
+				}
 
-			fclose(file);
+				fclose(file);
 
-			ret = EOK;
+				ret = EOK;
+			}
 		}
 	}
 
