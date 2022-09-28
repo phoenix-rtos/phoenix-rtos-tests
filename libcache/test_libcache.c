@@ -909,27 +909,36 @@ TEST(test_inv, cache_invalidate_lines)
 	TEST_ASSERT_NOT_NULL(cache);
 
 	buffer1 = malloc(count1);
+	TEST_ASSERT_NOT_NULL(buffer1);
+
+	/* Read 'undamaged' data from src mem */
 	readCount = cache_read(cache, addr, buffer1, count1);
 	TEST_ASSERT_EQUAL_INT(count1, readCount);
 
+	/* Prepare 'damaging' data */
 	buffer2 = "^^(*(*(&(&*@##$";
+
+	/* Create buffer with data expected from cache_read() after damage */
 	expected = malloc(count1);
 	TEST_ASSERT_NOT_NULL(expected);
-
 	memcpy(expected, buffer2, count2);
 	memcpy(expected + count2, buffer1 + count2, count1 - count2);
 
-	/* 'Damage' the source file */
-	writeCount = test_writeCb(addr, buffer2, count2, NULL);
-	TEST_ASSERT_EQUAL_INT(count2, writeCount);
-
+	/* Invalidate: next cache_read() should read data from src mem, not from cache */
 	ret = cache_invalidate(cache, addr, addr + 2 * LIBCACHE_LINE_SIZE);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
+	/* 'Damage' src mem */
+	writeCount = test_writeCb(addr, buffer2, count2, NULL);
+	TEST_ASSERT_EQUAL_INT(count2, writeCount);
+
+	/* Read a buffer from src mem */
 	actual = malloc(count1);
 	TEST_ASSERT_NOT_NULL(actual);
 	readCount = cache_read(cache, addr, actual, count1);
 	TEST_ASSERT_EQUAL_INT(count1, readCount);
+
+	/* Verify if data was actually read from src mem */
 	TEST_ASSERT_EQUAL_MEMORY(expected, actual, count1);
 
 	free(buffer1);
@@ -946,6 +955,136 @@ TEST_GROUP_RUNNER(test_inv)
 	RUN_TEST_CASE(test_inv, cache_invalidate_addrOutOfScope);
 	RUN_TEST_CASE(test_inv, cache_invalidate_addrPartiallyInScope);
 	RUN_TEST_CASE(test_inv, cache_invalidate_lines);
+}
+
+TEST_GROUP(test_clean);
+
+TEST_SETUP(test_clean)
+{
+	ops.readCb = test_readCb;
+	ops.writeCb = test_writeCb;
+}
+
+TEST_TEAR_DOWN(test_clean)
+{
+}
+
+TEST(test_clean, cache_clean_badAddrRange)
+{
+	int ret;
+	cachectx_t *cache;
+	uint64_t begAddr = LIBCACHE_ADDR_DUMMY, endAddr = LIBCACHE_ADDR_DUMMY / 2;
+
+	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_LINE_SIZE, LIBCACHE_LINES_CNT, &ops);
+
+	ret = cache_clean(cache, begAddr, endAddr);
+	TEST_ASSERT_EQUAL_INT(-EINVAL, ret);
+
+	ret = cache_deinit(cache);
+	TEST_ASSERT_EQUAL_INT(EOK, ret);
+}
+
+TEST(test_clean, cache_clean_addrOutOfScope)
+{
+	int ret;
+	cachectx_t *cache;
+	uint64_t begAddr = LIBCACHE_SRC_MEM_SIZE + 10, endAddr = begAddr + 10;
+
+	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_LINE_SIZE, LIBCACHE_LINES_CNT, &ops);
+
+	ret = cache_clean(cache, begAddr, endAddr);
+	TEST_ASSERT_EQUAL_INT(-EINVAL, ret);
+
+	ret = cache_deinit(cache);
+	TEST_ASSERT_EQUAL_INT(EOK, ret);
+}
+
+TEST(test_clean, cache_clean_addrPartiallyInScope)
+{
+	int ret;
+	ssize_t writeCount;
+	cachectx_t *cache;
+	char *buffer;
+	uint64_t addr = LIBCACHE_SRC_MEM_SIZE - 64;
+
+	size_t count = 64 * sizeof(char);
+
+	buffer = "^#$%^$#%^&$#&$!@!*!!~~~!@#@$$_#@_+$ 4#$%#$%#%#$%^^#$^$#^#$^%@#$$";
+
+	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_LINE_SIZE, LIBCACHE_LINES_CNT, &ops);
+	TEST_ASSERT_NOT_NULL(cache);
+
+	writeCount = cache_write(cache, addr, buffer, 64, LIBCACHE_WRITE_BACK);
+	TEST_ASSERT_EQUAL_INT(count, writeCount);
+
+	ret = cache_clean(cache, LIBCACHE_SRC_MEM_SIZE - 10, LIBCACHE_SRC_MEM_SIZE + 30);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+
+	ret = cache_deinit(cache);
+	TEST_ASSERT_EQUAL_INT(EOK, ret);
+}
+
+TEST(test_clean, cache_clean_lines)
+{
+	int ret;
+	ssize_t readCount, writeCount;
+	uint64_t addr = 0x1075ULL;
+	cachectx_t *cache = NULL;
+	char *bufferW, *expected, *bufferD, *actual;
+	size_t countW = 21 * sizeof(char), countRead = 64 * sizeof(char), countD = 11 * sizeof(char);
+
+	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_LINE_SIZE, LIBCACHE_LINES_CNT, &ops);
+	TEST_ASSERT_NOT_NULL(cache);
+
+	bufferW = "^#&&^^%$#@%^@%$$%@&^%";
+
+	/* Write a buffer to cache */
+	writeCount = cache_write(cache, addr, bufferW, countW, LIBCACHE_WRITE_BACK);
+	TEST_ASSERT_EQUAL_INT(countW, writeCount);
+
+	/* Clean: next cache_read() should read data from src mem, not from cache */
+	ret = cache_clean(cache, addr, addr + 2 * LIBCACHE_LINE_SIZE);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+
+	/* Check if cache_clean() flushed data to src mem */
+	expected = malloc(countRead);
+	TEST_ASSERT_NOT_NULL(expected);
+	readCount = test_readCb(addr, expected, countRead, NULL);
+	TEST_ASSERT_EQUAL_INT(countRead, readCount);
+	TEST_ASSERT_EQUAL_INT(0, memcmp(bufferW, expected, countW));
+
+	/* Check if cache_clean() invalidated */
+
+	/* 'Damage' src mem */
+	bufferD = "GASFGDHGDER";
+	writeCount = test_writeCb(addr, bufferD, countD, NULL);
+	TEST_ASSERT_EQUAL_INT(countD, writeCount);
+
+	/* Create buffer with data expected from cache_read() after damage */
+	memcpy(expected, bufferD, countD);
+
+	/* Read a buffer from src mem */
+	actual = malloc(countRead);
+	TEST_ASSERT_NOT_NULL(actual);
+	readCount = cache_read(cache, addr, actual, countRead);
+	TEST_ASSERT_EQUAL_INT(countRead, readCount);
+
+	/* Verify if data was actually read from src mem */
+	TEST_ASSERT_EQUAL_MEMORY(expected, actual, countRead);
+
+	free(expected);
+	free(actual);
+
+	ret = cache_deinit(cache);
+	TEST_ASSERT_EQUAL_INT(EOK, ret);
+}
+
+TEST_GROUP_RUNNER(test_clean)
+{
+	RUN_TEST_CASE(test_clean, cache_clean_badAddrRange);
+	RUN_TEST_CASE(test_clean, cache_clean_addrOutOfScope);
+	RUN_TEST_CASE(test_clean, cache_clean_addrPartiallyInScope);
+	RUN_TEST_CASE(test_clean, cache_clean_lines);
 }
 
 TEST_GROUP(test_callback_err);
@@ -1052,6 +1191,31 @@ TEST(test_callback_err, cache_flushCallbackErr)
 	TEST_ASSERT_EQUAL_INT(-EIO, ret);
 }
 
+TEST(test_callback_err, cache_cleanCallbackErr)
+{
+	int ret;
+	ssize_t writeCount;
+	uint64_t addr = LIBCACHE_ADDR_DUMMY;
+	cachectx_t *cache;
+	char *buffer;
+	size_t count = 213 * sizeof(char);
+
+	buffer = "^&%$^*&^%*&(&*()*(*)_()*^&%#@$^$^%%$^$%^@%$^%#@$^^$#%^$#&$&$%&$#&$#&$%&^%^^@!!!!!@%$%#^#$%^$#%^&$#&^*$(^*&^)_)_(++(_)_(*)(&^%^*%^$#%$@#$@!# @!$#$#%$ $#%##$^$#%^#$$!@!*!!~~~!@#@$$_#@_+$ 4#$%#$%#%#$%^^#$^$#^#$^%@#$$";
+
+	ops.writeCb = test_writeCbErr;
+	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_LINE_SIZE, LIBCACHE_LINES_CNT, &ops);
+	TEST_ASSERT_NOT_NULL(cache);
+
+	writeCount = cache_write(cache, addr, buffer, count, LIBCACHE_WRITE_BACK);
+	TEST_ASSERT_EQUAL_INT(count, writeCount);
+
+	ret = cache_clean(cache, addr, addr + 4 * LIBCACHE_LINE_SIZE);
+	TEST_ASSERT_EQUAL_INT(-EIO, ret);
+
+	ret = cache_deinit(cache);
+	TEST_ASSERT_EQUAL_INT(-EIO, ret);
+}
+
 TEST_GROUP_RUNNER(test_callback_err)
 {
 	RUN_TEST_CASE(test_callback_err, cache_write_writeCallbackErr);
@@ -1060,6 +1224,8 @@ TEST_GROUP_RUNNER(test_callback_err)
 	RUN_TEST_CASE(test_callback_err, cache_read_readCallbackErr);
 
 	RUN_TEST_CASE(test_callback_err, cache_flushCallbackErr);
+
+	RUN_TEST_CASE(test_callback_err, cache_cleanCallbackErr);
 }
 
 TEST_GROUP(test_integers);
@@ -1157,6 +1323,7 @@ void runner(void)
 		RUN_TEST_GROUP(test_threads);
 		RUN_TEST_GROUP(test_inv);
 		RUN_TEST_GROUP(test_flush);
+		RUN_TEST_GROUP(test_clean);
 		RUN_TEST_GROUP(test_callback_err);
 
 		ret = close(srcMem);
