@@ -12,7 +12,7 @@ LOCAL_SRCS := common.c
 DEPS := unity
 
 TEST_LIBS :=
-ifeq ("$(TARGET)","host-generic-pc")
+ifeq ("$(TARGET_FAMILY)-$(TARGET_SUBFAMILY)","host-generic")
   TEST_LIBS += host-flash libmeterfs libphoenix
   LOCAL_SRCS += file_pc.c
 else
