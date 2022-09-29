@@ -33,6 +33,7 @@ typedef struct {
 	void *buffer;
 	size_t count;
 	int policy;
+	ssize_t actualCount;
 } test_write_args_t;
 
 
@@ -41,6 +42,7 @@ typedef struct {
 	uint64_t addr;
 	void *buffer;
 	size_t count;
+	ssize_t actualCount;
 } test_read_args_t;
 
 

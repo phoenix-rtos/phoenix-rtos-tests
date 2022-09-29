@@ -323,6 +323,7 @@ TEST(test_read_write, cache_read_addrOutOfScope)
 	TEST_ASSERT_NOT_NULL(cache);
 
 	buffer = malloc(count);
+	TEST_ASSERT_NOT_NULL(buffer);
 	readCount = cache_read(cache, LIBCACHE_SRC_MEM_SIZE + 10, buffer, count);
 	TEST_ASSERT_EQUAL_INT(-EINVAL, readCount);
 
@@ -349,6 +350,7 @@ TEST(test_read_write, cache_read_addrPartiallyInScope)
 	TEST_ASSERT_EQUAL_INT(10 * sizeof(char), writeCount);
 
 	bufferR = malloc(count);
+	TEST_ASSERT_NOT_NULL(bufferR);
 	readCount = cache_read(cache, LIBCACHE_SRC_MEM_SIZE - 5, bufferR, count);
 	TEST_ASSERT_EQUAL_INT(5 * sizeof(char), readCount);
 
@@ -504,9 +506,8 @@ TEST_TEAR_DOWN(test_threads)
 TEST(test_threads, thread_write)
 {
 	int ret;
-	void *temp = NULL;
 	cachectx_t *cache = NULL;
-	ssize_t readCount = -1, *buff;
+	ssize_t readCount = -1;
 	pthread_t thread1, thread2, thread3, thread4;
 	test_write_args_t args1, args2, args3, args4;
 	char *actual1, *actual2, *actual3, *actual4;
@@ -536,29 +537,21 @@ TEST(test_threads, thread_write)
 	ret = pthread_create(&thread4, NULL, &test_cache_write, (void *)&args4);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
-	ret = pthread_join(thread1, &temp);
+	ret = pthread_join(thread1, NULL);
 	TEST_ASSERT_EQUAL_INT(0, ret);
-	buff = (ssize_t *)temp;
-	TEST_ASSERT_EQUAL_INT(args1.count, *buff);
-	free(temp);
+	TEST_ASSERT_EQUAL_INT(args1.count, args1.actualCount);
 
-	ret = pthread_join(thread2, &temp);
+	ret = pthread_join(thread2, NULL);
 	TEST_ASSERT_EQUAL_INT(0, ret);
-	buff = (ssize_t *)temp;
-	TEST_ASSERT_EQUAL_INT(args2.count, *buff);
-	free(temp);
+	TEST_ASSERT_EQUAL_INT(args2.count, args2.actualCount);
 
-	ret = pthread_join(thread3, &temp);
+	ret = pthread_join(thread3, NULL);
 	TEST_ASSERT_EQUAL_INT(0, ret);
-	buff = (ssize_t *)temp;
-	TEST_ASSERT_EQUAL_INT(args3.count, *buff);
-	free(temp);
+	TEST_ASSERT_EQUAL_INT(args3.count, args3.actualCount);
 
-	ret = pthread_join(thread4, &temp);
+	ret = pthread_join(thread4, NULL);
 	TEST_ASSERT_EQUAL_INT(0, ret);
-	buff = (ssize_t *)temp;
-	TEST_ASSERT_EQUAL_INT(args4.count, *buff);
-	free(temp);
+	TEST_ASSERT_EQUAL_INT(args4.count, args4.actualCount);
 
 	actual1 = malloc(count1);
 	TEST_ASSERT_NOT_NULL(actual1);
@@ -611,9 +604,8 @@ TEST(test_threads, thread_write)
 
 TEST(test_threads, thread_read)
 {
-	ssize_t readCount = -1, *buff;
+	ssize_t readCount = -1;
 	int ret1, ret2;
-	void *temp = NULL;
 	char *buffer1, *buffer2, *buffer3, *buffer4;
 	pthread_t thread1, thread2;
 	test_read_args_t args1, args2;
@@ -623,9 +615,13 @@ TEST(test_threads, thread_read)
 	size_t count2 = 10 * sizeof(char);
 
 	buffer1 = malloc(count1 * sizeof(char));
+	TEST_ASSERT_NOT_NULL(buffer1);
 	buffer2 = malloc(count2 * sizeof(char));
+	TEST_ASSERT_NOT_NULL(buffer2);
 	buffer3 = malloc(count1 * sizeof(char));
+	TEST_ASSERT_NOT_NULL(buffer3);
 	buffer4 = malloc(count2 * sizeof(char));
+	TEST_ASSERT_NOT_NULL(buffer4);
 
 	cache = cache_init(LIBCACHE_SRC_MEM_SIZE, LIBCACHE_LINE_SIZE, LIBCACHE_LINES_CNT, &ops);
 	TEST_ASSERT_NOT_NULL(cache);
@@ -638,17 +634,13 @@ TEST(test_threads, thread_read)
 	ret2 = pthread_create(&thread2, NULL, &test_cache_read, (void *)&args2);
 	TEST_ASSERT_EQUAL_INT(0, ret2);
 
-	ret1 = pthread_join(thread1, &temp);
+	ret1 = pthread_join(thread1, NULL);
 	TEST_ASSERT_EQUAL_INT(0, ret1);
-	buff = (ssize_t *)temp;
-	TEST_ASSERT_EQUAL_INT(args1.count, *buff);
-	free(temp);
+	TEST_ASSERT_EQUAL_INT(args1.count, args1.actualCount);
 
-	ret2 = pthread_join(thread2, &temp);
+	ret2 = pthread_join(thread2, NULL);
 	TEST_ASSERT_EQUAL_INT(0, ret2);
-	buff = (ssize_t *)temp;
-	TEST_ASSERT_EQUAL_INT(args2.count, *buff);
-	free(temp);
+	TEST_ASSERT_EQUAL_INT(args2.count, args2.actualCount);
 
 	ret1 = cache_deinit(cache);
 	TEST_ASSERT_EQUAL_INT(EOK, ret1);
@@ -747,6 +739,7 @@ TEST(test_flush, cache_flush_addrPartiallyInScope)
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	buffer2 = malloc(count);
+	TEST_ASSERT_NOT_NULL(buffer2);
 	readCount = test_readCb(begAddr, buffer2, count, NULL);
 	TEST_ASSERT_EQUAL_INT(count, readCount);
 
@@ -1157,6 +1150,7 @@ TEST(test_callback_err, cache_read_readCallbackErr)
 	TEST_ASSERT_NOT_NULL(cache);
 
 	bufferR = malloc(count);
+	TEST_ASSERT_NOT_NULL(bufferR);
 	readCount = cache_read(cache, addr, bufferR, count);
 	TEST_ASSERT_EQUAL_INT(-EIO, readCount);
 
