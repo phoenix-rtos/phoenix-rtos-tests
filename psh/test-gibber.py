@@ -20,7 +20,10 @@ EXPECTED = 'Unknown command!'
 
 def assert_printable(p):
     chars = list(set(string.printable) - set(string.whitespace))
+    # Using sets mixes the order of characters, so without sorting '/' may be placed as first (we want to avoid it)
+    chars.sort()
     chars = ''.join(chars) + ' '
+
     msg = 'Wrong output when sending all printable characters'
 
     psh.assert_cmd(p, chars, EXPECTED, msg)
