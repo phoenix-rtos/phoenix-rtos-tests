@@ -159,34 +159,26 @@ class Gdb(ProcessHandler):
     """Handler for gdb-multiarch process"""
 
     def __init__(self, target, file, script, cwd=None):
-        args = [f'{file}', '-x', f'{script}']
+        args = [f'{file}', '-x', f'{script}', '-batch']
         super().__init__(target, 'gdb-multiarch', args, cwd)
         self.jlink_device = ''
         if 'zynq7000' in target:
             self.jlink_device = 'Zynq 7020'
+        else:
+            raise GdbError('JLink device not set!')
 
     def read_output(self):
         if is_github_actions():
             logging.info('::group::Run gdb\n')
 
-        # When using docker, the additional newline may be needed
-        idx = self.proc.expect_exact(["(gdb) ", "Type <RET> for more"])
-
-        if idx == 1:
-            logging.info(self.proc.before)
-            self.proc.send('\r\n')
-            self.proc.expect_exact("(gdb) ")
-
-        self.proc.send('c\r\n')
-
+        self.proc.expect_exact(pexpect.EOF)
         logging.info(f'{self.proc.before}\n')
-        self.proc.close()
 
         if is_github_actions():
             logging.info('::endgroup::\n')
 
     def run(self):
-        with GdbServer(self.jlink_device) as gdbserv:
+        with JLinkGdbServer(self.jlink_device) as gdbserv:
             # Use pexpect.spawn to run a process as PTY, so it will flush on a new line
             self.proc = pexpect.spawn(
                 self.progname,
@@ -196,11 +188,11 @@ class Gdb(ProcessHandler):
                 timeout=8
             )
 
-            try:
-                self.read_output()
-            except pexpect.TIMEOUT:
-                error = 'Prompt not seen after executing loading script!'
-                raise GdbError(error, gdb_output=self.proc.before, gdbserv_output=gdbserv.output())
+            exit_status = self.proc.wait()
+            self.read_output()
+
+            if exit_status != 0:
+                raise GdbError('Gdb process failed!', gdb_output=self.proc.before, gdbserv_output=gdbserv.output())
 
             self.proc.close()
 
@@ -218,7 +210,6 @@ class Phoenixd(BackgroundProcessHandler):
         self,
         target,
         port,
-        baudrate=460800,
         dir='.',
         cwd=None,
     ):
@@ -231,7 +222,7 @@ class Phoenixd(BackgroundProcessHandler):
         super().__init__()
 
     def _reader(self):
-        """ This method is intended to be run as a separated thread.
+        """ This method is intended to be run as a separate thread.
         It searches for a line stating that message dispatcher has started
         and then browses phoenixd output that may be needed for proper working """
 
@@ -261,7 +252,6 @@ class Phoenixd(BackgroundProcessHandler):
         self.proc = pexpect.spawn(
             'phoenixd',
             ['-p', self.port,
-             '-b', str(self.baudrate),
              '-s', self.dir],
             cwd=self.cwd,
             encoding='ascii'
@@ -291,8 +281,8 @@ class Phoenixd(BackgroundProcessHandler):
         self.kill()
 
 
-class GdbServer(BackgroundProcessHandler):
-    """ Handler for JlinkGdbServer process"""
+class JLinkGdbServer(BackgroundProcessHandler):
+    """ Handler for JLinkGdbServer process"""
 
     def __init__(
         self,
@@ -302,7 +292,7 @@ class GdbServer(BackgroundProcessHandler):
         super().__init__()
 
     def _reader(self):
-        """ This method is intended to be run as a separated thread. It reads output of proc
+        """ This method is intended to be run as a separate thread. It reads output of proc
             line by line and saves it in the output_buffer."""
 
         while True:

@@ -57,7 +57,8 @@ class ZYNQ7000ZedboardRunner(DeviceRunner):
 
     def _restart_by_poweroff(self):
         self.power_gpio.low()
-        time.sleep(0.050)
+        # optimal power off time to prevent sustaining chips, e.g. flash memory, related to #540 issue
+        time.sleep(0.750)
         self.power_gpio.high()
         time.sleep(0.050)
 
