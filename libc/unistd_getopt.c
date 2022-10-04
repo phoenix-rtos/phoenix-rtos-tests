@@ -29,6 +29,10 @@
 #define ABORT       16
 
 
+/* aflag/bflag indicates, whether a/b option is set
+   cvalue is the value get from c parameter
+   nonopts is the count of nonoption arguments */
+
 struct getopt_t {
 	int aflag;
 	int bflag;
@@ -238,7 +242,7 @@ TEST(unistd_getopt, getopt_endofargs_doubledash)
 	TEST_ASSERT_EQUAL_INT(1, ret.aflag);
 	TEST_ASSERT_EQUAL_INT(0, ret.bflag);
 	TEST_ASSERT_NULL(ret.cvalue);
-	TEST_ASSERT_EQUAL_INT(1, ret.nonopts);
+	TEST_ASSERT_EQUAL_INT(2, ret.nonopts);
 }
 
 
