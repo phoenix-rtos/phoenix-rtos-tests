@@ -160,17 +160,18 @@ class PloTalker:
         exec = '-x' if exec else ''
         self.cmd(f'app {device} {exec} {file} {imap} {dmap}', timeout=30)
 
-    def copy(self, src, src_obj, dst, dst_obj, src_size='', dst_size=''):
+    def copy(self, src, src_obj, dst, dst_obj, src_size='', dst_size='', timeout=-1):
         logging.info('Copying the system image, please wait...\n')
-        self.cmd(f'copy {src} {src_obj} {src_size} {dst} {dst_obj} {dst_size}', timeout=140)
+        self.cmd(f'copy {src} {src_obj} {src_size} {dst} {dst_obj} {dst_size}', timeout=timeout)
 
-    def copy_file2mem(self, src, file, dst='flash1', off=0, size=0):
+    def copy_file2mem(self, src, file, dst='flash1', off=0, size=0, timeout=-1):
         self.copy(
             src=src,
             src_obj=file,
             dst=dst,
             dst_obj=off,
-            dst_size=size
+            dst_size=size,
+            timeout=timeout
         )
 
     def go(self):
@@ -215,7 +216,7 @@ class Runner(ABC):
 class DeviceRunner(Runner):
     """This class provides interface to run tests on hardware targets using serial port"""
 
-    status_color = {Runner.BUSY: 'blue', Runner.SUCCESS: 'green', Runner.FAIL: 'red'}
+    STATUS_COLOR = {Runner.BUSY: 'blue', Runner.SUCCESS: 'green', Runner.FAIL: 'red'}
 
     def __init__(self, target, serial, is_rpi_host, log=False):
         if is_rpi_host:
@@ -250,10 +251,10 @@ class DeviceRunner(Runner):
     def set_status(self, status):
         super().set_status(status)
         if self.is_rpi_host:
-            if status in self.status_color:
-                self.set_led(self.status_color[status])
+            if status in self.STATUS_COLOR:
+                self._set_led(self.STATUS_COLOR[status])
 
-    def set_led(self, color):
+    def _set_led(self, color):
         """Turn on the specified RGB LED's color."""
         if color in self.leds:
             for led_gpio in self.leds.values():

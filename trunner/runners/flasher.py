@@ -20,17 +20,18 @@ from trunner.config import PHRTOS_PROJECT_DIR
 class Flasher(ABC):
     """Common interface for flashing the system image"""
 
-    def __init__(self, target, serial_port, phoenixd_port, flash_bank, logpath):
+    def __init__(self, target, serial_port, phoenixd_port, flash_bank, logpath, copy_timeout):
         self.target = target
         self.serial_port = serial_port
         self.phoenixd_port = phoenixd_port
         self.flash_bank = flash_bank
         self.logpath = logpath
+        self.copy_timeout = copy_timeout
 
-    def flash(self, runner_reboot):
+    def flash(self, runner_reboot_fn):
         phd = None
         try:
-            runner_reboot(flashing_mode=True)
+            runner_reboot_fn(flashing_mode=True)
             with PloTalker(self.serial_port) as plo:
                 if self.logpath:
                     plo.plo.logfile = open(self.logpath, "a")
@@ -42,9 +43,10 @@ class Flasher(ABC):
                         src='usb0',
                         file='phoenix.disk',
                         dst=f'flash{self.flash_bank}',
+                        timeout=self.copy_timeout
                     )
 
-            runner_reboot(flashing_mode=False)
+            runner_reboot_fn(flashing_mode=False)
         except (TIMEOUT, EOF, PloError, PhoenixdError, GdbError, RebootError) as exc:
             exception = f'{exc}\n'
 
@@ -67,7 +69,7 @@ class ZYNQ7000JtagFlasher(Flasher):
     GDB_SCRIPT = f'{PHRTOS_PROJECT_DIR}/phoenix-rtos-build/scripts/upload-zynq7000.gdb'
 
     def __init__(self, target, serial_port, phoenixd_port, flash_bank, logpath):
-        super().__init__(target, serial_port, phoenixd_port, flash_bank, logpath)
+        super().__init__(target, serial_port, phoenixd_port, flash_bank, logpath, copy_timeout=140)
 
     def upload_plo(self, plo):
         Gdb(self.target, self.PLO_FILE, script=self.GDB_SCRIPT).run()
@@ -82,7 +84,7 @@ class NXPSerialFlasher(Flasher):
     SDP = 'plo-ram.sdp'
 
     def __init__(self, target, serial_port, phoenixd_port, flash_bank, logpath):
-        super().__init__(target, serial_port, phoenixd_port, flash_bank, logpath)
+        super().__init__(target, serial_port, phoenixd_port, flash_bank, logpath, copy_timeout=60)
 
     def upload_plo(self, plo):
         Psu(self.target, script=self.SDP).run()
