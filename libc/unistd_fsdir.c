@@ -30,20 +30,20 @@
 #define DIRNAME "unistd_fsdir_directory"
 
 static FILE *filep;
-static char buf[50];
+static char twd[PATH_MAX];
+static char buf[PATH_MAX];
 static char toolongpath[PATH_MAX + 16];
 
 TEST_GROUP(unistd_fsdir);
 
 TEST_SETUP(unistd_fsdir)
 {
-	/* change to and assert we are in root */
-	TEST_ASSERT_EQUAL_INT(0, chdir("/"));
-	TEST_ASSERT_NOT_NULL(getcwd(buf, sizeof(buf)));
-	TEST_ASSERT_EQUAL_STRING("/", buf);
-
-	/* clear buffer */
+	/* clear twd and buffer */
+	memset(twd, 0, sizeof(twd));
 	memset(buf, 0, sizeof(buf));
+
+	/* save the test working diectory */
+	TEST_ASSERT_NOT_NULL(getcwd(twd, sizeof(buf)));
 
 	/* clear/create file */
 	filep = fopen(FNAME, "w");
@@ -58,12 +58,16 @@ TEST_SETUP(unistd_fsdir)
 
 TEST_TEAR_DOWN(unistd_fsdir)
 {
+	TEST_ASSERT_NOT_NULL(getcwd(twd, sizeof(buf)));
 	TEST_ASSERT_EQUAL_INT(0, remove(FNAME));
 }
 
 
 TEST(unistd_fsdir, getcwd)
 {
+	/* assumption that chdir("/") works fine when returning 0 */
+	TEST_ASSERT_EQUAL_INT(0, chdir("/"));
+
 	TEST_ASSERT_NOT_NULL(getcwd(buf, sizeof(buf)));
 	TEST_ASSERT_EQUAL_STRING("/", buf);
 
@@ -72,44 +76,57 @@ TEST(unistd_fsdir, getcwd)
 
 	TEST_ASSERT_NULL(getcwd(buf, 1));
 	TEST_ASSERT_EQUAL_INT(ERANGE, errno);
+
+	/* go back to the test working directory */
+	TEST_ASSERT_EQUAL_INT(0, chdir(twd));
 }
 
 
 TEST(unistd_fsdir, chdir_abs)
 {
-	/* test chdir to some directory */
-	TEST_ASSERT_EQUAL_INT(0, chdir("/dev"));
-	TEST_ASSERT_NOT_NULL(getcwd(buf, sizeof(buf)));
-	TEST_ASSERT_EQUAL_STRING("/dev", buf);
-
-	/* test chdir to cwd */
-	TEST_ASSERT_EQUAL_INT(0, chdir("/dev"));
-	TEST_ASSERT_NOT_NULL(getcwd(buf, sizeof(buf)));
-	TEST_ASSERT_EQUAL_STRING("/dev", buf);
-
-	/* test chdir back to root */
+	/* test chdir to root */
 	TEST_ASSERT_EQUAL_INT(0, chdir("/"));
 	TEST_ASSERT_NOT_NULL(getcwd(buf, sizeof(buf)));
 	TEST_ASSERT_EQUAL_STRING("/", buf);
+
+	/* test chdir back to test working directory */
+	TEST_ASSERT_EQUAL_INT(0, chdir(twd));
+	TEST_ASSERT_NOT_NULL(getcwd(buf, sizeof(buf)));
+	TEST_ASSERT_EQUAL_STRING(twd, buf);
 }
 
 
 TEST(unistd_fsdir, chdir_rel)
 {
+	char absPath[PATH_MAX];
+	int slen;
+
+	TEST_ASSERT_NOT_NULL(strcpy(absPath, twd));
+
+	slen = strlen(absPath);
+	if (absPath[slen - 1] != '/') {
+		TEST_ASSERT_NOT_NULL(strcat(absPath, "/"));
+	}
+	TEST_ASSERT_NOT_NULL(strcat(absPath, DIRNAME));
+
+	TEST_ASSERT_EQUAL_INT(0, mkdir(DIRNAME, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH));
+
 	/* test chdir to some directory */
-	TEST_ASSERT_EQUAL_INT(0, chdir("dev"));
+	TEST_ASSERT_EQUAL_INT(0, chdir(DIRNAME));
 	TEST_ASSERT_NOT_NULL(getcwd(buf, sizeof(buf)));
-	TEST_ASSERT_EQUAL_STRING("/dev", buf);
+	TEST_ASSERT_EQUAL_STRING(absPath, buf);
 
 	/* test chdir to cwd */
 	TEST_ASSERT_EQUAL_INT(0, chdir("."));
 	TEST_ASSERT_NOT_NULL(getcwd(buf, sizeof(buf)));
-	TEST_ASSERT_EQUAL_STRING("/dev", buf);
+	TEST_ASSERT_EQUAL_STRING(absPath, buf);
 
 	/* test chdir back to root */
 	TEST_ASSERT_EQUAL_INT(0, chdir(".."));
 	TEST_ASSERT_NOT_NULL(getcwd(buf, sizeof(buf)));
-	TEST_ASSERT_EQUAL_STRING("/", buf);
+	TEST_ASSERT_EQUAL_STRING(twd, buf);
+
+	TEST_ASSERT_EQUAL_INT(0, rmdir(DIRNAME));
 }
 
 
@@ -124,7 +141,7 @@ TEST(unistd_fsdir, chdir_toolongpath)
 TEST(unistd_fsdir, chdir_nonexistent)
 {
 	/* test chdir to nonexisting directory */
-	TEST_ASSERT_EQUAL_INT(-1, chdir("/not_existing_directory"));
+	TEST_ASSERT_EQUAL_INT(-1, chdir("not_existing_directory"));
 	TEST_ASSERT_EQUAL_INT(ENOENT, errno);
 }
 
@@ -156,7 +173,7 @@ TEST(unistd_fsdir, rmdir_empty)
 TEST(unistd_fsdir, rmdir_nonexistent)
 {
 	/* test rmdir on nonexisting directory*/
-	TEST_ASSERT_EQUAL_INT(-1, rmdir("/not_existing_directory"));
+	TEST_ASSERT_EQUAL_INT(-1, rmdir("not_existing_directory"));
 	TEST_ASSERT_EQUAL_INT(ENOENT, errno);
 }
 
@@ -193,7 +210,7 @@ TEST(unistd_fsdir, rmdir_notempty)
 	filep = fopen(FNAME, "w");
 	TEST_ASSERT_NOT_NULL(filep);
 	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
-	TEST_ASSERT_EQUAL_INT(0, chdir("/"));
+	TEST_ASSERT_EQUAL_INT(0, chdir(".."));
 
 	/* test removing not empty directory */
 	TEST_ASSERT_EQUAL_INT(-1, rmdir(DIRNAME));
@@ -202,7 +219,7 @@ TEST(unistd_fsdir, rmdir_notempty)
 	/* cleanup */
 	TEST_ASSERT_EQUAL_INT(0, chdir(DIRNAME));
 	TEST_ASSERT_EQUAL_INT(0, remove(FNAME));
-	TEST_ASSERT_EQUAL_INT(0, chdir("/"));
+	TEST_ASSERT_EQUAL_INT(0, chdir(".."));
 	TEST_ASSERT_EQUAL_INT(0, rmdir(DIRNAME));
 }
 
