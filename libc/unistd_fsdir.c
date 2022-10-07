@@ -30,7 +30,7 @@
 #define DIRNAME "unistd_fsdir_directory"
 
 static FILE *filep;
-static char twd[PATH_MAX];
+static char testWorkDir[PATH_MAX];
 static char buf[PATH_MAX];
 static char toolongpath[PATH_MAX + 16];
 
@@ -38,12 +38,11 @@ TEST_GROUP(unistd_fsdir);
 
 TEST_SETUP(unistd_fsdir)
 {
-	/* clear twd and buffer */
-	memset(twd, 0, sizeof(twd));
+	/* clear buffer */
 	memset(buf, 0, sizeof(buf));
 
 	/* save the test working diectory */
-	TEST_ASSERT_NOT_NULL(getcwd(twd, sizeof(buf)));
+	TEST_ASSERT_NOT_NULL(getcwd(testWorkDir, sizeof(testWorkDir)));
 
 	/* clear/create file */
 	filep = fopen(FNAME, "w");
@@ -58,7 +57,8 @@ TEST_SETUP(unistd_fsdir)
 
 TEST_TEAR_DOWN(unistd_fsdir)
 {
-	TEST_ASSERT_NOT_NULL(getcwd(twd, sizeof(buf)));
+	/* go back to the test working directory */
+	TEST_ASSERT_EQUAL_INT(0, chdir(testWorkDir));
 	TEST_ASSERT_EQUAL_INT(0, remove(FNAME));
 }
 
@@ -76,38 +76,52 @@ TEST(unistd_fsdir, getcwd)
 
 	TEST_ASSERT_NULL(getcwd(buf, 1));
 	TEST_ASSERT_EQUAL_INT(ERANGE, errno);
-
-	/* go back to the test working directory */
-	TEST_ASSERT_EQUAL_INT(0, chdir(twd));
 }
 
 
-TEST(unistd_fsdir, chdir_abs)
+TEST(unistd_fsdir, chdir_absroot)
 {
 	/* test chdir to root */
 	TEST_ASSERT_EQUAL_INT(0, chdir("/"));
 	TEST_ASSERT_NOT_NULL(getcwd(buf, sizeof(buf)));
 	TEST_ASSERT_EQUAL_STRING("/", buf);
 
-	/* test chdir back to test working directory */
-	TEST_ASSERT_EQUAL_INT(0, chdir(twd));
+	/* go back to the test working directory and assert it */
+	TEST_ASSERT_EQUAL_INT(0, chdir(testWorkDir));
 	TEST_ASSERT_NOT_NULL(getcwd(buf, sizeof(buf)));
-	TEST_ASSERT_EQUAL_STRING(twd, buf);
+	TEST_ASSERT_EQUAL_STRING(testWorkDir, buf);
+}
+
+
+TEST(unistd_fsdir, chdir_absdev)
+{
+	/* test chdir to some directory */
+	TEST_ASSERT_EQUAL_INT(0, chdir("/dev"));
+	TEST_ASSERT_NOT_NULL(getcwd(buf, sizeof(buf)));
+	TEST_ASSERT_EQUAL_STRING("/dev", buf);
+
+	/* go back to the test working directory and assert it */
+	TEST_ASSERT_EQUAL_INT(0, chdir(testWorkDir));
+	TEST_ASSERT_NOT_NULL(getcwd(buf, sizeof(buf)));
+	TEST_ASSERT_EQUAL_STRING(testWorkDir, buf);
 }
 
 
 TEST(unistd_fsdir, chdir_rel)
 {
 	char absPath[PATH_MAX];
-	int slen;
+	size_t slen, free;
 
-	TEST_ASSERT_NOT_NULL(strcpy(absPath, twd));
+	strncpy(absPath, testWorkDir, sizeof(absPath));
 
 	slen = strlen(absPath);
+	TEST_ASSERT_GREATER_OR_EQUAL(slen + (size_t)sizeof(DIRNAME) + 2, (size_t)sizeof(absPath));
+
 	if (absPath[slen - 1] != '/') {
-		TEST_ASSERT_NOT_NULL(strcat(absPath, "/"));
+		absPath[slen++] = '/';
+		absPath[slen] = '\0';
 	}
-	TEST_ASSERT_NOT_NULL(strcat(absPath, DIRNAME));
+	strcat(absPath, DIRNAME);
 
 	TEST_ASSERT_EQUAL_INT(0, mkdir(DIRNAME, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH));
 
@@ -121,10 +135,10 @@ TEST(unistd_fsdir, chdir_rel)
 	TEST_ASSERT_NOT_NULL(getcwd(buf, sizeof(buf)));
 	TEST_ASSERT_EQUAL_STRING(absPath, buf);
 
-	/* test chdir back to root */
+	/* test chdir back to working directory */
 	TEST_ASSERT_EQUAL_INT(0, chdir(".."));
 	TEST_ASSERT_NOT_NULL(getcwd(buf, sizeof(buf)));
-	TEST_ASSERT_EQUAL_STRING(twd, buf);
+	TEST_ASSERT_EQUAL_STRING(testWorkDir, buf);
 
 	TEST_ASSERT_EQUAL_INT(0, rmdir(DIRNAME));
 }
@@ -224,23 +238,21 @@ TEST(unistd_fsdir, rmdir_notempty)
 }
 
 
-TEST(unistd_fsdir, fchdir)
+IGNORE_TEST(unistd_fsdir, fchdir)
 {
 	/*
 		Declared but unimplemented in libphoenix
 		https://github.com/phoenix-rtos/phoenix-rtos-project/issues/280
 	*/
-	TEST_IGNORE();
 }
 
 
-TEST(unistd_fsdir, fchown)
+IGNORE_TEST(unistd_fsdir, fchown)
 {
 	/*
 		Unimplemented in libphoenix
 		https://github.com/phoenix-rtos/phoenix-rtos-project/issues/280
 	*/
-	TEST_IGNORE();
 }
 
 
@@ -248,7 +260,8 @@ TEST_GROUP_RUNNER(unistd_fsdir)
 {
 	RUN_TEST_CASE(unistd_fsdir, getcwd);
 
-	RUN_TEST_CASE(unistd_fsdir, chdir_abs)
+	RUN_TEST_CASE(unistd_fsdir, chdir_absroot)
+	RUN_TEST_CASE(unistd_fsdir, chdir_absdev)
 	RUN_TEST_CASE(unistd_fsdir, chdir_rel)
 	RUN_TEST_CASE(unistd_fsdir, chdir_toolongpath);
 	RUN_TEST_CASE(unistd_fsdir, chdir_nonexistent);
