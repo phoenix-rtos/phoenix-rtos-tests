@@ -26,10 +26,11 @@
 #include "common.h"
 
 
+#define FNAME   "unistd_fsdir_file"
+#define DIRNAME "unistd_fsdir_directory"
+
 static FILE *filep;
 static char buf[50];
-static const char filename[] = "unistd_fsdir_file";
-static const char directoryname[] = "unistd_fsdir_directory";
 static char toolongpath[PATH_MAX + 16];
 
 TEST_GROUP(unistd_fsdir);
@@ -45,7 +46,7 @@ TEST_SETUP(unistd_fsdir)
 	memset(buf, 0, sizeof(buf));
 
 	/* clear/create file */
-	filep = fopen(filename, "w");
+	filep = fopen(FNAME, "w");
 	if (filep != NULL)
 		fclose(filep);
 
@@ -57,7 +58,7 @@ TEST_SETUP(unistd_fsdir)
 
 TEST_TEAR_DOWN(unistd_fsdir)
 {
-	TEST_ASSERT_EQUAL_INT(0, remove(filename));
+	TEST_ASSERT_EQUAL_INT(0, remove(FNAME));
 }
 
 
@@ -139,7 +140,7 @@ TEST(unistd_fsdir, chdir_emptystring)
 TEST(unistd_fsdir, chdir_tofile)
 {
 	/* test chdir to file */
-	TEST_ASSERT_EQUAL_INT(-1, chdir(filename));
+	TEST_ASSERT_EQUAL_INT(-1, chdir(FNAME));
 	TEST_ASSERT_EQUAL_INT(ENOTDIR, errno);
 }
 
@@ -147,8 +148,8 @@ TEST(unistd_fsdir, chdir_tofile)
 TEST(unistd_fsdir, rmdir_empty)
 {
 	/* test removing empty directory */
-	TEST_ASSERT_EQUAL_INT(0, mkdir(directoryname, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH));
-	TEST_ASSERT_EQUAL_INT(0, rmdir(directoryname));
+	TEST_ASSERT_EQUAL_INT(0, mkdir(DIRNAME, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH));
+	TEST_ASSERT_EQUAL_INT(0, rmdir(DIRNAME));
 }
 
 
@@ -179,7 +180,7 @@ TEST(unistd_fsdir, rmdir_emptystring)
 TEST(unistd_fsdir, rmdir_file)
 {
 	/* test rmdir on file */
-	TEST_ASSERT_EQUAL_INT(-1, rmdir(filename));
+	TEST_ASSERT_EQUAL_INT(-1, rmdir(FNAME));
 	TEST_ASSERT_EQUAL_INT(ENOTDIR, errno);
 }
 
@@ -187,22 +188,22 @@ TEST(unistd_fsdir, rmdir_file)
 TEST(unistd_fsdir, rmdir_notempty)
 {
 	/* prepare not empty directory */
-	TEST_ASSERT_EQUAL_INT(0, mkdir(directoryname, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH));
-	TEST_ASSERT_EQUAL_INT(0, chdir(directoryname));
-	filep = fopen(filename, "w");
+	TEST_ASSERT_EQUAL_INT(0, mkdir(DIRNAME, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH));
+	TEST_ASSERT_EQUAL_INT(0, chdir(DIRNAME));
+	filep = fopen(FNAME, "w");
 	TEST_ASSERT_NOT_NULL(filep);
 	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
 	TEST_ASSERT_EQUAL_INT(0, chdir("/"));
 
 	/* test removing not empty directory */
-	TEST_ASSERT_EQUAL_INT(-1, rmdir(directoryname));
+	TEST_ASSERT_EQUAL_INT(-1, rmdir(DIRNAME));
 	TEST_ASSERT_EQUAL_INT(ENOTEMPTY, errno);
 
 	/* cleanup */
-	TEST_ASSERT_EQUAL_INT(0, chdir(directoryname));
-	TEST_ASSERT_EQUAL_INT(0, remove(filename));
+	TEST_ASSERT_EQUAL_INT(0, chdir(DIRNAME));
+	TEST_ASSERT_EQUAL_INT(0, remove(FNAME));
 	TEST_ASSERT_EQUAL_INT(0, chdir("/"));
-	TEST_ASSERT_EQUAL_INT(0, rmdir(directoryname));
+	TEST_ASSERT_EQUAL_INT(0, rmdir(DIRNAME));
 }
 
 
