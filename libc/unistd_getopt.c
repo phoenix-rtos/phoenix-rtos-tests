@@ -6,7 +6,7 @@
  * Testing POSIX compatibility of getopt() unistd.h function
  *
  * Copyright 2021 Phoenix Systems
- * Author: Marek Bialowas
+ * Author: Mateusz Niewiadomski
  *
  * This file is part of Phoenix-RTOS.
  *
