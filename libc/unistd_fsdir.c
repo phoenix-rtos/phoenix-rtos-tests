@@ -6,7 +6,7 @@
  * Testing unistd.h file/fs/directory related functions
  *
  * Copyright 2022 Phoenix Systems
- * Author: 
+ * Author: Mateusz Niewiadomski, Damian Loewnau
  *
  * This file is part of Phoenix-RTOS.
  *
