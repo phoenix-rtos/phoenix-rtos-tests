@@ -41,11 +41,11 @@
 #include <unity_fixture.h>
 
 
-FILE *fd, *fd2;
-char stdpath[] = "stdio_file_test";
-char c, buf[20];
-int filedes;
-char toolongpath[PATH_MAX + 16];
+static FILE *fd, *fd2;
+static char stdpath[] = "stdio_file_test";
+static char c, buf[20];
+static int filedes;
+static char toolongpath[PATH_MAX + 16];
 
 /* 
 Tets group for:
@@ -56,9 +56,6 @@ TEST_GROUP(stdio_fopenfclose);
 
 TEST_SETUP(stdio_fopenfclose)
 {
-	memset(toolongpath, 'a', sizeof(toolongpath));
-	toolongpath[sizeof(toolongpath) - 1] = '\0';
-
 	fd = NULL;
 	fd2 = NULL;
 }
@@ -127,12 +124,16 @@ TEST(stdio_fopenfclose, stdio_fopenfclose_wrongflags)
 	/* open with no flags/wrong flags/null flags */
 	assert_fopen_error(stdpath, "", EINVAL);
 	assert_fopen_error(stdpath, "phoenix-rtos", EINVAL);
-	assert_fopen_error(stdpath, NULL, EINVAL);
+	// FIXME: invalid test, function argument defined as nonnull
+	//assert_fopen_error(stdpath, NULL, EINVAL);
 }
 
 TEST(stdio_fopenfclose, stdio_fopenfclose_toolongname)
 {
 	/* open file with too long name */
+	memset(toolongpath, 'a', sizeof(toolongpath));
+	toolongpath[sizeof(toolongpath) - 1] = '\0';
+
 	assert_fopen_error(toolongpath, "w", ENAMETOOLONG);
 }
 

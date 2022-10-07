@@ -34,12 +34,12 @@ TEST_TEAR_DOWN(wchar_wcscmp)
 TEST(wchar_wcscmp, basic)
 {
 	int i;
-	const wchar_t wstr1[2] = L"a";
-	const wchar_t wstr2[2] = L"b";
-	const wchar_t wstr3[10] = L"1234567890";
-	const wchar_t wstr4[5] = L"20000";
-	const wchar_t wstr5[2] = L"1";
-	const wchar_t wstr6[3] = L"10";
+	const wchar_t wstr1[] = L"a";
+	const wchar_t wstr2[] = L"b";
+	const wchar_t wstr3[] = L"1234567890";
+	const wchar_t wstr4[] = L"20000";
+	const wchar_t wstr5[] = L"1";
+	const wchar_t wstr6[] = L"10";
 	wchar_t wstr7[99] = {
 		L'\0',
 	};

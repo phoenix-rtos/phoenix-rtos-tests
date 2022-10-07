@@ -26,12 +26,11 @@
 #include "common.h"
 
 
-FILE *fd;
-char buf[50];
-const char filename[] = "unistd_fsdir_file";
-const char directoryname[] = "unistd_fsdir_directory";
-int err;
-char toolongpath[PATH_MAX + 16];
+static FILE *filep;
+static char buf[50];
+static const char filename[] = "unistd_fsdir_file";
+static const char directoryname[] = "unistd_fsdir_directory";
+static char toolongpath[PATH_MAX + 16];
 
 TEST_GROUP(unistd_fsdir);
 
@@ -46,8 +45,9 @@ TEST_SETUP(unistd_fsdir)
 	memset(buf, 0, sizeof(buf));
 
 	/* clear/create file */
-	fd = fopen(filename, "w");
-	fclose(fd);
+	filep = fopen(filename, "w");
+	if (filep != NULL)
+		fclose(filep);
 
 	/* set too long path */
 	memset(toolongpath, 'a', sizeof(toolongpath) - 1);
@@ -189,9 +189,9 @@ TEST(unistd_fsdir, rmdir_notempty)
 	/* prepare not empty directory */
 	TEST_ASSERT_EQUAL_INT(0, mkdir(directoryname, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH));
 	TEST_ASSERT_EQUAL_INT(0, chdir(directoryname));
-	fd = fopen(filename, "w");
-	TEST_ASSERT_NOT_NULL(fd);
-	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
+	filep = fopen(filename, "w");
+	TEST_ASSERT_NOT_NULL(filep);
+	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
 	TEST_ASSERT_EQUAL_INT(0, chdir("/"));
 
 	/* test removing not empty directory */

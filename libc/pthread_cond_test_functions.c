@@ -20,6 +20,7 @@
 #include <pthread.h>
 #include <unistd.h>
 
+thread_args_t thread_args;
 
 void *decrement_count_wait(void *args)
 {

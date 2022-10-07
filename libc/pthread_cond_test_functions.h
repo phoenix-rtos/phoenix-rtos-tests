@@ -34,7 +34,7 @@ typedef struct thread_args_t {
 } thread_args_t;
 
 
-thread_args_t thread_args;
+extern thread_args_t thread_args;
 
 
 void *decrement_count_wait(void *args);
