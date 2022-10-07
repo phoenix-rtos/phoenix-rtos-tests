@@ -73,7 +73,11 @@ TEST(resolve_path, canonicalize_abs_simple)
 
 TEST(resolve_path, canonicalize_pwd_simple)
 {
-	/* don't care about current dir */
+	char twd[PATH_MAX];
+
+	/* save the test working diectory */
+	TEST_ASSERT_NOT_NULL(getcwd(twd, sizeof(twd)));
+
 	TEST_ASSERT_EQUAL_INT(0, chdir("/etc"));
 
 	check_and_free_str("/etc", canonicalize_file_name("."));
@@ -85,6 +89,8 @@ TEST(resolve_path, canonicalize_pwd_simple)
 	check_and_free_str("/etc/passwd", canonicalize_file_name("./passwd"));
 
 	check_and_free_str("/etc", canonicalize_file_name("../etc"));
+
+	TEST_ASSERT_EQUAL_INT(0, chdir(twd));
 }
 
 
@@ -116,8 +122,10 @@ TEST(resolve_path, realpath_abs_noalloc)
 TEST(resolve_path, realpath_pwd_noalloc)
 {
 	char result[PATH_MAX];
+	char twd[PATH_MAX];
 
-	/* don't care about current dir */
+	/* save the test working diectory */
+	TEST_ASSERT_NOT_NULL(getcwd(twd, sizeof(twd)));
 	TEST_ASSERT_EQUAL_INT(0, chdir("/etc"));
 
 	TEST_ASSERT_EQUAL_STRING("/etc", realpath(".", result));
@@ -129,6 +137,8 @@ TEST(resolve_path, realpath_pwd_noalloc)
 	TEST_ASSERT_EQUAL_STRING("/etc/passwd", realpath("./passwd", result));
 
 	TEST_ASSERT_EQUAL_STRING("/etc", realpath("../etc", result));
+
+	TEST_ASSERT_EQUAL_INT(0, chdir(twd));
 }
 
 
@@ -199,6 +209,10 @@ TEST(resolve_path, symlink_abs)
 	char path[PATH_MAX] = { 0 };
 	char sympath[PATH_MAX] = { 0 };
 	char buf[PATH_MAX] = { 0 };
+	char twd[PATH_MAX];
+
+	/* save the test working diectory */
+	TEST_ASSERT_NOT_NULL(getcwd(twd, sizeof(twd)));
 
 	strcat(path, prefix);
 	strcat(path, "/");
@@ -237,6 +251,7 @@ TEST(resolve_path, symlink_abs)
 	/* cleanup - WARN: if failed - not reached */
 	unlink(path);
 	unlink(sympath);
+	TEST_ASSERT_EQUAL_INT(0, chdir(twd));
 }
 
 
@@ -246,6 +261,10 @@ TEST(resolve_path, symlink_relative)
 	char sympath[PATH_MAX] = { 0 };
 	char buf[PATH_MAX] = { 0 };
 	char *abspath;
+	char twd[PATH_MAX];
+
+	/* save the test working diectory */
+	TEST_ASSERT_NOT_NULL(getcwd(twd, sizeof(twd)));
 
 	/* CWD = / */
 	TEST_ASSERT_EQUAL_INT(0, chdir("/"));
@@ -290,9 +309,9 @@ TEST(resolve_path, symlink_relative)
 	/* TODO: lstat, stat */
 
 	/* cleanup - WARN: if failed - not reached */
-	TEST_ASSERT_EQUAL_INT(0, chdir("/"));
 	unlink(path);
 	unlink(sympath);
+	TEST_ASSERT_EQUAL_INT(0, chdir(twd));
 }
 
 
@@ -341,6 +360,10 @@ TEST(resolve_path, symlink_dir)
 	char path[PATH_MAX] = { 0 };
 	char sympath[PATH_MAX] = { 0 };
 	char buf[PATH_MAX] = { 0 };
+	char twd[PATH_MAX];
+
+	/* save the test working diectory */
+	TEST_ASSERT_NOT_NULL(getcwd(twd, sizeof(twd)));
 
 	TEST_ASSERT_EQUAL_INT(0, chdir(prefix));
 
@@ -401,12 +424,18 @@ TEST(resolve_path, symlink_dir)
 	/* cleanup - WARN: if failed - not reached */
 	TEST_ASSERT_EQUAL_INT(0, rmdir("real_dir"));
 	TEST_ASSERT_EQUAL_INT(0, unlink(sympath));
+	TEST_ASSERT_EQUAL_INT(0, chdir(twd));
 }
 
 
 /* check if (simple) symlink loop will exit eventually */
 TEST(resolve_path, symlink_loop)
 {
+	char twd[PATH_MAX];
+
+	/* save the test working diectory */
+	TEST_ASSERT_NOT_NULL(getcwd(twd, sizeof(twd)));
+
 	/* CWD = prefix */
 	TEST_ASSERT_EQUAL_INT(0, chdir(prefix));
 
@@ -434,12 +463,18 @@ TEST(resolve_path, symlink_loop)
 	/* cleanup - WARN: if failed - not reached */
 	unlink("symlink1");
 	unlink("symlink2");
+	TEST_ASSERT_EQUAL_INT(0, chdir(twd));
 }
 
 
 /* check if "mv symlink xxx" changes name of the symlink and not the target file */
 TEST(resolve_path, symlink_rename)
 {
+	char twd[PATH_MAX];
+
+	/* save the test working diectory */
+	TEST_ASSERT_NOT_NULL(getcwd(twd, sizeof(twd)));
+
 	/* CWD = prefix */
 	TEST_ASSERT_EQUAL_INT(0, chdir(prefix));
 
@@ -464,6 +499,7 @@ TEST(resolve_path, symlink_rename)
 	/* cleanup - WARN: if failed - not reached */
 	TEST_ASSERT_EQUAL_INT(0, unlink("symlink_new"));
 	TEST_ASSERT_EQUAL_INT(0, unlink("real_file"));
+	TEST_ASSERT_EQUAL_INT(0, chdir(twd));
 }
 
 
