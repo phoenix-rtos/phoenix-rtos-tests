@@ -731,6 +731,8 @@ TEST(stdio_fileop, fileop_remove)
 
 TEST(stdio_fileop, fileop_ferror)
 {
+	char c;
+
 	filep = fopen(STDIO_TEST_FILENAME, "w");
 	TEST_ASSERT_NOT_NULL(filep);
 	{
