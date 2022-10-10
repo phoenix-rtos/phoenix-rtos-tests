@@ -17,22 +17,14 @@
 
 #include <unity_fixture.h>
 
-#define SRC_SIZE  5
-#define DEST_SIZE 5
+/* defines for string_strlcpy */
+#define STR_SRC  "abcd"
+#define STR_DEST "xxxx"
 
-#define SRC1_SIZE 4
-#define SRC2_SIZE 6
-#define BUF_SIZE  12
-
-
-/* fixtures for strlcpy */
-static char source[SRC_SIZE];
-static char dest[DEST_SIZE];
-
-/* fixtures for strlcat */
-static char source1[SRC1_SIZE];
-static char source2[SRC2_SIZE];
-static char buffer[BUF_SIZE];
+/* defines for string_strlcat */
+#define STR_SRC1        "abc"
+#define STR_SRC2        "defgh"
+#define STR_PLACEHOLDER "klmnopqrstu"
 
 
 TEST_GROUP(string_strlcpy);
@@ -40,8 +32,6 @@ TEST_GROUP(string_strlcpy);
 
 TEST_SETUP(string_strlcpy)
 {
-	memcpy(source, "abcd", SRC_SIZE);
-	memcpy(dest, "xxxx", DEST_SIZE);
 }
 
 
@@ -54,6 +44,9 @@ TEST_TEAR_DOWN(string_strlcpy)
 #ifdef __phoenix__
 TEST(string_strlcpy, strlcpy_fullcopy)
 {
+	const char source[] = STR_SRC;
+	char dest[] = STR_DEST;
+
 	/* Test full copy */
 	int retval = strlcpy(dest, source, sizeof(source));
 	TEST_ASSERT_EQUAL_INT(sizeof(source) - 1, retval);
@@ -63,6 +56,9 @@ TEST(string_strlcpy, strlcpy_fullcopy)
 
 TEST(string_strlcpy, strlcpy_shorter)
 {
+	const char source[] = STR_SRC;
+	char dest[] = STR_DEST;
+
 	/* Test shorter than source copy */
 	int retval = strlcpy(dest, source, sizeof(source) - 2);
 	TEST_ASSERT_EQUAL_STRING("ab", dest);
@@ -72,6 +68,9 @@ TEST(string_strlcpy, strlcpy_shorter)
 
 TEST(string_strlcpy, strlcpy_longer)
 {
+	char source[] = STR_SRC;
+	char dest[] = STR_DEST;
+
 	/* Test longer than source copy */
 	source[3] = '\0'; /* source is now "abc" null terminated; */
 	int retval = strlcpy(dest, source, sizeof(source));
@@ -83,6 +82,9 @@ TEST(string_strlcpy, strlcpy_longer)
 
 TEST(string_strlcpy, strlcpy_onelength)
 {
+	const char source[] = STR_SRC;
+	char dest[] = STR_DEST;
+
 	/* Test 1 length copy */
 	int retval = strlcpy(dest, source, 1);
 	TEST_ASSERT_EQUAL_STRING("", dest);
@@ -92,9 +94,12 @@ TEST(string_strlcpy, strlcpy_onelength)
 
 TEST(string_strlcpy, strlcpy_zerolength)
 {
+	const char source[] = STR_SRC;
+	char dest[] = STR_DEST;
+
 	/* Test 0 length copy */
 	int retval = strlcpy(dest, source, 0);
-	TEST_ASSERT_EQUAL_STRING("xxxx", dest);
+	TEST_ASSERT_EQUAL_STRING(STR_DEST, dest);
 	TEST_ASSERT_EQUAL_INT(sizeof(source) - 1, retval);
 }
 
@@ -118,9 +123,6 @@ TEST_GROUP(string_strlcat);
 
 TEST_SETUP(string_strlcat)
 {
-	memcpy(source1, "abc", SRC1_SIZE);
-	memcpy(source2, "defgh", SRC2_SIZE);
-	memcpy(buffer, "klmnopqrstu", BUF_SIZE);
 }
 
 
@@ -132,32 +134,41 @@ TEST_TEAR_DOWN(string_strlcat)
 #ifdef __phoenix__
 TEST(string_strlcat, strlcat_fullconcat_empty)
 {
+	const char source[] = STR_SRC1;
+	char buffer[] = STR_PLACEHOLDER;
+
 	memset(buffer, '\0', sizeof(buffer));
 
 	/* Normal, full concat to empty string */
-	int retval = strlcat(buffer, source1, sizeof(buffer));
+	int retval = strlcat(buffer, source, sizeof(buffer));
 	TEST_ASSERT_EQUAL_INT(3, retval);
-	TEST_ASSERT_EQUAL_STRING(source1, buffer);
+	TEST_ASSERT_EQUAL_STRING(source, buffer);
 }
 
 
 TEST(string_strlcat, strlcat_fullconcat_part)
 {
+	const char source[] = STR_SRC2;
+	char buffer[] = STR_PLACEHOLDER;
+
 	buffer[3] = '\0';
 
 	/* Normal full concat to partially filled string */
-	int retval = strlcat(buffer, source2, sizeof(buffer));
-	TEST_ASSERT_EQUAL_INT(sizeof(source2) + 2, retval);
+	int retval = strlcat(buffer, source, sizeof(buffer));
+	TEST_ASSERT_EQUAL_INT(sizeof(source) + 2, retval);
 	TEST_ASSERT_EQUAL_STRING("klmdefgh", buffer);
 }
 
 
 TEST(string_strlcat, strlcat_partconcat_overflow)
 {
+	const char source[] = STR_SRC2;
+	char buffer[] = STR_PLACEHOLDER;
+
 	buffer[8] = '\0';
 
 	/* Partial concat to partially filled string that should overflow the buffer */
-	int retval = strlcat(buffer, source2, sizeof(buffer));
+	int retval = strlcat(buffer, source, sizeof(buffer));
 	TEST_ASSERT_EQUAL_INT(sizeof(buffer) + 1, retval);
 	TEST_ASSERT_EQUAL_STRING("klmnopqrdef", buffer);
 }
@@ -165,20 +176,26 @@ TEST(string_strlcat, strlcat_partconcat_overflow)
 
 TEST(string_strlcat, strlcat_onelength)
 {
+	const char source[] = STR_SRC2;
+	char buffer[] = STR_PLACEHOLDER;
+
 	/* 1 length concat */
 	buffer[6] = '\0';
-	int retval = strlcat(buffer, source2, 1);
-	TEST_ASSERT_EQUAL_INT(sizeof(source2), retval);
+	int retval = strlcat(buffer, source, 1);
+	TEST_ASSERT_EQUAL_INT(sizeof(source), retval);
 	TEST_ASSERT_EQUAL_STRING("klmnop", buffer);
 }
 
 
 TEST(string_strlcat, strlcat_zerolength)
 {
+	const char source[] = STR_SRC2;
+	char buffer[] = STR_PLACEHOLDER;
+
 	/* 0 length concat */
 	buffer[6] = '\0';
-	int retval = strlcat(buffer, source2, 0);
-	TEST_ASSERT_EQUAL_INT(sizeof(source2) - 1, retval);
+	int retval = strlcat(buffer, source, 0);
+	TEST_ASSERT_EQUAL_INT(sizeof(source) - 1, retval);
 	TEST_ASSERT_EQUAL_STRING("klmnop", buffer);
 }
 

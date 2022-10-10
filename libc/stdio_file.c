@@ -730,12 +730,10 @@ TEST(stdio_fileop, fileop_remove)
 
 TEST(stdio_fileop, fileop_ferror)
 {
-	char c;
-
 	filep = fopen(STDIO_TEST_FILENAME, "w");
 	TEST_ASSERT_NOT_NULL(filep);
 	{
-		c = fgetc(filep);
+		fgetc(filep);
 		TEST_ASSERT_GREATER_THAN_INT(0, ferror(filep));
 		clearerr(filep);
 		TEST_ASSERT_EQUAL_INT(0, ferror(filep));
