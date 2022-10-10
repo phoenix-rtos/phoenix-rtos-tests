@@ -41,8 +41,11 @@
 #include <unity_fixture.h>
 
 
-static FILE *fd, *fd2;
-static char stdpath[] = "stdio_file_test";
+#define STDIO_TEST_FILENAME "stdio_file_test"
+
+
+static FILE *filep, *filep2;
+static const char teststr[] = "test_string_123";
 static char c, buf[20];
 static int filedes;
 static char toolongpath[PATH_MAX + 16];
@@ -56,8 +59,8 @@ TEST_GROUP(stdio_fopenfclose);
 
 TEST_SETUP(stdio_fopenfclose)
 {
-	fd = NULL;
-	fd2 = NULL;
+	filep = NULL;
+	filep2 = NULL;
 }
 
 
@@ -66,40 +69,40 @@ TEST_TEAR_DOWN(stdio_fopenfclose)
 }
 
 
-int checkdescriptor(FILE *fd)
+int checkdescriptor(FILE *filep)
 {
-	return (fd == NULL) ? 0 : !fclose(fd);
+	return (filep == NULL) ? 0 : !fclose(filep);
 }
 
 
 void assert_fopen_error(char *path, char *opts, int errnocode)
 {
-	fd = fopen(path, opts);
-	TEST_ASSERT_FALSE(checkdescriptor(fd));
+	filep = fopen(path, opts);
+	TEST_ASSERT_FALSE(checkdescriptor(filep));
 	TEST_ASSERT_EQUAL_INT(errnocode, errno);
 }
 
 
 void assert_fopen_success(char *path, char *opts)
 {
-	fd = fopen(path, opts);
-	TEST_ASSERT_TRUE(checkdescriptor(fd));
+	filep = fopen(path, opts);
+	TEST_ASSERT_TRUE(checkdescriptor(filep));
 }
 
 
 TEST(stdio_fopenfclose, stdio_fopenfclose_file)
 {
 	/* not existing file opening without creating */
-	assert_fopen_error(stdpath, "r", ENOENT);
-	assert_fopen_error(stdpath, "r+", ENOENT);
+	assert_fopen_error(STDIO_TEST_FILENAME, "r", ENOENT);
+	assert_fopen_error(STDIO_TEST_FILENAME, "r+", ENOENT);
 	/* opening file with creation */
-	assert_fopen_success(stdpath, "w");
-	assert_fopen_success(stdpath, "a");
-	assert_fopen_success(stdpath, "w+");
-	assert_fopen_success(stdpath, "a+");
+	assert_fopen_success(STDIO_TEST_FILENAME, "w");
+	assert_fopen_success(STDIO_TEST_FILENAME, "a");
+	assert_fopen_success(STDIO_TEST_FILENAME, "w+");
+	assert_fopen_success(STDIO_TEST_FILENAME, "a+");
 	/* opening existing file for read */
-	assert_fopen_success(stdpath, "r");
-	assert_fopen_success(stdpath, "r+");
+	assert_fopen_success(STDIO_TEST_FILENAME, "r");
+	assert_fopen_success(STDIO_TEST_FILENAME, "r+");
 }
 
 
@@ -122,10 +125,10 @@ TEST(stdio_fopenfclose, stdio_fopenfclose_zeropath)
 TEST(stdio_fopenfclose, stdio_fopenfclose_wrongflags)
 {
 	/* open with no flags/wrong flags/null flags */
-	assert_fopen_error(stdpath, "", EINVAL);
-	assert_fopen_error(stdpath, "phoenix-rtos", EINVAL);
+	assert_fopen_error(STDIO_TEST_FILENAME, "", EINVAL);
+	assert_fopen_error(STDIO_TEST_FILENAME, "phoenix-rtos", EINVAL);
 	// FIXME: invalid test, function argument defined as nonnull
-	//assert_fopen_error(stdpath, NULL, EINVAL);
+	//assert_fopen_error(STDIO_TEST_FILENAME, NULL, EINVAL);
 }
 
 TEST(stdio_fopenfclose, stdio_fopenfclose_toolongname)
@@ -140,32 +143,32 @@ TEST(stdio_fopenfclose, stdio_fopenfclose_toolongname)
 
 TEST(stdio_fopenfclose, freopen_file)
 {
-	fd = fopen(stdpath, "w");
-	TEST_ASSERT_NOT_NULL(fd);
+	filep = fopen(STDIO_TEST_FILENAME, "w");
+	TEST_ASSERT_NOT_NULL(filep);
 	/* freopen() on opened file */
-	fd2 = freopen(stdpath, "w", fd);
+	filep2 = freopen(STDIO_TEST_FILENAME, "w", filep);
 	{
-		TEST_ASSERT_NOT_NULL(fd);
-		TEST_ASSERT_NOT_NULL(fd2);
-		TEST_ASSERT_TRUE(fd == fd2);
+		TEST_ASSERT_NOT_NULL(filep);
+		TEST_ASSERT_NOT_NULL(filep2);
+		TEST_ASSERT_TRUE(filep == filep2);
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
+	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
 }
 
 
 TEST(stdio_fopenfclose, fdopen_file)
 {
-	fd = fopen(stdpath, "r");
-	TEST_ASSERT_NOT_NULL(fd);
+	filep = fopen(STDIO_TEST_FILENAME, "r");
+	TEST_ASSERT_NOT_NULL(filep);
 	{
 		filedes = -1;
-		TEST_ASSERT_NOT_NULL(fd);
-		filedes = fileno(fd);
+		TEST_ASSERT_NOT_NULL(filep);
+		filedes = fileno(filep);
 		TEST_ASSERT_GREATER_OR_EQUAL_INT(0, filedes);
-		fd2 = fdopen(filedes, "r");
-		TEST_ASSERT_NOT_NULL(fd2);
+		filep2 = fdopen(filedes, "r");
+		TEST_ASSERT_NOT_NULL(filep2);
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
+	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
 }
 
 
@@ -206,90 +209,90 @@ TEST(stdio_getput, fwritefread_basic)
 {
 	/* write some data to file using fwrite(), read it using fread(), assert end of file */
 	memset(buf, 0, 20);
-	fd = fopen(stdpath, "w+");
-	TEST_ASSERT_NOT_NULL(fd);
+	filep = fopen(STDIO_TEST_FILENAME, "w+");
+	TEST_ASSERT_NOT_NULL(filep);
 	{
-		TEST_ASSERT_EQUAL_INT(5, fwrite(stdpath, sizeof(char), 5, fd));
-		rewind(fd);
-		TEST_ASSERT_EQUAL_INT(5, fread(buf, sizeof(char), 5, fd));
-		TEST_ASSERT_EQUAL_CHAR_ARRAY(stdpath, buf, 5);
-		TEST_ASSERT_EQUAL_INT(EOF, fgetc(fd));
+		TEST_ASSERT_EQUAL_INT(5, fwrite(teststr, sizeof(char), 5, filep));
+		rewind(filep);
+		TEST_ASSERT_EQUAL_INT(5, fread(buf, sizeof(char), 5, filep));
+		TEST_ASSERT_EQUAL_CHAR_ARRAY(teststr, buf, 5);
+		TEST_ASSERT_EQUAL_INT(EOF, fgetc(filep));
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
+	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
 }
 
 
 TEST(stdio_getput, getput_basic)
 {
 	/* Correct write */
-	fd = fopen(stdpath, "w");
-	TEST_ASSERT_NOT_NULL(fd);
+	filep = fopen(STDIO_TEST_FILENAME, "w");
+	TEST_ASSERT_NOT_NULL(filep);
 	{
-		TEST_ASSERT_EQUAL_INT('a', fputc('a', fd));
-		TEST_ASSERT_EQUAL_INT('b', putc('b', fd));
+		TEST_ASSERT_EQUAL_INT('a', fputc('a', filep));
+		TEST_ASSERT_EQUAL_INT('b', putc('b', filep));
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
+	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
 
 	/* Correct read */
-	fd = fopen(stdpath, "r");
-	TEST_ASSERT_NOT_NULL(fd);
+	filep = fopen(STDIO_TEST_FILENAME, "r");
+	TEST_ASSERT_NOT_NULL(filep);
 	{
-		TEST_ASSERT_EQUAL_INT('a', fgetc(fd));
-		TEST_ASSERT_EQUAL_INT('b', getc(fd));
-		TEST_ASSERT_EQUAL_INT(EOF, fgetc(fd));
-		TEST_ASSERT_EQUAL_INT(EOF, getc(fd));
+		TEST_ASSERT_EQUAL_INT('a', fgetc(filep));
+		TEST_ASSERT_EQUAL_INT('b', getc(filep));
+		TEST_ASSERT_EQUAL_INT(EOF, fgetc(filep));
+		TEST_ASSERT_EQUAL_INT(EOF, getc(filep));
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
+	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
 
 	/* read from file open for writing */
-	fd = fopen(stdpath, "w");
-	TEST_ASSERT_NOT_NULL(fd);
+	filep = fopen(STDIO_TEST_FILENAME, "w");
+	TEST_ASSERT_NOT_NULL(filep);
 	{
-		TEST_ASSERT_EQUAL_INT('a', fputc('a', fd));
-		TEST_ASSERT_EQUAL_INT('b', fputc('b', fd));
-		rewind(fd);
+		TEST_ASSERT_EQUAL_INT('a', fputc('a', filep));
+		TEST_ASSERT_EQUAL_INT('b', fputc('b', filep));
+		rewind(filep);
 
-		TEST_ASSERT_EQUAL_INT(EOF, fgetc(fd));
+		TEST_ASSERT_EQUAL_INT(EOF, fgetc(filep));
 		TEST_ASSERT_EQUAL_INT(EBADF, errno);
-		TEST_ASSERT_EQUAL_INT(EOF, fgetc(fd));
+		TEST_ASSERT_EQUAL_INT(EOF, fgetc(filep));
 		TEST_ASSERT_EQUAL_INT(EBADF, errno);
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
+	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
 
 	/* Try to write to file open for reading */
-	fd = fopen(stdpath, "r");
-	TEST_ASSERT_NOT_NULL(fd);
+	filep = fopen(STDIO_TEST_FILENAME, "r");
+	TEST_ASSERT_NOT_NULL(filep);
 	{
-		TEST_ASSERT_EQUAL_INT(EOF, fputc('a', fd));
+		TEST_ASSERT_EQUAL_INT(EOF, fputc('a', filep));
 		TEST_ASSERT_EQUAL_INT(EBADF, errno);
-		TEST_ASSERT_EQUAL_INT(EOF, fputc('a', fd));
+		TEST_ASSERT_EQUAL_INT(EOF, fputc('a', filep));
 		TEST_ASSERT_EQUAL_INT(EBADF, errno);
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
+	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
 }
 
 
 TEST(stdio_getput, getsputs_basic)
 {
 	/* reading/writing from file */
-	fd = fopen(stdpath, "w+");
-	TEST_ASSERT_NOT_NULL(fd);
+	filep = fopen(STDIO_TEST_FILENAME, "w+");
+	TEST_ASSERT_NOT_NULL(filep);
 	{
-		TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fputs(stdpath, fd));
-		rewind(fd);
-		TEST_ASSERT_NOT_NULL(fgets(buf, sizeof(buf), fd));
+		TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fputs(teststr, filep));
+		rewind(filep);
+		TEST_ASSERT_NOT_NULL(fgets(buf, sizeof(buf), filep));
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
+	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
 
 	/* reading from file not opened for reading */
-	fd = fopen(stdpath, "w");
-	TEST_ASSERT_NOT_NULL(fd);
+	filep = fopen(STDIO_TEST_FILENAME, "w");
+	TEST_ASSERT_NOT_NULL(filep);
 	{
-		TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fputs(stdpath, fd));
-		TEST_ASSERT_NULL(fgets(buf, sizeof(buf), fd));
+		TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fputs(teststr, filep));
+		TEST_ASSERT_NULL(fgets(buf, sizeof(buf), filep));
 		TEST_ASSERT_EQUAL_INT(EBADF, errno);
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
+	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
 }
 
 
@@ -304,50 +307,50 @@ TEST(stdio_getput, getsputs_readonly)
 	*/
 	TEST_IGNORE();
 
-	fd = fopen(stdpath, "r");
-	TEST_ASSERT_NOT_NULL(fd);
+	filep = fopen(STDIO_TEST_FILENAME, "r");
+	TEST_ASSERT_NOT_NULL(filep);
 	{
-		TEST_ASSERT_EQUAL_INT(EOF, fputs(stdpath, fd)); /* <posix incompliance> returns 0, should EOF */
+		TEST_ASSERT_EQUAL_INT(EOF, fputs(teststr, filep)); /* <posix incompliance> returns 0, should EOF */
 		TEST_ASSERT_EQUAL_INT(EBADF, errno);
-		TEST_ASSERT_NOT_NULL(fgets(buf, sizeof(buf), fd));
-		TEST_ASSERT_EQUAL_CHAR_ARRAY(stdpath, buf, sizeof(stdpath));
-		TEST_ASSERT_NULL(fgets(buf, sizeof(buf), fd));
+		TEST_ASSERT_NOT_NULL(fgets(buf, sizeof(buf), filep));
+		TEST_ASSERT_EQUAL_CHAR_ARRAY(teststr, buf, sizeof(teststr));
+		TEST_ASSERT_NULL(fgets(buf, sizeof(buf), filep));
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
+	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
 }
 
 
 TEST(stdio_getput, ungetc_basic)
 {
 	/* standard usage of ungetc */
-	fd = fopen(stdpath, "w");
-	TEST_ASSERT_NOT_NULL(fd);
+	filep = fopen(STDIO_TEST_FILENAME, "w");
+	TEST_ASSERT_NOT_NULL(filep);
 	{
-		TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fputs(stdpath, fd));
+		TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fputs(teststr, filep));
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
+	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
 
-	fd = fopen(stdpath, "r");
-	TEST_ASSERT_NOT_NULL(fd);
+	filep = fopen(STDIO_TEST_FILENAME, "r");
+	TEST_ASSERT_NOT_NULL(filep);
 	{
-		c = fgetc(fd);
-		TEST_ASSERT_EQUAL_INT((int)c, ungetc(c, fd));
-		TEST_ASSERT_EQUAL_PTR(buf, fgets(buf, sizeof(stdpath), fd));
-		TEST_ASSERT_EQUAL_STRING(stdpath, buf);
+		c = fgetc(filep);
+		TEST_ASSERT_EQUAL_INT((int)c, ungetc(c, filep));
+		TEST_ASSERT_EQUAL_PTR(buf, fgets(buf, sizeof(teststr), filep));
+		TEST_ASSERT_EQUAL_STRING(teststr, buf);
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
+	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
 
 	/*	EOF pushback test
 		If the value of c equals that of the macro EOF, 
 		the operation shall fail and the input stream shall be left unchanged. 
 	*/
-	fd = fopen(stdpath, "r");
-	TEST_ASSERT_NOT_NULL(fd);
+	filep = fopen(STDIO_TEST_FILENAME, "r");
+	TEST_ASSERT_NOT_NULL(filep);
 	{
-		TEST_ASSERT_EQUAL_INT(EOF, ungetc(EOF, fd));
-		TEST_ASSERT_EQUAL_INT(stdpath[0], fgetc(fd));
+		TEST_ASSERT_EQUAL_INT(EOF, ungetc(EOF, filep));
+		TEST_ASSERT_EQUAL_INT(teststr[0], fgetc(filep));
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
+	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
 }
 
 
@@ -376,15 +379,15 @@ TEST_GROUP(stdio_line);
 TEST_SETUP(stdio_line)
 {
 	/* file preparation */
-	fd = fopen(stdpath, "w+");
-	TEST_ASSERT_NOT_NULL(fd);
+	filep = fopen(STDIO_TEST_FILENAME, "w+");
+	TEST_ASSERT_NOT_NULL(filep);
 	{
-		fputs(LINE1, fd);
-		fputs(LINE2, fd);
-		fputs(LINE3, fd);
-		fputs(LINE4, fd);
+		fputs(LINE1, filep);
+		fputs(LINE2, filep);
+		fputs(LINE3, filep);
+		fputs(LINE4, filep);
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
+	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
 }
 
 
@@ -399,35 +402,35 @@ TEST(stdio_line, getline_basic)
 	size_t len = 1;
 
 	/* read using getline */
-	fd = fopen(stdpath, "r");
-	TEST_ASSERT_NOT_NULL(fd);
+	filep = fopen(STDIO_TEST_FILENAME, "r");
+	TEST_ASSERT_NOT_NULL(filep);
 	{
 		/* gerline with null buffer and misleading size */
-		TEST_ASSERT_EQUAL_INT(sizeof(LINE1) - 1, getline(&line, &len, fd));
+		TEST_ASSERT_EQUAL_INT(sizeof(LINE1) - 1, getline(&line, &len, filep));
 		TEST_ASSERT_EQUAL_STRING(LINE1, line);
 		/* new buffer shall be allocated of size at least strlen+1 */
 		TEST_ASSERT_GREATER_OR_EQUAL_INT(sizeof(LINE1), len);
 
 		/* getline with to small buffer */
-		TEST_ASSERT_EQUAL_INT(sizeof(LINE2) - 1, getline(&line, &len, fd));
+		TEST_ASSERT_EQUAL_INT(sizeof(LINE2) - 1, getline(&line, &len, filep));
 		TEST_ASSERT_EQUAL_STRING(LINE2, line);
 		/* buffer shall be reallocated of size at least strlen+1 */
 		TEST_ASSERT_GREATER_OR_EQUAL_INT(sizeof(LINE2), len);
 
 		/* getline with adequate buffer and character */
-		TEST_ASSERT_EQUAL_INT(sizeof(LINE3) - 1, getline(&line, &len, fd));
+		TEST_ASSERT_EQUAL_INT(sizeof(LINE3) - 1, getline(&line, &len, filep));
 		TEST_ASSERT_EQUAL_STRING(LINE3, line);
 		/* buffer shall not be reallocated, and stay at size at least as big as previusly*/
 		TEST_ASSERT_GREATER_OR_EQUAL_INT(sizeof(LINE3), len);
 
 		/* getline with adequate buffer, but only newline is read */
-		TEST_ASSERT_EQUAL_INT(sizeof(LINE4) - 1, getline(&line, &len, fd));
+		TEST_ASSERT_EQUAL_INT(sizeof(LINE4) - 1, getline(&line, &len, filep));
 		TEST_ASSERT_EQUAL_STRING(LINE4, line);
 		/* buffer shall not be reallocated, and stay at size at least as big as previusly*/
 		TEST_ASSERT_GREATER_OR_EQUAL_INT(sizeof(LINE4), len);
 
 		/* getline reading EOF */
-		TEST_ASSERT_EQUAL_INT(-1, getline(&line, &len, fd));
+		TEST_ASSERT_EQUAL_INT(-1, getline(&line, &len, filep));
 		/* buffer shall not change from previous call */
 		TEST_ASSERT_EQUAL_STRING(LINE4, line);
 		/* buffer shall not be reallocated, and stay at size at least as big as previusly*/
@@ -435,7 +438,7 @@ TEST(stdio_line, getline_basic)
 
 		free(line);
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
+	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
 }
 
 
@@ -445,15 +448,15 @@ TEST(stdio_line, getline_wronly)
 	size_t len = 0;
 
 	/* read using getline from write-only file */
-	fd = fopen(stdpath, "a");
-	TEST_ASSERT_NOT_NULL(fd);
+	filep = fopen(STDIO_TEST_FILENAME, "a");
+	TEST_ASSERT_NOT_NULL(filep);
 	{
-		rewind(fd);
-		TEST_ASSERT_EQUAL_INT(-1, getline(&line, &len, fd));
+		rewind(filep);
+		TEST_ASSERT_EQUAL_INT(-1, getline(&line, &len, filep));
 		TEST_ASSERT_EQUAL_INT(EBADF, errno);
 		TEST_ASSERT_NULL(line);
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
+	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
 }
 
 
@@ -462,17 +465,17 @@ TEST(stdio_line, getline_allocated)
 	char *line = NULL;
 	size_t len = 50; /* allocated memory exceeds one demanded for a line that to be read */
 
-	fd = fopen(stdpath, "r");
-	TEST_ASSERT_NOT_NULL(fd);
+	filep = fopen(STDIO_TEST_FILENAME, "r");
+	TEST_ASSERT_NOT_NULL(filep);
 	{
 		line = malloc(len);
-		rewind(fd);
-		TEST_ASSERT_EQUAL_INT(6, getline(&line, &len, fd));
+		rewind(filep);
+		TEST_ASSERT_EQUAL_INT(6, getline(&line, &len, filep));
 		TEST_ASSERT_EQUAL_INT(50, len);
 		TEST_ASSERT_EQUAL_STRING("line1\n", line);
 		free(line);
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
+	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
 }
 
 
@@ -483,26 +486,26 @@ TEST(stdio_line, getline_longline)
 	int i;
 
 	/* prepare file with one long line of length 1000 + '\n' */
-	fd = fopen(stdpath, "w+");
-	TEST_ASSERT_NOT_NULL(fd);
+	filep = fopen(STDIO_TEST_FILENAME, "w+");
+	TEST_ASSERT_NOT_NULL(filep);
 	{
 		for (i = 0; i < 100; i++) {
-			fputs("0123456789", fd);
+			fputs("0123456789", filep);
 		}
-		fputc('\n', fd);
+		fputc('\n', filep);
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
+	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
 
-	fd = fopen(stdpath, "r");
-	TEST_ASSERT_NOT_NULL(fd);
+	filep = fopen(STDIO_TEST_FILENAME, "r");
+	TEST_ASSERT_NOT_NULL(filep);
 	{
-		rewind(fd);
-		TEST_ASSERT_EQUAL_INT(1001, getline(&line, &len, fd));
+		rewind(filep);
+		TEST_ASSERT_EQUAL_INT(1001, getline(&line, &len, filep));
 		TEST_ASSERT_EQUAL_INT(1002, len);
 		TEST_ASSERT_EQUAL_INT(1001, strlen(line));
 		free(line);
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
+	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
 }
 
 
@@ -524,12 +527,12 @@ TEST_GROUP(stdio_fileseek);
 
 TEST_SETUP(stdio_fileseek)
 {
-	fd = fopen(stdpath, "w+");
-	TEST_ASSERT_NOT_NULL(fd);
+	filep = fopen(STDIO_TEST_FILENAME, "w+");
+	TEST_ASSERT_NOT_NULL(filep);
 	{
-		TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fputs(stdpath, fd));
+		TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fputs(teststr, filep));
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
+	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
 }
 
 
@@ -541,45 +544,45 @@ TEST_TEAR_DOWN(stdio_fileseek)
 TEST(stdio_fileseek, seek_fseek)
 {
 	/* fseek() to SEEK_SET/CUR/END macros */
-	fd = fopen(stdpath, "a+");
-	TEST_ASSERT_NOT_NULL(fd);
+	filep = fopen(STDIO_TEST_FILENAME, "a+");
+	TEST_ASSERT_NOT_NULL(filep);
 	{
-		TEST_ASSERT_NOT_NULL(fd);
-		TEST_ASSERT_EQUAL_INT(EOF, fgetc(fd));
+		TEST_ASSERT_NOT_NULL(filep);
+		TEST_ASSERT_EQUAL_INT(EOF, fgetc(filep));
 		/* fallback to absolute beginning */
-		TEST_ASSERT_EQUAL_INT(0, fseek(fd, 0, SEEK_SET));
-		TEST_ASSERT_EQUAL_INT(stdpath[0], fgetc(fd));
+		TEST_ASSERT_EQUAL_INT(0, fseek(filep, 0, SEEK_SET));
+		TEST_ASSERT_EQUAL_INT(teststr[0], fgetc(filep));
 		/* fallback relative -1 */
-		TEST_ASSERT_EQUAL_INT(stdpath[1], fgetc(fd));
-		TEST_ASSERT_EQUAL_INT(0, fseek(fd, -1, SEEK_CUR));
-		TEST_ASSERT_EQUAL_INT(stdpath[1], fgetc(fd));
+		TEST_ASSERT_EQUAL_INT(teststr[1], fgetc(filep));
+		TEST_ASSERT_EQUAL_INT(0, fseek(filep, -1, SEEK_CUR));
+		TEST_ASSERT_EQUAL_INT(teststr[1], fgetc(filep));
 		/* fallback to end */
-		TEST_ASSERT_EQUAL_INT(0, fseek(fd, -1, SEEK_END));
-		TEST_ASSERT_EQUAL_INT(stdpath[sizeof(stdpath) - 2], fgetc(fd));
+		TEST_ASSERT_EQUAL_INT(0, fseek(filep, -1, SEEK_END));
+		TEST_ASSERT_EQUAL_INT(teststr[sizeof(teststr) - 2], fgetc(filep));
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
+	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
 }
 
 
 TEST(stdio_fileseek, seek_fseeko)
 {
 	/* fseeko() to SEEK_SET/CUR/END macros */
-	fd = fopen(stdpath, "a+");
-	TEST_ASSERT_NOT_NULL(fd);
+	filep = fopen(STDIO_TEST_FILENAME, "a+");
+	TEST_ASSERT_NOT_NULL(filep);
 	{
 		/* fallback to absolute beginning */
-		TEST_ASSERT_NOT_NULL(fd);
-		TEST_ASSERT_EQUAL_INT(0, fseeko(fd, (off_t)0, SEEK_SET));
-		TEST_ASSERT_EQUAL_INT(stdpath[0], fgetc(fd));
+		TEST_ASSERT_NOT_NULL(filep);
+		TEST_ASSERT_EQUAL_INT(0, fseeko(filep, (off_t)0, SEEK_SET));
+		TEST_ASSERT_EQUAL_INT(teststr[0], fgetc(filep));
 		/* fallback relative -1 */
-		TEST_ASSERT_EQUAL_INT(stdpath[1], fgetc(fd));
-		TEST_ASSERT_EQUAL_INT(0, (off_t)fseeko(fd, -1, SEEK_CUR));
-		TEST_ASSERT_EQUAL_INT(stdpath[1], fgetc(fd));
+		TEST_ASSERT_EQUAL_INT(teststr[1], fgetc(filep));
+		TEST_ASSERT_EQUAL_INT(0, (off_t)fseeko(filep, -1, SEEK_CUR));
+		TEST_ASSERT_EQUAL_INT(teststr[1], fgetc(filep));
 		/* fallback to end */
-		TEST_ASSERT_EQUAL_INT(0, (off_t)fseeko(fd, -1, SEEK_END));
-		TEST_ASSERT_EQUAL_INT(stdpath[sizeof(stdpath) - 2], fgetc(fd));
+		TEST_ASSERT_EQUAL_INT(0, (off_t)fseeko(filep, -1, SEEK_END));
+		TEST_ASSERT_EQUAL_INT(teststr[sizeof(teststr) - 2], fgetc(filep));
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
+	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
 }
 
 
@@ -601,47 +604,47 @@ TEST(stdio_fileseek, seek_readonly)
 	/* https://github.com/phoenix-rtos/phoenix-rtos-project/issues/263 */
 	TEST_IGNORE();
 
-	fd = fopen(stdpath, "r");
-	TEST_ASSERT_NOT_NULL(fd);
+	filep = fopen(STDIO_TEST_FILENAME, "r");
+	TEST_ASSERT_NOT_NULL(filep);
 	{
-		TEST_ASSERT_EQUAL_INT(EOF, fseek(fd, 0, SEEK_SET));
+		TEST_ASSERT_EQUAL_INT(EOF, fseek(filep, 0, SEEK_SET));
 		TEST_ASSERT_EQUAL_INT(EBADF, errno);
-		TEST_ASSERT_EQUAL_INT(EOF, fseeko(fd, 0, SEEK_SET));
+		TEST_ASSERT_EQUAL_INT(EOF, fseeko(filep, 0, SEEK_SET));
 		TEST_ASSERT_EQUAL_INT(EBADF, errno);
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
+	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
 }
 
 
 TEST(stdio_fileseek, seek_rewind)
 {
 	/* Rewind to beginning of the file */
-	fd = fopen(stdpath, "w+");
-	TEST_ASSERT_NOT_NULL(fd);
+	filep = fopen(STDIO_TEST_FILENAME, "w+");
+	TEST_ASSERT_NOT_NULL(filep);
 	{
-		TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fputs(stdpath, fd));
-		rewind(fd);
-		TEST_ASSERT_EQUAL_INT(stdpath[0], fgetc(fd));
+		TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fputs(teststr, filep));
+		rewind(filep);
+		TEST_ASSERT_EQUAL_INT(teststr[0], fgetc(filep));
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
+	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
 }
 
 
 TEST(stdio_fileseek, seek_ftell)
 {
 	/* tell position in file after fseek() calls */
-	fd = fopen(stdpath, "w+");
-	TEST_ASSERT_NOT_NULL(fd);
+	filep = fopen(STDIO_TEST_FILENAME, "w+");
+	TEST_ASSERT_NOT_NULL(filep);
 	{
-		TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fputs(stdpath, fd));
-		fseek(fd, 0, SEEK_SET);
-		TEST_ASSERT_EQUAL_INT(0, ftell(fd));
-		fseek(fd, 4, SEEK_SET);
-		TEST_ASSERT_EQUAL_INT(4, ftell(fd));
-		fgetc(fd);
-		TEST_ASSERT_EQUAL_INT(5, ftell(fd));
+		TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fputs(teststr, filep));
+		fseek(filep, 0, SEEK_SET);
+		TEST_ASSERT_EQUAL_INT(0, ftell(filep));
+		fseek(filep, 4, SEEK_SET);
+		TEST_ASSERT_EQUAL_INT(4, ftell(filep));
+		fgetc(filep);
+		TEST_ASSERT_EQUAL_INT(5, ftell(filep));
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
+	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
 }
 
 
@@ -675,39 +678,39 @@ TEST_TEAR_DOWN(stdio_fileop)
 
 TEST(stdio_fileop, fileop_fileno)
 {
-	fd = fopen(stdpath, "r");
-	TEST_ASSERT_NOT_NULL(fd);
+	filep = fopen(STDIO_TEST_FILENAME, "r");
+	TEST_ASSERT_NOT_NULL(filep);
 	{
-		TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fileno(fd));
+		TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fileno(filep));
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
+	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
 }
 
 
 TEST(stdio_fileop, fileop_feof)
 {
-	fd = fopen(stdpath, "w+");
-	TEST_ASSERT_NOT_NULL(fd);
+	filep = fopen(STDIO_TEST_FILENAME, "w+");
+	TEST_ASSERT_NOT_NULL(filep);
 	{
-		TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fputs(stdpath, fd));
-		TEST_ASSERT_EQUAL_INT(EOF, fgetc(fd));
-		TEST_ASSERT_NOT_EQUAL_INT(0, feof(fd));
-		rewind(fd);
-		TEST_ASSERT_EQUAL_INT(0, feof(fd));
+		TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fputs(teststr, filep));
+		TEST_ASSERT_EQUAL_INT(EOF, fgetc(filep));
+		TEST_ASSERT_NOT_EQUAL_INT(0, feof(filep));
+		rewind(filep);
+		TEST_ASSERT_EQUAL_INT(0, feof(filep));
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
+	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
 }
 
 
 TEST(stdio_fileop, fileop_remove)
 {
 	/* fopen() a file and remove() it */
-	fd = fopen(stdpath, "w+");
-	TEST_ASSERT_NOT_NULL(fd);
-	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
-	remove(stdpath);
-	fd = fopen(stdpath, "r");
-	TEST_ASSERT_NULL(fd);
+	filep = fopen(STDIO_TEST_FILENAME, "w+");
+	TEST_ASSERT_NOT_NULL(filep);
+	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
+	remove(STDIO_TEST_FILENAME);
+	filep = fopen(STDIO_TEST_FILENAME, "r");
+	TEST_ASSERT_NULL(filep);
 
 	/* mkdir() a directory and remove() it */
 	TEST_ASSERT_EQUAL_INT(0, mkdir("stdio_file_testdir", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH));
@@ -718,15 +721,15 @@ TEST(stdio_fileop, fileop_remove)
 
 TEST(stdio_fileop, fileop_ferror)
 {
-	fd = fopen(stdpath, "w");
-	TEST_ASSERT_NOT_NULL(fd);
+	filep = fopen(STDIO_TEST_FILENAME, "w");
+	TEST_ASSERT_NOT_NULL(filep);
 	{
-		c = fgetc(fd);
-		TEST_ASSERT_GREATER_THAN_INT(0, ferror(fd));
-		clearerr(fd);
-		TEST_ASSERT_EQUAL_INT(0, ferror(fd));
+		c = fgetc(filep);
+		TEST_ASSERT_GREATER_THAN_INT(0, ferror(filep));
+		clearerr(filep);
+		TEST_ASSERT_EQUAL_INT(0, ferror(filep));
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
+	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
 }
 
 
@@ -746,17 +749,17 @@ TEST_GROUP(stdio_bufs);
 
 TEST_SETUP(stdio_bufs)
 {
-	fd = fopen(stdpath, "w+");
-	fd2 = fopen(stdpath, "r");
-	TEST_ASSERT_NOT_NULL(fd);
-	TEST_ASSERT_NOT_NULL(fd2);
+	filep = fopen(STDIO_TEST_FILENAME, "w+");
+	filep2 = fopen(STDIO_TEST_FILENAME, "r");
+	TEST_ASSERT_NOT_NULL(filep);
+	TEST_ASSERT_NOT_NULL(filep2);
 }
 
 
 TEST_TEAR_DOWN(stdio_bufs)
 {
-	TEST_ASSERT_EQUAL_INT(0, fclose(fd2));
-	TEST_ASSERT_EQUAL_INT(0, fclose(fd));
+	TEST_ASSERT_EQUAL_INT(0, fclose(filep2));
+	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
 }
 
 
@@ -765,22 +768,22 @@ TEST(stdio_bufs, setbuf_basic)
 	char buf2[BUFSIZ];
 
 	/* after setbuf() read from file before and after flush */
-	setbuf(fd, buf2);
-	fputc('a', fd);
-	TEST_ASSERT_EQUAL_INT(EOF, fgetc(fd2));
-	TEST_ASSERT_EQUAL_INT(0, fflush(fd));
-	TEST_ASSERT_EQUAL_INT('a', fgetc(fd2));
-	TEST_ASSERT_EQUAL_INT(EOF, fgetc(fd2));
+	setbuf(filep, buf2);
+	fputc('a', filep);
+	TEST_ASSERT_EQUAL_INT(EOF, fgetc(filep2));
+	TEST_ASSERT_EQUAL_INT(0, fflush(filep));
+	TEST_ASSERT_EQUAL_INT('a', fgetc(filep2));
+	TEST_ASSERT_EQUAL_INT(EOF, fgetc(filep2));
 }
 
 
 TEST(stdio_bufs, setbuf_null)
 {
 	/* after setbuf() read from file before and after flush */
-	setbuf(fd, NULL);
-	fputc('a', fd);
-	TEST_ASSERT_EQUAL_INT('a', fgetc(fd2));
-	TEST_ASSERT_EQUAL_INT(EOF, fgetc(fd2));
+	setbuf(filep, NULL);
+	fputc('a', filep);
+	TEST_ASSERT_EQUAL_INT('a', fgetc(filep2));
+	TEST_ASSERT_EQUAL_INT(EOF, fgetc(filep2));
 }
 
 
@@ -789,14 +792,14 @@ TEST(stdio_bufs, setvbuf_fullbuffer)
 	/* after setbuf() read from file before and after flush */
 	char buf2[8];
 
-	TEST_ASSERT_EQUAL_INT(0, setvbuf(fd, buf2, _IOFBF, 8));
+	TEST_ASSERT_EQUAL_INT(0, setvbuf(filep, buf2, _IOFBF, 8));
 
-	TEST_ASSERT_GREATER_THAN_INT(0, fputc('a', fd));
-	TEST_ASSERT_EQUAL_INT(EOF, fgetc(fd2));
-	TEST_ASSERT_EQUAL_INT(EOF, fgetc(fd2));
-	TEST_ASSERT_EQUAL_INT(0, fflush(fd));
-	TEST_ASSERT_EQUAL_INT('a', fgetc(fd2));
-	TEST_ASSERT_EQUAL_INT(EOF, fgetc(fd2));
+	TEST_ASSERT_GREATER_THAN_INT(0, fputc('a', filep));
+	TEST_ASSERT_EQUAL_INT(EOF, fgetc(filep2));
+	TEST_ASSERT_EQUAL_INT(EOF, fgetc(filep2));
+	TEST_ASSERT_EQUAL_INT(0, fflush(filep));
+	TEST_ASSERT_EQUAL_INT('a', fgetc(filep2));
+	TEST_ASSERT_EQUAL_INT(EOF, fgetc(filep2));
 }
 
 
@@ -804,10 +807,10 @@ TEST(stdio_bufs, setvbuf_fullbuffer_overflow)
 {
 	char buf2[8];
 
-	TEST_ASSERT_EQUAL_INT(0, setvbuf(fd, buf2, _IOFBF, 8));
+	TEST_ASSERT_EQUAL_INT(0, setvbuf(filep, buf2, _IOFBF, 8));
 
-	TEST_ASSERT_GREATER_THAN_INT(0, fputs("0123456789", fd));
-	TEST_ASSERT_NOT_NULL(fgets(buf, 20, fd2));
+	TEST_ASSERT_GREATER_THAN_INT(0, fputs("0123456789", filep));
+	TEST_ASSERT_NOT_NULL(fgets(buf, 20, filep2));
 	TEST_ASSERT_EQUAL_INT(10, strlen(buf));
 }
 
@@ -816,12 +819,12 @@ TEST(stdio_bufs, setvbuf_linebuffer)
 {
 	char buf2[8];
 
-	TEST_ASSERT_EQUAL_INT(0, setvbuf(fd, buf2, _IOLBF, 8));
+	TEST_ASSERT_EQUAL_INT(0, setvbuf(filep, buf2, _IOLBF, 8));
 
-	TEST_ASSERT_GREATER_THAN_INT(0, fputs("0123", fd));
-	TEST_ASSERT_EQUAL_INT(EOF, fgetc(fd2));
-	TEST_ASSERT_GREATER_THAN_INT(0, fputc('\n', fd));
-	TEST_ASSERT_NOT_NULL(fgets(buf, 10, fd2));
+	TEST_ASSERT_GREATER_THAN_INT(0, fputs("0123", filep));
+	TEST_ASSERT_EQUAL_INT(EOF, fgetc(filep2));
+	TEST_ASSERT_GREATER_THAN_INT(0, fputc('\n', filep));
+	TEST_ASSERT_NOT_NULL(fgets(buf, 10, filep2));
 	TEST_ASSERT_EQUAL_INT(5, strlen(buf));
 }
 
@@ -830,10 +833,10 @@ TEST(stdio_bufs, setvbuf_nobuffer)
 {
 	char buf2[8];
 
-	TEST_ASSERT_EQUAL_INT(0, setvbuf(fd, buf2, _IONBF, 8));
+	TEST_ASSERT_EQUAL_INT(0, setvbuf(filep, buf2, _IONBF, 8));
 
-	TEST_ASSERT_GREATER_THAN_INT(0, fputs("0123", fd));
-	TEST_ASSERT_NOT_NULL(fgets(buf, 10, fd2));
+	TEST_ASSERT_GREATER_THAN_INT(0, fputs("0123", filep));
+	TEST_ASSERT_NOT_NULL(fgets(buf, 10, filep2));
 	TEST_ASSERT_EQUAL_INT(4, strlen(buf));
 }
 
