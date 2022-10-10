@@ -30,6 +30,9 @@
 
 #include "common.h"
 
+
+static char testWorkDir[PATH_MAX];
+
 /* Tests verifying correctness of resolving paths in libphoenix.
  * The same tests can be compiled for host-generic-pc to verify our assumptions against glibc.
  */
@@ -38,11 +41,16 @@ TEST_GROUP(resolve_path);
 
 TEST_SETUP(resolve_path)
 {
+	/* save the test working diectory */
+	TEST_ASSERT_NOT_NULL(getcwd(testWorkDir, sizeof(testWorkDir)));
 }
 
 
 TEST_TEAR_DOWN(resolve_path)
 {
+	/* go back to the test working directory and assert it */
+	TEST_ASSERT_EQUAL_INT(0, chdir(testWorkDir));
+
 	/* TODO: all tests should use common test dir to be recursively removed here */
 }
 
