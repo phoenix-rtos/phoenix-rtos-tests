@@ -42,12 +42,11 @@
 
 
 #define STDIO_TEST_FILENAME "stdio_file_test"
+#define BUF_SIZE            20
 
 
 static FILE *filep, *filep2;
-static char teststr[] = "test_string_123";
-static char c, buf[20];
-static int filedes;
+static const char teststr[] = "test_string_123";
 static char toolongpath[PATH_MAX + 16];
 
 /* 
@@ -158,14 +157,16 @@ TEST(stdio_fopenfclose, freopen_file)
 
 TEST(stdio_fopenfclose, fdopen_file)
 {
+	int fd;
+
 	filep = fopen(STDIO_TEST_FILENAME, "r");
 	TEST_ASSERT_NOT_NULL(filep);
 	{
-		filedes = -1;
+		fd = -1;
 		TEST_ASSERT_NOT_NULL(filep);
-		filedes = fileno(filep);
-		TEST_ASSERT_GREATER_OR_EQUAL_INT(0, filedes);
-		filep2 = fdopen(filedes, "r");
+		fd = fileno(filep);
+		TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fd);
+		filep2 = fdopen(fd, "r");
 		TEST_ASSERT_NOT_NULL(filep2);
 	}
 	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
@@ -207,6 +208,8 @@ TEST_TEAR_DOWN(stdio_getput)
 
 TEST(stdio_getput, fwritefread_basic)
 {
+	char buf[BUF_SIZE];
+
 	/* write some data to file using fwrite(), read it using fread(), assert end of file */
 	memset(buf, 0, 20);
 	filep = fopen(STDIO_TEST_FILENAME, "w+");
@@ -274,6 +277,8 @@ TEST(stdio_getput, getput_basic)
 
 TEST(stdio_getput, getsputs_basic)
 {
+	char buf[BUF_SIZE];
+
 	/* reading/writing from file */
 	filep = fopen(STDIO_TEST_FILENAME, "w+");
 	TEST_ASSERT_NOT_NULL(filep);
@@ -307,6 +312,8 @@ TEST(stdio_getput, getsputs_readonly)
 	*/
 	TEST_IGNORE();
 
+	char buf[BUF_SIZE];
+
 	filep = fopen(STDIO_TEST_FILENAME, "r");
 	TEST_ASSERT_NOT_NULL(filep);
 	{
@@ -322,6 +329,8 @@ TEST(stdio_getput, getsputs_readonly)
 
 TEST(stdio_getput, ungetc_basic)
 {
+	char c, buf[BUF_SIZE];
+
 	/* standard usage of ungetc */
 	filep = fopen(STDIO_TEST_FILENAME, "w");
 	TEST_ASSERT_NOT_NULL(filep);
@@ -379,7 +388,7 @@ TEST_GROUP(stdio_line);
 TEST_SETUP(stdio_line)
 {
 	/* file preparation */
-	filep = fopen(STDIO_TEST_FILENAME, "w+");
+	filep = fopen(STDIO_TEST_FILENAME, "w");
 	TEST_ASSERT_NOT_NULL(filep);
 	{
 		fputs(LINE1, filep);
@@ -724,7 +733,7 @@ TEST(stdio_fileop, fileop_ferror)
 	filep = fopen(STDIO_TEST_FILENAME, "w");
 	TEST_ASSERT_NOT_NULL(filep);
 	{
-		c = fgetc(filep);
+		fgetc(filep);
 		TEST_ASSERT_GREATER_THAN_INT(0, ferror(filep));
 		clearerr(filep);
 		TEST_ASSERT_EQUAL_INT(0, ferror(filep));
@@ -805,6 +814,7 @@ TEST(stdio_bufs, setvbuf_fullbuffer)
 
 TEST(stdio_bufs, setvbuf_fullbuffer_overflow)
 {
+	char buf[BUF_SIZE];
 	char buf2[8];
 
 	TEST_ASSERT_EQUAL_INT(0, setvbuf(filep, buf2, _IOFBF, 8));
@@ -817,6 +827,7 @@ TEST(stdio_bufs, setvbuf_fullbuffer_overflow)
 
 TEST(stdio_bufs, setvbuf_linebuffer)
 {
+	char buf[BUF_SIZE];
 	char buf2[8];
 
 	TEST_ASSERT_EQUAL_INT(0, setvbuf(filep, buf2, _IOLBF, 8));
@@ -831,6 +842,7 @@ TEST(stdio_bufs, setvbuf_linebuffer)
 
 TEST(stdio_bufs, setvbuf_nobuffer)
 {
+	char buf[BUF_SIZE];
 	char buf2[8];
 
 	TEST_ASSERT_EQUAL_INT(0, setvbuf(filep, buf2, _IONBF, 8));
