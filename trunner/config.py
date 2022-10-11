@@ -23,6 +23,11 @@ def resolve_phrtos_dir() -> Path:
     return Path(*path.parts[:idx+1])
 
 
+def set_current_target(target):
+    global CURRENT_TARGET
+    CURRENT_TARGET = target
+
+
 PHRTOS_PROJECT_DIR = resolve_phrtos_dir()
 PHRTOS_TEST_DIR = PHRTOS_PROJECT_DIR / 'phoenix-rtos-tests'
 
@@ -80,7 +85,7 @@ def array_value(array: Dict[str, List[str]]) -> List[str]:
 
 @dataclass
 class ParserArgs:
-    targets: List[str]
+    target: str
     long_test: bool
     yaml_path: Path
     path: Path = field(init=False)
@@ -302,7 +307,7 @@ class ConfigParser:
         if 'harness' in config:
             self.resolve_harness(config, args.path)
         self.resolve_name(config, args.path)
-        self.resolve_targets(config, args.targets)
+        self.resolve_targets(config, [args.target, ])
 
 
 @dataclass

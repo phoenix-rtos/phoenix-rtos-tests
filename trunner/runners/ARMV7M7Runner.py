@@ -13,7 +13,7 @@ import select
 
 from pexpect.exceptions import TIMEOUT, EOF
 from trunner.tools.color import Color
-from .common import LOG_PATH, PloError, PloTalker, DeviceRunner, RebootError
+from .common import PloError, PloTalker, DeviceRunner, RebootError
 from .common import GPIO, rootfs
 from .utils import Phoenixd, PhoenixdError, append_output
 from .flasher import NXPSerialFlasher
