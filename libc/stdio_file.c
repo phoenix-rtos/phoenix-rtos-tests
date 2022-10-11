@@ -46,6 +46,7 @@
 #define BUF2_SIZE           8
 
 
+/* these variables are global to close opened files in case of test failure */
 static FILE *filep, *filep2;
 static const char teststr[] = "test_string_123";
 static char toolongpath[PATH_MAX + 16];
@@ -65,28 +66,38 @@ TEST_SETUP(stdio_fopenfclose)
 
 
 TEST_TEAR_DOWN(stdio_fopenfclose)
-{ /* empty */
+{
+	/* if the filep is NULL it means that file does not exist or is closed */
+	if (filep != NULL) {
+		fclose(filep);
+	}
+
+	if (filep2 != NULL) {
+		fclose(filep2);
+	}
+
+	/* remove the testfile even if some tet cases failed */
+	remove(STDIO_TEST_FILENAME);
 }
 
 
-int checkdescriptor(FILE *filep)
+static void assert_fopen_error(const char *path, const char *opts, int errnocode)
 {
-	return (filep == NULL) ? 0 : !fclose(filep);
-}
+	FILE *filepLocal;
 
-
-void assert_fopen_error(char *path, char *opts, int errnocode)
-{
-	filep = fopen(path, opts);
-	TEST_ASSERT_FALSE(checkdescriptor(filep));
+	filepLocal = fopen(path, opts);
 	TEST_ASSERT_EQUAL_INT(errnocode, errno);
+	TEST_ASSERT_NULL(filepLocal);
 }
 
 
-void assert_fopen_success(char *path, char *opts)
+static void assert_fopen_success(const char *path, const char *opts)
 {
-	filep = fopen(path, opts);
-	TEST_ASSERT_TRUE(checkdescriptor(filep));
+	FILE *filepLocal;
+
+	filepLocal = fopen(path, opts);
+	TEST_ASSERT_NOT_NULL(filepLocal);
+	TEST_ASSERT_EQUAL_INT(0, fclose(filepLocal));
 }
 
 
@@ -143,6 +154,7 @@ TEST(stdio_fopenfclose, stdio_fopenfclose_toolongname)
 
 TEST(stdio_fopenfclose, freopen_file)
 {
+	int ret;
 	filep = fopen(STDIO_TEST_FILENAME, "w");
 	TEST_ASSERT_NOT_NULL(filep);
 	/* freopen() on opened file */
@@ -152,15 +164,19 @@ TEST(stdio_fopenfclose, freopen_file)
 		TEST_ASSERT_NOT_NULL(filep2);
 		TEST_ASSERT_TRUE(filep == filep2);
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
+	ret = fclose(filep);
+	filep = NULL;
+	filep2 = NULL;
+
+	TEST_ASSERT_EQUAL_INT(0, ret);
 }
 
 
 TEST(stdio_fopenfclose, fdopen_file)
 {
-	int fd;
+	int fd, ret;
 
-	filep = fopen(STDIO_TEST_FILENAME, "r");
+	filep = fopen(STDIO_TEST_FILENAME, "w+");
 	TEST_ASSERT_NOT_NULL(filep);
 	{
 		fd = -1;
@@ -170,7 +186,11 @@ TEST(stdio_fopenfclose, fdopen_file)
 		filep2 = fdopen(fd, "r");
 		TEST_ASSERT_NOT_NULL(filep2);
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
+	ret = fclose(filep);
+	filep = NULL;
+	filep2 = NULL;
+
+	TEST_ASSERT_EQUAL_INT(0, ret);
 }
 
 
@@ -198,12 +218,27 @@ Tets group for:
 TEST_GROUP(stdio_getput);
 
 TEST_SETUP(stdio_getput)
-{ /* empty */
+{
+	filep = NULL;
 }
 
 
 TEST_TEAR_DOWN(stdio_getput)
-{ /* empty */
+{
+	if (filep != NULL) {
+		fclose(filep);
+	}
+
+	/* remove the testfile even if some tet cases failed */
+	remove(STDIO_TEST_FILENAME);
+}
+
+
+static void assert_fclosed(FILE **fp)
+{
+	int ret = fclose(*fp);
+	*fp = NULL;
+	TEST_ASSERT_EQUAL_INT(0, ret);
 }
 
 
@@ -222,7 +257,7 @@ TEST(stdio_getput, fwritefread_basic)
 		TEST_ASSERT_EQUAL_CHAR_ARRAY(teststr, buf, 5);
 		TEST_ASSERT_EQUAL_INT(EOF, fgetc(filep));
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
+	assert_fclosed(&filep);
 }
 
 
@@ -235,7 +270,7 @@ TEST(stdio_getput, getput_basic)
 		TEST_ASSERT_EQUAL_INT('a', fputc('a', filep));
 		TEST_ASSERT_EQUAL_INT('b', putc('b', filep));
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
+	assert_fclosed(&filep);
 
 	/* Correct read */
 	filep = fopen(STDIO_TEST_FILENAME, "r");
@@ -246,7 +281,7 @@ TEST(stdio_getput, getput_basic)
 		TEST_ASSERT_EQUAL_INT(EOF, fgetc(filep));
 		TEST_ASSERT_EQUAL_INT(EOF, getc(filep));
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
+	assert_fclosed(&filep);
 
 	/* read from file open for writing */
 	filep = fopen(STDIO_TEST_FILENAME, "w");
@@ -261,7 +296,7 @@ TEST(stdio_getput, getput_basic)
 		TEST_ASSERT_EQUAL_INT(EOF, fgetc(filep));
 		TEST_ASSERT_EQUAL_INT(EBADF, errno);
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
+	assert_fclosed(&filep);
 
 	/* Try to write to file open for reading */
 	filep = fopen(STDIO_TEST_FILENAME, "r");
@@ -272,7 +307,7 @@ TEST(stdio_getput, getput_basic)
 		TEST_ASSERT_EQUAL_INT(EOF, fputc('a', filep));
 		TEST_ASSERT_EQUAL_INT(EBADF, errno);
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
+	assert_fclosed(&filep);
 }
 
 
@@ -288,7 +323,7 @@ TEST(stdio_getput, getsputs_basic)
 		rewind(filep);
 		TEST_ASSERT_NOT_NULL(fgets(buf, sizeof(buf), filep));
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
+	assert_fclosed(&filep);
 
 	/* reading from file not opened for reading */
 	filep = fopen(STDIO_TEST_FILENAME, "w");
@@ -298,11 +333,11 @@ TEST(stdio_getput, getsputs_basic)
 		TEST_ASSERT_NULL(fgets(buf, sizeof(buf), filep));
 		TEST_ASSERT_EQUAL_INT(EBADF, errno);
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
+	assert_fclosed(&filep);
 }
 
 
-TEST(stdio_getput, getsputs_readonly)
+IGNORE_TEST(stdio_getput, getsputs_readonly)
 {
 	/* 
 	Upon successful completion, fputc() shall return the value it has written. 
@@ -311,7 +346,6 @@ TEST(stdio_getput, getsputs_readonly)
 	
 	https://github.com/phoenix-rtos/phoenix-rtos-project/issues/260
 	*/
-	TEST_IGNORE();
 
 	char buf[BUF_SIZE];
 
@@ -324,7 +358,7 @@ TEST(stdio_getput, getsputs_readonly)
 		TEST_ASSERT_EQUAL_CHAR_ARRAY(teststr, buf, sizeof(teststr));
 		TEST_ASSERT_NULL(fgets(buf, sizeof(buf), filep));
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
+	assert_fclosed(&filep);
 }
 
 
@@ -338,7 +372,7 @@ TEST(stdio_getput, ungetc_basic)
 	{
 		TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fputs(teststr, filep));
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
+	assert_fclosed(&filep);
 
 	filep = fopen(STDIO_TEST_FILENAME, "r");
 	TEST_ASSERT_NOT_NULL(filep);
@@ -348,7 +382,7 @@ TEST(stdio_getput, ungetc_basic)
 		TEST_ASSERT_EQUAL_PTR(buf, fgets(buf, sizeof(teststr), filep));
 		TEST_ASSERT_EQUAL_STRING(teststr, buf);
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
+	assert_fclosed(&filep);
 
 	/*	EOF pushback test
 		If the value of c equals that of the macro EOF, 
@@ -360,7 +394,7 @@ TEST(stdio_getput, ungetc_basic)
 		TEST_ASSERT_EQUAL_INT(EOF, ungetc(EOF, filep));
 		TEST_ASSERT_EQUAL_INT(teststr[0], fgetc(filep));
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
+	assert_fclosed(&filep);
 }
 
 
@@ -397,12 +431,18 @@ TEST_SETUP(stdio_line)
 		fputs(LINE3, filep);
 		fputs(LINE4, filep);
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
+	assert_fclosed(&filep);
 }
 
 
 TEST_TEAR_DOWN(stdio_line)
-{ /* empty */
+{
+	if (filep != NULL) {
+		fclose(filep);
+	}
+
+	/* remove the testfile even if some tet cases failed */
+	remove(STDIO_TEST_FILENAME);
 }
 
 
@@ -448,7 +488,7 @@ TEST(stdio_line, getline_basic)
 
 		free(line);
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
+	assert_fclosed(&filep);
 }
 
 
@@ -466,7 +506,7 @@ TEST(stdio_line, getline_wronly)
 		TEST_ASSERT_EQUAL_INT(EBADF, errno);
 		TEST_ASSERT_NULL(line);
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
+	assert_fclosed(&filep);
 }
 
 
@@ -485,7 +525,7 @@ TEST(stdio_line, getline_allocated)
 		TEST_ASSERT_EQUAL_STRING("line1\n", line);
 		free(line);
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
+	assert_fclosed(&filep);
 }
 
 
@@ -504,7 +544,7 @@ TEST(stdio_line, getline_longline)
 		}
 		fputc('\n', filep);
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
+	assert_fclosed(&filep);
 
 	filep = fopen(STDIO_TEST_FILENAME, "r");
 	TEST_ASSERT_NOT_NULL(filep);
@@ -515,7 +555,7 @@ TEST(stdio_line, getline_longline)
 		TEST_ASSERT_EQUAL_INT(1001, strlen(line));
 		free(line);
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
+	assert_fclosed(&filep);
 }
 
 
@@ -542,12 +582,18 @@ TEST_SETUP(stdio_fileseek)
 	{
 		TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fputs(teststr, filep));
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
+	assert_fclosed(&filep);
 }
 
 
 TEST_TEAR_DOWN(stdio_fileseek)
-{ /* empty */
+{
+	if (filep != NULL) {
+		fclose(filep);
+	}
+
+	/* remove the testfile even if some tet cases failed */
+	remove(STDIO_TEST_FILENAME);
 }
 
 
@@ -570,7 +616,7 @@ TEST(stdio_fileseek, seek_fseek)
 		TEST_ASSERT_EQUAL_INT(0, fseek(filep, -1, SEEK_END));
 		TEST_ASSERT_EQUAL_INT(teststr[sizeof(teststr) - 2], fgetc(filep));
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
+	assert_fclosed(&filep);
 }
 
 
@@ -592,27 +638,25 @@ TEST(stdio_fileseek, seek_fseeko)
 		TEST_ASSERT_EQUAL_INT(0, (off_t)fseeko(filep, -1, SEEK_END));
 		TEST_ASSERT_EQUAL_INT(teststr[sizeof(teststr) - 2], fgetc(filep));
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
+	assert_fclosed(&filep);
 }
 
 
-TEST(stdio_fileseek, seek_fsetpos)
+IGNORE_TEST(stdio_fileseek, seek_fsetpos)
 {
 	/* <posix incmpliance> function is not implemented in libphoenix */
 	/* The fsetpos() function shall set the file position and state indicators for the stream 
 	pointed to by stream according to the value of the object pointed to by pos, 
 	which the application shall ensure is a value obtained from an earlier call to fgetpos() on the same stream. 
 	If a read or write error occurs, the error indicator for the stream shall be set and fsetpos() fails.*/
-	TEST_IGNORE();
 }
 
 
-TEST(stdio_fileseek, seek_readonly)
+IGNORE_TEST(stdio_fileseek, seek_readonly)
 {
 	/* EBADF The file descriptor underlying the stream file is not open for writing ... */
 	/* <posix incompliant> returns 0, should EOF */
 	/* https://github.com/phoenix-rtos/phoenix-rtos-project/issues/263 */
-	TEST_IGNORE();
 
 	filep = fopen(STDIO_TEST_FILENAME, "r");
 	TEST_ASSERT_NOT_NULL(filep);
@@ -622,7 +666,7 @@ TEST(stdio_fileseek, seek_readonly)
 		TEST_ASSERT_EQUAL_INT(EOF, fseeko(filep, 0, SEEK_SET));
 		TEST_ASSERT_EQUAL_INT(EBADF, errno);
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
+	assert_fclosed(&filep);
 }
 
 
@@ -636,7 +680,7 @@ TEST(stdio_fileseek, seek_rewind)
 		rewind(filep);
 		TEST_ASSERT_EQUAL_INT(teststr[0], fgetc(filep));
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
+	assert_fclosed(&filep);
 }
 
 
@@ -654,7 +698,7 @@ TEST(stdio_fileseek, seek_ftell)
 		fgetc(filep);
 		TEST_ASSERT_EQUAL_INT(5, ftell(filep));
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
+	assert_fclosed(&filep);
 }
 
 
@@ -677,23 +721,31 @@ ferror, clearerr
 TEST_GROUP(stdio_fileop);
 
 TEST_SETUP(stdio_fileop)
-{ /* empty */
+{
+	filep = NULL;
 }
 
 
 TEST_TEAR_DOWN(stdio_fileop)
-{ /* empty */
+{
+	if (filep != NULL) {
+		fclose(filep);
+		filep = NULL;
+	}
+
+	/* remove the testfile even if some tet cases failed */
+	remove(STDIO_TEST_FILENAME);
 }
 
 
 TEST(stdio_fileop, fileop_fileno)
 {
-	filep = fopen(STDIO_TEST_FILENAME, "r");
+	filep = fopen(STDIO_TEST_FILENAME, "w");
 	TEST_ASSERT_NOT_NULL(filep);
 	{
 		TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fileno(filep));
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
+	assert_fclosed(&filep);
 }
 
 
@@ -708,7 +760,7 @@ TEST(stdio_fileop, fileop_feof)
 		rewind(filep);
 		TEST_ASSERT_EQUAL_INT(0, feof(filep));
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
+	assert_fclosed(&filep);
 }
 
 
@@ -739,7 +791,7 @@ TEST(stdio_fileop, fileop_ferror)
 		clearerr(filep);
 		TEST_ASSERT_EQUAL_INT(0, ferror(filep));
 	}
-	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
+	assert_fclosed(&filep);
 }
 
 
@@ -768,8 +820,17 @@ TEST_SETUP(stdio_bufs)
 
 TEST_TEAR_DOWN(stdio_bufs)
 {
-	TEST_ASSERT_EQUAL_INT(0, fclose(filep2));
-	TEST_ASSERT_EQUAL_INT(0, fclose(filep));
+	if (filep2 != NULL) {
+		fclose(filep2);
+		filep2 = NULL;
+	}
+	if (filep != NULL) {
+		fclose(filep);
+		filep = NULL;
+	}
+
+	/* remove the testfile even if some tet cases failed */
+	remove(STDIO_TEST_FILENAME);
 }
 
 
