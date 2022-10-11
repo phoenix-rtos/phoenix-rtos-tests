@@ -10,7 +10,7 @@ import select
 import sys
 import time
 
-from .common import DeviceRunner, GPIO, RebootError, LOG_PATH
+from .common import DeviceRunner, GPIO, RebootError
 from .flasher import ZYNQ7000JtagFlasher
 
 

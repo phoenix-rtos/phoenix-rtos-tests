@@ -44,10 +44,10 @@ def parse_args():
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-T", "--target",
-                        action='append', choices=config.ALL_TARGETS,
-                        help="Filter targets on which test will be built and run. "
-                             "By default runs tests on all available targets. "
-                             "Flag can be used multiple times.")
+                        default='ia32-generic-qemu',
+                        choices=config.ALL_TARGETS,
+                        help="Set target on which tests will be run. "
+                             "By default runs tests on %(default)s target. ")
 
     parser.add_argument("-t", "--test",
                         default=[], action='append', type=args_file,
@@ -65,9 +65,8 @@ def parse_args():
                         help="Specify verbosity level. By default uses level info.")
 
     parser.add_argument("-s", "--serial",
-                        default=config.DEVICE_SERIAL_PORT_NXP,
                         help="Specify serial to communicate with device board. "
-                             "By default uses %(default)s.")
+                             "Default value depends on the target")
 
     parser.add_argument("-b", "--baudrate",
                         default=config.DEVICE_SERIAL_BAUDRATE,
@@ -93,13 +92,11 @@ def parse_args():
     if not args.test:
         args.test = [config.PHRTOS_TEST_DIR]
 
-    if not args.target:
-        # Run on all available targets
-        args.target = config.ALL_TARGETS
-
-    # no support for running 2 device targets at once using one host
-    if 'armv7a9-zynq7000-zedboard' in args.target and args.serial != config.DEVICE_SERIAL_PORT_XYLINX :
-        args.serial = config.DEVICE_SERIAL_PORT_XYLINX
+    if not args.serial:
+        if args.target == 'armv7a9-zynq7000-zedboard':
+            args.serial = config.DEVICE_SERIAL_PORT_XYLINX
+        else:
+            args.serial = config.DEVICE_SERIAL_PORT_NXP
 
     if not args.baudrate:
         args.baudrate = config.DEVICE_SERIAL_BAUDRATE
@@ -111,7 +108,7 @@ def main():
     args = parse_args()
     set_logger(args.log_level)
 
-    runner = TestsRunner(targets=args.target,
+    runner = TestsRunner(target=args.target,
                          test_paths=args.test,
                          build=args.build,
                          flash=not args.no_flash,

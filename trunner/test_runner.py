@@ -1,8 +1,7 @@
 import logging
 
-from . import config
 from .builder import TargetBuilder
-from .config import TestCaseConfig, ParserArgs
+from .config import TestCaseConfig, ParserArgs, set_current_target
 from .device import RunnerFactory
 from .testcase import TestCaseFactory
 from .runners.common import Runner
@@ -11,11 +10,10 @@ from .runners.common import Runner
 class TestsRunner:
     """Class responsible for loading, building and running tests"""
 
-    def __init__(self, targets, test_paths, serial, build=True, flash=True, log=False, long_test=False):
-        self.targets = targets
+    def __init__(self, target, test_paths, serial, build=True, flash=True, log=False, long_test=False):
+        self.target = target
         self.test_configs = []
         self.test_paths = test_paths
-        self.tests_per_target = {k: [] for k in targets}
         self.build = build
         self.flash = flash
         self.long_test = long_test
@@ -36,50 +34,51 @@ class TestsRunner:
     def parse_tests(self):
         self.test_configs = []
         for path in self.test_paths:
-            args = ParserArgs(yaml_path=path, targets=self.targets, long_test=self.long_test)
+            args = ParserArgs(yaml_path=path, target=self.target, long_test=self.long_test)
             config = TestCaseConfig.from_yaml(args)
             self.test_configs.extend(config.tests)
             logging.debug(f"File {path} parsed successfuly\n")
 
     def run(self):
-        self.runners = {target: RunnerFactory.create(
-            target=target,
+        tests = []
+
+        self.runner = RunnerFactory.create(
+            target=self.target,
             serial=self.serial,
             log=self.log
-            ) for target in self.targets}
+            )
+
+        set_current_target(self.target)
         self.search_for_tests()
         self.parse_tests()
 
         for test_config in self.test_configs:
             test = TestCaseFactory.create(test_config)
-            self.tests_per_target[test.target].append(test)
+            tests.append(test)
 
+        # deprecated utility, which will be removed soon
         if self.build:
-            for target in self.targets:
-                TargetBuilder(target).build()
+            TargetBuilder(self.target).build()
 
         if self.flash:
-            for runner in self.runners.values():
-                runner.flash()
+            self.runner.flash()
 
-        for target, tests in self.tests_per_target.items():
-            config.CURRENT_TARGET = target
-            for test_case in tests:
-                test_case.log_test_started()
-                self.runners[target].run(test_case)
-                test_case.log_test_status()
+        for test_case in tests:
+            test_case.log_test_started()
+            self.runner.run(test_case)
+            test_case.log_test_status()
 
         passed, failed, skipped = 0, 0, 0
-        for target, tests in self.tests_per_target.items():
-            # Convert bools to int
-            for test in tests:
-                passed += int(test.passed())
-                failed += int(test.failed())
-                skipped += int(test.skipped())
 
-            if failed > 0:
-                self.runners[target].set_status(Runner.FAIL)
-            else:
-                self.runners[target].set_status(Runner.SUCCESS)
+        # Convert bools to int
+        for test in tests:
+            passed += int(test.passed())
+            failed += int(test.failed())
+            skipped += int(test.skipped())
+
+        if failed > 0:
+            self.runner.set_status(Runner.FAIL)
+        else:
+            self.runner.set_status(Runner.SUCCESS)
 
         return passed, failed, skipped
