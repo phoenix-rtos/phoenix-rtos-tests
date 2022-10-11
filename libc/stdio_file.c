@@ -43,6 +43,7 @@
 
 #define STDIO_TEST_FILENAME "stdio_file_test"
 #define BUF_SIZE            20
+#define BUF2_SIZE           8
 
 
 static FILE *filep, *filep2;
@@ -799,9 +800,9 @@ TEST(stdio_bufs, setbuf_null)
 TEST(stdio_bufs, setvbuf_fullbuffer)
 {
 	/* after setbuf() read from file before and after flush */
-	char buf2[8];
+	char buf2[BUF2_SIZE];
 
-	TEST_ASSERT_EQUAL_INT(0, setvbuf(filep, buf2, _IOFBF, 8));
+	TEST_ASSERT_EQUAL_INT(0, setvbuf(filep, buf2, _IOFBF, sizeof(buf2)));
 
 	TEST_ASSERT_GREATER_THAN_INT(0, fputc('a', filep));
 	TEST_ASSERT_EQUAL_INT(EOF, fgetc(filep2));
@@ -814,42 +815,45 @@ TEST(stdio_bufs, setvbuf_fullbuffer)
 
 TEST(stdio_bufs, setvbuf_fullbuffer_overflow)
 {
+	const char data[] = "0123456789";
 	char buf[BUF_SIZE];
-	char buf2[8];
+	char buf2[BUF2_SIZE];
 
-	TEST_ASSERT_EQUAL_INT(0, setvbuf(filep, buf2, _IOFBF, 8));
+	TEST_ASSERT_EQUAL_INT(0, setvbuf(filep, buf2, _IOFBF, sizeof(buf2)));
 
-	TEST_ASSERT_GREATER_THAN_INT(0, fputs("0123456789", filep));
-	TEST_ASSERT_NOT_NULL(fgets(buf, 20, filep2));
-	TEST_ASSERT_EQUAL_INT(10, strlen(buf));
+	TEST_ASSERT_GREATER_THAN_INT(0, fputs(data, filep));
+	TEST_ASSERT_NOT_NULL(fgets(buf, sizeof(buf), filep2));
+	TEST_ASSERT_EQUAL_INT(strlen(data), strlen(buf));
 }
 
 
 TEST(stdio_bufs, setvbuf_linebuffer)
 {
+	const char data[] = "0123";
 	char buf[BUF_SIZE];
-	char buf2[8];
+	char buf2[BUF2_SIZE];
 
-	TEST_ASSERT_EQUAL_INT(0, setvbuf(filep, buf2, _IOLBF, 8));
+	TEST_ASSERT_EQUAL_INT(0, setvbuf(filep, buf2, _IOLBF, sizeof(buf2)));
 
-	TEST_ASSERT_GREATER_THAN_INT(0, fputs("0123", filep));
+	TEST_ASSERT_GREATER_THAN_INT(0, fputs(data, filep));
 	TEST_ASSERT_EQUAL_INT(EOF, fgetc(filep2));
 	TEST_ASSERT_GREATER_THAN_INT(0, fputc('\n', filep));
-	TEST_ASSERT_NOT_NULL(fgets(buf, 10, filep2));
-	TEST_ASSERT_EQUAL_INT(5, strlen(buf));
+	TEST_ASSERT_NOT_NULL(fgets(buf, sizeof(buf), filep2));
+	TEST_ASSERT_EQUAL_INT(strlen(data) + 1, strlen(buf));
 }
 
 
 TEST(stdio_bufs, setvbuf_nobuffer)
 {
+	const char data[] = "0123";
 	char buf[BUF_SIZE];
-	char buf2[8];
+	char buf2[BUF2_SIZE];
 
-	TEST_ASSERT_EQUAL_INT(0, setvbuf(filep, buf2, _IONBF, 8));
+	TEST_ASSERT_EQUAL_INT(0, setvbuf(filep, buf2, _IONBF, sizeof(buf2)));
 
-	TEST_ASSERT_GREATER_THAN_INT(0, fputs("0123", filep));
-	TEST_ASSERT_NOT_NULL(fgets(buf, 10, filep2));
-	TEST_ASSERT_EQUAL_INT(4, strlen(buf));
+	TEST_ASSERT_GREATER_THAN_INT(0, fputs(data, filep));
+	TEST_ASSERT_NOT_NULL(fgets(buf, sizeof(buf), filep2));
+	TEST_ASSERT_EQUAL_INT(strlen(data), strlen(buf));
 }
 
 
