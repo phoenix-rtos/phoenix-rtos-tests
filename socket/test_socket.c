@@ -39,6 +39,8 @@
 static char data[1024];
 static char buf[1024];
 
+/* ignore warning when using sendmsg/recvmsg, we know it's not fully supported */
+#pragma GCC diagnostic ignored "-Wattribute-warning"
 
 ssize_t unix_msg_send(int sock, void *buf, size_t len, int *fd, size_t fdcnt)
 {
@@ -166,7 +168,7 @@ int open_files(int *fd, size_t cnt)
 	char buf[64];
 
 	for (i = 0; i < cnt; ++i) {
-		snprintf(buf, sizeof(buf), "/tmp/test_file_%u", i);
+		snprintf(buf, sizeof(buf), "/tmp/test_file_%zu", i);
 		if ((fd[i] = open(buf, O_CREAT | O_RDWR, 0666)) < 0)
 			return -1;
 	}
@@ -194,7 +196,7 @@ int unlink_files(size_t cnt)
 	char buf[64];
 
 	for (i = 0; i < cnt; ++i) {
-		snprintf(buf, sizeof(buf), "/tmp/test_file_%u", i);
+		snprintf(buf, sizeof(buf), "/tmp/test_file_%zu", i);
 		if (unlink(buf) < 0)
 			return -1;
 	}
@@ -922,3 +924,6 @@ int main(int argc, char *argv[])
 	UnityMain(argc, (const char **)argv, runner);
 	return 0;
 }
+
+/* restore -Wattribute-warning */
+#pragma GCC diagnostic pop
