@@ -37,6 +37,7 @@ class Flasher(ABC):
                     plo.plo.logfile = open(self.logpath, "a")
 
                 self.upload_plo(plo)
+                self.erase(plo)
 
                 with Phoenixd(self.target, self.phoenixd_port) as phd:
                     plo.copy_file2mem(
@@ -57,6 +58,11 @@ class Flasher(ABC):
             sys.exit(1)
 
     @abstractmethod
+    def erase(self):
+        """Method used for erasing target flash storage to prepare for copying an image """
+        pass
+
+    @abstractmethod
     def upload_plo(self):
         """Method used for flashing a device with the image containing tests."""
         pass
@@ -70,6 +76,13 @@ class ZYNQ7000JtagFlasher(Flasher):
 
     def __init__(self, target, serial_port, phoenixd_port, flash_bank, logpath):
         super().__init__(target, serial_port, phoenixd_port, flash_bank, logpath, copy_timeout=140)
+
+    def erase(self, plo):
+        plo.erase(
+            device=f'flash{self.flash_bank}',
+            offset=0x800000,
+            size=0x1000000  # The size of rootfs on zynq7000-zedboard target equals 16 MB
+        )
 
     def upload_plo(self, plo):
         Gdb(self.target, self.PLO_FILE, script=self.GDB_SCRIPT).run()
@@ -85,6 +98,10 @@ class NXPSerialFlasher(Flasher):
 
     def __init__(self, target, serial_port, phoenixd_port, flash_bank, logpath):
         super().__init__(target, serial_port, phoenixd_port, flash_bank, logpath, copy_timeout=60)
+
+    def erase(self, plo):
+        # do not erase until all the nxp targets supported by runner are non-rootfs
+        pass
 
     def upload_plo(self, plo):
         Psu(self.target, script=self.SDP).run()

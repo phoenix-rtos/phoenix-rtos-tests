@@ -83,15 +83,22 @@ class RebootError(Exception):
 
 
 class PloError(Exception):
-    def __init__(self, message, expected, cmd):
-        if not message:
-            message = "[no response]"
-        msg = f'{Color.BOLD}PLO ERROR:{Color.END} {message}\n' \
-              f'{Color.BOLD}CMD PASSED:{Color.END} {cmd}\n'
-        if expected:
-            msg += f'{Color.BOLD}EXPECTED:{Color.END} {str(expected)}\n'
+    def __init__(self, message, expected=None, cmd=None):
+        self.message = message
+        self.cmd = cmd
+        self.expected = expected
+        super().__init__(self)
 
-        super().__init__(msg)
+    def __str__(self):
+        msg = "[no response]" if not self.message else self.message
+        err = f"{Color.BOLD}PLO ERROR:{Color.END} {msg}\n"
+        if self.cmd is not None:
+            err += f"{Color.BOLD}CMD PASSED:{Color.END} {self.cmd}\n"
+
+        if self.expected is not None:
+            err += f"{Color.BOLD}EXPECTED:{Color.END} {self.expected}\n"
+
+        return err
 
 
 class PloTalker:
@@ -115,7 +122,7 @@ class PloTalker:
     def interrupt_counting(self):
         """ Interrupts timer counting to enter plo """
         self.plo.expect_exact('Waiting for input', timeout=3)
-        self.plo.send('\r\n')
+        self.plo.send('\n')
 
     def open(self):
         try:
@@ -141,20 +148,50 @@ class PloTalker:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
 
-    def wait_prompt(self, timeout=8):
-        self.plo.expect_exact("(plo)% ", timeout=timeout)
-
-    def cmd(self, cmd, timeout=8):
-        self.plo.send(cmd + '\r\n')
-        # Wait for an eoched command
-        self.plo.expect_exact(cmd)
+    def _assert_prompt(self, timeout):
         try:
             self.plo.expect_exact('(plo)%', timeout=timeout)
             # red color means that, there was some error in plo
             if "\x1b[31m" in self.plo.before:
-                raise PloError(self.plo.before, expected="(plo)% ", cmd=cmd)
+                raise PloError(message=self.plo.before, expected="(plo)% ")
         except pexpect.TIMEOUT:
-            raise PloError(self.plo.before, expected="(plo)% ", cmd=cmd)
+            raise PloError(message=self.plo.before, expected="(plo)% ")
+
+    def wait_prompt(self, timeout=8):
+        self.plo.expect_exact("(plo)% ", timeout=timeout)
+
+    def cmd(self, cmd, timeout):
+        # Plo requires only CR, when sending command
+        self.plo.send(cmd + '\r')
+        # Wait for an eoched command
+        self.plo.expect_exact(cmd)
+        try:
+            self._assert_prompt(timeout=timeout)
+        except PloError as err:
+            err.cmd = cmd
+            raise err
+
+    def erase(self, device, offset, size, timeout=8):
+        cmd = f'erase {device} {offset} {size}'
+        # Plo requires only CR, when sending command
+        self.plo.send(cmd + '\r')
+        # Wait for an eoched command
+        self.plo.expect_exact(cmd)
+
+        try:
+            msg = 'type YES! to proceed'
+            self.plo.expect_exact(msg)
+            self.plo.send('YES!\r')
+            msg = 'Erased'
+            self.plo.expect_exact(msg, timeout=40)
+        except pexpect.TIMEOUT:
+            raise PloError('Wrong erase command output!', expected=msg, cmd=cmd)
+
+        try:
+            self._assert_prompt(timeout=timeout)
+        except PloError as err:
+            err.cmd = cmd
+            raise err
 
     def app(self, device, file, imap, dmap, exec=False):
         exec = '-x' if exec else ''
