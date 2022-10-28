@@ -58,6 +58,8 @@ def _assert_created(p, name, dir=False):
     cmd = 'mkdir' if dir else 'touch'
     psh.assert_cmd(p, f'{cmd} {name}', msg=f'Failed to create: {name} using {cmd}')
 
+    name = name[:-1] if name.endswith('/') else name
+
     path_elements = name.rsplit('/', 1)
     if len(path_elements) == 2:
         name = path_elements[1]
@@ -79,8 +81,8 @@ def assert_dir_created(p, name):
 
 def _assert_random(p, pool, path, count, dir=False):
     ''' Asserts that `count` number of files/directories with random names
-    (created by matching chars from the `pool` list)
-    are properly created in the `path` directory'''
+    (created by matching chars from the `pool` list) are properly created
+    in the `path` directory '''
     psh.assert_cmd(p, f'mkdir {path}', msg=f'Failed to create {path} directory')
     names = get_rand_strings(pool, count)
 

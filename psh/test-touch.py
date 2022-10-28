@@ -13,21 +13,11 @@
 #
 
 import psh.tools.psh as psh
+import trunner.config as config
 from psh.tools.common import (CHARS, assert_present, assert_file_created, assert_random_files,
                               get_rand_strings, create_testdir)
 
 ROOT_TEST_DIR = 'test_touch_dir'
-
-
-def is_hello_present(p):
-    psh.assert_prompt_after_cmd(p, 'ls -d /usr/bin')
-    ret_code = psh.get_exit_code(p)
-
-    if ret_code != 0:
-        return False
-
-    usrbin_content = psh.ls_simple(p, '/usr/bin')
-    return True if 'hello' in usrbin_content else False
 
 
 def assert_timestamp_change(p, touched_files, uptimes, dir=''):
@@ -35,7 +25,6 @@ def assert_timestamp_change(p, touched_files, uptimes, dir=''):
     for file in files:
         if file.name in touched_files:
             uptime = uptimes[file.name]
-            msg = f"The file's timestamp hasn't been changed after touch: {dir}/{file.name}, timestamp = {file.date}"
             # uptime has to be got before touch
             # to prevent failed assertion when typing uptime in 00:59 and touch in 01:00
             # 1 min margin is applied
@@ -46,6 +35,7 @@ def assert_timestamp_change(p, touched_files, uptimes, dir=''):
                 uptime_str = f'{uptime.hour}:{uptime.minute}'
             # when writing test, system date is always set to Jan 01 00:00
             # so all touched files should have the following timestamp: Jan 01 00:00 + uptime
+            msg = f"The file's timestamp hasn't been changed after touch: {dir}/{file.name}, timestamp = {file.date}"
             assert file.date == ('Jan', '1', uptime_str), msg
 
 
@@ -54,33 +44,37 @@ def assert_symlinks(p):
     # all psh commands are symlinks
     psh_cmds = psh.get_commands(p)
     for psh_cmd in psh_cmds:
+        uptimes[psh_cmd] = psh.uptime(p)
         msg = f"Prompt hasn't been seen after the symlink touch: /bin/{psh_cmd}"
-        uptime = psh.uptime(p)
         psh.assert_cmd(p, f'touch /bin/{psh_cmd}', '', msg)
-        uptimes[psh_cmd] = uptime
+
     assert_timestamp_change(p, psh_cmds, uptimes, '/bin')
 
 
 def assert_executable(p):
-    # hello is the example of executable which likely exists in file system
+    # psh is the example of executable which exists in file system
     msg = "Prompt hasn't been seen after the executable touch: /usr/bin/hello"
     uptime = psh.uptime(p)
-    psh.assert_cmd(p, 'touch /usr/bin/hello', '', msg)
-    assert_timestamp_change(p, ['hello'], {'hello': uptime}, '/usr/bin')
+    if config.CURRENT_TARGET in config.SYSEXEC_TARGETS:
+        psh.assert_cmd(p, 'touch /syspage/psh', '', msg)
+        assert_timestamp_change(p, ['psh'], {'psh': uptime}, '/syspage')
+    else:
+        psh.assert_cmd(p, 'touch /bin/psh', '', msg)
+        assert_timestamp_change(p, ['psh'], {'psh': uptime}, '/bin')
 
 
 def assert_devices(p):
     uptimes = {}
     devices = psh.ls_simple(p, '/dev')
     for dev in devices:
+        uptimes[dev] = psh.uptime(p)
         msg = f"Prompt hasn't been seen after the device touch: /dev/{dev}"
-        uptime = psh.uptime(p)
         psh.assert_cmd(p, f'touch /dev/{dev}', '', msg)
-        uptimes[dev] = uptime
+
     assert_timestamp_change(p, devices, uptimes, dir='/dev')
 
 
-def assert_multi_arg(p, path=''):
+def assert_multi_arg(p, path):
     psh.assert_cmd(p, f'mkdir /{path}', msg=f'Failed to create {path} directory')
     names = get_rand_strings(CHARS, 3, min_chars=4, max_chars=8)
     args = f'/{path}/{names[0]} ' + f'/{path}/{names[1]} ' + f'/{path}/{names[2]}'
@@ -107,7 +101,4 @@ def harness(p):
 
     assert_symlinks(p)
     assert_devices(p)
-
-    # This case will only be executed on targets where the hello executable is present
-    if is_hello_present:
-        assert_executable(p)
+    assert_executable(p)

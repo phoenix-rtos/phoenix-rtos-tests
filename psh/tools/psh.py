@@ -56,10 +56,11 @@ def assert_cmd(pexpect_proc, cmd, expected='', msg='', is_regex=False):
     assert pexpect_proc.expect([exp_regex, pexpect.TIMEOUT, pexpect.EOF]) == 0, msg
 
 
-def assert_prompt_after_cmd(pexpect_proc, cmd, msg=''):
+def assert_prompt_after_cmd(pexpect_proc, cmd, msg=None):
     pexpect_proc.sendline(cmd)
     exp_regex = EOL + PROMPT
-    msg = f'Prompt not seen after sending the following command: {cmd}'
+    if not msg:
+        msg = f'Prompt not seen after sending the following command: {cmd}'
     assert pexpect_proc.expect([exp_regex, pexpect.TIMEOUT]) == 0, msg
 
     return pexpect_proc.before
@@ -174,6 +175,7 @@ def uptime(pexpect_proc):
             r'\(psh\)\% '])
         if idx == 0:
             groups = pexpect_proc.match.groups()
+
     hour, minute, second = groups
     time = Time(hour, minute, second)
 
