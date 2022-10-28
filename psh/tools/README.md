@@ -6,7 +6,7 @@ The python module `psh` makes writing harness tests easier. It provides the foll
 
 * `assert_cmd(pexpect_proc, cmd, expected='', msg='', is_regex=False)` - Sends a specified command and asserts that it's displayed correctly with optional expected output and next prompt. The function also checks if there are no unwanted pieces of information. It's possible to pass a regex in the `expected` argument, but then `is_regex` has to be set True. The regex should be passed as one raw string and match `EOL` after an expected output. Multi-line expected outputs have to be passed in a tuple, with lines in specific items. There is also a possibility to pass an additional message to print if the assertion fails. For a more readable assertion message in case that the test fails, the expected output is printed as regex, but in separate lines. So EOL, which is `r'(\r+)\n'` is replaced by `'\n'`.
 
-* `assert_prompt_after_cmd(pexpect_proc, cmd, msg='')` - Sends a command and asserts only `EOL` and next prompt. This method can be useful, when expecting command's output is not needed. Sent command isn't also asserted, so this function can be used for sending some unprintable characters. If it does not fail, the output caught before prompt will be returned.
+* `assert_prompt_after_cmd(pexpect_proc, cmd, msg=None)` - Sends a command and asserts only `EOL` and next prompt. This method can be useful, when expecting command's output is not needed. Sent command isn't also asserted, so this function can be used for sending some unprintable characters. If it does not fail, the output caught before prompt will be returned. If the `msg` argument is not passed, the default error message will be used.
 
 * `assert_only_prompt(pexpect_proc)` - Asserts psh prompt with the appropriate esc sequence.
 
@@ -18,9 +18,9 @@ The python module `psh` makes writing harness tests easier. It provides the foll
 
 * `get_exit_code(pexpect_proc)` - Returns the exit code of previously sent command.
 
-* `assert_cmd_failed(pexpect_proc)` - Asserts that the exit code of previously sent command didn't equal 0.
+* `assert_cmd_failed(pexpect_proc)` - Asserts that the exit code of previously sent command is not equal 0.
 
-* `assert_cmd_passed(pexpect_proc)` - Asserts that the exit code of previously sent command equaled 0.
+* `assert_cmd_passed(pexpect_proc)` - Asserts that the exit code of previously sent command is equal 0.
 
 * `init(pexpect_proc)` - Runs psh and next, asserts its first prompt.
 
