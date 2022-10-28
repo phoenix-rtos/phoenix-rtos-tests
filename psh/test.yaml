@@ -58,5 +58,11 @@ test:
           targets:
               exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk]
 
+        - name: runfile
+          harness: test-runfile.py
+          targets:
+              # runfile applet is not intended for non-rootfs targets
+              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk]
+
         - name: history
           harness: test-history.py
