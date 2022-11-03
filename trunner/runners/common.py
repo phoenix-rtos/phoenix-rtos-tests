@@ -136,7 +136,6 @@ class Phoenixd:
         self,
         target,
         port,
-        baudrate=460800,
         dir='.',
         cwd=None,
         wait_dispatcher=True
@@ -145,7 +144,6 @@ class Phoenixd:
             cwd = boot_dir(target)
         self.cwd = cwd
         self.port = port
-        self.baudrate = baudrate
         self.dir = dir
         self.proc = None
         self.reader_thread = None
@@ -164,7 +162,7 @@ class Phoenixd:
                 break
 
             if self.wait_dispatcher and not self.dispatcher_event.is_set():
-                msg = f'Starting message dispatcher on [{self.port}] (speed={self.baudrate})'
+                msg = f'Starting message dispatcher on [{self.port}]'
                 if msg in line:
                     self.dispatcher_event.set()
 
@@ -180,7 +178,6 @@ class Phoenixd:
         self.proc = pexpect.spawn(
             'phoenixd',
             ['-p', self.port,
-             '-b', str(self.baudrate),
              '-s', self.dir],
             cwd=self.cwd,
             encoding='ascii'
