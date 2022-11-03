@@ -254,7 +254,7 @@ class PloTalker:
     def interrupt_counting(self):
         """ Interrupts timer counting to enter plo """
         self.plo.expect_exact('Waiting for input', timeout=3)
-        self.plo.send('\r\n')
+        self.plo.send('\n')
         self.plo.expect_exact('\n')
 
     def open(self):
@@ -292,7 +292,8 @@ class PloTalker:
             raise PloError(line, expected="(plo)% ")
 
     def cmd(self, cmd, timeout=8):
-        self.plo.send(cmd + '\r\n')
+        # Plo requires only CR, when sending command
+        self.plo.send(cmd + '\r')
         # Wait for an eoched command
         self.plo.expect_exact(cmd)
         # There might be some ASCII escape characters, we wait only for a new line
@@ -317,7 +318,7 @@ class PloTalker:
         )
 
     def go(self):
-        self.plo.send('go!\r\n')
+        self.plo.send('go!\r')
 
 
 class Runner(ABC):
