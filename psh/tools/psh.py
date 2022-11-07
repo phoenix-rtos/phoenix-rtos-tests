@@ -18,15 +18,8 @@ import pexpect
 
 import trunner.config as config
 
-
 EOL = r'(\r+)\n'
 PROMPT = r'(\r+)\x1b\[0J' + r'\(psh\)% '
-
-
-def init(pexpect_proc):
-    ''' Runs psh and asserts a first prompt'''
-    run(pexpect_proc)
-    assert_only_prompt(pexpect_proc)
 
 
 def _readable(exp_regex):
@@ -88,14 +81,17 @@ def assert_prompt_fail(pexpect_proc, msg='', timeout=-1):
     assert idx != 0, msg
 
 
+def _get_exec_cmd(prog):
+    if config.CURRENT_TARGET in config.SYSEXEC_TARGETS:
+        return f'sysexec {prog}'
+    else:
+        return f'/bin/{prog}'
+
+
 def assert_exec(pexpect_proc, prog, expected='', msg=''):
     ''' Executes specified program and asserts that it's displayed correctly
     with optional expected output and next prompt'''
-
-    if config.CURRENT_TARGET in config.SYSEXEC_TARGETS:
-        exec_cmd = f'sysexec {prog}'
-    else:
-        exec_cmd = f'/bin/{prog}'
+    exec_cmd = _get_exec_cmd(prog)
 
     assert_cmd(pexpect_proc, exec_cmd, expected, msg)
 
@@ -136,5 +132,13 @@ def get_commands(pexpect_proc):
 
 
 def run(pexpect_proc):
-    pexpect_proc.send('psh\r\n')
-    pexpect_proc.expect(r'psh(\r+)\n')
+    # using runfile/sysexec to spawn a new psh process
+    exec_cmd = _get_exec_cmd('psh')
+    pexpect_proc.sendline(exec_cmd)
+    pexpect_proc.expect(rf'{exec_cmd}(\r+)\n')
+
+
+def init(pexpect_proc):
+    ''' Runs psh and asserts its first prompt'''
+    run(pexpect_proc)
+    assert_only_prompt(pexpect_proc)

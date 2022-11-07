@@ -20,7 +20,7 @@ The python module `psh` makes writing harness tests easier. It provides the foll
 
 * `assert_cmd_passed` - Asserts that the exit code of previously sent command equaled 0.
 
-* `init(pexpect_proc)` - Runs psh and next, asserts the first prompt.
+* `init(pexpect_proc)` - Runs psh and next, asserts its first prompt.
 
 The `pexpect_proc` argument is the [pexpect](https://pexpect.readthedocs.io/en/stable/api/index.html) process returned by `pexpect.spawn()` method. Each functional test has the spawned process passed in the argument, which is `p`, please see examples below.
 
