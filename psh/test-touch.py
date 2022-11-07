@@ -14,8 +14,8 @@
 
 import psh.tools.psh as psh
 import trunner.config as config
-from psh.tools.common import (CHARS, assert_present, assert_file_created, assert_random_files,
-                              get_rand_strings, create_testdir)
+from psh.tools.common import (CHARS, assert_present, assert_file_created, assert_dir_created,
+                              assert_random_files, get_rand_strings, create_testdir)
 
 ROOT_TEST_DIR = 'test_touch_dir'
 
@@ -85,6 +85,33 @@ def assert_multi_arg(p, path):
         assert_present(name, files, dir=False)
 
 
+def assert_file_slash(p):
+    """ in psh touch we do not expect error when touching file/ """
+    file_path = f'{ROOT_TEST_DIR}/slash_file/'
+    assert_file_created(p, file_path)
+    psh.assert_cmd(p, f'touch {file_path}')
+
+
+def assert_created_dir(p):
+    dir_path = f'{ROOT_TEST_DIR}/test_dir'
+    assert_dir_created(p, dir_path)
+    # touch on already created dir, without checking timestamp, just expecting no output
+    psh.assert_cmd(p, f'touch {dir_path}')
+    psh.assert_cmd(p, f'touch {dir_path}/')
+
+
+def assert_existing_dirs(p):
+    # we assume that syspage directory exists on syspage targets and bin directory exists on root-fs targets
+    msg = "Prompt hasn't been seen after the executable touch: /usr/bin/hello"
+    uptime = psh.uptime(p)
+    if config.CURRENT_TARGET in config.SYSEXEC_TARGETS:
+        psh.assert_cmd(p, 'touch /syspage/', '', msg)
+        assert_timestamp_change(p, ['syspage'], {'syspage': uptime}, '/')
+    else:
+        psh.assert_cmd(p, 'touch /bin/', '', msg)
+        assert_timestamp_change(p, ['bin'], {'bin': uptime}, '/')
+
+
 @psh.run
 def harness(p):
     create_testdir(p, ROOT_TEST_DIR)
@@ -98,6 +125,10 @@ def harness(p):
     assert_random_files(p, CHARS, f'{ROOT_TEST_DIR}/random/', count=20)
     for i in range(10):
         assert_multi_arg(p, f'{ROOT_TEST_DIR}/multi_arg{i}')
+    assert_file_slash(p)
+
+    assert_created_dir(p)
+    assert_existing_dirs(p)
 
     assert_symlinks(p)
     assert_devices(p)
