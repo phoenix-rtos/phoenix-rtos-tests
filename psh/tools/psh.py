@@ -19,6 +19,7 @@ import pexpect
 import trunner.config as config
 
 EOL = r'(\r+)\n'
+EOT = '\x04'
 PROMPT = r'(\r+)\x1b\[0J' + r'\(psh\)% '
 
 
@@ -142,3 +143,10 @@ def init(pexpect_proc):
     ''' Runs psh and asserts its first prompt'''
     run(pexpect_proc)
     assert_only_prompt(pexpect_proc)
+
+
+def deinit(pexpect_proc):
+    ''' Close spawned psh '''
+
+    pexpect_proc.send(EOT)
+    pexpect_proc.expect(r'exit(\r+)\n')

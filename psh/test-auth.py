@@ -19,8 +19,9 @@ import psh.tools.psh as psh
 
 import psh.tools.login as logintools
 
+from psh.tools.psh import EOT
 
-EOT = '\x04'
+
 BACKSPACE = '\x08'
 cred_ok = logintools.Credentials('defuser', '1234')
 cred_bad = logintools.Credentials('lorem', 'ipsum')

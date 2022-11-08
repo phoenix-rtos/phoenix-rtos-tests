@@ -22,6 +22,8 @@ The python module `psh` makes writing harness tests easier. It provides the foll
 
 * `init(pexpect_proc)` - Runs psh and next, asserts its first prompt.
 
+* `deinit(pexpect_proc)` - Closes spawned psh and asserts its exit.
+
 The `pexpect_proc` argument is the [pexpect](https://pexpect.readthedocs.io/en/stable/api/index.html) process returned by `pexpect.spawn()` method. Each functional test has the spawned process passed in the argument, which is `p`, please see examples below.
 
 ## The usage examples
