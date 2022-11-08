@@ -38,7 +38,7 @@ def get_process_list(p):
     return ps_list
 
 
-def create_psh_processes(p, count):
+def create_psh_processes(p, count, already_spawned):
     psh_pid_list = []
     msg = 'Failed to create new psh process'
     for _ in range(count):
@@ -51,7 +51,7 @@ def create_psh_processes(p, count):
             psh_pid_list.append(proc['pid'])
 
     psh_pid_count = len(psh_pid_list)
-    assert psh_pid_count == count, f'Created {psh_pid_count} psh processes, instead of {count}'
+    assert (psh_pid_count - already_spawned) == count, f'Created {psh_pid_count } psh processes, instead of {count}'
 
     return psh_pid_list
 
@@ -89,5 +89,6 @@ def harness(p):
 
     assert_errors(p)
 
-    pid_list = create_psh_processes(p, 3)
+    sleep_pshs = sum((proc['state'] == 'sleep' and proc['task'] in ('psh', '/bin/psh')) for proc in get_process_list(p))
+    pid_list = create_psh_processes(p, 3, already_spawned=sleep_pshs)
     assert_kill_procs(p, pid_list)
