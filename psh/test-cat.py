@@ -31,9 +31,8 @@ def assert_cat_h(p):
     psh.assert_cmd(p, cmd, expected=help)
 
 
+@psh.run
 def harness(p):
-    psh.init(p)
-
     # need to add more test cases when it will be possible to write content to the file
     assert_cat_err(p)
     assert_cat_h(p)

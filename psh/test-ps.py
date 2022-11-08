@@ -11,9 +11,8 @@ import psh.tools.psh as psh
 """
 
 
+@psh.run
 def harness(p):
-    psh.init(p)
-
     header_seen = False
     expected_tasks = ['[idle]', 'init', 'psh']
     ps_header = 'PID PPID PR STATE %CPU WAIT TIME VMEM THR CMD'.split()

@@ -50,9 +50,8 @@ def assert_hints(p, path, hints):
     psh.assert_prompt(p, msg='No prompt after hints test', timeout=1)
 
 
+@psh.run
 def harness(p):
-    psh.init(p)
-
     mkdir(p, 'etc')
 
     # Create test environment

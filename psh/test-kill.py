@@ -84,9 +84,8 @@ def assert_errors(p):
     psh.assert_cmd(p, f'kill {pid}', '', msg)
 
 
+@psh.run
 def harness(p):
-    psh.init(p)
-
     assert_errors(p)
 
     sleep_pshs = sum((proc['state'] == 'sleep' and proc['task'] in ('psh', '/bin/psh')) for proc in get_process_list(p))

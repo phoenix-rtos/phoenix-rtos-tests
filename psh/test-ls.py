@@ -136,12 +136,11 @@ def assert_ls_r(p, files):
     psh.assert_cmd(p, f'ls -r {TEST_DIR_BASIC}', expected, msg, is_regex=True)
 
 
+@psh.run
 def harness(p):
     listed_files = ('test1', 'test0', 'dir')
     to_create_files = ('.hidden',) + listed_files
     all_files = ('.', '..') + to_create_files
-
-    psh.init(p)
 
     create_testdir(p, ROOT_TEST_DIR)
     prepare_testdir(p, to_create_files)

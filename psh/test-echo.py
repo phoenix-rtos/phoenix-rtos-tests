@@ -15,9 +15,8 @@
 import psh.tools.psh as psh
 
 
+@psh.run
 def harness(p):
-    psh.init(p)
-
     # Simple check
     psh.assert_cmd(p, 'echo', '\r+\n', 'empty echo fail', is_regex=True)
     psh.assert_cmd(p, 'echo loremipsum', 'loremipsum', 'simple text not echoed back')

@@ -47,9 +47,8 @@ def assert_not_ascii(p):
     psh.assert_prompt_after_cmd(p, chars, "Prompt not seen when sending non-ascii characters")
 
 
+@psh.run
 def harness(p):
-    psh.init(p)
-
     assert_printable(p)
     assert_unprintable(p)
     assert_not_ascii(p)

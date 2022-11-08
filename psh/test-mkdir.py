@@ -102,10 +102,9 @@ def assert_first_prompt(p):
     assert got == prompt, f'Expected:\n{prompt}\nGot:\n{got}'
 
 
+@psh.run
 def harness(p):
     chars = list(set(string.printable) - set(string.whitespace) - set('/'))
-
-    psh.init(p)
 
     assert_dir_created(p, 'example_dir')
     files = ls(p)

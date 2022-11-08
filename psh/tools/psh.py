@@ -132,16 +132,12 @@ def get_commands(pexpect_proc):
     return commands
 
 
-def run(pexpect_proc):
+def init(pexpect_proc):
+    ''' Runs psh and asserts its first prompt'''
     # using runfile/sysexec to spawn a new psh process
     exec_cmd = _get_exec_cmd('psh')
     pexpect_proc.sendline(exec_cmd)
     pexpect_proc.expect(rf'{exec_cmd}(\r+)\n')
-
-
-def init(pexpect_proc):
-    ''' Runs psh and asserts its first prompt'''
-    run(pexpect_proc)
     assert_only_prompt(pexpect_proc)
 
 
@@ -150,3 +146,12 @@ def deinit(pexpect_proc):
 
     pexpect_proc.send(EOT)
     pexpect_proc.expect(r'exit(\r+)\n')
+
+
+def run(harness):
+
+    def wrapper_harness(pexpect_proc):
+        init(pexpect_proc)
+        harness(pexpect_proc)
+        deinit(pexpect_proc)
+    return wrapper_harness

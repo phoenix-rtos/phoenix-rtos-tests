@@ -15,9 +15,8 @@
 import psh.tools.psh as psh
 
 
+@psh.run
 def harness(p):
-    psh.init(p)
-
     fname = 'etc/shells'
     expected = r'# /etc/shells: valid login shells(\r+)\n/bin/sh(\r+)\n'
     cmd = f'cat {fname}'
