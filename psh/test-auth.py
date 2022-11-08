@@ -34,10 +34,8 @@ def assert_auth(p):
     assert p.expect_exact(['Login:', pexpect.TIMEOUT], timeout=2) == 0, '"auth" applet does not launch'
 
 
+@psh.run
 def harness(p):
-    # Run psh
-    psh.init(p)
-
     # Check if auth app is available and login exit
     assert_auth(p)
     p.send(EOT)

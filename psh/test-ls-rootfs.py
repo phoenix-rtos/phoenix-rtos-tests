@@ -106,8 +106,8 @@ def assert_extralong(p):
     psh.assert_cmd(p, f'ls {testdir_long}', expected, msg, is_regex=True)
 
 
+@psh.run
 def harness(p):
-    psh.init(p)
     create_testdir(p, ROOT_TEST_DIR)
 
     # these cases may not work on non-rootfs targets, because of too many internal directories

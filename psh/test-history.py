@@ -89,9 +89,8 @@ def assert_empty(p):
     psh.assert_cmd(p, 'history', '  1  history', msg)
 
 
+@psh.run
 def harness(p):
-    psh.init(p)
-
     psh_cmds = psh.get_commands(p)
 
     assert_help(p)

@@ -39,10 +39,8 @@ def assert_pshlogin(p):
         raise AssertionError('pshlogin does not launch')
 
 
+@psh.run
 def harness(p):
-    # Run psh
-    psh.init(p)
-
     # Run pshlogin
     assert_pshlogin(p)
 
@@ -71,3 +69,6 @@ def harness(p):
     p.send(string.printable + '\n')
     assert p.expect_exact(['Login:', pexpect.TIMEOUT], timeout=2) == 0, 'Long login does not repeat login procedure'
     logintools.assert_login_fail(p, cred_ok.user, string.printable)  # too long password
+
+    # Proper login to go back to psh
+    logintools.assert_login(p, cred_ok_etc.user, cred_ok_etc.passwd)
