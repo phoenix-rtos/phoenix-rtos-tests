@@ -174,6 +174,9 @@ class PloTalker:
             err.cmd = cmd
             raise err
 
+    def alias(self, prog, offset, psize):
+        self.cmd('alias {} {} {}'.format(prog, hex(offset), hex(psize)), timeout=4)
+
     def erase(self, device, offset, size, timeout=8):
         cmd = f'erase {device} {offset} {size}'
         # Plo requires only CR, when sending command

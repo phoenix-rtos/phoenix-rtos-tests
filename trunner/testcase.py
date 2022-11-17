@@ -82,12 +82,12 @@ class TestCase:
     def exec(self, proc):
         cmd = ' '.join(shlex.quote(arg) for arg in self.exec_cmd)
         proc.sendline(f'/bin/{cmd}')
-        proc.expect(f'/bin/{cmd}(.*)\n')
+        proc.expect(f'/bin/{cmd}(\r+)\n')
 
     def sysexec(self, proc):
         cmd = ' '.join(shlex.quote(arg) for arg in self.exec_cmd)
         proc.sendline(f'sysexec {cmd}')
-        proc.expect(f'sysexec {cmd}(.*)\n')
+        proc.expect(f'sysexec {cmd}(\r+)\n')
 
     def exec_test(self, proc):
         try:
