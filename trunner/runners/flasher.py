@@ -13,11 +13,27 @@ import sys
 
 from pexpect.exceptions import TIMEOUT, EOF
 from .common import PloError, PloTalker, RebootError
-from .utils import Psu, Gdb, Phoenixd, PhoenixdError, GdbError, append_output
+from .utils import Psu, Gdb, Openocd, Phoenixd, PhoenixdError, GdbError, OpenocdError, append_output
 from trunner.config import PHRTOS_PROJECT_DIR
 
 
-class Flasher(ABC):
+class STM32L4OpenocdFlasher():
+    """ Class intended for flashing the system image to STM32L4X6 platform using stlink and openocd """
+
+    IMAGE_FILE = 'phoenix.disk'
+
+    def __init__(self, target):
+        self.target = target
+
+    def flash(self):
+        try:
+            Openocd(self.target, self.IMAGE_FILE, interface='stlink').run()
+        except OpenocdError as exc:
+            logging.info(exc)
+            sys.exit(1)
+
+
+class PloFlasher(ABC):
     """Common interface for flashing the system image"""
 
     def __init__(self, target, serial_port, phoenixd_port, flash_bank, logpath, copy_timeout):
@@ -68,7 +84,7 @@ class Flasher(ABC):
         pass
 
 
-class ZYNQ7000JtagFlasher(Flasher):
+class ZYNQ7000JtagFlasher(PloFlasher):
     """ Class intended for flashing the system image to Zynq7000 platform using jtag and plo"""
 
     PLO_FILE = 'plo-gdb.elf'
@@ -91,7 +107,7 @@ class ZYNQ7000JtagFlasher(Flasher):
         plo.wait_prompt()
 
 
-class NXPSerialFlasher(Flasher):
+class NXPSerialFlasher(PloFlasher):
     """ Class intended for flashing the system image to NXP platforms using psu and plo"""
 
     SDP = 'plo-ram.sdp'
