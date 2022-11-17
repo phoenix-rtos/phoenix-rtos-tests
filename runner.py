@@ -2,6 +2,7 @@
 
 import argparse
 import logging
+import os
 import pathlib
 import sys
 
@@ -9,6 +10,34 @@ import trunner.config as config
 
 from trunner.test_runner import TestsRunner
 from trunner.tools.color import Color
+
+
+def resolve_serial(unresolved, target):
+    """ Serial path may slightly differ for various devices
+        Even when connected to the same socket """
+    # Serial port does not matter on host/qemu targets
+    if 'host' in target or 'qemu' in target:
+        return ''
+
+    dev_path = '/dev/serial/by-path/'
+    resolved = None
+    unresolved = os.path.basename(unresolved)
+    try:
+        devices = os.listdir(dev_path)
+
+        for dev in devices:
+            if unresolved in dev:
+                resolved = dev
+    except FileNotFoundError:
+        print('No connected devices detected! The /dev/serial/by-path directory does not exist.')
+
+    if resolved is None:
+        print(f'Serial port with the default path prefix printed below not found!\n{unresolved}\n'
+              f'Detected devices: \n{", ".join(devices)}\n'
+              'Please change the socket or consider passing `--serial` argument.')
+        sys.exit(1)
+
+    return f'{dev_path}/{resolved}'
 
 
 def set_logger(level=logging.INFO):
@@ -93,10 +122,7 @@ def parse_args():
         args.test = [config.PHRTOS_TEST_DIR]
 
     if not args.serial:
-        if args.target == 'armv7a9-zynq7000-zedboard':
-            args.serial = config.DEVICE_SERIAL_PORT_XYLINX
-        else:
-            args.serial = config.DEVICE_SERIAL_PORT_NXP
+        args.serial = resolve_serial(config.DEVICE_SERIAL_PORT_PREFIX, args.target)
 
     if not args.baudrate:
         args.baudrate = config.DEVICE_SERIAL_BAUDRATE
