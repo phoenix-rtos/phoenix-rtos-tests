@@ -3,21 +3,30 @@
 #
 # STM32l4 runner
 #
-# Copyright 2021 Phoenix Systems
-# Authors: Mateusz Niewiadomski
+# Copyright 2021, 2022 Phoenix Systems
+# Authors: Mateusz Niewiadomski, Damian Loewnau
 #
 
-import os
-import subprocess
+import select
 import sys
 import time
 
 import pexpect.fdpexpect
-import serial
-from pexpect import TIMEOUT
 
-from .common import DeviceRunner, Color
-from .common import boot_dir
+from .common import DeviceRunner, RebootError, GPIO, PloTalker
+from .flasher import STM32L4OpenocdFlasher
+
+
+def hostpc_reboot():
+    """Reboots a tested device by a human."""
+
+    print("Please reset the board by pressing `RESET B2` button and press enter")
+    print("\tNote that You should press the enter key just after reset button")
+
+    if sys.stdin in select.select([sys.stdin], [], [], 30)[0]:
+        sys.stdin.readline()
+    else:
+        raise RebootError('It took too long to wait for a key pressing')
 
 
 class STM32L4Runner(DeviceRunner):
@@ -25,7 +34,14 @@ class STM32L4Runner(DeviceRunner):
 
     The ST-Link programming board should be connected to USB port
     and a target should be connected to ST-Link and powered
-    """
+
+    Default configuration for running on Rpi + Nucleo board:
+
+    GPIO 17 must be connected to pin 5 in CN8 header - NRST (using an additional resistor 1,5k)
+    GPIO 2 must be connected to an appropriate IN pin used for power cut in relay module
+    GPIO 12 must be connected to a blue pin of an RGB LED
+    GPIO 13 must be connected to a red pin of an RGB LED
+    GPIO 18 must be connected to a green pin of an RGB LED"""
 
     class oneByOne_fdspawn(pexpect.fdpexpect.fdspawn):
         """ Workaround for Phoenix-RTOS on stm32l4 targets not processing characters fast enough
@@ -43,64 +59,62 @@ class STM32L4Runner(DeviceRunner):
                 time.sleep(0.03)
             return ret
 
-    def __init__(self, target, serial, log=False):
+    def __init__(self, target, serial, is_rpi_host=True, log=False):
+        self.is_rpi_host = is_rpi_host
+        if self.is_rpi_host:
+            self.reset_gpio = GPIO(17)
+            self.reset_gpio.high()
+            self.power_gpio = GPIO(2)
+            self.power_gpio.high()
         # Currently leds are not supported in this runner, that's why is_rpi_host is False
-        super().__init__(target, serial, is_rpi_host=False, log=log)
+        super().__init__(target, serial, is_rpi_host, log=log)
+        self.is_cut_power_used = False
+
+    def _restart_by_jtag(self):
+        self.reset_gpio.low()
+        time.sleep(0.050)
+        self.reset_gpio.high()
+
+    def _restart_by_poweroff(self):
+        self.power_gpio.low()
+        time.sleep(0.050)
+        self.power_gpio.high()
+        time.sleep(0.050)
+
+    def rpi_reboot(self, cut_power=False):
+        """Reboots a tested device using Raspberry Pi as host-generic-pc."""
+        if cut_power:
+            self._restart_by_poweroff()
+        else:
+            self._restart_by_jtag()
+
+    def reboot(self, cut_power=False):
+        """Reboots a tested device."""
+        if self.is_rpi_host:
+            self.rpi_reboot(cut_power)
+        else:
+            hostpc_reboot()
 
     def flash(self):
-        """ Flashing with openocd as a separate process """
+        flasher = STM32L4OpenocdFlasher(self.target)
+        flasher.flash()
 
-        binary_path = os.path.join(boot_dir(self.target), 'phoenix-kernel.bin')
-        openocd_cmd = [
-            'openocd',
-            '-f', 'interface/stlink.cfg',
-            '-f', 'target/stm32l4x.cfg',
-            '-c', "reset_config srst_only srst_nogate connect_assert_srst",
-            '-c',  "program {progname} 0x08000000 verify reset exit".format(progname=binary_path)
-            ]
-
-        # openocd prints important information (counterintuitively) on stderr, not stdout. However pipe both for user
-        openocd_process = subprocess.Popen(
-            openocd_cmd,
-            stdout=sys.stdout.fileno(),
-            stderr=sys.stdout.fileno()
-            )
-
-        if openocd_process.wait() != 0:
-            print(Color.colorify("OpenOCD error: cannot flash target", Color.BOLD))
-            sys.exit(1)
+    def load(self, test):
+        self.reboot(cut_power=self.is_cut_power_used)
+        # there may be some rubbish on serial right after reboot - to avoid fail we ignore codec errors
+        with PloTalker(self.serial_port, codec_errors='ignore', replaced_fdspawn=self.oneByOne_fdspawn) as plo:
+            if self.logpath:
+                plo.plo.logfile = open(self.logpath, "a")
+            plo.interrupt_counting()
+            plo.wait_prompt()
+            if not test.exec_cmd and not test.syspage_prog:
+                return True
+        return True
 
     def run(self, test):
         if test.skipped():
             return
 
-        try:
-            self.serial = serial.Serial(self.serial_port, baudrate=self.serial_baudrate)
-        except serial.SerialException:
-            test.handle_exception()
+        if not self.load(test):
             return
-
-        # Create pexpect.fdpexpect.fdspawn with modified send() by using oneByOne_fdspawn class
-        # codec_errors='ignore' - random light may cause out-of-ascii characters to appear when using optical port
-        proc = self.oneByOne_fdspawn(
-            self.serial,
-            encoding='ascii',
-            codec_errors='ignore',
-            timeout=test.timeout
-            )
-        if self.logpath:
-            proc.logfile = open(self.logpath, "a")
-
-        # FIXME - race on start of Phoenix-RTOS between dummyfs and psh
-        # flushing the buffer and sending newline
-        # ensures that carret is in newline just after (psh)% prompt
-        flushed = ""
-        while not proc.expect([r'.+', TIMEOUT], timeout=0.1):
-            flushed += proc.match.group(0)
-        flushed = None
-        proc.send("\n")
-
-        try:
-            test.handle(proc)
-        finally:
-            self.serial.close()
+        super().run(test, replaced_fdspawn=self.oneByOne_fdspawn)

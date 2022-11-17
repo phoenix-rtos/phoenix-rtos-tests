@@ -104,11 +104,14 @@ class PloError(Exception):
 class PloTalker:
     """Interface to communicate with plo"""
 
-    def __init__(self, port, baudrate=115200):
+    def __init__(self, port, baudrate=115200, codec_errors='strict', replaced_fdspawn=None):
         self.port = port
         self.baudrate = baudrate
         self.serial = None
         self.plo = None
+        self.codec_errors = codec_errors
+        self.pexpect_fdspawn_fn = pexpect.fdpexpect.fdspawn if not replaced_fdspawn else replaced_fdspawn
+        self.replaced_fdspawn = replaced_fdspawn
 
     @classmethod
     def from_pexpect(cls, pexpect_fd):
@@ -132,7 +135,7 @@ class PloTalker:
             raise
 
         try:
-            self.plo = pexpect.fdpexpect.fdspawn(self.serial, encoding='ascii', timeout=8)
+            self.plo = self.pexpect_fdspawn_fn(self.serial, encoding='ascii', codec_errors=self.codec_errors, timeout=8)
         except Exception:
             self.serial.close()
             raise
@@ -264,17 +267,19 @@ class DeviceRunner(Runner):
         self.serial = None
         self.send_go = True
 
-    def run(self, test):
+    def run(self, test, replaced_fdspawn=None):
         if test.skipped():
             return
 
+        pexpect_fdspawn_fn = pexpect.fdpexpect.fdspawn if not replaced_fdspawn else replaced_fdspawn
         try:
             self.serial = serial.Serial(self.serial_port, baudrate=self.serial_baudrate)
         except serial.SerialException:
             test.handle_exception()
             return
 
-        proc = pexpect.fdpexpect.fdspawn(self.serial, encoding='utf-8', timeout=test.timeout)
+        proc = pexpect_fdspawn_fn(self.serial, encoding='utf-8', timeout=test.timeout)
+
         if self.logpath:
             proc.logfile = open(self.logpath, "a")
 

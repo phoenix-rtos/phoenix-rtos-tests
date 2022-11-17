@@ -18,6 +18,6 @@ class RunnerFactory:
         if target == 'armv7a9-zynq7000-zedboard':
             return ZYNQ7000ZedboardRunner(target, serial, PHOENIXD_PORT, is_rpi_host=True, log=log)
         if target == 'armv7m4-stm32l4x6-nucleo':
-            return STM32L4Runner(target, serial, log=log)
+            return STM32L4Runner(target, serial, is_rpi_host=True, log=log)
 
         raise ValueError(f"Unknown Runner target: {target}")

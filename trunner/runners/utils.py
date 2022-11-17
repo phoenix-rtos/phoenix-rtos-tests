@@ -48,6 +48,12 @@ class GdbError(Exception):
         super().__init__(msg)
 
 
+class OpenocdError(Exception):
+    def __init__(self, error):
+        msg = f'{Color.BOLD}OPENOCD ERROR:{Color.END} {error}\n'
+        super().__init__(msg)
+
+
 class PhoenixdError(Exception):
     def __init__(self, message, output=''):
 
@@ -69,10 +75,20 @@ class ProcessHandler(ABC):
         self.cwd = cwd
         self.proc = None
 
-    @abstractmethod
-    def read_output(self):
+    def read_output(self, progname):
         """ This method is intended to read the program output"""
-        pass
+        if is_github_actions():
+            logging.info(f'::group::Run {progname}\n')
+
+        while True:
+            line = self.proc.readline()
+            if not line:
+                break
+
+            logging.info(line)
+
+        if is_github_actions():
+            logging.info('::endgroup::\n')
 
     @abstractmethod
     def run(self):
@@ -126,20 +142,6 @@ class Psu(ProcessHandler):
     def __init__(self, target, script, cwd=None):
         super().__init__(target, 'psu', [f'{script}'], cwd)
 
-    def read_output(self):
-        if is_github_actions():
-            logging.info('::group::Run psu\n')
-
-        while True:
-            line = self.proc.readline()
-            if not line:
-                break
-
-            logging.info(line)
-
-        if is_github_actions():
-            logging.info('::endgroup::\n')
-
     def run(self):
         # Use pexpect.spawn to run a process as PTY, so it will flush on a new line
         self.proc = pexpect.spawn(
@@ -149,10 +151,46 @@ class Psu(ProcessHandler):
             encoding='ascii'
         )
 
-        self.read_output()
+        self.read_output(progname='psu')
         self.proc.wait()
         if self.proc.exitstatus != 0:
             raise PsuError(' Loading plo using psu failed, psu exit status was not equal 0!')
+
+
+class Openocd(ProcessHandler):
+    """Handler for openocd process"""
+
+    def __init__(self, target, file, interface, cwd=None):
+        # tested only for stm32l4x6 target and stlink interface
+        if 'stm32l4x6' in target:
+            openocd_target = 'stm32l4x'
+        else:
+            raise OpenocdError('Not supported target!')
+
+        if interface != 'stlink':
+            raise OpenocdError('Not supported interface!')
+
+        args = [
+            '-f', f'interface/{interface}.cfg',
+            '-f', f'target/{openocd_target}.cfg',
+            '-c', 'reset_config srst_only srst_nogate connect_assert_srst',
+            '-c', f'program {file} 0x08000000 verify reset exit'
+            ]
+
+        super().__init__(target, 'openocd', args, cwd)
+
+    def run(self):
+        self.proc = pexpect.spawn(
+            self.progname,
+            self.args,
+            cwd=self.cwd,
+            encoding='ascii'
+        )
+
+        self.read_output(progname='openocd')
+        self.proc.wait()
+        if self.proc.exitstatus != 0:
+            raise OpenocdError('Flashing system image using openocd failed, openocd exit status was not equal 0!')
 
 
 class Gdb(ProcessHandler):
