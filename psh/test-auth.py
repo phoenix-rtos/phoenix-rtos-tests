@@ -71,6 +71,8 @@ def harness(p):
 
     # Too long credentials
     printables = string.printable
+    # We don't want to send whitespace characters, especially newline
+    printables = printables.translate({ord(i): None for i in string.whitespace})
     assert_auth(p)
     p.send(printables + '\n')
     assert p.expect_exact(['Login:', pexpect.TIMEOUT]) == 0, 'Long login does not repeat login procedure'
