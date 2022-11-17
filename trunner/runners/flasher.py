@@ -13,7 +13,7 @@ import sys
 
 from pexpect.exceptions import TIMEOUT, EOF
 from .common import PloError, PloTalker, RebootError
-from .utils import Psu, Gdb, Openocd, Phoenixd, PhoenixdError, GdbError, OpenocdError, append_output
+from .utils import Psu, GdbScript, Openocd, Phoenixd, PhoenixdError, GdbError, OpenocdError, append_output
 from trunner.config import PHRTOS_PROJECT_DIR
 
 
@@ -101,7 +101,7 @@ class ZYNQ7000JtagFlasher(PloFlasher):
         )
 
     def upload_plo(self, plo):
-        Gdb(self.target, self.PLO_FILE, script=self.GDB_SCRIPT).run()
+        GdbScript(self.target, self.PLO_FILE, script=self.GDB_SCRIPT).run()
 
         plo.interrupt_counting()
         plo.wait_prompt()

@@ -7,14 +7,19 @@
 # Authors: Mateusz Niewiadomski, Damian Loewnau
 #
 
+import re
 import select
+import subprocess
 import sys
 import time
 
 import pexpect.fdpexpect
 
-from .common import DeviceRunner, RebootError, GPIO, PloTalker
+from pexpect.exceptions import TIMEOUT, EOF
+from trunner.tools.color import Color
+from .common import DeviceRunner, RebootError, GPIO, PloTalker, PloError, rootfs
 from .flasher import STM32L4OpenocdFlasher
+from .utils import OpenocdGdbServer, OpenocdError, GdbInteractive
 
 
 def hostpc_reboot():
@@ -27,6 +32,18 @@ def hostpc_reboot():
         sys.stdin.readline()
     else:
         raise RebootError('It took too long to wait for a key pressing')
+
+
+def count_psize(binary_path: str, page_size, page_mask):
+    """ Counts size of the binary aligned to page size
+        The algorithm corresponds to the one from _targets/build.common """
+    wc = subprocess.run(['wc', '-c', binary_path], capture_output=True)
+    out = wc.stdout.decode()
+    m = re.search(r'(\d+?)\s', out)
+    bytes = m.group(0)
+    prog_size = (int(bytes) + page_size - 1) & page_mask
+
+    return prog_size
 
 
 class STM32L4Runner(DeviceRunner):
@@ -42,6 +59,10 @@ class STM32L4Runner(DeviceRunner):
     GPIO 12 must be connected to a blue pin of an RGB LED
     GPIO 13 must be connected to a red pin of an RGB LED
     GPIO 18 must be connected to a green pin of an RGB LED"""
+
+    # based on the values from build.project.armv7m4-stm32l4x6
+    SIZE_PAGE = 0x200
+    PAGE_MASK = 0xfffffe00
 
     class oneByOne_fdspawn(pexpect.fdpexpect.fdspawn):
         """ Workaround for Phoenix-RTOS on stm32l4 targets not processing characters fast enough
@@ -100,15 +121,46 @@ class STM32L4Runner(DeviceRunner):
         flasher.flash()
 
     def load(self, test):
-        self.reboot(cut_power=self.is_cut_power_used)
-        # there may be some rubbish on serial right after reboot - to avoid fail we ignore codec errors
-        with PloTalker(self.serial_port, codec_errors='ignore', replaced_fdspawn=self.oneByOne_fdspawn) as plo:
-            if self.logpath:
-                plo.plo.logfile = open(self.logpath, "a")
-            plo.interrupt_counting()
-            plo.wait_prompt()
-            if not test.exec_cmd and not test.syspage_prog:
-                return True
+        load_dir = str(rootfs(test.target) / 'bin')
+        try:
+            if self.is_cut_power_used:
+                self.reboot(cut_power=self.is_cut_power_used)
+            # Running GdbServer causes reboot, so when cut power is not needed skip calling it
+            with OpenocdGdbServer(self.target, interface='stlink'):
+                # there may be some rubbish on serial right after reboot - to avoid fail we ignore codec errors
+                with PloTalker(self.serial_port, codec_errors='ignore', replaced_fdspawn=self.oneByOne_fdspawn) as plo:
+                    if self.logpath:
+                        plo.plo.logfile = open(self.logpath, "a")
+                    plo.interrupt_counting()
+                    plo.wait_prompt()
+                    if not test.exec_cmd and not test.syspage_prog:
+                        return True
+
+                    prog = test.exec_cmd[0] if test.exec_cmd else test.syspage_prog
+                    test_path = f'{load_dir}/{prog}'
+                    try:
+                        with GdbInteractive(self.target, port=3333) as gdb:
+                            gdb.connect()
+                            gdb.load(test_path, addr=0x20030000)
+                            gdb.go()
+                    except (TIMEOUT, EOF) as exc:
+                        test.exception = Color.colorify('EXCEPTION GDB\n', Color.BOLD)
+                        test.handle_pyexpect_error(gdb.proc, exc)
+                        return False
+
+                    psize = count_psize(f'{test_path}', self.SIZE_PAGE, self.PAGE_MASK)
+                    plo.alias(prog, offset=0x30000, psize=psize)
+                    plo.app('ramdev', prog, 'ram', 'ram')
+        except (TIMEOUT, EOF, PloError, OpenocdError) as exc:
+            if isinstance(exc, TIMEOUT) or isinstance(exc, EOF):
+                test.exception = Color.colorify('EXCEPTION PLO\n', Color.BOLD)
+                test.handle_pyexpect_error(plo.plo, exc)
+            else:  # RebootError, PloError or PhoenixdError
+                test.exception = str(exc)
+                test.fail()
+
+            return False
+
         return True
 
     def run(self, test):
