@@ -2,13 +2,42 @@
 
 import argparse
 import logging
+import os
+import pexpect
 import pathlib
+import re
 import sys
 
 import trunner.config as config
 
 from trunner.test_runner import TestsRunner
 from trunner.tools.color import Color
+
+
+def resolve_serial(unresolved, target):
+    """ Serial path may slightly differ for various devices
+        Even when connected to the same socket """
+    # Serial port does not matter on host/qemu targets
+    if 'host' in target or 'qemu' in target:
+        return ''
+
+    try:
+        with pexpect.spawn(
+            'ls /dev/serial/by-path/',
+            encoding="ascii",
+            timeout=3,
+        ) as proc:
+            basename_prefix = os.path.basename(unresolved)
+            basename_prefix = re.escape(basename_prefix)
+
+            proc.expect(rf'{basename_prefix}[^\r\n]+')
+            resolved = f'/dev/serial/by-path/{proc.match[0]}'
+    except (pexpect.TIMEOUT, pexpect.EOF):
+        print(f'Serial port with the default path prefix printed below not found!\n{unresolved}\n'
+              'Please change the socket or consider passing `--serial` argument')
+        sys.exit(1)
+
+    return resolved
 
 
 def set_logger(level=logging.INFO):
@@ -93,10 +122,7 @@ def parse_args():
         args.test = [config.PHRTOS_TEST_DIR]
 
     if not args.serial:
-        if args.target == 'armv7a9-zynq7000-zedboard':
-            args.serial = config.DEVICE_SERIAL_PORT_XYLINX
-        else:
-            args.serial = config.DEVICE_SERIAL_PORT_NXP
+        args.serial = resolve_serial(config.DEVICE_SERIAL_PORT_PREFIX, args.target)
 
     if not args.baudrate:
         args.baudrate = config.DEVICE_SERIAL_BAUDRATE

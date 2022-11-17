@@ -64,9 +64,8 @@ LONG_TESTS = ['busybox', 'mbedtls', 'micropython_std', 'micropython_repl']
 
 CURRENT_TARGET = None
 
-# Port to communicate with hardware boards
-DEVICE_SERIAL_PORT_NXP = '/dev/serial/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.4:1.1'
-DEVICE_SERIAL_PORT_XYLINX = '/dev/serial/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.4:1.0'
+# Port to communicate with hardware boards - by default we use the same rpi socket
+DEVICE_SERIAL_PORT_PREFIX = "/dev/serial/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.4:1"
 DEVICE_SERIAL_BAUDRATE = 115200
 
 # DEVICE_SERIAL USB port address
