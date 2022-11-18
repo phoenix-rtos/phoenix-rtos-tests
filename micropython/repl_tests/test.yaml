@@ -1,7 +1,8 @@
 test:
     type: micropython_repl
     targets:
-      exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk]
+      # those tests is intended to run on rootfs targets
+      exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo]
     tests:
         - name: cmdline.repl_basic.py
           exec: echo usr/test/micropython/cmdline/repl_basic.py
