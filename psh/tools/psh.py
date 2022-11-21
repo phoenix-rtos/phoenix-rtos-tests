@@ -124,53 +124,18 @@ def assert_cmd_successed(pexpect_proc):
     assert get_exit_code(pexpect_proc) == 0, 'The exit status of last passed command does not equal 0!'
 
 
-def ls(pexpect_proc, dir=''):
-    ''' Returns the list with named tuples containing information about files present in the specified directory '''
-    File = namedtuple('File', ['name', 'owner', 'is_dir', 'datetime'])
-
-    pexpect_proc.sendline(f'ls -la {dir}')
-    pexpect_proc.expect_exact('ls -la')
-    if dir:
-        pexpect_proc.expect_exact(f' {dir}')
-
-    pexpect_proc.expect_exact('\n')
-
-    files = []
-    while True:
-        idx = pexpect_proc.expect([r'\(psh\)\% ', r'([^\r\n]+(\r+\n))'])
-        if idx == 0:
-            break
-
-        line = pexpect_proc.match.group(0)
-        # temporary solution to match line with missing `---` in owner position (issue #254)
-        if '    ---' in line:
-            line = line.replace('    ---', '--- ---')
-        try:
-            permissions, _, owner, _, _, month, mday, time, name = line.split()
-        except ValueError:
-            assert False, f'wrong ls output: {line}'
-
-        # Name is printed with ascii escape characters - remove them
-        esc_sequences = re.findall(CONTROL_CODE, name)
-
-        for seq in esc_sequences:
-            name = name.replace(seq, '')
-
-        # the year is set to default 1970, 1 min resolution
-        file_datetime = datetime.strptime(f'1970 {month} {mday} {time}:00', '%Y %b %d %X')
-        f = File(name, owner, permissions[0] == 'd', file_datetime)
-        files.append(f)
-
-    return files
+def _send(pexpect_proc, cmd):
+    pexpect_proc.sendline(cmd)
+    idx = pexpect_proc.expect_exact([cmd, pexpect.TIMEOUT, pexpect.EOF])
+    assert idx == 0, f"{cmd} command hasn't been sent properly"
 
 
 def uptime(pexpect_proc):
     ''' Returns tuple with time since start of a system in format: hh:mm:ss'''
     Time = namedtuple('Time', ['hour', 'minute', 'second'])
-    pexpect_proc.sendline('uptime')
-    idx = pexpect_proc.expect_exact(['uptime', pexpect.TIMEOUT, pexpect.EOF])
-    assert idx == 0, "uptime command hasn't been sent properly"
+    _send(pexpect_proc, 'uptime')
 
+    idx = 0
     while idx != 1:
         idx = pexpect_proc.expect([
             r'up (\d+):(\d+):(\d+).*?\n',
@@ -186,46 +151,18 @@ def uptime(pexpect_proc):
 
 def date(pexpect_proc):
     ''' Returns the system date in a datetime object '''
-    pexpect_proc.sendline('date +%Y:%m:%d:%H:%M:%S')
-    pexpect_proc.expect_exact('date +%Y:%m:%d:%H:%M:%S')
+    _send(pexpect_proc, 'date +%Y:%m:%d:%H:%M:%S')
     pexpect_proc.expect(rf'(?P<year>\d+):(?P<month>\d+):(?P<day>\d+):(?P<hour>\d+):(?P<min>\d+):(?P<sec>\d+){EOL}')
 
     m = pexpect_proc.match
     return datetime(*map(int, m.groups()))
 
 
-def ls_simple(pexpect_proc, dir=''):
-    ''' Returns list of file names from the specified directory'''
-    files = []
-    pexpect_proc.sendline(f'ls -1 {dir}')
-    idx = pexpect_proc.expect_exact([f'ls -1 {dir}', pexpect.TIMEOUT, pexpect.EOF])
-    assert idx == 0, f"ls {dir} command hasn't been sent properly"
-
-    while True:
-        idx = pexpect_proc.expect([r'\(psh\)\% ', r'((?P<fname>[^\r\n]+)(\r+\n))'])
-        if idx == 0:
-            break
-        else:
-            file = pexpect_proc.match.group('fname')
-            # Name is printed with ascii escape characters - remove them
-            esc_sequences = re.findall(CONTROL_CODE, file)
-            for seq in esc_sequences:
-                file = file.replace(seq, '')
-
-            files.append(file)
-
-    return files
-
-
 def ls(pexpect_proc, dir=''):
     ''' Returns the list with named tuples containing information about files present in the specified directory '''
-    File = namedtuple('File', ['name', 'owner', 'is_dir', 'date'])
-    Date = namedtuple('Date', ['month', 'mday', 'time'])
+    File = namedtuple('File', ['name', 'owner', 'is_dir', 'datetime'])
 
-    pexpect_proc.sendline(f'ls -la {dir}')
-    pexpect_proc.expect_exact('ls -la')
-    if dir:
-        pexpect_proc.expect_exact(f' {dir}')
+    _send(pexpect_proc, f'ls -la {dir}')
 
     pexpect_proc.expect_exact('\n')
 
@@ -237,20 +174,18 @@ def ls(pexpect_proc, dir=''):
 
         line = pexpect_proc.match.group(0)
         # temporary solution to match line with missing `---` in owner position (issue #254)
-        if '    ---' in line:
-            line = line.replace('    ---', '--- ---')
+        line = line.replace('    ---', '--- ---')
         try:
-            permissions, _, owner, _, _, month, mday, time, name = line.split()
+            permissions, _, owner, _, _, month, mday, time, name = line.split(maxsplit=9)
         except ValueError:
             assert False, f'wrong ls output: {line}'
 
         # Name is printed with ascii escape characters - remove them
-        esc_sequences = re.findall(CONTROL_CODE, name)
+        name = re.sub(CONTROL_CODE, '', name)
 
-        for seq in esc_sequences:
-            name = name.replace(seq, '')
-
-        f = File(name, owner, permissions[0] == 'd', Date(month, mday, time))
+        # the year is set to default 1970, 1 min resolution
+        file_datetime = datetime.strptime(f'1970 {month} {mday} {time}:00', '%Y %b %d %X')
+        f = File(name, owner, permissions[0] == 'd', file_datetime)
         files.append(f)
 
     return files
@@ -259,9 +194,7 @@ def ls(pexpect_proc, dir=''):
 def ls_simple(pexpect_proc, dir=''):
     ''' Returns list of file names from the specified directory'''
     files = []
-    pexpect_proc.sendline(f'ls -1 {dir}')
-    idx = pexpect_proc.expect_exact([f'ls -1 {dir}', pexpect.TIMEOUT, pexpect.EOF])
-    assert idx == 0, f"ls {dir} command hasn't been sent properly"
+    _send(pexpect_proc, f'ls -1 {dir}')
 
     while True:
         idx = pexpect_proc.expect([r'\(psh\)\% ', r'((?P<fname>[^\r\n]+)(\r+\n))'])
