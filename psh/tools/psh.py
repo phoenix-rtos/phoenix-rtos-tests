@@ -36,9 +36,20 @@ def _readable(exp_regex):
     return exp_regex.replace(PROMPT, '(psh)% ')
 
 
-def assert_cmd(pexpect_proc, cmd, expected='', msg='', is_regex=False):
+def _check_result(pexpect_proc, result):
+    if result == 'dont-check':
+        return
+
+    if (result != 'success') and (result != 'fail'):
+        raise Exception(f''.join((f'The value {result} for `result` argument is not correct. ',
+            'Please choose between susccess/fail/dont-check')))
+
+    assert_cmd_successed(pexpect_proc) if result == 'success' else assert_cmd_failed(pexpect_proc)
+
+
+def assert_cmd(pexpect_proc, cmd, expected='', result='success', msg='', is_regex=False):
     ''' Sends specified command and asserts that it's displayed correctly
-    with optional expected output and next prompt'''
+    with optional expected output and next prompt. Exit status is asserted depending on `result`'''
     pexpect_proc.sendline(cmd)
     cmd = re.escape(cmd)
     exp_regex = ''
@@ -54,17 +65,25 @@ def assert_cmd(pexpect_proc, cmd, expected='', msg='', is_regex=False):
     exp_regex = cmd + EOL + exp_regex + PROMPT
     exp_readable = _readable(exp_regex)
     msg = f'Expected output regex was: \n---\n{exp_readable}\n---\n' + msg
+
     assert pexpect_proc.expect([exp_regex, pexpect.TIMEOUT, pexpect.EOF]) == 0, msg
 
+    _check_result(pexpect_proc, result)
 
-def assert_prompt_after_cmd(pexpect_proc, cmd, msg=None):
+
+def assert_prompt_after_cmd(pexpect_proc, cmd, result='success', msg=None):
+    ''' Sends specified command and asserts that the command and next prompt are displayed correctly.
+    Exit status is asserted depending on the result argument '''
     pexpect_proc.sendline(cmd)
     exp_regex = EOL + PROMPT
     if not msg:
         msg = f'Prompt not seen after sending the following command: {cmd}'
     assert pexpect_proc.expect([exp_regex, pexpect.TIMEOUT]) == 0, msg
+    output = pexpect_proc.before
 
-    return pexpect_proc.before
+    _check_result(pexpect_proc, result)
+
+    return output
 
 
 def assert_only_prompt(pexpect_proc):
@@ -102,7 +121,7 @@ def assert_exec(pexpect_proc, prog, expected='', msg=''):
     with optional expected output and next prompt'''
     exec_cmd = _get_exec_cmd(prog)
 
-    assert_cmd(pexpect_proc, exec_cmd, expected, msg)
+    assert_cmd(pexpect_proc, exec_cmd, expected, result='success', msg=msg)
 
 
 def get_exit_code(pexpect_proc):
