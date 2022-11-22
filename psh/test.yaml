@@ -45,14 +45,18 @@ test:
         - name: touch
           harness: test-touch.py
 
+        - name: touch-rootfs
+          harness: test-touch-rootfs.py
+          targets:
+              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk]
+
         - name: ls
           harness: test-ls.py
 
         - name: ls-rootfs
           harness: test-ls-rootfs.py
           targets:
-              value:
-                  - ia32-generic-qemu
+              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk]
 
         - name: history
           harness: test-history.py

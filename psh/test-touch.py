@@ -20,19 +20,6 @@ from psh.tools.common import (CHARS, assert_present, assert_file_created, assert
 ROOT_TEST_DIR = 'test_touch_dir'
 
 
-def assert_hardlinks(p):
-    uptimes = {}
-    # all psh commands are hardlinks
-    psh_cmds = psh.get_commands(p)
-    psh_cmds.remove('psh')
-    for psh_cmd in psh_cmds:
-        uptimes[psh_cmd] = psh.uptime(p)
-        msg = f"Prompt hasn't been seen after the symlink touch: /bin/{psh_cmd}"
-        psh.assert_cmd(p, f'touch /bin/{psh_cmd}', '', msg)
-
-    assert_timestamp_change(p, psh_cmds, uptimes, '/bin')
-
-
 def assert_executable(p):
     # psh is the example of executable which exists in file system
     msg = "Prompt hasn't been seen after the executable touch: /usr/bin/hello"
@@ -112,6 +99,5 @@ def harness(p):
     assert_created_dir(p)
     assert_existing_dirs(p)
 
-    assert_hardlinks(p)
     assert_devices(p)
     assert_executable(p)
