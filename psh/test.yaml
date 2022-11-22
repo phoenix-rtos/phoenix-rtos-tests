@@ -14,8 +14,7 @@ test:
         - name: pshlogin
           harness: test-pshlogin.py
           targets:
-              value:
-                  - ia32-generic-qemu
+              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk]
 
         - name: echo
           harness: test-echo.py
@@ -35,8 +34,7 @@ test:
         - name: cat-shells
           harness: test-cat-shells.py
           targets:
-              value:
-                  - ia32-generic-qemu
+              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk]
 
         - name: kill
           harness: test-kill.py
