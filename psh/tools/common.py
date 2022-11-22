@@ -38,6 +38,25 @@ def create_testdir(p, dirname):
     psh.assert_cmd(p, f'mkdir {dirname}', '', msg)
 
 
+def assert_timestamp_change(p, touched_files, uptimes, dir=''):
+    files = psh.ls(p, dir)
+    for file in files:
+        if file.name in touched_files:
+            uptime = uptimes[file.name]
+            # uptime has to be got before touch
+            # to prevent failed assertion when typing uptime in 00:59 and touch in 01:00
+            # 1 min margin is applied
+            next_minute = f'{(int(uptime.minute)+1):02d}'
+            if file.date.time == f'{uptime.hour}:{next_minute}':
+                uptime_str = f'{uptime.hour}:{next_minute}'
+            else:
+                uptime_str = f'{uptime.hour}:{uptime.minute}'
+            # when writing test, system date is always set to Jan 01 00:00
+            # so all touched files should have the following timestamp: Jan 01 00:00 + uptime
+            msg = f"The file's timestamp hasn't been changed after touch: {dir}/{file.name}, timestamp = {file.date}"
+            assert file.date == ('Jan', '1', uptime_str), msg
+
+
 def assert_present(name, files, dir=False):
     ''' Asserts that the `name` file/directory is present in the `files` named tuple'''
     for file in files:
