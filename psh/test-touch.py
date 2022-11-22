@@ -2,7 +2,7 @@
 #
 # phoenix-rtos-tests
 #
-# psh touch command text
+# psh touch command test
 #
 # Copyright 2022 Phoenix Systems
 # Author: Damian Loewnau
@@ -15,34 +15,16 @@
 import psh.tools.psh as psh
 import trunner.config as config
 from psh.tools.common import (CHARS, assert_present, assert_file_created, assert_dir_created,
-                              assert_random_files, get_rand_strings, create_testdir)
+                              assert_random_files, get_rand_strings, create_testdir, assert_timestamp_change)
 
 ROOT_TEST_DIR = 'test_touch_dir'
 
 
-def assert_timestamp_change(p, touched_files, uptimes, dir=''):
-    files = psh.ls(p, dir)
-    for file in files:
-        if file.name in touched_files:
-            uptime = uptimes[file.name]
-            # uptime has to be got before touch
-            # to prevent failed assertion when typing uptime in 00:59 and touch in 01:00
-            # 1 min margin is applied
-            next_minute = f'{(int(uptime.minute)+1):02d}'
-            if file.date.time == f'{uptime.hour}:{next_minute}':
-                uptime_str = f'{uptime.hour}:{next_minute}'
-            else:
-                uptime_str = f'{uptime.hour}:{uptime.minute}'
-            # when writing test, system date is always set to Jan 01 00:00
-            # so all touched files should have the following timestamp: Jan 01 00:00 + uptime
-            msg = f"The file's timestamp hasn't been changed after touch: {dir}/{file.name}, timestamp = {file.date}"
-            assert file.date == ('Jan', '1', uptime_str), msg
-
-
-def assert_symlinks(p):
+def assert_hardlinks(p):
     uptimes = {}
-    # all psh commands are symlinks
+    # all psh commands are hardlinks
     psh_cmds = psh.get_commands(p)
+    psh_cmds.remove('psh')
     for psh_cmd in psh_cmds:
         uptimes[psh_cmd] = psh.uptime(p)
         msg = f"Prompt hasn't been seen after the symlink touch: /bin/{psh_cmd}"
@@ -130,6 +112,6 @@ def harness(p):
     assert_created_dir(p)
     assert_existing_dirs(p)
 
-    assert_symlinks(p)
+    assert_hardlinks(p)
     assert_devices(p)
     assert_executable(p)
