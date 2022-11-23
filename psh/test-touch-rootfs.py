@@ -12,19 +12,19 @@
 # %LICENSE%
 
 import psh.tools.psh as psh
-from psh.tools.common import assert_timestamp_change
+from psh.tools.common import assert_mtime
 
 
 def assert_hardlinks(p):
-    uptimes = {}
+    dates = {}
     # all psh commands are hardlinks
-    psh_cmds = psh.get_commands(p)
-    for psh_cmd in psh_cmds:
-        uptimes[psh_cmd] = psh.uptime(p)
-        msg = f"Prompt hasn't been seen after the hardlink touch: /bin/{psh_cmd}"
-        psh.assert_cmd(p, f'touch /bin/{psh_cmd}', '', msg)
+    for hardlink in psh.get_commands(p):
+        hardlink_path = f'/bin/{hardlink}'
+        dates[hardlink] = psh.date(p)
+        msg = f"Prompt hasn't been seen after the hardlink touch: {hardlink_path}"
+        psh.assert_cmd(p, f'touch {hardlink_path}', msg=msg)
 
-    assert_timestamp_change(p, psh_cmds, uptimes, '/bin')
+    assert_mtime(p, dates, '/bin')
 
 
 @psh.run
