@@ -19,6 +19,7 @@ import pexpect
 import trunner.config as config
 
 from collections import namedtuple
+from datetime import datetime
 
 EOL = r'(\r+)\n'
 EOT = '\x04'
@@ -180,6 +181,22 @@ def uptime(pexpect_proc):
     time = Time(hour, minute, second)
 
     return time
+
+
+def date(pexpect_proc):
+    ''' Returns the system date in a datetime object '''
+    pexpect_proc.sendline('date +%Y:%m:%d:%H:%M:%S')
+    pexpect_proc.expect_exact('date +%Y:%m:%d:%H:%M:%S')
+    pexpect_proc.expect(rf'(?P<year>\d+):(?P<month>\d+):(?P<day>\d+):(?P<hour>\d+):(?P<min>\d+):(?P<sec>\d+){EOL}')
+
+    m = pexpect_proc.match
+    return datetime(
+        int(m.group('year')),
+        int(m.group('month')),
+        int(m.group('day')),
+        int(m.group('hour')),
+        int(m.group('min')),
+        int(m.group('sec')))
 
 
 def ls_simple(pexpect_proc, dir=''):

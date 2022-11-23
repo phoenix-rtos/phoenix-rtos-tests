@@ -28,6 +28,8 @@ The python module `psh` makes writing harness tests easier. It provides the foll
 
 The `pexpect_proc` argument is the [pexpect](https://pexpect.readthedocs.io/en/stable/api/index.html) process returned by `pexpect.spawn()` method. Each functional test has the spawned process passed in the argument, which is `p`, please see examples below.
 
+There are also other utilities helpful when writing psh tests, for example `ls` or `date`. Please go to `psh.py` and check them, descriptions are provided in function's doctrings.
+
 ## The usage examples
 
 * The error statement assertion
