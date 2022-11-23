@@ -21,7 +21,7 @@ import trunner.config as config
 from collections import namedtuple
 from datetime import datetime
 
-EOL = r'(\r+)\n'
+EOL = r'(?:\r+)\n'
 EOT = '\x04'
 PROMPT = r'(\r+)\x1b\[0J' + r'\(psh\)% '
 # according to control sequence introducer pattern
@@ -126,8 +126,7 @@ def assert_cmd_successed(pexpect_proc):
 
 def ls(pexpect_proc, dir=''):
     ''' Returns the list with named tuples containing information about files present in the specified directory '''
-    File = namedtuple('File', ['name', 'owner', 'is_dir', 'date'])
-    Date = namedtuple('Date', ['month', 'mday', 'time'])
+    File = namedtuple('File', ['name', 'owner', 'is_dir', 'datetime'])
 
     pexpect_proc.sendline(f'ls -la {dir}')
     pexpect_proc.expect_exact('ls -la')
@@ -157,7 +156,9 @@ def ls(pexpect_proc, dir=''):
         for seq in esc_sequences:
             name = name.replace(seq, '')
 
-        f = File(name, owner, permissions[0] == 'd', Date(month, mday, time))
+        # the year is set to default 1970, 1 min resolution
+        file_datetime = datetime.strptime(f'1970 {month} {mday} {time}:00', '%Y %b %d %X')
+        f = File(name, owner, permissions[0] == 'd', file_datetime)
         files.append(f)
 
     return files
@@ -190,13 +191,7 @@ def date(pexpect_proc):
     pexpect_proc.expect(rf'(?P<year>\d+):(?P<month>\d+):(?P<day>\d+):(?P<hour>\d+):(?P<min>\d+):(?P<sec>\d+){EOL}')
 
     m = pexpect_proc.match
-    return datetime(
-        int(m.group('year')),
-        int(m.group('month')),
-        int(m.group('day')),
-        int(m.group('hour')),
-        int(m.group('min')),
-        int(m.group('sec')))
+    return datetime(*map(int, m.groups()))
 
 
 def ls_simple(pexpect_proc, dir=''):

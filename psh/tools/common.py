@@ -15,6 +15,9 @@
 import random
 import string
 
+from datetime import datetime, timedelta
+from typing import Dict
+
 import psh.tools.psh as psh
 
 from psh.tools.psh import CONTROL_CODE
@@ -38,23 +41,27 @@ def create_testdir(p, dirname):
     psh.assert_cmd(p, f'mkdir {dirname}', '', msg)
 
 
-def assert_timestamp_change(p, touched_files, uptimes, dir=''):
-    files = psh.ls(p, dir)
-    for file in files:
-        if file.name in touched_files:
-            uptime = uptimes[file.name]
-            # uptime has to be got before touch
-            # to prevent failed assertion when typing uptime in 00:59 and touch in 01:00
-            # 1 min margin is applied
-            next_minute = f'{(int(uptime.minute)+1):02d}'
-            if file.date.time == f'{uptime.hour}:{next_minute}':
-                uptime_str = f'{uptime.hour}:{next_minute}'
-            else:
-                uptime_str = f'{uptime.hour}:{uptime.minute}'
-            # when writing test, system date is always set to Jan 01 00:00
-            # so all touched files should have the following timestamp: Jan 01 00:00 + uptime
-            msg = f"The file's timestamp hasn't been changed after touch: {dir}/{file.name}, timestamp = {file.date}"
-            assert file.date == ('Jan', '1', uptime_str), msg
+def assert_mtime(p, datetimes: Dict[str, datetime], dir=''):
+    ''' Asserts that files (keys in datetimes dictionary) have modification time
+    equal to corresponding datetime values with 1 min margin.
+    Year and seconds are not checked. All files shall be present in the `dir` directory. '''
+
+    dir_files = {file.name: file for file in psh.ls(p, dir)}
+
+    for filename, target_datetime in datetimes.items():
+        assert filename in dir_files, f'File {filename} is not present in the {dir} directory!'
+        date = dir_files[filename].datetime
+
+        # we do not want to compare years and seconds (not printed by ls -l)
+        date = date.replace(year=target_datetime.year, second=target_datetime.second)
+
+        # to prevent failed assertion when typing date in 00:59 and touch in 01:00
+        if date - target_datetime == timedelta(minutes=1):
+            date = target_datetime
+
+        assert date == target_datetime, "".join((
+            f'The modification time for {filename} is not equal to the target one!',
+            f'file datetime: {date} target datetime: {target_datetime}'))
 
 
 def assert_present(name, files, dir=False):

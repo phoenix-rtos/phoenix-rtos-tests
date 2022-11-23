@@ -15,7 +15,7 @@
 import psh.tools.psh as psh
 import trunner.config as config
 from psh.tools.common import (CHARS, assert_present, assert_file_created, assert_dir_created,
-                              assert_random_files, get_rand_strings, create_testdir, assert_timestamp_change)
+                              assert_random_files, get_rand_strings, create_testdir, assert_mtime)
 
 ROOT_TEST_DIR = 'test_touch_dir'
 
@@ -23,24 +23,24 @@ ROOT_TEST_DIR = 'test_touch_dir'
 def assert_executable(p):
     # psh is the example of executable which exists in file system
     msg = "Prompt hasn't been seen after the executable touch: /usr/bin/hello"
-    uptime = psh.uptime(p)
+    date = psh.date(p)
     if config.CURRENT_TARGET in config.SYSEXEC_TARGETS:
-        psh.assert_cmd(p, 'touch /syspage/psh', '', msg)
-        assert_timestamp_change(p, ['psh'], {'psh': uptime}, '/syspage')
+        psh.assert_cmd(p, 'touch /syspage/psh', msg=msg)
+        assert_mtime(p, {'psh': date}, '/syspage')
     else:
-        psh.assert_cmd(p, 'touch /bin/psh', '', msg)
-        assert_timestamp_change(p, ['psh'], {'psh': uptime}, '/bin')
+        psh.assert_cmd(p, 'touch /bin/psh', msg=msg)
+        assert_mtime(p, {'psh': date}, '/bin')
 
 
 def assert_devices(p):
-    uptimes = {}
+    dates = {}
     devices = psh.ls_simple(p, '/dev')
     for dev in devices:
-        uptimes[dev] = psh.uptime(p)
+        dates[dev] = psh.date(p)
         msg = f"Prompt hasn't been seen after the device touch: /dev/{dev}"
-        psh.assert_cmd(p, f'touch /dev/{dev}', '', msg)
+        psh.assert_cmd(p, f'touch /dev/{dev}', msg=msg)
 
-    assert_timestamp_change(p, devices, uptimes, dir='/dev')
+    assert_mtime(p, dates, dir='/dev')
 
 
 def assert_multi_arg(p, path):
@@ -72,13 +72,13 @@ def assert_created_dir(p):
 def assert_existing_dirs(p):
     # we assume that syspage directory exists on syspage targets and bin directory exists on root-fs targets
     msg = "Prompt hasn't been seen after the executable touch: /usr/bin/hello"
-    uptime = psh.uptime(p)
+    date = psh.date(p)
     if config.CURRENT_TARGET in config.SYSEXEC_TARGETS:
-        psh.assert_cmd(p, 'touch /syspage/', '', msg)
-        assert_timestamp_change(p, ['syspage'], {'syspage': uptime}, '/')
+        psh.assert_cmd(p, 'touch /syspage/', msg=msg)
+        assert_mtime(p, {'syspage': date}, '/')
     else:
-        psh.assert_cmd(p, 'touch /bin/', '', msg)
-        assert_timestamp_change(p, ['bin'], {'bin': uptime}, '/')
+        psh.assert_cmd(p, 'touch /bin/', msg=msg)
+        assert_mtime(p, {'bin': date}, '/')
 
 
 @psh.run
