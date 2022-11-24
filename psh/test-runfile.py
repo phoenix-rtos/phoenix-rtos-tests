@@ -16,6 +16,7 @@ import pexpect
 import psh.tools.psh as psh
 import trunner.config as config
 from psh.tools.psh import EOT
+from psh.tools.randwrapper import TestRandom
 from psh.tools.common import CHARS, get_rand_strings
 
 ROOT_TEST_DIR = 'test_runfile_dir'
@@ -30,10 +31,10 @@ def get_root_dirs(p):
     return root_dirs
 
 
-def assert_nonexistent(p, root_dirs):
+def assert_nonexistent(p, root_dirs, random_wrapper: TestRandom):
     psh.assert_prompt_after_cmd(p, '/nonexistent_file', result='fail')
 
-    rfnames = get_rand_strings(CHARS, 10)
+    rfnames = get_rand_strings(CHARS, 10, random_wrapper)
     for rfname in rfnames:
         psh.assert_prompt_after_cmd(p, f'/{rfname}', result='fail')
 
@@ -93,8 +94,9 @@ def assert_text_files(p):
 def harness(p):
     psh.init(p)
 
+    random_wrapper = TestRandom(seed=1)
     root_dirs = get_root_dirs(p)
-    assert_nonexistent(p, root_dirs)
+    assert_nonexistent(p, root_dirs, random_wrapper)
     assert_dirs(p, root_dirs)
     assert_symlinks(p)
     assert_executables(p)

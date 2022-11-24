@@ -1,6 +1,7 @@
 import string
 
 import psh.tools.psh as psh
+from psh.tools.randwrapper import TestRandom
 from psh.tools.common import CHARS, get_rand_strings
 
 
@@ -41,8 +42,8 @@ def assert_clear(p):
     psh.assert_cmd(p, 'history', '  1  history', result='dont-check', msg='Wrong history output after clear')
 
 
-def assert_rand_cmds(p, psh_cmds):
-    cmds = get_rand_strings(CHARS, 50)
+def assert_rand_cmds(p, psh_cmds, random_wrapper: TestRandom):
+    cmds = get_rand_strings(CHARS, 50, random_wrapper)
 
     cmds = list(set(cmds) - set(psh_cmds))
     msg = 'Wrong history output after running random unknown commands'
@@ -63,17 +64,17 @@ def assert_psh_cmds(p, psh_cmds, with_repeats=False):
         assert_sent(p, remaining, msg)
 
 
-def assert_multiarg_cmds(p):
+def assert_multiarg_cmds(p, random_wrapper: TestRandom):
     cmds = ['bind', 'cat', 'help', 'mem', 'uptime', 'unknown_cmd_1', 'unknown_cmd_2', 'unknown_cmd_3']
     for idx, cmd in enumerate(cmds):
-        args = get_rand_strings(CHARS, 4)
+        args = get_rand_strings(CHARS, 4, random_wrapper)
         cmds[idx] = ' '.join((cmd, *args))
     msg = 'Wrong history output after running commands with multiple arguments'
     assert_sent(p, cmds, msg=msg)
 
 
-def assert_multicall_random(p):
-    cmds = get_rand_strings(CHARS, 20)
+def assert_multicall_random(p, random_wrapper: TestRandom):
+    cmds = get_rand_strings(CHARS, 20, random_wrapper)
     msg = 'Wrong history output after multiple time running same commands'
     assert_sent(p, cmds, msg, repeat=True)
 
@@ -89,11 +90,12 @@ def assert_empty(p):
 @psh.run
 def harness(p):
     psh_cmds = psh.get_commands(p)
+    random_wrapper = TestRandom(seed=1)
 
     assert_help(p)
     assert_clear(p)
 
-    assert_rand_cmds(p, psh_cmds)
+    assert_rand_cmds(p, psh_cmds, random_wrapper)
     assert_clear(p)
 
     assert_psh_cmds(p, psh_cmds)
@@ -102,11 +104,11 @@ def harness(p):
     assert_psh_cmds(p, psh_cmds, with_repeats=True)
     assert_clear(p)
 
-    assert_multicall_random(p)
+    assert_multicall_random(p, random_wrapper)
     assert_clear(p)
 
     assert_empty(p)
     assert_clear(p)
 
-    assert_multiarg_cmds(p)
+    assert_multiarg_cmds(p, random_wrapper)
     assert_clear(p)

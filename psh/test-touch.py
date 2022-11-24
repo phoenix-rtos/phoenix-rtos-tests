@@ -14,8 +14,10 @@
 
 import psh.tools.psh as psh
 import trunner.config as config
+from psh.tools.randwrapper import TestRandom
 from psh.tools.common import (CHARS, assert_present, assert_file_created, assert_dir_created,
                               assert_random_files, get_rand_strings, create_testdir, assert_mtime)
+
 
 ROOT_TEST_DIR = 'test_touch_dir'
 
@@ -43,9 +45,9 @@ def assert_devices(p):
     assert_mtime(p, dates, dir='/dev')
 
 
-def assert_multi_arg(p, path):
+def assert_multi_arg(p, path, random_wrapper: TestRandom):
     psh.assert_cmd(p, f'mkdir /{path}', result='success', msg=f'Failed to create {path} directory')
-    names = get_rand_strings(CHARS, 3, min_chars=4, max_chars=8)
+    names = get_rand_strings(CHARS, 3, random_wrapper, min_chars=4, max_chars=8)
     args = f'/{path}/{names[0]} ' + f'/{path}/{names[1]} ' + f'/{path}/{names[2]}'
     psh.assert_cmd(p, f'touch {args}', result='success', msg=f'Failed to create {args}')
 
@@ -84,6 +86,7 @@ def assert_existing_dirs(p):
 @psh.run
 def harness(p):
     create_testdir(p, ROOT_TEST_DIR)
+    random_wrapper = TestRandom(seed=1)
 
     assert_file_created(p, f'{ROOT_TEST_DIR}/test_file')
     # double touch the same file without checking timestamp
@@ -91,9 +94,9 @@ def harness(p):
     # there are some targets, where max fname length equals 64
     assert_file_created(p, f'{ROOT_TEST_DIR}/' + ''.join(CHARS[:50]))
     assert_file_created(p, f'{ROOT_TEST_DIR}/' + ''.join(CHARS[50:]))
-    assert_random_files(p, CHARS, f'{ROOT_TEST_DIR}/random/', count=20)
+    assert_random_files(p, CHARS, f'{ROOT_TEST_DIR}/random/', random_wrapper, count=20)
     for i in range(10):
-        assert_multi_arg(p, f'{ROOT_TEST_DIR}/multi_arg{i}')
+        assert_multi_arg(p, f'{ROOT_TEST_DIR}/multi_arg{i}', random_wrapper)
     assert_file_slash(p)
 
     assert_created_dir(p)

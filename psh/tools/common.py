@@ -12,7 +12,6 @@
 # %LICENSE%
 #
 
-import random
 import string
 
 from datetime import datetime, timedelta
@@ -21,15 +20,18 @@ from typing import Dict
 import psh.tools.psh as psh
 
 from psh.tools.psh import CONTROL_CODE
+from psh.tools.randwrapper import TestRandom
 
 # acceptable separators: white spaces (wss) + CC, CC + wss, wss
 SEPARATOR_PATTERN = r'(?:' + CONTROL_CODE + r'|\s)+'
 CHARS = list(set(string.printable) - set(string.whitespace) - set('/'))
 
 
-def get_rand_strings(pool, count, min_chars=8, max_chars=16):
+def get_rand_strings(pool, count, random_wrapper: TestRandom, min_chars=8, max_chars=16):
     ''' Returns random names (with length between min_chars and max_chars) from characters pool'''
-    return [''.join(random.choices(pool, k=random.randint(min_chars, max_chars))) for _ in range(count)]
+    # we want to have reproducible test cases
+    pool = sorted(pool)
+    return [''.join(random_wrapper.choices(pool, k=random_wrapper.randint(min_chars, max_chars))) for _ in range(count)]
 
 
 def create_testdir(p, dirname):
@@ -105,12 +107,12 @@ def assert_dir_created(p, name):
     _assert_created(p, name, dir=True)
 
 
-def _assert_random(p, pool, path, count, dir=False):
+def _assert_random(p, pool, path, count, random_wrapper: TestRandom, dir=False):
     ''' Asserts that `count` number of files/directories with random names
     (created by matching chars from the `pool` list) are properly created
     in the `path` directory '''
     psh.assert_cmd(p, f'mkdir {path}', result='success', msg=f'Failed to create {path} directory')
-    names = get_rand_strings(pool, count)
+    names = get_rand_strings(pool, count, random_wrapper)
 
     cmd = 'mkdir' if dir else 'touch'
     for name in names:
@@ -124,9 +126,9 @@ def _assert_random(p, pool, path, count, dir=False):
     assert_present(name, files, dir=dir)
 
 
-def assert_random_files(p, pool, path, count=20):
-    _assert_random(p, pool, path, count, dir=False)
+def assert_random_files(p, pool, path, random_wrapper: TestRandom, count=20):
+    _assert_random(p, pool, path, count, random_wrapper, dir=False)
 
 
-def assert_random_dirs(p, pool, path, count=20):
-    _assert_random(p, pool, path, count, dir=True)
+def assert_random_dirs(p, pool, path, random_wrapper: TestRandom, count=20):
+    _assert_random(p, pool, path, count, random_wrapper, dir=True)
