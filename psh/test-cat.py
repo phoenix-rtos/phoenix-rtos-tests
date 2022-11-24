@@ -4,7 +4,7 @@
 #
 # psh cat command test
 #
-# Copyright 2021 Phoenix Systems
+# Copyright 2021, 2022 Phoenix Systems
 # Author: Damian Loewnau
 #
 # This file is part of Phoenix-RTOS.
@@ -17,18 +17,14 @@ import psh.tools.psh as psh
 
 def assert_cat_err(p):
     fname = 'nonexistentFile'
-    cmd = f'cat {fname}'
     statement = f'cat: {fname} no such file'
-
-    psh.assert_cmd(p, cmd, expected=statement)
+    psh.assert_cmd(p, f'cat {fname}', expected=statement, result='fail')
 
 
 def assert_cat_h(p):
-    cmd = 'cat -h'
     help = ('Usage: cat [options] [files]',
             '  -h:  shows this help message')
-
-    psh.assert_cmd(p, cmd, expected=help)
+    psh.assert_cmd(p, 'cat -h', expected=help, result='success')
 
 
 @psh.run

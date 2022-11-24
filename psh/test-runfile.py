@@ -18,6 +18,8 @@ import trunner.config as config
 from psh.tools.psh import EOT
 from psh.tools.common import CHARS, get_rand_strings
 
+ROOT_TEST_DIR = 'test_runfile_dir'
+
 
 def get_root_dirs(p):
     root_dirs = []
@@ -29,47 +31,25 @@ def get_root_dirs(p):
 
 
 def assert_nonexistent(p, root_dirs):
-    cmd = '/nonexistent_file'
-    msg = 'Wrong error message, when executing nonexistent file'
-    psh.assert_cmd(p, cmd, f'psh: {cmd} not found', msg)
+    psh.assert_prompt_after_cmd(p, '/nonexistent_file', result='fail')
 
     rfnames = get_rand_strings(CHARS, 10)
     for rfname in rfnames:
-        cmd = '/nonexistent_file'
-        msg = f'Prompt not seen after executing: /{rfname}'
-        psh.assert_prompt_after_cmd(p, f'/{rfname}', msg)
-        psh.assert_cmd_failed(p)
+        psh.assert_prompt_after_cmd(p, f'/{rfname}', result='fail')
 
-        msg = f'Wrong error message, when executing: /{rfname}'
-        psh.assert_cmd(p, f'/{rfname}', f'psh: /{rfname} not found', msg)
         for root_dir in root_dirs:
-            msg = f'Prompt not seen after executing: /{root_dir}/{rfname}'
-            psh.assert_prompt_after_cmd(p, f'/{rfname}', msg)
-            psh.assert_cmd_failed(p)
+            psh.assert_prompt_after_cmd(p, f'/{root_dir}/{rfname}', result='fail')
 
 
 def assert_dirs(p, root_dirs):
-    dirname = 'test_runfile_dir'
-    msg = f'Creating the following directory failed: {dirname}'
-    psh.assert_cmd(p, f'mkdir {dirname}', '', msg)
-    psh.assert_cmd_successed(p)
-
-    msg = f'Prompt not seen after executing: /{dirname}'
-    psh.assert_prompt_after_cmd(p, f'/{dirname}', msg)
-    psh.assert_cmd_failed(p)
-
-    # psh.assert_cmd(p, f'/{dirname}', f'psh: /{dirname} is not an executable')
+    psh.assert_prompt_after_cmd(p, f'/{ROOT_TEST_DIR}', result='fail')
 
     for root_dir in root_dirs:
-        msg = f'Prompt not seen after executing: /{root_dir}'
-        psh.assert_prompt_after_cmd(p, f'/{dirname}', msg)
-        psh.assert_cmd_failed(p)
+        psh.assert_prompt_after_cmd(p, f'/{root_dir}', result='fail')
 
 
 def assert_symlinks(p):
-    p.sendline('/bin/ls')
-    psh.assert_prompt(p, "Prompt hasn't been seen after executing: /bin/ls")
-    psh.assert_cmd_successed(p)
+    psh.assert_prompt_after_cmd(p, '/bin/ls', result='success')
 
     help_cmds = psh.get_commands(p)
     p.sendline('/bin/help')
@@ -87,38 +67,27 @@ def _exit_spawned_psh(p):
 
 def assert_executables(p):
     # psh is the example of executable which exists in file system
-    msg = "Prompt hasn't been seen after executing psh using runfile!"
     if config.CURRENT_TARGET in config.SYSEXEC_TARGETS:
-        psh.assert_cmd(p, '/syspage/psh', '', msg)
+        psh.assert_cmd(p, '/syspage/psh', '', result='success')
     else:
-        psh.assert_cmd(p, '/bin/psh', '', msg)
+        psh.assert_cmd(p, '/bin/psh', '', result='success')
 
-    psh.assert_cmd_successed(p)
     _exit_spawned_psh(p)
 
 
 def assert_devices(p):
     devs = psh.ls_simple(p, '/dev')
     for dev in devs:
-        msg = f'Prompt not seen after executing: /dev/{dev}'
-        psh.assert_prompt_after_cmd(p, f'/dev/{dev}', msg)
-        psh.assert_cmd_failed(p)
+        psh.assert_prompt_after_cmd(p, f'/dev/{dev}', result='fail')
 
 
 def assert_text_files(p):
     etc_content = psh.ls_simple(p, '/etc')
     if 'passwd' in etc_content:
-        msg = 'Wrong output when executing text file'
-        psh.assert_cmd(p, '/etc/passwd', '', msg)
-        psh.assert_cmd_failed(p)
+        psh.assert_cmd(p, '/etc/passwd', '', result='fail')
 
-    msg = 'Creating testfile by touch command failed'
-    psh.assert_cmd(p, 'touch testfile', '', msg)
-    psh.assert_cmd_successed(p)
-
-    msg = 'Wrong output when executing empty file'
-    psh.assert_cmd(p, '/testfile', '', msg)
-    psh.assert_cmd_failed(p)
+    psh.assert_cmd(p, 'touch testfile', '', result='success')
+    psh.assert_cmd(p, '/testfile', '', result='fail')
 
 
 def harness(p):
