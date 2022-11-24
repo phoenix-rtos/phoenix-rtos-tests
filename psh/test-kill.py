@@ -59,7 +59,7 @@ def create_psh_processes(p, count, already_spawned):
 def assert_kill_procs(p, pid_list):
     for pid in pid_list:
         msg = f'Wrong output when killing process with the following pid: {pid}'
-        psh.assert_cmd(p, f'kill {pid}', '', msg)
+        psh.assert_cmd(p, f'kill {pid}', '', result='success', msg=msg)
     sleep(0.5)
 
     dead = set(pid_list) - set(proc['pid'] for proc in get_process_list(p))

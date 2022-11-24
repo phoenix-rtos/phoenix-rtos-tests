@@ -38,16 +38,16 @@ def assert_devices(p):
     for dev in devices:
         dates[dev] = psh.date(p)
         msg = f"Prompt hasn't been seen after the device touch: /dev/{dev}"
-        psh.assert_cmd(p, f'touch /dev/{dev}', msg=msg)
+        psh.assert_cmd(p, f'touch /dev/{dev}', '', result='success', msg=msg)
 
     assert_mtime(p, dates, dir='/dev')
 
 
 def assert_multi_arg(p, path):
-    psh.assert_cmd(p, f'mkdir /{path}', msg=f'Failed to create {path} directory')
+    psh.assert_cmd(p, f'mkdir /{path}', result='success', msg=f'Failed to create {path} directory')
     names = get_rand_strings(CHARS, 3, min_chars=4, max_chars=8)
     args = f'/{path}/{names[0]} ' + f'/{path}/{names[1]} ' + f'/{path}/{names[2]}'
-    psh.assert_cmd(p, f'touch {args}', msg=f'Failed to create {args}')
+    psh.assert_cmd(p, f'touch {args}', result='success', msg=f'Failed to create {args}')
 
     files = psh.ls(p, f'/{path}')
     for name in names:
@@ -58,15 +58,15 @@ def assert_file_slash(p):
     """ in psh touch we do not expect error when touching file/ """
     file_path = f'{ROOT_TEST_DIR}/slash_file/'
     assert_file_created(p, file_path)
-    psh.assert_cmd(p, f'touch {file_path}')
+    psh.assert_cmd(p, f'touch {file_path}', result='success')
 
 
 def assert_created_dir(p):
     dir_path = f'{ROOT_TEST_DIR}/test_dir'
     assert_dir_created(p, dir_path)
     # touch on already created dir, without checking timestamp, just expecting no output
-    psh.assert_cmd(p, f'touch {dir_path}')
-    psh.assert_cmd(p, f'touch {dir_path}/')
+    psh.assert_cmd(p, f'touch {dir_path}', result='success')
+    psh.assert_cmd(p, f'touch {dir_path}/', result='success')
 
 
 def assert_existing_dirs(p):
@@ -74,11 +74,11 @@ def assert_existing_dirs(p):
     msg = "Prompt hasn't been seen after the executable touch: /usr/bin/hello"
     date = psh.date(p)
     if config.CURRENT_TARGET in config.SYSEXEC_TARGETS:
-        psh.assert_cmd(p, 'touch /syspage/', msg=msg)
-        assert_mtime(p, {'syspage': date}, '/')
+        psh.assert_cmd(p, 'touch /syspage/', '', result='success', msg=msg)
+        assert_mtime(p, ['syspage'], {'syspage': date}, '/')
     else:
-        psh.assert_cmd(p, 'touch /bin/', msg=msg)
-        assert_mtime(p, {'bin': date}, '/')
+        psh.assert_cmd(p, 'touch /bin/', '', result='success', msg=msg)
+        assert_mtime(p, ['bin'], {'bin': date}, '/')
 
 
 @psh.run
