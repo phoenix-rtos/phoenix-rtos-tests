@@ -41,8 +41,8 @@ def _check_result(pexpect_proc, result):
         return
 
     if (result != 'success') and (result != 'fail'):
-        raise Exception(f''.join((f'The value {result} for `result` argument is not correct. ',
-            'Please choose between susccess/fail/dont-check')))
+        raise Exception(''.join((f'The value {result} for `result` argument is not correct. ',
+                        'Please choose between susccess/fail/dont-check')))
 
     assert_cmd_successed(pexpect_proc) if result == 'success' else assert_cmd_failed(pexpect_proc)
 

@@ -38,7 +38,7 @@ def create_testdir(p, dirname):
                      'Probably the directory has already been created.',
                      'Try to re-build the project and run specified test second time.'])
 
-    psh.assert_cmd(p, f'mkdir {dirname}', '', msg)
+    psh.assert_cmd(p, f'mkdir {dirname}', '', result='success', msg=msg)
 
 
 def assert_mtime(p, datetimes: Dict[str, datetime], dir=''):
@@ -82,7 +82,7 @@ def _assert_created(p, name, dir=False):
     name can also be the file/directory absolute path'''
 
     cmd = 'mkdir' if dir else 'touch'
-    psh.assert_cmd(p, f'{cmd} {name}', msg=f'Failed to create: {name} using {cmd}')
+    psh.assert_cmd(p, f'{cmd} {name}', result='success', msg=f'Failed to create: {name} using {cmd}')
 
     name = name[:-1] if name.endswith('/') else name
 
@@ -109,7 +109,7 @@ def _assert_random(p, pool, path, count, dir=False):
     ''' Asserts that `count` number of files/directories with random names
     (created by matching chars from the `pool` list) are properly created
     in the `path` directory '''
-    psh.assert_cmd(p, f'mkdir {path}', msg=f'Failed to create {path} directory')
+    psh.assert_cmd(p, f'mkdir {path}', result='success', msg=f'Failed to create {path} directory')
     names = get_rand_strings(pool, count)
 
     cmd = 'mkdir' if dir else 'touch'

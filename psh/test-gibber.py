@@ -23,10 +23,9 @@ def assert_printable(p):
     # Using sets mixes the order of characters, so without sorting '/' may be placed as first (we want to avoid it)
     chars.sort()
     chars = ''.join(chars) + ' '
-
     msg = 'Wrong output when sending all printable characters'
 
-    psh.assert_cmd(p, chars, EXPECTED, msg)
+    psh.assert_cmd(p, chars, EXPECTED, result='fail', msg=msg)
 
 
 def assert_unprintable(p):
@@ -38,13 +37,14 @@ def assert_unprintable(p):
     # 13: CR with other codes like SO may cause sending /r/n
 
     chars = ''.join(chr(x) for x in sorted({*range(0, 32)} - {3, 4, 10, 12, 13, 28}))
-    output = psh.assert_prompt_after_cmd(p, chars, "Prompt not seen when sending non-printable characters")
-    assert output == '', f"Unexpected output when sending non-printable characters: {output!r}"
+    msg = 'Prompt not seen when sending non-printable characters'
+    output = psh.assert_prompt_after_cmd(p, chars, result='success', msg=msg)
+    assert output == '', f'Unexpected output when sending non-printable characters: {output!r}'
 
 
 def assert_not_ascii(p):
     chars = ''.join(chr(x) for x in sorted({*range(128, 256)}))
-    psh.assert_prompt_after_cmd(p, chars, "Prompt not seen when sending non-ascii characters")
+    psh.assert_prompt_after_cmd(p, chars, result='success', msg='Prompt not seen when sending non-ascii characters')
 
 
 @psh.run

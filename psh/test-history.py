@@ -16,32 +16,29 @@ def assert_sent(p, cmds, msg='', repeat=False):
         expected.append(line)
         i += 1
     expected.append(f'  {i}  history')
-    psh.assert_cmd(p, 'history', expected, msg)
+    psh.assert_cmd(p, 'history', expected, result='success', msg=msg)
 
 
 def assert_help(p):
     assert_msg = "Prompt hasn't been displayed properly, when calling with -h argument"
-    psh.assert_prompt_after_cmd(p, 'history -h', assert_msg)
-    psh.assert_cmd_successed(p)
+    psh.assert_prompt_after_cmd(p, 'history -h', result='success', msg=assert_msg)
 
     assert_msg = "Prompt hasn't been displayed properly, when calling with wrong arguments"
-    psh.assert_prompt_after_cmd(p, 'history -z', assert_msg)
-    psh.assert_cmd_failed(p)
+    psh.assert_prompt_after_cmd(p, 'history -z', result='fail', msg=assert_msg)
     # Temporary disabled, because of the following issue:
     # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/521
     # psh.assert_prompt_after_cmd(p, 'history -xx', assert_msg)
     # psh.assert_cmd_failed(p)
-    psh.assert_prompt_after_cmd(p, 'history @!$ qrw $*%', assert_msg)
-    psh.assert_cmd_failed(p)
+    psh.assert_prompt_after_cmd(p, 'history @!$ qrw $*%', result='fail', msg=assert_msg)
     # the order in CHARS list can be random
     # temporarily because of #521 issue we use sorted version
-    psh.assert_prompt_after_cmd(p, 'history ' + ''.join(sorted(CHARS)), assert_msg)
-    psh.assert_cmd_failed(p)
+    psh.assert_prompt_after_cmd(p, 'history ' + ''.join(sorted(CHARS)), result='fail', msg=assert_msg)
 
 
 def assert_clear(p):
-    psh.assert_cmd(p, 'history -c', msg='Unexpected output after history -c command')
-    psh.assert_cmd(p, 'history', '  1  history', msg='Wrong history output after clear')
+    psh.assert_cmd(p, 'history -c', result='dont-check', msg='Unexpected output after history -c command')
+    # we don't want to have echo $? in history
+    psh.assert_cmd(p, 'history', '  1  history', result='dont-check', msg='Wrong history output after clear')
 
 
 def assert_rand_cmds(p, psh_cmds):
@@ -72,7 +69,7 @@ def assert_multiarg_cmds(p):
         args = get_rand_strings(CHARS, 4)
         cmds[idx] = ' '.join((cmd, *args))
     msg = 'Wrong history output after running commands with multiple arguments'
-    assert_sent(p, cmds, msg)
+    assert_sent(p, cmds, msg=msg)
 
 
 def assert_multicall_random(p):
@@ -86,7 +83,7 @@ def assert_empty(p):
     p.sendline('')
     for _ in range(10):
         p.sendline(string.whitespace)
-    psh.assert_cmd(p, 'history', '  1  history', msg)
+    psh.assert_cmd(p, 'history', '  1  history', msg=msg)
 
 
 @psh.run
@@ -109,4 +106,7 @@ def harness(p):
     assert_clear(p)
 
     assert_empty(p)
+    assert_clear(p)
+
     assert_multiarg_cmds(p)
+    assert_clear(p)

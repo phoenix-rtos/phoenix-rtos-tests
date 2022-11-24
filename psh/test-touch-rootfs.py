@@ -22,7 +22,7 @@ def assert_hardlinks(p):
         hardlink_path = f'/bin/{hardlink}'
         dates[hardlink] = psh.date(p)
         msg = f"Prompt hasn't been seen after the hardlink touch: {hardlink_path}"
-        psh.assert_cmd(p, f'touch {hardlink_path}', msg=msg)
+        psh.assert_cmd(p, f'touch {hardlink_path}', result='success', msg=msg)
 
     assert_mtime(p, dates, '/bin')
 

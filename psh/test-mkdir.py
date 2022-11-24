@@ -22,7 +22,5 @@ def harness(p):
 
     assert_random_dirs(p, CHARS, f'{ROOT_TEST_DIR}/random/', count=20)
 
-    psh.assert_prompt_after_cmd(p, 'mkdir /')
-    psh.assert_cmd_failed(p)
-    psh.assert_prompt_after_cmd(p, f'mkdir {ROOT_TEST_DIR}')
-    psh.assert_cmd_failed(p)
+    psh.assert_prompt_after_cmd(p, 'mkdir /', result='fail')
+    psh.assert_prompt_after_cmd(p, f'mkdir {ROOT_TEST_DIR}', result='fail')
