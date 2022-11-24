@@ -174,21 +174,24 @@ TEST(stdio_fopenfclose, freopen_file)
 
 TEST(stdio_fopenfclose, fdopen_file)
 {
-	int fd, ret;
+	int fd1, fd2, ret;
 
 	filep = fopen(STDIO_TEST_FILENAME, "w+");
 	TEST_ASSERT_NOT_NULL(filep);
 	{
-		fd = -1;
+		fd1 = -1;
 		TEST_ASSERT_NOT_NULL(filep);
-		fd = fileno(filep);
-		TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fd);
-		filep2 = fdopen(fd, "r");
+		fd1 = fileno(filep);
+		fd2 = dup(fd1);
+		TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fd2);
+		filep2 = fdopen(fd2, "r");
 		TEST_ASSERT_NOT_NULL(filep2);
+		ret = fclose(filep2);
+		filep2 = NULL;
+		TEST_ASSERT_EQUAL_INT(0, ret);
 	}
 	ret = fclose(filep);
 	filep = NULL;
-	filep2 = NULL;
 
 	TEST_ASSERT_EQUAL_INT(0, ret);
 }
