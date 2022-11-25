@@ -22,8 +22,8 @@
  * puts, gets < needs writing to stdin/unimplemented
  * popen, pclose, tmpfile < not usable on all targets
  *
- * Copyright 2021 Phoenix Systems
- * Author: Mateusz Niewiadomski
+ * Copyright 2021, 2022 Phoenix Systems
+ * Author: Mateusz Niewiadomski, Damian Loewnau
  *
  * This file is part of Phoenix-RTOS.
  *
@@ -86,7 +86,9 @@ static void assert_fopen_error(const char *path, const char *opts, int errnocode
 	FILE *filepLocal;
 
 	filepLocal = fopen(path, opts);
-	TEST_ASSERT_EQUAL_INT(errnocode, errno);
+	if (errnocode != -1) {
+		TEST_ASSERT_EQUAL_INT(errnocode, errno);
+	}
 	TEST_ASSERT_NULL(filepLocal);
 }
 
@@ -127,10 +129,12 @@ TEST(stdio_fopenfclose, stdio_fopenfclose_opendir)
 TEST(stdio_fopenfclose, stdio_fopenfclose_zeropath)
 {
 	/* open null or zero path */
+	/* we do not check errno, because it's not standardized in POSIX for NULL path case.
+	On Phoenix-RTOS it returns EINVAL, on Ubuntu host it's EFAULT */
 	assert_fopen_error("", "r", ENOENT);
-	assert_fopen_error(NULL, "r", EINVAL);
+	assert_fopen_error(NULL, "r", -1);
 	assert_fopen_error("", "w", ENOENT);
-	assert_fopen_error(NULL, "w", EINVAL);
+	assert_fopen_error(NULL, "w", -1);
 }
 
 TEST(stdio_fopenfclose, stdio_fopenfclose_wrongflags)
@@ -507,7 +511,9 @@ TEST(stdio_line, getline_wronly)
 		rewind(filep);
 		TEST_ASSERT_EQUAL_INT(-1, getline(&line, &len, filep));
 		TEST_ASSERT_EQUAL_INT(EBADF, errno);
-		TEST_ASSERT_NULL(line);
+		/* even if line is a NULL pointer and there is nothing to read, it shall allocate a byte for NUL termination char */
+		TEST_ASSERT_NOT_NULL(line);
+		TEST_ASSERT_EQUAL(0, line[0]);
 	}
 	assert_fclosed(&filep);
 }
@@ -554,7 +560,8 @@ TEST(stdio_line, getline_longline)
 	{
 		rewind(filep);
 		TEST_ASSERT_EQUAL_INT(1001, getline(&line, &len, filep));
-		TEST_ASSERT_EQUAL_INT(1002, len);
+		/* the len can be set to a bigger value than it's required */
+		TEST_ASSERT_GREATER_THAN_INT(1001, len);
 		TEST_ASSERT_EQUAL_INT(1001, strlen(line));
 		free(line);
 	}
@@ -607,6 +614,10 @@ TEST(stdio_fileseek, seek_fseek)
 	TEST_ASSERT_NOT_NULL(filep);
 	{
 		TEST_ASSERT_NOT_NULL(filep);
+		/* POSIX does not specify whether the indicator shall be changed, when we are only reading in append mode.
+		On Ubuntu host it will remain at the beginning of a file, on Phoenix-RTOS it will indicate EOF
+		That's why we want to write sth before testing fseek, this case is standardized - the indicator is set to EOF prior to each write*/
+		TEST_ASSERT_EQUAL_INT('.', fputc('.', filep));
 		TEST_ASSERT_EQUAL_INT(EOF, fgetc(filep));
 		/* fallback to absolute beginning */
 		TEST_ASSERT_EQUAL_INT(0, fseek(filep, 0, SEEK_SET));
@@ -617,7 +628,7 @@ TEST(stdio_fileseek, seek_fseek)
 		TEST_ASSERT_EQUAL_INT(teststr[1], fgetc(filep));
 		/* fallback to end */
 		TEST_ASSERT_EQUAL_INT(0, fseek(filep, -1, SEEK_END));
-		TEST_ASSERT_EQUAL_INT(teststr[sizeof(teststr) - 2], fgetc(filep));
+		TEST_ASSERT_EQUAL_INT('.', fgetc(filep));
 	}
 	assert_fclosed(&filep);
 }
@@ -845,6 +856,8 @@ TEST(stdio_bufs, setbuf_basic)
 	setbuf(filep, buf2);
 	fputc('a', filep);
 	TEST_ASSERT_EQUAL_INT(EOF, fgetc(filep2));
+	/* clear the EOF indicator */
+	clearerr(filep2);
 	TEST_ASSERT_EQUAL_INT(0, fflush(filep));
 	TEST_ASSERT_EQUAL_INT('a', fgetc(filep2));
 	TEST_ASSERT_EQUAL_INT(EOF, fgetc(filep2));
@@ -871,6 +884,8 @@ TEST(stdio_bufs, setvbuf_fullbuffer)
 	TEST_ASSERT_GREATER_THAN_INT(0, fputc('a', filep));
 	TEST_ASSERT_EQUAL_INT(EOF, fgetc(filep2));
 	TEST_ASSERT_EQUAL_INT(EOF, fgetc(filep2));
+	/* clear the EOF indicator */
+	clearerr(filep2);
 	TEST_ASSERT_EQUAL_INT(0, fflush(filep));
 	TEST_ASSERT_EQUAL_INT('a', fgetc(filep2));
 	TEST_ASSERT_EQUAL_INT(EOF, fgetc(filep2));
@@ -900,7 +915,7 @@ TEST(stdio_bufs, setvbuf_linebuffer)
 	TEST_ASSERT_EQUAL_INT(0, setvbuf(filep, buf2, _IOLBF, sizeof(buf2)));
 
 	TEST_ASSERT_GREATER_THAN_INT(0, fputs(data, filep));
-	TEST_ASSERT_EQUAL_INT(EOF, fgetc(filep2));
+	/* On host data can be already flushed before sending newline */
 	TEST_ASSERT_GREATER_THAN_INT(0, fputc('\n', filep));
 	TEST_ASSERT_NOT_NULL(fgets(buf, sizeof(buf), filep2));
 	TEST_ASSERT_EQUAL_INT(strlen(data) + 1, strlen(buf));
