@@ -5,19 +5,22 @@
  *
  * Main entry point.
  *
- * Copyright 2021 Phoenix Systems
- * Author: Marek Bialowas
+ * Copyright 2021, 2022 Phoenix Systems
+ * Author: Marek Bialowas, Damian Loewnau
  *
  * This file is part of Phoenix-RTOS.
  *
  * %LICENSE%
  */
 
+#include <stdlib.h>
 #include "unity_fixture.h"
 
 /* no need for forward declarations, RUN_TEST_GROUP does it by itself */
 void runner(void)
 {
+	setenv("POSIXLY_CORRECT", "y", 1);
+
 	RUN_TEST_GROUP(stdio_fopenfclose);
 	RUN_TEST_GROUP(stdio_line);
 	RUN_TEST_GROUP(stdio_getput);
@@ -35,6 +38,8 @@ void runner(void)
 	RUN_TEST_GROUP(unistd_fsdir);
 	RUN_TEST_GROUP(wchar_wcscmp);
 	RUN_TEST_GROUP(test_pthread_cond);
+
+	unsetenv("POSIXLY_CORRECT");
 }
 
 
