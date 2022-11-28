@@ -839,11 +839,36 @@ TEST(stdio_fileop, fileop_ferror)
 }
 
 
+TEST(stdio_fileop, fileop_clearerr)
+{
+	filep = fopen(STDIO_TEST_FILENAME, "w");
+	TEST_ASSERT_NOT_NULL(filep);
+	{
+		fgetc(filep);
+		TEST_ASSERT_NOT_EQUAL_INT(0, ferror(filep));
+		clearerr(filep);
+		TEST_ASSERT_EQUAL_INT(0, ferror(filep));
+	}
+	assert_fclosed(&filep);
+
+	filep = fopen(STDIO_TEST_FILENAME, "w+");
+	TEST_ASSERT_NOT_NULL(filep);
+	{
+		TEST_ASSERT_EQUAL_INT(EOF, fgetc(filep));
+		TEST_ASSERT_NOT_EQUAL_INT(0, feof(filep));
+		clearerr(filep);
+		TEST_ASSERT_EQUAL_INT(0, feof(filep));
+	}
+	assert_fclosed(&filep);
+}
+
+
 TEST_GROUP_RUNNER(stdio_fileop)
 {
 	RUN_TEST_CASE(stdio_fileop, fileop_fileno);
 	RUN_TEST_CASE(stdio_fileop, fileop_feof);
 	RUN_TEST_CASE(stdio_fileop, fileop_ferror);
+	RUN_TEST_CASE(stdio_fileop, fileop_clearerr);
 }
 
 
