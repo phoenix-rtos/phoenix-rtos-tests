@@ -318,6 +318,34 @@ TEST(stdio_getput, getput_basic)
 }
 
 
+TEST(stdio_getput, fgetc_eof)
+{
+	filep = fopen(STDIO_TEST_FILENAME, "w+");
+	TEST_ASSERT_EQUAL_INT(0, feof(filep));
+	TEST_ASSERT_EQUAL_INT(EOF, fgetc(filep));
+	TEST_ASSERT_NOT_EQUAL_INT(0, feof(filep));
+
+	TEST_ASSERT_EQUAL_INT('a', fputc('a', filep));
+	TEST_ASSERT_EQUAL_INT(EOF, fgetc(filep));
+	TEST_ASSERT_NOT_EQUAL_INT(0, feof(filep));
+}
+
+
+TEST(stdio_getput, fgets_eof)
+{
+	char buf[BUF_SIZE];
+
+	filep = fopen(STDIO_TEST_FILENAME, "w+");
+	TEST_ASSERT_EQUAL_INT(0, feof(filep));
+	TEST_ASSERT_NULL(fgets(buf, sizeof(buf), filep));
+	TEST_ASSERT_NOT_EQUAL_INT(0, feof(filep));
+
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fputs("test_str", filep));
+	TEST_ASSERT_NULL(fgets(buf, sizeof(buf), filep));
+	TEST_ASSERT_NOT_EQUAL_INT(0, feof(filep));
+}
+
+
 TEST(stdio_getput, getsputs_basic)
 {
 	char buf[BUF_SIZE];
@@ -409,7 +437,9 @@ TEST_GROUP_RUNNER(stdio_getput)
 {
 	RUN_TEST_CASE(stdio_getput, fwritefread_basic);
 	RUN_TEST_CASE(stdio_getput, getput_basic);
+	RUN_TEST_CASE(stdio_getput, fgetc_eof);
 	RUN_TEST_CASE(stdio_getput, getsputs_basic);
+	RUN_TEST_CASE(stdio_getput, fgets_eof);
 	RUN_TEST_CASE(stdio_getput, getsputs_readonly);
 	RUN_TEST_CASE(stdio_getput, ungetc_basic);
 }
