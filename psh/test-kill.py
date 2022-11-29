@@ -42,7 +42,7 @@ def create_psh_processes(p, count, already_spawned):
     psh_pid_list = []
     msg = 'Failed to create new psh process'
     for _ in range(count):
-        psh.assert_exec(p, 'psh', '', msg)
+        psh.assert_exec(p, 'psh', msg=msg)
 
     # find pid list of sleep psh processes
     for proc in get_process_list(p):
@@ -59,7 +59,7 @@ def create_psh_processes(p, count, already_spawned):
 def assert_kill_procs(p, pid_list):
     for pid in pid_list:
         msg = f'Wrong output when killing process with the following pid: {pid}'
-        psh.assert_cmd(p, f'kill {pid}', '', result='success', msg=msg)
+        psh.assert_cmd(p, f'kill {pid}', result='success', msg=msg)
     sleep(0.5)
 
     dead = set(pid_list) - set(proc['pid'] for proc in get_process_list(p))
@@ -75,13 +75,16 @@ def assert_errors(p):
         pid = pid + 1
 
     msg = 'Wrong kill help message'
-    psh.assert_cmd(p, 'kill', 'usage: kill <pid>', msg)
+    psh.assert_cmd(p, 'kill', expected='usage: kill <pid>', result='fail', msg=msg)
     msg = 'Wrong kill error message when passing string in argument'
-    psh.assert_cmd(p, 'kill not_number', 'kill: could not parse process id: not_number', msg)
+    psh.assert_cmd(p, 'kill not_number',
+                   expected='kill: could not parse process id: not_number',
+                   result='fail',
+                   msg=msg)
 
     # nothing should be done
     msg = 'Wrong output when killing nonexistent process'
-    psh.assert_cmd(p, f'kill {pid}', '', msg)
+    psh.assert_cmd(p, f'kill {pid}', result='fail', msg=msg)
 
 
 @psh.run

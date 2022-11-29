@@ -69,9 +69,9 @@ def _exit_spawned_psh(p):
 def assert_executables(p):
     # psh is the example of executable which exists in file system
     if config.CURRENT_TARGET in config.SYSEXEC_TARGETS:
-        psh.assert_cmd(p, '/syspage/psh', '', result='success')
+        psh.assert_cmd(p, '/syspage/psh', result='success')
     else:
-        psh.assert_cmd(p, '/bin/psh', '', result='success')
+        psh.assert_cmd(p, '/bin/psh', result='success')
 
     _exit_spawned_psh(p)
 
@@ -85,10 +85,10 @@ def assert_devices(p):
 def assert_text_files(p):
     etc_content = psh.ls_simple(p, '/etc')
     if 'passwd' in etc_content:
-        psh.assert_cmd(p, '/etc/passwd', '', result='fail')
+        psh.assert_cmd(p, '/etc/passwd', result='fail')
 
-    psh.assert_cmd(p, 'touch testfile', '', result='success')
-    psh.assert_cmd(p, '/testfile', '', result='fail')
+    psh.assert_cmd(p, 'touch testfile', result='success')
+    psh.assert_cmd(p, '/testfile', result='fail')
 
 
 def harness(p):

@@ -22,7 +22,7 @@ def assert_execve_env_changed(p):
                  'environ[0] = TEST1=exec_value'))
     msg = "Wrong output of execve function with changed environment"
 
-    psh.assert_cmd(p, cmd, expected, msg)
+    psh.assert_cmd(p, cmd, expected=expected, result='success', msg=msg)
 
 
 def assert_execve_env_unchanged(p):
@@ -32,7 +32,7 @@ def assert_execve_env_unchanged(p):
                  'environ[0] = TEST1=unchanged_value'))
     msg = "Wrong output of execve function with unchanged environment"
 
-    psh.assert_cmd(p, cmd, expected, msg)
+    psh.assert_cmd(p, cmd, expected=expected, result='success', msg=msg)
 
 
 def assert_execve_path_searched(p):
@@ -42,7 +42,7 @@ def assert_execve_path_searched(p):
                  'environ[0] = PATH=/bin:/sbin:/usr/bin:/usr/sbin'))
     msg = "Wrong output of execve function with searching in PATH environment variable"
 
-    psh.assert_cmd(p, cmd, expected, msg)
+    psh.assert_cmd(p, cmd, expected=expected, result='success', msg=msg)
 
 
 def assert_execvpe_env_changed(p):
@@ -52,7 +52,7 @@ def assert_execvpe_env_changed(p):
                  'environ[0] = TEST1=exec_value'))
     msg = "Wrong output of execvpe function with changed environment"
 
-    psh.assert_cmd(p, cmd, expected, msg)
+    psh.assert_cmd(p, cmd, expected=expected, result='success', msg=msg)
 
 
 def assert_execvpe_env_unchanged(p):
@@ -62,7 +62,7 @@ def assert_execvpe_env_unchanged(p):
                  'environ[0] = TEST1=unchanged_value'))
     msg = "Wrong output of execvpe function with unchanged environment"
 
-    psh.assert_cmd(p, cmd, expected, msg)
+    psh.assert_cmd(p, cmd, expected=expected, result='success', msg=msg)
 
 
 def assert_execvpe_path_searched(p):
@@ -72,7 +72,7 @@ def assert_execvpe_path_searched(p):
                  'environ[0] = PATH=/bin:/sbin:/usr/bin:/usr/sbin'))
     msg = "Wrong output of execvpe function with searching in PATH environment variable"
 
-    psh.assert_cmd(p, cmd, expected, msg)
+    psh.assert_cmd(p, cmd, expected=expected, result='success', msg=msg)
 
 
 def assert_execvp_env_unchanged(p):
@@ -82,7 +82,7 @@ def assert_execvp_env_unchanged(p):
                  'environ[0] = TEST1=unchanged_value'))
     msg = "Wrong output of execvp function with unchanged environment"
 
-    psh.assert_cmd(p, cmd, expected, msg)
+    psh.assert_cmd(p, cmd, expected=expected, result='success', msg=msg)
 
 
 def assert_execvp_path_searched(p):
@@ -92,7 +92,7 @@ def assert_execvp_path_searched(p):
                  'environ[0] = PATH=/bin:/sbin:/usr/bin:/usr/sbin'))
     msg = "Wrong output of execvp function with searching in PATH environment variable"
 
-    psh.assert_cmd(p, cmd, expected, msg)
+    psh.assert_cmd(p, cmd, expected=expected, result='success', msg=msg)
 
 
 def harness(p):

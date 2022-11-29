@@ -24,7 +24,7 @@ TEST_DIR_BASIC = f'{ROOT_TEST_DIR}/basic'
 
 def prepare_testdir(p, files):
     msg = 'Wrong output when creating basic directory!'
-    psh.assert_cmd(p, f'mkdir {TEST_DIR_BASIC}', '', result='success', msg=msg)
+    psh.assert_cmd(p, f'mkdir {TEST_DIR_BASIC}', result='success', msg=msg)
     cmd = 'touch'
     for file in files:
         if file == 'dir':
@@ -32,10 +32,10 @@ def prepare_testdir(p, files):
         cmd += f' {TEST_DIR_BASIC}/{file}'
 
     msg = 'Wrong output when creating basic test files!'
-    psh.assert_cmd(p, cmd, '', result='success', msg=msg)
+    psh.assert_cmd(p, cmd, result='success', msg=msg)
 
     msg = 'Wrong output when creating internal test directory!'
-    psh.assert_cmd(p, f'mkdir {TEST_DIR_BASIC}/dir', '', result='success', msg=msg)
+    psh.assert_cmd(p, f'mkdir {TEST_DIR_BASIC}/dir', result='success', msg=msg)
 
 
 def create_unordered_pattern(files):
@@ -68,48 +68,48 @@ def create_ordered_pattern(files, separate_lines=False):
 def assert_ls_err(p):
     msg = 'Wrong error message, when trying to print nonexistent directory content'
     expected = "ls: can't access nonexistentDir: no such file or directory"
-    psh.assert_cmd(p, 'ls nonexistentDir', expected, result='fail', msg=msg)
+    psh.assert_cmd(p, 'ls nonexistentDir', expected=expected, result='fail', msg=msg)
 
 
 def assert_ls_noarg(p, files):
     expected = create_ordered_pattern(sorted(files))
     msg = 'Wrong content of listed directory, when calling ls without arguments'
-    psh.assert_cmd(p, f'ls {TEST_DIR_BASIC}', expected, result='success', msg=msg, is_regex=True)
+    psh.assert_cmd(p, f'ls {TEST_DIR_BASIC}', expected=expected, result='success', msg=msg, is_regex=True)
 
 
 def assert_ls_1(p, files):
     expected = create_ordered_pattern(sorted(files), separate_lines=True)
     msg = 'Wrong content of listed directory, when calling `ls -1`'
-    psh.assert_cmd(p, f'ls -1 {TEST_DIR_BASIC}', expected, result='success', msg=msg, is_regex=True)
+    psh.assert_cmd(p, f'ls -1 {TEST_DIR_BASIC}', expected=expected, result='success', msg=msg, is_regex=True)
 
 
 def assert_ls_a(p, files):
     expected = create_ordered_pattern(sorted(files))
     msg = 'Wrong content of listed directory, when calling `ls -a`'
-    psh.assert_cmd(p, f'ls -a {TEST_DIR_BASIC}', expected, result='success', msg=msg, is_regex=True)
+    psh.assert_cmd(p, f'ls -a {TEST_DIR_BASIC}', expected=expected, result='success', msg=msg, is_regex=True)
 
 
 def assert_ls_d(p):
     expected = create_ordered_pattern([TEST_DIR_BASIC, ])
     msg = 'Wrong output, when calling `ls -d tested_directory`'
-    psh.assert_cmd(p, f'ls -d {TEST_DIR_BASIC}', expected, result='success', msg=msg, is_regex=True)
+    psh.assert_cmd(p, f'ls -d {TEST_DIR_BASIC}', expected=expected, result='success', msg=msg, is_regex=True)
 
     expected = create_ordered_pattern(['.', ])
     msg = 'Wrong output, when calling `ls -d` without specified directory'
-    psh.assert_cmd(p, 'ls -d', expected, result='success', msg=msg, is_regex=True)
+    psh.assert_cmd(p, 'ls -d', expected=expected, result='success', msg=msg, is_regex=True)
 
 
 def assert_ls_f(p, files):
     expected = create_unordered_pattern(files)
     msg = 'Wrong output, when calling `ls -f`'
-    psh.assert_cmd(p, f'ls -f {TEST_DIR_BASIC}', expected, result='success', msg=msg, is_regex=True)
+    psh.assert_cmd(p, f'ls -f {TEST_DIR_BASIC}', expected=expected, result='success', msg=msg, is_regex=True)
 
 
 def assert_ls_h(p):
     arg_help_pattern = r'(?P<help_line>\s*-[\w\s]:[ \S]+(\r+\n))+'
     expected = r'usage:(\s)ls \[options\] \[files\](\r+\n)' + arg_help_pattern
     msg = 'Wrong ls help message format'
-    psh.assert_cmd(p, 'ls -h', expected, result='success', msg=msg, is_regex=True)
+    psh.assert_cmd(p, 'ls -h', expected=expected, result='success', msg=msg, is_regex=True)
 
 
 def assert_ls_l(p, files):
@@ -135,7 +135,7 @@ def assert_ls_l(p, files):
 def assert_ls_r(p, files):
     expected = create_ordered_pattern(sorted(files, reverse=True))
     msg = 'Wrong output, when calling `ls -r`'
-    psh.assert_cmd(p, f'ls -r {TEST_DIR_BASIC}', expected, result='success', msg=msg, is_regex=True)
+    psh.assert_cmd(p, f'ls -r {TEST_DIR_BASIC}', expected=expected, result='success', msg=msg, is_regex=True)
 
 
 @psh.run
