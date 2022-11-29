@@ -17,6 +17,7 @@ import psh.tools.psh as psh
 
 @psh.run
 def harness(p):
-    expected = r'# /etc/shells: valid login shells(\r+)\n/bin/sh(\r+)\n'
-
-    psh.assert_cmd(p, 'cat etc/shells', expected, msg='The /etc/shells/ file content is invalid', is_regex=True)
+    psh.assert_cmd(p, 'cat etc/shells',
+                   expected=r'# /etc/shells: valid login shells(\r+)\n/bin/sh(\r+)\n',
+                   msg='The /etc/shells/ file content is invalid',
+                   is_regex=True)

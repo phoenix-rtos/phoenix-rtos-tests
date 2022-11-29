@@ -27,10 +27,10 @@ def assert_executable(p):
     msg = "Prompt hasn't been seen after the executable touch: /usr/bin/hello"
     date = psh.date(p)
     if config.CURRENT_TARGET in config.SYSEXEC_TARGETS:
-        psh.assert_cmd(p, 'touch /syspage/psh', msg=msg)
+        psh.assert_cmd(p, 'touch /syspage/psh', result='success', msg=msg)
         assert_mtime(p, {'psh': date}, '/syspage')
     else:
-        psh.assert_cmd(p, 'touch /bin/psh', msg=msg)
+        psh.assert_cmd(p, 'touch /bin/psh', result='success', msg=msg)
         assert_mtime(p, {'psh': date}, '/bin')
 
 
@@ -40,7 +40,7 @@ def assert_devices(p):
     for dev in devices:
         dates[dev] = psh.date(p)
         msg = f"Prompt hasn't been seen after the device touch: /dev/{dev}"
-        psh.assert_cmd(p, f'touch /dev/{dev}', '', result='success', msg=msg)
+        psh.assert_cmd(p, f'touch /dev/{dev}', result='success', msg=msg)
 
     assert_mtime(p, dates, dir='/dev')
 
@@ -76,11 +76,11 @@ def assert_existing_dirs(p):
     msg = "Prompt hasn't been seen after the executable touch: /usr/bin/hello"
     date = psh.date(p)
     if config.CURRENT_TARGET in config.SYSEXEC_TARGETS:
-        psh.assert_cmd(p, 'touch /syspage/', '', result='success', msg=msg)
-        assert_mtime(p, ['syspage'], {'syspage': date}, '/')
+        psh.assert_cmd(p, 'touch /syspage/', result='success', msg=msg)
+        assert_mtime(p, {'syspage': date}, '/')
     else:
-        psh.assert_cmd(p, 'touch /bin/', '', result='success', msg=msg)
-        assert_mtime(p, ['bin'], {'bin': date}, '/')
+        psh.assert_cmd(p, 'touch /bin/', result='success', msg=msg)
+        assert_mtime(p, {'bin': date}, '/')
 
 
 @psh.run
