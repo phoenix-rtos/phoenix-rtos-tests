@@ -49,27 +49,27 @@ def assert_ls_t(p):
     msg_mkdir = "Wrong output when creating directory!"
     date_pattern = r'\w{3},\s+\d{2}\s+\w{3}\s+\d{2}\s+\d{2}:\d{2}:\d{2}' + psh.EOL
 
-    psh.assert_cmd(p, 'date -s @160000000', date_pattern, msg=msg_date, is_regex=True)
-    psh.assert_cmd(p, f'touch {ROOT_TEST_DIR}/file_created_earliest', '', msg=msg_touch)
+    psh.assert_cmd(p, 'date -s @160000000', expected=date_pattern, msg=msg_date, is_regex=True)
+    psh.assert_cmd(p, f'touch {ROOT_TEST_DIR}/file_created_earliest', msg=msg_touch)
 
-    psh.assert_cmd(p, 'date -s @162000000', date_pattern, msg=msg_date, is_regex=True)
-    psh.assert_cmd(p, f'mkdir {ROOT_TEST_DIR}/dir_created_second', '', msg=msg_mkdir)
+    psh.assert_cmd(p, 'date -s @162000000', expected=date_pattern, msg=msg_date, is_regex=True)
+    psh.assert_cmd(p, f'mkdir {ROOT_TEST_DIR}/dir_created_second', msg=msg_mkdir)
 
-    psh.assert_cmd(p, 'date -s @164000000', date_pattern, msg=msg_date, is_regex=True)
-    psh.assert_cmd(p, f'touch {ROOT_TEST_DIR}/file_created_last', '', msg=msg_touch)
+    psh.assert_cmd(p, 'date -s @164000000', expected=date_pattern, msg=msg_date, is_regex=True)
+    psh.assert_cmd(p, f'touch {ROOT_TEST_DIR}/file_created_last', msg=msg_touch)
 
     expected_pattern = r'.*?file_created_last.*?dir_created_second.*?file_created_earliest.*?'
     expected_pattern = expected_pattern + psh.EOL
 
     msg = "files are not printed in the correct order when calling `ls -t`"
-    psh.assert_cmd(p, f'ls -t {ROOT_TEST_DIR}', expected_pattern, msg=msg, is_regex=True)
+    psh.assert_cmd(p, f'ls -t {ROOT_TEST_DIR}', expected=expected_pattern, msg=msg, is_regex=True)
 
 
 def assert_ls_S(p):
     expected_pattern = r'.*?psh' + SEPARATOR_PATTERN + r'.*?empty_file' + SEPARATOR_PATTERN + r'.*?'
     expected_pattern = expected_pattern + psh.EOL
 
-    psh.assert_cmd(p, 'touch /bin/empty_file', '', msg='Wrong output when creating empty file!')
+    psh.assert_cmd(p, 'touch /bin/empty_file', msg='Wrong output when creating empty file!')
 
     # TODO: use only newly created files, when it will be possible to write content to a file
     psh.assert_cmd(
@@ -86,13 +86,13 @@ def assert_multi(p):
     for i in range(20):
         files.append(f'file{i}')
     testdir_multi = f'{ROOT_TEST_DIR}/multi'
-    psh.assert_cmd(p, f'mkdir {testdir_multi}', '', msg='Wrong output when creating test directory for multiple files')
+    psh.assert_cmd(p, f'mkdir {testdir_multi}', msg='Wrong output when creating test directory for multiple files')
     for file in files:
-        psh.assert_cmd(p, f'touch {testdir_multi}/{file}', '', msg=f'Wrong output when creating {testdir_multi}/{file}')
+        psh.assert_cmd(p, f'touch {testdir_multi}/{file}', msg=f'Wrong output when creating {testdir_multi}/{file}')
     # assert at least 2 rows of listed files, list's content isn't checked here
     expected = r'([^\r\n]+(\r+\n)){2,}'
     msg = "Multiple files wasn't listed correctly in two lines"
-    psh.assert_cmd(p, f'ls {testdir_multi}', expected, msg=msg, is_regex=True)
+    psh.assert_cmd(p, f'ls {testdir_multi}', expected=expected, msg=msg, is_regex=True)
 
 
 def assert_extralong(p):
@@ -101,11 +101,11 @@ def assert_extralong(p):
     long_fname = 'loremipsum' * 9
     # there shouldn't be any new line separator in listed fname, window size should split it up if necessarily
     expected = OPTIONAL_CONTROL_CODE + long_fname + OPTIONAL_CONTROL_CODE + psh.EOL
-    psh.assert_cmd(p, f'mkdir {testdir_long}', '', msg='Wrong output when creating test directory for long file')
-    psh.assert_cmd(p, f'touch {testdir_long}/{long_fname}', '', msg=f'Wrong output when creating file: {long_fname}')
+    psh.assert_cmd(p, f'mkdir {testdir_long}', msg='Wrong output when creating test directory for long file')
+    psh.assert_cmd(p, f'touch {testdir_long}/{long_fname}', msg=f'Wrong output when creating file: {long_fname}')
 
     msg = "Extra long file name hasn't been printed properly!"
-    psh.assert_cmd(p, f'ls {testdir_long}', expected, msg=msg, is_regex=True)
+    psh.assert_cmd(p, f'ls {testdir_long}', expected=expected, msg=msg, is_regex=True)
 
 
 @psh.run

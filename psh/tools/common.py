@@ -40,7 +40,7 @@ def create_testdir(p, dirname):
                      'Probably the directory has already been created.',
                      'Try to re-build the project and run specified test second time.'])
 
-    psh.assert_cmd(p, f'mkdir {dirname}', '', result='success', msg=msg)
+    psh.assert_cmd(p, f'mkdir {dirname}', result='success', msg=msg)
 
 
 def assert_mtime(p, datetimes: Dict[str, datetime], dir=''):

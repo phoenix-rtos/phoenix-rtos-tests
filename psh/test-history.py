@@ -17,7 +17,7 @@ def assert_sent(p, cmds, msg='', repeat=False):
         expected.append(line)
         i += 1
     expected.append(f'  {i}  history')
-    psh.assert_cmd(p, 'history', expected, result='success', msg=msg)
+    psh.assert_cmd(p, 'history', expected=expected, result='success', msg=msg)
 
 
 def assert_help(p):
@@ -39,7 +39,7 @@ def assert_help(p):
 def assert_clear(p):
     psh.assert_cmd(p, 'history -c', result='dont-check', msg='Unexpected output after history -c command')
     # we don't want to have echo $? in history
-    psh.assert_cmd(p, 'history', '  1  history', result='dont-check', msg='Wrong history output after clear')
+    psh.assert_cmd(p, 'history', expected='  1  history', result='dont-check', msg='Wrong history output after clear')
 
 
 def assert_rand_cmds(p, psh_cmds, random_wrapper: TestRandom):
@@ -84,7 +84,7 @@ def assert_empty(p):
     p.sendline('')
     for _ in range(10):
         p.sendline(string.whitespace)
-    psh.assert_cmd(p, 'history', '  1  history', msg=msg)
+    psh.assert_cmd(p, 'history', expected='  1  history', msg=msg)
 
 
 @psh.run

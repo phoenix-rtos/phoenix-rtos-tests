@@ -39,15 +39,16 @@ def _readable(exp_regex):
 def _check_result(pexpect_proc, result):
     if result == 'dont-check':
         return
-
-    if (result != 'success') and (result != 'fail'):
+    elif result == 'success':
+        assert_cmd_successed(pexpect_proc)
+    elif result == 'fail':
+        assert_cmd_failed(pexpect_proc)
+    else:
         raise Exception(''.join((f'The value {result} for `result` argument is not correct. ',
                         'Please choose between susccess/fail/dont-check')))
 
-    assert_cmd_successed(pexpect_proc) if result == 'success' else assert_cmd_failed(pexpect_proc)
 
-
-def assert_cmd(pexpect_proc, cmd, expected='', result='success', msg='', is_regex=False):
+def assert_cmd(pexpect_proc, cmd, *, expected='', result='success', msg='', is_regex=False):
     ''' Sends specified command and asserts that it's displayed correctly
     with optional expected output and next prompt. Exit status is asserted depending on `result`'''
     pexpect_proc.sendline(cmd)
@@ -121,7 +122,7 @@ def assert_exec(pexpect_proc, prog, expected='', msg=''):
     with optional expected output and next prompt'''
     exec_cmd = _get_exec_cmd(prog)
 
-    assert_cmd(pexpect_proc, exec_cmd, expected, result='success', msg=msg)
+    assert_cmd(pexpect_proc, exec_cmd, expected=expected, result='success', msg=msg)
 
 
 def get_exit_code(pexpect_proc):
@@ -144,6 +145,7 @@ def assert_cmd_successed(pexpect_proc):
 
 
 def _send(pexpect_proc, cmd):
+    cmd.strip()
     pexpect_proc.sendline(cmd)
     idx = pexpect_proc.expect_exact([cmd, pexpect.TIMEOUT, pexpect.EOF])
     assert idx == 0, f"{cmd} command hasn't been sent properly"
