@@ -22,6 +22,15 @@
 #include <unity_fixture.h>
 
 
+/* "/" is a root dir and the supported shell is sh on Phoenix-RTOS */
+#ifdef __phoenix__
+#define ROOT_WORKDIR "/"
+#define ROOT_SHELL   "/bin/sh"
+#else
+#define ROOT_WORKDIR "/root"
+#define ROOT_SHELL   "/bin/bash"
+#endif
+
 static unsigned int ispasswdfile;
 
 
@@ -52,8 +61,8 @@ TEST(getpwd, getpwnam_getroot)
 		TEST_ASSERT_EQUAL_INT(0, pw->pw_uid);
 		TEST_ASSERT_EQUAL_INT(0, pw->pw_gid);
 		TEST_ASSERT_EQUAL_STRING("root", pw->pw_gecos);
-		TEST_ASSERT_EQUAL_STRING("/", pw->pw_dir);
-		TEST_ASSERT_EQUAL_STRING("/bin/sh", pw->pw_shell);
+		TEST_ASSERT_EQUAL_STRING(ROOT_WORKDIR, pw->pw_dir);
+		TEST_ASSERT_EQUAL_STRING(ROOT_SHELL, pw->pw_shell);
 	}
 	else {
 		TEST_ASSERT_NULL(pw);
@@ -76,8 +85,8 @@ TEST(getpwd, getpwuid_getroot)
 		TEST_ASSERT_EQUAL_INT(0, pw->pw_uid);
 		TEST_ASSERT_EQUAL_INT(0, pw->pw_gid);
 		TEST_ASSERT_EQUAL_STRING("root", pw->pw_gecos);
-		TEST_ASSERT_EQUAL_STRING("/", pw->pw_dir);
-		TEST_ASSERT_EQUAL_STRING("/bin/sh", pw->pw_shell);
+		TEST_ASSERT_EQUAL_STRING(ROOT_WORKDIR, pw->pw_dir);
+		TEST_ASSERT_EQUAL_STRING(ROOT_SHELL, pw->pw_shell);
 	}
 	else {
 		TEST_ASSERT_NULL(pw);
@@ -147,5 +156,9 @@ TEST_GROUP_RUNNER(getpwd)
 	RUN_TEST_CASE(getpwd, getpwuid_getroot);
 	RUN_TEST_CASE(getpwd, getpwnam_getnull);
 	RUN_TEST_CASE(getpwd, getpwuid_getnull);
+	/* we can't rename/delete the /etc/passwd file on host */
+#ifdef __phoenix__
 	RUN_TEST_CASE(getpwd, getpwnam_nopasswdfile);
+	RUN_TEST_CASE(getpwd, getpwuid_nopasswdfile);
+#endif
 }
