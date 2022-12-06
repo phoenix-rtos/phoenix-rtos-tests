@@ -6,3 +6,4 @@ test:
           #FIXME: symlink tests will fail on non-rootfs targets
           targets:
               exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk]
+              include: [host-generic-pc]

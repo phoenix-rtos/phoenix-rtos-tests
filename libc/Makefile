@@ -3,4 +3,6 @@ NAME := test-libc
 SRCS := $(wildcard $(LOCAL_DIR)*.c)
 DEP_LIBS := unity
 
+LOCAL_LDFLAGS := -lpthread
+
 include $(binary.mk)
