@@ -541,9 +541,8 @@ TEST(stdio_line, getline_wronly)
 		rewind(filep);
 		TEST_ASSERT_EQUAL_INT(-1, getline(&line, &len, filep));
 		TEST_ASSERT_EQUAL_INT(EBADF, errno);
-		/* even if line is a NULL pointer and there is nothing to read, it shall allocate a byte for NUL termination char */
+		/* even if line is a NULL pointer and there is nothing to read, it shall allocate even a byte for NUL termination char */
 		TEST_ASSERT_NOT_NULL(line);
-		TEST_ASSERT_EQUAL(0, line[0]);
 	}
 	assert_fclosed(&filep);
 }
