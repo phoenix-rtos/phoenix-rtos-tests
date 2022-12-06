@@ -6,7 +6,7 @@
  * test/libc/pthread
  *
  * Copyright 2022 Phoenix Systems
- * Author: Lukasz Leczkowski
+ * Author: Lukasz Leczkowski, Damian Loewnau
  *
  * This file is part of Phoenix-RTOS.
  *
@@ -44,11 +44,17 @@ TEST(test_pthread_cond, pthread_condattr_setclock)
 	TEST_ASSERT_EQUAL(0, pthread_condattr_setclock(&attr, CLOCK_MONOTONIC));
 
 	clockid_t clock;
-	/* Only 'CLOCK_MONOTONIC' supported */
+	/* Only 'CLOCK_MONOTONIC' supported Phoenix-RTOS */
 	TEST_ASSERT_EQUAL(0, pthread_condattr_getclock(&attr, &clock));
 	TEST_ASSERT_EQUAL(CLOCK_MONOTONIC, clock);
 	TEST_ASSERT_EQUAL(EINVAL, pthread_condattr_setclock(&attr, CLOCK_MONOTONIC_RAW));
+#ifdef __phoenix__
 	TEST_ASSERT_EQUAL(EINVAL, pthread_condattr_setclock(&attr, CLOCK_REALTIME));
+#else
+	TEST_ASSERT_EQUAL(0, pthread_condattr_setclock(&attr, CLOCK_REALTIME));
+	TEST_ASSERT_EQUAL(0, pthread_condattr_getclock(&attr, &clock));
+	TEST_ASSERT_EQUAL(CLOCK_REALTIME, clock);
+#endif
 }
 
 
@@ -59,10 +65,16 @@ TEST(test_pthread_cond, pthread_condattr_setpshared)
 	TEST_ASSERT_EQUAL(0, pthread_condattr_setpshared(&attr, PTHREAD_PROCESS_PRIVATE));
 
 	int pshared;
-	/* Only 'PTHREAD_PROCESS_PRIVATE' supported */
+	/* Only 'PTHREAD_PROCESS_PRIVATE' supported on Phoenix-RTOS */
 	TEST_ASSERT_EQUAL(0, pthread_condattr_getpshared(&attr, &pshared));
 	TEST_ASSERT_EQUAL(PTHREAD_PROCESS_PRIVATE, pshared);
+#ifdef __phoenix__
 	TEST_ASSERT_EQUAL(EINVAL, pthread_condattr_setpshared(&attr, PTHREAD_PROCESS_SHARED));
+#else
+	TEST_ASSERT_EQUAL(0, pthread_condattr_setpshared(&attr, PTHREAD_PROCESS_SHARED));
+	TEST_ASSERT_EQUAL(0, pthread_condattr_getpshared(&attr, &pshared));
+	TEST_ASSERT_EQUAL(PTHREAD_PROCESS_SHARED, pshared);
+#endif
 }
 
 
@@ -166,28 +178,6 @@ TEST(test_pthread_cond, pthread_cond_timedwait_fail_signal_incorrect_timeout)
 }
 
 
-TEST(test_pthread_cond, pthread_cond_timedwait_fail_signal_too_short_timeout)
-{
-	pthread_t first, second;
-	thread_args.count = 0;
-	thread_err_t err_first, err_second;
-
-	TEST_ASSERT_EQUAL(0, pthread_mutex_init(&thread_args.count_lock, NULL));
-	TEST_ASSERT_EQUAL(0, pthread_cond_init(&thread_args.count_nonzero, NULL));
-	TEST_ASSERT_EQUAL(0, pthread_create(&first, NULL, decrement_count_timed_wait_fail_too_short_timeout, &err_first));
-	TEST_ASSERT_EQUAL(0, pthread_create(&second, NULL, increment_count_signal, &err_second));
-	TEST_ASSERT_EQUAL(0, pthread_join(first, NULL));
-	TEST_ASSERT_EQUAL(0, pthread_join(second, NULL));
-
-	TEST_ASSERT_EQUAL(0, err_first.err1);
-	TEST_ASSERT_EQUAL(ETIMEDOUT, err_first.err2);
-	TEST_ASSERT_EQUAL(0, err_first.err3);
-	TEST_ASSERT_EQUAL(0, err_second.err1);
-	TEST_ASSERT_EQUAL(0, err_second.err2);
-	TEST_ASSERT_EQUAL(0, err_second.err3);
-}
-
-
 TEST(test_pthread_cond, pthread_cond_timedwait_pass_broadcast)
 {
 	pthread_t first, second, third;
@@ -242,33 +232,6 @@ TEST(test_pthread_cond, pthread_cond_timedwait_fail_broadcast_incorrect_timeout)
 }
 
 
-TEST(test_pthread_cond, pthread_cond_timedwait_fail_broadcast_too_short_timeout)
-{
-	pthread_t first, second, third;
-	thread_args.count = 0;
-	thread_err_t err_first, err_second, err_third;
-
-	TEST_ASSERT_EQUAL(0, pthread_mutex_init(&thread_args.count_lock, NULL));
-	TEST_ASSERT_EQUAL(0, pthread_cond_init(&thread_args.count_nonzero, NULL));
-	TEST_ASSERT_EQUAL(0, pthread_create(&first, NULL, decrement_count_timed_wait_fail_too_short_timeout, &err_first));
-	TEST_ASSERT_EQUAL(0, pthread_create(&second, NULL, decrement_count_timed_wait_fail_too_short_timeout, &err_second));
-	TEST_ASSERT_EQUAL(0, pthread_create(&third, NULL, increment_count_broadcast, &err_third));
-	TEST_ASSERT_EQUAL(0, pthread_join(first, NULL));
-	TEST_ASSERT_EQUAL(0, pthread_join(second, NULL));
-	TEST_ASSERT_EQUAL(0, pthread_join(third, NULL));
-
-	TEST_ASSERT_EQUAL(0, err_first.err1);
-	TEST_ASSERT_EQUAL(ETIMEDOUT, err_first.err2);
-	TEST_ASSERT_EQUAL(0, err_first.err3);
-	TEST_ASSERT_EQUAL(0, err_second.err1);
-	TEST_ASSERT_EQUAL(ETIMEDOUT, err_second.err2);
-	TEST_ASSERT_EQUAL(0, err_second.err3);
-	TEST_ASSERT_EQUAL(0, err_third.err1);
-	TEST_ASSERT_EQUAL(0, err_third.err2);
-	TEST_ASSERT_EQUAL(0, err_third.err3);
-}
-
-
 TEST_GROUP_RUNNER(test_pthread_cond)
 {
 	RUN_TEST_CASE(test_pthread_cond, pthread_cond_init);
@@ -278,8 +241,6 @@ TEST_GROUP_RUNNER(test_pthread_cond)
 	RUN_TEST_CASE(test_pthread_cond, pthread_cond_wait_broadcast);
 	RUN_TEST_CASE(test_pthread_cond, pthread_cond_timedwait_pass_signal);
 	RUN_TEST_CASE(test_pthread_cond, pthread_cond_timedwait_fail_signal_incorrect_timeout);
-	RUN_TEST_CASE(test_pthread_cond, pthread_cond_timedwait_fail_signal_too_short_timeout);
 	RUN_TEST_CASE(test_pthread_cond, pthread_cond_timedwait_pass_broadcast);
 	RUN_TEST_CASE(test_pthread_cond, pthread_cond_timedwait_fail_broadcast_incorrect_timeout);
-	RUN_TEST_CASE(test_pthread_cond, pthread_cond_timedwait_fail_broadcast_too_short_timeout);
 }

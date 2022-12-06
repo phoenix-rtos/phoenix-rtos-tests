@@ -21,9 +21,9 @@
 
 
 typedef struct thread_err_t {
-	int err1;
-	int err2;
-	int err3;
+	volatile int err1;
+	volatile int err2;
+	volatile int err3;
 } thread_err_t;
 
 
