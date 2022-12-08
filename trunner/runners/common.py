@@ -183,7 +183,8 @@ class PloTalker:
             self.plo.expect_exact(msg)
             self.plo.send('YES!\r')
             msg = 'Erased'
-            self.plo.expect_exact(msg, timeout=40)
+            # timeout based on typical 16 MB erase time for zedboard flash memory (S25FL256S)
+            self.plo.expect_exact(msg, timeout=65)
         except pexpect.TIMEOUT:
             raise PloError('Wrong erase command output!', expected=msg, cmd=cmd)
 
