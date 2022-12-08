@@ -68,6 +68,7 @@ def harness(p):
     assert_auth(p)
     logintools.assert_login_empty(p, cred_empty.user)
     p.send(EOT)  # assert_login_empty() with empty login does not go back to psh, exit needed
+    psh.assert_prompt(p, msg='Cannot exit "auth" during empty login passing', timeout=1)
 
     # Too long credentials
     printables = string.printable
