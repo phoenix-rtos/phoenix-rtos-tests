@@ -59,10 +59,14 @@ def harness(p):
 
     # Exit and try to login again but with defuser:
     p.send(EOT)
+    psh.assert_prompt(p)
+
     assert_pshlogin(p)
     logintools.assert_login_fail(p, cred_ok.user, cred_bad.passwd)
     logintools.assert_login(p, cred_ok.user, cred_ok.passwd)
+
     p.send(EOT)
+    psh.assert_prompt(p)
 
     # Too long credentials
     assert_pshlogin(p)
