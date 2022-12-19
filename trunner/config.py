@@ -40,6 +40,7 @@ PYEXPECT_TIMEOUT = 8
 ALL_TARGETS = ['armv7a9-zynq7000-qemu',
                'armv7a9-zynq7000-zedboard',
                'armv7m4-stm32l4x6-nucleo',
+               'armv7m4-stm32l4x6-skl',
                'armv7m7-imxrt106x-evk',
                'armv7m7-imxrt117x-evk',
                'host-generic-pc',
@@ -55,6 +56,7 @@ SYSEXEC_TARGETS = ['armv7a9-zynq7000-qemu',
                    'armv7m7-imxrt106x-evk',
                    'armv7m7-imxrt117x-evk',
                    'armv7m4-stm32l4x6-nucleo',
+                   'armv7m4-stm32l4x6-skl',
                    'riscv64-generic-qemu']
 
 QEMU_TARGETS = ['armv7a9-zynq7000-qemu', 'ia32-generic-qemu', 'riscv64-generic-qemu']

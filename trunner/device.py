@@ -1,5 +1,5 @@
 # Imports of available runners
-from .runners import HostRunner, QemuRunner, IMXRT106xRunner, IMXRT117xRunner, STM32L4Runner, ZYNQ7000ZedboardRunner
+from .runners import HostRunner, QemuRunner, IMXRT106xRunner, IMXRT117xRunner, STM32L4Runner, STM32SklRunner, ZYNQ7000ZedboardRunner
 
 from .config import DEVICE_SERIAL_USB, PHOENIXD_PORT, QEMU_TARGETS
 
@@ -19,5 +19,7 @@ class RunnerFactory:
             return ZYNQ7000ZedboardRunner(target, serial, PHOENIXD_PORT, is_rpi_host=True, log=log)
         if target == 'armv7m4-stm32l4x6-nucleo':
             return STM32L4Runner(target, serial, is_rpi_host=True, log=log)
+        if target == 'armv7m4-stm32l4x6-skl':
+            return STM32SklRunner(target, serial, is_rpi_host=True, log=log)
 
         raise ValueError(f"Unknown Runner target: {target}")

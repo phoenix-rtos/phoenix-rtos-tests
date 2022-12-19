@@ -263,7 +263,7 @@ class DeviceRunner(Runner):
 
     def __init__(self, target, serial, is_rpi_host, log=False):
         if is_rpi_host:
-            self.leds = {'red': GPIO(13), 'green': GPIO(18), 'blue': GPIO(12)}
+            self.leds = {'red': self.ledr_gpio, 'green': self.ledg_gpio, 'blue': self.ledb_gpio}
         super().__init__(target, log)
         self.serial_port = serial[0]
         self.serial_baudrate = serial[1]
