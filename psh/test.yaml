@@ -75,3 +75,6 @@ test:
 
         - name: help
           harness: test-help.py
+
+        - name: exit
+          harness: test-exit.py
