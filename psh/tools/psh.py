@@ -23,7 +23,7 @@ from datetime import datetime
 
 EOL = r'(?:\r+)\n'
 EOT = '\x04'
-PROMPT = r'(\r+)\x1b\[0J' + r'\(psh\)% '
+PROMPT = r'(\r*)\x1b\[0J' + r'\(psh\)% '
 # according to control sequence introducer pattern
 CONTROL_CODE = r'(\x1b\[[\x30-\x3F]*[\x20-\x2F]*[\x40-\x7E])'
 OPTIONAL_CONTROL_CODE = CONTROL_CODE + r'?'
@@ -89,7 +89,7 @@ def assert_prompt_after_cmd(pexpect_proc, cmd, result='success', msg=None):
 
 def assert_only_prompt(pexpect_proc):
     ''' Expect an erase in display ascii escape sequence and a prompt sign '''
-    prompt = '\r\x1b[0J' + '(psh)% '
+    prompt = '\x1b[0J' + '(psh)% '
     got = pexpect_proc.read(len(prompt))
     assert got == prompt, f'Expected:\n{prompt}\nGot:\n{got}'
 
