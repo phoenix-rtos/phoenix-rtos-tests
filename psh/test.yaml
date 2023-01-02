@@ -72,3 +72,6 @@ test:
 
         - name: history
           harness: test-history.py
+
+        - name: help
+          harness: test-help.py
