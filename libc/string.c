@@ -27,6 +27,8 @@
 #define STR_PLACEHOLDER "klmnopqrstu"
 
 
+/* NOTE: strlcpy not available on linux, enable tests only on phoenix */
+#ifdef __phoenix__
 TEST_GROUP(string_strlcpy);
 
 
@@ -40,8 +42,6 @@ TEST_TEAR_DOWN(string_strlcpy)
 }
 
 
-/* NOTE: strlcpy not available on linux, enable tests only on phoenix */
-#ifdef __phoenix__
 TEST(string_strlcpy, strlcpy_fullcopy)
 {
 	const char source[] = STR_SRC;
@@ -118,6 +118,7 @@ TEST_GROUP_RUNNER(string_strlcpy)
 }
 
 
+#ifdef __phoenix__
 TEST_GROUP(string_strlcat);
 
 
@@ -131,7 +132,6 @@ TEST_TEAR_DOWN(string_strlcat)
 }
 
 
-#ifdef __phoenix__
 TEST(string_strlcat, strlcat_fullconcat_empty)
 {
 	const char source[] = STR_SRC1;
