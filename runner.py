@@ -1,138 +1,221 @@
 #!/usr/bin/env python3
-
 import argparse
-import logging
-import pathlib
 import sys
+from pathlib import Path
+from typing import Dict, Tuple
 
-import trunner.config as config
-
-from trunner.test_runner import TestsRunner
-from trunner.tools.color import Color
-
-
-def set_logger(level=logging.INFO):
-    root = logging.getLogger()
-    root.setLevel(logging.DEBUG)
-
-    stream_handler = logging.StreamHandler(sys.stdout)
-    stream_handler.setLevel(level)
-    stream_handler.terminator = ''
-    formatter = logging.Formatter('%(message)s')
-    stream_handler.setFormatter(formatter)
-    root.addHandler(stream_handler)
+import trunner
+from trunner.extensions import ExtensionError, load_extensions
+from trunner.host import EmulatorHost, Host, RpiHost
+from trunner import TestRunner
+from trunner.dut import PortError
+from trunner.target import (
+    IMXRT106xEvkTarget,
+    IMXRT117xEvkTarget,
+    HostPCGenericTarget,
+    IA32GenericQemuTarget,
+    RISCV64GenericQemuTarget,
+    ARMv7A9Zynq7000QemuTarget,
+    STM32L4x6Target,
+    Zynq7000ZedboardTarget,
+)
+from trunner.config import TestContext
+from trunner.target.base import TargetBase
 
 
 def args_file(arg):
-    path = pathlib.Path(arg)
+    path = Path(arg)
     if not path.exists():
         print(f"Path {path} does not exist")
-        sys.exit(1)
+        sys.exit(3)
 
     path = path.resolve()
     return path
 
 
-def parse_args():
-    logging_level = {
-            'debug': logging.DEBUG,
-            'info': logging.INFO,
-            'warning': logging.WARNING,
-            'error': logging.ERROR
-    }
-
+def parse_args(targets, hosts):
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("-T", "--target",
-                        default='ia32-generic-qemu',
-                        choices=config.ALL_TARGETS,
-                        help="Set target on which tests will be run. "
-                             "By default runs tests on %(default)s target. ")
+    parser.add_argument(
+        "-T",
+        "--target",
+        default="ia32-generic-qemu",
+        choices=targets.keys(),
+        help="Set target on which tests will be run. "
+        "By default runs tests on %(default)s target. "
+        "Targets can be extend using extension feature.",
+    )
 
-    parser.add_argument("-t", "--test",
-                        default=[], action='append', type=args_file,
-                        help="Specify directory in which test will be searched. "
-                             "If flag is not used then runner searches for tests in "
-                             "phoenix-rtos-tests directory. Flag can be used multiple times.")
+    parser.add_argument(
+        "-H",
+        "--host",
+        default="pc",
+        choices=hosts.keys(),
+        help="Set host that run tests. \"pc\" host is recommended for running tests on emulators. "
+        "To control physical boards you can use \"rpi\" host or pc "
+        "(but it requires restarting board manually by yourself). By default runs tests on %(default)s. "
+        "Hosts can be extend using extension feature.",
+    )
 
-    parser.add_argument("--build",
-                        default=False, action='store_true',
-                        help="Runner will build all tests.")
+    parser.add_argument(
+        "-t",
+        "--test",
+        default=[],
+        action="append",
+        type=args_file,
+        help="Specify directory in which test will be searched. "
+        "If flag is not used then runner searches for tests in "
+        "phoenix-rtos-project directory. Flag can be used multiple times.",
+    )
 
-    parser.add_argument("-l", "--log-level",
-                        default='info',
-                        choices=logging_level,
-                        help="Specify verbosity level. By default uses level info.")
+    parser.add_argument(
+        "-p",
+        "--port",
+        help="Specify serial to communicate with device board. "
+        "Default value depends on the target",
+    )
 
-    parser.add_argument("-s", "--serial",
-                        help="Specify serial to communicate with device board. "
-                             "Default value depends on the target")
+    parser.add_argument(
+        "-b",
+        "--baudrate",
+        default=115200,
+        help="Specify the connection speed of serial. " "By default uses %(default)d",
+    )
 
-    parser.add_argument("-b", "--baudrate",
-                        default=config.DEVICE_SERIAL_BAUDRATE,
-                        help="Specify the connection speed of serial. "
-                             "By default uses 115200")
+    parser.add_argument(
+        "--no-flash",
+        default=False,
+        action="store_true",
+        help="Board will not be flashed by runner.",
+    )
 
-    parser.add_argument("--no-flash",
-                        default=False, action='store_true',
-                        help="Board will not be flashed by runner.")
+    parser.add_argument(
+        "--no-test",
+        default=False,
+        action="store_true",
+        help="Tests will be not run by runner. This option may be helpful to only flash the device "
+        "or check if yamls are parsed correctly."
+    )
 
-    # Add alternative option "--long-test" "" for long-test argument, which is False
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="count",
+        default=0,
+        help="Increases verbosity level",
+    )
+
+    # Add alternative option "--nightly" "" for nightly argument, which is False
     # Needed for proper disabling long tests in gh actions
     # because of problem with passing empty argument through gh workflows
-    parser.add_argument("--long-test",
-                        type=bool,
-                        nargs='?', default=False, const=True,
-                        help="Long tests will be run")
+    parser.add_argument(
+        "--nightly",
+        type=bool,
+        nargs="?",
+        default=False,
+        const=True,
+        help="Nightly tests will be run",
+    )
 
     args = parser.parse_args()
 
-    args.log_level = logging_level[args.log_level]
-
     if not args.test:
-        args.test = [config.PHRTOS_TEST_DIR]
-
-    if not args.serial:
-        if args.target == 'armv7a9-zynq7000-zedboard':
-            args.serial = config.DEVICE_SERIAL_PORT_XYLINX
-        else:
-            args.serial = config.DEVICE_SERIAL_PORT_NXP
-
-    if not args.baudrate:
-        args.baudrate = config.DEVICE_SERIAL_BAUDRATE
+        args.test = [resolve_project_path()]
 
     return args
 
 
+def resolve_project_path():
+    file_path = Path(__file__).resolve()
+    # file_path is phoenix-rtos-project/phoenix-rtos-tests/runner.py
+    project_dir = file_path.parent.parent
+    return project_dir
+
+
+def resolve_targets_and_hosts() -> Tuple[Dict[str, TargetBase], Dict[str, Host]]:
+    targets = [
+        HostPCGenericTarget,
+        IA32GenericQemuTarget,
+        RISCV64GenericQemuTarget,
+        ARMv7A9Zynq7000QemuTarget,
+        STM32L4x6Target,
+        IMXRT106xEvkTarget,
+        IMXRT117xEvkTarget,
+        Zynq7000ZedboardTarget,
+    ]
+
+    hosts = [EmulatorHost, RpiHost]
+
+    try:
+        ext_targets, ext_hosts = load_extensions()
+    except ExtensionError as e:
+        print(e)
+        sys.exit(4)
+
+    targets.extend(ext_targets)
+    hosts.extend(ext_hosts)
+
+    # NOTE default targets/hosts can be overwritten if extensions have the same name!
+    targets = {t.name: t for t in targets}
+    hosts = {h.name: h for h in hosts}
+
+    return targets, hosts
+
+
 def main():
-    args = parse_args()
-    set_logger(args.log_level)
+    targets, hosts = resolve_targets_and_hosts()
 
-    runner = TestsRunner(target=args.target,
-                         test_paths=args.test,
-                         build=args.build,
-                         flash=not args.no_flash,
-                         serial=(args.serial, args.baudrate),
-                         log=(args.log_level == logging.DEBUG),
-                         long_test=args.long_test
-                         )
+    args = parse_args(targets, hosts)
+    host_cls = hosts[args.host]
+    host = host_cls()
 
-    passed, failed, skipped = runner.run()
+    # Create partial context for target initialization
+    ctx = TestContext(
+        target=None,
+        host=host,
+        port=args.port,
+        baudrate=args.baudrate,
+        project_path=resolve_project_path(),
+        nightly=args.nightly,
+        should_flash=not args.no_flash,
+        should_test=not args.no_test,
+        verbosity=args.verbose,
+    )
 
-    total = passed + failed + skipped
-    summary = f'TESTS: {total}'
-    summary += f' {Color.colorify("PASSED", Color.OK)}: {passed}'
-    summary += f' {Color.colorify("FAILED", Color.FAIL)}: {failed}'
-    summary += f' {Color.colorify("SKIPPED", Color.SKIP)}: {skipped}\n'
-    logging.info(summary)
+    try:
+        target_cls = targets[args.target]
+        target = target_cls.from_context(ctx)
+    except PortError as e:
+        # TODO Make port finding in the global scope
+        print(e)
+        sys.exit(2)
 
-    if failed == 0:
-        print("Succeeded!")
-        sys.exit(0)
-    else:
-        print("Failed!")
-        sys.exit(1)
+    ctx = TestContext(
+        target=target,
+        host=ctx.host,
+        port=ctx.port,
+        baudrate=ctx.baudrate,
+        project_path=ctx.project_path,
+        nightly=ctx.nightly,
+        should_flash=ctx.should_flash,
+        should_test=ctx.should_test,
+        verbosity=ctx.verbosity,
+    )
+
+    # Set global context
+    trunner.ctx = ctx
+
+    runner = TestRunner(
+        ctx=ctx,
+        test_paths=args.test,
+    )
+
+    ok = runner.run()
+    if not ok:
+        return 1
+
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    exit(main())
