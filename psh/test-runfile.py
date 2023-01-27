@@ -13,8 +13,9 @@
 #
 
 import pexpect
+
+import trunner
 import psh.tools.psh as psh
-import trunner.config as config
 from psh.tools.psh import EOT
 from psh.tools.randwrapper import TestRandom
 from psh.tools.common import CHARS, get_rand_strings
@@ -68,10 +69,10 @@ def _exit_spawned_psh(p):
 
 def assert_executables(p):
     # psh is the example of executable which exists in file system
-    if config.CURRENT_TARGET in config.SYSEXEC_TARGETS:
-        psh.assert_cmd(p, '/syspage/psh', result='success')
-    else:
+    if trunner.ctx.target.rootfs:
         psh.assert_cmd(p, '/bin/psh', result='success')
+    else:
+        psh.assert_cmd(p, '/syspage/psh', result='success')
 
     _exit_spawned_psh(p)
 
@@ -91,9 +92,8 @@ def assert_text_files(p):
     psh.assert_cmd(p, '/testfile', result='fail')
 
 
+@psh.run
 def harness(p):
-    psh.init(p)
-
     random_wrapper = TestRandom(seed=1)
     root_dirs = get_root_dirs(p)
     assert_nonexistent(p, root_dirs, random_wrapper)
