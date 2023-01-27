@@ -1,0 +1,24 @@
+test:
+  harness: micropython_repl.py
+  nightly: true
+  targets:
+    exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk]
+  # TODO fix test harness
+  ignore: true
+
+  tests:
+    - name: cmdline.repl_basic.py
+      run: echo usr/test/micropython/cmdline/repl_basic.py
+    - name: cmdline.repl_emacs_keys.py
+      run: echo usr/test/micropython/cmdline/repl_emacs_keys.py
+    - name: cmdline.repl_cont.py
+      run: echo usr/test/micropython/cmdline/repl_cont.py
+    - name: cmdline.repl_micropyinspect.py
+      run: echo usr/test/micropython/cmdline/repl_micropyinspect.py
+    - name: cmdline.repl_words_move.py
+      run: echo usr/test/micropython/cmdline/repl_words_move.py
+      ignore: true
+    - name: cmdline.repl_inspect.py
+      run: echo usr/test/micropython/cmdline/repl_inspect.py
+    - name: cmdline.repl_autocomplete.py
+      run: echo usr/test/micropython/cmdline/repl_autocomplete.py
