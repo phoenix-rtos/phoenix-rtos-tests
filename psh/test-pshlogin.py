@@ -76,3 +76,4 @@ def harness(p):
 
     # Proper login to go back to psh
     logintools.assert_login(p, cred_ok_etc.user, cred_ok_etc.passwd)
+    p.send(EOT)
