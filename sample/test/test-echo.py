@@ -13,5 +13,3 @@ def harness(p):
 
     p.sendline("")
     p.expect_exact("[Success!]")
-
-    return True

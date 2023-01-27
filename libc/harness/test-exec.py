@@ -106,3 +106,5 @@ def harness(p):
     assert_execvpe_path_searched(p)
     assert_execvp_env_unchanged(p)
     assert_execvp_path_searched(p)
+
+    p.sendline("exit")

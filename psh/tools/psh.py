@@ -14,11 +14,12 @@
 #
 
 import re
+from collections import namedtuple
+
 import pexpect
 
-import trunner.config as config
+import trunner
 
-from collections import namedtuple
 from datetime import datetime
 
 EOL = r'(?:\r+)\n'
@@ -111,7 +112,7 @@ def assert_prompt_fail(pexpect_proc, msg='', timeout=-1):
 
 
 def _get_exec_cmd(prog):
-    if config.CURRENT_TARGET in config.SYSEXEC_TARGETS:
+    if not trunner.ctx.target.rootfs:
         return f'sysexec {prog}'
     else:
         return f'/bin/{prog}'
@@ -157,6 +158,8 @@ def uptime(pexpect_proc):
     _send(pexpect_proc, 'uptime')
 
     idx = 0
+
+    groups = None
     while idx != 1:
         idx = pexpect_proc.expect([
             r'up (\d+):(\d+):(\d+).*?\n',
@@ -164,6 +167,7 @@ def uptime(pexpect_proc):
         if idx == 0:
             groups = pexpect_proc.match.groups()
 
+    assert groups is not None
     hour, minute, second = groups
     time = Time(hour, minute, second)
 
@@ -269,6 +273,7 @@ def run(harness):
 
     def wrapper_harness(pexpect_proc):
         init(pexpect_proc)
-        harness(pexpect_proc)
+        res = harness(pexpect_proc)
         deinit(pexpect_proc)
+        return res
     return wrapper_harness

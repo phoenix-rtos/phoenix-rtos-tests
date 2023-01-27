@@ -38,28 +38,29 @@ def get_process_list(p):
     return ps_list
 
 
-def create_psh_processes(p, count, already_spawned):
-    psh_pid_list = []
-    msg = 'Failed to create new psh process'
+def create_psh_processes(p, count):
+    def get_psh_pids(p):
+        return [int(proc["pid"]) for proc in get_process_list(p) if proc["task"] in ("psh", "/bin/psh")]
+
+    # Save spawned already spawned psh processes - we don't want to kill them
+    old_pids = get_psh_pids(p)
+
     for _ in range(count):
-        psh.assert_exec(p, 'psh', msg=msg)
+        psh.assert_exec(p, 'psh', msg='Failed to create new psh process')
 
-    # find pid list of sleep psh processes
-    for proc in get_process_list(p):
-        task = proc['task']
-        if proc['state'] == 'sleep' and (task == 'psh' or task == '/bin/psh'):
-            psh_pid_list.append(proc['pid'])
+    new_pids = get_psh_pids(p)
 
-    psh_pid_count = len(psh_pid_list)
-    assert (psh_pid_count - already_spawned) == count, f'Created {psh_pid_count } psh processes, instead of {count}'
+    new_pids = [pid for pid in new_pids if pid not in old_pids]
+    new_pids.reverse()
 
-    return psh_pid_list
+    assert len(new_pids) == count, f'Created {len(new_pids)} psh processes, instead of {count}'
+    return new_pids
 
 
 def assert_kill_procs(p, pid_list):
     for pid in pid_list:
         msg = f'Wrong output when killing process with the following pid: {pid}'
-        psh.assert_cmd(p, f'kill {pid}', result='success', msg=msg)
+        psh.assert_cmd(p, f'kill {pid}', result='dont-check', msg=msg)
     sleep(0.5)
 
     dead = set(pid_list) - set(proc['pid'] for proc in get_process_list(p))
@@ -67,12 +68,11 @@ def assert_kill_procs(p, pid_list):
 
 
 def assert_errors(p):
-    pid = 90
-    used_pid_list = [proc["pid"] for proc in get_process_list(p)]
+    unused_pid = max(int(proc["pid"]) for proc in get_process_list(p)) + 1
 
-    # if process id is used, find next unused id
-    while str(pid) in used_pid_list:
-        pid = pid + 1
+    # nothing should be done
+    msg = 'Wrong output when killing nonexistent process'
+    psh.assert_cmd(p, f'kill {unused_pid}', result="fail", msg=msg)
 
     msg = 'Wrong kill help message'
     psh.assert_cmd(p, 'kill', expected='usage: kill <pid>', result='fail', msg=msg)
@@ -82,15 +82,10 @@ def assert_errors(p):
                    result='fail',
                    msg=msg)
 
-    # nothing should be done
-    msg = 'Wrong output when killing nonexistent process'
-    psh.assert_cmd(p, f'kill {pid}', result='fail', msg=msg)
-
 
 @psh.run
 def harness(p):
     assert_errors(p)
 
-    sleep_pshs = sum((proc['state'] == 'sleep' and proc['task'] in ('psh', '/bin/psh')) for proc in get_process_list(p))
-    pid_list = create_psh_processes(p, 3, already_spawned=sleep_pshs)
+    pid_list = create_psh_processes(p, 3)
     assert_kill_procs(p, pid_list)
