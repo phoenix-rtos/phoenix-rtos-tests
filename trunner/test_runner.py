@@ -1,84 +1,116 @@
-import logging
+import sys
+from typing import Sequence
 
-from .builder import TargetBuilder
-from .config import TestCaseConfig, ParserArgs, set_current_target
-from .device import RunnerFactory
-from .testcase import TestCaseFactory
-from .runners.common import Runner
+from trunner.config import ConfigParser
+from trunner.harness import HarnessError, FlashError
+from trunner.text import bold, green, red, yellow
+from trunner.types import TestOptions, TestResult
 
 
-class TestsRunner:
+class TestRunner:
     """Class responsible for loading, building and running tests"""
 
-    def __init__(self, target, test_paths, serial, build=True, flash=True, log=False, long_test=False):
-        self.target = target
+    def __init__(self, ctx, test_paths):
+        self.ctx = ctx
+        self.target = self.ctx.target
         self.test_configs = []
         self.test_paths = test_paths
-        self.build = build
-        self.flash = flash
-        self.long_test = long_test
-        self.runners = None
-        self.serial = serial
-        self.log = log
 
     def search_for_tests(self):
         paths = []
         for path in self.test_paths:
-            candidate = list(path.rglob('test*.yaml'))
+            candidate = list(path.rglob("test*.yaml"))
             if not candidate:
-                raise ValueError(f'Test {path} does not contain .yaml test configuration')
+                raise ValueError(f"Test {path} does not contain .yaml test configuration")
             paths.extend(candidate)
 
         self.test_paths = paths
 
     def parse_tests(self):
-        self.test_configs = []
+        self.search_for_tests()
+        parser = ConfigParser(self.ctx)
+
+        tests = []
         for path in self.test_paths:
-            args = ParserArgs(yaml_path=path, target=self.target, long_test=self.long_test)
-            config = TestCaseConfig.from_yaml(args)
-            self.test_configs.extend(config.tests)
-            logging.debug(f"File {path} parsed successfuly\n")
+            tests.extend(parser.parse(path))
+
+        return tests
+
+    def flash(self):
+        try:
+            self.target.flash_dut()
+        except (FlashError, HarnessError) as e:
+            print(bold("ERROR WHILE FLASHING THE DEVICE"))
+            print(e)
+            sys.exit(1)
+
+    def run_tests(self, tests: Sequence[TestOptions]):
+        fail, skip = 0, 0
+
+        for idx, test in enumerate(tests):
+            result = TestResult(test.name)
+            print(f"{result.get_name()}: ", end="", flush=True)
+
+            if test.ignore:
+                result.skip()
+            else:
+                harness = self.target.build_test(test)
+                assert harness is not None
+
+                res = None
+                try:
+                    res = harness()
+                except HarnessError as e:
+                    result.fail(str(e))
+
+                if res is not None:
+                    result = res
+
+            print(result, end="", flush=True)
+
+            if result.is_fail():
+                fail += 1
+            elif result.is_skip():
+                skip += 1
+
+            def set_reboot_flag(tests, idx, result):
+                # If the test is successful and the next test doesn't require loading via
+                # the plo we don't want to reboot the entire device (to speed up the test execution).
+                # There are three exceptions to this rule:
+                # 1. Runner runs in the "nightly" mode when we are not concerned about slow execution.
+                # 2. The test has failed.
+                # 3. We have to enter the bootloader in order to load applications.
+                if idx == len(tests) - 1:
+                    return
+
+                if result.is_skip():
+                    tests[idx + 1].should_reboot = tests[idx].should_reboot
+
+                if (
+                    result.is_fail()
+                    or self.ctx.nightly
+                    or (tests[idx + 1].bootloader is not None and tests[idx + 1].bootloader.apps)
+                ):
+                    tests[idx + 1].should_reboot = True
+                else:
+                    tests[idx + 1].should_reboot = False
+
+            set_reboot_flag(tests, idx, result)
+
+        return fail, skip
 
     def run(self):
-        tests = []
+        tests = self.parse_tests()
 
-        self.runner = RunnerFactory.create(
-            target=self.target,
-            serial=self.serial,
-            log=self.log
-            )
+        if self.ctx.should_flash:
+            self.flash()
 
-        set_current_target(self.target)
-        self.search_for_tests()
-        self.parse_tests()
+        if not self.ctx.should_test:
+            return True
 
-        for test_config in self.test_configs:
-            test = TestCaseFactory.create(test_config)
-            tests.append(test)
+        fails, skips = self.run_tests(tests)
+        oks = len(tests) - fails - skips
 
-        # deprecated utility, which will be removed soon
-        if self.build:
-            TargetBuilder(self.target).build()
+        print(f"TESTS: {len(tests)} {green('PASSED')}: {oks} {red('FAILED')}: {fails} {yellow('SKIPPED')}: {skips}")
 
-        if self.flash:
-            self.runner.flash()
-
-        for test_case in tests:
-            test_case.log_test_started()
-            self.runner.run(test_case)
-            test_case.log_test_status()
-
-        passed, failed, skipped = 0, 0, 0
-
-        # Convert bools to int
-        for test in tests:
-            passed += int(test.passed())
-            failed += int(test.failed())
-            skipped += int(test.skipped())
-
-        if failed > 0:
-            self.runner.set_status(Runner.FAIL)
-        else:
-            self.runner.set_status(Runner.SUCCESS)
-
-        return passed, failed, skipped
+        return fails == 0
