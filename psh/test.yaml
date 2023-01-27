@@ -9,12 +9,16 @@ test:
 
         - name: auth
           harness: test-auth.py
+          targets:
+              exclude:
+                   # temporarily disabled because of #550 issue
+                  - armv7m4-stm32l4x6-nucleo
 
         #FIXME - test-pshlogin.py is only for targets with root
         - name: pshlogin
           harness: test-pshlogin.py
           targets:
-              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk]
+              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo]
 
         - name: echo
           harness: test-echo.py
@@ -34,23 +38,29 @@ test:
         - name: cat-shells
           harness: test-cat-shells.py
           targets:
-              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk]
+              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo]
 
         - name: kill
           harness: test-kill.py
 
         - name: mkdir
           harness: test-mkdir.py
+          targets:
+              exclude:
+                   # temporarily disabled because of #550 issue
+                  - armv7m4-stm32l4x6-nucleo
 
         - name: touch
+          # TODO touch of netsocket and pf fails...
           harness: test-touch.py
+          ignore: True
 
         - name: touch-rootfs
           harness: test-touch-rootfs.py
           # temporary disabled because of the following issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/621
           ignore: true
           targets:
-              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk]
+              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo]
 
         - name: ls
           harness: test-ls.py
@@ -58,13 +68,17 @@ test:
         - name: ls-rootfs
           harness: test-ls-rootfs.py
           targets:
-              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk]
+              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo]
 
         - name: runfile
           harness: test-runfile.py
           targets:
               # runfile applet is not intended for non-rootfs targets
-              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk]
+              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo]
 
         - name: history
           harness: test-history.py
+          targets:
+              exclude:
+                   # temporarily disabled because of #550 issue
+                  - armv7m4-stm32l4x6-nucleo

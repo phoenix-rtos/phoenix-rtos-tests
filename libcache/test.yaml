@@ -1,5 +1,5 @@
 test:
-  type: unit
+  type: unity
   tests:
     - name: unit
-      exec: test-libcache
+      execute: test-libcache

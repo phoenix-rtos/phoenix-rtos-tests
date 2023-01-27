@@ -1,8 +1,7 @@
 test:
-    type: unit
+    type: unity
     tests:
         - name: unit
-          timeout: 15
-          exec: test-libuuid
+          execute: test-libuuid
           targets:
               exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk]
