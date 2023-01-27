@@ -1,13 +1,13 @@
 test:
     tests:
         - name: echo
-          exec: test-echo
           harness: test-echo.py
+          execute: test-echo
           targets:
               include: [host-generic-pc]
 
         - name: unity
-          exec: test-unity
-          type: unit
+          execute: test-unity
+          type: unity
           targets:
               include: [host-generic-pc]

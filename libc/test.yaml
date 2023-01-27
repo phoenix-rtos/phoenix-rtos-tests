@@ -1,8 +1,10 @@
 test:
-    type: unit
-    tests:
-        - name: unit
-          exec: test-libc
-          #FIXME: symlink tests will fail on non-rootfs targets
-          targets:
-              include: [host-generic-pc]
+  type: unity
+  tests:
+    - name: unit
+      execute: test-libc
+      #FIXME: symlink tests will fail on non-rootfs targets
+      #FIXME: unistd_uid doesn't work on zynq7000-qemu
+      targets:
+        exclude: [armv7a9-zynq7000-qemu]
+        include: [host-generic-pc]

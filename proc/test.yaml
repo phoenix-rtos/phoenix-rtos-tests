@@ -1,8 +1,10 @@
 test:
     tests:
         - name: test_thread_rand
-          exec: test_thread_rand
-          type: unit
+          type: unity
+          execute: test_thread_rand
+
         - name: test_priority
-          syspage: test_priority
+          load:
+            - app: test_priority
           harness: test_priority.py

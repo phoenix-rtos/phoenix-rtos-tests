@@ -1,6 +1,5 @@
 test:
-    type: unit
+    type: unity
     tests:
         - name: unit
-          exec: test-setjmp
-
+          execute: test-setjmp

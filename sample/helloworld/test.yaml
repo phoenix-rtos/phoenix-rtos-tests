@@ -2,7 +2,4 @@ test:
     tests:
         - name: main
           harness: test.py
-          exec: test-helloworld
-          targets:
-              include:
-                  - host-generic-pc
+          execute: test-helloworld
