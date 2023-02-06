@@ -3,8 +3,8 @@
  *
  * Meterfs test file abstraction
  *
- * Copyright 2021 Phoenix Systems
- * Author: Aleksander Kaminski, Andrzej Glowinski, Tomasz Korniluk
+ * Copyright 2021, 2023 Phoenix Systems
+ * Author: Aleksander Kaminski, Andrzej Glowinski, Tomasz Korniluk, Hubert Badocha
  *
  * %LICENSE%
  */
@@ -19,8 +19,9 @@
 #include "unity_fixture.h"
 
 static oid_t meterfs;
+static const char *pathPrefix;
 
-static inline void file_prepareDevCtl(msg_t* msg)
+static inline void file_prepareDevCtl(msg_t *msg)
 {
 	msg->type = mtDevCtl;
 	msg->i.data = NULL;
@@ -30,11 +31,19 @@ static inline void file_prepareDevCtl(msg_t* msg)
 }
 
 
+static int lookup_rel(const char *name, oid_t *file, oid_t *dev)
+{
+	char buffer[64];
+	(void)snprintf(buffer, sizeof(buffer), "%s/%s", pathPrefix, name);
+	return lookup(buffer, file, dev);
+}
+
+
 int file_lookup(const char *name)
 {
 	oid_t oid;
 
-	return lookup(name, &oid, NULL);
+	return lookup_rel(name, &oid, NULL);
 }
 
 
@@ -44,7 +53,7 @@ int file_open(const char *name)
 	int err;
 	id_t id;
 
-	if ((err = lookup(name, &msg.i.openclose.oid, NULL)) < 0)
+	if ((err = lookup_rel(name, &msg.i.openclose.oid, NULL)) < 0)
 		return err;
 
 	id = msg.i.openclose.oid.id;
@@ -213,10 +222,8 @@ int file_eraseAll(void)
 }
 
 
-void file_init(const char *path)
+int file_init(const char *path)
 {
-	int err;
-
-	if ((err = lookup(path, NULL, &meterfs)) < 0)
-		return err;
+	pathPrefix = path;
+	return lookup(path, NULL, &meterfs);
 }

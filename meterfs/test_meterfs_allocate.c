@@ -3,14 +3,15 @@
  *
  * Meterfs allocating tests group
  *
- * Copyright 2021 Phoenix Systems
- * Author: Tomasz Korniluk
+ * Copyright 2021, 2023 Phoenix Systems
+ * Author: Tomasz Korniluk, Hubert Badocha
  *
  *
  * %LICENSE%
  */
 
 #include "common.h"
+
 
 TEST_GROUP(meterfs_allocate);
 
@@ -110,8 +111,18 @@ void runner(void)
 
 int main(int argc, char *argv[])
 {
-	file_init(argv[1]);
-	TEST_ASSERT_EQUAL(0, file_eraseAll());
+	if (argc != 2) {
+		(void)printf("Usage: %s /meterfs/mount/path\n", argv[0]);
+		return 1;
+	}
+	if (file_init(argv[1]) != 0) {
+		(void)printf("Failed to initialize test\n");
+		return 1;
+	}
+	if (file_eraseAll() != 0) {
+		(void)printf("Failed to format meterfs partition\n");
+		return 1;
+	}
 
 	UnityMain(argc, (const char**)argv, runner);
 
