@@ -135,11 +135,15 @@ int file_eraseAll(void)
 }
 
 
-void file_init(const char *path)
+int file_init(const char *path)
 {
 	size_t filesz = FLASHSIZE;
 	size_t sectorsz = SECTORSIZE;
+	int err;
 
-	if (hostflashsrv_init(&filesz, &sectorsz, path) < 0)
+	err = hostflashsrv_init(&filesz, &sectorsz, path);
+	if (err < 0) {
 		printf("hostflashsrv: init failed\n");
+	}
+	return err;
 }

@@ -3,8 +3,8 @@
  *
  * Meterfs writing and reading tests group
  *
- * Copyright 2021 Phoenix Systems
- * Author: Tomasz Korniluk
+ * Copyright 2021, 2023 Phoenix Systems
+ * Author: Tomasz Korniluk, Hubert Badocha
  *
  *
  * %LICENSE%
@@ -72,24 +72,24 @@ TEST_TEAR_DOWN(meterfs_writeread)
 /* Test case of writing too small records. */
 TEST(meterfs_writeread, small_records)
 {
-	int i, wroteLen;
+	int i, writeLen;
 	file_info_t info = { 2, 5 * 255, 5, 0 };
 
 	common.fd = common_preallocOpenFile("file0", info.sectors, info.filesz, info.recordsz);
 
 	for (i = 0; i < 255; ++i) {
 		snprintf(common.buffMsg, sizeof(common.buffMsg), "iter=%d", i);
-		wroteLen = i % (info.recordsz + 1);
+		writeLen = i % (info.recordsz + 1);
 		i % 2 ? snprintf(common.pattern, sizeof(common.pattern), "aaaaa") : snprintf(common.pattern, sizeof(common.pattern), "zzzzz");
 
-		if (wroteLen) {
-			TEST_ASSERT_EQUAL_MESSAGE(info.recordsz, file_write(common.fd, common.pattern, wroteLen), common.buffMsg);
-			common_readContent(common.fd, info.recordcnt * info.recordsz, common.buffRec, info.recordsz, common.pattern, wroteLen, common.buffMsg);
+		if (writeLen) {
+			TEST_ASSERT_EQUAL_MESSAGE(info.recordsz, file_write(common.fd, common.pattern, writeLen), common.buffMsg);
+			common_readContent(common.fd, info.recordcnt * info.recordsz, common.buffRec, info.recordsz, common.pattern, writeLen, common.buffMsg);
 			info.recordcnt++;
 		}
 		else {
 			/* Resolving case of writing zero length record. */
-			TEST_ASSERT_EQUAL_MESSAGE(-EINVAL, file_write(common.fd, common.pattern, wroteLen), common.buffMsg);
+			TEST_ASSERT_EQUAL_MESSAGE(-EINVAL, file_write(common.fd, common.pattern, writeLen), common.buffMsg);
 		}
 
 		cleanBuffs();
@@ -110,7 +110,7 @@ TEST(meterfs_writeread, file_overflow)
 	for (i = 0; i < 255; ++i) {
 		snprintf(common.buffMsg, sizeof(common.buffMsg), "iter=%d", i);
 		i % 2 ? snprintf(common.pattern, sizeof(common.pattern), "aaaaa") : snprintf(common.pattern, sizeof(common.pattern), "zzzzz");
-	
+
 		TEST_ASSERT_EQUAL_MESSAGE(info.recordsz, file_write(common.fd, common.pattern, info.recordsz), common.buffMsg);
 
 		if (i < (info.filesz / info.recordsz)) {
@@ -132,28 +132,28 @@ TEST(meterfs_writeread, file_overflow)
 /* Test case of writing too big records. */
 TEST(meterfs_writeread, big_records)
 {
-	int i, wroteLen;
+	int i, writeLen;
 	file_info_t info = { 2, 2 * 255, 2, 0 };
 
 	common.fd = common_preallocOpenFile("file0", info.sectors, info.filesz, info.recordsz);
 
 	for (i = 0; i < 255; ++i) {
 		snprintf(common.buffMsg, sizeof(common.buffMsg), "iter=%d", i);
-		wroteLen = i % 6;
+		writeLen = i % 6;
 		i % 2 ? snprintf(common.pattern, sizeof(common.pattern), "aaaaa") : snprintf(common.pattern, sizeof(common.pattern), "zzzzz");
 
-		if (wroteLen > info.recordsz) {
-			TEST_ASSERT_EQUAL_MESSAGE(info.recordsz, file_write(common.fd, common.pattern, wroteLen), common.buffMsg);
+		if (writeLen > info.recordsz) {
+			TEST_ASSERT_EQUAL_MESSAGE(info.recordsz, file_write(common.fd, common.pattern, writeLen), common.buffMsg);
 			common_readContent(common.fd, info.recordcnt * info.recordsz, common.buffRec, info.recordsz, common.pattern, info.recordsz, common.buffMsg);
 			info.recordcnt++;
 		}
-		else if (wroteLen == 0) {
+		else if (writeLen == 0) {
 			/* Resolving case of writing zero length record. */
-			TEST_ASSERT_EQUAL_MESSAGE(-EINVAL, file_write(common.fd, common.pattern, wroteLen), common.buffMsg);
+			TEST_ASSERT_EQUAL_MESSAGE(-EINVAL, file_write(common.fd, common.pattern, writeLen), common.buffMsg);
 		}
 		else {
-			TEST_ASSERT_EQUAL_MESSAGE(info.recordsz, file_write(common.fd, common.pattern, wroteLen), common.buffMsg);
-			common_readContent(common.fd, info.recordcnt * info.recordsz, common.buffRec, info.recordsz, common.pattern, wroteLen, common.buffMsg);
+			TEST_ASSERT_EQUAL_MESSAGE(info.recordsz, file_write(common.fd, common.pattern, writeLen), common.buffMsg);
+			common_readContent(common.fd, info.recordcnt * info.recordsz, common.buffRec, info.recordsz, common.pattern, writeLen, common.buffMsg);
 			info.recordcnt++;
 		}
 
@@ -169,7 +169,7 @@ TEST(meterfs_writeread, file_end)
 {
 	int i;
 	file_info_t info = { 2, 10, 5, 0 };
-	
+
 	snprintf(common.pattern, sizeof(common.pattern), "a0000");
 	common.fd = common_preallocOpenFile("file0", info.sectors, info.filesz, info.recordsz);
 
@@ -197,7 +197,7 @@ TEST(meterfs_writeread, many_records)
 	TEST_ASSERT_EQUAL(0, info.recordcnt);
 
 	for (i = 0; i < 4000; ++i) {
-		snprintf(common.buffMsg,  sizeof(common.buffMsg), "a0000000%04d", i);
+		snprintf(common.buffMsg, sizeof(common.buffMsg), "a0000000%04d", i);
 		TEST_ASSERT_EQUAL_MESSAGE(info.recordsz, file_write(common.fd, common.buffMsg, info.recordsz), common.buffMsg);
 
 		if (i >= 3000) {
@@ -261,10 +261,20 @@ void runner(void)
 
 int main(int argc, char *argv[])
 {
-	file_init(argv[1]);
-	TEST_ASSERT_EQUAL(0, file_eraseAll());
+	if (argc != 2) {
+		(void)printf("Usage: %s /meterfs/mount/path\n", argv[0]);
+		return 1;
+	}
+	if (file_init(argv[1]) != 0) {
+		(void)printf("Failed to initialize test\n");
+		return 1;
+	}
+	if (file_eraseAll() != 0) {
+		(void)printf("Failed to format meterfs partition\n");
+		return 1;
+	}
 
-	UnityMain(argc, (const char**)argv, runner);
+	UnityMain(argc, (const char **)argv, runner);
 
 	return 0;
 }

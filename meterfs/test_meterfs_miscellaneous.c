@@ -3,8 +3,8 @@
  *
  * Meterfs miscellaneous tests group
  *
- * Copyright 2021 Phoenix Systems
- * Author: Tomasz Korniluk
+ * Copyright 2021, 2023 Phoenix Systems
+ * Author: Tomasz Korniluk, Hubert Badocha
  *
  *
  * %LICENSE%
@@ -15,21 +15,21 @@
 static struct {
 	int fd;
 	char buffRec[40];
-	char buffMsg[9];
+	char buffMsg[12];
 } common;
 
 
 static void writeReadCheck(file_info_t *info)
 {
-	int i;
+	unsigned int i;
 
-	for (i = 0; i < info->filesz / info->recordsz; ++i) {
-		snprintf(common.buffMsg, sizeof(common.buffMsg), "a%04d", i);
+	for (i = 0; i < (info->filesz / info->recordsz); ++i) {
+		(void)snprintf(common.buffMsg, sizeof(common.buffMsg), "a%04u", i);
 		TEST_ASSERT_EQUAL_MESSAGE(info->recordsz, file_write(common.fd, common.buffMsg, strlen(common.buffMsg)), common.buffMsg);
 		common_readContent(common.fd, i * info->recordsz, common.buffRec, info->recordsz, common.buffMsg, strlen(common.buffMsg), common.buffMsg);
 
-		memset(common.buffMsg, 0, sizeof(common.buffMsg));
-		memset(common.buffRec, 0, sizeof(common.buffRec));
+		(void)memset(common.buffMsg, 0, sizeof(common.buffMsg));
+		(void)memset(common.buffRec, 0, sizeof(common.buffRec));
 	}
 
 	TEST_ASSERT_EQUAL(0, file_getInfo(common.fd, &info->sectors, &info->filesz, &info->recordsz, &info->recordcnt));
@@ -54,7 +54,7 @@ TEST_TEAR_DOWN(meterfs_miscellaneous)
 
 /* Test case of resizing file and getting file info. */
 TEST(meterfs_miscellaneous, resize_getinfo)
-{	
+{
 	file_info_t info;
 	file_info_t pattern = { 4, 2000, 20, 0 };
 
@@ -69,7 +69,7 @@ TEST(meterfs_miscellaneous, resize_getinfo)
 	common_fileInfoCompare(&info, &pattern, "step2");
 
 	writeReadCheck(&info);
-	
+
 	pattern.filesz = 4000;
 	pattern.recordsz = 40;
 	TEST_ASSERT_EQUAL(0, file_resize(common.fd, pattern.filesz, pattern.recordsz));
@@ -100,15 +100,16 @@ TEST(meterfs_miscellaneous, resize_bigger)
 TEST(meterfs_miscellaneous, multi_lookup)
 {
 	file_info_t info = { 2, 2000, 20, 0 };
-	char name[] = "file0";
+	const char *name = "file0";
 	int i;
 
 	TEST_ASSERT_EQUAL(0, file_allocate(name, info.sectors, info.filesz, info.recordsz));
 
-	for (i = 0; i < 5; ++i)
-		TEST_ASSERT_GREATER_OR_EQUAL(0, file_lookup(name));
+	(void)snprintf(common.buffMsg, sizeof(common.buffMsg), "/%s", name);
+	for (i = 0; i < 5; ++i) {
+		TEST_ASSERT_GREATER_OR_EQUAL(0, file_lookup(common.buffMsg));
+	}
 
-	snprintf(common.buffMsg, sizeof(common.buffMsg), "/%s", name);
 	common.fd = file_open(common.buffMsg);
 	TEST_ASSERT_GREATER_OR_EQUAL(0, common.fd);
 
@@ -132,10 +133,20 @@ void runner(void)
 
 int main(int argc, char *argv[])
 {
-	file_init(argv[1]);
-	TEST_ASSERT_EQUAL(0, file_eraseAll());
+	if (argc != 2) {
+		(void)printf("Usage: %s /meterfs/mount/path\n", argv[0]);
+		return 1;
+	}
+	if (file_init(argv[1]) != 0) {
+		(void)printf("Failed to initialize test\n");
+		return 1;
+	}
+	if (file_eraseAll() != 0) {
+		(void)printf("Failed to format meterfs partition\n");
+		return 1;
+	}
 
-	UnityMain(argc, (const char**)argv, runner);
+	UnityMain(argc, (const char **)argv, runner);
 
 	return 0;
 }

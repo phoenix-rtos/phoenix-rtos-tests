@@ -3,8 +3,8 @@
  *
  * File abstraction
  *
- * Copyright 2021 Phoenix Systems
- * Author: Tomasz Korniluk
+ * Copyright 2021, 2023 Phoenix Systems
+ * Author: Tomasz Korniluk, Hubert Badocha
  *
  * %LICENSE%
  */
@@ -41,6 +41,6 @@ int file_getInfo(id_t fid, size_t *sectors, size_t *filesz, size_t *recordsz, si
 int file_eraseAll(void);
 
 
-void file_init(const char *path);
+int file_init(const char *path);
 
 #endif
