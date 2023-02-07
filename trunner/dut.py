@@ -14,6 +14,14 @@ class PortNotFound(PortError):
 
 
 class Dut:
+    """
+    This class wraps the pexpect object using the delegator pattern.
+
+    With the delegator pattern, we can keep one object through the testing campaign
+    and we are flexible with changing the pexpect object underneath. This is helpful
+    when implementing "reboot" logic for devices that are emulated (e.g. using qemu).
+    """
+
     def __init__(self):
         self.pexpect_proc = None
 
@@ -27,6 +35,14 @@ class Dut:
             setattr(self.pexpect_proc, __name, __value)
 
     def clear_buffer(self):
+        """
+        Clears the pexpect buffer.
+
+        This function may be useful for clearing the buffer between turning on the device
+        and the first reboot to avoid unwanted content. It can only be used if we know that
+        device will not write to output.
+        """
+
         if not self.pexpect_proc:
             return
 
@@ -44,6 +60,8 @@ class Dut:
 
 
 class SerialDut(Dut):
+    """DUT class for targets that communicates with host using serial port"""
+
     def __init__(self, port, baudrate, *args, **kwargs):
         super().__init__()
         self.port = port
@@ -69,6 +87,8 @@ class SerialDut(Dut):
 
 
 class ProcessDut(Dut):
+    """DUT class for targets that are emulated by spawning process on host, like emulators"""
+
     def __init__(self, *args, **kwargs):
         super().__init__()
         self.args = args

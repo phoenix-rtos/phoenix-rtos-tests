@@ -1,5 +1,6 @@
 import sys
-from typing import Sequence
+from pathlib import Path
+from typing import List, Sequence
 
 from trunner.config import ConfigParser
 from trunner.harness import HarnessError, FlashError
@@ -16,7 +17,9 @@ class TestRunner:
         self.test_configs = []
         self.test_paths = test_paths
 
-    def search_for_tests(self):
+    def search_for_tests(self) -> List[Path]:
+        """Returns test*.yaml files that are searched in directories given in test_paths attribute."""
+
         paths = []
         for path in self.test_paths:
             candidate = list(path.rglob("test*.yaml"))
@@ -24,19 +27,23 @@ class TestRunner:
                 raise ValueError(f"Test {path} does not contain .yaml test configuration")
             paths.extend(candidate)
 
-        self.test_paths = paths
+        return paths
 
-    def parse_tests(self):
-        self.search_for_tests()
+    def parse_tests(self) -> Sequence[TestOptions]:
+        """Returns test options that can be used to build test harness."""
+
+        test_yamls = self.search_for_tests()
         parser = ConfigParser(self.ctx)
 
         tests = []
-        for path in self.test_paths:
+        for path in test_yamls:
             tests.extend(parser.parse(path))
 
         return tests
 
     def flash(self):
+        """Flashes the device under test."""
+
         try:
             self.target.flash_dut()
         except (FlashError, HarnessError) as e:
@@ -45,6 +52,15 @@ class TestRunner:
             sys.exit(1)
 
     def run_tests(self, tests: Sequence[TestOptions]):
+        """It builds and runs tests based on given test options.
+
+        For each test description in tests this method builds the test, runs it and prints the result.
+        Additionally, reboot strategy is chosen based on the result of previous executed tests.
+
+        Arguments:
+            tests: Sequence of test options that describe how test looks like.
+        """
+
         fail, skip = 0, 0
 
         for idx, test in enumerate(tests):
@@ -99,7 +115,12 @@ class TestRunner:
 
         return fail, skip
 
-    def run(self):
+    def run(self) -> bool:
+        """Runs the entire test campaigne based on yamls given in test_paths attribute.
+
+        Returns true if there is no failed tests.
+        """
+
         tests = self.parse_tests()
 
         if self.ctx.should_flash:

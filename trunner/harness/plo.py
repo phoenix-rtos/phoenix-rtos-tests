@@ -11,6 +11,8 @@ from .base import HarnessBase, HarnessError, Rebooter
 
 
 class PloError(HarnessError):
+    """Exception thrown by PloInterface class."""
+
     def __init__(
         self,
         msg: Optional[str] = None,
@@ -39,13 +41,18 @@ class PloError(HarnessError):
 
 
 class PloInterface:
-    """Interface to communicate with plo"""
+    """
+    Interface to communicate with plo.
+
+    It implements useful methods to communicate with the plo bootloader and standardize the way
+    to handle the errors.
+    """
 
     def __init__(self, dut: Dut):
         self.dut = dut
 
     def enter_bootloader(self):
-        """Interrupts timer counting to enter plo"""
+        """Interrupts timer counting to enter plo."""
 
         try:
             self.dut.expect_exact("Waiting for input", timeout=3)
@@ -55,6 +62,16 @@ class PloInterface:
         self.dut.send("\n")
 
     def _assert_prompt(self, timeout: Optional[int] = None, error_check=True):
+        """Asserts that plo prompt was outputted by dut.
+
+        This method can be combined with sending command to wait for the command to end
+        and to check if error occurred.
+
+        Args:
+            timeout: Timeout to wait for a prompt, same as in pexpect module.
+            error_check: Check if there is a red color (\x1b[31m code) in pexpect buffer before the prompt.
+        """
+
         try:
             self.dut.expect_exact("(plo)%", timeout=timeout)
         except pexpect.TIMEOUT as e:
@@ -66,9 +83,12 @@ class PloInterface:
                 raise PloError(output=self.dut.before, expected="(plo)% ")
 
     def wait_prompt(self, timeout: Optional[int] = 8):
+        """Asserts that plo prompt was outputted by dut."""
         self._assert_prompt(timeout=timeout, error_check=False)
 
     def send_cmd(self, cmd: str):
+        """Sends command and read echo of it."""
+
         try:
             # When sending the plo command, it only requires the CR character
             self.dut.send(cmd + "\r")
@@ -77,6 +97,11 @@ class PloInterface:
             raise PloError("failed to read echoed command", cmd=cmd, output=self.dut.before) from e
 
     def cmd(self, cmd: str, timeout: Optional[int] = None):
+        """Sends command and waits for it to finish.
+
+        In case of error throws PloError exception.
+        """
+
         self.send_cmd(cmd)
         try:
             self._assert_prompt(timeout=timeout)
@@ -85,6 +110,8 @@ class PloInterface:
             raise e
 
     def erase(self, device: str, offset: int, size: int, timeout: Optional[int] = None):
+        """Performs erase command."""
+
         cmd = f"erase {device} {offset} {size}"
         self.send_cmd(cmd)
 
@@ -104,6 +131,7 @@ class PloInterface:
     def app(
         self, device: str, file: str, imap: str, dmap: str, exec: bool = False
     ):  # pylint: disable=redefined-builtin
+        """Performs app command."""
         x = "-x" if exec else ""
         self.cmd(f"app {device} {x} {file} {imap} {dmap}", timeout=30)
 
@@ -117,6 +145,7 @@ class PloInterface:
         dst_size: Optional[int] = None,
         timeout: Optional[int] = -1,
     ):
+        """Performs copy command."""
         src_sz = "" if src_size is None else str(src_size)
         dst_sz = "" if dst_size is None else str(dst_size)
         self.cmd(f"copy {src} {src_obj} {src_sz} {dst} {dst_obj} {dst_sz}", timeout=timeout)
@@ -130,6 +159,7 @@ class PloInterface:
         size: int = 0,
         timeout: Optional[int] = -1,
     ):
+        """Copies file to memory."""
         self.copy(
             src=src,
             src_obj=file,
@@ -140,20 +170,37 @@ class PloInterface:
         )
 
     def alias(self, name: str, offset: int, size: int):
+        """Sets alias for the memory region."""
         self.cmd(f"alias {name} {offset:#x} {size:#x}", timeout=4)
 
     def go(self):
+        """Sends go command to jump out from plo."""
         self.dut.send("go!\r")
 
 
 @dataclass(frozen=True)
 class PloImageProperty:
+    """Class that represents the OS image loaded by plo."""
+
     file: str
     source: str
     memory_bank: str
 
 
 class PloImageLoader(HarnessBase, PloInterface):
+    """Harness to load the image to the memory using plo bootloader and phoenixd program.
+
+    It loads plo bootloader using plo_loader callback and then, with the help of a phoenixd program,
+    loads the main OS image described by the PloImageProperty class.
+
+    Attributes:
+        dut: Device on which harness will be run.
+        rebooter: Rebooter object needed to do reboot of the dut.
+        plo_loader: A callback that performs plo loading to the RAM memory.
+        phoenixd: Phoenixd object that wraps phoenixd program.
+
+    """
+
     def __init__(
         self,
         dut: Dut,
@@ -185,6 +232,17 @@ class PloImageLoader(HarnessBase, PloInterface):
 
 
 class PloPhoenixdAppLoader(HarnessBase, PloInterface):
+    """Harness to load the binaries to syspage using plo bootloader.
+
+    It loads the binariers of applications using plo bootloader with the help of a phoenixd program.
+
+    Attributes:
+        dut: Device on which harness will be run.
+        apps: Sequence of applications that will be loaded.
+        phoenixd: Phoenixd object that wraps phoenixd program.
+
+    """
+
     def __init__(self, dut: Dut, apps: Sequence[AppOptions], phoenixd: Phoenixd):
         self.dut = dut
         self.apps = apps if apps else []
@@ -204,6 +262,16 @@ class PloPhoenixdAppLoader(HarnessBase, PloInterface):
 
 
 class PloHarness(HarnessBase, PloInterface):
+    """Basic harness for the plo bootloader that initialize the device.
+
+    This harness enters the plo bootloader and loads binaries to syspage if it's necessary.
+
+    Attributes:
+        dut: Device on which harness will be run.
+        app_loader: Optional app loader harness to copy the binaries to the syspage.
+
+    """
+
     def __init__(self, dut: Dut, app_loader: Optional[Callable[[], None]] = None):
         self.dut = dut
         self.app_loader = app_loader

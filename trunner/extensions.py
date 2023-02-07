@@ -13,6 +13,8 @@ class ExtensionError(Exception):
 
 
 def read_extensions_paths() -> List[Path]:
+    """Returns the list of extension file paths found in directories specified in PHOENIX_TRUNNER_EXT env variable."""
+
     paths = os.getenv("PHOENIX_TRUNNER_EXT")
     if not paths:
         return []
@@ -24,13 +26,15 @@ def read_extensions_paths() -> List[Path]:
         if not p.is_dir():
             raise ExtensionError(f"Extension path {p} must be a dir!")
 
-        result.extend(p.glob("**/*_extension.py"))
+        result.extend(p.glob("**/*_ext.py"))
 
     return result
 
 
 def load_register_fn(path: Path):
-    spec = importlib.util.spec_from_file_location(f"{path.name}_module", path.absolute())
+    """Load and return the register_extension function defined in python file in path argument."""
+
+    spec = importlib.util.spec_from_file_location(path.name, path.absolute())
     if not spec:
         raise ExtensionError(f"Failed to load spec from location {path}")
 
@@ -44,21 +48,53 @@ def load_register_fn(path: Path):
 
 
 def register_extensions(extensions: Sequence[Callable[[], dict]]) -> Tuple[List[TargetBase], List[Host]]:
+    """Returns lists of targets and hosts returned from given extension functions."""
+
     targets, hosts = [], []
 
     for register_fn in extensions:
-        d = register_fn()
+        extension = register_fn()
 
-        if "target" in d:
-            targets.append(d["target"])
+        if "target" in extension:
+            targets.append(extension["target"])
 
-        if "host" in d:
-            hosts.append(d["host"])
+        if "host" in extension:
+            hosts.append(extension["host"])
 
     return targets, hosts
 
 
 def load_extensions() -> Tuple[List[TargetBase], List[Host]]:
+    """Returns the external targets and hosts defined by user.
+
+    This function loads the external targets and hosts found in extensions specified
+    by PHOENIX_TRUNNER_EXT environment variable. The path added to PHOENIX_TRUNNER_EXT
+    should be a directory with a file or files that ends with *_ext.py suffix. To successfully
+    load the extension, it must define a function register_extension() that returns dict with
+    keywords "host" and "target" mapping new classes.
+
+    Example of such extension:
+        File phoenix-rtos-project/dummy_target_tests/dummy_ext.py
+
+        from trunner.target import IA32GenericQemuTarget
+        from trunner.host import EmulatorHost
+
+
+        class DummyTarget(IA32GenericQemuTarget):
+            name = "ia32-dummy-qemu"
+
+
+        class DummyHost(EmulatorHost):
+            name = "emu-dummy-host"
+
+
+        def register_extension():
+            return {
+                "target": DummyTarget,
+                "host": DummyHost,
+            }
+    """
+
     paths = read_extensions_paths()
     register_fns = []
 

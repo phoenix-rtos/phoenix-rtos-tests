@@ -26,6 +26,7 @@ class ARMv7A9TargetRebooter(Rebooter):
 
     def _reboot_hard(self):
         self.host.set_power(False)
+        # optimal power off time to prevent sustaining chips, e.g. flash memory, related to #540 issue
         time.sleep(0.75)
         self.dut.clear_buffer()
         self.host.set_power(True)
@@ -45,6 +46,7 @@ class ARMv7A9Target(TargetBase):
 
     def flash_dut(self):
         def gdb_plo_loader():
+            """Loads plo image to RAM using gdb."""
             script = f"{self._project_dir()}/phoenix-rtos-build/scripts/upload-zynq7000.gdb"
             gdbserver = JLinkGdbServer("Zynq 7020")
             plo = PloInterface(self.dut)

@@ -43,7 +43,7 @@ def parse_args(targets, hosts):
         choices=targets.keys(),
         help="Set target on which tests will be run. "
         "By default runs tests on %(default)s target. "
-        "Targets can be extend using extension feature.",
+        "Targets can be extended using extension feature.",
     )
 
     parser.add_argument(
@@ -54,7 +54,7 @@ def parse_args(targets, hosts):
         help="Set host that run tests. \"pc\" host is recommended for running tests on emulators. "
         "To control physical boards you can use \"rpi\" host or pc "
         "(but it requires restarting board manually by yourself). By default runs tests on %(default)s. "
-        "Hosts can be extend using extension feature.",
+        "Hosts can be extended using extension feature.",
     )
 
     parser.add_argument(
@@ -133,6 +133,13 @@ def resolve_project_path():
 
 
 def resolve_targets_and_hosts() -> Tuple[Dict[str, TargetBase], Dict[str, Host]]:
+    """
+    Returns a tuple of dictionaries that map host and target names to an equivalent class.
+
+    Load external targets and hosts defined by user in extensions and combine them
+    with internal runnner targets.
+    """
+
     targets = [
         HostPCGenericTarget,
         IA32GenericQemuTarget,
