@@ -38,6 +38,18 @@ class ShellError(HarnessError):
 
 
 class ShellHarness(HarnessBase):
+    """Basic harness for the shell.
+
+    It waits for the prompt and then executes the command if given.
+
+    Attributes:
+        dut: Device on which harness will be run.
+        prompt: Prompt that shell outputs.
+        cmd: Command that will be executed after reading prompt.
+        prompt_timeout: Optional timeout to wait before prompt will show up.
+
+    """
+
     def __init__(self, dut: Dut, prompt: str, cmd: Optional[List[str]] = None, prompt_timeout: Optional[int] = None):
         self.dut = dut
         self.prompt = prompt

@@ -22,6 +22,20 @@ class ParserError(Exception):
 
 @dataclass(frozen=True)
 class TestContext:
+    """Global context of the runner.
+
+    Attributes:
+        target: Target on which the runner was launched.
+        host: Host on which the runner was launched.
+        port: Path to serial port if target uses it.
+        baudrate: Baudrate for serial. It is used if port is set.
+        project_path: Path to phoenix-rtos-project directory.
+        nightly: Determine if it's nigthly run.
+        should_flash: True if device should be flashed.
+        should_test: True if tests should be run.
+        verbosity: Verbose level of the output of tests.
+    """
+
     target: Optional[TargetBase]
     host: Host
     port: Optional[str]
@@ -34,6 +48,13 @@ class TestContext:
 
 
 def array_value(array: Dict[str, List[str]]) -> List[str]:
+    """Logic for setting parameters if there are multiple to choose from.
+
+    `value` keyword is hard set of parameter
+    `include` keyword appends parameter
+    `excludes` keyword removes parameter
+    """
+
     value = set(array.get("value", []))
     value |= set(array.get("include", []))
     value -= set(array.get("exclude", []))
