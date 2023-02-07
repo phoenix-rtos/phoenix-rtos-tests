@@ -16,7 +16,10 @@
 #ifndef _TEST_LIBC_COMMON_H
 #define _TEST_LIBC_COMMON_H
 
+#include <stdio.h>
 #include <stddef.h>
+#include <errno.h>
+#include <sys/stat.h>
 
 /*
  * Most of the helpers are macros (or at least surrounded by macros)
