@@ -9,12 +9,23 @@ from .base import HarnessBase, HarnessError
 
 
 class PyHarness(HarnessBase):
+    """Harness that wraps basic user harness function.
+
+    This class implements logic to run user defined harnesses and handles errors accordingly.
+
+    Attributes:
+        dut: Device on which harness will be run.
+        pyharness: User defined harness function.
+
+    """
+
     def __init__(self, dut, pyharness_fn):
         self.dut = dut
         self.pyharness = pyharness_fn
         super().__init__()
 
     def chain(self):
+        # PyHarness must be the last harness in the chain.
         raise NotImplementedError(f"{self.__class__.__name__} is a terminal harness and it can't be chained")
 
     def __call__(self) -> Optional[TestResult]:
@@ -23,6 +34,7 @@ class PyHarness(HarnessBase):
         output = None
 
         try:
+            # Catch the output printed to stdout
             with contextlib.redirect_stdout(io.StringIO()) as o:
                 test_result = self.pyharness(self.dut)
 
@@ -39,6 +51,7 @@ class PyHarness(HarnessBase):
         except Exception:
             result.fail_unknown_exception()
         finally:
+            # pyharness can return either TestResult or None. Check if type is correct.
             if test_result is not None:
                 if not isinstance(test_result, TestResult):
                     raise HarnessError(

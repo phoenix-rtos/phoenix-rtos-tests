@@ -2,11 +2,16 @@ import importlib
 
 
 class Host:  # pylint: disable=too-few-public-methods
+    """Base class for Host abstraction"""
+
     def has_gpio(self) -> bool:
+        """Return true if host has gpio utility and can restart the target device using it."""
         raise NotImplementedError
 
 
 class EmulatorHost(Host):
+    """Host class for the targets that are intended to run on PC (for example, emulated targets)."""
+
     name = "pc"
 
     def has_gpio(self) -> bool:
@@ -35,6 +40,14 @@ class GPIO:
 
 
 class RpiHost(Host):
+    """Host class for Raspberry Pi computer.
+
+    Attributes:
+        reset_gpio: GPIO to reset the board.
+        power_gpio: GPIO to turn on/off power to the board.
+        boot_gpio: GPIO to enter booting mode to program the board.
+    """
+
     name = "rpi"
 
     def __init__(self):
