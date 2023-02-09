@@ -516,6 +516,11 @@ TEST(unistd_file, file_truncate_up)
 
 	/* truncate file length to higher than it already is */
 	TEST_ASSERT_EQUAL_INT(0, truncate(FNAME, datalen));
+
+	/* temporary disabled part, because of #599 issue */
+#ifdef __phoenix__
+	TEST_IGNORE();
+#endif
 	/* reopen file and read everything that's inside */
 	fd = open(FNAME, O_RDONLY, S_IRUSR);
 	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fd);
@@ -651,9 +656,13 @@ TEST(unistd_file, file_ftruncate_up)
 
 	/* truncate file length to higher than it already is */
 	TEST_ASSERT_EQUAL_INT(0, ftruncate(fd, datalen));
-
-	/* reopen file */
 	TEST_ASSERT_EQUAL_INT(0, close(fd));
+
+	/* temporary disabled part, because of #599 issue */
+#ifdef __phoenix__
+	TEST_IGNORE();
+#endif
+	/* reopen file */
 	fd = open(FNAME, O_RDONLY);
 	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fd);
 	/* read everything that`s inside the file */
