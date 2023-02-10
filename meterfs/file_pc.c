@@ -16,7 +16,7 @@
 
 #include "file.h"
 
-#define FLASHSIZE (4 * 1024 * 1024)
+#define FLASHSIZE  (4 * 1024 * 1024)
 #define SECTORSIZE (4 * 1024)
 
 int file_lookup(const char *name)
@@ -32,16 +32,21 @@ int file_open(const char *name)
 	int err;
 	id_t id;
 
-	if ((err = hostflashsrv_lookup(name, &id)) < 0)
+	err = hostflashsrv_lookup(name, &id);
+	if (err < 0) {
 		return err;
+	}
 
-	if (id > INT_MAX)
+	if (id > INT_MAX) {
 		return -1;
+	}
 
-	if ((err = hostflashsrv_open(&id)) < 0)
+	err = hostflashsrv_open(&id);
+	if (err < 0) {
 		return err;
+	}
 
-	return (int)id; 
+	return (int)id;
 }
 
 
@@ -67,13 +72,14 @@ int file_allocate(const char *name, size_t sectors, size_t filesz, size_t record
 {
 	meterfs_i_devctl_t iptr;
 	meterfs_o_devctl_t optr;
-	int len = 0;
+	size_t len = 0;
 
 	iptr.type = meterfs_allocate;
 	len = strnlen(name, sizeof(iptr.allocate.name));
-	memcpy(iptr.allocate.name, name, len);
-	if (len < sizeof(iptr.allocate.name))
+	(void)memcpy(iptr.allocate.name, name, len);
+	if (len < sizeof(iptr.allocate.name)) {
 		iptr.allocate.name[len] = '\0';
+	}
 	iptr.allocate.sectors = sectors;
 	iptr.allocate.filesz = filesz;
 	iptr.allocate.recordsz = recordsz;
@@ -105,20 +111,26 @@ int file_getInfo(id_t fid, size_t *sectors, size_t *filesz, size_t *recordsz, si
 	iptr.type = meterfs_info;
 	iptr.id = fid;
 
-	if ((err = hostflashsrv_devctl(&iptr, &optr)) < 0)
+	err = hostflashsrv_devctl(&iptr, &optr);
+	if (err < 0) {
 		return err;
+	}
 
-	if (sectors != NULL)
+	if (sectors != NULL) {
 		(*sectors) = optr.info.sectors;
+	}
 
-	if (filesz != NULL)
+	if (filesz != NULL) {
 		(*filesz) = optr.info.filesz;
+	}
 
-	if (recordsz != NULL)
+	if (recordsz != NULL) {
 		(*recordsz) = optr.info.recordsz;
+	}
 
-	if (recordcnt != NULL)
+	if (recordcnt != NULL) {
 		(*recordcnt) = optr.info.recordcnt;
+	}
 
 	return 0;
 }
@@ -143,7 +155,7 @@ int file_init(const char *path)
 
 	err = hostflashsrv_init(&filesz, &sectorsz, path);
 	if (err < 0) {
-		printf("hostflashsrv: init failed\n");
+		(void)printf("hostflashsrv: init failed\n");
 	}
 	return err;
 }

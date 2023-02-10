@@ -27,7 +27,7 @@ TEST_TEAR_DOWN(meterfs_allocate)
 }
 
 
-/* 
+/*
  * Test case of allocating file bigger than flash size.
  * NOTE: Not valid for hw target. Now there is no way to obtain/parametrize flash size in test.
  */
@@ -35,7 +35,7 @@ TEST(meterfs_allocate, big_file)
 {
 	uint32_t flashsz = 4 * 1024 * 1024;
 	uint32_t sectorsz = 4096;
-	file_info_t info = { ((flashsz + sectorsz) / sectorsz) + 1, flashsz + sectorsz, 20, 0 };
+	file_info_t info = { ((flashsz + sectorsz) / sectorsz) + 1u, flashsz + sectorsz, 20, 0 };
 
 	TEST_ASSERT_EQUAL(-EINVAL, file_allocate("file0", info.sectors, info.filesz, info.recordsz));
 }
@@ -48,12 +48,14 @@ TEST(meterfs_allocate, many_files)
 	char fileName[9];
 
 	for (i = 0; i < (255 + 10); ++i) {
-		snprintf(fileName, sizeof(fileName), "file%d", i);
-		if (i < 255)
+		(void)snprintf(fileName, sizeof(fileName), "file%d", i);
+		if (i < 255) {
 			TEST_ASSERT_EQUAL_MESSAGE(0, file_allocate(fileName, 2, 2000, 20), fileName);
-		else
+		}
+		else {
 			TEST_ASSERT_EQUAL_MESSAGE(-ENOMEM, file_allocate(fileName, 2, 2000, 20), fileName);
-		memset(fileName, 0, sizeof(fileName));
+		}
+		(void)memset(fileName, 0, sizeof(fileName));
 	}
 }
 
@@ -84,7 +86,7 @@ TEST(meterfs_allocate, var_init_args)
 	TEST_ASSERT_EQUAL(-EINVAL, file_allocate("file4", 3, 2000000, 20));
 	TEST_ASSERT_EQUAL(-EINVAL, file_allocate("file5", 7, 2000, 0));
 
-	TEST_ASSERT_EQUAL(0, file_allocate("file6", 4, 20, 20));	
+	TEST_ASSERT_EQUAL(0, file_allocate("file6", 4, 20, 20));
 	TEST_ASSERT_EQUAL(0, file_allocate("file7", 6, 2000, 20));
 	TEST_ASSERT_EQUAL(0, file_allocate("file8", 8, 10, 5));
 	TEST_ASSERT_EQUAL(0, file_allocate("file9", 12, 10, 5));
@@ -124,7 +126,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	UnityMain(argc, (const char**)argv, runner);
+	UnityMain(argc, (const char **)argv, runner);
 
 	return 0;
 }
