@@ -22,7 +22,7 @@ TEST_GROUP(meterfs_openclose);
 
 TEST_SETUP(meterfs_openclose)
 {
-	memset(common.buff, 0, sizeof(common.buff));
+	(void)memset(common.buff, 0, sizeof(common.buff));
 }
 
 
@@ -35,13 +35,13 @@ TEST_TEAR_DOWN(meterfs_openclose)
 /* Test case of opening and closing non existing files. */
 TEST(meterfs_openclose, no_files)
 {
-	int i;
+	size_t i;
 
 	for (i = 0; i < sizeof(common.fds) / sizeof(common.fds[0]); ++i) {
-		snprintf(common.buff, sizeof(common.buff), "/file%d", i);
+		(void)snprintf(common.buff, sizeof(common.buff), "/file%zu", i);
 		TEST_ASSERT_EQUAL_MESSAGE(-ENOENT, file_open(common.buff), common.buff);
 		TEST_ASSERT_EQUAL_MESSAGE(-ENOENT, file_close(i), common.buff);
-		memset(common.buff, 0, sizeof(common.buff));
+		(void)memset(common.buff, 0, sizeof(common.buff));
 	}
 }
 
@@ -49,25 +49,25 @@ TEST(meterfs_openclose, no_files)
 /* Test case of opening and closing existing files. */
 TEST(meterfs_openclose, existing_files)
 {
-	int i;
+	size_t i;
 
 	for (i = 0; i < sizeof(common.fds) / sizeof(common.fds[0]); ++i) {
-		snprintf(common.buff, sizeof(common.buff), "file%d", i);
+		(void)snprintf(common.buff, sizeof(common.buff), "file%zu", i);
 		TEST_ASSERT_EQUAL_MESSAGE(0, file_allocate(common.buff, 2, 2000, 20), common.buff);
-		memset(common.buff, 0, sizeof(common.buff));
+		(void)memset(common.buff, 0, sizeof(common.buff));
 	}
 
 	for (i = 0; i < sizeof(common.fds) / sizeof(common.fds[0]); ++i) {
-		snprintf(common.buff, sizeof(common.buff), "/file%d", i);
+		(void)snprintf(common.buff, sizeof(common.buff), "/file%zu", i);
 		common.fds[i] = file_open(common.buff);
 		TEST_ASSERT_GREATER_OR_EQUAL_MESSAGE(0, common.fds[i], common.buff);
-		memset(common.buff, 0, sizeof(common.buff));
+		(void)memset(common.buff, 0, sizeof(common.buff));
 	}
 
 	for (i = 0; i < sizeof(common.fds) / sizeof(common.fds[0]); ++i) {
-		snprintf(common.buff, sizeof(common.buff), "file%d", i);
+		(void)snprintf(common.buff, sizeof(common.buff), "file%zu", i);
 		TEST_ASSERT_EQUAL_MESSAGE(0, file_close(common.fds[i]), common.buff);
-		memset(common.buff, 0, sizeof(common.buff));
+		(void)memset(common.buff, 0, sizeof(common.buff));
 	}
 }
 

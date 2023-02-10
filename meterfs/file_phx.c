@@ -14,6 +14,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <meterfs.h>
+#include <errno.h>
 
 #include "file.h"
 #include "unity_fixture.h"
@@ -34,7 +35,9 @@ static inline void file_prepareDevCtl(msg_t *msg)
 static int lookup_rel(const char *name, oid_t *file, oid_t *dev)
 {
 	char buffer[64];
-	(void)snprintf(buffer, sizeof(buffer), "%s/%s", pathPrefix, name);
+	if (snprintf(buffer, sizeof(buffer), "%s/%s", pathPrefix, name) >= sizeof(buffer)) {
+		return -ENAMETOOLONG;
+	}
 	return lookup(buffer, file, dev);
 }
 
@@ -53,8 +56,10 @@ int file_open(const char *name)
 	int err;
 	id_t id;
 
-	if ((err = lookup_rel(name, &msg.i.openclose.oid, NULL)) < 0)
+	err = lookup_rel(name, &msg.i.openclose.oid, NULL);
+	if (err < 0) {
 		return err;
+	}
 
 	id = msg.i.openclose.oid.id;
 
@@ -67,7 +72,7 @@ int file_open(const char *name)
 
 	TEST_ASSERT_EQUAL(0, msgSend(meterfs.port, &msg));
 
-	return msg.o.io.err < 0 ? msg.o.io.err : id;
+	return (msg.o.io.err < 0) ? msg.o.io.err : id;
 }
 
 
@@ -136,15 +141,16 @@ int file_allocate(const char *name, size_t sectors, size_t filesz, size_t record
 	msg_t msg;
 	meterfs_i_devctl_t *iptr = (meterfs_i_devctl_t *)msg.i.raw;
 	meterfs_o_devctl_t *optr = (meterfs_o_devctl_t *)msg.o.raw;
-	int len = 0;
+	size_t len = 0;
 
 	file_prepareDevCtl(&msg);
 
 	iptr->type = meterfs_allocate;
 	len = strnlen(name, sizeof(iptr->allocate.name));
-	memcpy(iptr->allocate.name, name, len);
-	if (len < sizeof(iptr->allocate.name))
+	(void)memcpy(iptr->allocate.name, name, len);
+	if (len < sizeof(iptr->allocate.name)) {
 		iptr->allocate.name[len] = '\0';
+	}
 	iptr->allocate.sectors = sectors;
 	iptr->allocate.filesz = filesz;
 	iptr->allocate.recordsz = recordsz;
@@ -187,20 +193,25 @@ int file_getInfo(id_t fid, size_t *sectors, size_t *filesz, size_t *recordsz, si
 
 	TEST_ASSERT_EQUAL(0, msgSend(meterfs.port, &msg));
 
-	if (optr->err < 0)
+	if (optr->err < 0) {
 		return optr->err;
+	}
 
-	if (sectors != NULL)
+	if (sectors != NULL) {
 		(*sectors) = optr->info.sectors;
+	}
 
-	if (filesz != NULL)
+	if (filesz != NULL) {
 		(*filesz) = optr->info.filesz;
+	}
 
-	if (recordsz != NULL)
+	if (recordsz != NULL) {
 		(*recordsz) = optr->info.recordsz;
+	}
 
-	if (recordcnt != NULL)
+	if (recordcnt != NULL) {
 		(*recordcnt) = optr->info.recordcnt;
+	}
 
 	return 0;
 }

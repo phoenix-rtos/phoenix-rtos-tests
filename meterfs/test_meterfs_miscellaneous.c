@@ -14,17 +14,17 @@
 
 static struct {
 	int fd;
-	char buffRec[40];
-	char buffMsg[12];
+	char buffRec[64];
+	char buffMsg[32];
 } common;
 
 
 static void writeReadCheck(file_info_t *info)
 {
-	unsigned int i;
+	size_t i;
 
 	for (i = 0; i < (info->filesz / info->recordsz); ++i) {
-		(void)snprintf(common.buffMsg, sizeof(common.buffMsg), "a%04u", i);
+		(void)snprintf(common.buffMsg, sizeof(common.buffMsg), "a%04zu", i);
 		TEST_ASSERT_EQUAL_MESSAGE(info->recordsz, file_write(common.fd, common.buffMsg, strlen(common.buffMsg)), common.buffMsg);
 		common_readContent(common.fd, i * info->recordsz, common.buffRec, info->recordsz, common.buffMsg, strlen(common.buffMsg), common.buffMsg);
 
