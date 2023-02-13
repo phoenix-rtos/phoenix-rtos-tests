@@ -65,49 +65,62 @@ class TestResult:
     def skip(self):
         self.status = TestResult.SKIP
 
+    def _failed_traceback(self) -> List[str]:
+        _, _, exc_traceback = sys.exc_info()
+        tb_info = traceback.format_tb(exc_traceback)[1:]  # Get rid off "self.harness()" call info
+        return [bold("ASSERTION TRACEBACK (most recent call last):"), "".join(tb_info)]
+
+    def _failed_before_buffer(self, dut) -> str:
+        return dut.before.replace("\r", "")
+
+    def _failed_buffer(self, dut) -> str:
+        return dut.buffer.replace("\r", "")
+
     def fail_pexpect(self, dut, exc):
         self.fail()
         r_searched = r"[\d+]: (?:re.compile\()?b?['\"](.*)['\"]\)?"
         searched_patterns = re.findall(r_searched, exc.value)
 
-        self.msg += bold("EXPECTED:\n")
-        for idx, pattern in enumerate(searched_patterns):
-            self.msg += f"\t{idx}: {pattern}\n"
-
-        before = dut.before.replace("\r", "")
-        self.msg += bold("GOT:\n")
-        self.msg += before + "\n"
+        self.msg = "\n".join(
+            [
+                bold("EXPECTED:"),
+                *(f"\t{idx}: {pattern}" for idx, pattern in enumerate(searched_patterns)),
+                bold("GOT:"),
+                self._failed_before_buffer(dut),
+                "",
+            ]
+        )
 
     def fail_decode(self, dut, exc):
         self.fail()
-        self.msg += bold("Unicode Decode Error detected!\n")
-        self.msg += bold("STRING WITH NON-ASCII CHARACTER:\n")
-        self.msg += f"{exc.object}\n"
-        self.msg += bold("OUTPUT CAUGHT BEFORE EXCEPTION:\n")
-        before = dut.before.replace("\r", "")
-        self.msg += before + "\n"
+        self.msg = "\n".join(
+            [
+                bold("Unicode Decode Error detected!"),
+                *self._failed_traceback(),
+                bold("STRING WITH NON-ASCII CHARACTER:"),
+                str(exc.object),
+                bold("OUTPUT CAUGHT BEFORE EXCEPTION:\n"),
+                self._failed_before_buffer(dut),
+                "",
+            ]
+        )
 
     def fail_assertion(self, dut, exc):
         self.fail()
-        _, _, exc_traceback = sys.exc_info()
-        # Get rid off "self.harness()" call info
-        tb_info = traceback.format_tb(exc_traceback)[1:]
-        self.msg += bold("ASSERTION TRACEBACK (most recent call last):\n")
-        self.msg += "".join(tb_info)
+        msg = [*self._failed_traceback()]
 
         if exc.args:
-            self.msg += bold("ASSERTION MESSAGE:\n")
-            self.msg += f"{exc}\n"
+            msg.extend([bold("ASSERTION MESSAGE:"), str(exc)])
 
-        buffer = dut.buffer.replace("\r", "")
-        if buffer:
-            self.msg += bold("READER BUFFER:\n")
-            self.msg += buffer + "\n"
+        if dut.buffer:
+            msg.extend([bold("READER BUFFER:"), self._failed_buffer(dut)])
+
+        msg.append("")
+        self.msg = "\n".join(msg)
 
     def fail_unknown_exception(self):
         self.fail()
-        self.msg += bold("EXCEPTION:\n")
-        self.msg += traceback.format_exc()
+        self.msg = "\n".join([bold("EXCEPTION:"), traceback.format_exc()])
 
 
 @dataclass

@@ -1,4 +1,4 @@
-from typing import Any, Dict, Sequence
+from typing import Any, Dict, Optional, Sequence
 
 import trunner
 from trunner.dut import Dut
@@ -30,7 +30,7 @@ def _format_result_output(results: Sequence[Dict[str, Any]]) -> str:
     return "".join(output)
 
 
-def unity_harness(dut: Dut):
+def unity_harness(dut: Dut) -> Optional[TestResult]:
     assert_re = r"ASSERTION (?P<path>.*?):(?P<line>\d+):(?P<status>FAIL|INFO|IGNORE): (?P<msg>.*?)\r"
     result_re = r"TEST\((?P<group>\w+), (?P<name>\w+)\) (?P<status>PASS|IGNORE)"
     # Fail need to have its own regex due to greedy matching

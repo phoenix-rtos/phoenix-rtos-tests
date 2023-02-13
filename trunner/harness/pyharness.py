@@ -1,14 +1,15 @@
 import contextlib
-from typing import Optional
+from typing import Callable, Optional
 from ptyprocess.ptyprocess import io
 
 from pexpect import TIMEOUT, EOF
 
+from trunner.dut import Dut
 from trunner.types import TestResult
-from .base import HarnessBase, HarnessError
+from .base import TermHarness, HarnessError
 
 
-class PyHarness(HarnessBase):
+class PyHarness(TermHarness):
     """Harness that wraps basic user harness function.
 
     This class implements logic to run user defined harnesses and handles errors accordingly.
@@ -19,14 +20,10 @@ class PyHarness(HarnessBase):
 
     """
 
-    def __init__(self, dut, pyharness_fn):
+    def __init__(self, dut: Dut, pyharness_fn: Callable[[Dut], Optional[TestResult]]):
+        super().__init__()
         self.dut = dut
         self.pyharness = pyharness_fn
-        super().__init__()
-
-    def chain(self):
-        # PyHarness must be the last harness in the chain.
-        raise NotImplementedError(f"{self.__class__.__name__} is a terminal harness and it can't be chained")
 
     def __call__(self) -> Optional[TestResult]:
         result = TestResult(status=TestResult.FAIL)

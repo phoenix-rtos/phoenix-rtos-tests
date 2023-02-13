@@ -71,8 +71,7 @@ def harness(p):
     psh.assert_prompt(p, msg='Cannot exit "auth" during empty login passing', timeout=1)
 
     # Too long credentials
-    printables = string.printable
-    printables = printables.translate({ord(i): None for i in string.whitespace})
+    printables = "".join(string.printable.split())  # remove whitespaces
     assert_auth(p)
     p.send(printables + '\n')
     assert p.expect_exact(['Login:', pexpect.TIMEOUT]) == 0, 'Long login does not repeat login procedure'

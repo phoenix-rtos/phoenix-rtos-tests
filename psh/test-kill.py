@@ -42,16 +42,15 @@ def create_psh_processes(p, count):
     def get_psh_pids(p):
         return [int(proc["pid"]) for proc in get_process_list(p) if proc["task"] in ("psh", "/bin/psh")]
 
-    # Save spawned already spawned psh processes - we don't want to kill them
+    # Save already spawned psh processes - we don't want to kill them
     old_pids = get_psh_pids(p)
 
     for _ in range(count):
         psh.assert_exec(p, 'psh', msg='Failed to create new psh process')
 
     new_pids = get_psh_pids(p)
-
     new_pids = [pid for pid in new_pids if pid not in old_pids]
-    new_pids.reverse()
+    new_pids.sort(reverse=True)
 
     assert len(new_pids) == count, f'Created {len(new_pids)} psh processes, instead of {count}'
     return new_pids
@@ -61,6 +60,7 @@ def assert_kill_procs(p, pid_list):
     for pid in pid_list:
         msg = f'Wrong output when killing process with the following pid: {pid}'
         psh.assert_cmd(p, f'kill {pid}', result='dont-check', msg=msg)
+
     sleep(0.5)
 
     dead = set(pid_list) - set(proc['pid'] for proc in get_process_list(p))

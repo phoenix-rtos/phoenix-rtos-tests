@@ -1,9 +1,11 @@
 import time
-from typing import Optional
+from abc import ABC, abstractmethod
+from typing import Callable, Optional
 
 from trunner.text import bold
 from trunner.host import Host
 from trunner.dut import Dut
+from trunner.types import TestResult
 
 
 class HarnessError(Exception):
@@ -12,18 +14,26 @@ class HarnessError(Exception):
     pass
 
 
-class FlashError(HarnessError):
-    def __init__(self, msg: Optional[str] = None, output: Optional[str] = None):
+class ProcessError(HarnessError):
+    name: str = "PROCESS"
+
+    def __init__(self, msg: str = "", output: Optional[str] = None):
         self.msg = msg
         self.output = output
 
     def __str__(self):
-        err = bold("FLASH ERROR: ") + (self.msg if self.msg else "") + "\n"
+        # TODO format github actions output
+        err = [bold(f"{self.name} ERROR:"), self.msg]
 
         if self.output is not None:
-            err += bold("OUTPUT:") + "\n" + self.output + "\n"
+            err.extend([bold("OUTPUT:"), self.output])
 
-        return err
+        err.append("")
+        return "\n".join(err)
+
+
+class FlashError(ProcessError):
+    name: str = "FLASH"
 
 
 class Rebooter:
@@ -70,59 +80,70 @@ class Rebooter:
             self._reboot_dut_text(hard=hard)
 
 
+class HarnessBase(ABC):
+    """Base class for harnesses functors that are tied together."""
+
+    @abstractmethod
+    def __call__(self):
+        """Implements the harness logic. Every class that inherites must to implement this method."""
+
+
+class TermHarness(HarnessBase):
+    pass
+
+
+class IntermediateHarness(HarnessBase):
+    def __init__(self):
+        self.next_harness = VoidHarness()
+
+    def chain(self, harness: Callable[[], Optional[TestResult]]):
+        """Chains harnesses together in self -> harness order. Returns passed argument."""
+        self.next_harness = harness
+        return self.next_harness
+
+
 class HarnessBuilder:
     """Class that builds a single-linked list abstraction over harness chain method."""
 
+    class DummyHarness(IntermediateHarness):
+        def __call__(self):
+            return self.next_harness()
+
     def __init__(self):
         # We use VoidHarness as dummy-head of the list
-        self.head = VoidHarness()
+        self.head = HarnessBuilder.DummyHarness()
         self.tail = self.head
 
-    def chain(self, harness):
+    def add(self, harness: Callable[[], Optional[TestResult]]):
         """Add harness to the tail of list."""
         self.tail = self.tail.chain(harness)
 
     def get_harness(self):
         """Returns the first harness in list."""
-        return self.head.harness
+        if self.head is self.tail:
+            raise ValueError("Harness chain is empty!")
+
+        return self.head.next_harness
 
 
-class HarnessBase:
-    """Base class for harnesses functors that are tied together."""
-
-    def __init__(self):
-        # TODO Here we should rather set it to the None value, now we can't check from the class
-        # if we are the last harness in the chain.
-        self.harness = lambda: None
-
-    def __call__(self):
-        """Implements the harness logic. Every class that inherites must to implement this method."""
-        raise NotImplementedError("__call__ should no be called from the base class")
-
-    def chain(self, harness):
-        """Chains harnesses together in self -> harness order. Returns passed argument."""
-        self.harness = harness
-        return self.harness
-
-
-class VoidHarness(HarnessBase):
+class VoidHarness(TermHarness):
     """Harness that does nothing."""
 
     def __call__(self):
         pass
 
 
-class RebooterHarness(HarnessBase):
+class RebooterHarness(IntermediateHarness):
     """Special harness to perform reboot of the device."""
 
-    def __init__(self, rebooter: Rebooter, flash: bool = False, hard: bool = False):
+    def __init__(self, rebooter, flash: bool = False, hard: bool = False):
+        super().__init__()
         self.rebooter = rebooter
         self.flash = flash
         self.hard = hard
-        super().__init__()
 
-    def __call__(self):
+    def __call__(self) -> Optional[TestResult]:
         """Call rebooter with set flags and continue to execute the next harness."""
 
         self.rebooter(flash=self.flash, hard=self.hard)
-        return self.harness()
+        return self.next_harness()

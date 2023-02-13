@@ -32,7 +32,7 @@ def read_extensions_paths() -> List[Path]:
 
 
 def load_register_fn(path: Path):
-    """Load and return the register_extension function defined in python file in path argument."""
+    """Loads and returns the register_extension function defined in python file in path argument."""
 
     spec = importlib.util.spec_from_file_location(path.name, path.absolute())
     if not spec:
