@@ -6,8 +6,7 @@ from contextlib import contextmanager
 
 import pexpect
 
-from trunner.harness.base import HarnessError
-from trunner.text import bold
+from trunner.harness import ProcessError
 
 
 def wait_for_dev(port, timeout=0):
@@ -21,17 +20,8 @@ def wait_for_dev(port, timeout=0):
             raise TimeoutError
 
 
-class PsuError(HarnessError):
-    def __init__(self, msg, output=None):
-        self.msg = msg
-        self.output = output
-
-    def __str__(self):
-        err = bold("PSU ERROR:") + "\n" + (self.msg if self.msg else "") + "\n"
-        if self.output is not None:
-            err += bold("OUTPUT:") + "\n" + self.output + "\n"
-
-        return err
+class PsuError(ProcessError):
+    name = "PSU"
 
 
 class Psu:
@@ -71,28 +61,15 @@ class Psu:
             )
 
 
-class PhoenixdError(HarnessError):
-    def __init__(self, msg, output=None):
-        self.msg = msg
-        self.output = output
-
-    def __str__(self):
-        err = bold("PHOENIXD ERROR:") + "\n" + (self.msg if self.msg else "") + "\n"
-        if self.output is not None:
-            err += bold("OUTPUT:") + "\n" + self.output + "\n"
-
-        return err
+class PhoenixdError(ProcessError):
+    name = "PHOENIXD"
 
 
 class Phoenixd:
     """Handler for phoenixd process"""
 
-    def __init__(self, port=None, cwd=".", directory="."):
-        if port is None:
-            self.port = "/dev/serial/by-id/usb-Phoenix_Systems_plo_CDC_ACM-if00"
-        else:
-            self.port = port
-
+    def __init__(self, port="/dev/serial/by-id/usb-Phoenix_Systems_plo_CDC_ACM-if00", cwd=".", directory="."):
+        self.port = port
         self.proc = None
         self.output_buffer = ""
         self.reader_thread = None
@@ -142,7 +119,7 @@ class Phoenixd:
         # Reader thread will notify us that message dispatcher has just started
         dispatcher_ready = self.dispatcher_event.wait(timeout=5)
         if not dispatcher_ready:
-            self.kill()
+            self._close()
             raise PhoenixdError("Message dispatcher did not start!", self.output_buffer)
 
         return self.proc
@@ -153,19 +130,9 @@ class Phoenixd:
             self._run()
             yield
         finally:
-            self.kill()
+            self._close()
 
-    def output(self):
-        # if is_github_actions():
-        #    output = '::group::phoenixd output\n' + self.output_buffer + '\n::endgroup::\n'
-        # else:
-        output = self.output_buffer
-        return output
-
-    def close(self):
-        self.kill()
-
-    def kill(self):
+    def _close(self):
         if not self.proc:
             return
 
@@ -174,10 +141,3 @@ class Phoenixd:
         self.reader_thread.join(timeout=10)
         if self.proc.isalive():
             os.killpg(os.getpgid(self.proc.pid), signal.SIGKILL)
-
-    def __enter__(self):
-        self._run()
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.kill()

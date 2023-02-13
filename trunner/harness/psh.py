@@ -6,7 +6,7 @@ import pexpect
 from trunner.dut import Dut
 from trunner.text import bold
 from trunner.types import TestResult
-from .base import HarnessBase, HarnessError
+from .base import HarnessError, IntermediateHarness
 
 
 class ShellError(HarnessError):
@@ -17,11 +17,11 @@ class ShellError(HarnessError):
         expected: Optional[str] = None,
         cmd: Optional[str] = None,
     ):
+        super().__init__()
         self.msg = msg
         self.output = output
         self.cmd = cmd
         self.expected = expected
-        super().__init__(self)
 
     def __str__(self):
         err = bold("SHELL ERROR: ") + (self.msg if self.msg else "") + "\n"
@@ -37,7 +37,7 @@ class ShellError(HarnessError):
         return err
 
 
-class ShellHarness(HarnessBase):
+class ShellHarness(IntermediateHarness):
     """Basic harness for the shell.
 
     It waits for the prompt and then executes the command if given.
@@ -50,24 +50,16 @@ class ShellHarness(HarnessBase):
 
     """
 
-    def __init__(self, dut: Dut, prompt: str, cmd: Optional[List[str]] = None, prompt_timeout: Optional[int] = None):
+    def __init__(self, dut: Dut, prompt: str, cmd: Optional[List[str]] = None, prompt_timeout: Optional[int] = -1):
+        super().__init__()
         self.dut = dut
         self.prompt = prompt
-        if cmd is None:
-            self.cmd = cmd
-        else:
-            self.cmd = " ".join(shlex.quote(arg) for arg in cmd)
+        self.cmd = " ".join(map(shlex.quote, cmd)) if cmd is not None else cmd
         self.prompt_timeout = prompt_timeout
-        super().__init__()
 
     def __call__(self) -> Optional[TestResult]:
-        if self.prompt_timeout is not None:
-            timeout = self.prompt_timeout
-        else:
-            timeout = self.dut.timeout
-
         try:
-            self.dut.expect_exact(self.prompt, timeout=timeout)
+            self.dut.expect_exact(self.prompt, timeout=self.prompt_timeout)
         except (pexpect.TIMEOUT, pexpect.EOF) as e:
             raise ShellError(
                 msg="Couldn't find a prompt!",
@@ -86,4 +78,4 @@ class ShellHarness(HarnessBase):
                     output=self.dut.before,
                 ) from e
 
-        return self.harness()
+        return self.next_harness()
