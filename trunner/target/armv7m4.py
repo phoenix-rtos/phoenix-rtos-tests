@@ -1,18 +1,19 @@
 import subprocess
 import time
 from pathlib import Path
-from typing import Callable, Optional, Sequence
+from typing import Optional, Sequence
 
 import pexpect.fdpexpect
 import serial
 
 from trunner.config import TestContext
-from trunner.dut import Dut, PortError
+from trunner.dut import Dut, SerialDut, PortError
+from trunner.harness.base import HarnessBase
 from trunner.host import Host
 from trunner.harness import (
-    HarnessBase,
+    IntermediateHarness,
+    TermHarness,
     PloInterface,
-    VoidHarness,
     PloHarness,
     ShellHarness,
     Rebooter,
@@ -27,28 +28,47 @@ from .base import TargetBase, find_port
 
 class ARMv7M4Rebooter(Rebooter):
     # TODO add text mode
+    # NOTE: changing boot modes not needed/supported for this target
     pass
 
 
-class OpenocdGdbServerHarness(HarnessBase):
-    def __call__(self):
+class STM32L4x6OpenocdGdbServerHarness(IntermediateHarness):
+    """Harness that runs other harness in Opendocd gdb server context.
+
+    It calls passed harness under gdb server context and then continue normal
+    harness execution flow.
+
+    Attributes:
+        harness: Harness that will be run under gdb server context.
+
+    """
+
+    def __init__(self, harness: HarnessBase):
+        super().__init__()
+        self.harness = harness
+
+    def __call__(self) -> Optional[TestResult]:
         with OpenocdGdbServer(interface="stlink", target="stm32l4x").run():
-            return self.harness()
+            self.harness()
+
+        return self.next_harness()
 
 
-class STM32L4x6PloAppLoader(HarnessBase, PloInterface):
+class STM32L4x6PloAppLoader(TermHarness, PloInterface):
     def __init__(self, dut: Dut, apps: Sequence[AppOptions], gdb: GdbInteractive):
+        TermHarness.__init__(self)
+        PloInterface.__init__(self, dut)
         self.dut = dut
         self.apps = apps
         self.gdb = gdb
         self.load_offset = 0x30000
         self.ram_addr = 0x20000000
         self.page_sz = 0x200
-        super().__init__()
 
     def _app_size(self, path: Path):
         sz = path.stat().st_size
-        offset = self.page_sz - (sz % self.page_sz) if sz % self.page_sz != 0 else 0
+        # round up to the size of the page
+        offset = (self.page_sz - sz) % self.page_sz
         return sz + offset
 
     def __call__(self):
@@ -81,12 +101,22 @@ class STM32L4x6PloAppLoader(HarnessBase, PloInterface):
             offset += sz
 
 
+class SetupAndRunHarness(IntermediateHarness):
+    def __init__(self, setup: HarnessBase):
+        super().__init__()
+        self.setup = setup
+
+    def __call__(self) -> Optional[TestResult]:
+        self.setup()
+        return self.next_harness()
+
+
 class STM32L4x6Target(TargetBase):
     name = "armv7m4-stm32l4x6-nucleo"
     rootfs = False
     experimental = False
     image_file = "phoenix.disk"
-    kernel_addr = 0x08000000
+    image_addr = 0x08000000
 
     class fdspawncustom(pexpect.fdpexpect.fdspawn):
         """
@@ -102,15 +132,14 @@ class STM32L4x6Target(TargetBase):
 
             return ret
 
-    class STM32L4SerialDut(Dut):
-        def __init__(self, port: str, baudrate: int, *args, **kwargs):
-            super().__init__()
+    class STM32L4SerialDut(SerialDut):
+        def open(self):
             try:
-                self.serial = serial.Serial(port, baudrate)
+                self.serial = serial.Serial(self.port, self.baudrate)
             except serial.SerialException as e:
                 raise PortError(str(e)) from e
 
-            self.pexpect_proc = STM32L4x6Target.fdspawncustom(self.serial, *args, **kwargs)
+            self.pexpect_proc = STM32L4x6Target.fdspawncustom(self.serial, *self.args, **self.kwargs)
 
     def __init__(self, host: Host, port: Optional[str] = None, baudrate: int = 115200):
         if port is None:
@@ -137,7 +166,7 @@ class STM32L4x6Target(TargetBase):
                     "-c",
                     "reset_config srst_only srst_nogate connect_assert_srst",
                     "-c",
-                    f"program {self.image_file} {self.kernel_addr:#x} verify reset exit",
+                    f"program {self.image_file} {self.image_addr:#x} verify reset exit",
                 ],
                 capture_output=True,
                 check=True,
@@ -152,20 +181,11 @@ class STM32L4x6Target(TargetBase):
         except subprocess.TimeoutExpired as e:
             raise FlashError(msg=str(e), output=e.stdout.decode("ascii") if e.stdout else None) from e
 
-    def build_test(self, test: TestOptions) -> Callable[[], Optional[TestResult]]:
+    def build_test(self, test: TestOptions):
         builder = HarnessBuilder()
 
         if test.should_reboot:
-            builder.chain(RebooterHarness(self.rebooter, hard=False))
-
-        if test.bootloader is not None and test.bootloader.apps:
-            # We are going to load some apps, so run gdb server
-            builder.chain(OpenocdGdbServerHarness())
-
-            # Running gdb server causes the board restart. We are left with unknown
-            # content in the dut buffer. Reboot one more time using rebooter to make
-            # sure buffer is cleared.
-            builder.chain(RebooterHarness(self.rebooter, hard=False))
+            builder.add(RebooterHarness(self.rebooter, hard=False))
 
         if test.bootloader is not None:
             app_loader = None
@@ -177,22 +197,19 @@ class STM32L4x6Target(TargetBase):
                     gdb=GdbInteractive(port=3333, cwd=self.bin_dir()),
                 )
 
-            builder.chain(PloHarness(self.dut, app_loader=app_loader))
+            builder.add(PloHarness(self.dut, app_loader=app_loader))
+
+        if test.bootloader is not None and test.bootloader.apps:
+            # In the case we are loading apps using OpenGdbServer we wouild like to run plo
+            # in the gdb server context. Get the harness that we already build, pack it in gdb
+            # server context and continue building harness
+            setup = builder.get_harness()
+            builder = HarnessBuilder()
+            builder.add(STM32L4x6OpenocdGdbServerHarness(setup))
 
         if test.shell is not None:
-            builder.chain(ShellHarness(self.dut, self.shell_prompt, test.shell.cmd))
+            builder.add(ShellHarness(self.dut, self.shell_prompt, test.shell.cmd))
 
-        builder.chain(VoidHarness())
+        builder.add(test.harness)
 
-        setup = builder.get_harness()
-
-        assert test.harness is not None
-        run = test.harness
-
-        # In the case we are loading apps using OpenGdbServer we don't want to keep it
-        # open during a test execution. So first setup the device and then execute the test.
-        def test_harness():
-            setup()
-            return run()
-
-        return test_harness
+        return builder.get_harness()

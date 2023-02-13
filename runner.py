@@ -33,7 +33,14 @@ def args_file(arg):
     return path
 
 
-def parse_args(targets, hosts):
+def parse_args(targets: Dict[str, TargetBase], hosts: Dict[str, Host]):
+    """Parses and returns program arguments.
+
+    Arguments:
+        targets: Dictionary of available targets.
+        hosts: Dictionary of available hosts.
+
+    """
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
@@ -41,9 +48,11 @@ def parse_args(targets, hosts):
         "--target",
         default="ia32-generic-qemu",
         choices=targets.keys(),
-        help="Set target on which tests will be run. "
-        "By default runs tests on %(default)s target. "
-        "Targets can be extended using extension feature.",
+        help=(
+            "Set target on which tests will be run. "
+            "By default runs tests on %(default)s target. "
+            "Targets can be extended using extension feature."
+        ),
     )
 
     parser.add_argument(
@@ -51,10 +60,12 @@ def parse_args(targets, hosts):
         "--host",
         default="pc",
         choices=hosts.keys(),
-        help="Set host that run tests. \"pc\" host is recommended for running tests on emulators. "
-        "To control physical boards you can use \"rpi\" host or pc "
-        "(but it requires restarting board manually by yourself). By default runs tests on %(default)s. "
-        "Hosts can be extended using extension feature.",
+        help=(
+            'Set host that run tests. "pc" host is recommended for running tests on emulators. '
+            'To control physical boards you can use "rpi" host or pc '
+            "(but it requires restarting board manually by yourself). By default runs tests on %(default)s. "
+            "Hosts can be extended using extension feature."
+        ),
     )
 
     parser.add_argument(
@@ -63,23 +74,24 @@ def parse_args(targets, hosts):
         default=[],
         action="append",
         type=args_file,
-        help="Specify directory in which test will be searched. "
-        "If flag is not used then runner searches for tests in "
-        "phoenix-rtos-project directory. Flag can be used multiple times.",
+        help=(
+            "Specify directory in which test will be searched. "
+            "If flag is not used then runner searches for tests in "
+            "phoenix-rtos-project directory. Flag can be used multiple times."
+        ),
     )
 
     parser.add_argument(
         "-p",
         "--port",
-        help="Specify serial to communicate with device board. "
-        "Default value depends on the target",
+        help="Specify serial to communicate with device board. Default value depends on the target",
     )
 
     parser.add_argument(
         "-b",
         "--baudrate",
         default=115200,
-        help="Specify the connection speed of serial. " "By default uses %(default)d",
+        help="Specify the connection speed of serial. By default uses %(default)d",
     )
 
     parser.add_argument(
@@ -93,8 +105,10 @@ def parse_args(targets, hosts):
         "--no-test",
         default=False,
         action="store_true",
-        help="Tests will be not run by runner. This option may be helpful to only flash the device "
-        "or check if yamls are parsed correctly."
+        help=(
+            "Tests will be not run by runner. This option may be helpful to only flash the device "
+            "or check if yamls are parsed correctly."
+        ),
     )
 
     parser.add_argument(

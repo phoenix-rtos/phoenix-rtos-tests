@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from typing import Any
 
 import pexpect
@@ -13,7 +14,7 @@ class PortNotFound(PortError):
     pass
 
 
-class Dut:
+class Dut(ABC):
     """
     This class wraps the pexpect object using the delegator pattern.
 
@@ -52,11 +53,13 @@ class Dut:
         except (pexpect.TIMEOUT, pexpect.EOF):
             pass
 
+    @abstractmethod
     def open(self):
-        raise NotImplementedError
+        pass
 
+    @abstractmethod
     def close(self):
-        raise NotImplementedError
+        pass
 
 
 class SerialDut(Dut):

@@ -79,7 +79,7 @@ class ConfigParser:
 
     def __init__(self, ctx: TestContext):
         self.ctx = ctx
-        self.yaml_path = Path()
+        self.yaml_path = Path("/")
         self.main = ConfigParser.MainConfig()
         self.raw_main = {}
         self.test = TestOptions()
@@ -186,11 +186,13 @@ class ConfigParser:
         if execute_binary:
             prefix = self.ctx.target.exec_dir() + "/" if self.ctx.target.rootfs else "sysexec "
             parsed_cmd = shlex.split(prefix + cmd[0]) + cmd[1:]
+            binary = cmd[0]
         else:
+            binary = None
             parsed_cmd = cmd
 
         self.test.shell = ShellOptions(
-            binary=cmd[0] if execute_binary else None,
+            binary=binary,
             cmd=parsed_cmd,
         )
 

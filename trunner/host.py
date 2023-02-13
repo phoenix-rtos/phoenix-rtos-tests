@@ -1,12 +1,13 @@
 import importlib
+from abc import ABC, abstractmethod
 
 
-class Host:  # pylint: disable=too-few-public-methods
+class Host(ABC):  # pylint: disable=too-few-public-methods
     """Base class for Host abstraction"""
 
+    @abstractmethod
     def has_gpio(self) -> bool:
         """Return true if host has gpio utility and can restart the target device using it."""
-        raise NotImplementedError
 
 
 class EmulatorHost(Host):
@@ -74,5 +75,4 @@ class RpiHost(Host):
             self.boot_gpio.low()
 
     def has_gpio(self):
-        # TODO property
         return True

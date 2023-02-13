@@ -1,5 +1,5 @@
 from typing import Callable, Optional
-from trunner.dut import SerialDut
+from trunner.dut import Dut, SerialDut
 from trunner.harness import (
     HarnessBuilder,
     PloInterface,
@@ -11,6 +11,7 @@ from trunner.harness import (
     RebooterHarness,
     ShellHarness,
 )
+from trunner.harness.base import TermHarness
 from trunner.host import Host
 from trunner.tools import Phoenixd, Psu
 from trunner.types import TestOptions, TestResult
@@ -21,6 +22,18 @@ class ARMv7M7TargetRebooter(Rebooter):
     # TODO add text mode
     def _set_flash_mode(self, flash):
         self.host.set_flash_mode(not flash)
+
+
+class PsuPloLoader(TermHarness, PloInterface):
+    def __init__(self, dut: Dut, psu: Psu):
+        TermHarness.__init__(self)
+        PloInterface.__init__(self, dut)
+        self.psu = psu
+
+    def __call__(self):
+        """Loads plo image to RAM using psu tool."""
+        self.psu.run()
+        self.wait_prompt()
 
 
 class ARMv7M7Target(TargetBase):
@@ -39,18 +52,16 @@ class ARMv7M7Target(TargetBase):
         return cls(ctx.host, ctx.port, ctx.baudrate)
 
     def flash_dut(self):
-        def psu_plo_loader():
-            psu = Psu(self.kernel_psu_script, self.boot_dir())
-            plo = PloInterface(self.dut)
-
-            psu.run()
-            plo.wait_prompt()
+        plo_loader = PsuPloLoader(
+            dut=self.dut,
+            psu=Psu(self.kernel_psu_script, self.boot_dir()),
+        )
 
         loader = PloImageLoader(
             dut=self.dut,
             rebooter=self.rebooter,
             image=self.image,
-            plo_loader=psu_plo_loader,
+            plo_loader=plo_loader,
             phoenixd=Phoenixd(directory=self.boot_dir()),
         )
 
@@ -60,7 +71,7 @@ class ARMv7M7Target(TargetBase):
         builder = HarnessBuilder()
 
         if test.should_reboot:
-            builder.chain(RebooterHarness(self.rebooter))
+            builder.add(RebooterHarness(self.rebooter))
 
         if test.bootloader is not None:
             app_loader = None
@@ -70,12 +81,12 @@ class ARMv7M7Target(TargetBase):
                     dut=self.dut, apps=test.bootloader.apps, phoenixd=Phoenixd(directory=self.bin_dir())
                 )
 
-            builder.chain(PloHarness(self.dut, app_loader=app_loader))
+            builder.add(PloHarness(self.dut, app_loader=app_loader))
 
         if test.shell is not None:
-            builder.chain(ShellHarness(self.dut, self.shell_prompt, test.shell.cmd))
+            builder.add(ShellHarness(self.dut, self.shell_prompt, test.shell.cmd))
 
-        builder.chain(test.harness)
+        builder.add(test.harness)
 
         return builder.get_harness()
 

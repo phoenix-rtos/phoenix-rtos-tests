@@ -112,10 +112,10 @@ def assert_prompt_fail(pexpect_proc, msg='', timeout=-1):
 
 
 def _get_exec_cmd(prog):
-    if not trunner.ctx.target.rootfs:
-        return f'sysexec {prog}'
-    else:
+    if trunner.ctx.target.rootfs:
         return f'/bin/{prog}'
+    else:
+        return f'sysexec {prog}'
 
 
 def assert_exec(pexpect_proc, prog, expected='', msg=''):
