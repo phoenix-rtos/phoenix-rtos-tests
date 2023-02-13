@@ -73,14 +73,14 @@ class TestRunner:
                 harness = self.target.build_test(test)
                 assert harness is not None
 
-                res = None
                 try:
-                    res = harness()
+                    result = harness()
                 except HarnessError as e:
                     result.fail(str(e))
 
-                if res is not None:
-                    result = res
+                if result is None:
+                    # Returned type of harness is None, reinit reult with default
+                    result = TestResult(test.name, status=TestResult.OK)
 
             print(result, end="", flush=True)
 
@@ -118,7 +118,7 @@ class TestRunner:
     def run(self) -> bool:
         """Runs the entire test campaigne based on yamls given in test_paths attribute.
 
-        Returns true if there is no failed tests.
+        Returns true if there are no failed tests.
         """
 
         tests = self.parse_tests()
@@ -130,8 +130,8 @@ class TestRunner:
             return True
 
         fails, skips = self.run_tests(tests)
-        oks = len(tests) - fails - skips
+        passes = len(tests) - fails - skips
 
-        print(f"TESTS: {len(tests)} {green('PASSED')}: {oks} {red('FAILED')}: {fails} {yellow('SKIPPED')}: {skips}")
+        print(f"TESTS: {len(tests)} {green('PASSED')}: {passes} {red('FAILED')}: {fails} {yellow('SKIPPED')}: {skips}")
 
         return fails == 0

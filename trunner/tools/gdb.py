@@ -5,21 +5,11 @@ from typing import Union
 
 import pexpect
 
-from trunner.text import bold
-from trunner.harness import HarnessError, FlashError
+from trunner.harness import ProcessError, FlashError
 
 
-class GdbError(HarnessError):
-    def __init__(self, msg=None, output=None):
-        self.msg = msg
-        self.output = output
-
-    def __str__(self):
-        err = bold("GDB ERROR: ") + (self.msg if self.msg else "") + "\n"
-        if self.output is not None:
-            err += bold("OUTPUT:") + "\n" + self.output + "\n"
-
-        return err
+class GdbError(ProcessError):
+    name = "GDB"
 
 
 class GdbInteractive:
@@ -57,7 +47,7 @@ class GdbInteractive:
         except (pexpect.TIMEOUT, pexpect.EOF) as e:
             raise GdbError("Failed to continue", output=self.proc.before) from e
 
-    def close(self):
+    def _close(self):
         if not self.proc:
             return
 
@@ -86,20 +76,11 @@ class GdbInteractive:
             # Add the output of GdbInteractive to exception
             raise e
         finally:
-            self.close()
+            self._close()
 
 
-class OpenocdError(HarnessError):
-    def __init__(self, msg=None, output=None):
-        self.msg = msg
-        self.output = output
-
-    def __str__(self):
-        err = bold("OPENOCD ERROR: ") + (self.msg if self.msg else "") + "\n"
-        if self.output is not None:
-            err += bold("OUTPUT:") + "\n" + self.output + "\n"
-
-        return err
+class OpenocdError(ProcessError):
+    name = "OPENOCD"
 
 
 class OpenocdGdbServer:
@@ -139,9 +120,9 @@ class OpenocdGdbServer:
             # Add the output of OpenocdGdbServer to exception
             raise e
         finally:
-            self.close()
+            self._close()
 
-    def close(self):
+    def _close(self):
         if not self.proc:
             return
 
@@ -154,7 +135,7 @@ class JLinkGdbServer:
         self.device = device
         self.proc = None
 
-    def close(self):
+    def _close(self):
         if not self.proc:
             return
 
@@ -173,4 +154,4 @@ class JLinkGdbServer:
             # Add the output of JLinkGdbServer to exception
             raise e
         finally:
-            self.close()
+            self._close()

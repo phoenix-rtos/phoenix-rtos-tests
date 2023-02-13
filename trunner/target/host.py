@@ -3,7 +3,7 @@ from typing import Callable, Optional, List
 
 from trunner.config import TestContext
 from trunner.dut import HostDut
-from trunner.harness import HarnessBase, HarnessBuilder
+from trunner.harness import IntermediateHarness, HarnessBuilder
 from trunner.types import TestOptions, TestResult
 from .base import TargetBase
 
@@ -14,23 +14,23 @@ class HostPCGenericTarget(TargetBase):
     sysexec = False
     experimental = True
 
-    class ExecHarness(HarnessBase):
+    class ExecHarness(IntermediateHarness):
         def __init__(self, dut: HostDut, cmd: List[str]):
-            self.dut = dut
-            self.cmd = " ".join(shlex.quote(arg) for arg in cmd)
             super().__init__()
+            self.dut = dut
+            self.cmd = " ".join(map(shlex.quote, cmd))
 
         def __call__(self) -> Optional[TestResult]:
             self.dut.set_args(self.cmd, encoding="utf-8")
             self.dut.open()
-            return self.harness()
+            return self.next_harness()
 
     def __init__(self):
-        self.dut = HostDut()
         super().__init__()
+        self.dut = HostDut()
 
     @classmethod
-    def from_context(cls, ctx: TestContext):
+    def from_context(cls, _: TestContext):
         return cls()
 
     def exec_dir(self) -> str:
@@ -47,10 +47,10 @@ class HostPCGenericTarget(TargetBase):
             def fail():
                 return TestResult(msg="There is no command to execute", status=TestResult.FAIL)
 
-            builder.chain(fail)
+            builder.add(fail)
             return builder.get_harness()
 
-        builder.chain(self.ExecHarness(self.dut, test.shell.cmd))
-        builder.chain(test.harness)
+        builder.add(self.ExecHarness(self.dut, test.shell.cmd))
+        builder.add(test.harness)
 
         return builder.get_harness()
