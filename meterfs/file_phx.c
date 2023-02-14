@@ -233,6 +233,27 @@ int file_eraseAll(void)
 }
 
 
+int file_devInfo(file_fsInfo_t *fsInfo)
+{
+	msg_t msg;
+	meterfs_i_devctl_t *iptr = (meterfs_i_devctl_t *)msg.i.raw;
+	meterfs_o_devctl_t *optr = (meterfs_o_devctl_t *)msg.o.raw;
+
+	file_prepareDevCtl(&msg);
+
+	iptr->type = meterfs_fsInfo;
+
+	TEST_ASSERT_EQUAL(0, msgSend(meterfs.port, &msg));
+
+	fsInfo->filecnt = optr->fsInfo.filecnt;
+	fsInfo->fileLimit = optr->fsInfo.fileLimit;
+	fsInfo->sz = optr->fsInfo.sz;
+	fsInfo->sectorsz = optr->fsInfo.sectorsz;
+
+	return optr->err;
+}
+
+
 int file_init(const char *path)
 {
 	pathPrefix = path;

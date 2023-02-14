@@ -147,6 +147,28 @@ int file_eraseAll(void)
 }
 
 
+int file_devInfo(file_fsInfo_t *fsInfo)
+{
+	meterfs_i_devctl_t iptr;
+	meterfs_o_devctl_t optr;
+	int err;
+
+	iptr.type = meterfs_fsInfo;
+
+	err = hostflashsrv_devctl(&iptr, &optr);
+	if (err < 0) {
+		return err;
+	}
+
+	fsInfo->filecnt = optr.fsInfo.filecnt;
+	fsInfo->fileLimit = optr.fsInfo.fileLimit;
+	fsInfo->sz = optr.fsInfo.sz;
+	fsInfo->sectorsz = optr.fsInfo.sectorsz;
+
+	return 0;
+}
+
+
 int file_init(const char *path)
 {
 	size_t filesz = FLASHSIZE;

@@ -13,7 +13,7 @@
 #include "common.h"
 
 static struct {
-	char buff[40];
+	char buff[128];
 } common;
 
 int common_preallocOpenFile(const char *name, size_t sectors, size_t filesz, size_t recordsz)
