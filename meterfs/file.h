@@ -14,6 +14,14 @@
 
 #include <sys/types.h>
 
+typedef struct {
+	size_t sz;
+	size_t sectorsz;
+	size_t fileLimit;
+	size_t filecnt;
+} file_fsInfo_t;
+
+
 int file_lookup(const char *name);
 
 
@@ -39,6 +47,9 @@ int file_getInfo(id_t fid, size_t *sectors, size_t *filesz, size_t *recordsz, si
 
 
 int file_eraseAll(void);
+
+
+int file_devInfo(file_fsInfo_t *fsInfo);
 
 
 int file_init(const char *path);

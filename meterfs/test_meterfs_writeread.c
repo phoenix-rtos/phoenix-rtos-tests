@@ -21,6 +21,10 @@ static struct {
 	char buffBigRX[1064];
 } common;
 
+
+static file_fsInfo_t fsInfo;
+
+
 static void cleanBuffs(void)
 {
 	(void)memset(common.pattern, 0, sizeof(common.pattern));
@@ -61,6 +65,7 @@ TEST_SETUP(meterfs_writeread)
 {
 	common.fd = 0;
 	cleanBuffs();
+	TEST_ASSERT_EQUAL(0, file_devInfo(&fsInfo));
 }
 
 
@@ -74,7 +79,7 @@ TEST_TEAR_DOWN(meterfs_writeread)
 TEST(meterfs_writeread, small_records)
 {
 	size_t i, writeLen;
-	file_info_t info = { 2, 5 * 255, 5, 0 };
+	file_info_t info = { ((5u * 255u) / fsInfo.sectorsz) + 2u, 5 * 255, 5, 0 };
 
 	common.fd = common_preallocOpenFile("file0", info.sectors, info.filesz, info.recordsz);
 
@@ -134,7 +139,7 @@ TEST(meterfs_writeread, file_overflow)
 TEST(meterfs_writeread, big_records)
 {
 	size_t i, writeLen;
-	file_info_t info = { 2, 2 * 255, 2, 0 };
+	file_info_t info = { ((5u * 255u) / fsInfo.sectorsz) + 2u, 2 * 255, 2, 0 };
 
 	common.fd = common_preallocOpenFile("file0", info.sectors, info.filesz, info.recordsz);
 
@@ -190,7 +195,8 @@ TEST(meterfs_writeread, file_end)
 TEST(meterfs_writeread, many_records)
 {
 	int i;
-	file_info_t info = { 16, 36000, 12, 0 };
+	const size_t headerSectorcnt = 6u;
+	file_info_t info = { (fsInfo.sz / fsInfo.sectorsz) - headerSectorcnt, 36000, 12, 0 };
 
 	common.fd = common_preallocOpenFile("file0", info.sectors, info.filesz, info.recordsz);
 
@@ -219,7 +225,7 @@ TEST(meterfs_writeread, many_records)
 /* Test case of fulfilling all sectors and turning big file to the beginning. */
 TEST(meterfs_writeread, file_turn_big)
 {
-	file_info_t info = { 281, 1064, 1064, 0 };
+	file_info_t info = { (fsInfo.sz / fsInfo.sectorsz) / 2u, fsInfo.sectorsz / 4u, fsInfo.sectorsz / 4u, 0 };
 
 	common.fd = common_preallocOpenFile("file0", info.sectors, info.filesz, info.recordsz);
 
@@ -232,7 +238,7 @@ TEST(meterfs_writeread, file_turn_big)
 /* Test case of fulfilling all sectors and turning small file to the beginning. */
 TEST(meterfs_writeread, file_turn_small)
 {
-	file_info_t info = { 2, 400, 400 };
+	file_info_t info = { 2, fsInfo.sectorsz / 10u, fsInfo.sectorsz / 10u };
 
 	common.fd = common_preallocOpenFile("file0", info.sectors, info.filesz, info.recordsz);
 

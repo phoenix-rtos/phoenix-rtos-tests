@@ -19,6 +19,9 @@ static struct {
 } common;
 
 
+static file_fsInfo_t fsInfo;
+
+
 static void writeReadCheck(file_info_t *info)
 {
 	size_t i;
@@ -43,6 +46,7 @@ TEST_GROUP(meterfs_miscellaneous);
 TEST_SETUP(meterfs_miscellaneous)
 {
 	common.fd = 0;
+	TEST_ASSERT_EQUAL(0, file_devInfo(&fsInfo));
 }
 
 
@@ -56,22 +60,22 @@ TEST_TEAR_DOWN(meterfs_miscellaneous)
 TEST(meterfs_miscellaneous, resize_getinfo)
 {
 	file_info_t info;
-	file_info_t pattern = { 4, 2000, 20, 0 };
+	file_info_t pattern = { 4, fsInfo.sectorsz / 2u, fsInfo.sectorsz / 200u, 0 };
 
 	common.fd = common_preallocOpenFile("file0", pattern.sectors, pattern.filesz, pattern.recordsz);
 	TEST_ASSERT_EQUAL(0, file_getInfo(common.fd, &info.sectors, &info.filesz, &info.recordsz, &info.recordcnt));
 	common_fileInfoCompare(&info, &pattern, "step1");
 
-	pattern.filesz = 200;
-	pattern.recordsz = 5;
+	pattern.filesz /= 10;
+	pattern.recordsz /= 4;
 	TEST_ASSERT_EQUAL(0, file_resize(common.fd, pattern.filesz, pattern.recordsz));
 	TEST_ASSERT_EQUAL(0, file_getInfo(common.fd, &info.sectors, &info.filesz, &info.recordsz, &info.recordcnt));
 	common_fileInfoCompare(&info, &pattern, "step2");
 
 	writeReadCheck(&info);
 
-	pattern.filesz = 4000;
-	pattern.recordsz = 40;
+	pattern.filesz *= 20;
+	pattern.recordsz *= 10;
 	TEST_ASSERT_EQUAL(0, file_resize(common.fd, pattern.filesz, pattern.recordsz));
 	TEST_ASSERT_EQUAL(0, file_getInfo(common.fd, &info.sectors, &info.filesz, &info.recordsz, &info.recordcnt));
 	common_fileInfoCompare(&info, &pattern, "step3");
@@ -85,11 +89,11 @@ TEST(meterfs_miscellaneous, resize_getinfo)
 /* Test case of resizing file to size bigger than allowed by sectors num. */
 TEST(meterfs_miscellaneous, resize_bigger)
 {
-	file_info_t pattern = { 2, 2000, 20, 0 };
+	file_info_t pattern = { 2, fsInfo.sectorsz / 2u, fsInfo.sectorsz / 200u, 0 };
 
 	common.fd = common_preallocOpenFile("file0", pattern.sectors, pattern.filesz, pattern.recordsz);
-	pattern.filesz = 8000;
-	pattern.recordsz = 40;
+	pattern.filesz = 2u * fsInfo.sectorsz;
+	pattern.recordsz *= 2;
 	TEST_ASSERT_EQUAL(-EINVAL, file_resize(common.fd, pattern.filesz, pattern.recordsz));
 
 	TEST_ASSERT_EQUAL(0, file_close(common.fd));
@@ -99,7 +103,7 @@ TEST(meterfs_miscellaneous, resize_bigger)
 /* Test case of using lookup multiple times in a row. */
 TEST(meterfs_miscellaneous, multi_lookup)
 {
-	file_info_t info = { 2, 2000, 20, 0 };
+	file_info_t info = { 2, fsInfo.sectorsz / 2u, fsInfo.sectorsz / 200u, 0 };
 	const char *name = "file0";
 	int i;
 

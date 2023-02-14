@@ -17,12 +17,17 @@ static struct {
 	char buff[21];
 } common;
 
+
+static file_fsInfo_t fsInfo;
+
+
 TEST_GROUP(meterfs_openclose);
 
 
 TEST_SETUP(meterfs_openclose)
 {
 	(void)memset(common.buff, 0, sizeof(common.buff));
+	TEST_ASSERT_EQUAL(0, file_devInfo(&fsInfo));
 }
 
 
@@ -49,22 +54,25 @@ TEST(meterfs_openclose, no_files)
 /* Test case of opening and closing existing files. */
 TEST(meterfs_openclose, existing_files)
 {
-	size_t i;
+	size_t i, fileCount = sizeof(common.fds) / sizeof(common.fds[0]);
+	if (fileCount > fsInfo.fileLimit) {
+		fileCount = fsInfo.fileLimit;
+	}
 
-	for (i = 0; i < sizeof(common.fds) / sizeof(common.fds[0]); ++i) {
+	for (i = 0; i < fileCount; ++i) {
 		(void)snprintf(common.buff, sizeof(common.buff), "file%zu", i);
 		TEST_ASSERT_EQUAL_MESSAGE(0, file_allocate(common.buff, 2, 2000, 20), common.buff);
 		(void)memset(common.buff, 0, sizeof(common.buff));
 	}
 
-	for (i = 0; i < sizeof(common.fds) / sizeof(common.fds[0]); ++i) {
+	for (i = 0; i < fileCount; ++i) {
 		(void)snprintf(common.buff, sizeof(common.buff), "/file%zu", i);
 		common.fds[i] = file_open(common.buff);
 		TEST_ASSERT_GREATER_OR_EQUAL_MESSAGE(0, common.fds[i], common.buff);
 		(void)memset(common.buff, 0, sizeof(common.buff));
 	}
 
-	for (i = 0; i < sizeof(common.fds) / sizeof(common.fds[0]); ++i) {
+	for (i = 0; i < fileCount; ++i) {
 		(void)snprintf(common.buff, sizeof(common.buff), "file%zu", i);
 		TEST_ASSERT_EQUAL_MESSAGE(0, file_close(common.fds[i]), common.buff);
 		(void)memset(common.buff, 0, sizeof(common.buff));
