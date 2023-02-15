@@ -12,7 +12,7 @@ from trunner.harness.base import HarnessBase
 from trunner.host import Host
 from trunner.harness import (
     IntermediateHarness,
-    TermHarness,
+    TerminalHarness,
     PloInterface,
     PloHarness,
     ShellHarness,
@@ -54,9 +54,9 @@ class STM32L4x6OpenocdGdbServerHarness(IntermediateHarness):
         return self.next_harness()
 
 
-class STM32L4x6PloAppLoader(TermHarness, PloInterface):
+class STM32L4x6PloAppLoader(TerminalHarness, PloInterface):
     def __init__(self, dut: Dut, apps: Sequence[AppOptions], gdb: GdbInteractive):
-        TermHarness.__init__(self)
+        TerminalHarness.__init__(self)
         PloInterface.__init__(self, dut)
         self.dut = dut
         self.apps = apps

@@ -1,33 +1,13 @@
 import re
-from typing import Sequence
 
-from trunner.text import bold, red, yellow
-from trunner.types import TestResult
-
-
-def format_output(results: Sequence[dict]) -> str:
-    output = []
-
-    for res in results:
-        if res["status"] == TestResult.OK:
-            continue
-
-        msg = "\t" + bold(res["name"]) + ": "
-        if res["status"] == TestResult.FAIL:
-            msg += red("FAIL") + "\n" + res["msg"]
-        elif res["status"] == TestResult.SKIP:
-            msg += yellow("SKIP") + "\n"
-
-        output.append(msg)
-
-    return "".join(output)
+from trunner.types import TestResult, Result, Status
 
 
 def harness(dut):
     results = []
-    test = {}
-    msg = ""
-    test_status = TestResult.OK
+    result = None
+    msg = []
+    test_status = Status.OK
 
     RESULT = r"(?P<name>.{67}\s)(?P<status>(PASS|----|FAILED))\r+\n"
     MSG_LINE = r"  (?P<line>[^\r\n]+?)\r+\n"
@@ -35,35 +15,34 @@ def harness(dut):
 
     while True:
         idx = dut.expect([RESULT, FINAL, MSG_LINE], timeout=25)
+        parsed = dut.match.groupdict()
+
+        if idx == 2:
+            msg.append("\t\t" + parsed["line"])
+            continue
+
+        if result:
+            # We ended processing test result and message
+            if msg and result.status == Status.FAIL:
+                test_status = Status.FAIL
+                result.msg = "\n".join(msg)
+                msg = []
+
+            # if there are dots after test name - remove them
+            dots = re.search(r" \.+ ", result.name)
+            if dots:
+                result.name = result.name[: dots.start()]
+
+            results.append(result)
+
+        if idx == 0:
+            if parsed["status"] == "----":
+                status = Status.SKIP
+            else:
+                status = Status.from_str(parsed["status"])
+
+            result = Result(name=parsed["name"], status=status)
         if idx == 1:
             break
 
-        parsed = dut.match.groupdict()
-
-        if test:
-            if test["status"] == "----":
-                test["status"] = TestResult.SKIP
-            elif test["status"] == "FAILED":
-                test["status"] = TestResult.FAIL
-            elif test["status"] == "PASS":
-                test["status"] = TestResult.OK
-
-            # We ended processing test result and message
-            if msg and test["status"] == TestResult.FAIL:
-                test_status = TestResult.FAIL
-                test["msg"] = msg
-                msg = ""
-
-            # if there are dots after test name - remove them
-            dots = re.search(r" \.+ ", test["name"])
-            if dots:
-                test["name"] = test["name"][: dots.start()]
-
-            results.append(test)
-
-        if idx == 0:
-            test = parsed
-        elif idx == 2:
-            msg += "\t\t" + parsed["line"] + "\n"
-
-    return TestResult(msg=format_output(results), status=test_status)
+    return TestResult(msg=Result.format_output(results), status=test_status)

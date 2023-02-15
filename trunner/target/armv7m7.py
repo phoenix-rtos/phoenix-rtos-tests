@@ -11,7 +11,7 @@ from trunner.harness import (
     RebooterHarness,
     ShellHarness,
 )
-from trunner.harness.base import TermHarness
+from trunner.harness.base import TerminalHarness
 from trunner.host import Host
 from trunner.tools import Phoenixd, Psu
 from trunner.types import TestOptions, TestResult
@@ -24,9 +24,9 @@ class ARMv7M7TargetRebooter(Rebooter):
         self.host.set_flash_mode(not flash)
 
 
-class PsuPloLoader(TermHarness, PloInterface):
+class PsuPloLoader(TerminalHarness, PloInterface):
     def __init__(self, dut: Dut, psu: Psu):
-        TermHarness.__init__(self)
+        TerminalHarness.__init__(self)
         PloInterface.__init__(self, dut)
         self.psu = psu
 

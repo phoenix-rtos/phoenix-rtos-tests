@@ -1,6 +1,6 @@
 import re
 
-from trunner.types import TestResult
+from trunner.types import Status, TestResult
 
 PROMPT = r"(\r+)\x1b\[0J" + r"\(psh\)% "
 EOL = r"\r+\n"
@@ -97,7 +97,7 @@ def harness(dut):
     expected_output_re = create_regex(exp_output)
 
     if re.match(expected_output_re, test_output):
-        return TestResult(status=TestResult.OK)
+        return TestResult(status=Status.OK)
     else:
         msg = f"Incorrect output\n\nExpected result:\n{expected_output_re}\nTest result:\n{test_output}"
-        return TestResult(msg=msg, status=TestResult.FAIL)
+        return TestResult(msg=msg, status=Status.FAIL)
