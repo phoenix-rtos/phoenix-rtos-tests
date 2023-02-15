@@ -88,7 +88,7 @@ class HarnessBase(ABC):
         """Implements the harness logic. Every class that inherites must to implement this method."""
 
 
-class TermHarness(HarnessBase):
+class TerminalHarness(HarnessBase):
     pass
 
 
@@ -105,28 +105,27 @@ class IntermediateHarness(HarnessBase):
 class HarnessBuilder:
     """Class that builds a single-linked list abstraction over harness chain method."""
 
-    class DummyHarness(IntermediateHarness):
-        def __call__(self):
-            return self.next_harness()
-
     def __init__(self):
-        # We use VoidHarness as dummy-head of the list
-        self.head = HarnessBuilder.DummyHarness()
-        self.tail = self.head
+        self.head = None
+        self.tail = None
 
     def add(self, harness: Callable[[], Optional[TestResult]]):
         """Add harness to the tail of list."""
-        self.tail = self.tail.chain(harness)
+        if self.tail is None:
+            self.tail = harness
+            self.head = harness
+        else:
+            self.tail = self.tail.chain(harness)
 
     def get_harness(self):
         """Returns the first harness in list."""
         if self.head is self.tail:
             raise ValueError("Harness chain is empty!")
 
-        return self.head.next_harness
+        return self.head
 
 
-class VoidHarness(TermHarness):
+class VoidHarness(TerminalHarness):
     """Harness that does nothing."""
 
     def __call__(self):

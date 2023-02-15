@@ -1,20 +1,49 @@
+from __future__ import annotations
+
 import re
 import sys
 import traceback
 from dataclasses import dataclass, field
-from typing import Callable, List, Optional
+from enum import Enum, auto
+from typing import Callable, List, Optional, Sequence
 
+import trunner
 from trunner.text import bold, green, red, yellow
 
 
-class TestResult:
-    OK = "OK"
-    FAIL = "FAIL"
-    SKIP = "SKIP"
+class Status(Enum):
+    OK = auto()
+    FAIL = auto()
+    SKIP = auto()
 
+    @classmethod
+    def from_str(cls, s):
+        if s in ("FAIL", "FAILED", "BAD"):
+            return Status.FAIL
+        if s in ("OK", "PASS", "PASSED"):
+            return Status.OK
+        if s in ("SKIP", "SKIPPED", "IGNORE", "IGNORED"):
+            return Status.SKIP
+
+        raise ValueError(f"Cannot create {cls.__name__} from string {s}")
+
+    def color(self) -> Callable[[str], str]:
+        if self == Status.OK:
+            return green
+        elif self == Status.FAIL:
+            return red
+        else:
+            return yellow
+
+    def __str__(self) -> str:
+        color = self.color()
+        return color(self.name)
+
+
+class TestResult:
     def __init__(self, name=None, msg="", output="", status=None, verbosity=0):
         self.msg = msg
-        self.status = TestResult.OK if status is None else status
+        self.status = Status.OK if status is None else status
         self.name = name
         self.output = output
         self.verbosity = verbosity
@@ -23,47 +52,33 @@ class TestResult:
         return self.name if self.name else "UNKNOWN TEST NAME"
 
     def __str__(self) -> str:
-        result = []
-        if self.is_ok():
-            result.append(green("OK"))
-        elif self.is_fail():
-            result.append(red("FAIL"))
-        elif self.is_skip():
-            result.append(yellow("SKIP"))
-        else:
-            # Leaving it for debugging purpose
-            result.append("UNKNOWN STATUS")
+        result = [str(self.status)]
+        if self.msg:
+            result.append(self.msg.rstrip())
 
-        result.append("\n")
-        result.append(self.msg)
-        if self.msg and self.msg[-1] != "\n":
-            result.append("\n")
+        if self.output and self.verbosity > 0:
+            result.extend([bold("OUTPUT:"), self.output.rstrip()])
 
-        if self.verbosity > 0 and self.output:
-            result.append(bold("OUTPUT:\n"))
-            result.append(self.output)
-            if self.output[-1] != "\n":
-                result.append("\n")
-
-        return "".join(result)
+        result.append("")
+        return "\n".join(result)
 
     def is_fail(self):
-        return self.status == TestResult.FAIL
+        return self.status == Status.FAIL
 
     def is_skip(self):
-        return self.status == TestResult.SKIP
+        return self.status == Status.SKIP
 
     def is_ok(self):
-        return self.status == TestResult.OK
+        return self.status == Status.OK
 
     def fail(self, msg=None):
         if msg is not None:
             self.msg = msg
 
-        self.status = TestResult.FAIL
+        self.status = Status.FAIL
 
     def skip(self):
-        self.status = TestResult.SKIP
+        self.status = Status.SKIP
 
     def _failed_traceback(self) -> List[str]:
         _, _, exc_traceback = sys.exc_info()
@@ -121,6 +136,39 @@ class TestResult:
     def fail_unknown_exception(self):
         self.fail()
         self.msg = "\n".join([bold("EXCEPTION:"), traceback.format_exc()])
+
+
+@dataclass
+class Result:
+    """Helper class that can be used to build more complex test results.
+
+    It may be helpful in more complex harnesses that parses output from other
+    testing framework to build output.
+
+    Attributes:
+        name: Name of test/subtest
+        status: Status of test
+        msg: Message that will be printed after test header
+    """
+
+    name: str
+    status: Status = Status.OK
+    msg: str = ""
+
+    @staticmethod
+    def format_output(results: Sequence[Result]) -> str:
+        output = []
+
+        for res in results:
+            if res.status != Status.FAIL and trunner.ctx.verbosity == 0:
+                continue
+
+            output.append(f"\t{bold(res.name)}: {res.status}")
+            if res.msg and res.status == Status.FAIL:
+                output.append(res.msg)
+
+        output.append("")
+        return "\n".join(output)
 
 
 @dataclass

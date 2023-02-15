@@ -5,7 +5,7 @@ from typing import List, Sequence
 from trunner.config import ConfigParser
 from trunner.harness import HarnessError, FlashError
 from trunner.text import bold, green, red, yellow
-from trunner.types import TestOptions, TestResult
+from trunner.types import Status, TestOptions, TestResult
 
 
 class TestRunner:
@@ -79,8 +79,8 @@ class TestRunner:
                     result.fail(str(e))
 
                 if result is None:
-                    # Returned type of harness is None, reinit reult with default
-                    result = TestResult(test.name, status=TestResult.OK)
+                    # Returned type of harness is None, reinit result with default
+                    result = TestResult(test.name, status=Status.OK)
 
             print(result, end="", flush=True)
 

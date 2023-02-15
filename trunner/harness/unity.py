@@ -3,7 +3,7 @@ from typing import Any, Dict, Optional, Sequence
 import trunner
 from trunner.dut import Dut
 from trunner.text import blue, bold, green, red, yellow
-from trunner.types import TestResult
+from trunner.types import Status, TestResult
 
 
 def _format_result_output(results: Sequence[Dict[str, Any]]) -> str:
@@ -69,5 +69,5 @@ def unity_harness(dut: Dut) -> Optional[TestResult]:
             # TODO parse last line
             break
 
-    status = TestResult.FAIL if stats["FAIL"] != 0 else TestResult.OK
+    status = Status.FAIL if stats["FAIL"] != 0 else Status.OK
     return TestResult(msg=_format_result_output(results), status=status)
