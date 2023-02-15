@@ -15,7 +15,7 @@ from trunner.harness import (
     RebooterHarness,
     FlashError,
 )
-from trunner.harness.base import TermHarness
+from trunner.harness import TerminalHarness
 from trunner.host import Host
 from trunner.tools import JLinkGdbServer, Phoenixd
 from trunner.types import TestResult, TestOptions
@@ -40,9 +40,9 @@ class ARMv7A9TargetRebooter(Rebooter):
         self.host.set_flash_mode(not flash)
 
 
-class ZynqGdbPloLoader(TermHarness, PloInterface):
+class ZynqGdbPloLoader(TerminalHarness, PloInterface):
     def __init__(self, dut: Dut, script: str, cwd: Optional[str] = None):
-        TermHarness.__init__(self)
+        TerminalHarness.__init__(self)
         PloInterface.__init__(self, dut)
         self.script = script
         self.cwd = cwd

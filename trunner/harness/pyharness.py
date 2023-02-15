@@ -5,11 +5,11 @@ from ptyprocess.ptyprocess import io
 from pexpect import TIMEOUT, EOF
 
 from trunner.dut import Dut
-from trunner.types import TestResult
-from .base import TermHarness, HarnessError
+from trunner.types import Status, TestResult
+from .base import TerminalHarness, HarnessError
 
 
-class PyHarness(TermHarness):
+class PyHarness(TerminalHarness):
     """Harness that wraps basic user harness function.
 
     This class implements logic to run user defined harnesses and handles errors accordingly.
@@ -26,7 +26,7 @@ class PyHarness(TermHarness):
         self.pyharness = pyharness_fn
 
     def __call__(self) -> Optional[TestResult]:
-        result = TestResult(status=TestResult.FAIL)
+        result = TestResult(status=Status.FAIL)
         test_result = None
         output = None
 
@@ -36,7 +36,7 @@ class PyHarness(TermHarness):
                 test_result = self.pyharness(self.dut)
 
             if test_result is None:
-                test_result = TestResult(status=TestResult.OK)
+                test_result = TestResult(status=Status.OK)
 
             output = o.getvalue()
         except (TIMEOUT, EOF) as e:

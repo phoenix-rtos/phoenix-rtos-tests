@@ -1,6 +1,6 @@
 from .base import (
     HarnessBase,
-    TermHarness,
+    TerminalHarness,
     IntermediateHarness,
     VoidHarness,
     RebooterHarness,
@@ -22,7 +22,7 @@ __all__ = [
     "FlashError",
     "PyHarness",
     "HarnessBase",
-    "TermHarness",
+    "TerminalHarness",
     "IntermediateHarness",
     "VoidHarness",
     "Rebooter",
