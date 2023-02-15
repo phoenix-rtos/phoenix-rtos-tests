@@ -209,7 +209,7 @@ def main():
     except PortError as e:
         # TODO Make port finding in the global scope
         print(e)
-        sys.exit(2)
+        return 2
 
     ctx = TestContext(
         target=target,
@@ -239,4 +239,6 @@ def main():
 
 
 if __name__ == "__main__":
-    exit(main())
+    res = main()
+    if res != 0:
+        sys.exit(res)

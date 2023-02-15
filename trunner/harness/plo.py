@@ -7,7 +7,7 @@ from trunner.dut import Dut
 from trunner.text import bold
 from trunner.tools import Phoenixd
 from trunner.types import AppOptions, TestResult
-from .base import HarnessError, IntermediateHarness, Rebooter, TermHarness, VoidHarness
+from .base import HarnessError, IntermediateHarness, Rebooter, TerminalHarness
 
 
 class PloError(HarnessError):
@@ -27,17 +27,21 @@ class PloError(HarnessError):
         self.expected = expected
 
     def __str__(self):
-        err = bold("PLO ERROR: ") + (self.msg if self.msg else "") + "\n"
+        err = [bold("PLO ERROR: ")]
+        if self.msg:
+            err.append(self.msg)
+
         if self.cmd is not None:
-            err += bold("CMD PASSED: ") + self.cmd + "\n"
+            err.extend([bold("CMD PASSED:"), self.cmd])
 
         if self.expected is not None:
-            err += bold("EXPECTED: ") + self.expected + "\n"
+            err.extend([bold("EXPECTED:"), self.expected])
 
         if self.output is not None:
-            err += bold("OUTPUT:") + "\n" + self.output + "\n"
+            err.extend([bold("OUTPUT:"), self.output])
 
-        return err
+        err.append("")
+        return "\n".join(err)
 
 
 class PloInterface:
@@ -187,7 +191,7 @@ class PloImageProperty:
     memory_bank: str
 
 
-class PloImageLoader(TermHarness, PloInterface):
+class PloImageLoader(TerminalHarness, PloInterface):
     """Harness to load the image to the memory using plo bootloader and phoenixd program.
 
     It loads plo bootloader using plo_loader callback and then, with the help of a phoenixd program,
@@ -206,10 +210,10 @@ class PloImageLoader(TermHarness, PloInterface):
         dut: Dut,
         rebooter: Rebooter,
         image: PloImageProperty,
-        plo_loader: TermHarness,
+        plo_loader: TerminalHarness,
         phoenixd: Phoenixd,
     ):
-        TermHarness.__init__(self)
+        TerminalHarness.__init__(self)
         PloInterface.__init__(self, dut)
         self.dut = dut
         self.rebooter = rebooter
@@ -232,7 +236,7 @@ class PloImageLoader(TermHarness, PloInterface):
         self.rebooter(flash=False, hard=True)
 
 
-class PloPhoenixdAppLoader(TermHarness, PloInterface):
+class PloPhoenixdAppLoader(TerminalHarness, PloInterface):
     """Harness to load the binaries to syspage using plo bootloader.
 
     It loads the binariers of applications using plo bootloader with the help of a phoenixd program.
@@ -245,10 +249,10 @@ class PloPhoenixdAppLoader(TermHarness, PloInterface):
     """
 
     def __init__(self, dut: Dut, apps: Sequence[AppOptions], phoenixd: Phoenixd):
-        TermHarness.__init__(self)
+        TerminalHarness.__init__(self)
         PloInterface.__init__(self, dut)
         self.dut = dut
-        self.apps = apps if apps else []
+        self.apps = apps
         self.phoenixd = phoenixd
 
     def __call__(self):
@@ -278,11 +282,12 @@ class PloHarness(IntermediateHarness, PloInterface):
         IntermediateHarness.__init__(self)
         PloInterface.__init__(self, dut)
         self.dut = dut
-        self.app_loader = VoidHarness() if not app_loader else app_loader
+        self.app_loader = app_loader
 
     def __call__(self) -> Optional[TestResult]:
         self.enter_bootloader()
         self.wait_prompt()
-        self.app_loader()
+        if self.app_loader:
+            self.app_loader()
         self.go()
         return self.next_harness()

@@ -4,7 +4,7 @@ from typing import Callable, Optional, List
 from trunner.config import TestContext
 from trunner.dut import HostDut
 from trunner.harness import IntermediateHarness, HarnessBuilder
-from trunner.types import TestOptions, TestResult
+from trunner.types import Status, TestOptions, TestResult
 from .base import TargetBase
 
 
@@ -45,7 +45,7 @@ class HostPCGenericTarget(TargetBase):
         if test.shell is None or test.shell.cmd is None:
             # TODO we should detect it in parsing step, now force fail
             def fail():
-                return TestResult(msg="There is no command to execute", status=TestResult.FAIL)
+                return TestResult(msg="There is no command to execute", status=Status.FAIL)
 
             builder.add(fail)
             return builder.get_harness()

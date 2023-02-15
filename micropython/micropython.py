@@ -1,7 +1,7 @@
 import re
 from pathlib import Path
 
-from trunner.types import TestResult
+from trunner.types import Status, TestResult
 
 PROMPT = r"(\r+)\x1b\[0J" + r"\(psh\)% "
 EOL = r"\r+\n"
@@ -108,7 +108,7 @@ def harness(dut):
     test_path, test_result = get_test(dut)
 
     if re.match("SKIP", test_result):
-        res = TestResult(status=TestResult.SKIP)
+        res = TestResult(status=Status.SKIP)
         dut.sendline()
         return res
 
@@ -123,7 +123,7 @@ def harness(dut):
         test_passed = True
 
     if test_passed:
-        return TestResult(status=TestResult.OK)
+        return TestResult(status=Status.OK)
     else:
         msg = f"Incorrect result!\n\nExpected result:\n{exp_output}\nTest result:\n{test_result}\n"
-        return TestResult(msg=msg, status=TestResult.FAIL)
+        return TestResult(msg=msg, status=Status.FAIL)
