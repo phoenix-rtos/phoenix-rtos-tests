@@ -543,6 +543,7 @@ TEST(stdio_line, getline_wronly)
 		TEST_ASSERT_EQUAL_INT(EBADF, errno);
 		/* even if line is a NULL pointer and there is nothing to read, it shall allocate even a byte for NUL termination char */
 		TEST_ASSERT_NOT_NULL(line);
+		free(line);
 	}
 	assert_fclosed(&filep);
 }
