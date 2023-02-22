@@ -1,3 +1,4 @@
+import io
 import os
 import signal
 import threading
@@ -6,7 +7,8 @@ from contextlib import contextmanager
 
 import pexpect
 
-from trunner.harness import ProcessError
+from trunner.harness import ProcessError, HarnessError
+from .common import add_output_to_exception
 
 
 def wait_for_dev(port, timeout=0):
@@ -71,11 +73,12 @@ class Phoenixd:
     def __init__(self, port="/dev/serial/by-id/usb-Phoenix_Systems_plo_CDC_ACM-if00", cwd=".", directory="."):
         self.port = port
         self.proc = None
-        self.output_buffer = ""
         self.reader_thread = None
         self.cwd = cwd
         self.dir = directory
         self.dispatcher_event = None
+        self.logfile = io.StringIO()
+        self.output = ""
 
     def _reader(self):
         """This method is intended to be run as a separate thread.
@@ -92,11 +95,9 @@ class Phoenixd:
 
         self.dispatcher_event.set()
 
-        self.output_buffer = self.proc.before
         # Phoenixd requires reading its output constantly to work properly, especially during long copy operations
-        self.proc.expect(pexpect.EOF, timeout=None)
         # EOF occurs always after killing the phoenixd process
-        self.output_buffer += self.proc.before
+        self.proc.expect(pexpect.EOF, timeout=None)
 
     def _run(self):
         try:
@@ -119,12 +120,12 @@ class Phoenixd:
         # Reader thread will notify us that message dispatcher has just started
         dispatcher_ready = self.dispatcher_event.wait(timeout=5)
         if not dispatcher_ready:
-            self._close()
-            raise PhoenixdError("Message dispatcher did not start!", self.output_buffer)
+            raise PhoenixdError("Message dispatcher did not start!", self.proc.before)
 
         return self.proc
 
     @contextmanager
+    @add_output_to_exception(exclude=PhoenixdError)
     def run(self):
         try:
             self._run()
@@ -141,3 +142,6 @@ class Phoenixd:
         self.reader_thread.join(timeout=10)
         if self.proc.isalive():
             os.killpg(os.getpgid(self.proc.pid), signal.SIGKILL)
+
+        self.output = self.logfile.getvalue()
+        self.logfile.close()

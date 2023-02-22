@@ -8,9 +8,9 @@ import serial
 
 from trunner.config import TestContext
 from trunner.dut import Dut, SerialDut, PortError
-from trunner.harness.base import HarnessBase
 from trunner.host import Host
 from trunner.harness import (
+    HarnessBase,
     IntermediateHarness,
     TerminalHarness,
     PloInterface,

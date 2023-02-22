@@ -1,3 +1,4 @@
+import io
 import signal
 from contextlib import contextmanager
 from pathlib import Path
@@ -5,7 +6,9 @@ from typing import Union
 
 import pexpect
 
-from trunner.harness import ProcessError, FlashError
+from trunner.harness import ProcessError
+from trunner.dut import clear_pexpect_buffer
+from .common import add_output_to_exception
 
 
 class GdbError(ProcessError):
@@ -17,6 +20,8 @@ class GdbInteractive:
         self.port = port
         self.cwd = cwd
         self.proc = None
+        self.output = ""
+        self.logfile = io.StringIO()
 
     def expect_prompt(self):
         try:
@@ -53,6 +58,8 @@ class GdbInteractive:
 
         self.proc.close(force=True)
         self.proc.wait()
+        self.output = self.logfile.getvalue()
+        self.logfile.close()
 
         if self.proc.exitstatus != 0:
             status = self.proc.exitstatus
@@ -62,6 +69,7 @@ class GdbInteractive:
             raise GdbError(f"gdb-multiarch returned {status} after closing gdb in interactive mode!")
 
     @contextmanager
+    @add_output_to_exception(exclude=GdbError)
     def run(self):
         try:
             self.proc = pexpect.spawn(
@@ -69,12 +77,10 @@ class GdbInteractive:
                 encoding="ascii",
                 timeout=8,
                 cwd=self.cwd,
+                logfile=self.logfile,
             )
             self.proc.expect_exact("(gdb) ")
             yield
-        except FlashError as e:
-            # Add the output of GdbInteractive to exception
-            raise e
         finally:
             self._close()
 
@@ -90,8 +96,11 @@ class OpenocdGdbServer:
         self.proc = None
         self.target = target
         self.interface = interface
+        self.output = ""
+        self.logfile = io.StringIO()
 
     @contextmanager
+    @add_output_to_exception(exclude=OpenocdError)
     def run(self):
         try:
             # Use pexpect.spawn to run a process as PTY, so it will flush on a new line
@@ -108,6 +117,7 @@ class OpenocdGdbServer:
                     "init;reset",
                 ],
                 encoding="ascii",
+                logfile=self.logfile,
             )
 
             try:
@@ -116,9 +126,6 @@ class OpenocdGdbServer:
                 raise OpenocdError("Failed to start gdb server", self.proc.before) from e
 
             yield
-        except FlashError as e:
-            # Add the output of OpenocdGdbServer to exception
-            raise e
         finally:
             self._close()
 
@@ -126,14 +133,19 @@ class OpenocdGdbServer:
         if not self.proc:
             return
 
+        clear_pexpect_buffer(self.proc)
         self.proc.close(force=True)
         self.proc.wait()
+        self.output = self.logfile.getvalue()
+        self.logfile.close()
 
 
 class JLinkGdbServer:
     def __init__(self, device):
         self.device = device
         self.proc = None
+        self.logfile = io.StringIO()
+        self.output = ""
 
     def _close(self):
         if not self.proc:
@@ -142,16 +154,18 @@ class JLinkGdbServer:
         self.proc.kill(signal.SIGTERM)
         self.proc.expect_exact("Shutting down...")
         self.proc.close(force=True)
+        self.output = self.logfile.getvalue()
+        self.logfile.close()
 
     @contextmanager
+    @add_output_to_exception()
     def run(self):
         try:
-            self.proc = pexpect.spawn("JLinkGDBServer", ["-device", self.device], encoding="ascii")
+            self.proc = pexpect.spawn(
+                "JLinkGDBServer", ["-device", self.device], encoding="ascii", logfile=self.logfile
+            )
             self.proc.expect_exact("Connected to target")
             self.proc.expect_exact("Waiting for GDB connection...")
             yield
-        except FlashError as e:
-            # Add the output of JLinkGdbServer to exception
-            raise e
         finally:
             self._close()

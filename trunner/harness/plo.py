@@ -15,7 +15,7 @@ class PloError(HarnessError):
 
     def __init__(
         self,
-        msg: Optional[str] = None,
+        msg: str = "",
         output: Optional[str] = None,
         expected: Optional[str] = None,
         cmd: Optional[str] = None,
@@ -27,9 +27,7 @@ class PloError(HarnessError):
         self.expected = expected
 
     def __str__(self):
-        err = [bold("PLO ERROR: ")]
-        if self.msg:
-            err.append(self.msg)
+        err = [bold("PLO ERROR: ") + self.msg]
 
         if self.cmd is not None:
             err.extend([bold("CMD PASSED:"), self.cmd])
@@ -39,6 +37,8 @@ class PloError(HarnessError):
 
         if self.output is not None:
             err.extend([bold("OUTPUT:"), self.output])
+
+        err.extend(self._format_additional_info())
 
         err.append("")
         return "\n".join(err)

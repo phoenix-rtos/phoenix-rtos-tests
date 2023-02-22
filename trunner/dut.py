@@ -14,6 +14,18 @@ class PortNotFound(PortError):
     pass
 
 
+def clear_pexpect_buffer(pexpect_obj):
+    """Clears the pexpect buffer.
+
+    This function should be used when pexpect obj doesn't transmit new bytes."""
+
+    try:
+        while True:
+            pexpect_obj.expect(r".+", timeout=0)
+    except (pexpect.TIMEOUT, pexpect.EOF):
+        pass
+
+
 class Dut(ABC):
     """
     This class wraps the pexpect object using the delegator pattern.
@@ -47,11 +59,7 @@ class Dut(ABC):
         if not self.pexpect_proc:
             return
 
-        try:
-            while True:
-                self.pexpect_proc.expect(r".+", timeout=0)
-        except (pexpect.TIMEOUT, pexpect.EOF):
-            pass
+        clear_pexpect_buffer(self.pexpect_proc)
 
     @abstractmethod
     def open(self):
