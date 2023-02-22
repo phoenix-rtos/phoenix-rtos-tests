@@ -12,7 +12,7 @@ from .base import HarnessError, IntermediateHarness
 class ShellError(HarnessError):
     def __init__(
         self,
-        msg: Optional[str] = None,
+        msg: str = "",
         output: Optional[str] = None,
         expected: Optional[str] = None,
         cmd: Optional[str] = None,
@@ -24,17 +24,19 @@ class ShellError(HarnessError):
         self.expected = expected
 
     def __str__(self):
-        err = bold("SHELL ERROR: ") + (self.msg if self.msg else "") + "\n"
+        err = [bold("SHELL ERROR: ") + self.msg]
+
         if self.cmd is not None:
-            err += bold("CMD PASSED: ") + self.cmd + "\n"
+            err.append(bold("CMD PASSED: ") + self.cmd)
 
         if self.expected is not None:
-            err += bold("EXPECTED: ") + self.expected + "\n"
+            err.append(bold("EXPECTED: ") + self.expected)
 
         if self.output is not None:
-            err += bold("OUTPUT:") + "\n" + self.output + "\n"
+            err.extend([bold("OUTPUT:"), self.output])
 
-        return err
+        err.append("")
+        return "\n".join(err)
 
 
 class ShellHarness(IntermediateHarness):
