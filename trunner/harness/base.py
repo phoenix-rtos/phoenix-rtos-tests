@@ -1,6 +1,6 @@
 import time
 from abc import ABC, abstractmethod
-from typing import Callable, Optional
+from typing import Callable, Optional, List
 
 from trunner.text import bold
 from trunner.host import Host
@@ -11,23 +11,51 @@ from trunner.types import TestResult
 class HarnessError(Exception):
     """Base class for errors thrown in harnesses."""
 
-    pass
+    def __init__(self, msg: str = ""):
+        self.msg = msg
+        self.additional_info = {}
+
+    def add_additional_info(self, header: str, output: str):
+        self.additional_info[header] = output
+
+    def _format_additional_info(self) -> List[str]:
+        err = []
+
+        if self.additional_info:
+            err.append(bold("ADDITIONAL INFO:"))
+
+            for header, output in self.additional_info.items():
+                err.extend([bold(header.upper() + ":"), output])
+
+        return err
+
+    def __str__(self):
+        msg = self.msg
+        if not msg:
+            msg = "[there is no message]"
+
+        err = [bold(f"HARNESS ERROR: ") + msg]
+        err.extend(self._format_additional_info())
+        err.append("")
+        return "\n".join(err)
 
 
 class ProcessError(HarnessError):
     name: str = "PROCESS"
 
     def __init__(self, msg: str = "", output: Optional[str] = None):
+        super().__init__(msg)
         self.msg = msg
         self.output = output
 
     def __str__(self):
         # TODO format github actions output
-        err = [bold(f"{self.name} ERROR:"), self.msg]
+        err = [bold(f"{self.name} ERROR: ") + self.msg]
 
         if self.output is not None:
             err.extend([bold("OUTPUT:"), self.output])
 
+        err.extend(self._format_additional_info())
         err.append("")
         return "\n".join(err)
 
