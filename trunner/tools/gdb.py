@@ -27,7 +27,7 @@ class GdbInteractive:
         try:
             self.proc.expect_exact("(gdb) ")
         except (pexpect.TIMEOUT, pexpect.EOF) as e:
-            raise GdbError("Failed to read a prompt", self.proc.before) from e
+            raise GdbError("Failed to read a prompt", output=self.logfile.getvalue()) from e
 
     def connect(self):
         try:
@@ -35,7 +35,7 @@ class GdbInteractive:
             # TODO here is not enough to expect a prompt, parse if everything is OK
             self.expect_prompt()
         except (pexpect.TIMEOUT, pexpect.EOF) as e:
-            raise GdbError(f"Failed to connect to localhost:{self.port}", output=self.proc.before) from e
+            raise GdbError(f"Failed to connect to localhost:{self.port}", output=self.logfile.getvalue()) from e
 
     def load(self, test_path: Union[Path, str], addr: int):
         try:
@@ -43,14 +43,14 @@ class GdbInteractive:
             self.proc.expect_exact("Restoring binary file")
             self.expect_prompt()
         except (pexpect.TIMEOUT, pexpect.EOF) as e:
-            raise GdbError(f"Failed to load {test_path} to addr {addr}", output=self.proc.before) from e
+            raise GdbError(f"Failed to load {test_path} to addr {addr}", output=self.logfile.getvalue()) from e
 
     def cont(self):
         try:
             self.proc.sendline("c")
             self.proc.expect_exact("Continuing.")
         except (pexpect.TIMEOUT, pexpect.EOF) as e:
-            raise GdbError("Failed to continue", output=self.proc.before) from e
+            raise GdbError("Failed to continue", output=self.logfile.getvalue()) from e
 
     def _close(self):
         if not self.proc:
@@ -66,10 +66,12 @@ class GdbInteractive:
             if self.proc.exitstatus is None:
                 status = "[terminated by signal]"
 
-            raise GdbError(f"gdb-multiarch returned {status} after closing gdb in interactive mode!")
+            raise GdbError(
+                f"gdb-multiarch returned {status} after closing gdb in interactive mode!", output=self.output
+            )
 
     @contextmanager
-    @add_output_to_exception(exclude=GdbError)
+    @add_output_to_exception(GdbError)
     def run(self):
         try:
             self.proc = pexpect.spawn(
@@ -100,7 +102,7 @@ class OpenocdGdbServer:
         self.logfile = io.StringIO()
 
     @contextmanager
-    @add_output_to_exception(exclude=OpenocdError)
+    @add_output_to_exception(OpenocdError)
     def run(self):
         try:
             # Use pexpect.spawn to run a process as PTY, so it will flush on a new line
@@ -123,7 +125,7 @@ class OpenocdGdbServer:
             try:
                 self.proc.expect_exact("Info : Listening on port 3333 for gdb connections")
             except (pexpect.TIMEOUT, pexpect.EOF) as e:
-                raise OpenocdError("Failed to start gdb server", self.proc.before) from e
+                raise OpenocdError("Failed to start gdb server", self.logfile.getvalue()) from e
 
             yield
         finally:

@@ -12,8 +12,9 @@
 # %LICENSE%
 #
 
+import trunner
+
 import psh.tools.psh as psh
-import trunner.config as config
 from psh.tools.psh import EOT
 from psh.tools.randwrapper import TestRandom
 from psh.tools.common import CHARS, get_rand_strings

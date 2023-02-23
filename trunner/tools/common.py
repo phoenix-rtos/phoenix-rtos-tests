@@ -1,11 +1,11 @@
-from typing import Optional, Type
+from typing import Type
 from functools import wraps
 from pathlib import Path
 
 from trunner.harness import HarnessError
 
 
-def add_output_to_exception(exclude: Optional[Type[HarnessError]] = None):
+def add_output_to_exception(*excludes: Type[HarnessError]):
     """Decorator to add the output of process to the exception.
 
     It should be nested in the contextmanager decorator"""
@@ -15,15 +15,11 @@ def add_output_to_exception(exclude: Optional[Type[HarnessError]] = None):
         def wrapper(self, *args, **kwargs):
             try:
                 yield from generator(self, *args, **kwargs)
-            except exclude:
-                # We are not interested in `exclude` type of exception
-                raise
             except HarnessError as e:
-                if not self.proc:
-                    raise
+                if not isinstance(e, excludes) and self.proc:
+                    command = Path(self.proc.command).name
+                    e.add_additional_info(command + " output", self.output)
 
-                command = Path(self.proc.command).name
-                e.add_additional_info(command, self.output)
                 raise
 
         return wrapper

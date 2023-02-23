@@ -119,15 +119,10 @@ def parse_args(targets: Dict[str, TargetBase], hosts: Dict[str, Host]):
         help="Increases verbosity level",
     )
 
-    # Add alternative option "--nightly" "" for nightly argument, which is False
-    # Needed for proper disabling long tests in gh actions
-    # because of problem with passing empty argument through gh workflows
     parser.add_argument(
         "--nightly",
-        type=bool,
-        nargs="?",
         default=False,
-        const=True,
+        action="store_true",
         help="Nightly tests will be run",
     )
 

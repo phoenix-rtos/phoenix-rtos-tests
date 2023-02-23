@@ -62,7 +62,7 @@ def assert_mtime(p, datetimes: Dict[str, datetime], dir=''):
             date = target_datetime
 
         assert date == target_datetime, "".join((
-            f'The modification time for {filename} is not equal to the target one!',
+            f'The modification time for {filename} is not equal to the target one! ',
             f'file datetime: {date} target datetime: {target_datetime}'))
 
 

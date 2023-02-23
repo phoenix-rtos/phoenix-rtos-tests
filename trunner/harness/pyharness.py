@@ -1,6 +1,4 @@
-import contextlib
 from typing import Callable, Optional
-from ptyprocess.ptyprocess import io
 
 from pexpect import TIMEOUT, EOF
 
@@ -28,17 +26,14 @@ class PyHarness(TerminalHarness):
     def __call__(self) -> Optional[TestResult]:
         result = TestResult(status=Status.FAIL)
         test_result = None
-        output = None
 
         try:
-            # Catch the output printed to stdout
-            with contextlib.redirect_stdout(io.StringIO()) as o:
-                test_result = self.pyharness(self.dut)
+            # TODO maybe we should catch the output from the test, for example based on test configuration
+            test_result = self.pyharness(self.dut)
 
             if test_result is None:
                 test_result = TestResult(status=Status.OK)
 
-            output = o.getvalue()
         except (TIMEOUT, EOF) as e:
             result.fail_pexpect(self.dut, e)
         except UnicodeDecodeError as e:
@@ -57,8 +52,5 @@ class PyHarness(TerminalHarness):
                     )
 
                 result = test_result
-
-        if output is not None:
-            result.output = output
 
         return result
