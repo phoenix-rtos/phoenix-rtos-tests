@@ -101,16 +101,6 @@ class STM32L4x6PloAppLoader(TerminalHarness, PloInterface):
             offset += sz
 
 
-class SetupAndRunHarness(IntermediateHarness):
-    def __init__(self, setup: HarnessBase):
-        super().__init__()
-        self.setup = setup
-
-    def __call__(self) -> Optional[TestResult]:
-        self.setup()
-        return self.next_harness()
-
-
 class STM32L4x6Target(TargetBase):
     name = "armv7m4-stm32l4x6-nucleo"
     rootfs = False

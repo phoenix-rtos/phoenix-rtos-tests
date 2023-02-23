@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import re
 import sys
 import traceback
@@ -9,6 +10,10 @@ from typing import Callable, List, Optional, Sequence
 
 import trunner
 from trunner.text import bold, green, red, yellow
+
+
+def is_github_actions() -> bool:
+    return "GITHUB_ACTIONS" in os.environ
 
 
 class Status(Enum):
