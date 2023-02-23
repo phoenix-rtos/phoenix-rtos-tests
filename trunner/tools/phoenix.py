@@ -7,7 +7,7 @@ from contextlib import contextmanager
 
 import pexpect
 
-from trunner.harness import ProcessError, HarnessError
+from trunner.harness import ProcessError
 from .common import add_output_to_exception
 
 
@@ -111,6 +111,7 @@ class Phoenixd:
             ["-p", self.port, "-s", self.dir],
             cwd=self.cwd,
             encoding="ascii",
+            logfile=self.logfile,
         )
 
         self.dispatcher_event = threading.Event()
@@ -125,7 +126,7 @@ class Phoenixd:
         return self.proc
 
     @contextmanager
-    @add_output_to_exception(exclude=PhoenixdError)
+    @add_output_to_exception(PhoenixdError)
     def run(self):
         try:
             self._run()

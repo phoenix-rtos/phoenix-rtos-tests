@@ -116,7 +116,7 @@ class TestRunner:
         return fail, skip
 
     def run(self) -> bool:
-        """Runs the entire test campaigne based on yamls given in test_paths attribute.
+        """Runs the entire test campaign based on yamls given in test_paths attribute.
 
         Returns true if there are no failed tests.
         """

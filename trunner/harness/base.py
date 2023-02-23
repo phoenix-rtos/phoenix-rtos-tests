@@ -5,7 +5,7 @@ from typing import Callable, Optional, List
 from trunner.text import bold
 from trunner.host import Host
 from trunner.dut import Dut
-from trunner.types import TestResult
+from trunner.types import TestResult, is_github_actions
 
 
 class HarnessError(Exception):
@@ -25,7 +25,13 @@ class HarnessError(Exception):
             err.append(bold("ADDITIONAL INFO:"))
 
             for header, output in self.additional_info.items():
+                if is_github_actions():
+                    err.append(f"::group::{header}")
+
                 err.extend([bold(header.upper() + ":"), output])
+
+                if is_github_actions():
+                    err.append("::endgroup::")
 
         return err
 
@@ -34,7 +40,7 @@ class HarnessError(Exception):
         if not msg:
             msg = "[there is no message]"
 
-        err = [bold(f"HARNESS ERROR: ") + msg]
+        err = [bold("HARNESS ERROR: ") + msg]
         err.extend(self._format_additional_info())
         err.append("")
         return "\n".join(err)
@@ -145,9 +151,9 @@ class HarnessBuilder:
         else:
             self.tail = self.tail.chain(harness)
 
-    def get_harness(self):
+    def get_harness(self) -> Callable[[], Optional[TestResult]]:
         """Returns the first harness in list."""
-        if self.head is self.tail:
+        if self.head is None:
             raise ValueError("Harness chain is empty!")
 
         return self.head
