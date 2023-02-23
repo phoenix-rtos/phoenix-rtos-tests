@@ -7,7 +7,7 @@ from contextlib import contextmanager
 
 import pexpect
 
-from trunner.harness import ProcessError, HarnessError
+from trunner.harness import ProcessError
 from .common import add_output_to_exception
 
 

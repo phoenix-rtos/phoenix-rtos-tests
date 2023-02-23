@@ -34,7 +34,7 @@ class HarnessError(Exception):
         if not msg:
             msg = "[there is no message]"
 
-        err = [bold(f"HARNESS ERROR: ") + msg]
+        err = [bold("HARNESS ERROR: ") + msg]
         err.extend(self._format_additional_info())
         err.append("")
         return "\n".join(err)
@@ -145,9 +145,9 @@ class HarnessBuilder:
         else:
             self.tail = self.tail.chain(harness)
 
-    def get_harness(self):
+    def get_harness(self) -> Callable[[], Optional[TestResult]]:
         """Returns the first harness in list."""
-        if self.head is self.tail:
+        if self.head is None:
             raise ValueError("Harness chain is empty!")
 
         return self.head

@@ -38,9 +38,8 @@ class PsuPloLoader(TerminalHarness, PloInterface):
 
 class ARMv7M7Target(TargetBase):
     image = PloImageProperty(file="phoenix.disk", source="usb0", memory_bank="flash0")
-    kernel_psu_script = "plo-ram.sdp"
+    plo_psu_script = "plo-ram.sdp"
     rootfs = False
-    vid_pid = "vid:pid"
 
     def __init__(self, host: Host, port: str, baudrate: int = 115200):
         self.dut = SerialDut(port, baudrate, encoding="utf-8", codec_errors="ignore")
@@ -54,7 +53,7 @@ class ARMv7M7Target(TargetBase):
     def flash_dut(self):
         plo_loader = PsuPloLoader(
             dut=self.dut,
-            psu=Psu(self.kernel_psu_script, self.boot_dir()),
+            psu=Psu(self.plo_psu_script, self.boot_dir()),
         )
 
         loader = PloImageLoader(
@@ -71,7 +70,7 @@ class ARMv7M7Target(TargetBase):
         builder = HarnessBuilder()
 
         if test.should_reboot:
-            builder.add(RebooterHarness(self.rebooter))
+            builder.add(RebooterHarness(self.rebooter, hard=False))
 
         if test.bootloader is not None:
             app_loader = None
