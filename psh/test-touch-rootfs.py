@@ -15,18 +15,18 @@ import psh.tools.psh as psh
 from psh.tools.common import assert_mtime
 
 
-def assert_hardlinks(p):
+def assert_bin(p):
+    ''' Asserts that all files in /bin are able to be touched'''
     dates = {}
-    # all psh commands are hardlinks
-    for hardlink in psh.get_commands(p):
-        hardlink_path = f'/bin/{hardlink}'
-        dates[hardlink] = psh.date(p)
-        msg = f"Prompt hasn't been seen after the hardlink touch: {hardlink_path}"
-        psh.assert_cmd(p, f'touch {hardlink_path}', result='success', msg=msg)
+    for file in psh.ls_simple(p, 'bin'):
+        file_path = f'/bin/{file}'
+        dates[file] = psh.date(p)
+        msg = f"Prompt hasn't been seen after the executable/hardlink touch: {file_path}"
+        psh.assert_cmd(p, f'touch {file_path}', result='success', msg=msg)
 
     assert_mtime(p, dates, '/bin')
 
 
 @psh.run
 def harness(p):
-    assert_hardlinks(p)
+    assert_bin(p)
