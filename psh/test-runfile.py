@@ -12,7 +12,6 @@
 # %LICENSE%
 #
 
-import pexpect
 import psh.tools.psh as psh
 import trunner.config as config
 from psh.tools.psh import EOT
@@ -49,16 +48,18 @@ def assert_dirs(p, root_dirs):
         psh.assert_prompt_after_cmd(p, f'/{root_dir}', result='fail')
 
 
-def assert_symlinks(p):
-    psh.assert_prompt_after_cmd(p, '/bin/ls', result='success')
-
-    help_cmds = psh.get_commands(p)
-    p.sendline('/bin/help')
-    for help_cmd in help_cmds:
-        idx = p.expect_exact([help_cmd, pexpect.TIMEOUT, pexpect.EOF])
-        assert idx == 0, f"Help output, when executing by runfile doesn't print the following command: {help_cmd}"
-    psh.assert_prompt(p, "Prompt hasn't been seen after executing: /bin/help")
-    psh.assert_cmd_successed(p)
+def assert_hardlinks(p):
+    # psh applets are examples of hardlinks that exists in fs.
+    # When busybox port is used their applets overwrite psh hardlinks with same names.
+    # That's why we test only one phoenix-specific psh applet
+    # Just checking whether executing runfile on them prints expected format for this cmd
+    msg = 'Wrong format of mem command output, when calling without arguments'
+    psh.assert_cmd(p,
+                   '/bin/mem',
+                   expected=r'(\(\d+\+\d+\)/\d+\w?B)\s+(\d+/\d+\s+entries)(\r+)\n',
+                   result='success',
+                   msg=msg,
+                   is_regex=True)
 
 
 def _exit_spawned_psh(p):
@@ -98,7 +99,7 @@ def harness(p):
     root_dirs = get_root_dirs(p)
     assert_nonexistent(p, root_dirs, random_wrapper)
     assert_dirs(p, root_dirs)
-    assert_symlinks(p)
+    assert_hardlinks(p)
     assert_executables(p)
     # skipped test case because of https://github.com/phoenix-rtos/phoenix-rtos-project/issues/262
     # assert_devices(p)
