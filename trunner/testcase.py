@@ -94,7 +94,7 @@ class TestCase:
             # Wait for a prompt
             # On armv7a9-zynq7000-qemu jffs initialization may take to ~20s, that's why it's set to 25
             if self.target == "armv7a9-zynq7000-qemu":
-                proc.expect_exact('(psh)% ', timeout=25)
+                proc.expect_exact('root@?:~ #', timeout=25)
             else:
                 proc.expect_exact('(psh)% ')
             if self.exec_cmd:

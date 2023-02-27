@@ -37,7 +37,7 @@ class QemuRunner(Runner):
 
         proc = pexpect.spawn(self.cmd, encoding='utf-8', timeout=test.timeout)
         if self.logpath:
-            proc.logfile = open(self.logpath, "a")
+            proc.logfile_read = open(self.logpath, "a")
 
         try:
             test.handle(proc)
