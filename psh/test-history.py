@@ -26,14 +26,9 @@ def assert_help(p):
 
     assert_msg = "Prompt hasn't been displayed properly, when calling with wrong arguments"
     psh.assert_prompt_after_cmd(p, 'history -z', result='fail', msg=assert_msg)
-    # Temporary disabled, because of the following issue:
-    # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/521
-    # psh.assert_prompt_after_cmd(p, 'history -xx', assert_msg)
-    # psh.assert_cmd_failed(p)
+    psh.assert_prompt_after_cmd(p, 'history -xx', result='fail', msg=assert_msg)
     psh.assert_prompt_after_cmd(p, 'history @!$ qrw $*%', result='fail', msg=assert_msg)
-    # the order in CHARS list can be random
-    # temporarily because of #521 issue we use sorted version
-    psh.assert_prompt_after_cmd(p, 'history ' + ''.join(sorted(CHARS)), result='fail', msg=assert_msg)
+    psh.assert_prompt_after_cmd(p, 'history ' + ''.join(CHARS), result='fail', msg=assert_msg)
 
 
 def assert_clear(p):
