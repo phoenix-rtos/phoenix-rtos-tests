@@ -29,14 +29,18 @@ def assert_ls_pshcmds(p, psh_cmds):
     psh_cmd_pattern += SEPARATOR_PATTERN
 
     cmd = 'ls bin'
-    listed_psh_cmds = set()
+    listed_files = set()
+    # TODO: get values dynamically, now it's based on PSH_INTERNAL_APPLETS
+    internal_applets = set(('help', 'pshapp'))
     p.sendline(cmd)
     p.expect(cmd)
 
     while p.expect([psh.PROMPT, psh_cmd_pattern]):
-        listed_psh_cmds.add(p.match['cmd'])
+        cmd = p.match['cmd']
+        if cmd not in internal_applets:
+            listed_files.add(cmd)
 
-    missing_cmds = psh_cmds - listed_psh_cmds
+    missing_cmds = psh_cmds - internal_applets - listed_files
     msg = ("Not all psh commands from help are listed in /bin!"
            + f"\nMissing commands: {missing_cmds}")
 
