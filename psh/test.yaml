@@ -47,6 +47,8 @@ test:
 
         - name: touch-rootfs
           harness: test-touch-rootfs.py
+          # temporary disabled because of the following issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/621
+          ignore: true
           targets:
               exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk]
 
