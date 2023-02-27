@@ -21,7 +21,7 @@ def assert_bin(p):
     for file in psh.ls_simple(p, 'bin'):
         file_path = f'/bin/{file}'
         dates[file] = psh.date(p)
-        msg = f"Prompt hasn't been seen after the executable/hardlink touch: {file_path}"
+        msg = f"Prompt hasn't been seen after touching the following file: {file_path}"
         psh.assert_cmd(p, f'touch {file_path}', result='success', msg=msg)
 
     assert_mtime(p, dates, '/bin')
