@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import sys
+import os
 from pathlib import Path
 from typing import Dict, Tuple
 
@@ -33,6 +34,20 @@ def args_file(arg):
     return path
 
 
+def is_raspberry_pi() -> bool:
+    if os.name != "posix":
+        return False
+
+    try:
+        with open("/sys/firmware/devicetree/base/model", "r") as f:
+            model = f.read().lower()
+            return "raspberry pi" in model
+    except Exception:
+        pass
+
+    return False
+
+
 def parse_args(targets: Dict[str, TargetBase], hosts: Dict[str, Host]):
     """Parses and returns program arguments.
 
@@ -58,7 +73,7 @@ def parse_args(targets: Dict[str, TargetBase], hosts: Dict[str, Host]):
     parser.add_argument(
         "-H",
         "--host",
-        default="pc",
+        default="rpi" if is_raspberry_pi() else "pc",
         choices=hosts.keys(),
         help=(
             'Set host that run tests. "pc" host is recommended for running tests on emulators. '
