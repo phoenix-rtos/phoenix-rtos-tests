@@ -1,4 +1,4 @@
-from .base import TargetBase
+from .base import TargetBase, find_port
 from .armv7m7 import IMXRT106xEvkTarget, IMXRT117xEvkTarget, ARMv7M7Target
 from .armv7m4 import STM32L4x6Target
 from .armv7a9 import Zynq7000ZedboardTarget
@@ -16,4 +16,5 @@ __all__ = [
     "STM32L4x6Target",
     "Zynq7000ZedboardTarget",
     "TargetBase",
+    "find_port",
 ]
