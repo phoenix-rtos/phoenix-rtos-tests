@@ -1,6 +1,7 @@
 from __future__ import annotations
 import importlib.util
 import shlex
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Set, TYPE_CHECKING
@@ -114,7 +115,11 @@ class ConfigParser:
             raise ParserError("error during loading harness module")
 
         harness_module = importlib.util.module_from_spec(spec)
+        sys.modules["harness"] = harness_module
+        saved_path = sys.path
+        sys.path = sys.path + [str(path.parent.absolute())]
         spec.loader.exec_module(harness_module)
+        sys.path = saved_path
 
         if hasattr(harness_module, "harness"):
             harness_fn = harness_module.harness
