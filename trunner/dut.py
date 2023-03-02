@@ -4,6 +4,7 @@ from typing import Any
 import pexpect
 import pexpect.fdpexpect
 import serial
+import os
 
 
 class PortError(Exception):
@@ -95,6 +96,12 @@ class SerialDut(Dut):
             raise PortError(e) from e
 
         self.pexpect_proc = pexpect.fdpexpect.fdspawn(self.serial, *self.args, **self.kwargs)
+        if os.path.exists("/tmp/phoenix_test.log"):
+            os.remove("/tmp/phoenix_test.log")
+        if os.path.exists("/tmp/phoenix_test_read.log"):
+            os.remove("/tmp/phoenix_test_read.log")
+        self.pexpect_proc.logfile = open("/tmp/phoenix_test.log", "a")
+        self.pexpect_proc.logfile_read = open("/tmp/phoenix_test_read.log", "a")
 
 
 class ProcessDut(Dut):
