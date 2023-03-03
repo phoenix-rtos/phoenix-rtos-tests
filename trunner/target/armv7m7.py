@@ -24,6 +24,10 @@ class ARMv7M7TargetRebooter(Rebooter):
         # setting the flash mode pin on this specific test unit to high causes switch to flash memory mode
         self.host.set_flash_mode(not flash)
 
+    def _reboot_hard(self):
+        # FIXME due to problems with relay use only soft reboot
+        self._reboot_soft()
+
 
 class PsuPloLoader(TerminalHarness, PloInterface):
     def __init__(self, dut: Dut, psu: Psu):
