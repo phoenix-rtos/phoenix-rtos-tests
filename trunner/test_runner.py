@@ -99,6 +99,8 @@ class TestRunner:
                 if idx == len(tests) - 1:
                     return
 
+                tests[idx + 1].should_reboot = False
+
                 if result.is_skip():
                     tests[idx + 1].should_reboot = tests[idx].should_reboot
 
@@ -108,8 +110,6 @@ class TestRunner:
                     or (tests[idx + 1].bootloader is not None and tests[idx + 1].bootloader.apps)
                 ):
                     tests[idx + 1].should_reboot = True
-                else:
-                    tests[idx + 1].should_reboot = False
 
             set_reboot_flag(tests, idx, result)
 
