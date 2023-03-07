@@ -56,7 +56,8 @@ class ZynqGdbPloLoader(TerminalHarness, PloInterface):
                 subprocess.run(
                     ["gdb-multiarch", "plo-gdb.elf", "-x", self.script, "-batch"],
                     encoding="ascii",
-                    capture_output=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
                     check=True,
                     timeout=20,
                     cwd=self.cwd,

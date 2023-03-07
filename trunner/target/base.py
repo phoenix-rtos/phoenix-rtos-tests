@@ -13,12 +13,18 @@ def find_port(port_hint: str) -> str:
 
     for p in list_ports.grep(port_hint):
         if port is not None:
-            raise PortNotFound(f'More than one port can be found using hint "{port_hint}"')
+            raise PortNotFound(
+                "More than one port was found! Maybe more than one device is connected? Hint used to find port:"
+                f" {port_hint}"
+            )
 
         port = p
 
     if port is None:
-        raise PortNotFound(f'There is not port with that can be found using hint "{port_hint}"')
+        raise PortNotFound(
+            "Couldn't find port to communicate with device! Make sure device is connected. Hint used to find port:"
+            f" {port_hint}"
+        )
 
     return port.device
 

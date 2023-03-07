@@ -8,6 +8,11 @@ from trunner.text import bold, green, red, yellow
 from trunner.types import Status, TestOptions, TestResult
 
 
+def _add_tests_module_to_syspath(project_path: Path):
+    # Add phoenix-rtos-tests to python path to make sure that module is visible for tests, whenever they are
+    sys.path.insert(0, str(project_path / Path("phoenix-rtos-tests")))
+
+
 class TestRunner:
     """Class responsible for loading, building and running tests"""
 
@@ -44,12 +49,16 @@ class TestRunner:
     def flash(self):
         """Flashes the device under test."""
 
+        print("Flashing an image to device...")
+
         try:
             self.target.flash_dut()
         except (FlashError, HarnessError) as e:
             print(bold("ERROR WHILE FLASHING THE DEVICE"))
             print(e)
             sys.exit(1)
+
+        print("Done!")
 
     def run_tests(self, tests: Sequence[TestOptions]):
         """It builds and runs tests based on given test options.
@@ -99,6 +108,8 @@ class TestRunner:
                 if idx == len(tests) - 1:
                     return
 
+                tests[idx + 1].should_reboot = False
+
                 if result.is_skip():
                     tests[idx + 1].should_reboot = tests[idx].should_reboot
 
@@ -108,8 +119,6 @@ class TestRunner:
                     or (tests[idx + 1].bootloader is not None and tests[idx + 1].bootloader.apps)
                 ):
                     tests[idx + 1].should_reboot = True
-                else:
-                    tests[idx + 1].should_reboot = False
 
             set_reboot_flag(tests, idx, result)
 
@@ -128,6 +137,8 @@ class TestRunner:
 
         if not self.ctx.should_test:
             return True
+
+        _add_tests_module_to_syspath(self.ctx.project_path)
 
         fails, skips = self.run_tests(tests)
         passes = len(tests) - fails - skips

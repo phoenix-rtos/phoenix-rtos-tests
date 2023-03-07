@@ -117,7 +117,7 @@ class ConfigParser:
         harness_module = importlib.util.module_from_spec(spec)
         sys.modules["harness"] = harness_module
         saved_path = sys.path
-        sys.path = sys.path + [str(path.parent.absolute())]
+        sys.path = [str(path.parent.absolute())] + sys.path
         spec.loader.exec_module(harness_module)
         sys.path = saved_path
 
