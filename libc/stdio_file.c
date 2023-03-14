@@ -686,13 +686,36 @@ TEST(stdio_fileseek, seek_fseeko)
 }
 
 
-IGNORE_TEST(stdio_fileseek, seek_fsetpos)
+/* TODO: add more test cases to cover all requirements from documentation (errno, clearing EOF etc.) */
+TEST(stdio_fileseek, seek_fsetpos)
 {
-	/* <posix incmpliance> function is not implemented in libphoenix */
-	/* The fsetpos() function shall set the file position and state indicators for the stream 
-	pointed to by stream according to the value of the object pointed to by pos, 
-	which the application shall ensure is a value obtained from an earlier call to fgetpos() on the same stream. 
+	/* The fsetpos() function shall set the file position and state indicators for the stream
+	pointed to by stream according to the value of the object pointed to by pos,
+	which the application shall ensure is a value obtained from an earlier call to fgetpos() on the same stream.
 	If a read or write error occurs, the error indicator for the stream shall be set and fsetpos() fails.*/
+
+	fpos_t pos0, pos1;
+	filep = fopen(STDIO_TEST_FILENAME, "a+");
+	TEST_ASSERT_NOT_NULL(filep);
+	{
+		/* Ensure to start from the beginning */
+		(void)rewind(filep); /* not tested */
+		/* Save location of the file beginning */
+		TEST_ASSERT_EQUAL_INT(0, fgetpos(filep, &pos0));
+		TEST_ASSERT_EQUAL_INT(teststr[0], fgetc(filep));
+		/* Save location at second byte */
+		TEST_ASSERT_EQUAL_INT(0, fgetpos(filep, &pos1));
+		TEST_ASSERT_EQUAL_INT(teststr[1], fgetc(filep));
+		TEST_ASSERT_EQUAL_INT(teststr[2], fgetc(filep));
+		/* Restore location #1 */
+		TEST_ASSERT_EQUAL_INT(0, fsetpos(filep, &pos1));
+		TEST_ASSERT_EQUAL_INT(teststr[1], fgetc(filep));
+		TEST_ASSERT_EQUAL_INT(teststr[2], fgetc(filep));
+		/* Restore location #0 */
+		TEST_ASSERT_EQUAL_INT(0, fsetpos(filep, &pos0));
+		TEST_ASSERT_EQUAL_INT(teststr[0], fgetc(filep));
+	}
+	assert_fclosed(&filep);
 }
 
 
