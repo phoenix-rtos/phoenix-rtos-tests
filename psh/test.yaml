@@ -9,10 +9,6 @@ test:
 
         - name: auth
           harness: test-auth.py
-          targets:
-              exclude:
-                   # temporarily disabled because of #550 issue
-                  - armv7m4-stm32l4x6-nucleo
 
         #FIXME - test-pshlogin.py is only for targets with root
         - name: pshlogin
@@ -45,10 +41,6 @@ test:
 
         - name: mkdir
           harness: test-mkdir.py
-          targets:
-              exclude:
-                   # temporarily disabled because of #550 issue
-                  - armv7m4-stm32l4x6-nucleo
 
         - name: touch
           # TODO touch of netsocket and pf fails...
@@ -78,7 +70,3 @@ test:
 
         - name: history
           harness: test-history.py
-          targets:
-              exclude:
-                   # temporarily disabled because of #550 issue
-                  - armv7m4-stm32l4x6-nucleo
