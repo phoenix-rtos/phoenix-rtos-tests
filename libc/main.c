@@ -40,6 +40,7 @@ void runner(void)
 	RUN_TEST_GROUP(wchar_wcscmp);
 	RUN_TEST_GROUP(test_pthread_cond);
 	RUN_TEST_GROUP(stdlib_malloc);
+	RUN_TEST_GROUP(string_len);
 }
 
 
