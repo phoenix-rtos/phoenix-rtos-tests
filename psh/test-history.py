@@ -46,17 +46,17 @@ def assert_rand_cmds(p, psh_cmds, random_wrapper: TestRandom):
 
 
 def assert_psh_cmds(p, psh_cmds, with_repeats=False):
-    # perf, pm disabled because of issues, double history is printed as one
-    omitted = {'edit', 'exit', 'perf', 'pm', 'top', 'reboot', 'history'}
-
-    remaining = list(set(psh_cmds) - omitted)
+    # psh prompt should appear after passing the following commands without arguments:
+    cmds = ['bind', 'cat', 'cd', 'cp', 'date', 'df', 'dmesg', 'echo', 'exec', 'help',
+            'history', 'hm', 'kill', 'ls', 'mem', 'mkdir', 'mount', 'nc', 'nslookup', 'ntpclient',
+            'ping', 'ps', 'pwd', 'sync', 'sysexec', 'touch', 'tty', 'umount', 'uptime', 'wget']
 
     if with_repeats:
         msg = 'Wrong history output after running available psh commands multiple time'
-        assert_sent(p, remaining, msg, repeat=True)
+        assert_sent(p, cmds, msg, repeat=True)
     else:
         msg = 'Wrong history output after running available psh commands'
-        assert_sent(p, remaining, msg)
+        assert_sent(p, cmds, msg)
 
 
 def assert_multiarg_cmds(p, random_wrapper: TestRandom):
