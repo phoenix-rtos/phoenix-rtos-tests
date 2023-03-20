@@ -8,4 +8,3 @@
 
 $(eval $(call add_test, test_mmap))
 $(eval $(call add_test, test_malloc))
-$(eval $(call add_test, test_memmove))

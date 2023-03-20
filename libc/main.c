@@ -54,6 +54,9 @@ void runner(void)
 	RUN_TEST_GROUP(stdio_scanf_squareBrackets);
 	RUN_TEST_GROUP(stdio_scanf_rest);
 	RUN_TEST_GROUP(string_chr);
+	RUN_TEST_GROUP(string_memset);
+	RUN_TEST_GROUP(string_memmove);
+	RUN_TEST_GROUP(string_memmove_big);
 }
 
 
