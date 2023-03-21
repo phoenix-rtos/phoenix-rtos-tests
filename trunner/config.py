@@ -2,7 +2,7 @@ from __future__ import annotations
 import importlib.util
 import shlex
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Set, TYPE_CHECKING
 
@@ -37,8 +37,6 @@ class TestContext:
         verbosity: Verbose level of the output of tests.
     """
 
-    target: Optional[TargetBase]
-    host: Host
     port: Optional[str]
     baudrate: int
     project_path: Path
@@ -46,6 +44,9 @@ class TestContext:
     should_flash: bool
     should_test: bool
     verbosity: int
+    kwargs: dict = field(default_factory=dict)
+    target: Optional[TargetBase] = None
+    host: Optional[Host] = None
 
 
 def array_value(array: Dict[str, List[str]]) -> List[str]:
