@@ -56,10 +56,16 @@ def register_extensions(extensions: Sequence[Callable[[], dict]]) -> Tuple[List[
         extension = register_fn()
 
         if "target" in extension:
-            targets.append(extension["target"])
+            if isinstance(extension["target"], list):
+                targets.extend(extension["target"])
+            else:
+                targets.append(extension["target"])
 
         if "host" in extension:
-            hosts.append(extension["host"])
+            if isinstance(extension["host"], list):
+                hosts.extend(extension["host"])
+            else:
+                hosts.append(extension["host"])
 
     return targets, hosts
 
