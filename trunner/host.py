@@ -9,11 +9,20 @@ class Host(ABC):  # pylint: disable=too-few-public-methods
     def has_gpio(self) -> bool:
         """Return true if host has gpio utility and can restart the target device using it."""
 
+    @classmethod
+    @abstractmethod
+    def from_context(cls, _):
+        pass
+
 
 class EmulatorHost(Host):
     """Host class for the targets that are intended to run on PC (for example, emulated targets)."""
 
     name = "pc"
+
+    @classmethod
+    def from_context(cls, _):
+        return cls()
 
     def has_gpio(self) -> bool:
         return False
@@ -55,6 +64,10 @@ class RpiHost(Host):
         self.reset_gpio = GPIO(17, init=1)
         self.power_gpio = GPIO(2, init=1)
         self.boot_gpio = GPIO(4, init=0)
+
+    @classmethod
+    def from_context(cls, _):
+        return cls()
 
     def set_reset(self, val):
         if val:

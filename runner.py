@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import dataclasses
 import sys
 import os
 from pathlib import Path
@@ -141,6 +142,35 @@ def parse_args(targets: Dict[str, TargetBase], hosts: Dict[str, Host]):
         help="Nightly tests will be run",
     )
 
+    class keyValue(argparse.Action):
+        def __call__(self, parser, namespace, values, option_string=None):
+            kwargs = getattr(namespace, self.dest)
+            if kwargs is None:
+                kwargs = dict()
+
+            if values is None:
+                parser.error()
+
+            for item in values:
+                try:
+                    key, val = item.split("=", 1)
+                except ValueError:
+                    parser.error(f"expected key=value format, got: {item}")
+
+                kwargs[key] = val
+
+            setattr(namespace, self.dest, kwargs)
+
+    parser.add_argument(
+        "--kwargs",
+        nargs="+",
+        action=keyValue,
+        help=(
+            "Pass extra arguments in key=value format to use them in extensions or in harnesses. Caution: do not use"
+            " '=' character in the `key` string! Runner just splits the word on the first occurrence of `=` character."
+        ),
+    )
+
     args = parser.parse_args()
 
     if not args.test:
@@ -197,13 +227,8 @@ def main():
     targets, hosts = resolve_targets_and_hosts()
 
     args = parse_args(targets, hosts)
-    host_cls = hosts[args.host]
-    host = host_cls()
 
-    # Create partial context for target initialization
     ctx = TestContext(
-        target=None,
-        host=host,
         port=args.port,
         baudrate=args.baudrate,
         project_path=resolve_project_path(),
@@ -211,27 +236,22 @@ def main():
         should_flash=not args.no_flash,
         should_test=not args.no_test,
         verbosity=args.verbose,
+        kwargs=args.kwargs,
     )
 
+    host_cls = hosts[args.host]
+    host = host_cls.from_context(ctx)
+    ctx = dataclasses.replace(ctx, host=host)
+
+    target_cls = targets[args.target]
     try:
-        target_cls = targets[args.target]
         target = target_cls.from_context(ctx)
     except PortError as e:
         # TODO Make port finding in the global scope
         print(e)
         return 2
 
-    ctx = TestContext(
-        target=target,
-        host=ctx.host,
-        port=ctx.port,
-        baudrate=ctx.baudrate,
-        project_path=ctx.project_path,
-        nightly=ctx.nightly,
-        should_flash=ctx.should_flash,
-        should_test=ctx.should_test,
-        verbosity=ctx.verbosity,
-    )
+    ctx = dataclasses.replace(ctx, target=target)
 
     # Set global context
     trunner.ctx = ctx
