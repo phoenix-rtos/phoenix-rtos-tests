@@ -1,15 +1,15 @@
 from typing import Any, Dict, Optional, Sequence
 
-import trunner
+from trunner.ctx import TestContext
 from trunner.dut import Dut
 from trunner.text import blue, bold, green, red, yellow
 from trunner.types import Status, TestResult
 
 
-def _format_result_output(results: Sequence[Dict[str, Any]]) -> str:
+def _format_result_output(results: Sequence[Dict[str, Any]], ctx: TestContext) -> str:
     output = []
     for res in results:
-        if res["status"] == "PASS" and trunner.ctx.verbosity == 0:
+        if res["status"] == "PASS" and ctx.verbosity == 0:
             continue
 
         out = "\t" + bold(f"TEST({res['group']}, {res['name']})") + " "
@@ -30,7 +30,7 @@ def _format_result_output(results: Sequence[Dict[str, Any]]) -> str:
     return "".join(output)
 
 
-def unity_harness(dut: Dut) -> Optional[TestResult]:
+def unity_harness(dut: Dut, ctx: TestContext) -> Optional[TestResult]:
     assert_re = r"ASSERTION (?P<path>.*?):(?P<line>\d+):(?P<status>FAIL|INFO|IGNORE): (?P<msg>.*?)\r"
     result_re = r"TEST\((?P<group>\w+), (?P<name>\w+)\) (?P<status>PASS|IGNORE)"
     # Fail need to have its own regex due to greedy matching
@@ -70,4 +70,4 @@ def unity_harness(dut: Dut) -> Optional[TestResult]:
             break
 
     status = Status.FAIL if stats["FAIL"] != 0 else Status.OK
-    return TestResult(msg=_format_result_output(results), status=status)
+    return TestResult(msg=_format_result_output(results, ctx), status=status)

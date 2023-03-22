@@ -3,7 +3,7 @@ import time
 from abc import abstractmethod
 from typing import Callable, Optional
 
-from trunner.config import TestContext
+from trunner.ctx import TestContext
 from trunner.dut import Dut, SerialDut
 from trunner.harness import (
     HarnessBuilder,

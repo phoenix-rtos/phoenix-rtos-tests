@@ -6,7 +6,7 @@ from typing import Optional, Sequence
 import pexpect.fdpexpect
 import serial
 
-from trunner.config import TestContext
+from trunner.ctx import TestContext
 from trunner.dut import Dut, SerialDut, PortError
 from trunner.host import Host
 from trunner.harness import (

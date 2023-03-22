@@ -12,8 +12,6 @@
 # %LICENSE%
 #
 
-import trunner
-
 import psh.tools.psh as psh
 from psh.tools.psh import EOT
 from psh.tools.randwrapper import TestRandom
@@ -68,9 +66,9 @@ def _exit_spawned_psh(p):
     p.expect(r'exit(\r+)\n')
 
 
-def assert_executables(p):
+def assert_executables(p, ctx):
     # psh is the example of executable which exists in file system
-    if trunner.ctx.target.rootfs:
+    if ctx.target.rootfs:
         psh.assert_cmd(p, '/bin/psh', result='success')
     else:
         psh.assert_cmd(p, '/syspage/psh', result='success')
@@ -94,13 +92,13 @@ def assert_text_files(p):
 
 
 @psh.run
-def harness(p):
+def harness(p, ctx):
     random_wrapper = TestRandom(seed=1)
     root_dirs = get_root_dirs(p)
     assert_nonexistent(p, root_dirs, random_wrapper)
     assert_dirs(p, root_dirs)
     assert_hardlinks(p)
-    assert_executables(p)
+    assert_executables(p, ctx)
     # skipped test case because of https://github.com/phoenix-rtos/phoenix-rtos-project/issues/262
     # assert_devices(p)
     assert_text_files(p)

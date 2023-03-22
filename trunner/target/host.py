@@ -1,7 +1,7 @@
 import shlex
 from typing import Callable, Optional, List
 
-from trunner.config import TestContext
+from trunner.ctx import TestContext
 from trunner.dut import HostDut
 from trunner.harness import IntermediateHarness, HarnessBuilder
 from trunner.types import Status, TestOptions, TestResult

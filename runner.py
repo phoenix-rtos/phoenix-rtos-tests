@@ -21,7 +21,7 @@ from trunner.target import (
     STM32L4x6Target,
     Zynq7000ZedboardTarget,
 )
-from trunner.config import TestContext
+from trunner.ctx import TestContext
 from trunner.target.base import TargetBase
 
 
