@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from typing import Callable, Optional
 
-from trunner.config import TestContext
+from trunner.ctx import TestContext
 from trunner.dut import QemuDut
 from trunner.harness import HarnessBuilder, RebooterHarness, ShellHarness
 from trunner.types import TestOptions, TestResult

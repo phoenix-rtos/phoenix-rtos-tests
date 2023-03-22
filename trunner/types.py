@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Callable, List, Optional, Sequence
 
-import trunner
+from trunner.ctx import TestContext
 from trunner.text import bold, green, red, yellow
 
 
@@ -161,11 +161,11 @@ class Result:
     msg: str = ""
 
     @staticmethod
-    def format_output(results: Sequence[Result]) -> str:
+    def format_output(results: Sequence[Result], ctx: TestContext) -> str:
         output = []
 
         for res in results:
-            if res.status != Status.FAIL and trunner.ctx.verbosity == 0:
+            if res.status != Status.FAIL and ctx.verbosity == 0:
                 continue
 
             output.append(f"\t{bold(res.name)}: {res.status}")

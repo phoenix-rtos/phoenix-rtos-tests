@@ -13,6 +13,7 @@
 # %LICENSE%
 #
 
+import functools
 import re
 from collections import namedtuple
 
@@ -270,10 +271,12 @@ def deinit(pexpect_proc):
 
 
 def run(harness):
-
-    def wrapper_harness(pexpect_proc):
-        init(pexpect_proc)
-        res = harness(pexpect_proc)
-        deinit(pexpect_proc)
+    @functools.wraps(harness)
+    def wrapper_harness(*args, **kwargs):
+        dut = args[0]
+        init(dut)
+        res = harness(*args, **kwargs)
+        deinit(dut)
         return res
+
     return wrapper_harness

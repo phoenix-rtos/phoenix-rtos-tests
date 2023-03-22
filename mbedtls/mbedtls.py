@@ -1,9 +1,11 @@
 import re
 
+from trunner.ctx import TestContext
+from trunner.dut import Dut
 from trunner.types import TestResult, Result, Status
 
 
-def harness(dut):
+def harness(dut: Dut, ctx: TestContext):
     results = []
     result = None
     msg = []
@@ -45,4 +47,4 @@ def harness(dut):
         if idx == 1:
             break
 
-    return TestResult(msg=Result.format_output(results), status=test_status)
+    return TestResult(msg=Result.format_output(results, ctx), status=test_status)

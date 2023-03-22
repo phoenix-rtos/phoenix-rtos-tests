@@ -1,52 +1,19 @@
-from __future__ import annotations
 import importlib.util
 import shlex
 import sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Set, TYPE_CHECKING
+from typing import Dict, List, Optional, Tuple, Set
 
 import yaml
 
+from trunner.ctx import TestContext
 from trunner.harness import PyHarness, unity_harness
-from trunner.host import Host
 from trunner.types import AppOptions, BootloaderOptions, TestOptions, ShellOptions
-
-if TYPE_CHECKING:
-    # TargetBase uses TestContext, fix circular import
-    from trunner.target import TargetBase
 
 
 class ParserError(Exception):
     pass
-
-
-@dataclass(frozen=True)
-class TestContext:
-    """Global context of the runner.
-
-    Attributes:
-        target: Target on which the runner was launched.
-        host: Host on which the runner was launched.
-        port: Path to serial port if target uses it.
-        baudrate: Baudrate for serial. It is used if port is set.
-        project_path: Path to phoenix-rtos-project directory.
-        nightly: Determine if it's nigthly run.
-        should_flash: True if device should be flashed.
-        should_test: True if tests should be run.
-        verbosity: Verbose level of the output of tests.
-    """
-
-    port: Optional[str]
-    baudrate: int
-    project_path: Path
-    nightly: bool
-    should_flash: bool
-    should_test: bool
-    verbosity: int
-    kwargs: dict = field(default_factory=dict)
-    target: Optional[TargetBase] = None
-    host: Optional[Host] = None
 
 
 def array_value(array: Dict[str, List[str]]) -> List[str]:
@@ -127,10 +94,10 @@ class ConfigParser:
         else:
             raise ParserError(f"harness function has not been found in {path}")
 
-        self.test.harness = PyHarness(self.ctx.target.dut, harness_fn)
+        self.test.harness = PyHarness(self.ctx.target.dut, self.ctx, harness_fn)
 
     def _parse_unity(self):
-        self.test.harness = PyHarness(self.ctx.target.dut, unity_harness)
+        self.test.harness = PyHarness(self.ctx.target.dut, self.ctx, unity_harness)
 
     def _parse_load(self, config: dict):
         apps = config.get("load", [])
