@@ -62,6 +62,8 @@ void runner(void)
 	RUN_TEST_GROUP(string_strcpy_stpcpy);
 	RUN_TEST_GROUP(string_strlcpy);
 	RUN_TEST_GROUP(string_strlcat);
+	RUN_TEST_GROUP(string_errsign);
+	RUN_TEST_GROUP(signal_psignal);
 }
 
 
