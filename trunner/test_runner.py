@@ -9,7 +9,7 @@ from trunner.config import ConfigParser
 from trunner.dut import Dut
 from trunner.harness import HarnessError, FlashError
 from trunner.text import bold, green, red, yellow
-from trunner.types import Status, TestOptions, TestResult
+from trunner.types import Status, TestOptions, TestResult, is_github_actions
 
 
 def _add_tests_module_to_syspath(project_path: Path):
@@ -41,30 +41,50 @@ def init_logdir(logdir: str):
 def set_logfiles(dut: Dut, logdir: str):
     """Sets dut logfiles associated with the pexpect process if needed."""
 
-    if not logdir:
+    if not logdir and not is_github_actions():
         return
 
     logfile_r, logfile_w, logfile_a = StringIO(""), StringIO(""), StringIO("")
     dut.set_logfiles(logfile_r, logfile_w, logfile_a)
 
 
+def format_logs_for_gh(logs):
+    """Prepares drop-down list for github actions workflows based on provided raw logs"""
+
+    # skip esc codes intended to clear window and double cr to avoid printing additional newline
+    logs = logs.replace("\r\r", "\r")
+    logs = logs.replace("\033[2J", "")
+    logs = logs.replace("\033c", "")
+    logs = "::group::show logs\n" + logs + "\n::endgroup::"
+
+    return logs
+
+
 def dump_logfiles(dut: Dut, dirname: str, logdir: str):
     """Dump logfiles to log directory or to gh actions if needed."""
 
-    if not logdir:
+    if not logdir and not is_github_actions():
         return
 
-    for logfile_name, log in zip(("out", "in", "inout"), dut.get_logfiles()):
-        logs = log.getvalue()
-        # empty string -> do not dump logs
-        if not logs:
-            return
-        if not os.path.isdir(f"{logdir}/{dirname}"):
-            os.mkdir(f"{logdir}/{dirname}")
-        with open(f"{logdir}/{dirname}/{logfile_name}.log", "w") as logfile:
-            logfile.write(logs)
-        with open(f"{logdir}/test_campaign/{logfile_name}.log", "a") as logfile:
-            logfile.write(logs)
+    # we want to dump logs in the given directory
+    if logdir:
+        for logfile_name, log in zip(("out", "in", "inout"), dut.get_logfiles()):
+            logs = log.getvalue()
+            # empty string -> do not dump logs
+            if not logs:
+                return
+            if not os.path.isdir(f"{logdir}/{dirname}"):
+                os.mkdir(f"{logdir}/{dirname}")
+            with open(f"{logdir}/{dirname}/{logfile_name}.log", "w") as logfile:
+                logfile.write(logs)
+            with open(f"{logdir}/test_campaign/{logfile_name}.log", "a") as logfile:
+                logfile.write(logs)
+    # we want to dump logs on Github Actions workflow
+    if is_github_actions():
+        logfiles = dut.get_logfiles()
+        # use only out logfile
+        logs = logfiles[0].getvalue()
+        print(format_logs_for_gh(logs))
 
 
 class TestRunner:
