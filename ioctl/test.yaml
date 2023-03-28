@@ -1,0 +1,7 @@
+test:
+  type: unity
+  tests:
+    - name: unit
+      execute: test-ioctl
+      targets:
+        exclude: [host-generic-pc]
