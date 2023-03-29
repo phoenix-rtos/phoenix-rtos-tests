@@ -1823,7 +1823,11 @@ void UnityIgnore(const char* msg, const UNITY_LINE_TYPE line)
         UNITY_OUTPUT_CHAR(' ');
         UnityPrint(msg);
     }
+	/* clang-format off */
+    UNITY_PRINT_EOL();
+    
     UNITY_IGNORE_AND_BAIL;
+	/* clang-format on */
 }
 
 /*-----------------------------------------------*/
