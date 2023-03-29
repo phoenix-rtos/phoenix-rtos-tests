@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Dict, Tuple
 
 import trunner
+from trunner import resolve_project_path
 from trunner.extensions import ExtensionError, load_extensions
 from trunner.host import EmulatorHost, Host, RpiHost
 from trunner import TestRunner
@@ -26,12 +27,7 @@ from trunner.target.base import TargetBase
 
 
 def args_file(arg):
-    path = Path(arg)
-    if not path.exists():
-        print(f"Path {path} does not exist")
-        sys.exit(3)
-
-    path = path.resolve()
+    path = Path(arg).resolve()
     return path
 
 
@@ -164,6 +160,7 @@ def parse_args(targets: Dict[str, TargetBase], hosts: Dict[str, Host]):
     parser.add_argument(
         "--kwargs",
         nargs="+",
+        default=dict(),
         action=keyValue,
         help=(
             "Pass extra arguments in key=value format to use them in extensions or in harnesses. Caution: do not use"
@@ -177,13 +174,6 @@ def parse_args(targets: Dict[str, TargetBase], hosts: Dict[str, Host]):
         args.test = [resolve_project_path()]
 
     return args
-
-
-def resolve_project_path():
-    file_path = Path(__file__).resolve()
-    # file_path is phoenix-rtos-project/phoenix-rtos-tests/runner.py
-    project_dir = file_path.parent.parent
-    return project_dir
 
 
 def resolve_targets_and_hosts() -> Tuple[Dict[str, TargetBase], Dict[str, Host]]:

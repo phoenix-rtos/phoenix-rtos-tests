@@ -13,6 +13,13 @@ def _add_tests_module_to_syspath(project_path: Path):
     sys.path.insert(0, str(project_path / Path("phoenix-rtos-tests")))
 
 
+def resolve_project_path():
+    file_path = Path(__file__).resolve()
+    # file_path is phoenix-rtos-project/phoenix-rtos-tests/trunner/test_runner.py
+    project_dir = file_path.parent.parent.parent
+    return project_dir
+
+
 class TestRunner:
     """Class responsible for loading, building and running tests"""
 
@@ -27,10 +34,21 @@ class TestRunner:
 
         paths = []
         for path in self.test_paths:
-            candidate = list(path.rglob("test*.yaml"))
-            if not candidate:
-                raise ValueError(f"Test {path} does not contain .yaml test configuration")
-            paths.extend(candidate)
+            yamls = []
+
+            if path.is_dir():
+                yamls = list(path.rglob("test*.yaml")) + list(path.rglob("test*.yml"))
+                if not yamls:
+                    raise ValueError(f"{path} does not contain .yaml test configuration")
+            elif path.is_file():
+                if path.suffix != ".yaml" and path.suffix != ".yml":
+                    raise ValueError("Test configuration must be a file with .yaml or .yml extension")
+
+                yamls = [path]
+            else:
+                raise ValueError(f"Test configuration {path} is neither a directory nor a file.")
+
+            paths.extend(yamls)
 
         return paths
 
