@@ -107,6 +107,7 @@ class TestResult:
                 *(f"\t{idx}: {pattern}" for idx, pattern in enumerate(searched_patterns)),
                 bold("GOT:"),
                 self._failed_before_buffer(dut),
+                *self._failed_traceback(),
                 "",
             ]
         )
@@ -137,6 +138,10 @@ class TestResult:
 
         msg.append("")
         self.msg = "\n".join(msg)
+
+    def fail_harness_exception(self, exc):
+        self.fail()
+        self.msg = "\n".join([*self._failed_traceback(), str(exc)])
 
     def fail_unknown_exception(self):
         self.fail()

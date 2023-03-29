@@ -61,6 +61,8 @@ class PyHarness(TerminalHarness):
             result.fail_decode(self.dut, e)
         except AssertionError as e:
             result.fail_assertion(self.dut, e)
+        except HarnessError as e:
+            result.fail_harness_exception(e)
         except Exception:
             result.fail_unknown_exception()
         finally:
