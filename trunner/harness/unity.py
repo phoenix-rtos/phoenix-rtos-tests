@@ -20,6 +20,8 @@ def _format_result_output(results: Sequence[Dict[str, Any]], ctx: TestContext) -
             out += green("OK")
         elif res["status"] == "IGNORE":
             out += yellow("IGNORE")
+            if "msg" in res:
+                out += ": " + res["msg"]
         elif res["status"] == "INFO":
             out += blue("INFO")
 
@@ -31,13 +33,13 @@ def _format_result_output(results: Sequence[Dict[str, Any]], ctx: TestContext) -
 
 
 def unity_harness(dut: Dut, ctx: TestContext) -> Optional[TestResult]:
-    assert_re = r"ASSERTION (?P<path>.*?):(?P<line>\d+):(?P<status>FAIL|INFO|IGNORE): (?P<msg>.*?)\r"
+    assert_re = r"ASSERTION (?P<path>[\S]+):(?P<line>\d+):(?P<status>FAIL|INFO|IGNORE): (?P<msg>.*?)\r"
     result_re = r"TEST\((?P<group>\w+), (?P<name>\w+)\) (?P<status>PASS|IGNORE)"
     # Fail need to have its own regex due to greedy matching
     result_final_re = r"TEST\((?P<group>\w+), (?P<name>\w+)\) (?P<status>FAIL) at (?P<path>.*?):(?P<line>\d+)\r"
     final_re = r"(?P<total>\d+) Tests (?P<fail>\d+) Failures (?P<ignore>\d+) Ignored \r+\n(?P<result>OK|FAIL)"
 
-    last_fail = {"path": None, "line": None}
+    last_assertion = {}
     stats = {"FAIL": 0, "IGNORE": 0, "PASS": 0}
     results = []
 
@@ -46,13 +48,13 @@ def unity_harness(dut: Dut, ctx: TestContext) -> Optional[TestResult]:
         parsed = dut.match.groupdict()
 
         if idx == 0:
-            if parsed["status"] == "FAIL":
-                last_fail = parsed
+            if parsed["status"] in ["FAIL", "IGNORE"]:
+                last_assertion = parsed
         elif idx in (1, 2):
-            # TODO we do not consider INFO/IGNORE messages
-            if parsed["status"] == "FAIL":
-                if last_fail["path"] == parsed["path"] and last_fail["line"] == parsed["line"]:
-                    parsed["msg"] = last_fail["msg"]
+            # TODO we do not consider INFO messages
+            if last_assertion and last_assertion["status"] != "INFO":
+                parsed["msg"] = last_assertion["msg"]
+                last_assertion = {}
 
             stats[parsed["status"]] += 1
             results.append(parsed)
