@@ -68,9 +68,7 @@ TEST(stdlib_malloc, malloc_basic)
 	void *ptr;
 	ptr = malloc(BLOCK_SIZE);
 	TEST_ASSERT_NOT_NULL(ptr);
-#ifndef __phoenix__  // Temporarily disabled on phoenix because issue: #660
 	TEST_ASSERT_GREATER_OR_EQUAL_INT(BLOCK_SIZE, malloc_usable_size(ptr));
-#endif
 	memset(ptr, 0x5a, BLOCK_SIZE);
 	TEST_ASSERT_EACH_EQUAL_HEX8(0x5a, ptr, BLOCK_SIZE);
 	free(ptr);
@@ -82,9 +80,7 @@ TEST(stdlib_malloc, malloc_one)
 	void *ptr;
 	ptr = malloc(1);
 	TEST_ASSERT_NOT_NULL(ptr);
-#ifndef __phoenix__
 	TEST_ASSERT_GREATER_OR_EQUAL_INT(1, malloc_usable_size(ptr));
-#endif
 	memset(ptr, 0x2d, 1);
 	TEST_ASSERT_EACH_EQUAL_HEX8(0x2d, ptr, 1);
 	free(ptr);
@@ -96,9 +92,7 @@ TEST(stdlib_malloc, malloc_large)
 	void *ptr;
 	ptr = malloc(LARGE_SIZE);
 	TEST_ASSERT_NOT_NULL(ptr);
-#ifndef __phoenix__
 	TEST_ASSERT_GREATER_OR_EQUAL_INT(LARGE_SIZE, malloc_usable_size(ptr));
-#endif
 	memset(ptr, 0xb4, LARGE_SIZE);
 	TEST_ASSERT_EACH_EQUAL_HEX8(0xb4, ptr, LARGE_SIZE);
 	free(ptr);
@@ -111,9 +105,7 @@ TEST(stdlib_malloc, malloc_multiple)
 	ptr0 = malloc(sizeof(int));
 	TEST_ASSERT_NOT_NULL(ptr0);
 	TEST_ASSERT_EQUAL_INT(0, (uintptr_t)ptr0 % sizeof(int));
-#ifndef __phoenix__
 	TEST_ASSERT_GREATER_OR_EQUAL_INT(sizeof(int), malloc_usable_size(ptr0));
-#endif
 	memset(ptr0, 0x50, sizeof(int));
 	TEST_ASSERT_EACH_EQUAL_HEX8(0x50, ptr0, sizeof(int));
 
@@ -121,9 +113,7 @@ TEST(stdlib_malloc, malloc_multiple)
 	ptr1 = malloc(sizeof(float));
 	TEST_ASSERT_NOT_NULL(ptr1);
 	TEST_ASSERT_EQUAL_INT(0, (uintptr_t)ptr1 % sizeof(float));
-#ifndef __phoenix__
 	TEST_ASSERT_GREATER_OR_EQUAL_INT(sizeof(float), malloc_usable_size(ptr1));
-#endif
 	memset(ptr1, 0xa0, sizeof(float));
 	TEST_ASSERT_EACH_EQUAL_HEX8(0xa0, ptr1, sizeof(float));
 
@@ -131,9 +121,7 @@ TEST(stdlib_malloc, malloc_multiple)
 	ptr2 = malloc(sizeof(char));
 	TEST_ASSERT_NOT_NULL(ptr2);
 	TEST_ASSERT_EQUAL_INT(0, (uintptr_t)ptr2 % sizeof(char));
-#ifndef __phoenix__
 	TEST_ASSERT_GREATER_OR_EQUAL_INT(sizeof(char), malloc_usable_size(ptr2));
-#endif
 	memset(ptr2, 0x28, sizeof(char));
 	TEST_ASSERT_EACH_EQUAL_HEX8(0x28, ptr2, sizeof(char));
 
@@ -161,9 +149,7 @@ TEST(stdlib_malloc, malloc_iterate)
 	for (size_t s = 1; s <= 4096; s++) {
 		void *ptr = malloc(s);
 		TEST_ASSERT_NOT_NULL(ptr);
-#ifndef __phoenix__
 		TEST_ASSERT_GREATER_OR_EQUAL_INT(s, malloc_usable_size(ptr));
-#endif
 		memset(ptr, 0x5a, s);
 		TEST_ASSERT_EACH_EQUAL_HEX8(0x5a, ptr, s);
 		free(ptr);
@@ -189,9 +175,7 @@ TEST(stdlib_malloc, calloc_basic)
 	int *ptr = calloc(BLOCK_SIZE, sizeof(int));
 	TEST_ASSERT_NOT_NULL(ptr);
 	TEST_ASSERT_EACH_EQUAL_INT(0, ptr, BLOCK_SIZE);
-#ifndef __phoenix__
 	TEST_ASSERT_GREATER_OR_EQUAL_INT(BLOCK_SIZE, malloc_usable_size(ptr));
-#endif
 	free(ptr);
 }
 
@@ -230,9 +214,7 @@ TEST(stdlib_malloc, calloc_one)
 	int *ptr = calloc(1, sizeof(int));
 	TEST_ASSERT_NOT_NULL(ptr);
 	TEST_ASSERT_EQUAL_INT(0, *ptr);
-#ifndef __phoenix__
 	TEST_ASSERT_GREATER_OR_EQUAL_INT(sizeof(int), malloc_usable_size(ptr));
-#endif
 	free(ptr);
 }
 
@@ -242,9 +224,7 @@ TEST(stdlib_malloc, calloc_large)
 	int *ptr = calloc(LARGE_SIZE, sizeof(int));
 	TEST_ASSERT_NOT_NULL(ptr);
 	TEST_ASSERT_EACH_EQUAL_INT(0, ptr, LARGE_SIZE);
-#ifndef __phoenix__
 	TEST_ASSERT_GREATER_OR_EQUAL_INT(sizeof(int), malloc_usable_size(ptr));
-#endif
 	free(ptr);
 }
 
@@ -256,9 +236,7 @@ TEST(stdlib_malloc, calloc_iterate)
 		TEST_ASSERT_NOT_NULL(ptr);
 		TEST_ASSERT_EACH_EQUAL_CHAR(0, ptr, s);
 		TEST_ASSERT_EQUAL_INT(0, (uintptr_t)ptr % sizeof(char));
-#ifndef __phoenix__
 		TEST_ASSERT_GREATER_OR_EQUAL_INT(s, malloc_usable_size(ptr));
-#endif
 		memset(ptr, 0x98, s);
 		TEST_ASSERT_EACH_EQUAL_HEX8(0x98, ptr, s);
 		free(ptr);
@@ -305,9 +283,7 @@ TEST(stdlib_malloc, realloc_zero_size)
 	int *ptr = calloc(1, sizeof(int));
 	TEST_ASSERT_NOT_NULL(ptr);
 	TEST_ASSERT_EQUAL_INT(0, *ptr);
-#ifndef __phoenix__
 	TEST_ASSERT_GREATER_OR_EQUAL_INT(sizeof(int), malloc_usable_size(ptr));
-#endif
 
 	int *ptr1 = realloc(ptr, 0);
 	TEST_ASSERT_NULL(ptr1);
@@ -479,27 +455,21 @@ TEST(stdlib_malloc, realloc_multiple)
 
 	int *ptr1 = realloc(ptr, BLOCK_SIZE);
 	TEST_ASSERT_NOT_NULL(ptr1);
-#ifndef __phoenix__
 	TEST_ASSERT_GREATER_OR_EQUAL_INT(BLOCK_SIZE, malloc_usable_size(ptr1));
-#endif
 	TEST_ASSERT_EACH_EQUAL_HEX8(0x5f, ptr1, BLOCK_SIZE);
 	memset(ptr1, 0xbe, BLOCK_SIZE);
 	TEST_ASSERT_EACH_EQUAL_HEX8(0xbe, ptr1, BLOCK_SIZE);
 
 	int *ptr2 = realloc(ptr1, BLOCK_SIZE * 2);
 	TEST_ASSERT_NOT_NULL(ptr2);
-#ifndef __phoenix__
 	TEST_ASSERT_GREATER_OR_EQUAL_INT(BLOCK_SIZE * 2, malloc_usable_size(ptr2));
-#endif
 	TEST_ASSERT_EACH_EQUAL_HEX8(0xbe, ptr2, BLOCK_SIZE);
 	memset(ptr2, 0x30, BLOCK_SIZE * 2);
 	TEST_ASSERT_EACH_EQUAL_HEX8(0x30, ptr2, BLOCK_SIZE * 2);
 
 	int *ptr3 = realloc(ptr2, BLOCK_SIZE / 2);
 	TEST_ASSERT_NOT_NULL(ptr3);
-#ifndef __phoenix__
 	TEST_ASSERT_GREATER_OR_EQUAL_INT(BLOCK_SIZE / 2, malloc_usable_size(ptr3));
-#endif
 	TEST_ASSERT_EACH_EQUAL_HEX8(0x30, ptr3, BLOCK_SIZE / 2);
 
 	free(ptr3);
