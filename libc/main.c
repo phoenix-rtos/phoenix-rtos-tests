@@ -39,7 +39,7 @@ void runner(void)
 	RUN_TEST_GROUP(unistd_file);
 	RUN_TEST_GROUP(wchar_wcscmp);
 	RUN_TEST_GROUP(test_pthread_cond);
-	RUN_TEST_GROUP(stdlib_malloc);
+	RUN_TEST_GROUP(stdlib_alloc);
 	RUN_TEST_GROUP(string_len);
 	RUN_TEST_GROUP(stdlib_env);
 }

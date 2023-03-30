@@ -50,20 +50,20 @@ malloc, calloc,
 realloc, free
 */
 
-TEST_GROUP(stdlib_malloc);
+TEST_GROUP(stdlib_alloc);
 
 
-TEST_SETUP(stdlib_malloc)
+TEST_SETUP(stdlib_alloc)
 {
 }
 
 
-TEST_TEAR_DOWN(stdlib_malloc)
+TEST_TEAR_DOWN(stdlib_alloc)
 {
 }
 
 
-TEST(stdlib_malloc, malloc_basic)
+TEST(stdlib_alloc, malloc_basic)
 {
 	void *ptr;
 	ptr = malloc(BLOCK_SIZE);
@@ -75,7 +75,7 @@ TEST(stdlib_malloc, malloc_basic)
 }
 
 
-TEST(stdlib_malloc, malloc_one)
+TEST(stdlib_alloc, malloc_one)
 {
 	void *ptr;
 	ptr = malloc(1);
@@ -87,7 +87,7 @@ TEST(stdlib_malloc, malloc_one)
 }
 
 
-TEST(stdlib_malloc, malloc_large)
+TEST(stdlib_alloc, malloc_large)
 {
 	void *ptr;
 	ptr = malloc(LARGE_SIZE);
@@ -99,7 +99,7 @@ TEST(stdlib_malloc, malloc_large)
 }
 
 
-TEST(stdlib_malloc, malloc_multiple)
+TEST(stdlib_alloc, malloc_multiple)
 {
 	void *ptr0;
 	ptr0 = malloc(sizeof(int));
@@ -131,7 +131,7 @@ TEST(stdlib_malloc, malloc_multiple)
 }
 
 
-TEST(stdlib_malloc, malloc_zero)
+TEST(stdlib_alloc, malloc_zero)
 {
 	void *ptr;
 	ptr = malloc(0);
@@ -144,7 +144,7 @@ TEST(stdlib_malloc, malloc_zero)
 }
 
 
-TEST(stdlib_malloc, malloc_iterate)
+TEST(stdlib_alloc, malloc_iterate)
 {
 	for (size_t s = 1; s <= 4096; s++) {
 		void *ptr = malloc(s);
@@ -157,7 +157,7 @@ TEST(stdlib_malloc, malloc_iterate)
 }
 
 
-TEST(stdlib_malloc, malloc_overflow)
+TEST(stdlib_alloc, malloc_overflow)
 {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Walloc-size-larger-than="
@@ -170,7 +170,7 @@ TEST(stdlib_malloc, malloc_overflow)
 }
 
 
-TEST(stdlib_malloc, calloc_basic)
+TEST(stdlib_alloc, calloc_basic)
 {
 	int *ptr = calloc(BLOCK_SIZE, sizeof(int));
 	TEST_ASSERT_NOT_NULL(ptr);
@@ -180,7 +180,7 @@ TEST(stdlib_malloc, calloc_basic)
 }
 
 
-TEST(stdlib_malloc, calloc_zero)
+TEST(stdlib_alloc, calloc_zero)
 {
 	int *ptr = calloc(0, sizeof(int));
 #ifdef __phoenix__
@@ -209,7 +209,7 @@ TEST(stdlib_malloc, calloc_zero)
 }
 
 
-TEST(stdlib_malloc, calloc_one)
+TEST(stdlib_alloc, calloc_one)
 {
 	int *ptr = calloc(1, sizeof(int));
 	TEST_ASSERT_NOT_NULL(ptr);
@@ -219,7 +219,7 @@ TEST(stdlib_malloc, calloc_one)
 }
 
 
-TEST(stdlib_malloc, calloc_large)
+TEST(stdlib_alloc, calloc_large)
 {
 	int *ptr = calloc(LARGE_SIZE, sizeof(int));
 	TEST_ASSERT_NOT_NULL(ptr);
@@ -229,7 +229,7 @@ TEST(stdlib_malloc, calloc_large)
 }
 
 
-TEST(stdlib_malloc, calloc_iterate)
+TEST(stdlib_alloc, calloc_iterate)
 {
 	for (size_t s = 1; s <= 4096; s++) {
 		char *ptr = calloc(s, sizeof(char));
@@ -244,7 +244,7 @@ TEST(stdlib_malloc, calloc_iterate)
 }
 
 
-TEST(stdlib_malloc, calloc_overflow)
+TEST(stdlib_alloc, calloc_overflow)
 {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Walloc-size-larger-than="
@@ -265,7 +265,7 @@ TEST(stdlib_malloc, calloc_overflow)
 }
 
 
-TEST(stdlib_malloc, realloc_null)
+TEST(stdlib_alloc, realloc_null)
 {
 	int *ptr = realloc(NULL, sizeof(int));
 	TEST_ASSERT_NOT_NULL(ptr);
@@ -278,7 +278,7 @@ TEST(stdlib_malloc, realloc_null)
 }
 
 
-TEST(stdlib_malloc, realloc_zero_size)
+TEST(stdlib_alloc, realloc_zero_size)
 {
 	int *ptr = calloc(1, sizeof(int));
 	TEST_ASSERT_NOT_NULL(ptr);
@@ -290,7 +290,7 @@ TEST(stdlib_malloc, realloc_zero_size)
 }
 
 
-TEST(stdlib_malloc, realloc_calloc_resize)
+TEST(stdlib_alloc, realloc_calloc_resize)
 {
 	int *ptr = calloc(BLOCK_SIZE, sizeof(int));
 	TEST_ASSERT_NOT_NULL(ptr);
@@ -312,7 +312,7 @@ TEST(stdlib_malloc, realloc_calloc_resize)
 }
 
 
-TEST(stdlib_malloc, realloc_calloc_resize_smaller)
+TEST(stdlib_alloc, realloc_calloc_resize_smaller)
 {
 	int *ptr = calloc(2, 2 * sizeof(int));
 	TEST_ASSERT_NOT_NULL(ptr);
@@ -344,7 +344,7 @@ TEST(stdlib_malloc, realloc_calloc_resize_smaller)
 }
 
 
-TEST(stdlib_malloc, realloc_calloc_resize_larger)
+TEST(stdlib_alloc, realloc_calloc_resize_larger)
 {
 	int *ptr = calloc(1, sizeof(int));
 	TEST_ASSERT_NOT_NULL(ptr);
@@ -377,7 +377,7 @@ TEST(stdlib_malloc, realloc_calloc_resize_larger)
 }
 
 
-TEST(stdlib_malloc, realloc_malloc_resize)
+TEST(stdlib_alloc, realloc_malloc_resize)
 {
 	int *ptr = malloc(sizeof(int));
 	TEST_ASSERT_NOT_NULL(ptr);
@@ -393,7 +393,7 @@ TEST(stdlib_malloc, realloc_malloc_resize)
 }
 
 
-TEST(stdlib_malloc, realloc_malloc_resize_smaller)
+TEST(stdlib_alloc, realloc_malloc_resize_smaller)
 {
 	int *ptr = malloc(2 * sizeof(int));
 	TEST_ASSERT_NOT_NULL(ptr);
@@ -419,7 +419,7 @@ TEST(stdlib_malloc, realloc_malloc_resize_smaller)
 }
 
 
-TEST(stdlib_malloc, realloc_malloc_resize_larger)
+TEST(stdlib_alloc, realloc_malloc_resize_larger)
 {
 	int *ptr = malloc(sizeof(int));
 	TEST_ASSERT_NOT_NULL(ptr);
@@ -445,7 +445,7 @@ TEST(stdlib_malloc, realloc_malloc_resize_larger)
 }
 
 
-TEST(stdlib_malloc, realloc_multiple)
+TEST(stdlib_alloc, realloc_multiple)
 {
 	int *ptr = calloc(BLOCK_SIZE, BLOCK_SIZE);
 	TEST_ASSERT_NOT_NULL(ptr);
@@ -476,7 +476,7 @@ TEST(stdlib_malloc, realloc_multiple)
 }
 
 
-TEST(stdlib_malloc, realloc_overflow)
+TEST(stdlib_alloc, realloc_overflow)
 {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Walloc-size-larger-than="
@@ -505,7 +505,7 @@ TEST(stdlib_malloc, realloc_overflow)
 }
 
 
-TEST(stdlib_malloc, free_null)
+TEST(stdlib_alloc, free_null)
 {
 	int *ptr = NULL;
 	free(ptr);
@@ -513,30 +513,30 @@ TEST(stdlib_malloc, free_null)
 }
 
 
-TEST_GROUP_RUNNER(stdlib_malloc)
+TEST_GROUP_RUNNER(stdlib_alloc)
 {
-	RUN_TEST_CASE(stdlib_malloc, malloc_basic);
-	RUN_TEST_CASE(stdlib_malloc, malloc_one);
-	RUN_TEST_CASE(stdlib_malloc, malloc_large);
-	RUN_TEST_CASE(stdlib_malloc, malloc_multiple);
-	RUN_TEST_CASE(stdlib_malloc, malloc_zero);
-	RUN_TEST_CASE(stdlib_malloc, malloc_iterate);
-	RUN_TEST_CASE(stdlib_malloc, malloc_overflow);
-	RUN_TEST_CASE(stdlib_malloc, calloc_basic);
-	RUN_TEST_CASE(stdlib_malloc, calloc_zero);
-	RUN_TEST_CASE(stdlib_malloc, calloc_one);
-	RUN_TEST_CASE(stdlib_malloc, calloc_large);
-	RUN_TEST_CASE(stdlib_malloc, calloc_iterate);
-	RUN_TEST_CASE(stdlib_malloc, calloc_overflow);
-	RUN_TEST_CASE(stdlib_malloc, realloc_null);
-	RUN_TEST_CASE(stdlib_malloc, realloc_zero_size);
-	RUN_TEST_CASE(stdlib_malloc, realloc_calloc_resize);
-	RUN_TEST_CASE(stdlib_malloc, realloc_calloc_resize_smaller);
-	RUN_TEST_CASE(stdlib_malloc, realloc_calloc_resize_larger);
-	RUN_TEST_CASE(stdlib_malloc, realloc_malloc_resize);
-	RUN_TEST_CASE(stdlib_malloc, realloc_malloc_resize_smaller);
-	RUN_TEST_CASE(stdlib_malloc, realloc_malloc_resize_larger);
-	RUN_TEST_CASE(stdlib_malloc, realloc_multiple);
-	RUN_TEST_CASE(stdlib_malloc, realloc_overflow);
-	RUN_TEST_CASE(stdlib_malloc, free_null);
+	RUN_TEST_CASE(stdlib_alloc, malloc_basic);
+	RUN_TEST_CASE(stdlib_alloc, malloc_one);
+	RUN_TEST_CASE(stdlib_alloc, malloc_large);
+	RUN_TEST_CASE(stdlib_alloc, malloc_multiple);
+	RUN_TEST_CASE(stdlib_alloc, malloc_zero);
+	RUN_TEST_CASE(stdlib_alloc, malloc_iterate);
+	RUN_TEST_CASE(stdlib_alloc, malloc_overflow);
+	RUN_TEST_CASE(stdlib_alloc, calloc_basic);
+	RUN_TEST_CASE(stdlib_alloc, calloc_zero);
+	RUN_TEST_CASE(stdlib_alloc, calloc_one);
+	RUN_TEST_CASE(stdlib_alloc, calloc_large);
+	RUN_TEST_CASE(stdlib_alloc, calloc_iterate);
+	RUN_TEST_CASE(stdlib_alloc, calloc_overflow);
+	RUN_TEST_CASE(stdlib_alloc, realloc_null);
+	RUN_TEST_CASE(stdlib_alloc, realloc_zero_size);
+	RUN_TEST_CASE(stdlib_alloc, realloc_calloc_resize);
+	RUN_TEST_CASE(stdlib_alloc, realloc_calloc_resize_smaller);
+	RUN_TEST_CASE(stdlib_alloc, realloc_calloc_resize_larger);
+	RUN_TEST_CASE(stdlib_alloc, realloc_malloc_resize);
+	RUN_TEST_CASE(stdlib_alloc, realloc_malloc_resize_smaller);
+	RUN_TEST_CASE(stdlib_alloc, realloc_malloc_resize_larger);
+	RUN_TEST_CASE(stdlib_alloc, realloc_multiple);
+	RUN_TEST_CASE(stdlib_alloc, realloc_overflow);
+	RUN_TEST_CASE(stdlib_alloc, free_null);
 }
