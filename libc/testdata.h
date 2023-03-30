@@ -6,7 +6,7 @@
  * Helpers regarding data for libc testing purposes
  *
  * Copyright 2023 Phoenix Systems
- * Author: Damian Loewnau
+ * Author: Damian Loewnau, Mateusz Bloch
  *
  * This file is part of Phoenix-RTOS.
  *
@@ -25,6 +25,14 @@
 
 /* returns string filled with all possible chars, which has to be freed after use */
 extern char *testdata_createCharStr(int size);
+
+
+/* large string filled with lorem ipsum data */
+extern const char testdata_hugeStr[];
+
+
+/* returns size of the testdata_huge_str */
+extern const size_t testdata_hugeSize;
 
 
 #endif
