@@ -42,6 +42,7 @@ void runner(void)
 	RUN_TEST_GROUP(stdlib_alloc);
 	RUN_TEST_GROUP(string_len);
 	RUN_TEST_GROUP(stdlib_env);
+	RUN_TEST_GROUP(ctype);
 }
 
 
