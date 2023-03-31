@@ -134,7 +134,11 @@ class TestRunner:
                 if (
                     result.is_fail()
                     or self.ctx.nightly
-                    or (tests[idx + 1].bootloader is not None and tests[idx + 1].bootloader.apps)
+                    or (
+                        not self.ctx.target.rootfs
+                        and tests[idx + 1].bootloader is not None
+                        and tests[idx + 1].bootloader.apps
+                    )
                 ):
                     tests[idx + 1].should_reboot = True
 
