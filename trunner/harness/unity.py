@@ -35,7 +35,7 @@ def unity_harness(dut: Dut, ctx: TestContext) -> Optional[TestResult]:
     result_re = r"TEST\((?P<group>\w+), (?P<name>\w+)\) (?P<status>PASS|IGNORE)"
     # Fail need to have its own regex due to greedy matching
     result_final_re = r"TEST\((?P<group>\w+), (?P<name>\w+)\) (?P<status>FAIL) at (?P<path>.*?):(?P<line>\d+)\r"
-    final_re = r"(?P<total>\d+) Tests (?P<fail>\d+) Failures (?P<ignore>\d+) Ignored"
+    final_re = r"(?P<total>\d+) Tests (?P<fail>\d+) Failures (?P<ignore>\d+) Ignored \r+\n(?P<result>OK|FAIL)"
 
     last_fail = {"path": None, "line": None}
     stats = {"FAIL": 0, "IGNORE": 0, "PASS": 0}
@@ -58,7 +58,8 @@ def unity_harness(dut: Dut, ctx: TestContext) -> Optional[TestResult]:
             results.append(parsed)
         elif idx == 3:
             for k, v in parsed.items():
-                parsed[k] = int(v)
+                if k != "result":
+                    parsed[k] = int(v)
 
             assert (
                 parsed["total"] == sum(stats.values())
