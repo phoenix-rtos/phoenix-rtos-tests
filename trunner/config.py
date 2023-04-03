@@ -94,10 +94,10 @@ class ConfigParser:
         else:
             raise ParserError(f"harness function has not been found in {path}")
 
-        self.test.harness = PyHarness(self.ctx.target.dut, self.ctx, harness_fn)
+        self.test.harness = PyHarness(self.ctx.target.dut, self.ctx, harness_fn, self.test.kwargs)
 
     def _parse_unity(self):
-        self.test.harness = PyHarness(self.ctx.target.dut, self.ctx, unity_harness)
+        self.test.harness = PyHarness(self.ctx.target.dut, self.ctx, unity_harness, self.test.kwargs)
 
     def _parse_load(self, config: dict):
         apps = config.get("load", [])
@@ -222,6 +222,13 @@ class ConfigParser:
 
         self.test.name = f"{test_dir}/{name}"
 
+    def _parse_kwargs(self, config: dict) -> None:
+        kwargs = config.get("kwargs", dict())
+        if not isinstance(kwargs, dict):
+            raise ParserError('"kwargs" must be a dictionary!')
+
+        self.test.kwargs = kwargs
+
     def _parse_config(self, config: dict):
         # Note, the order of parsing is important!
         self.test = TestOptions()
@@ -243,6 +250,7 @@ class ConfigParser:
 
         self._parse_shell_command(config)
         self._parse_load(config)
+        self._parse_kwargs(config)
         self._parse_type(config)
 
     def _load_yaml(self) -> dict:
