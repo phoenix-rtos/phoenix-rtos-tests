@@ -1,6 +1,6 @@
 from __future__ import annotations
 import inspect
-from typing import Callable, Optional, Tuple
+from typing import Dict, Optional, Tuple
 
 from pexpect import TIMEOUT, EOF
 
@@ -25,32 +25,52 @@ class PyHarness(TerminalHarness):
         self,
         dut: Dut,
         ctx: TestContext,
-        pyharness_fn: Callable[[Dut], Optional[TestResult]] | Callable[[Dut, TestContext], Optional[TestResult]],
+        pyharness_fn,
+        kwargs,
     ):
         super().__init__()
         self.dut: Dut = dut
         self.ctx: TestContext = ctx
         self.pyharness = pyharness_fn
+        self.kwargs = kwargs
 
-    def resolve_pyharness_args(self) -> Tuple[Dut] | Tuple[Dut, TestContext]:
+    def resolve_pyharness_args(self) -> Tuple[Tuple, Dict]:
         parameters = inspect.signature(self.pyharness).parameters
+        kwargs = {**self.kwargs, **self.ctx.kwargs}  # always prioritize kwargs from context
 
-        if len(parameters) == 0 or len(parameters) > 2:
-            raise HarnessError("harness can be defined only with one or two parameters! (dut and ctx)")
+        # Given the parameter list of the `harness` function, attempt to match the arguments provided.
+        # The `harness` function may be defined in one of the following ways:
+        # Based on parameter list of harness function try to fit arguments.
+        # - def harness(dut): (with only dut as a required argument)
+        # - def harness(dut, ctx): (with dut and context as required arguments)
+        # - def harness(dut, **kwargs): (with dut as a required argument and additional keyword arguments)
+        # - def harness(dut, ctx, **kwargs): (with both dut and context required arguments and additional
+        #   keyword arguments)
+
+        if len(parameters) == 0 or len(parameters) > 3:
+            raise HarnessError(
+                "the harness function can be defined only with one, two or three parameters! (dut, ctx and kwargs)"
+            )
         elif len(parameters) == 2:
-            return (self.dut, self.ctx)
+            # If the function definition includes `**kwargs`, pass both dut and kwargs as arguments
+            # otherwise, pass dut and context.
+            if any(param.kind == param.VAR_KEYWORD for param in parameters.values()):
+                return (self.dut,), kwargs
+            else:
+                return (self.dut, self.ctx), {}
+        elif len(parameters) == 3:
+            return (self.dut, self.ctx), kwargs
         else:
-            return (self.dut,)
+            return (self.dut,), {}
 
     def __call__(self) -> Optional[TestResult]:
         result = TestResult(status=Status.FAIL)
         test_result = None
 
-        args = self.resolve_pyharness_args()
-
+        args, kwargs = self.resolve_pyharness_args()
         try:
             # TODO maybe we should catch the output from the test, for example based on test configuration
-            test_result = self.pyharness(*args)
+            test_result = self.pyharness(*args, **kwargs)
 
             if test_result is None:
                 test_result = TestResult(status=Status.OK)
@@ -66,7 +86,7 @@ class PyHarness(TerminalHarness):
         except Exception:
             result.fail_unknown_exception()
         finally:
-            # pyharness can return either TestResult or None. Check if type is correct.
+            # Ensure that the type of the return value from pyharness is correct, as it can be either TestResult or None
             if test_result is not None:
                 if not isinstance(test_result, TestResult):
                     raise HarnessError(

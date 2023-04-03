@@ -1,6 +1,8 @@
 import importlib
 from abc import ABC, abstractmethod
 
+from trunner.ctx import TestContext
+
 
 class Host(ABC):  # pylint: disable=too-few-public-methods
     """Base class for Host abstraction"""
@@ -13,6 +15,10 @@ class Host(ABC):  # pylint: disable=too-few-public-methods
     @abstractmethod
     def from_context(cls, _):
         pass
+
+    def add_to_context(self, ctx: TestContext) -> TestContext:
+        """Host can use this method to add things to ctx or modify it. A new context is returned."""
+        return ctx
 
 
 class EmulatorHost(Host):

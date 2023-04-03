@@ -6,7 +6,7 @@ import sys
 import traceback
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Callable, List, Optional, Sequence
+from typing import Callable, Dict, List, Optional, Sequence
 
 from trunner.ctx import TestContext
 from trunner.text import bold, green, red, yellow
@@ -211,3 +211,4 @@ class TestOptions:
     should_reboot: bool = True
     ignore: bool = False
     nightly: bool = False
+    kwargs: Dict = field(default_factory=dict)

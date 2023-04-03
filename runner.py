@@ -242,6 +242,7 @@ def main():
         return 2
 
     ctx = dataclasses.replace(ctx, target=target)
+    ctx = host.add_to_context(ctx)
 
     # Set global context
     trunner.ctx = ctx
