@@ -28,16 +28,52 @@
 #include <unistd.h>
 #include <limits.h>
 
+
+/*
+ * All tests for floats are disabled in this test of
+ * issues #652 and #634 which cause problems with scanning these values.
+ * #652 https://github.com/phoenix-rtos/phoenix-rtos-project/issues/652
+ * #634 https://github.com/phoenix-rtos/phoenix-rtos-project/issues/634
+ */
+
+
+/* Disabled because of #656 issue */
+#ifndef __phoenix__
+#include <float.h>
+#endif
+
 #include <unity_fixture.h>
 
 #include "common.h"
 
 
-#define TESTFILE_PATH "stdio_fscanf_test"
-#define TEST_STR      "Lorem ipsum dolor sit amet,Vestibulum ante ipsum primis in faucibus orci luctus 123 et ultrices posuere cubilia curae 0x0005"
 
+
+#define TESTFILE_PATH "stdio_fscanf_test"
 /* Size enough to hold most of data types int/ptrdif/float(in other formats than %f%F and %lf%lF)/str */
 #define BUFF_LEN 256
+/* Size big enough for string contains floats (long notation) */
+#define BUFF_LEN_FLOAT 290
+
+/* Checking for define flt minmax*/
+#ifndef FLT_MAX
+#define FLT_MAX 3.40282347e+38F
+#endif
+
+#ifndef FLT_MIN
+#define FLT_MIN 1.17549435e-38F
+#endif
+
+#define TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax) \
+	{ \
+		TEST_ASSERT_EQUAL_FLOAT(FLT_MAX, fltMax); \
+		TEST_ASSERT_EQUAL_FLOAT(FLT_MAX / 2, fltMaxH); \
+		TEST_ASSERT_EQUAL_FLOAT(FLT_MIN, fltMin); \
+		TEST_ASSERT_EQUAL_FLOAT(0.f, zero); \
+		TEST_ASSERT_EQUAL_FLOAT((FLT_MIN) * -1, negFltMin); \
+		TEST_ASSERT_EQUAL_FLOAT((FLT_MAX / 2) * -1, negFltMaxH); \
+		TEST_ASSERT_EQUAL_FLOAT((FLT_MAX) * -1, negFltMax); \
+	}
 
 static FILE *filep;
 
@@ -77,6 +113,7 @@ TEST_GROUP(stdio_scanf_i);
 TEST_GROUP(stdio_scanf_u);
 TEST_GROUP(stdio_scanf_o);
 TEST_GROUP(stdio_scanf_x);
+TEST_GROUP(stdio_scanf_aefg);
 
 
 /*
@@ -2373,6 +2410,592 @@ TEST(stdio_scanf_x, tX)
 }
 
 
+/*
+//////////////////////////////////////////////////////////////////////////////////////
+*/
+
+TEST_SETUP(stdio_scanf_aefg)
+{
+	filep = fopen(TESTFILE_PATH, "w+");
+}
+
+
+TEST_TEAR_DOWN(stdio_scanf_aefg)
+{
+	fclose(filep);
+}
+
+
+TEST(stdio_scanf_aefg, f)
+{
+	/*
+	 * <posix incmpliance> Scanf doesn't support longer floating-point numbers
+	 * Problems occur when scanf needs to read big numbers after coma.
+	 * example: 0.234234345345 scanf will read
+	 * example 2.212121e-100 scanf won't read because this is along float after a coma.
+	 * Issue link: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/652
+	 */
+
+#ifdef __phoenix__
+	TEST_IGNORE();
+#endif
+
+	char buff[BUFF_LEN_FLOAT] = { 0 };
+	float fltMax, fltMaxH, zero, fltMin, negFltMax, negFltMaxH, negFltMin;
+	const char *format = "%f %f %f %f %f %f %f";
+
+	/*
+	 * Specific precision for float numbers following into 0.
+	 * FLT_MAX and FLT_MIN have first digit different by 0 on 38 place after coma
+	 * and to have an accurate reading of this value we read at least 4 digits
+	 */
+	sprintf(buff, "%f %f %.42f %f %.42f %f %f", FLT_MAX, FLT_MAX / 2, FLT_MIN, 0.f, FLT_MIN * -1, (FLT_MAX / 2) * -1, FLT_MAX * -1);
+	fprintf(filep, "%s", buff);
+	rewind(filep);
+
+	TEST_ASSERT_EQUAL_INT(7, test_vfscanfWrapper(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
+	/* This block contains all asserts from min to max for float */
+	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+
+	rewind(filep);
+
+	TEST_ASSERT_EQUAL_INT(7, fscanf(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
+	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+
+	TEST_ASSERT_EQUAL_INT(7, test_vsscanfWrapper(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
+	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+
+	TEST_ASSERT_EQUAL_INT(7, sscanf(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
+	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+}
+
+
+/*
+////////////////////////////////////////////////////////////////////////////////////////////////////
+*/
+
+
+TEST(stdio_scanf_aefg, F)
+{
+	/*
+	 * <posix incmpliance> Scanf doesn't support longer floating-point numbers
+	 * Problems occur when scanf needs to read big numbers after coma.
+	 * example: 0.234234345345 scanf will read
+	 * example 2.212121e-100 scanf won't read because this is along float after a coma.
+	 * Issue link: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/652
+	 */
+
+#ifdef __phoenix__
+	TEST_IGNORE();
+#endif
+
+	char buff[BUFF_LEN_FLOAT] = { 0 };
+	float fltMax, fltMaxH, zero, fltMin, negFltMax, negFltMaxH, negFltMin;
+	const char *format = "%F %F %F %F %F %F %F";
+
+	/*
+	 * Specific precision for float numbers following into 0.
+	 * FLT_MAX and FLT_MIN have first digit different by 0 on 38 place after coma
+	 * and to have an accurate reading of this value we read at least 4 digits
+	 */
+	sprintf(buff, "%f %f %.42f %f %.42f %f %f", FLT_MAX, FLT_MAX / 2, FLT_MIN, 0.f, FLT_MIN * -1, (FLT_MAX / 2) * -1, FLT_MAX * -1);
+	fprintf(filep, "%s", buff);
+	rewind(filep);
+
+	TEST_ASSERT_EQUAL_INT(7, test_vfscanfWrapper(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
+	/* This block contains all asserts from min to max for float */
+	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+
+	rewind(filep);
+
+	TEST_ASSERT_EQUAL_INT(7, fscanf(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
+	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+
+	TEST_ASSERT_EQUAL_INT(7, test_vsscanfWrapper(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
+	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+
+	TEST_ASSERT_EQUAL_INT(7, sscanf(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
+	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+}
+
+
+/*
+////////////////////////////////////////////////////////////////////////////////////////////////////
+*/
+
+
+TEST(stdio_scanf_aefg, a)
+{
+	/*
+	 * <posix incmpliance> Scanf doesn't support longer floating-point numbers
+	 * Problems occur when scanf needs to read big numbers after coma.
+	 * example: 0.234234345345 scanf will read
+	 * example 2.212121e-100 scanf won't read because this is along float after a coma.
+	 * Issue link: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/652
+	 */
+
+#ifdef __phoenix__
+	TEST_IGNORE();
+#endif
+
+	char buff[BUFF_LEN] = { 0 };
+	float fltMax, fltMaxH, zero, fltMin, negFltMax, negFltMaxH, negFltMin;
+	const char *format = "%a %a %a %a %a %a %a";
+
+	sprintf(buff, format, FLT_MAX, FLT_MAX / 2, FLT_MIN, 0.f, FLT_MIN * -1, (FLT_MAX / 2) * -1, FLT_MAX * -1);
+	fprintf(filep, "%s", buff);
+	rewind(filep);
+
+	test_vfscanfWrapper(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax);
+	/* This block contains all asserts from min to max for float */
+	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+
+	rewind(filep);
+
+	TEST_ASSERT_EQUAL_INT(7, fscanf(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
+	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+
+	TEST_ASSERT_EQUAL_INT(7, test_vsscanfWrapper(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
+	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+
+	TEST_ASSERT_EQUAL_INT(7, sscanf(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
+	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+}
+
+
+/*
+////////////////////////////////////////////////////////////////////////////////////////////////////
+*/
+
+
+TEST(stdio_scanf_aefg, A)
+{
+	/*
+	 * <posix incmpliance> Scanf doesn't support longer floating-point numbers
+	 * Problems occur when scanf needs to read big numbers after coma.
+	 * example: 0.234234345345 scanf will read
+	 * example 2.212121e-100 scanf won't read because this is along float after a coma.
+	 * Issue link: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/652
+	 */
+
+#ifdef __phoenix__
+	TEST_IGNORE();
+#endif
+
+	char buff[BUFF_LEN] = { 0 };
+	float fltMax, fltMaxH, zero, fltMin, negFltMax, negFltMaxH, negFltMin;
+	const char *format = "%A %A %A %A %A %A %A";
+
+	sprintf(buff, format, FLT_MAX, FLT_MAX / 2, FLT_MIN, 0.f, FLT_MIN * -1, (FLT_MAX / 2) * -1, FLT_MAX * -1);
+	fprintf(filep, "%s", buff);
+	rewind(filep);
+
+	TEST_ASSERT_EQUAL_INT(7, test_vfscanfWrapper(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
+	/* This block contains all asserts from min to max for float */
+	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+
+	rewind(filep);
+
+	TEST_ASSERT_EQUAL_INT(7, fscanf(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
+	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+
+	TEST_ASSERT_EQUAL_INT(7, test_vsscanfWrapper(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
+	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+
+	TEST_ASSERT_EQUAL_INT(7, sscanf(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
+	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+}
+
+
+/*
+////////////////////////////////////////////////////////////////////////////////////////////////////
+*/
+
+
+TEST(stdio_scanf_aefg, e)
+{
+	/*
+	 * <posix incmpliance> Scanf doesn't support longer floating-point numbers
+	 * Problems occur when scanf needs to read big numbers after coma.
+	 * example: 0.234234345345 scanf will read
+	 * example 2.212121e-100 scanf won't read because this is along float after a coma.
+	 * Issue link: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/652
+	 */
+
+#ifdef __phoenix__
+	TEST_IGNORE();
+#endif
+
+	char buff[BUFF_LEN] = { 0 };
+	float fltMax, fltMaxH, zero, fltMin, negFltMax, negFltMaxH, negFltMin;
+	const char *format = "%e %e %e %e %e %e %e";
+
+	sprintf(buff, format, FLT_MAX, FLT_MAX / 2, FLT_MIN, 0.f, FLT_MIN * -1, (FLT_MAX / 2) * -1, FLT_MAX * -1);
+	fprintf(filep, "%s", buff);
+	rewind(filep);
+
+	TEST_ASSERT_EQUAL_INT(7, test_vfscanfWrapper(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
+	/* This block contains all asserts from min to max for float */
+	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+
+	rewind(filep);
+
+	TEST_ASSERT_EQUAL_INT(7, fscanf(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
+	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+
+	TEST_ASSERT_EQUAL_INT(7, test_vsscanfWrapper(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
+	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+
+	TEST_ASSERT_EQUAL_INT(7, sscanf(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
+	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+}
+
+
+/*
+////////////////////////////////////////////////////////////////////////////////////////////////////
+*/
+
+
+TEST(stdio_scanf_aefg, E)
+{
+	/*
+	 * <posix incmpliance> Scanf doesn't support longer floating-point numbers
+	 * Problems occur when scanf needs to read big numbers after coma.
+	 * example: 0.234234345345 scanf will read
+	 * example 2.212121e-100 scanf won't read because this is along float after a coma.
+	 * Issue link: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/652
+	 */
+
+#ifdef __phoenix__
+	TEST_IGNORE();
+#endif
+
+	char buff[BUFF_LEN] = { 0 };
+	float fltMax, fltMaxH, zero, fltMin, negFltMax, negFltMaxH, negFltMin;
+	const char *format = "%E %E %E %E %E %E %E";
+
+	sprintf(buff, format, FLT_MAX, FLT_MAX / 2, FLT_MIN, 0.f, FLT_MIN * -1, (FLT_MAX / 2) * -1, FLT_MAX * -1);
+	fprintf(filep, "%s", buff);
+	rewind(filep);
+
+	TEST_ASSERT_EQUAL_INT(7, test_vfscanfWrapper(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
+	/* This block contains all asserts from min to max for float */
+	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+
+	rewind(filep);
+
+	TEST_ASSERT_EQUAL_INT(7, fscanf(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
+	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+
+	TEST_ASSERT_EQUAL_INT(7, test_vsscanfWrapper(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
+	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+
+	TEST_ASSERT_EQUAL_INT(7, sscanf(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
+	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+}
+
+
+/*
+////////////////////////////////////////////////////////////////////////////////////////////////////
+*/
+
+
+TEST(stdio_scanf_aefg, g)
+{
+	/*
+	 * <posix incmpliance> Scanf doesn't support longer floating-point numbers
+	 * Problems occur when scanf needs to read big numbers after coma.
+	 * example: 0.234234345345 scanf will read
+	 * example 2.212121e-100 scanf won't read because this is along float after a coma.
+	 * Issue link: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/652
+	 */
+
+#ifdef __phoenix__
+	TEST_IGNORE();
+#endif
+
+	char buff[BUFF_LEN] = { 0 };
+	float fltMax, fltMaxH, zero, fltMin, negFltMax, negFltMaxH, negFltMin;
+	const char *format = "%g %g %g %g %g %g %g";
+
+	sprintf(buff, format, FLT_MAX, FLT_MAX / 2, FLT_MIN, 0.f, FLT_MIN * -1, (FLT_MAX / 2) * -1, FLT_MAX * -1);
+	fprintf(filep, "%s", buff);
+	rewind(filep);
+
+	TEST_ASSERT_EQUAL_INT(7, test_vfscanfWrapper(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
+	/* This block contains all asserts from min to max for float */
+	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+
+	rewind(filep);
+
+	TEST_ASSERT_EQUAL_INT(7, fscanf(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
+	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+
+	TEST_ASSERT_EQUAL_INT(7, test_vsscanfWrapper(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
+	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+
+	TEST_ASSERT_EQUAL_INT(7, sscanf(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
+	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+}
+
+
+/*
+////////////////////////////////////////////////////////////////////////////////////////////////////
+*/
+
+
+TEST(stdio_scanf_aefg, G)
+{
+	/*
+	 * <posix incmpliance> Scanf doesn't support longer floating-point numbers
+	 * Problems occur when scanf needs to read big numbers after coma.
+	 * example: 0.234234345345 scanf will read
+	 * example 2.212121e-100 scanf won't read because this is along float after a coma.
+	 * Issue link: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/652
+	 */
+
+#ifdef __phoenix__
+	TEST_IGNORE();
+#endif
+
+	char buff[BUFF_LEN] = { 0 };
+	float fltMax, fltMaxH, zero, fltMin, negFltMax, negFltMaxH, negFltMin;
+	const char *format = "%G %G %G %G %G %G %G";
+
+	sprintf(buff, format, FLT_MAX, FLT_MAX / 2, FLT_MIN, 0.f, FLT_MIN * -1, (FLT_MAX / 2) * -1, FLT_MAX * -1);
+	fprintf(filep, "%s", buff);
+	rewind(filep);
+
+	TEST_ASSERT_EQUAL_INT(7, test_vfscanfWrapper(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
+	/* This block contains all asserts from min to max for float */
+	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+
+	rewind(filep);
+
+	TEST_ASSERT_EQUAL_INT(7, fscanf(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
+	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+
+	TEST_ASSERT_EQUAL_INT(7, test_vsscanfWrapper(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
+	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+
+	TEST_ASSERT_EQUAL_INT(7, sscanf(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
+	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+}
+
+
+/*
+////////////////////////////////////////////////////////////////////////////////////////////////////
+*/
+
+
+TEST(stdio_scanf_aefg, inf_nan_f)
+{
+	/*
+	 * <posix incmpliance> Scanf Inf and Nan handling problem
+	 * There is a problem with Scanf where it is unable to read any representation of valInf or valNan.
+	 * Issue link: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/634
+	 */
+#ifdef __phoenix__
+	TEST_IGNORE();
+#endif
+
+	char buff[BUFF_LEN_FLOAT] = { 0 };
+	double valInf, valNan, valNegInf;
+	const char *format = "%lf %lf %lf";
+
+	sprintf(buff, format, INFINITY, INFINITY * -1, NAN);
+	fprintf(filep, "%s", buff);
+	rewind(filep);
+
+	TEST_ASSERT_EQUAL_INT(3, test_vfscanfWrapper(filep, format, &valInf, &valNegInf, &valNan));
+
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
+	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
+
+	rewind(filep);
+
+	TEST_ASSERT_EQUAL_INT(3, fscanf(filep, format, &valInf, &valNegInf, &valNan));
+
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
+	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
+
+	TEST_ASSERT_EQUAL_INT(3, test_vsscanfWrapper(buff, format, &valInf, &valNegInf, &valNan));
+
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
+	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
+
+	TEST_ASSERT_EQUAL_INT(3, sscanf(buff, format, &valInf, &valNegInf, &valNan));
+
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
+	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
+}
+
+
+/*
+////////////////////////////////////////////////////////////////////////////////////////////////////
+*/
+
+
+TEST(stdio_scanf_aefg, inf_nan_a)
+{
+	/*
+	 * <posix incmpliance> Scanf Inf and Nan handling problem
+	 * There is a problem with Scanf where it is unable to read any representation of valInf or valNan.
+	 * Issue link: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/634
+	 */
+#ifdef __phoenix__
+	TEST_IGNORE();
+#endif
+
+	char buff[BUFF_LEN_FLOAT] = { 0 };
+	double valInf, valNan, valNegInf;
+	const char *format = "%la %la %la";
+
+	sprintf(buff, format, INFINITY, INFINITY * -1, NAN);
+	fprintf(filep, "%s", buff);
+	rewind(filep);
+
+	TEST_ASSERT_EQUAL_INT(3, test_vfscanfWrapper(filep, format, &valInf, &valNegInf, &valNan));
+
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
+	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
+
+	rewind(filep);
+
+	TEST_ASSERT_EQUAL_INT(3, fscanf(filep, format, &valInf, &valNegInf, &valNan));
+
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
+	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
+
+	TEST_ASSERT_EQUAL_INT(3, test_vsscanfWrapper(buff, format, &valInf, &valNegInf, &valNan));
+
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
+	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
+
+	TEST_ASSERT_EQUAL_INT(3, sscanf(buff, format, &valInf, &valNegInf, &valNan));
+
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
+	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
+}
+
+
+/*
+////////////////////////////////////////////////////////////////////////////////////////////////////
+*/
+
+
+TEST(stdio_scanf_aefg, inf_nan_e)
+{
+	/*
+	 * <posix incmpliance> Scanf Inf and Nan handling problem
+	 * There is a problem with Scanf where it is unable to read any representation of valInf or valNan.
+	 * Issue link: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/634
+	 */
+#ifdef __phoenix__
+	TEST_IGNORE();
+#endif
+
+	char buff[BUFF_LEN_FLOAT] = { 0 };
+	double valInf, valNan, valNegInf;
+	const char *format = "%le %le %le";
+
+	sprintf(buff, format, INFINITY, INFINITY * -1, NAN);
+	fprintf(filep, "%s", buff);
+	rewind(filep);
+
+	TEST_ASSERT_EQUAL_INT(3, test_vfscanfWrapper(filep, format, &valInf, &valNegInf, &valNan));
+
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
+	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
+
+	rewind(filep);
+
+	TEST_ASSERT_EQUAL_INT(3, fscanf(filep, format, &valInf, &valNegInf, &valNan));
+
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
+	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
+
+	TEST_ASSERT_EQUAL_INT(3, test_vsscanfWrapper(buff, format, &valInf, &valNegInf, &valNan));
+
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
+	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
+
+	TEST_ASSERT_EQUAL_INT(3, sscanf(buff, format, &valInf, &valNegInf, &valNan));
+
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
+	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
+}
+
+
+/*
+////////////////////////////////////////////////////////////////////////////////////////////////////
+*/
+
+
+TEST(stdio_scanf_aefg, inf_nan_g)
+{
+	/*
+	 * <posix incmpliance> Scanf Inf and Nan handling problem
+	 * There is a problem with Scanf where it is unable to read any representation of valInf or valNan.
+	 * Issue link: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/634
+	 */
+#ifdef __phoenix__
+	TEST_IGNORE();
+#endif
+
+	char buff[BUFF_LEN_FLOAT] = { 0 };
+	double valInf, valNan, valNegInf;
+	const char *format = "%lg %lg %lg";
+
+	sprintf(buff, format, INFINITY, INFINITY * -1, NAN);
+	fprintf(filep, "%s", buff);
+	rewind(filep);
+
+	TEST_ASSERT_EQUAL_INT(3, test_vfscanfWrapper(filep, format, &valInf, &valNegInf, &valNan));
+
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
+	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
+
+	rewind(filep);
+
+	TEST_ASSERT_EQUAL_INT(3, fscanf(filep, format, &valInf, &valNegInf, &valNan));
+
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
+	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
+
+	TEST_ASSERT_EQUAL_INT(3, test_vsscanfWrapper(buff, format, &valInf, &valNegInf, &valNan));
+
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
+	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
+
+	TEST_ASSERT_EQUAL_INT(3, sscanf(buff, format, &valInf, &valNegInf, &valNan));
+
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
+	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
+}
+
+
+/*
+////////////////////////////////////////////////////////////////////////////////////////////////////
+*/
+
+
 TEST_GROUP_RUNNER(stdio_scanf_d)
 {
 	RUN_TEST_CASE(stdio_scanf_d, d);
@@ -2447,5 +3070,23 @@ TEST_GROUP_RUNNER(stdio_scanf_x)
 	RUN_TEST_CASE(stdio_scanf_x, jX);
 	RUN_TEST_CASE(stdio_scanf_x, zX);
 	RUN_TEST_CASE(stdio_scanf_x, tX);
+	remove(TESTFILE_PATH);
+}
+
+
+TEST_GROUP_RUNNER(stdio_scanf_aefg)
+{
+	RUN_TEST_CASE(stdio_scanf_aefg, f);
+	RUN_TEST_CASE(stdio_scanf_aefg, F);
+	RUN_TEST_CASE(stdio_scanf_aefg, a);
+	RUN_TEST_CASE(stdio_scanf_aefg, A);
+	RUN_TEST_CASE(stdio_scanf_aefg, e);
+	RUN_TEST_CASE(stdio_scanf_aefg, E);
+	RUN_TEST_CASE(stdio_scanf_aefg, g);
+	RUN_TEST_CASE(stdio_scanf_aefg, G);
+	RUN_TEST_CASE(stdio_scanf_aefg, inf_nan_f);
+	RUN_TEST_CASE(stdio_scanf_aefg, inf_nan_a);
+	RUN_TEST_CASE(stdio_scanf_aefg, inf_nan_e);
+	RUN_TEST_CASE(stdio_scanf_aefg, inf_nan_g);
 	remove(TESTFILE_PATH);
 }
