@@ -13,10 +13,10 @@
  * %LICENSE%
  */
 
+#include "common.h"
+#include "unity_fixture.h"
 #include <stdlib.h>
 #include <string.h>
-#include "unity_fixture.h"
-#include "common.h"
 
 /* no need for forward declarations, RUN_TEST_GROUP does it by itself */
 void runner(void)
@@ -44,8 +44,12 @@ void runner(void)
 	RUN_TEST_GROUP(string_len);
 	RUN_TEST_GROUP(stdlib_env);
 	RUN_TEST_GROUP(ctype);
+	RUN_TEST_GROUP(stdio_scanf_d);
+	RUN_TEST_GROUP(stdio_scanf_i);
+	RUN_TEST_GROUP(stdio_scanf_u);
+	RUN_TEST_GROUP(stdio_scanf_o);
+	RUN_TEST_GROUP(stdio_scanf_x);
 }
-
 
 /* crete directory unless it exists */
 static int libc_createDirIfMissing(const char *path)
@@ -68,7 +72,6 @@ static int libc_createDirIfMissing(const char *path)
 	return 0;
 }
 
-
 /* crete file with optional data (may be NULL) unless it exists */
 static int libc_createFileIfMissing(const char *path, const char *charData)
 {
@@ -89,7 +92,6 @@ static int libc_createFileIfMissing(const char *path, const char *charData)
 
 	return 0;
 }
-
 
 int main(int argc, char *argv[])
 {
