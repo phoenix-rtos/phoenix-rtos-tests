@@ -14,6 +14,7 @@
 
 import string
 import pexpect
+import time
 
 import psh.tools.psh as psh
 
@@ -82,10 +83,13 @@ def harness(p):
     p.send(cred_ok.user + cred_ok.user)
     for i in range(len(cred_ok.user) + 1):  # Test just enough backspaces
         p.send(BACKSPACE)
+        p.expect_exact(BACKSPACE)
     p.send(cred_ok.user[-1] + '\n')
     assert p.expect_exact(["Password:", pexpect.TIMEOUT]) == 0
     p.send(cred_ok.passwd)
     for i in range(len(cred_ok.passwd) + 9):  # test too many backspaces
         p.send(BACKSPACE)
+        # it's not possible to assert sending BACKSPACE in the passwd prompt
+        time.sleep(0.05)
     p.send(cred_ok.passwd + '\n')
     psh.assert_prompt(p, msg='Login should pass but failed', timeout=1)
