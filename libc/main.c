@@ -49,6 +49,7 @@ void runner(void)
 	RUN_TEST_GROUP(stdio_scanf_u);
 	RUN_TEST_GROUP(stdio_scanf_o);
 	RUN_TEST_GROUP(stdio_scanf_x);
+	RUN_TEST_GROUP(stdio_scanf_aefg);
 }
 
 /* crete directory unless it exists */
