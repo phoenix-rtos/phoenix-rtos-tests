@@ -47,13 +47,24 @@
 #include "common.h"
 
 
+/* Checking for define NL_ARGMAX*/
+#ifndef NL_ARGMAX
+#define NL_ARGMAX 32
+#endif
 
 
 #define TESTFILE_PATH "stdio_fscanf_test"
+#define TEST_STR      "Lorem ipsum dolor sit amet,Vestibulum ante ipsum primis in faucibus orci luctus 123 et ultrices posuere cubilia curae 0x0005"
+
 /* Size enough to hold most of data types int/ptrdif/float(in other formats than %f%F and %lf%lF)/str */
 #define BUFF_LEN 256
 /* Size big enough for string contains floats (long notation) */
 #define BUFF_LEN_FLOAT 290
+/* Size for tables with ascii chars */
+#define BUFF_LEN_STR 128
+/* Size for one word stored in TEST_STR */
+/* Size 10 because a longest word in TEST_STR have 10 letters */
+#define MAX_TESTSTR_WORDLEN 10
 
 /* Checking for define flt minmax*/
 #ifndef FLT_MAX
@@ -114,6 +125,7 @@ TEST_GROUP(stdio_scanf_u);
 TEST_GROUP(stdio_scanf_o);
 TEST_GROUP(stdio_scanf_x);
 TEST_GROUP(stdio_scanf_aefg);
+TEST_GROUP(stdio_scanf_cspn);
 
 
 /*
@@ -2996,6 +3008,353 @@ TEST(stdio_scanf_aefg, inf_nan_g)
 */
 
 
+TEST_SETUP(stdio_scanf_cspn)
+{
+	filep = fopen(TESTFILE_PATH, "w+");
+}
+
+
+TEST_TEAR_DOWN(stdio_scanf_cspn)
+{
+	fclose(filep);
+}
+
+
+TEST(stdio_scanf_cspn, c)
+{
+	const char *format = "%corem-ips%cm-dolo%c";
+	char buff[BUFF_LEN_STR] = "Lorem-ipsum-dolor";
+	char c1, c2, c3;
+
+	fprintf(filep, "%s", buff);
+	rewind(filep);
+
+	TEST_ASSERT_EQUAL_INT(3, test_vfscanfWrapper(filep, format, &c1, &c2, &c3));
+	TEST_ASSERT_EQUAL_CHAR('L', c1);
+	TEST_ASSERT_EQUAL_CHAR('u', c2);
+	TEST_ASSERT_EQUAL_CHAR('r', c3);
+
+	rewind(filep);
+
+	TEST_ASSERT_EQUAL_INT(3, fscanf(filep, format, &c1, &c2, &c3));
+	TEST_ASSERT_EQUAL_CHAR('L', c1);
+	TEST_ASSERT_EQUAL_CHAR('u', c2);
+	TEST_ASSERT_EQUAL_CHAR('r', c3);
+
+	TEST_ASSERT_EQUAL_INT(3, test_vsscanfWrapper(buff, format, &c1, &c2, &c3));
+	TEST_ASSERT_EQUAL_CHAR('L', c1);
+	TEST_ASSERT_EQUAL_CHAR('u', c2);
+	TEST_ASSERT_EQUAL_CHAR('r', c3);
+
+	TEST_ASSERT_EQUAL_INT(3, sscanf(buff, format, &c1, &c2, &c3));
+	TEST_ASSERT_EQUAL_CHAR('L', c1);
+	TEST_ASSERT_EQUAL_CHAR('u', c2);
+	TEST_ASSERT_EQUAL_CHAR('r', c3);
+}
+
+
+TEST(stdio_scanf_cspn, c_ascii)
+{
+	char buff[BUFF_LEN_STR] = { 0 };
+	char c;
+	int i;
+
+	for (i = 1; i < 128; i++) {
+		buff[i - 1] = i;
+	}
+
+	fprintf(filep, "%s", buff);
+	rewind(filep);
+
+	for (i = 1; i < 128; i++) {
+		TEST_ASSERT_EQUAL_INT(1, test_vfscanfWrapper(filep, "%c", &c));
+		TEST_ASSERT_EQUAL_CHAR(i, c);
+
+		fseek(filep, i - 1, SEEK_SET);
+
+		TEST_ASSERT_EQUAL_INT(1, fscanf(filep, "%c", &c));
+		TEST_ASSERT_EQUAL_CHAR(i, c);
+
+		/*
+		 * This fseek is used because of issue #639
+		 * https://github.com/phoenix-rtos/phoenix-rtos-project/issues/639
+		 */
+
+#ifdef __phoenix__
+		fseek(filep, i, SEEK_SET);
+#endif
+
+		TEST_ASSERT_EQUAL_INT(1, test_vsscanfWrapper(&buff[i - 1], "%c", &c));
+		TEST_ASSERT_EQUAL_CHAR(i, c);
+
+		TEST_ASSERT_EQUAL_INT(1, sscanf(&buff[i - 1], "%c", &c));
+		TEST_ASSERT_EQUAL_CHAR(i, c);
+	}
+}
+
+
+TEST(stdio_scanf_cspn, s_path)
+{
+	char buff[BUFF_LEN_STR] = TESTFILE_PATH;
+	char res[BUFF_LEN_STR];
+
+	fprintf(filep, "%s", buff);
+	rewind(filep);
+
+	TEST_ASSERT_EQUAL_INT(1, test_vfscanfWrapper(filep, "%s", res));
+	TEST_ASSERT_EQUAL_STRING(TESTFILE_PATH, res);
+
+	rewind(filep);
+
+	TEST_ASSERT_EQUAL_INT(1, fscanf(filep, "%s", res));
+	TEST_ASSERT_EQUAL_STRING(TESTFILE_PATH, res);
+
+	TEST_ASSERT_EQUAL_INT(1, test_vsscanfWrapper(buff, "%s", res));
+	TEST_ASSERT_EQUAL_STRING(TESTFILE_PATH, res);
+
+	TEST_ASSERT_EQUAL_INT(1, sscanf(buff, "%s", res));
+	TEST_ASSERT_EQUAL_STRING(TESTFILE_PATH, res);
+}
+
+
+TEST(stdio_scanf_cspn, s_pick)
+{
+	char buff[BUFF_LEN_STR] = TEST_STR;
+	char firstWord[MAX_TESTSTR_WORDLEN];
+	char secondWord[MAX_TESTSTR_WORDLEN];
+	char thirdWord[MAX_TESTSTR_WORDLEN];
+	char fourthWord[MAX_TESTSTR_WORDLEN];
+	char decimalWord[MAX_TESTSTR_WORDLEN];
+	char hexWord[MAX_TESTSTR_WORDLEN];
+
+	fprintf(filep, "%s", buff);
+	rewind(filep);
+
+	/* clang-format off */
+	TEST_ASSERT_EQUAL_INT(6,test_vfscanfWrapper(
+		filep, "%s %s %s %s amet,Vestibulum ante ipsum primis in faucibus orci luctus %s et ultrices posuere cubilia " "curae %s",
+		firstWord,secondWord, thirdWord, fourthWord, decimalWord, hexWord));
+
+	TEST_ASSERT_EQUAL_STRING("Lorem", firstWord);
+	TEST_ASSERT_EQUAL_STRING("ipsum", secondWord);
+	TEST_ASSERT_EQUAL_STRING("dolor", thirdWord);
+	TEST_ASSERT_EQUAL_STRING("sit", fourthWord);
+	TEST_ASSERT_EQUAL_STRING("123", decimalWord);
+	TEST_ASSERT_EQUAL_STRING("0x0005", hexWord);
+
+	rewind(filep);
+
+		TEST_ASSERT_EQUAL_INT(6,fscanf(
+		filep, "%s %s %s %s amet,Vestibulum ante ipsum primis in faucibus orci luctus %s et ultrices posuere cubilia " "curae %s",
+		firstWord,secondWord, thirdWord, fourthWord, decimalWord, hexWord));
+
+	TEST_ASSERT_EQUAL_STRING("Lorem", firstWord);
+	TEST_ASSERT_EQUAL_STRING("ipsum", secondWord);
+	TEST_ASSERT_EQUAL_STRING("dolor", thirdWord);
+	TEST_ASSERT_EQUAL_STRING("sit", fourthWord);
+	TEST_ASSERT_EQUAL_STRING("123", decimalWord);
+	TEST_ASSERT_EQUAL_STRING("0x0005", hexWord);
+
+	TEST_ASSERT_EQUAL_INT(6,test_vsscanfWrapper(
+		buff, "%s %s %s %s amet,Vestibulum ante ipsum primis in faucibus orci luctus %s et ultrices posuere cubilia " "curae %s",
+		firstWord,secondWord, thirdWord, fourthWord, decimalWord, hexWord));
+
+	TEST_ASSERT_EQUAL_STRING("Lorem", firstWord);
+	TEST_ASSERT_EQUAL_STRING("ipsum", secondWord);
+	TEST_ASSERT_EQUAL_STRING("dolor", thirdWord);
+	TEST_ASSERT_EQUAL_STRING("sit", fourthWord);
+	TEST_ASSERT_EQUAL_STRING("123", decimalWord);
+	TEST_ASSERT_EQUAL_STRING("0x0005", hexWord);
+
+	TEST_ASSERT_EQUAL_INT(6,sscanf(
+		buff, "%s %s %s %s amet,Vestibulum ante ipsum primis in faucibus orci luctus %s et ultrices posuere cubilia " "curae %s",
+		firstWord,secondWord, thirdWord, fourthWord, decimalWord, hexWord));
+
+	TEST_ASSERT_EQUAL_STRING("Lorem", firstWord);
+	TEST_ASSERT_EQUAL_STRING("ipsum", secondWord);
+	TEST_ASSERT_EQUAL_STRING("dolor", thirdWord);
+	TEST_ASSERT_EQUAL_STRING("sit", fourthWord);
+	TEST_ASSERT_EQUAL_STRING("123", decimalWord);
+	TEST_ASSERT_EQUAL_STRING("0x0005", hexWord);
+	/* clang-format on */
+}
+
+
+TEST(stdio_scanf_cspn, s_torn)
+{
+	char buff[BUFF_LEN_STR] = { 0 };
+	const char *txt = "\4399\0ns";
+
+	fprintf(filep, "%s", txt);
+	rewind(filep);
+
+	TEST_ASSERT_EQUAL_INT(1, test_vfscanfWrapper(filep, "%s", buff));
+	TEST_ASSERT_EQUAL_CHAR(txt[3], buff[3]);
+	TEST_ASSERT_NOT_EQUAL_CHAR(txt[4], buff[4]);
+	TEST_ASSERT_NOT_EQUAL_CHAR(txt[5], buff[5]);
+	TEST_ASSERT_EQUAL_STRING(txt, buff);
+
+	rewind(filep);
+
+	TEST_ASSERT_EQUAL_INT(1, fscanf(filep, "%s", buff));
+	TEST_ASSERT_EQUAL_CHAR(txt[3], buff[3]);
+	TEST_ASSERT_NOT_EQUAL_CHAR(txt[4], buff[4]);
+	TEST_ASSERT_NOT_EQUAL_CHAR(txt[5], buff[5]);
+	TEST_ASSERT_EQUAL_STRING(txt, buff);
+
+	TEST_ASSERT_EQUAL_INT(1, test_vsscanfWrapper(txt, "%s", buff));
+	TEST_ASSERT_EQUAL_CHAR(txt[3], buff[3]);
+	TEST_ASSERT_NOT_EQUAL_CHAR(txt[4], buff[4]);
+	TEST_ASSERT_NOT_EQUAL_CHAR(txt[5], buff[5]);
+	TEST_ASSERT_EQUAL_STRING(txt, buff);
+
+	TEST_ASSERT_EQUAL_INT(1, sscanf(txt, "%s", buff));
+	TEST_ASSERT_EQUAL_CHAR(txt[3], buff[3]);
+	TEST_ASSERT_NOT_EQUAL_CHAR(txt[4], buff[4]);
+	TEST_ASSERT_NOT_EQUAL_CHAR(txt[5], buff[5]);
+	TEST_ASSERT_EQUAL_STRING(txt, buff);
+}
+
+
+TEST(stdio_scanf_cspn, s_ascii)
+{
+	char buff[BUFF_LEN_STR] = { 0 };
+	char asciiStr[BUFF_LEN_STR] = { 0 };
+	int i;
+
+	/*
+	 * In ASCII table from number 33 starts printable characters
+	 * in this case we want to dodge terminating ASCII signs
+	 */
+	for (i = 33; i < 127; i++) {
+		buff[i - 33] = i;
+	}
+	buff[i] = '\0';
+
+	fprintf(filep, "%s", buff);
+	rewind(filep);
+
+	TEST_ASSERT_EQUAL_INT(1, fscanf(filep, "%s", asciiStr));
+	TEST_ASSERT_EQUAL_STRING(buff, asciiStr);
+
+	rewind(filep);
+
+	TEST_ASSERT_EQUAL_INT(1, test_vfscanfWrapper(filep, "%s", asciiStr));
+	TEST_ASSERT_EQUAL_STRING(buff, asciiStr);
+
+	TEST_ASSERT_EQUAL_INT(1, test_vsscanfWrapper(buff, "%s", asciiStr));
+	TEST_ASSERT_EQUAL_STRING(buff, asciiStr);
+
+	TEST_ASSERT_EQUAL_INT(1, sscanf(buff, "%s", asciiStr));
+	TEST_ASSERT_EQUAL_STRING(buff, asciiStr);
+}
+
+
+TEST(stdio_scanf_cspn, percent)
+{
+	char buff[BUFF_LEN_STR] = "%yes % --- % yes";
+	char correct[BUFF_LEN_STR] = { 0 };
+	char wrong[BUFF_LEN_STR] = { 0 };
+	const char *format = "%%%s%%--- %% %s";
+
+	fprintf(filep, "%s", buff);
+
+	rewind(filep);
+
+	TEST_ASSERT_EQUAL_INT(1, test_vfscanfWrapper(filep, format, correct, wrong));
+	TEST_ASSERT_EQUAL_STRING("yes", correct);
+	TEST_ASSERT_EQUAL_STRING("", wrong);
+
+	rewind(filep);
+
+	TEST_ASSERT_EQUAL_INT(1, fscanf(filep, format, correct, wrong));
+	TEST_ASSERT_EQUAL_STRING("yes", correct);
+	TEST_ASSERT_EQUAL_STRING("", wrong);
+
+	TEST_ASSERT_EQUAL_INT(1, test_vsscanfWrapper(buff, format, correct, wrong));
+	TEST_ASSERT_EQUAL_STRING("yes", correct);
+	TEST_ASSERT_EQUAL_STRING("", wrong);
+
+	TEST_ASSERT_EQUAL_INT(1, sscanf(buff, format, correct, wrong));
+	TEST_ASSERT_EQUAL_STRING("yes", correct);
+	TEST_ASSERT_EQUAL_STRING("", wrong);
+}
+
+
+TEST(stdio_scanf_cspn, ptr)
+{
+	/* Disabled because of issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/677 */
+#ifdef __phoenix__
+	TEST_IGNORE();
+#endif
+
+	char buff[BUFF_LEN_STR];
+	char format[] = "%p %p %p %p";
+	void *const expPtr = (void *)0xDEADBEEF;
+	void *const expPtrZero = (void *)0x00000000;
+	void *const expPtrMax = (void *)INTPTR_MAX;
+	void *const expPtrMin = (void *)INTPTR_MIN;
+	void *ptrVal, *ptrValZero, *ptrValMax, *ptrValMin;
+
+	sprintf(buff, format, expPtr, expPtrZero, expPtrMax, expPtrMin);
+	fprintf(filep, "%s", buff);
+	rewind(filep);
+
+	TEST_ASSERT_EQUAL_INT(4, test_vfscanfWrapper(filep, format, &ptrVal, &ptrValZero, &ptrValMax, &ptrValMin));
+	TEST_ASSERT_EQUAL_PTR(expPtr, ptrVal);
+	TEST_ASSERT_EQUAL_PTR(expPtrZero, ptrValZero);
+	TEST_ASSERT_EQUAL_PTR(expPtrMax, ptrValMax);
+	TEST_ASSERT_EQUAL_PTR(expPtrMin, ptrValMin);
+
+	rewind(filep);
+
+	TEST_ASSERT_EQUAL_INT(4, fscanf(filep, format, &ptrVal, &ptrValZero, &ptrValMax, &ptrValMin));
+	TEST_ASSERT_EQUAL_PTR(expPtr, ptrVal);
+	TEST_ASSERT_EQUAL_PTR(expPtrZero, ptrValZero);
+	TEST_ASSERT_EQUAL_PTR(expPtrMax, ptrValMax);
+	TEST_ASSERT_EQUAL_PTR(expPtrMin, ptrValMin);
+
+	TEST_ASSERT_EQUAL_INT(4, test_vsscanfWrapper(buff, format, &ptrVal, &ptrValZero, &ptrValMax, &ptrValMin));
+	TEST_ASSERT_EQUAL_PTR(expPtr, ptrVal);
+	TEST_ASSERT_EQUAL_PTR(expPtrZero, ptrValZero);
+	TEST_ASSERT_EQUAL_PTR(expPtrMax, ptrValMax);
+	TEST_ASSERT_EQUAL_PTR(expPtrMin, ptrValMin);
+
+	TEST_ASSERT_EQUAL_INT(4, sscanf(buff, format, &ptrVal, &ptrValZero, &ptrValMax, &ptrValMin));
+	TEST_ASSERT_EQUAL_PTR(expPtr, ptrVal);
+	TEST_ASSERT_EQUAL_PTR(expPtrZero, ptrValZero);
+	TEST_ASSERT_EQUAL_PTR(expPtrMax, ptrValMax);
+	TEST_ASSERT_EQUAL_PTR(expPtrMin, ptrValMin);
+}
+
+
+TEST(stdio_scanf_cspn, n)
+{
+	char buff[BUFF_LEN_STR] = { 0 };
+	char res[BUFF_LEN_STR] = { 0 };
+	int counter;
+
+	memset(buff, 'a', sizeof(buff) - 1);
+
+	fprintf(filep, "%s", buff);
+	rewind(filep);
+
+	test_vfscanfWrapper(filep, "%s %n", res, &counter);
+	TEST_ASSERT_EQUAL_INT(sizeof(buff) - 1, counter);
+	rewind(filep);
+
+	TEST_ASSERT_EQUAL_INT(1, fscanf(filep, "%s %n", res, &counter));
+	TEST_ASSERT_EQUAL_INT(sizeof(buff) - 1, counter);
+
+	TEST_ASSERT_EQUAL_INT(1, test_vsscanfWrapper(buff, "%s %n", res, &counter));
+	TEST_ASSERT_EQUAL_INT(sizeof(buff) - 1, counter);
+
+	TEST_ASSERT_EQUAL_INT(1, sscanf(buff, "%s %n", res, &counter));
+	TEST_ASSERT_EQUAL_INT(sizeof(buff) - 1, counter);
+}
+
+
+
 TEST_GROUP_RUNNER(stdio_scanf_d)
 {
 	RUN_TEST_CASE(stdio_scanf_d, d);
@@ -3088,5 +3447,20 @@ TEST_GROUP_RUNNER(stdio_scanf_aefg)
 	RUN_TEST_CASE(stdio_scanf_aefg, inf_nan_a);
 	RUN_TEST_CASE(stdio_scanf_aefg, inf_nan_e);
 	RUN_TEST_CASE(stdio_scanf_aefg, inf_nan_g);
+	remove(TESTFILE_PATH);
+}
+
+
+TEST_GROUP_RUNNER(stdio_scanf_cspn)
+{
+	RUN_TEST_CASE(stdio_scanf_cspn, c);
+	RUN_TEST_CASE(stdio_scanf_cspn, c_ascii);
+	RUN_TEST_CASE(stdio_scanf_cspn, s_path);
+	RUN_TEST_CASE(stdio_scanf_cspn, s_torn);
+	RUN_TEST_CASE(stdio_scanf_cspn, s_ascii);
+	RUN_TEST_CASE(stdio_scanf_cspn, s_pick);
+	RUN_TEST_CASE(stdio_scanf_cspn, percent);
+	RUN_TEST_CASE(stdio_scanf_cspn, n);
+	RUN_TEST_CASE(stdio_scanf_cspn, ptr);
 	remove(TESTFILE_PATH);
 }
