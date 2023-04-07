@@ -2663,22 +2663,22 @@ TEST(stdio_scanf_aefg, f)
 	fprintf(filep, "%s", buff);
 	rewind(filep);
 
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1;
+	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
 	TEST_ASSERT_EQUAL_INT(7, test_vfscanfWrapper(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
 	/* This block contains all asserts from min to max for float */
 	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
 
 	rewind(filep);
 
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1;
+	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
 	TEST_ASSERT_EQUAL_INT(7, fscanf(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
 	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
 
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1;
+	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
 	TEST_ASSERT_EQUAL_INT(7, test_vsscanfWrapper(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
 	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
 
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1;
+	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
 	TEST_ASSERT_EQUAL_INT(7, sscanf(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
 	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
 }
@@ -2716,22 +2716,22 @@ TEST(stdio_scanf_aefg, F)
 	fprintf(filep, "%s", buff);
 	rewind(filep);
 
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1;
+	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
 	TEST_ASSERT_EQUAL_INT(7, test_vfscanfWrapper(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
 	/* This block contains all asserts from min to max for float */
 	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
 
 	rewind(filep);
 
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1;
+	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
 	TEST_ASSERT_EQUAL_INT(7, fscanf(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
 	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
 
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1;
+	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
 	TEST_ASSERT_EQUAL_INT(7, test_vsscanfWrapper(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
 	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
 
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1;
+	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
 	TEST_ASSERT_EQUAL_INT(7, sscanf(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
 	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
 }
@@ -2764,22 +2764,22 @@ TEST(stdio_scanf_aefg, a)
 	fprintf(filep, "%s", buff);
 	rewind(filep);
 
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1;
+	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
 	TEST_ASSERT_EQUAL_INT(7, test_vfscanfWrapper(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
 	/* This block contains all asserts from min to max for float */
 	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
 
 	rewind(filep);
 
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1;
+	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
 	TEST_ASSERT_EQUAL_INT(7, fscanf(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
 	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
 
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1;
+	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
 	TEST_ASSERT_EQUAL_INT(7, test_vsscanfWrapper(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
 	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
 
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1;
+	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
 	TEST_ASSERT_EQUAL_INT(7, sscanf(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
 	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
 }
@@ -2812,22 +2812,22 @@ TEST(stdio_scanf_aefg, A)
 	fprintf(filep, "%s", buff);
 	rewind(filep);
 
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1;
+	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
 	TEST_ASSERT_EQUAL_INT(7, test_vfscanfWrapper(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
 	/* This block contains all asserts from min to max for float */
 	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
 
 	rewind(filep);
 
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1;
+	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
 	TEST_ASSERT_EQUAL_INT(7, fscanf(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
 	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
 
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1;
+	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
 	TEST_ASSERT_EQUAL_INT(7, test_vsscanfWrapper(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
 	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
 
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1;
+	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
 	TEST_ASSERT_EQUAL_INT(7, sscanf(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
 	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
 }
@@ -2860,22 +2860,22 @@ TEST(stdio_scanf_aefg, e)
 	fprintf(filep, "%s", buff);
 	rewind(filep);
 
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1;
+	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
 	TEST_ASSERT_EQUAL_INT(7, test_vfscanfWrapper(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
 	/* This block contains all asserts from min to max for float */
 	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
 
 	rewind(filep);
 
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1;
+	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
 	TEST_ASSERT_EQUAL_INT(7, fscanf(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
 	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
 
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1;
+	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
 	TEST_ASSERT_EQUAL_INT(7, test_vsscanfWrapper(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
 	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
 
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1;
+	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
 	TEST_ASSERT_EQUAL_INT(7, sscanf(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
 	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
 }
@@ -2908,22 +2908,22 @@ TEST(stdio_scanf_aefg, E)
 	fprintf(filep, "%s", buff);
 	rewind(filep);
 
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1;
+	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
 	TEST_ASSERT_EQUAL_INT(7, test_vfscanfWrapper(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
 	/* This block contains all asserts from min to max for float */
 	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
 
 	rewind(filep);
 
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1;
+	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
 	TEST_ASSERT_EQUAL_INT(7, fscanf(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
 	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
 
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1;
+	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
 	TEST_ASSERT_EQUAL_INT(7, test_vsscanfWrapper(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
 	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
 
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1;
+	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
 	TEST_ASSERT_EQUAL_INT(7, sscanf(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
 	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
 }
@@ -2956,22 +2956,22 @@ TEST(stdio_scanf_aefg, g)
 	fprintf(filep, "%s", buff);
 	rewind(filep);
 
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1;
+	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
 	TEST_ASSERT_EQUAL_INT(7, test_vfscanfWrapper(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
 	/* This block contains all asserts from min to max for float */
 	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
 
 	rewind(filep);
 
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1;
+	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
 	TEST_ASSERT_EQUAL_INT(7, fscanf(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
 	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
 
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1;
+	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
 	TEST_ASSERT_EQUAL_INT(7, test_vsscanfWrapper(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
 	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
 
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1;
+	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
 	TEST_ASSERT_EQUAL_INT(7, sscanf(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
 	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
 }
@@ -3004,22 +3004,22 @@ TEST(stdio_scanf_aefg, G)
 	fprintf(filep, "%s", buff);
 	rewind(filep);
 
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1;
+	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
 	TEST_ASSERT_EQUAL_INT(7, test_vfscanfWrapper(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
 	/* This block contains all asserts from min to max for float */
 	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
 
 	rewind(filep);
 
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1;
+	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
 	TEST_ASSERT_EQUAL_INT(7, fscanf(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
 	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
 
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1;
+	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
 	TEST_ASSERT_EQUAL_INT(7, test_vsscanfWrapper(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
 	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
 
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1;
+	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
 	TEST_ASSERT_EQUAL_INT(7, sscanf(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
 	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
 }
@@ -3049,7 +3049,7 @@ TEST(stdio_scanf_aefg, inf_nan_f)
 	fprintf(filep, "%s", buff);
 	rewind(filep);
 
-	valInf = valNan = valNegInf = 1;
+	valInf = valNan = valNegInf = 1.0;
 	TEST_ASSERT_EQUAL_INT(3, test_vfscanfWrapper(filep, format, &valInf, &valNegInf, &valNan));
 
 	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
@@ -3058,21 +3058,21 @@ TEST(stdio_scanf_aefg, inf_nan_f)
 
 	rewind(filep);
 
-	valInf = valNan = valNegInf = 1;
+	valInf = valNan = valNegInf = 1.0;
 	TEST_ASSERT_EQUAL_INT(3, fscanf(filep, format, &valInf, &valNegInf, &valNan));
 
 	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
 	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
 	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
 
-	valInf = valNan = valNegInf = 1;
+	valInf = valNan = valNegInf = 1.0;
 	TEST_ASSERT_EQUAL_INT(3, test_vsscanfWrapper(buff, format, &valInf, &valNegInf, &valNan));
 
 	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
 	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
 	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
 
-	valInf = valNan = valNegInf = 1;
+	valInf = valNan = valNegInf = 1.0;
 	TEST_ASSERT_EQUAL_INT(3, sscanf(buff, format, &valInf, &valNegInf, &valNan));
 
 	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
@@ -3105,7 +3105,7 @@ TEST(stdio_scanf_aefg, inf_nan_a)
 	fprintf(filep, "%s", buff);
 	rewind(filep);
 
-	valInf = valNan = valNegInf = 1;
+	valInf = valNan = valNegInf = 1.0;
 	TEST_ASSERT_EQUAL_INT(3, test_vfscanfWrapper(filep, format, &valInf, &valNegInf, &valNan));
 
 	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
@@ -3114,21 +3114,21 @@ TEST(stdio_scanf_aefg, inf_nan_a)
 
 	rewind(filep);
 
-	valInf = valNan = valNegInf = 1;
+	valInf = valNan = valNegInf = 1.0;
 	TEST_ASSERT_EQUAL_INT(3, fscanf(filep, format, &valInf, &valNegInf, &valNan));
 
 	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
 	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
 	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
 
-	valInf = valNan = valNegInf = 1;
+	valInf = valNan = valNegInf = 1.0;
 	TEST_ASSERT_EQUAL_INT(3, test_vsscanfWrapper(buff, format, &valInf, &valNegInf, &valNan));
 
 	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
 	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
 	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
 
-	valInf = valNan = valNegInf = 1;
+	valInf = valNan = valNegInf = 1.0;
 	TEST_ASSERT_EQUAL_INT(3, sscanf(buff, format, &valInf, &valNegInf, &valNan));
 
 	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
@@ -3161,7 +3161,7 @@ TEST(stdio_scanf_aefg, inf_nan_e)
 	fprintf(filep, "%s", buff);
 	rewind(filep);
 
-	valInf = valNan = valNegInf = 1;
+	valInf = valNan = valNegInf = 1.0;
 	TEST_ASSERT_EQUAL_INT(3, test_vfscanfWrapper(filep, format, &valInf, &valNegInf, &valNan));
 
 	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
@@ -3170,21 +3170,21 @@ TEST(stdio_scanf_aefg, inf_nan_e)
 
 	rewind(filep);
 
-	valInf = valNan = valNegInf = 1;
+	valInf = valNan = valNegInf = 1.0;
 	TEST_ASSERT_EQUAL_INT(3, fscanf(filep, format, &valInf, &valNegInf, &valNan));
 
 	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
 	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
 	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
 
-	valInf = valNan = valNegInf = 1;
+	valInf = valNan = valNegInf = 1.0;
 	TEST_ASSERT_EQUAL_INT(3, test_vsscanfWrapper(buff, format, &valInf, &valNegInf, &valNan));
 
 	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
 	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
 	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
 
-	valInf = valNan = valNegInf = 1;
+	valInf = valNan = valNegInf = 1.0;
 	TEST_ASSERT_EQUAL_INT(3, sscanf(buff, format, &valInf, &valNegInf, &valNan));
 
 	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
@@ -3217,7 +3217,7 @@ TEST(stdio_scanf_aefg, inf_nan_g)
 	fprintf(filep, "%s", buff);
 	rewind(filep);
 
-	valInf = valNan = valNegInf = 1;
+	valInf = valNan = valNegInf = 1.0;
 	TEST_ASSERT_EQUAL_INT(3, test_vfscanfWrapper(filep, format, &valInf, &valNegInf, &valNan));
 
 	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
@@ -3226,21 +3226,21 @@ TEST(stdio_scanf_aefg, inf_nan_g)
 
 	rewind(filep);
 
-	valInf = valNan = valNegInf = 1;
+	valInf = valNan = valNegInf = 1.0;
 	TEST_ASSERT_EQUAL_INT(3, fscanf(filep, format, &valInf, &valNegInf, &valNan));
 
 	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
 	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
 	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
 
-	valInf = valNan = valNegInf = 1;
+	valInf = valNan = valNegInf = 1.0;
 	TEST_ASSERT_EQUAL_INT(3, test_vsscanfWrapper(buff, format, &valInf, &valNegInf, &valNan));
 
 	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
 	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
 	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
 
-	valInf = valNan = valNegInf = 1;
+	valInf = valNan = valNegInf = 1.0;
 	TEST_ASSERT_EQUAL_INT(3, sscanf(buff, format, &valInf, &valNegInf, &valNan));
 
 	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
@@ -3425,7 +3425,6 @@ TEST(stdio_scanf_cspn, s_pick)
 	TEST_ASSERT_EQUAL_STRING("sit", words[3]);
 	TEST_ASSERT_EQUAL_STRING("123", words[4]);
 	TEST_ASSERT_EQUAL_STRING("0x0005", words[5]);
-	/* clang-format on */
 }
 
 
@@ -4450,6 +4449,7 @@ TEST(stdio_scanf_rest, m_brackets)
 }
 
 
+__attribute__((no_sanitize_address))
 TEST(stdio_scanf_rest, m_c)
 {
 /* Disabled because of issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/667 */
@@ -4457,10 +4457,10 @@ TEST(stdio_scanf_rest, m_c)
 	TEST_IGNORE();
 #endif
 
-/* Address sanitizer used on Ubuntu 22.04 fails in such case, because of the following issue:
- * https://github.com/llvm/llvm-project/issues/61768
- */
-#ifndef __phoenix__
+	/* Address sanitizer used on Ubuntu 22.04 fails in such case, because of the following issue:
+	 * https://github.com/llvm/llvm-project/issues/61768
+	 */
+#if defined(__SANITIZE_ADDRESS__)
 	TEST_IGNORE();
 #endif
 
@@ -4533,7 +4533,7 @@ TEST(stdio_scanf_rest, star)
 
 TEST(stdio_scanf_rest, field_width)
 {
-	/* Test ignored because of issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/681 */
+/* Test ignored because of issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/681 */
 #ifdef __phoenix__
 	TEST_IGNORE();
 #endif
@@ -4548,7 +4548,8 @@ TEST(stdio_scanf_rest, field_width)
 	rewind(filep);
 
 	memset(valStr, 0, sizeof(valStr));
-	valIntMin = valIntMax = valFltMin = valFltMax = 1;
+	valIntMin = valIntMax = 1;
+	valFltMin = valFltMax = 1.0;
 	TEST_ASSERT_EQUAL_INT(5, fscanf(filep, format, valStr, &valIntMax, &valIntMin, &valFltMax, &valFltMin));
 	TEST_ASSERT_EQUAL_CHAR_ARRAY(str, valStr, strlen(valStr));
 	TEST_ASSERT_EQUAL_INT(21474, valIntMax);
@@ -4558,7 +4559,8 @@ TEST(stdio_scanf_rest, field_width)
 
 	rewind(filep);
 	memset(valStr, 0, sizeof(valStr));
-	valIntMin = valIntMax = valFltMin = valFltMax = 1;
+	valIntMin = valIntMax = 1;
+	valFltMin = valFltMax = 1.0;
 	TEST_ASSERT_EQUAL_INT(5, test_vfscanfWrapper(filep, format, valStr, &valIntMax, &valIntMin, &valFltMax, &valFltMin));
 	TEST_ASSERT_EQUAL_CHAR_ARRAY(str, valStr, strlen(valStr));
 	TEST_ASSERT_EQUAL_INT(21474, valIntMax);
@@ -4567,7 +4569,8 @@ TEST(stdio_scanf_rest, field_width)
 	TEST_ASSERT_EQUAL_FLOAT(0.000340, valFltMin);
 
 	memset(valStr, 0, sizeof(valStr));
-	valIntMin = valIntMax = valFltMin = valFltMax = 1;
+	valIntMin = valIntMax = 1;
+	valFltMin = valFltMax = 1.0;
 	TEST_ASSERT_EQUAL_INT(5, sscanf(buff, format, valStr, &valIntMax, &valIntMin, &valFltMax, &valFltMin));
 	TEST_ASSERT_EQUAL_CHAR_ARRAY(str, valStr, strlen(valStr));
 	TEST_ASSERT_EQUAL_INT(21474, valIntMax);
@@ -4576,7 +4579,8 @@ TEST(stdio_scanf_rest, field_width)
 	TEST_ASSERT_EQUAL_FLOAT(0.000340, valFltMin);
 
 	memset(valStr, 0, sizeof(valStr));
-	valIntMin = valIntMax = valFltMin = valFltMax = 1;
+	valIntMin = valIntMax = 1;
+	valFltMin = valFltMax = 1.0;
 	TEST_ASSERT_EQUAL_INT(5, test_vsscanfWrapper(buff, format, valStr, &valIntMax, &valIntMin, &valFltMax, &valFltMin));
 	TEST_ASSERT_EQUAL_CHAR_ARRAY(str, valStr, strlen(valStr));
 	TEST_ASSERT_EQUAL_INT(21474, valIntMax);
