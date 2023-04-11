@@ -1,12 +1,12 @@
 import re
 from pathlib import Path
 
+from trunner.ctx import TestContext
+from trunner.dut import Dut
 from trunner.types import Status, TestResult
 
-PROMPT = r"(\r+)\x1b\[0J" + r"\(psh\)% "
 EOL = r"\r+\n"
 
-UPYTH_PROMPT = ">>>"
 MICROPYTHON = "/bin/micropython"
 
 TESTS_WITH_REGEX_OUTPUT = {
@@ -64,11 +64,20 @@ def is_test_with_regex_output(test_path: str):
     return p.parent.name + "/" + p.name in TESTS_WITH_REGEX_OUTPUT
 
 
-def get_test(dut):
-    dut.expect(PROMPT, timeout=45)
-    output = dut.before
+def remove_prompt_ascii_escape(text: str):
+    # psh prompt is colored on some target, remove ascii escape codes responsible for that
+    if text[-4:] == "\x1b[0J":
+        return text[:-4]
+
+    return text
+
+
+def get_test(dut: Dut, ctx: TestContext):
+    dut.expect_exact(ctx.target.shell_prompt, timeout=45)
+    output = remove_prompt_ascii_escape(dut.before)
+
     # Leave prompt in the buffer
-    dut.sendline()
+    dut.sendline("")
 
     re_result = re.search(r"Error: (.+) - (.+)", output)
     assert (
@@ -88,31 +97,31 @@ def get_test(dut):
     return test_path, test_result
 
 
-def get_exp_output(dut, test_path: str):
+def get_exp_output(dut: Dut, ctx: TestContext, test_path: str):
     cmd = f"cat {test_path}.exp"
 
-    dut.expect(PROMPT)
+    dut.expect_exact(ctx.target.shell_prompt)
     dut.sendline(cmd)
     dut.expect(cmd + EOL)
-    dut.expect(PROMPT)
-    output = dut.before
+    dut.expect_exact(ctx.target.shell_prompt)
+    output = remove_prompt_ascii_escape(dut.before)
     # Leave prompt in the buffer
-    dut.sendline()
+    dut.sendline("")
 
     return output
 
 
-def harness(dut):
+def harness(dut: Dut, ctx: TestContext):
     """Harness for getting test result from MicroPython test and comparing to the expected output"""
 
-    test_path, test_result = get_test(dut)
+    test_path, test_result = get_test(dut, ctx)
 
     if re.match("SKIP", test_result):
         res = TestResult(status=Status.SKIP)
-        dut.sendline()
+        dut.sendline("")
         return res
 
-    exp_output = get_exp_output(dut, test_path)
+    exp_output = get_exp_output(dut, ctx, test_path)
 
     test_passed = False
     if is_test_with_regex_output(test_path):
@@ -125,5 +134,5 @@ def harness(dut):
     if test_passed:
         return TestResult(status=Status.OK)
     else:
-        msg = f"Incorrect result!\n\nExpected result:\n{exp_output}\nTest result:\n{test_result}\n"
+        msg = f"Incorrect result!\n\nExpected result:\n{repr(exp_output)}\nTest result:\n{repr(test_result)}\n"
         return TestResult(msg=msg, status=Status.FAIL)

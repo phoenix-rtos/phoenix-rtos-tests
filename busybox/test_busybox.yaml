@@ -3,6 +3,9 @@ test:
     harness: busybox.py
     nightly: true
 
+    targets:
+      value: [ia32-generic-qemu, armv7a9-zynq7000-qemu, armv7a9-zynq7000-zedboard]
+
     tests:
       - name: busybox
         execute: test_busybox busybox

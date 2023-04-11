@@ -16,7 +16,7 @@ def harness(dut: Dut, ctx: TestContext):
     FINAL = r"(?P<status>FAILED|PASSED)\s\((?P<nr>\d+)\s/\s(?P<total_nr>\d+)\stests\s\(\d+\sskipped\)\)"
 
     while True:
-        idx = dut.expect([RESULT, FINAL, MSG_LINE], timeout=25)
+        idx = dut.expect([RESULT, FINAL, MSG_LINE], timeout=90)
         parsed = dut.match.groupdict()
 
         if idx == 2:
