@@ -64,6 +64,14 @@ void runner(void)
 	RUN_TEST_GROUP(string_strlcat);
 	RUN_TEST_GROUP(string_errsign);
 	RUN_TEST_GROUP(signal_psignal);
+	RUN_TEST_GROUP(stdio_printf_d);
+	RUN_TEST_GROUP(stdio_printf_i);
+	RUN_TEST_GROUP(stdio_printf_u);
+	RUN_TEST_GROUP(stdio_printf_o);
+	RUN_TEST_GROUP(stdio_printf_x);
+	RUN_TEST_GROUP(stdio_printf_fega);
+	RUN_TEST_GROUP(stdio_printf_cspn);
+	RUN_TEST_GROUP(stdio_printf_rest);
 }
 
 
