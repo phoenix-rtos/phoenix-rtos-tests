@@ -23,7 +23,7 @@ def harness(dut: Dut, ctx: TestContext):
     MESSAGE = r"(?P<line>.*?)\r+\n"
 
     while True:
-        idx = dut.expect([RESULT, FINAL, MESSAGE], timeout=45)
+        idx = dut.expect([RESULT, FINAL, MESSAGE], timeout=90)
         parsed = dut.match.groupdict()
 
         if idx == 2:

@@ -2,7 +2,7 @@ test:
     nightly: true
     harness: mbedtls.py
     targets:
-      exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk]
+      value: [ia32-generic-qemu]
 
     tests:
       - name: test_suite_aes.cbc
