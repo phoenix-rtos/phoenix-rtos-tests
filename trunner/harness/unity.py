@@ -67,7 +67,11 @@ def unity_harness(dut: Dut, ctx: TestContext) -> Optional[TestResult]:
                 parsed["total"] == sum(stats.values())
                 and parsed["fail"] == stats["FAIL"]
                 and parsed["ignore"] == stats["IGNORE"]
-            ), "There is a mismatch between the number of parsed tests and overall results!"
+            ), "".join(("There is a mismatch between the number of parsed tests and overall results!\n",
+                        "Parsed results from the final Unity message (total, failed, ignored): ",
+                        f"{parsed['total']}, {parsed['fail']}, {parsed['ignore']}\n",
+                        "Found test summary lines (total, failed, ignored): ",
+                        f"{sum(stats.values())}, {stats['FAIL']}, {stats['IGNORE']}"))
 
             # TODO parse last line
             break
