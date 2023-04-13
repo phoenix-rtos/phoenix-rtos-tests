@@ -36,7 +36,7 @@ def unity_harness(dut: Dut, ctx: TestContext) -> Optional[TestResult]:
     assert_re = r"ASSERTION (?P<path>[\S]+):(?P<line>\d+):(?P<status>FAIL|INFO|IGNORE): (?P<msg>.*?)\r"
     result_re = r"TEST\((?P<group>\w+), (?P<name>\w+)\) (?P<status>PASS|IGNORE)"
     # Fail need to have its own regex due to greedy matching
-    result_final_re = r"TEST\((?P<group>\w+), (?P<name>\w+)\) (?P<status>FAIL) at (?P<path>.*?):(?P<line>\d+)\r"
+    result_fail_re = r"TEST\((?P<group>\w+), (?P<name>\w+)\) (?P<status>FAIL) at (?P<path>.*?):(?P<line>\d+)\r"
     final_re = r"(?P<total>\d+) Tests (?P<fail>\d+) Failures (?P<ignore>\d+) Ignored \r+\n(?P<result>OK|FAIL)"
 
     last_assertion = {}
@@ -44,7 +44,7 @@ def unity_harness(dut: Dut, ctx: TestContext) -> Optional[TestResult]:
     results = []
 
     while True:
-        idx = dut.expect([assert_re, result_re, result_final_re, final_re])
+        idx = dut.expect([assert_re, result_re, result_fail_re, final_re])
         parsed = dut.match.groupdict()
 
         if idx == 0:
@@ -73,7 +73,6 @@ def unity_harness(dut: Dut, ctx: TestContext) -> Optional[TestResult]:
                         "Found test summary lines (total, failed, ignored): ",
                         f"{sum(stats.values())}, {stats['FAIL']}, {stats['IGNORE']}"))
 
-            # TODO parse last line
             break
 
     status = Status.FAIL if stats["FAIL"] != 0 else Status.OK
