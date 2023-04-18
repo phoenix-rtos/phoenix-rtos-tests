@@ -29,6 +29,7 @@ class TestContext:
     baudrate: int
     project_path: Path
     nightly: bool
+    logdir: Optional[str]
     should_flash: bool
     should_test: bool
     verbosity: int

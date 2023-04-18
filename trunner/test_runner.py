@@ -1,8 +1,12 @@
+import os
+import shutil
 import sys
+from io import StringIO
 from pathlib import Path
 from typing import List, Sequence
 
 from trunner.config import ConfigParser
+from trunner.dut import Dut
 from trunner.harness import HarnessError, FlashError
 from trunner.text import bold, green, red, yellow
 from trunner.types import Status, TestOptions, TestResult
@@ -18,6 +22,49 @@ def resolve_project_path():
     # file_path is phoenix-rtos-project/phoenix-rtos-tests/trunner/test_runner.py
     project_dir = file_path.parent.parent.parent
     return project_dir
+
+
+def init_logdir(logdir: str):
+    """Inits log directories if it's needed."""
+    if not logdir:
+        return
+
+    # clear the whole log directory before the next campaign
+    if os.path.isdir(logdir):
+        for file in os.listdir(logdir):
+            shutil.rmtree(f"{logdir}/{file}")
+
+    # test campaign directory will always be needed
+    os.makedirs(f"{logdir}/test_campaign")
+
+
+def set_logfiles(dut: Dut, logdir: str):
+    """Sets dut logfiles associated with the pexpect process if needed."""
+
+    if not logdir:
+        return
+
+    logfile_r, logfile_w, logfile_a = StringIO(""), StringIO(""), StringIO("")
+    dut.set_logfiles(logfile_r, logfile_w, logfile_a)
+
+
+def dump_logfiles(dut: Dut, dirname: str, logdir: str):
+    """Dump logfiles to log directory or to gh actions if needed."""
+
+    if not logdir:
+        return
+
+    for logfile_name, log in zip(("out", "in", "inout"), dut.get_logfiles()):
+        logs = log.getvalue()
+        # empty string -> do not dump logs
+        if not logs:
+            return
+        if not os.path.isdir(f"{logdir}/{dirname}"):
+            os.mkdir(f"{logdir}/{dirname}")
+        with open(f"{logdir}/{dirname}/{logfile_name}.log", "w") as logfile:
+            logfile.write(logs)
+        with open(f"{logdir}/test_campaign/{logfile_name}.log", "a") as logfile:
+            logfile.write(logs)
 
 
 class TestRunner:
@@ -97,6 +144,7 @@ class TestRunner:
             if test.ignore:
                 result.skip()
             else:
+                set_logfiles(self.target.dut, self.ctx.logdir)
                 harness = self.target.build_test(test)
                 assert harness is not None
 
@@ -115,6 +163,10 @@ class TestRunner:
                 fail += 1
             elif result.is_skip():
                 skip += 1
+
+            if not result.is_skip():
+                testname_stripped = test.name.replace("phoenix-rtos-tests/", "").replace("/", ".")
+                dump_logfiles(self.target.dut, testname_stripped, self.ctx.logdir)
 
             def set_reboot_flag(tests, idx, result):
                 # If the test is successful and the next test doesn't require loading via
@@ -154,8 +206,12 @@ class TestRunner:
 
         tests = self.parse_tests()
 
+        init_logdir(self.ctx.logdir)
+
         if self.ctx.should_flash:
+            set_logfiles(self.target.dut, self.ctx.logdir)
             self.flash()
+            dump_logfiles(self.target.dut, "flash", self.ctx.logdir)
 
         if not self.ctx.should_test:
             return True

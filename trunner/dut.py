@@ -37,6 +37,7 @@ class Dut(ABC):
 
     def __init__(self):
         self.pexpect_proc = None
+        self._logfiles = None
 
     def __getattr__(self, __name: str) -> Any:
         return getattr(self.pexpect_proc, __name)
@@ -46,6 +47,21 @@ class Dut(ABC):
             super().__setattr__(__name, __value)
         except AttributeError:
             setattr(self.pexpect_proc, __name, __value)
+
+    def set_logfiles(self, rd, wr, all):
+        self._logfiles = rd, wr, all
+
+        if self.pexpect_proc:
+            self._set_logfiles()
+
+    def get_logfiles(self):
+        return self._logfiles
+
+    def _set_logfiles(self):
+        if self._logfiles is not None:
+            self.pexpect_proc.logfile_read = self._logfiles[0]
+            self.pexpect_proc.logfile_send = self._logfiles[1]
+            self.pexpect_proc.logfile = self._logfiles[2]
 
     def clear_buffer(self):
         """
@@ -111,6 +127,7 @@ class ProcessDut(Dut):
 
     def open(self):
         self.pexpect_proc = pexpect.spawn(*self.args, **self.kwargs)
+        self._set_logfiles()
 
     def set_args(self, *args, **kwargs):
         self.args = args

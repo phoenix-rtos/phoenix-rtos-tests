@@ -53,6 +53,7 @@ def parse_args(targets: Dict[str, TargetBase], hosts: Dict[str, Host]):
         hosts: Dictionary of available hosts.
 
     """
+
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
@@ -136,6 +137,23 @@ def parse_args(targets: Dict[str, TargetBase], hosts: Dict[str, Host]):
         default=False,
         action="store_true",
         help="Nightly tests will be run",
+    )
+
+    def is_dir(dirpath):
+        """Check whether the provided path is a directory (if exists)"""
+        if os.path.exists(dirpath) and not os.path.isdir(dirpath):
+            raise argparse.ArgumentTypeError(f"{dirpath} is not a directory!")
+        return dirpath
+
+    parser.add_argument(
+        "--logdir",
+        default=None,
+        const="./phoenix_test_campaign_logs",
+        help="Directory path where log files from the test campaign will be stored. "
+        "By default log files will not be created. "
+        "When only --logdir without a value is set, uses %(const)s",
+        nargs="?",
+        type=is_dir,
     )
 
     class keyValue(argparse.Action):
@@ -223,6 +241,7 @@ def main():
         baudrate=args.baudrate,
         project_path=resolve_project_path(),
         nightly=args.nightly,
+        logdir=args.logdir,
         should_flash=not args.no_flash,
         should_test=not args.no_test,
         verbosity=args.verbose,
