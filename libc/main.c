@@ -53,6 +53,7 @@ void runner(void)
 	RUN_TEST_GROUP(stdio_scanf_cspn);
 	RUN_TEST_GROUP(stdio_scanf_squareBrackets);
 	RUN_TEST_GROUP(stdio_scanf_rest);
+	RUN_TEST_GROUP(string_chr);
 }
 
 
