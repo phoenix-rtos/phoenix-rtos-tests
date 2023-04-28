@@ -35,6 +35,10 @@ void runner(void)
 	RUN_TEST_GROUP(string_cat);
 	RUN_TEST_GROUP(string_dup);
 	RUN_TEST_GROUP(string_spn);
+	RUN_TEST_GROUP(string_memcmp);
+	RUN_TEST_GROUP(string_strncmp);
+	RUN_TEST_GROUP(string_strcmp);
+	RUN_TEST_GROUP(string_strcoll);
 }
 
 
