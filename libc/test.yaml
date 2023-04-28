@@ -6,5 +6,5 @@ test:
       #FIXME: symlink tests will fail on non-rootfs targets
       #FIXME: unistd_uid doesn't work on zynq7000-qemu
       targets:
-        exclude: [armv7a9-zynq7000-qemu, armv7m4-stm32l4x6-nucleo]
+        exclude: [armv7m4-stm32l4x6-nucleo]
         include: [host-generic-pc]
