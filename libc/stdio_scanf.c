@@ -3638,7 +3638,7 @@ TEST_SETUP(stdio_scanf_squareBrackets)
 
 TEST_TEAR_DOWN(stdio_scanf_squareBrackets)
 {
-	// fclose(filep);
+	fclose(filep);
 }
 
 
