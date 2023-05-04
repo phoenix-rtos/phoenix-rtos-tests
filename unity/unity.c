@@ -3,7 +3,7 @@
     Copyright (c) 2007-21 Mike Karlesky, Mark VanderVoord, Greg Williams
     [Released under MIT License. Please refer to license.txt for details]
 ============================================================================ */
-
+/* clang-format off */
 #include "unity.h"
 #include <stddef.h>
 
@@ -801,6 +801,7 @@ void UnityAssertEqualIntArray(UNITY_INTERNAL_PTR expected,
 
     if (UnityIsOneArrayNull(expected, actual, lineNumber, msg))
     {
+        UNITY_PRINT_EOL();
         UNITY_FAIL_AND_BAIL;
     }
 
@@ -931,6 +932,7 @@ void UnityAssertEqualFloatArray(UNITY_PTR_ATTRIBUTE const UNITY_FLOAT* expected,
 
     if (UnityIsOneArrayNull((UNITY_INTERNAL_PTR)expected, (UNITY_INTERNAL_PTR)actual, lineNumber, msg))
     {
+        UNITY_PRINT_EOL();
         UNITY_FAIL_AND_BAIL;
     }
 
@@ -1075,6 +1077,7 @@ void UnityAssertEqualDoubleArray(UNITY_PTR_ATTRIBUTE const UNITY_DOUBLE* expecte
 
     if (UnityIsOneArrayNull((UNITY_INTERNAL_PTR)expected, (UNITY_INTERNAL_PTR)actual, lineNumber, msg))
     {
+        UNITY_PRINT_EOL();
         UNITY_FAIL_AND_BAIL;
     }
 
@@ -1260,6 +1263,7 @@ void UnityAssertNumbersArrayWithin(const UNITY_UINT delta,
 
     if (UnityIsOneArrayNull(expected, actual, lineNumber, msg))
     {
+        UNITY_PRINT_EOL();
         UNITY_FAIL_AND_BAIL;
     }
 
@@ -1462,6 +1466,7 @@ void UnityAssertEqualStringArray(UNITY_INTERNAL_PTR expected,
 
     if (UnityIsOneArrayNull((UNITY_INTERNAL_PTR)expected, (UNITY_INTERNAL_PTR)actual, lineNumber, msg))
     {
+        UNITY_PRINT_EOL();
         UNITY_FAIL_AND_BAIL;
     }
 
@@ -1542,6 +1547,7 @@ void UnityAssertEqualMemory(UNITY_INTERNAL_PTR expected,
 
     if (UnityIsOneArrayNull(expected, actual, lineNumber, msg))
     {
+        UNITY_PRINT_EOL();
         UNITY_FAIL_AND_BAIL;
     }
 
@@ -1823,11 +1829,10 @@ void UnityIgnore(const char* msg, const UNITY_LINE_TYPE line)
         UNITY_OUTPUT_CHAR(' ');
         UnityPrint(msg);
     }
-	/* clang-format off */
+
     UNITY_PRINT_EOL();
     
     UNITY_IGNORE_AND_BAIL;
-	/* clang-format on */
 }
 
 /*-----------------------------------------------*/
@@ -2130,4 +2135,5 @@ int UnityTestMatches(void)
 }
 
 #endif /* UNITY_USE_COMMAND_LINE_ARGS */
+/* clang-format on */
 /*-----------------------------------------------*/
