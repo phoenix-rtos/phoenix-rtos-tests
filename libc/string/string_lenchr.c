@@ -490,29 +490,52 @@ TEST(string_chr, ascii)
 }
 
 
-TEST(string_chr, not_ascii)
+TEST(string_chr, not_ascii_chars)
 {
-	char charSet[BUFF_SIZE] = { 0 };
-	int len, i;
+	char notAsciiStr[129] = { 0 };
+	int sz, i;
 
-	/* Checking out of ASCII bytes */
-	for (i = sizeof(charSet); i < sizeof(charSet) * 2 - 1; i++) {
-		charSet[i - sizeof(charSet)] = i;
+	/*
+	 * Depending on architecture we will get
+	 * output {128;255} if chars are unsigned or {-128;-1} when chars are signed
+	 */
+
+	notAsciiStr[128] = 0;
+	sz = sizeof(notAsciiStr);
+	for (i = 0; i <= 127; i++) {
+		notAsciiStr[i] = i + 128;
+		/* Testing capability of functions to hold and read not ascii set */
+		TEST_ASSERT_EQUAL_STRING(&notAsciiStr[i], strchr(notAsciiStr, notAsciiStr[i]));
+		TEST_ASSERT_EQUAL_STRING(&notAsciiStr[i], strrchr(notAsciiStr, notAsciiStr[i]));
+		TEST_ASSERT_EQUAL_STRING(&notAsciiStr[i], memchr(notAsciiStr, notAsciiStr[i], sz));
 	}
+}
 
-	/* Testing capability of functions to hold and read not ascii set */
-	len = sizeof(charSet);
-	TEST_ASSERT_EQUAL_PTR(charSet, strchr(charSet, charSet[0]));
-	TEST_ASSERT_EQUAL_PTR(charSet, strrchr(charSet, charSet[0]));
-	TEST_ASSERT_EQUAL_PTR(charSet, memchr(charSet, charSet[0], len));
+TEST(string_chr, int_to_char_cast)
+{
+	char str[2];
+	int intVal[] = {
+		INT_MIN,
+		INT_MIN / 3,
+		-514,
+		-256,
+		-129,
+		129,
+		256,
+		514,
+		INT_MAX / 3,
+		INT_MAX
+	},
+		i;
 
-	TEST_ASSERT_EQUAL_PTR(&charSet[64], strchr(charSet, charSet[64]));
-	TEST_ASSERT_EQUAL_PTR(&charSet[64], strrchr(charSet, charSet[64]));
-	TEST_ASSERT_EQUAL_PTR(&charSet[64], memchr(charSet, charSet[64], len));
+	for (i = 0; i < sizeof(intVal) / sizeof(int); i++) {
+		/* Copy value into first place in array as char*/
+		str[0] = intVal[i];
+		/*Setting up 0 on second place to recognize array as string*/
+		str[1] = 0;
 
-	TEST_ASSERT_EQUAL_PTR(&charSet[len - 1], strchr(charSet, charSet[len - 1]));
-	TEST_ASSERT_EQUAL_PTR(&charSet[len - 1], strrchr(charSet, charSet[len - 1]));
-	TEST_ASSERT_EQUAL_PTR(&charSet[len - 1], memchr(charSet, charSet[len - 1], len));
+		TEST_ASSERT_EQUAL_PTR(&str[0], strrchr(str, intVal[i]));
+	}
 }
 
 
@@ -633,6 +656,7 @@ TEST_GROUP_RUNNER(string_chr)
 	RUN_TEST_CASE(string_chr, whitespaces);
 	RUN_TEST_CASE(string_chr, empty);
 	RUN_TEST_CASE(string_chr, ascii);
-	RUN_TEST_CASE(string_chr, not_ascii);
+	RUN_TEST_CASE(string_chr, not_ascii_chars);
+	RUN_TEST_CASE(string_chr, int_to_char_cast);
 	RUN_TEST_CASE(string_chr, torn);
 }
