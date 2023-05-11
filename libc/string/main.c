@@ -39,6 +39,10 @@ void runner(void)
 	RUN_TEST_GROUP(string_strncmp);
 	RUN_TEST_GROUP(string_strcmp);
 	RUN_TEST_GROUP(string_strcoll);
+	RUN_TEST_GROUP(string_tok);
+	RUN_TEST_GROUP(string_tok_r);
+	RUN_TEST_GROUP(string_str);
+	RUN_TEST_GROUP(string_pbrk);
 }
 
 
