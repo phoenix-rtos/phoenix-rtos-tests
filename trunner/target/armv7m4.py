@@ -65,7 +65,7 @@ class STM32L4x6PloAppLoader(TerminalHarness, PloInterface):
         self.ram_addr = 0x20000000
         self.page_sz = 0x200
 
-    def _app_size(self, path: Path):
+    def _aligned_app_size(self, path: Path):
         sz = path.stat().st_size
         # round up to the size of the page
         offset = (self.page_sz - sz) % self.page_sz
@@ -79,7 +79,7 @@ class STM32L4x6PloAppLoader(TerminalHarness, PloInterface):
 
             for app in self.apps:
                 path = self.gdb.cwd / Path(app.file)
-                sz = self._app_size(path)
+                sz = self._aligned_app_size(path)
 
                 self.gdb.load(path, self.ram_addr + offset)
                 offset += sz
@@ -93,12 +93,12 @@ class STM32L4x6PloAppLoader(TerminalHarness, PloInterface):
         offset = self.load_offset
         for app in self.apps:
             path = self.gdb.cwd / Path(app.file)
-            sz = self._app_size(path)
+            sz = path.stat().st_size
 
             self.alias(app.file, offset=offset, size=sz)
             self.app("ramdev", app.file, "ram", "ram")
 
-            offset += sz
+            offset += self._aligned_app_size(path)
 
 
 class fdspawncustom(pexpect.fdpexpect.fdspawn):
