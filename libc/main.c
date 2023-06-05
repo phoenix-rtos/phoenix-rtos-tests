@@ -33,8 +33,6 @@ void runner(void)
 	RUN_TEST_GROUP(file);
 	RUN_TEST_GROUP(unistd_getopt);
 	RUN_TEST_GROUP(unistd_uids);
-	RUN_TEST_GROUP(string_strlcpy);
-	RUN_TEST_GROUP(string_strlcat);
 	RUN_TEST_GROUP(unistd_fsdir);
 	RUN_TEST_GROUP(unistd_file);
 	RUN_TEST_GROUP(wchar_wcscmp);
@@ -57,6 +55,8 @@ void runner(void)
 	RUN_TEST_GROUP(string_memset);
 	RUN_TEST_GROUP(string_memmove);
 	RUN_TEST_GROUP(string_memmove_big);
+	RUN_TEST_GROUP(string_strlcpy);
+	RUN_TEST_GROUP(string_strlcat);
 }
 
 
