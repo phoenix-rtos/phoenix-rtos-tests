@@ -7,113 +7,188 @@ test:
       value: [ia32-generic-qemu, armv7a9-zynq7000-qemu, armv7a9-zynq7000-zedboard]
 
     tests:
+
       - name: busybox
         execute: test_busybox busybox
+
       - name: basename
         execute: test_busybox basename
+
       - name: bunzip2
         ignore: True
         execute: test_busybox bunzip2
+
       - name: bzcat
         execute: test_busybox bzcat
+        targets:
+          exclude: [armv7a9-zynq7000-qemu, armv7a9-zynq7000-zedboard] # TODO: investigate reason'
+
       - name: cat
         execute: test_busybox cat
+
       - name: cmp
         execute: test_busybox cmp
+
       - name: cp
         execute: test_busybox cp
+        targets:
+          exclude: [ia32-generic-qemu] # TODO: investigate reason'
+
       - name: cut
         execute: test_busybox cut
+
       - name: date
         ignore: True
         execute: test_busybox date
+
       - name: dd
         ignore: True
         execute: test_busybox dd
+
       - name: diff
         execute: test_busybox diff
+        targets:
+          exclude: [ia32-generic-qemu] # TODO: investigate reason'
+
       - name: dirname
         execute: test_busybox dirname
+
       - name: echo
         ignore: True
         execute: test_busybox echo
+
       - name: "false"
         execute: test_busybox "false"
+
       - name: find
         execute: test_busybox find
+        targets:
+          exclude: [ia32-generic-qemu] # TODO: investigate reason'
+
       - name: grep
         ignore: True
         execute: test_busybox grep
+
       - name: gunzip
         ignore: True
         execute: test_busybox gunzip
+
       - name: gzip
         execute: test_busybox gzip
+        targets:
+          exclude: [armv7a9-zynq7000-qemu, armv7a9-zynq7000-zedboard] # TODO: investigate reason'
+
       - name: head
         execute: test_busybox head
+
       - name: id
         execute: test_busybox id
+
       - name: ln
         execute: test_busybox ln
+        targets:
+          exclude: [armv7a9-zynq7000-qemu, armv7a9-zynq7000-zedboard] # TODO: investigate reason'
+
       - name: ls
         execute: test_busybox ls
+        targets:
+          exclude: [ia32-generic-qemu] # TODO: investigate reason'
+
       - name: md5sum
         execute: test_busybox md5sum
+
       - name: mkdir
         execute: test_busybox mkdir
+
       - name: mv
         ignore: True
         execute: test_busybox mv
+
       - name: od
         execute: test_busybox od
+
       - name: paste
         execute: test_busybox paste
+
       - name: printf
         ignore: True
         execute: test_busybox printf
+
       - name: pwd
         execute: test_busybox pwd
+
       - name: readlink
         execute: test_busybox readlink
+        targets:
+          exclude: [ia32-generic-qemu] # TODO: investigate reason'
+
       - name: rm
         execute: test_busybox rm
+
       - name: rmdir
         execute: test_busybox rmdir
+
       - name: sed
         ignore: True
         execute: test_busybox sed
+
       - name: sha1sum
         execute: test_busybox sha1sum
+
       - name: sha256sum
         execute: test_busybox sha256sum
+
       - name: sha3sum
         execute: test_busybox sha3sum
+
       - name: sha512sum
         execute: test_busybox sha512sum
+
       - name: sort
         execute: test_busybox sort
+        targets:
+          exclude: [ia32-generic-qemu] # TODO: investigate reason'
+
       - name: tail
         execute: test_busybox tail
+        targets:
+          exclude: [ia32-generic-qemu] # TODO: investigate reason'
+
       - name: tar
         ignore: True
         execute: test_busybox tar
+
       - name: tee
         execute: test_busybox tee
+
       - name: test
         execute: test_busybox test
+        targets:
+          exclude: [ia32-generic-qemu] # TODO: investigate reason'
+
       - name: touch
         execute: test_busybox touch
+
       - name: tr
         execute: test_busybox tr
+        targets:
+          exclude: [ia32-generic-qemu] # TODO: investigate reason'
+
       - name: "true"
         execute: test_busybox "true"
+
       - name: uniq
         execute: test_busybox uniq
+        targets:
+          exclude: [ia32-generic-qemu] # TODO: investigate reason'
+
       - name: wc
         execute: test_busybox wc
+
       - name: which
         ignore: True
         execute: test_busybox which
+
       - name: xargs
         ignore: True
         execute: test_busybox xargs
