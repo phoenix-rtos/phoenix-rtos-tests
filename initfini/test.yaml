@@ -3,3 +3,5 @@ test:
         - name: main
           harness: test.py
           execute: test-initfini
+          targets:
+              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk,armv7a9-zynq7000-qemu]

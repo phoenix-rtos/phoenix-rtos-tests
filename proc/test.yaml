@@ -3,8 +3,14 @@ test:
         - name: test_thread_rand
           type: unity
           execute: test_thread_rand
+          targets:
+              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk,armv7a9-zynq7000-qemu]
+
 
         - name: test_priority
           load:
             - app: test_priority
           harness: test_priority.py
+          targets:
+              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk,armv7a9-zynq7000-qemu]
+

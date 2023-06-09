@@ -133,9 +133,9 @@ TEST_GROUP(stdio_scanf_rest);
 TEST_SETUP(stdio_scanf_d)
 {
 
-	printf("Here przed plikiem ");
+	printf("Here przed plikiem \n");
 	filep = fopen(TESTFILE_PATH, "w+");
-	printf("Here po pliku ");
+	printf("Here po pliku \n");
 }
 
 
@@ -148,7 +148,7 @@ TEST_TEAR_DOWN(stdio_scanf_d)
 TEST(stdio_scanf_d, d)
 {
 
-	printf("Here d/d testy");
+	printf("Here d/d testy\n");
 	char buff[BUFF_LEN] = { 0 };
 	int max, min, zero, hmin, hmax;
 	const char *format = "%d %d %d %d %d";
@@ -4622,7 +4622,7 @@ TEST(stdio_scanf_rest, field_width)
 
 TEST_GROUP_RUNNER(stdio_scanf_d)
 {
-	printf("Here test group runner");
+	printf("Here test group runner\n");
 	RUN_TEST_CASE(stdio_scanf_d, d);
 	RUN_TEST_CASE(stdio_scanf_d, hhd);
 	RUN_TEST_CASE(stdio_scanf_d, hd);

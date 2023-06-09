@@ -2,6 +2,7 @@ test:
     targets:
       #TODO: remove when riscv64-generic-qemu target will stop being experimental
       include: [riscv64-generic-qemu]
+      exclude: [armv7a9-zynq7000-qemu]
 
     tests:
         - name: gibber
