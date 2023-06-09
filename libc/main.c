@@ -42,6 +42,7 @@ void runner(void)
 	RUN_TEST_GROUP(string_len);
 	RUN_TEST_GROUP(stdlib_env);
 	RUN_TEST_GROUP(ctype);
+	printf("Here przed scanf ");
 	RUN_TEST_GROUP(stdio_scanf_d);
 	RUN_TEST_GROUP(stdio_scanf_i);
 	RUN_TEST_GROUP(stdio_scanf_u);
