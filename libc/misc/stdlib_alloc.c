@@ -146,7 +146,7 @@ TEST(stdlib_alloc, malloc_zero)
 
 TEST(stdlib_alloc, malloc_iterate)
 {
-	for (size_t s = 1; s <= 4096; s++) {
+	for (size_t s = 1; s <= LARGE_SIZE; s++) {
 		void *ptr = malloc(s);
 		TEST_ASSERT_NOT_NULL(ptr);
 		TEST_ASSERT_GREATER_OR_EQUAL_INT(s, malloc_usable_size(ptr));
@@ -231,7 +231,7 @@ TEST(stdlib_alloc, calloc_large)
 
 TEST(stdlib_alloc, calloc_iterate)
 {
-	for (size_t s = 1; s <= 4096; s++) {
+	for (size_t s = 1; s <= LARGE_SIZE; s++) {
 		char *ptr = calloc(s, sizeof(char));
 		TEST_ASSERT_NOT_NULL(ptr);
 		TEST_ASSERT_EACH_EQUAL_CHAR(0, ptr, s);
