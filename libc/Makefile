@@ -1,9 +1,23 @@
-LOCAL_DIR := $(call my-dir)
-NAME := test-libc
-SRCS := $(wildcard $(LOCAL_DIR)*.c)
+# custom name as LOCAL_DIR is auto-reset by binary.mk
+MY_LOCAL_DIR := $(call my-dir)
+COMMON_SRCS := $(wildcard $(MY_LOCAL_DIR)*.c)
+
+LIBC_UNIT_TESTS :=
+
+# quick template for adding libc tests from subdirs (makes test-libc-xxx binary from xxx/*.c)
+# $(eval $(call add_libc_test,NAME[,LOCAL_LDFLAGS]))
+define add_test_libc
+NAME := test-libc-$(1)
+LIBC_UNIT_TESTS += test-libc-$(1)
+SRCS := $(wildcard $(MY_LOCAL_DIR)$(1)/*.c) $(COMMON_SRCS)
 DEP_LIBS := unity
-
-LOCAL_LDFLAGS := -lpthread
-LOCAL_LDFLAGS += -z stack-size=12288
-
+LOCAL_CFLAGS := -I$(MY_LOCAL_DIR)
+LOCAL_LDFLAGS := $(2)
 include $(binary.mk)
+endef
+
+$(eval $(call add_test_libc,printf, -z stack-size=12288))
+$(eval $(call add_test_libc,pthread, -lpthread -z stack-size=12288))
+$(eval $(call add_test_libc,misc))
+$(eval $(call add_test_libc,stdio))
+$(eval $(call add_test_libc,string))
