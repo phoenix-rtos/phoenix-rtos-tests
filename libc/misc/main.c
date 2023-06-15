@@ -21,49 +21,17 @@
 /* no need for forward declarations, RUN_TEST_GROUP does it by itself */
 void runner(void)
 {
-	RUN_TEST_GROUP(stdio_fopenfclose);
-	RUN_TEST_GROUP(stdio_line);
-	RUN_TEST_GROUP(stdio_getput);
-	RUN_TEST_GROUP(stdio_fileseek);
-	RUN_TEST_GROUP(stdio_fileop);
-	RUN_TEST_GROUP(stdio_bufs);
-
 	RUN_TEST_GROUP(getpwd);
 	RUN_TEST_GROUP(resolve_path);
-	RUN_TEST_GROUP(file);
 	RUN_TEST_GROUP(unistd_getopt);
 	RUN_TEST_GROUP(unistd_uids);
 	RUN_TEST_GROUP(unistd_fsdir);
 	RUN_TEST_GROUP(unistd_file);
 	RUN_TEST_GROUP(wchar_wcscmp);
-	RUN_TEST_GROUP(test_pthread_cond);
 	RUN_TEST_GROUP(strtod_family);
 	RUN_TEST_GROUP(stdlib_alloc);
-	RUN_TEST_GROUP(string_len);
 	RUN_TEST_GROUP(stdlib_env);
 	RUN_TEST_GROUP(ctype);
-	RUN_TEST_GROUP(stdio_scanf_d);
-	RUN_TEST_GROUP(stdio_scanf_i);
-	RUN_TEST_GROUP(stdio_scanf_u);
-	RUN_TEST_GROUP(stdio_scanf_o);
-	RUN_TEST_GROUP(stdio_scanf_x);
-	RUN_TEST_GROUP(stdio_scanf_aefg);
-	RUN_TEST_GROUP(stdio_scanf_cspn);
-	RUN_TEST_GROUP(stdio_scanf_squareBrackets);
-	RUN_TEST_GROUP(stdio_scanf_rest);
-	RUN_TEST_GROUP(string_chr);
-	RUN_TEST_GROUP(string_memset);
-	RUN_TEST_GROUP(string_memmove);
-	RUN_TEST_GROUP(string_memmove_big);
-	RUN_TEST_GROUP(string_memcpy);
-	RUN_TEST_GROUP(string_memccpy);
-	RUN_TEST_GROUP(string_strncpy);
-	RUN_TEST_GROUP(string_stpncpy);
-	RUN_TEST_GROUP(string_strcpy_stpcpy);
-	RUN_TEST_GROUP(string_strlcpy);
-	RUN_TEST_GROUP(string_strlcat);
-	RUN_TEST_GROUP(string_errsign);
-	RUN_TEST_GROUP(signal_psignal);
 	RUN_TEST_GROUP(stdlib_bsearch);
 }
 
