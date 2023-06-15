@@ -39,164 +39,104 @@
 #include <unity_fixture.h>
 #include <signal.h>
 
-static FILE *output_file;
-static char buff[700];
+static FILE *test_outFile;
+static char test_buff[700];
 
+enum test_outType { DTEST,
+	FTEST,
+	TEST,
+	SNTEST,
+	STEST };
+
+#define NUM_OUTPUT_TYPES 5
 
 #define PATH "stdio_printf_test"
 
 /* comma delimiter macro ',' for multiple arguments parsing to *printf() function via macros */
 #define COMMA ,
 
-/* macro assertions*/
-#define dtest(format, value, expect) \
+/* macro assertion to test printf functions*/
+#define test_assertPrintfs(expect, format, ...) \
 	{ \
-		memset(buff, 0, sizeof(buff)); \
-		rewind(output_file); \
-		dprintf(fileno(output_file), format, value); \
-		fseek(output_file, 0, SEEK_SET); \
-		fflush(output_file); \
-		TEST_ASSERT_EQUAL_STRING(expect, fgets(buff, strlen(expect) + 1, output_file)); \
-		TEST_ASSERT_EQUAL_STRING(expect, buff); \
-	}
-
-#define ftest(format, value, expect) \
-	{ \
-		memset(buff, 0, sizeof(buff)); \
-		rewind(output_file); \
-		fprintf(output_file, format, value); \
-		fseek(output_file, 0, SEEK_SET); \
-		fflush(output_file); \
-		TEST_ASSERT_EQUAL_STRING(expect, fgets(buff, strlen(expect) + 1, output_file)); \
-		TEST_ASSERT_EQUAL_STRING(expect, buff); \
-	}
-
-#define stdtest(format, value, expect) \
-	{ \
-		rewind(output_file); \
-		memset(buff, 0, sizeof(buff)); \
-		int stdout_fd = dup(STDOUT_FILENO); \
-		int fd = open(PATH, O_WRONLY | O_CREAT, 0666); \
-		dup2(fd, STDOUT_FILENO); \
-		printf(format, value); \
-		fflush(stdout); \
-		fseek(output_file, 0, SEEK_SET); \
-		fflush(output_file); \
-		/* redirect back to stdout */ \
-		dup2(stdout_fd, STDOUT_FILENO); \
-		close(fd); \
-		close(stdout_fd); \
-		TEST_ASSERT_EQUAL_STRING(expect, fgets(buff, strlen(expect) + 1, output_file)); \
-		TEST_ASSERT_EQUAL_STRING(expect, buff); \
-	}
-
-#define sntest(format, value, expect) \
-	{ \
-		memset(buff, 0, sizeof(buff)); \
-		snprintf(buff, strlen(expect) + 1, format, value); \
-		TEST_ASSERT_EQUAL_STRING(expect, buff); \
-	}
-
-#define stest(format, value, expect) \
-	{ \
-		memset(buff, 0, sizeof(buff)); \
-		sprintf(buff, format, value); \
-		TEST_ASSERT_EQUAL_STRING(expect, buff); \
+		for (enum test_outType type = DTEST; type < NUM_OUTPUT_TYPES; type++) { \
+			memset(test_buff, 0, sizeof(test_buff)); \
+			rewind(test_outFile); \
+			switch (type) { \
+				case DTEST: \
+					dprintf(fileno(test_outFile), format, __VA_ARGS__); \
+					break; \
+				case FTEST: \
+					fprintf(test_outFile, format, __VA_ARGS__); \
+					break; \
+				case TEST: { \
+					int stdout_fd = dup(STDOUT_FILENO); \
+					int fd = open(PATH, O_WRONLY | O_CREAT, 0666); \
+					dup2(fd, STDOUT_FILENO); \
+					printf(format, __VA_ARGS__); \
+					fflush(stdout); \
+					dup2(stdout_fd, STDOUT_FILENO); \
+					close(fd); \
+					close(stdout_fd); \
+					break; \
+				} \
+				case SNTEST: \
+					snprintf(test_buff, strlen(expect) + 1, format, __VA_ARGS__); \
+					break; \
+				case STEST: \
+					sprintf(test_buff, format, __VA_ARGS__); \
+					break; \
+			} \
+			fseek(test_outFile, 0, SEEK_SET); \
+			fflush(test_outFile); \
+			TEST_ASSERT_EQUAL_STRING(expect, fgets(test_buff, strlen(expect) + 1, test_outFile)); \
+			TEST_ASSERT_EQUAL_STRING(expect, test_buff); \
+		} \
 	}
 
 /* wrappers for vprintf tests*/
-static void vdtest(char *expect, const char *format, ...)
+static void test_assertVprintfs(char *expect, const char *format, ...)
 {
 	va_list arg_ptr;
-
-	memset(buff, 0, sizeof(buff));
-	rewind(output_file);
-
 	va_start(arg_ptr, format);
 
-	vdprintf(fileno(output_file), format, arg_ptr);
-	fseek(output_file, 0, SEEK_SET);
-	fflush(output_file);
+	for (enum test_outType type = DTEST; type < NUM_OUTPUT_TYPES; type++) {
+		memset(test_buff, 0, sizeof(test_buff));
+		rewind(test_outFile);
 
-	TEST_ASSERT_EQUAL_STRING(expect, fgets(buff, strlen(expect) + 1, output_file));
-	TEST_ASSERT_EQUAL_STRING(expect, buff);
+		switch (type) {
+			case DTEST:
+				vdprintf(fileno(test_outFile), format, arg_ptr);
+				break;
+			case FTEST:
+				vfprintf(test_outFile, format, arg_ptr);
+				break;
+			case TEST: {
+				int stdout_fd = dup(STDOUT_FILENO);
+				int fd = open(PATH, O_WRONLY | O_CREAT, 0666);
+				dup2(fd, STDOUT_FILENO);
+				vprintf(format, arg_ptr);
+				fflush(stdout);
+				dup2(stdout_fd, STDOUT_FILENO);
+				close(fd);
+				close(stdout_fd);
+				break;
+			}
+			case SNTEST:
+				vsnprintf(test_buff, strlen(expect) + 1, format, arg_ptr);
+				break;
+			case STEST:
+				vsprintf(test_buff, format, arg_ptr);
+				break;
+		}
 
-	va_end(arg_ptr);
-}
+		fseek(test_outFile, 0, SEEK_SET);
+		fflush(test_outFile);
+		TEST_ASSERT_EQUAL_STRING(expect, fgets(test_buff, strlen(expect) + 1, test_outFile));
+		TEST_ASSERT_EQUAL_STRING(expect, test_buff);
 
-
-static void vftest(char *expect, const char *format, ...)
-{
-	va_list arg_ptr;
-
-	memset(buff, 0, sizeof(buff));
-	rewind(output_file);
-
-	va_start(arg_ptr, format);
-
-	vfprintf(output_file, format, arg_ptr);
-	fseek(output_file, 0, SEEK_SET);
-	fflush(output_file);
-
-	TEST_ASSERT_EQUAL_STRING(expect, fgets(buff, strlen(expect) + 1, output_file));
-	TEST_ASSERT_EQUAL_STRING(expect, buff);
-
-	va_end(arg_ptr);
-}
-
-
-static void vtest(char *expect, const char *format, ...)
-{
-	va_list arg_ptr;
-
-	rewind(output_file);
-	int stdout_fd = dup(STDOUT_FILENO);
-	memset(buff, 0, sizeof(buff));
-	int fd = open(PATH, O_WRONLY | O_CREAT, 0666);
-	dup2(fd, STDOUT_FILENO);
-
-	va_start(arg_ptr, format);
-
-	vprintf(format, arg_ptr);
-
-	fflush(stdout);
-	fseek(output_file, 0, SEEK_SET);
-	fflush(output_file);
-	/* redirect back to stdout */
-	dup2(stdout_fd, STDOUT_FILENO);
-	close(fd);
-	close(stdout_fd);
-	TEST_ASSERT_EQUAL_STRING(expect, fgets(buff, strlen(expect) + 1, output_file));
-	TEST_ASSERT_EQUAL_STRING(expect, buff);
-
-	va_end(arg_ptr);
-}
-
-
-static void vsntest(char *expect, const char *format, ...)
-{
-	va_list arg_ptr;
-	memset(buff, 0, sizeof(buff));
-
-	va_start(arg_ptr, format);
-
-	vsnprintf(buff, strlen(expect) + 1, format, arg_ptr);
-	TEST_ASSERT_EQUAL_STRING(expect, buff);
-
-	va_end(arg_ptr);
-}
-
-
-static void vstest(char *expect, const char *format, ...)
-{
-	va_list arg_ptr;
-	memset(buff, 0, sizeof(buff));
-
-	va_start(arg_ptr, format);
-
-	vsprintf(buff, format, arg_ptr);
-	TEST_ASSERT_EQUAL_STRING(expect, buff);
-
+		va_end(arg_ptr);
+		va_start(arg_ptr, format);  // re-initialize arg_ptr for next loop iteration
+	}
 	va_end(arg_ptr);
 }
 
@@ -291,13 +231,13 @@ TEST_GROUP(stdio_printf_rest);
 
 TEST_SETUP(stdio_printf_d)
 {
-	output_file = fopen(PATH, "w+");
+	test_outFile = fopen(PATH, "w+");
 }
 
 
 TEST_TEAR_DOWN(stdio_printf_d)
 {
-	fclose(output_file);
+	fclose(test_outFile);
 	remove(PATH);
 }
 
@@ -319,17 +259,8 @@ TEST(stdio_printf_d, d)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vftest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vsntest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vstest(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
 }
 
 
@@ -350,17 +281,8 @@ TEST(stdio_printf_d, hhd)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vftest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vsntest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vstest(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
 }
 
 
@@ -381,17 +303,8 @@ TEST(stdio_printf_d, hd)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vftest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vsntest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vstest(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
 }
 
 
@@ -412,17 +325,8 @@ TEST(stdio_printf_d, ld)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vftest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vsntest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vstest(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
 }
 
 
@@ -443,17 +347,8 @@ TEST(stdio_printf_d, lld)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vftest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vsntest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vstest(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
 }
 
 
@@ -474,17 +369,8 @@ TEST(stdio_printf_d, jd)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vftest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vsntest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vstest(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
 }
 
 
@@ -505,17 +391,8 @@ TEST(stdio_printf_d, zd)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2]);
-	vftest(expect, format, values[0], values[1], values[2]);
-	vtest(expect, format, values[0], values[1], values[2]);
-	vsntest(expect, format, values[0], values[1], values[2]);
-	vstest(expect, format, values[0], values[1], values[2]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2]);
 }
 
 
@@ -536,17 +413,8 @@ TEST(stdio_printf_d, td)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vftest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vsntest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vstest(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
 }
 
 
@@ -566,30 +434,21 @@ TEST(stdio_printf_d, out_of_bonds)
 	strcat(expect, temp);
 	free(temp);
 
-	dtest(format, INT_MAX COMMA INT_MAX, expect);
-	ftest(format, INT_MAX COMMA INT_MAX, expect);
-	stdtest(format, INT_MAX COMMA INT_MAX, expect);
-	sntest(format, INT_MAX COMMA INT_MAX, expect);
-	stest(format, INT_MAX COMMA INT_MAX, expect);
-
-	vdtest(expect, format, INT_MAX, INT_MAX);
-	vftest(expect, format, INT_MAX, INT_MAX);
-	vtest(expect, format, INT_MAX, INT_MAX);
-	vsntest(expect, format, INT_MAX, INT_MAX);
-	vstest(expect, format, INT_MAX, INT_MAX);
+	test_assertPrintfs(expect, format, INT_MAX, INT_MAX);
+	test_assertVprintfs(expect, format, INT_MAX, INT_MAX);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 
 TEST_SETUP(stdio_printf_i)
 {
-	output_file = fopen(PATH, "w+");
+	test_outFile = fopen(PATH, "w+");
 }
 
 
 TEST_TEAR_DOWN(stdio_printf_i)
 {
-	fclose(output_file);
+	fclose(test_outFile);
 	remove(PATH);
 }
 
@@ -611,17 +470,8 @@ TEST(stdio_printf_i, i)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vftest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vsntest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vstest(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
 }
 
 
@@ -642,17 +492,8 @@ TEST(stdio_printf_i, hhi)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vftest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vsntest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vstest(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
 }
 
 
@@ -673,17 +514,8 @@ TEST(stdio_printf_i, hi)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vftest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vsntest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vstest(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
 }
 
 
@@ -704,17 +536,8 @@ TEST(stdio_printf_i, li)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vftest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vsntest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vstest(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
 }
 
 
@@ -735,17 +558,8 @@ TEST(stdio_printf_i, lli)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vftest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vsntest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vstest(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
 }
 
 
@@ -766,17 +580,8 @@ TEST(stdio_printf_i, ji)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vftest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vsntest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vstest(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
 }
 
 
@@ -797,17 +602,8 @@ TEST(stdio_printf_i, zi)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2]);
-	vftest(expect, format, values[0], values[1], values[2]);
-	vtest(expect, format, values[0], values[1], values[2]);
-	vsntest(expect, format, values[0], values[1], values[2]);
-	vstest(expect, format, values[0], values[1], values[2]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2]);
 }
 
 
@@ -828,17 +624,8 @@ TEST(stdio_printf_i, ti)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vftest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vsntest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vstest(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
 }
 
 
@@ -858,30 +645,22 @@ TEST(stdio_printf_i, out_of_bonds)
 	strcat(expect, temp);
 	free(temp);
 
-	dtest(format, INT_MAX COMMA INT_MAX, expect);
-	ftest(format, INT_MAX COMMA INT_MAX, expect);
-	stdtest(format, INT_MAX COMMA INT_MAX, expect);
-	sntest(format, INT_MAX COMMA INT_MAX, expect);
-	stest(format, INT_MAX COMMA INT_MAX, expect);
+	test_assertPrintfs(expect, format, INT_MAX, INT_MAX);
 
-	vdtest(expect, format, INT_MAX, INT_MAX);
-	vftest(expect, format, INT_MAX, INT_MAX);
-	vtest(expect, format, INT_MAX, INT_MAX);
-	vsntest(expect, format, INT_MAX, INT_MAX);
-	vstest(expect, format, INT_MAX, INT_MAX);
+	test_assertVprintfs(expect, format, INT_MAX, INT_MAX);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 
 TEST_SETUP(stdio_printf_o)
 {
-	output_file = fopen(PATH, "w+");
+	test_outFile = fopen(PATH, "w+");
 }
 
 
 TEST_TEAR_DOWN(stdio_printf_o)
 {
-	fclose(output_file);
+	fclose(test_outFile);
 	remove(PATH);
 }
 
@@ -903,17 +682,8 @@ TEST(stdio_printf_o, o)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2]);
-	vftest(expect, format, values[0], values[1], values[2]);
-	vtest(expect, format, values[0], values[1], values[2]);
-	vsntest(expect, format, values[0], values[1], values[2]);
-	vstest(expect, format, values[0], values[1], values[2]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2]);
 }
 
 
@@ -934,17 +704,8 @@ TEST(stdio_printf_o, hho)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2]);
-	vftest(expect, format, values[0], values[1], values[2]);
-	vtest(expect, format, values[0], values[1], values[2]);
-	vsntest(expect, format, values[0], values[1], values[2]);
-	vstest(expect, format, values[0], values[1], values[2]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2]);
 }
 
 
@@ -965,17 +726,8 @@ TEST(stdio_printf_o, ho)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2]);
-	vftest(expect, format, values[0], values[1], values[2]);
-	vtest(expect, format, values[0], values[1], values[2]);
-	vsntest(expect, format, values[0], values[1], values[2]);
-	vstest(expect, format, values[0], values[1], values[2]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2]);
 }
 
 
@@ -996,17 +748,8 @@ TEST(stdio_printf_o, lo)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2]);
-	vftest(expect, format, values[0], values[1], values[2]);
-	vtest(expect, format, values[0], values[1], values[2]);
-	vsntest(expect, format, values[0], values[1], values[2]);
-	vstest(expect, format, values[0], values[1], values[2]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2]);
 }
 
 
@@ -1027,17 +770,8 @@ TEST(stdio_printf_o, llo)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2]);
-	vftest(expect, format, values[0], values[1], values[2]);
-	vtest(expect, format, values[0], values[1], values[2]);
-	vsntest(expect, format, values[0], values[1], values[2]);
-	vstest(expect, format, values[0], values[1], values[2]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2]);
 }
 
 
@@ -1058,17 +792,8 @@ TEST(stdio_printf_o, jo)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2]);
-	vftest(expect, format, values[0], values[1], values[2]);
-	vtest(expect, format, values[0], values[1], values[2]);
-	vsntest(expect, format, values[0], values[1], values[2]);
-	vstest(expect, format, values[0], values[1], values[2]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2]);
 }
 
 
@@ -1089,17 +814,8 @@ TEST(stdio_printf_o, zo)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2]);
-	vftest(expect, format, values[0], values[1], values[2]);
-	vtest(expect, format, values[0], values[1], values[2]);
-	vsntest(expect, format, values[0], values[1], values[2]);
-	vstest(expect, format, values[0], values[1], values[2]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2]);
 }
 
 
@@ -1121,17 +837,8 @@ TEST(stdio_printf_o, to)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2]);
-	vftest(expect, format, values[0], values[1], values[2]);
-	vtest(expect, format, values[0], values[1], values[2]);
-	vsntest(expect, format, values[0], values[1], values[2]);
-	vstest(expect, format, values[0], values[1], values[2]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2]);
 }
 
 
@@ -1151,30 +858,21 @@ TEST(stdio_printf_o, out_of_bonds)
 	strcat(expect, temp);
 	free(temp);
 
-	dtest(format, UINT_MAX COMMA UINT_MAX, expect);
-	ftest(format, UINT_MAX COMMA UINT_MAX, expect);
-	stdtest(format, UINT_MAX COMMA UINT_MAX, expect);
-	sntest(format, UINT_MAX COMMA UINT_MAX, expect);
-	stest(format, UINT_MAX COMMA UINT_MAX, expect);
-
-	vdtest(expect, format, UINT_MAX, UINT_MAX);
-	vftest(expect, format, UINT_MAX, UINT_MAX);
-	vtest(expect, format, UINT_MAX, UINT_MAX);
-	vsntest(expect, format, UINT_MAX, UINT_MAX);
-	vstest(expect, format, UINT_MAX, UINT_MAX);
+	test_assertPrintfs(expect, format, UINT_MAX, UINT_MAX);
+	test_assertVprintfs(expect, format, UINT_MAX, UINT_MAX);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 
 TEST_SETUP(stdio_printf_u)
 {
-	output_file = fopen(PATH, "w+");
+	test_outFile = fopen(PATH, "w+");
 }
 
 
 TEST_TEAR_DOWN(stdio_printf_u)
 {
-	fclose(output_file);
+	fclose(test_outFile);
 	remove(PATH);
 }
 
@@ -1196,17 +894,8 @@ TEST(stdio_printf_u, u)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2]);
-	vftest(expect, format, values[0], values[1], values[2]);
-	vtest(expect, format, values[0], values[1], values[2]);
-	vsntest(expect, format, values[0], values[1], values[2]);
-	vstest(expect, format, values[0], values[1], values[2]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2]);
 }
 
 
@@ -1227,17 +916,8 @@ TEST(stdio_printf_u, hhu)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2]);
-	vftest(expect, format, values[0], values[1], values[2]);
-	vtest(expect, format, values[0], values[1], values[2]);
-	vsntest(expect, format, values[0], values[1], values[2]);
-	vstest(expect, format, values[0], values[1], values[2]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2]);
 }
 
 
@@ -1258,17 +938,8 @@ TEST(stdio_printf_u, hu)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2]);
-	vftest(expect, format, values[0], values[1], values[2]);
-	vtest(expect, format, values[0], values[1], values[2]);
-	vsntest(expect, format, values[0], values[1], values[2]);
-	vstest(expect, format, values[0], values[1], values[2]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2]);
 }
 
 
@@ -1289,17 +960,8 @@ TEST(stdio_printf_u, lu)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2]);
-	vftest(expect, format, values[0], values[1], values[2]);
-	vtest(expect, format, values[0], values[1], values[2]);
-	vsntest(expect, format, values[0], values[1], values[2]);
-	vstest(expect, format, values[0], values[1], values[2]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2]);
 }
 
 
@@ -1320,17 +982,8 @@ TEST(stdio_printf_u, llu)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2]);
-	vftest(expect, format, values[0], values[1], values[2]);
-	vtest(expect, format, values[0], values[1], values[2]);
-	vsntest(expect, format, values[0], values[1], values[2]);
-	vstest(expect, format, values[0], values[1], values[2]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2]);
 }
 
 
@@ -1351,17 +1004,8 @@ TEST(stdio_printf_u, ju)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2]);
-	vftest(expect, format, values[0], values[1], values[2]);
-	vtest(expect, format, values[0], values[1], values[2]);
-	vsntest(expect, format, values[0], values[1], values[2]);
-	vstest(expect, format, values[0], values[1], values[2]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2]);
 }
 
 
@@ -1382,17 +1026,8 @@ TEST(stdio_printf_u, zu)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2]);
-	vftest(expect, format, values[0], values[1], values[2]);
-	vtest(expect, format, values[0], values[1], values[2]);
-	vsntest(expect, format, values[0], values[1], values[2]);
-	vstest(expect, format, values[0], values[1], values[2]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2]);
 }
 
 
@@ -1414,17 +1049,8 @@ TEST(stdio_printf_u, tu)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2]);
-	vftest(expect, format, values[0], values[1], values[2]);
-	vtest(expect, format, values[0], values[1], values[2]);
-	vsntest(expect, format, values[0], values[1], values[2]);
-	vstest(expect, format, values[0], values[1], values[2]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2]);
 }
 
 
@@ -1443,30 +1069,21 @@ TEST(stdio_printf_u, out_of_bonds)
 	strcat(expect, temp);
 	free(temp);
 
-	dtest(format, UINT_MAX COMMA UINT_MAX, expect);
-	ftest(format, UINT_MAX COMMA UINT_MAX, expect);
-	stdtest(format, UINT_MAX COMMA UINT_MAX, expect);
-	sntest(format, UINT_MAX COMMA UINT_MAX, expect);
-	stest(format, UINT_MAX COMMA UINT_MAX, expect);
-
-	vdtest(expect, format, UINT_MAX, UINT_MAX);
-	vftest(expect, format, UINT_MAX, UINT_MAX);
-	vtest(expect, format, UINT_MAX, UINT_MAX);
-	vsntest(expect, format, UINT_MAX, UINT_MAX);
-	vstest(expect, format, UINT_MAX, UINT_MAX);
+	test_assertPrintfs(expect, format, UINT_MAX, UINT_MAX);
+	test_assertVprintfs(expect, format, UINT_MAX, UINT_MAX);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 
 TEST_SETUP(stdio_printf_x)
 {
-	output_file = fopen(PATH, "w+");
+	test_outFile = fopen(PATH, "w+");
 }
 
 
 TEST_TEAR_DOWN(stdio_printf_x)
 {
-	fclose(output_file);
+	fclose(test_outFile);
 	remove(PATH);
 }
 
@@ -1488,17 +1105,8 @@ TEST(stdio_printf_x, x)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2]);
-	vftest(expect, format, values[0], values[1], values[2]);
-	vtest(expect, format, values[0], values[1], values[2]);
-	vsntest(expect, format, values[0], values[1], values[2]);
-	vstest(expect, format, values[0], values[1], values[2]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2]);
 }
 
 
@@ -1519,17 +1127,8 @@ TEST(stdio_printf_x, hhx)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2]);
-	vftest(expect, format, values[0], values[1], values[2]);
-	vtest(expect, format, values[0], values[1], values[2]);
-	vsntest(expect, format, values[0], values[1], values[2]);
-	vstest(expect, format, values[0], values[1], values[2]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2]);
 }
 
 
@@ -1550,17 +1149,8 @@ TEST(stdio_printf_x, hx)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2]);
-	vftest(expect, format, values[0], values[1], values[2]);
-	vtest(expect, format, values[0], values[1], values[2]);
-	vsntest(expect, format, values[0], values[1], values[2]);
-	vstest(expect, format, values[0], values[1], values[2]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2]);
 }
 
 
@@ -1581,17 +1171,8 @@ TEST(stdio_printf_x, lx)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2]);
-	vftest(expect, format, values[0], values[1], values[2]);
-	vtest(expect, format, values[0], values[1], values[2]);
-	vsntest(expect, format, values[0], values[1], values[2]);
-	vstest(expect, format, values[0], values[1], values[2]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2]);
 }
 
 
@@ -1612,17 +1193,8 @@ TEST(stdio_printf_x, llx)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2]);
-	vftest(expect, format, values[0], values[1], values[2]);
-	vtest(expect, format, values[0], values[1], values[2]);
-	vsntest(expect, format, values[0], values[1], values[2]);
-	vstest(expect, format, values[0], values[1], values[2]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2]);
 }
 
 
@@ -1643,17 +1215,8 @@ TEST(stdio_printf_x, jx)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2]);
-	vftest(expect, format, values[0], values[1], values[2]);
-	vtest(expect, format, values[0], values[1], values[2]);
-	vsntest(expect, format, values[0], values[1], values[2]);
-	vstest(expect, format, values[0], values[1], values[2]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2]);
 }
 
 
@@ -1674,17 +1237,8 @@ TEST(stdio_printf_x, zx)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2]);
-	vftest(expect, format, values[0], values[1], values[2]);
-	vtest(expect, format, values[0], values[1], values[2]);
-	vsntest(expect, format, values[0], values[1], values[2]);
-	vstest(expect, format, values[0], values[1], values[2]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2]);
 }
 
 
@@ -1706,17 +1260,8 @@ TEST(stdio_printf_x, tx)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2]);
-	vftest(expect, format, values[0], values[1], values[2]);
-	vtest(expect, format, values[0], values[1], values[2]);
-	vsntest(expect, format, values[0], values[1], values[2]);
-	vstest(expect, format, values[0], values[1], values[2]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2]);
 }
 
 
@@ -1735,17 +1280,8 @@ TEST(stdio_printf_x, x_out_of_bonds)
 	strcat(expect, temp);
 	free(temp);
 
-	dtest(format, UINT_MAX COMMA UINT_MAX, expect);
-	ftest(format, UINT_MAX COMMA UINT_MAX, expect);
-	stdtest(format, UINT_MAX COMMA UINT_MAX, expect);
-	sntest(format, UINT_MAX COMMA UINT_MAX, expect);
-	stest(format, UINT_MAX COMMA UINT_MAX, expect);
-
-	vdtest(expect, format, UINT_MAX, UINT_MAX);
-	vftest(expect, format, UINT_MAX, UINT_MAX);
-	vtest(expect, format, UINT_MAX, UINT_MAX);
-	vsntest(expect, format, UINT_MAX, UINT_MAX);
-	vstest(expect, format, UINT_MAX, UINT_MAX);
+	test_assertPrintfs(expect, format, UINT_MAX, UINT_MAX);
+	test_assertVprintfs(expect, format, UINT_MAX, UINT_MAX);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1767,17 +1303,8 @@ TEST(stdio_printf_x, X)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2]);
-	vftest(expect, format, values[0], values[1], values[2]);
-	vtest(expect, format, values[0], values[1], values[2]);
-	vsntest(expect, format, values[0], values[1], values[2]);
-	vstest(expect, format, values[0], values[1], values[2]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2]);
 }
 
 
@@ -1798,17 +1325,8 @@ TEST(stdio_printf_x, hhX)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2]);
-	vftest(expect, format, values[0], values[1], values[2]);
-	vtest(expect, format, values[0], values[1], values[2]);
-	vsntest(expect, format, values[0], values[1], values[2]);
-	vstest(expect, format, values[0], values[1], values[2]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2]);
 }
 
 
@@ -1829,17 +1347,8 @@ TEST(stdio_printf_x, hX)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2]);
-	vftest(expect, format, values[0], values[1], values[2]);
-	vtest(expect, format, values[0], values[1], values[2]);
-	vsntest(expect, format, values[0], values[1], values[2]);
-	vstest(expect, format, values[0], values[1], values[2]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2]);
 }
 
 
@@ -1860,17 +1369,8 @@ TEST(stdio_printf_x, lX)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2]);
-	vftest(expect, format, values[0], values[1], values[2]);
-	vtest(expect, format, values[0], values[1], values[2]);
-	vsntest(expect, format, values[0], values[1], values[2]);
-	vstest(expect, format, values[0], values[1], values[2]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2]);
 }
 
 
@@ -1891,17 +1391,8 @@ TEST(stdio_printf_x, llX)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2]);
-	vftest(expect, format, values[0], values[1], values[2]);
-	vtest(expect, format, values[0], values[1], values[2]);
-	vsntest(expect, format, values[0], values[1], values[2]);
-	vstest(expect, format, values[0], values[1], values[2]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2]);
 }
 
 
@@ -1922,17 +1413,8 @@ TEST(stdio_printf_x, jX)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2]);
-	vftest(expect, format, values[0], values[1], values[2]);
-	vtest(expect, format, values[0], values[1], values[2]);
-	vsntest(expect, format, values[0], values[1], values[2]);
-	vstest(expect, format, values[0], values[1], values[2]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2]);
 }
 
 
@@ -1953,17 +1435,8 @@ TEST(stdio_printf_x, zX)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2]);
-	vftest(expect, format, values[0], values[1], values[2]);
-	vtest(expect, format, values[0], values[1], values[2]);
-	vsntest(expect, format, values[0], values[1], values[2]);
-	vstest(expect, format, values[0], values[1], values[2]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2]);
 }
 
 
@@ -1985,17 +1458,8 @@ TEST(stdio_printf_x, tX)
 		free(temp);
 	}
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2]);
-	vftest(expect, format, values[0], values[1], values[2]);
-	vtest(expect, format, values[0], values[1], values[2]);
-	vsntest(expect, format, values[0], values[1], values[2]);
-	vstest(expect, format, values[0], values[1], values[2]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2]);
 }
 
 
@@ -2017,30 +1481,21 @@ TEST(stdio_printf_x, X_out_of_bonds)
 	strcat(expect, temp);
 	free(temp);
 
-	dtest(format, UINT_MAX COMMA UINT_MAX, expect);
-	ftest(format, UINT_MAX COMMA UINT_MAX, expect);
-	stdtest(format, UINT_MAX COMMA UINT_MAX, expect);
-	sntest(format, UINT_MAX COMMA UINT_MAX, expect);
-	stest(format, UINT_MAX COMMA UINT_MAX, expect);
-
-	vdtest(expect, format, UINT_MAX, UINT_MAX);
-	vftest(expect, format, UINT_MAX, UINT_MAX);
-	vtest(expect, format, UINT_MAX, UINT_MAX);
-	vsntest(expect, format, UINT_MAX, UINT_MAX);
-	vstest(expect, format, UINT_MAX, UINT_MAX);
+	test_assertPrintfs(expect, format, UINT_MAX, UINT_MAX);
+	test_assertVprintfs(expect, format, UINT_MAX, UINT_MAX);
 }
 
 //////////////////////////////////////////////////////////////////////////
 
 TEST_SETUP(stdio_printf_fega)
 {
-	output_file = fopen(PATH, "w+");
+	test_outFile = fopen(PATH, "w+");
 }
 
 
 TEST_TEAR_DOWN(stdio_printf_fega)
 {
-	fclose(output_file);
+	fclose(test_outFile);
 	remove(PATH);
 }
 
@@ -2057,17 +1512,8 @@ TEST(stdio_printf_fega, f)
 	};
 	char *expect = "0.000000 0.000000 0.000000 170141173319264429905852091742258462720.000000 340282346638528859811704183484516925440.000000";
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vftest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vsntest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vstest(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
 }
 
 
@@ -2083,17 +1529,8 @@ TEST(stdio_printf_fega, lf)
 	};
 	char *expect = "0.000000 0.000000 0.000000 89884656743115785407263711865852178399035283762922498299458738401578630390014269380294779316383439085770229476757191232117160663444732091384233773351768758493024955288275641038122745045194664472037934254227566971152291618451611474082904279666061674137398913102072361584369088590459649940625202013092062429184.000000 179769313486231570814527423731704356798070567525844996598917476803157260780028538760589558632766878171540458953514382464234321326889464182768467546703537516986049910576551282076245490090389328944075868508455133942304583236903222948165808559332123348274797826204144723168738177180919299881250404026184124858368.000000";
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vftest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vsntest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vstest(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
 }
 
 
@@ -2109,17 +1546,8 @@ TEST(stdio_printf_fega, Lf)
 	};
 	char *expect = "0.000000 0.000000 0.000000 89884656743115785407263711865852178399035283762922498299458738401578630390014269380294779316383439085770229476757191232117160663444732091384233773351768758493024955288275641038122745045194664472037934254227566971152291618451611474082904279666061674137398913102072361584369088590459649940625202013092062429184.000000 179769313486231570814527423731704356798070567525844996598917476803157260780028538760589558632766878171540458953514382464234321326889464182768467546703537516986049910576551282076245490090389328944075868508455133942304583236903222948165808559332123348274797826204144723168738177180919299881250404026184124858368.000000";
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vftest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vsntest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vstest(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
 }
 
 
@@ -2135,17 +1563,8 @@ TEST(stdio_printf_fega, F)
 	};
 	char *expect = "0.000000 0.000000 0.000000 170141173319264429905852091742258462720.000000 340282346638528859811704183484516925440.000000";
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vftest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vsntest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vstest(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
 }
 
 
@@ -2161,17 +1580,8 @@ TEST(stdio_printf_fega, lF)
 	};
 	char *expect = "0.000000 0.000000 0.000000 89884656743115785407263711865852178399035283762922498299458738401578630390014269380294779316383439085770229476757191232117160663444732091384233773351768758493024955288275641038122745045194664472037934254227566971152291618451611474082904279666061674137398913102072361584369088590459649940625202013092062429184.000000 179769313486231570814527423731704356798070567525844996598917476803157260780028538760589558632766878171540458953514382464234321326889464182768467546703537516986049910576551282076245490090389328944075868508455133942304583236903222948165808559332123348274797826204144723168738177180919299881250404026184124858368.000000";
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vftest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vsntest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vstest(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
 }
 
 
@@ -2187,17 +1597,8 @@ TEST(stdio_printf_fega, LF)
 	};
 	char *expect = "0.000000 0.000000 0.000000 89884656743115785407263711865852178399035283762922498299458738401578630390014269380294779316383439085770229476757191232117160663444732091384233773351768758493024955288275641038122745045194664472037934254227566971152291618451611474082904279666061674137398913102072361584369088590459649940625202013092062429184.000000 179769313486231570814527423731704356798070567525844996598917476803157260780028538760589558632766878171540458953514382464234321326889464182768467546703537516986049910576551282076245490090389328944075868508455133942304583236903222948165808559332123348274797826204144723168738177180919299881250404026184124858368.000000";
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vftest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vsntest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vstest(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
 }
 
 
@@ -2213,17 +1614,8 @@ TEST(stdio_printf_fega, e)
 	};
 	char *expect = "1.175494e-38 5.877472e-39 0.000000e+00 1.701412e+38 3.402823e+38";
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vftest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vsntest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vstest(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
 }
 
 
@@ -2239,17 +1631,8 @@ TEST(stdio_printf_fega, le)
 	};
 	char *expect = "2.225074e-308 1.112537e-308 0.000000e+00 8.988466e+307 1.797693e+308";
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vftest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vsntest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vstest(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
 }
 
 
@@ -2265,17 +1648,8 @@ TEST(stdio_printf_fega, Le)
 	};
 	char *expect = "2.225074e-308 1.112537e-308 0.000000e+00 8.988466e+307 1.797693e+308";
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vftest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vsntest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vstest(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
 }
 
 
@@ -2291,17 +1665,8 @@ TEST(stdio_printf_fega, E)
 	};
 	char *expect = "1.175494E-38 5.877472E-39 0.000000E+00 1.701412E+38 3.402823E+38";
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vftest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vsntest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vstest(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
 }
 
 
@@ -2317,17 +1682,8 @@ TEST(stdio_printf_fega, lE)
 	};
 	char *expect = "2.225074E-308 1.112537E-308 0.000000E+00 8.988466E+307 1.797693E+308";
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vftest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vsntest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vstest(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
 }
 
 
@@ -2343,17 +1699,8 @@ TEST(stdio_printf_fega, LE)
 	};
 	char *expect = "2.225074E-308 1.112537E-308 0.000000E+00 8.988466E+307 1.797693E+308";
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vftest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vsntest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vstest(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
 }
 
 
@@ -2369,17 +1716,8 @@ TEST(stdio_printf_fega, g)
 	};
 	char *expect = "1.17549e-38 5.87747e-39 0 1.70141e+38 3.40282e+38";
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vftest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vsntest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vstest(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
 }
 
 
@@ -2395,17 +1733,8 @@ TEST(stdio_printf_fega, lg)
 	};
 	char *expect = "2.22507e-308 1.11254e-308 0 8.98847e+307 1.79769e+308";
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vftest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vsntest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vstest(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
 }
 
 
@@ -2421,17 +1750,8 @@ TEST(stdio_printf_fega, Lg)
 	};
 	char *expect = "2.22507e-308 1.11254e-308 0 8.98847e+307 1.79769e+308";
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vftest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vsntest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vstest(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
 }
 
 
@@ -2447,17 +1767,8 @@ TEST(stdio_printf_fega, G)
 	};
 	char *expect = "1.17549E-38 5.87747E-39 0 1.70141E+38 3.40282E+38";
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vftest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vsntest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vstest(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
 }
 
 
@@ -2473,17 +1784,8 @@ TEST(stdio_printf_fega, lG)
 	};
 	char *expect = "2.22507E-308 1.11254E-308 0 8.98847E+307 1.79769E+308";
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vftest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vsntest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vstest(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
 }
 
 
@@ -2499,17 +1801,8 @@ TEST(stdio_printf_fega, LG)
 	};
 	char *expect = "2.22507E-308 1.11254E-308 0 8.98847E+307 1.79769E+308";
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vftest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vsntest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vstest(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
 }
 
 
@@ -2526,17 +1819,8 @@ TEST(stdio_printf_fega, a)
 	};
 	char *expect = "0x1.000000p-126 0x1.000000p-127 0x0.000000p+0 0x1.fffffep+126 0x1.fffffep+127";
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vftest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vsntest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vstest(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
 }
 
 
@@ -2553,17 +1837,8 @@ TEST(stdio_printf_fega, la)
 	};
 	char *expect = "0x1.000000p-1022 0x0.800000p-1022 0x0.000000p+0 0x2.000000p+1022 0x2.000000p+1023";
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vftest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vsntest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vstest(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
 }
 
 
@@ -2583,17 +1858,8 @@ TEST(stdio_printf_fega, La)
 	};
 	char *expect = "0x8.000000p-1025 0x8.000000p-1026 0x0.000000p+0 0x1.000000p+1023 0x1.000000p+1024";
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vftest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vsntest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vstest(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
 }
 
 
@@ -2610,17 +1876,8 @@ TEST(stdio_printf_fega, A)
 	};
 	char *expect = "0X1.000000P-126 0X1.000000P-127 0X0.000000P+0 0X1.FFFFFEP+126 0X1.FFFFFEP+127";
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vftest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vsntest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vstest(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
 }
 
 
@@ -2637,17 +1894,8 @@ TEST(stdio_printf_fega, lA)
 	};
 	char *expect = "0X1.000000P-1022 0X0.800000P-1022 0X0.000000P+0 0X2.000000P+1022 0X2.000000P+1023";
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vftest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vsntest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vstest(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
 }
 
 
@@ -2668,17 +1916,8 @@ TEST(stdio_printf_fega, LA)
 	};
 	char *expect = "0X8.000000P-1025 0X8.000000P-1026 0X0.000000P+0 0X1.000000P+1023 0X1.000000P+1024";
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vftest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vtest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vsntest(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	vstest(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
 }
 
 
@@ -2691,17 +1930,8 @@ TEST(stdio_printf_fega, fega_inf_nan)
 
 	for (i = 0; i < (sizeof(format) / sizeof(format[0])); i++) {
 
-		dtest(format[i], values[0] COMMA values[1] COMMA values[2] COMMA values[3], expect);
-		ftest(format[i], values[0] COMMA values[1] COMMA values[2] COMMA values[3], expect);
-		stdtest(format[i], values[0] COMMA values[1] COMMA values[2] COMMA values[3], expect);
-		sntest(format[i], values[0] COMMA values[1] COMMA values[2] COMMA values[3], expect);
-		stest(format[i], values[0] COMMA values[1] COMMA values[2] COMMA values[3], expect);
-
-		vdtest(expect, format[i], values[0], values[1], values[2], values[3]);
-		vftest(expect, format[i], values[0], values[1], values[2], values[3]);
-		vtest(expect, format[i], values[0], values[1], values[2], values[3]);
-		vsntest(expect, format[i], values[0], values[1], values[2], values[3]);
-		vstest(expect, format[i], values[0], values[1], values[2], values[3]);
+		test_assertPrintfs(expect, format[i], values[0], values[1], values[2], values[3]);
+		test_assertVprintfs(expect, format[i], values[0], values[1], values[2], values[3]);
 	}
 }
 
@@ -2715,17 +1945,8 @@ TEST(stdio_printf_fega, lfega_inf_nan)
 
 	for (i = 0; i < (sizeof(format) / sizeof(format[0])); i++) {
 
-		dtest(format[i], values[0] COMMA values[1] COMMA values[2] COMMA values[3], expect);
-		ftest(format[i], values[0] COMMA values[1] COMMA values[2] COMMA values[3], expect);
-		stdtest(format[i], values[0] COMMA values[1] COMMA values[2] COMMA values[3], expect);
-		sntest(format[i], values[0] COMMA values[1] COMMA values[2] COMMA values[3], expect);
-		stest(format[i], values[0] COMMA values[1] COMMA values[2] COMMA values[3], expect);
-
-		vdtest(expect, format[i], values[0], values[1], values[2], values[3]);
-		vftest(expect, format[i], values[0], values[1], values[2], values[3]);
-		vtest(expect, format[i], values[0], values[1], values[2], values[3]);
-		vsntest(expect, format[i], values[0], values[1], values[2], values[3]);
-		vstest(expect, format[i], values[0], values[1], values[2], values[3]);
+		test_assertPrintfs(expect, format[i], values[0], values[1], values[2], values[3]);
+		test_assertVprintfs(expect, format[i], values[0], values[1], values[2], values[3]);
 	}
 }
 
@@ -2739,17 +1960,8 @@ TEST(stdio_printf_fega, Lfega_inf_nan)
 
 	for (i = 0; i < (sizeof(format) / sizeof(format[0])); i++) {
 
-		dtest(format[i], values[0] COMMA values[1] COMMA values[2] COMMA values[3], expect);
-		ftest(format[i], values[0] COMMA values[1] COMMA values[2] COMMA values[3], expect);
-		stdtest(format[i], values[0] COMMA values[1] COMMA values[2] COMMA values[3], expect);
-		sntest(format[i], values[0] COMMA values[1] COMMA values[2] COMMA values[3], expect);
-		stest(format[i], values[0] COMMA values[1] COMMA values[2] COMMA values[3], expect);
-
-		vdtest(expect, format[i], values[0], values[1], values[2], values[3]);
-		vftest(expect, format[i], values[0], values[1], values[2], values[3]);
-		vtest(expect, format[i], values[0], values[1], values[2], values[3]);
-		vsntest(expect, format[i], values[0], values[1], values[2], values[3]);
-		vstest(expect, format[i], values[0], values[1], values[2], values[3]);
+		test_assertPrintfs(expect, format[i], values[0], values[1], values[2], values[3]);
+		test_assertVprintfs(expect, format[i], values[0], values[1], values[2], values[3]);
 	}
 }
 
@@ -2763,17 +1975,8 @@ TEST(stdio_printf_fega, FEGA_inf_nan)
 
 	for (i = 0; i < (sizeof(format) / sizeof(format[0])); i++) {
 
-		dtest(format[i], values[0] COMMA values[1] COMMA values[2] COMMA values[3], expect);
-		ftest(format[i], values[0] COMMA values[1] COMMA values[2] COMMA values[3], expect);
-		stdtest(format[i], values[0] COMMA values[1] COMMA values[2] COMMA values[3], expect);
-		sntest(format[i], values[0] COMMA values[1] COMMA values[2] COMMA values[3], expect);
-		stest(format[i], values[0] COMMA values[1] COMMA values[2] COMMA values[3], expect);
-
-		vdtest(expect, format[i], values[0], values[1], values[2], values[3]);
-		vftest(expect, format[i], values[0], values[1], values[2], values[3]);
-		vtest(expect, format[i], values[0], values[1], values[2], values[3]);
-		vsntest(expect, format[i], values[0], values[1], values[2], values[3]);
-		vstest(expect, format[i], values[0], values[1], values[2], values[3]);
+		test_assertPrintfs(expect, format[i], values[0], values[1], values[2], values[3]);
+		test_assertVprintfs(expect, format[i], values[0], values[1], values[2], values[3]);
 	}
 }
 
@@ -2787,17 +1990,8 @@ TEST(stdio_printf_fega, lFEGA_inf_nan)
 
 	for (i = 0; i < (sizeof(format) / sizeof(format[0])); i++) {
 
-		dtest(format[i], values[0] COMMA values[1] COMMA values[2] COMMA values[3], expect);
-		ftest(format[i], values[0] COMMA values[1] COMMA values[2] COMMA values[3], expect);
-		stdtest(format[i], values[0] COMMA values[1] COMMA values[2] COMMA values[3], expect);
-		sntest(format[i], values[0] COMMA values[1] COMMA values[2] COMMA values[3], expect);
-		stest(format[i], values[0] COMMA values[1] COMMA values[2] COMMA values[3], expect);
-
-		vdtest(expect, format[i], values[0], values[1], values[2], values[3]);
-		vftest(expect, format[i], values[0], values[1], values[2], values[3]);
-		vtest(expect, format[i], values[0], values[1], values[2], values[3]);
-		vsntest(expect, format[i], values[0], values[1], values[2], values[3]);
-		vstest(expect, format[i], values[0], values[1], values[2], values[3]);
+		test_assertPrintfs(expect, format[i], values[0], values[1], values[2], values[3]);
+		test_assertVprintfs(expect, format[i], values[0], values[1], values[2], values[3]);
 	}
 }
 
@@ -2811,17 +2005,8 @@ TEST(stdio_printf_fega, LFEGA_inf_nan)
 
 	for (i = 0; i < (sizeof(format) / sizeof(format[0])); i++) {
 
-		dtest(format[i], values[0] COMMA values[1] COMMA values[2] COMMA values[3], expect);
-		ftest(format[i], values[0] COMMA values[1] COMMA values[2] COMMA values[3], expect);
-		stdtest(format[i], values[0] COMMA values[1] COMMA values[2] COMMA values[3], expect);
-		sntest(format[i], values[0] COMMA values[1] COMMA values[2] COMMA values[3], expect);
-		stest(format[i], values[0] COMMA values[1] COMMA values[2] COMMA values[3], expect);
-
-		vdtest(expect, format[i], values[0], values[1], values[2], values[3]);
-		vftest(expect, format[i], values[0], values[1], values[2], values[3]);
-		vtest(expect, format[i], values[0], values[1], values[2], values[3]);
-		vsntest(expect, format[i], values[0], values[1], values[2], values[3]);
-		vstest(expect, format[i], values[0], values[1], values[2], values[3]);
+		test_assertPrintfs(expect, format[i], values[0], values[1], values[2], values[3]);
+		test_assertVprintfs(expect, format[i], values[0], values[1], values[2], values[3]);
 	}
 }
 
@@ -2829,13 +2014,13 @@ TEST(stdio_printf_fega, LFEGA_inf_nan)
 
 TEST_SETUP(stdio_printf_cspn)
 {
-	output_file = fopen(PATH, "w+");
+	test_outFile = fopen(PATH, "w+");
 }
 
 
 TEST_TEAR_DOWN(stdio_printf_cspn)
 {
-	fclose(output_file);
+	fclose(test_outFile);
 	remove(PATH);
 }
 
@@ -2849,17 +2034,8 @@ TEST(stdio_printf_cspn, c)
 
 	for (i = 1; i < (sizeof(values) / sizeof(values[0])); i++) {
 
-		dtest(format, values[i], expect[i]);
-		ftest(format, values[i], expect[i]);
-		stdtest(format, values[i], expect[i]);
-		sntest(format, values[i], expect[i]);
-		stest(format, values[i], expect[i]);
-
-		vdtest(expect[i], format, values[i]);
-		vftest(expect[i], format, values[i]);
-		vtest(expect[i], format, values[i]);
-		vsntest(expect[i], format, values[i]);
-		vstest(expect[i], format, values[i]);
+		test_assertPrintfs(expect[i], format, values[i]);
+		test_assertVprintfs(expect[i], format, values[i]);
 	}
 }
 
@@ -2872,17 +2048,8 @@ TEST(stdio_printf_cspn, c_ascii)
 	for (i = 1; i < 128; i++) {
 		char *expect = test_intToAscii(i);
 
-		dtest(format, i, expect);
-		ftest(format, i, expect);
-		stdtest(format, i, expect);
-		sntest(format, i, expect);
-		stest(format, i, expect);
-
-		vdtest(expect, format, i);
-		vftest(expect, format, i);
-		vtest(expect, format, i);
-		vsntest(expect, format, i);
-		vstest(expect, format, i);
+		test_assertPrintfs(expect, format, i);
+		test_assertVprintfs(expect, format, i);
 
 		free(expect);
 	}
@@ -2897,17 +2064,8 @@ TEST(stdio_printf_cspn, c_non_ascii)
 	for (i = 128; i < 256; i++) {
 		char *expect = test_intToAscii(i);
 
-		dtest(format, i, expect);
-		ftest(format, i, expect);
-		stdtest(format, i, expect);
-		sntest(format, i, expect);
-		stest(format, i, expect);
-
-		vdtest(expect, format, i);
-		vftest(expect, format, i);
-		vtest(expect, format, i);
-		vsntest(expect, format, i);
-		vstest(expect, format, i);
+		test_assertPrintfs(expect, format, i);
+		test_assertVprintfs(expect, format, i);
 
 		free(expect);
 	}
@@ -2920,17 +2078,8 @@ TEST(stdio_printf_cspn, lc)
 	const wchar_t values[] = { L'a', L'A', L'0', L'9', L'!', L';' };
 	char *expect = "a A 0 9 ! ;";
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4] COMMA values[5], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4] COMMA values[5], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4] COMMA values[5], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4] COMMA values[5], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4] COMMA values[5], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2], values[3], values[4], values[5]);
-	vftest(expect, format, values[0], values[1], values[2], values[3], values[4], values[5]);
-	vtest(expect, format, values[0], values[1], values[2], values[3], values[4], values[5]);
-	vsntest(expect, format, values[0], values[1], values[2], values[3], values[4], values[5]);
-	vstest(expect, format, values[0], values[1], values[2], values[3], values[4], values[5]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4], values[5]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2], values[3], values[4], values[5]);
 }
 
 
@@ -2944,17 +2093,8 @@ TEST(stdio_printf_cspn, C)
 	const wchar_t values[] = { L'a', L'A', L'0', L'9', L'!', L';' };
 	char *expect = "a A 0 9 ! ;";
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4] COMMA values[5], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4] COMMA values[5], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4] COMMA values[5], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4] COMMA values[5], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4] COMMA values[5], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2], values[3], values[4], values[5]);
-	vftest(expect, format, values[0], values[1], values[2], values[3], values[4], values[5]);
-	vtest(expect, format, values[0], values[1], values[2], values[3], values[4], values[5]);
-	vsntest(expect, format, values[0], values[1], values[2], values[3], values[4], values[5]);
-	vstest(expect, format, values[0], values[1], values[2], values[3], values[4], values[5]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4], values[5]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2], values[3], values[4], values[5]);
 }
 
 
@@ -2964,17 +2104,8 @@ TEST(stdio_printf_cspn, s)
 	char *values[] = { "Lorem", "ipsum", "dolor", "sir", "amet", "Ut hendrerit iaculis tempus. Ut eu dapibus ante." };
 	char *expect = "Lorem ipsum dolor sir amet Ut hendrerit iaculis tempus. Ut eu dapibus ante.";
 
-	dtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4] COMMA values[5], expect);
-	ftest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4] COMMA values[5], expect);
-	stdtest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4] COMMA values[5], expect);
-	sntest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4] COMMA values[5], expect);
-	stest(format, values[0] COMMA values[1] COMMA values[2] COMMA values[3] COMMA values[4] COMMA values[5], expect);
-
-	vdtest(expect, format, values[0], values[1], values[2], values[3], values[4], values[5]);
-	vftest(expect, format, values[0], values[1], values[2], values[3], values[4], values[5]);
-	vtest(expect, format, values[0], values[1], values[2], values[3], values[4], values[5]);
-	vsntest(expect, format, values[0], values[1], values[2], values[3], values[4], values[5]);
-	vstest(expect, format, values[0], values[1], values[2], values[3], values[4], values[5]);
+	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4], values[5]);
+	test_assertVprintfs(expect, format, values[0], values[1], values[2], values[3], values[4], values[5]);
 }
 
 
@@ -2987,17 +2118,8 @@ TEST(stdio_printf_cspn, s_specific)
 
 	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 
-		dtest(format, values[i], expect[i]);
-		ftest(format, values[i], expect[i]);
-		stdtest(format, values[i], expect[i]);
-		sntest(format, values[i], expect[i]);
-		stest(format, values[i], expect[i]);
-
-		vdtest(expect[i], format, values[i]);
-		vftest(expect[i], format, values[i]);
-		vtest(expect[i], format, values[i]);
-		vsntest(expect[i], format, values[i]);
-		vstest(expect[i], format, values[i]);
+		test_assertPrintfs(expect[i], format, values[i]);
+		test_assertVprintfs(expect[i], format, values[i]);
 	}
 }
 
@@ -3014,17 +2136,8 @@ TEST(stdio_printf_cspn, s_ascii)
 	for (i = 33; i < 128; i++) {
 		char *expect = test_intToAscii(i);
 
-		dtest(format, expect, expect);
-		ftest(format, expect, expect);
-		stdtest(format, expect, expect);
-		sntest(format, expect, expect);
-		stest(format, expect, expect);
-
-		vdtest(expect, format, expect);
-		vftest(expect, format, expect);
-		vtest(expect, format, expect);
-		vsntest(expect, format, expect);
-		vstest(expect, format, expect);
+		test_assertPrintfs(expect, format, expect);
+		test_assertVprintfs(expect, format, expect);
 
 		free(expect);
 	}
@@ -3036,17 +2149,8 @@ TEST(stdio_printf_cspn, s_huge_string)
 	const char *format = "%s";
 	char *values = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus hendrerit various orci, ac sollicitudin nunc imperdiet ac. Morbi laoreet, enim eu mollis consequat, leo risus pellentesque arcu, a pulvinar augue magna nec erat. Morbi gravida dui ut lacus mattis, et maximus dolor facilisis cras ame";
 
-	dtest(format, values, values);
-	ftest(format, values, values);
-	stdtest(format, values, values);
-	sntest(format, values, values);
-	stest(format, values, values);
-
-	vdtest(values, format, values);
-	vftest(values, format, values);
-	vtest(values, format, values);
-	vsntest(values, format, values);
-	vstest(values, format, values);
+	test_assertPrintfs(values, format, values);
+	test_assertVprintfs(values, format, values);
 }
 
 
@@ -3063,17 +2167,8 @@ TEST(stdio_printf_cspn, ls)
 
 	for (i = 1; i < (sizeof(values) / sizeof(values[0])); i++) {
 
-		dtest(format, values[i], expect[i]);
-		ftest(format, values[i], expect[i]);
-		stdtest(format, values[i], expect[i]);
-		sntest(format, values[i], expect[i]);
-		stest(format, values[i], expect[i]);
-
-		vdtest(expect[i], format, values[i]);
-		vftest(expect[i], format, values[i]);
-		vtest(expect[i], format, values[i]);
-		vsntest(expect[i], format, values[i]);
-		vstest(expect[i], format, values[i]);
+		test_assertPrintfs(expect[i], format, values[i]);
+		test_assertVprintfs(expect[i], format, values[i]);
 	}
 }
 
@@ -3091,17 +2186,8 @@ TEST(stdio_printf_cspn, S)
 
 	for (i = 1; i < (sizeof(values) / sizeof(values[0])); i++) {
 
-		dtest(format, values[i], expect[i]);
-		ftest(format, values[i], expect[i]);
-		stdtest(format, values[i], expect[i]);
-		sntest(format, values[i], expect[i]);
-		stest(format, values[i], expect[i]);
-
-		vdtest(expect[i], format, values[i]);
-		vftest(expect[i], format, values[i]);
-		vtest(expect[i], format, values[i]);
-		vsntest(expect[i], format, values[i]);
-		vstest(expect[i], format, values[i]);
+		test_assertPrintfs(expect[i], format, values[i]);
+		test_assertVprintfs(expect[i], format, values[i]);
 	}
 }
 
@@ -3116,17 +2202,8 @@ TEST(stdio_printf_cspn, p)
 
 	const char *format = "%p %p %p %p";
 
-	dtest(format, (void *)0xDEADBEEF COMMA(void *) 0x00000000 COMMA(void *) INTPTR_MAX COMMA(void *) INTPTR_MIN, expect);
-	ftest(format, (void *)0xDEADBEEF COMMA(void *) 0x00000000 COMMA(void *) INTPTR_MAX COMMA(void *) INTPTR_MIN, expect);
-	stdtest(format, (void *)0xDEADBEEF COMMA(void *) 0x00000000 COMMA(void *) INTPTR_MAX COMMA(void *) INTPTR_MIN, expect);
-	sntest(format, (void *)0xDEADBEEF COMMA(void *) 0x00000000 COMMA(void *) INTPTR_MAX COMMA(void *) INTPTR_MIN, expect);
-	stest(format, (void *)0xDEADBEEF COMMA(void *) 0x00000000 COMMA(void *) INTPTR_MAX COMMA(void *) INTPTR_MIN, expect);
-
-	vdtest(expect, format, (void *)0xDEADBEEF, (void *)0x00000000, (void *)INTPTR_MAX, (void *)INTPTR_MIN);
-	vftest(expect, format, (void *)0xDEADBEEF, (void *)0x00000000, (void *)INTPTR_MAX, (void *)INTPTR_MIN);
-	vtest(expect, format, (void *)0xDEADBEEF, (void *)0x00000000, (void *)INTPTR_MAX, (void *)INTPTR_MIN);
-	vsntest(expect, format, (void *)0xDEADBEEF, (void *)0x00000000, (void *)INTPTR_MAX, (void *)INTPTR_MIN);
-	vstest(expect, format, (void *)0xDEADBEEF, (void *)0x00000000, (void *)INTPTR_MAX, (void *)INTPTR_MIN);
+	test_assertPrintfs(expect, format, (void *)0xDEADBEEF, (void *)0x00000000, (void *)INTPTR_MAX, (void *)INTPTR_MIN);
+	test_assertVprintfs(expect, format, (void *)0xDEADBEEF, (void *)0x00000000, (void *)INTPTR_MAX, (void *)INTPTR_MIN);
 }
 
 
@@ -3140,43 +2217,11 @@ TEST(stdio_printf_cspn, n)
 	const char *format = "Lorem ipsum%n";
 	char *expect = "Lorem ipsum";
 
-	dtest(format, &count, expect);
+	test_assertPrintfs(expect, format, &count);
 	TEST_ASSERT_EQUAL_INT(strlen(expect), count);
 	count = 0;
 
-	ftest(format, &count, expect);
-	TEST_ASSERT_EQUAL_INT(strlen(expect), count);
-	count = 0;
-
-	stdtest(format, &count, expect);
-	TEST_ASSERT_EQUAL_INT(strlen(expect), count);
-	count = 0;
-
-	sntest(format, &count, expect);
-	TEST_ASSERT_EQUAL_INT(strlen(expect), count);
-	count = 0;
-
-	stest(format, &count, expect);
-	TEST_ASSERT_EQUAL_INT(strlen(expect), count);
-	count = 0;
-
-	vdtest(expect, format, &count);
-	TEST_ASSERT_EQUAL_INT(strlen(expect), count);
-	count = 0;
-
-	vftest(expect, format, &count);
-	TEST_ASSERT_EQUAL_INT(strlen(expect), count);
-	count = 0;
-
-	vtest(expect, format, &count);
-	TEST_ASSERT_EQUAL_INT(strlen(expect), count);
-	count = 0;
-
-	vsntest(expect, format, &count);
-	TEST_ASSERT_EQUAL_INT(strlen(expect), count);
-	count = 0;
-
-	vstest(expect, format, &count);
+	test_assertVprintfs(expect, format, &count);
 	TEST_ASSERT_EQUAL_INT(strlen(expect), count);
 	count = 0;
 }
@@ -3187,30 +2232,21 @@ TEST(stdio_printf_cspn, percent)
 	const char *format = "%% yes %%Lorem%%Ipsum %% Hello";
 	char *expect = "% yes %Lorem%Ipsum % Hello";
 
-	dtest(format, 0, expect);
-	ftest(format, 0, expect);
-	stdtest(format, 0, expect);
-	sntest(format, 0, expect);
-	stest(format, 0, expect);
-
-	vdtest(expect, format, 0);
-	vftest(expect, format, 0);
-	vtest(expect, format, 0);
-	vsntest(expect, format, 0);
-	vstest(expect, format, 0);
+	test_assertPrintfs(expect, format, 0);
+	test_assertVprintfs(expect, format, 0);
 }
 
 ///////////////////////////////////////////////////////////////////////////
 
 TEST_SETUP(stdio_printf_rest)
 {
-	output_file = fopen(PATH, "w+");
+	test_outFile = fopen(PATH, "w+");
 }
 
 
 TEST_TEAR_DOWN(stdio_printf_rest)
 {
-	fclose(output_file);
+	fclose(test_outFile);
 	remove(PATH);
 }
 
@@ -3224,17 +2260,8 @@ TEST(stdio_printf_rest, mods_int)
 
 	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 
-		dtest(format, values[i] COMMA values[i] COMMA values[i] COMMA values[i] COMMA values[i] COMMA values[i], expect[i]);
-		ftest(format, values[i] COMMA values[i] COMMA values[i] COMMA values[i] COMMA values[i] COMMA values[i], expect[i]);
-		stdtest(format, values[i] COMMA values[i] COMMA values[i] COMMA values[i] COMMA values[i] COMMA values[i], expect[i]);
-		sntest(format, values[i] COMMA values[i] COMMA values[i] COMMA values[i] COMMA values[i] COMMA values[i], expect[i]);
-		stest(format, values[i] COMMA values[i] COMMA values[i] COMMA values[i] COMMA values[i] COMMA values[i], expect[i]);
-
-		vdtest(expect[i], format, values[i], values[i], values[i], values[i], values[i], values[i]);
-		vftest(expect[i], format, values[i], values[i], values[i], values[i], values[i], values[i]);
-		vtest(expect[i], format, values[i], values[i], values[i], values[i], values[i], values[i]);
-		vsntest(expect[i], format, values[i], values[i], values[i], values[i], values[i], values[i]);
-		vstest(expect[i], format, values[i], values[i], values[i], values[i], values[i], values[i]);
+		test_assertPrintfs(expect[i], format, values[i], values[i], values[i], values[i], values[i], values[i]);
+		test_assertVprintfs(expect[i], format, values[i], values[i], values[i], values[i], values[i], values[i]);
 	}
 }
 
@@ -3248,17 +2275,8 @@ TEST(stdio_printf_rest, mods_float)
 
 	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 
-		dtest(format, values[i] COMMA values[i] COMMA values[i] COMMA values[i] COMMA values[i] COMMA values[i], expect[i]);
-		ftest(format, values[i] COMMA values[i] COMMA values[i] COMMA values[i] COMMA values[i] COMMA values[i], expect[i]);
-		stdtest(format, values[i] COMMA values[i] COMMA values[i] COMMA values[i] COMMA values[i] COMMA values[i], expect[i]);
-		sntest(format, values[i] COMMA values[i] COMMA values[i] COMMA values[i] COMMA values[i] COMMA values[i], expect[i]);
-		stest(format, values[i] COMMA values[i] COMMA values[i] COMMA values[i] COMMA values[i] COMMA values[i], expect[i]);
-
-		vdtest(expect[i], format, values[i], values[i], values[i], values[i], values[i], values[i]);
-		vftest(expect[i], format, values[i], values[i], values[i], values[i], values[i], values[i]);
-		vtest(expect[i], format, values[i], values[i], values[i], values[i], values[i], values[i]);
-		vsntest(expect[i], format, values[i], values[i], values[i], values[i], values[i], values[i]);
-		vstest(expect[i], format, values[i], values[i], values[i], values[i], values[i], values[i]);
+		test_assertPrintfs(expect[i], format, values[i], values[i], values[i], values[i], values[i], values[i]);
+		test_assertVprintfs(expect[i], format, values[i], values[i], values[i], values[i], values[i], values[i]);
 	}
 }
 
@@ -3272,17 +2290,8 @@ TEST(stdio_printf_rest, mods_double)
 
 	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 
-		dtest(format, values[i] COMMA values[i] COMMA values[i] COMMA values[i] COMMA values[i] COMMA values[i], expect[i]);
-		ftest(format, values[i] COMMA values[i] COMMA values[i] COMMA values[i] COMMA values[i] COMMA values[i], expect[i]);
-		stdtest(format, values[i] COMMA values[i] COMMA values[i] COMMA values[i] COMMA values[i] COMMA values[i], expect[i]);
-		sntest(format, values[i] COMMA values[i] COMMA values[i] COMMA values[i] COMMA values[i] COMMA values[i], expect[i]);
-		stest(format, values[i] COMMA values[i] COMMA values[i] COMMA values[i] COMMA values[i] COMMA values[i], expect[i]);
-
-		vdtest(expect[i], format, values[i], values[i], values[i], values[i], values[i], values[i]);
-		vftest(expect[i], format, values[i], values[i], values[i], values[i], values[i], values[i]);
-		vtest(expect[i], format, values[i], values[i], values[i], values[i], values[i], values[i]);
-		vsntest(expect[i], format, values[i], values[i], values[i], values[i], values[i], values[i]);
-		vstest(expect[i], format, values[i], values[i], values[i], values[i], values[i], values[i]);
+		test_assertPrintfs(expect[i], format, values[i], values[i], values[i], values[i], values[i], values[i]);
+		test_assertVprintfs(expect[i], format, values[i], values[i], values[i], values[i], values[i], values[i]);
 	}
 }
 
@@ -3296,17 +2305,8 @@ TEST(stdio_printf_rest, mods_string)
 
 	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 
-		dtest(format, values[i] COMMA values[i] COMMA values[i] COMMA values[i] COMMA values[i], expect[i]);
-		ftest(format, values[i] COMMA values[i] COMMA values[i] COMMA values[i] COMMA values[i], expect[i]);
-		stdtest(format, values[i] COMMA values[i] COMMA values[i] COMMA values[i] COMMA values[i], expect[i]);
-		sntest(format, values[i] COMMA values[i] COMMA values[i] COMMA values[i] COMMA values[i], expect[i]);
-		stest(format, values[i] COMMA values[i] COMMA values[i] COMMA values[i] COMMA values[i], expect[i]);
-
-		vdtest(expect[i], format, values[i], values[i], values[i], values[i], values[i]);
-		vftest(expect[i], format, values[i], values[i], values[i], values[i], values[i]);
-		vtest(expect[i], format, values[i], values[i], values[i], values[i], values[i]);
-		vsntest(expect[i], format, values[i], values[i], values[i], values[i], values[i]);
-		vstest(expect[i], format, values[i], values[i], values[i], values[i], values[i]);
+		test_assertPrintfs(expect[i], format, values[i], values[i], values[i], values[i], values[i]);
+		test_assertVprintfs(expect[i], format, values[i], values[i], values[i], values[i], values[i]);
 	}
 }
 
@@ -3320,17 +2320,8 @@ TEST(stdio_printf_rest, mods_o_x)
 
 	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 
-		dtest(format, values[i] COMMA values[i] COMMA values[i] COMMA values[i] COMMA values[i] COMMA values[i], expect[i]);
-		ftest(format, values[i] COMMA values[i] COMMA values[i] COMMA values[i] COMMA values[i] COMMA values[i], expect[i]);
-		stdtest(format, values[i] COMMA values[i] COMMA values[i] COMMA values[i] COMMA values[i] COMMA values[i], expect[i]);
-		sntest(format, values[i] COMMA values[i] COMMA values[i] COMMA values[i] COMMA values[i] COMMA values[i], expect[i]);
-		stest(format, values[i] COMMA values[i] COMMA values[i] COMMA values[i] COMMA values[i] COMMA values[i], expect[i]);
-
-		vdtest(expect[i], format, values[i], values[i], values[i], values[i], values[i], values[i]);
-		vftest(expect[i], format, values[i], values[i], values[i], values[i], values[i], values[i]);
-		vtest(expect[i], format, values[i], values[i], values[i], values[i], values[i], values[i]);
-		vsntest(expect[i], format, values[i], values[i], values[i], values[i], values[i], values[i]);
-		vstest(expect[i], format, values[i], values[i], values[i], values[i], values[i], values[i]);
+		test_assertPrintfs(expect[i], format, values[i], values[i], values[i], values[i], values[i], values[i]);
+		test_assertVprintfs(expect[i], format, values[i], values[i], values[i], values[i], values[i], values[i]);
 	}
 }
 
@@ -3345,17 +2336,8 @@ TEST(stdio_printf_rest, mods_sharp_fega)
 
 	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 
-		dtest(format, values[i] COMMA values[i] COMMA values[i] COMMA values[i], expect[i]);
-		ftest(format, values[i] COMMA values[i] COMMA values[i] COMMA values[i], expect[i]);
-		stdtest(format, values[i] COMMA values[i] COMMA values[i] COMMA values[i], expect[i]);
-		sntest(format, values[i] COMMA values[i] COMMA values[i] COMMA values[i], expect[i]);
-		stest(format, values[i] COMMA values[i] COMMA values[i] COMMA values[i], expect[i]);
-
-		vdtest(expect[i], format, values[i], values[i], values[i], values[i]);
-		vftest(expect[i], format, values[i], values[i], values[i], values[i]);
-		vtest(expect[i], format, values[i], values[i], values[i], values[i]);
-		vsntest(expect[i], format, values[i], values[i], values[i], values[i]);
-		vstest(expect[i], format, values[i], values[i], values[i], values[i]);
+		test_assertPrintfs(expect[i], format, values[i], values[i], values[i], values[i]);
+		test_assertVprintfs(expect[i], format, values[i], values[i], values[i], values[i]);
 	}
 }
 
@@ -3370,17 +2352,8 @@ TEST(stdio_printf_rest, mods_sharp_FEGA)
 
 	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 
-		dtest(format, values[i] COMMA values[i] COMMA values[i] COMMA values[i], expect[i]);
-		ftest(format, values[i] COMMA values[i] COMMA values[i] COMMA values[i], expect[i]);
-		stdtest(format, values[i] COMMA values[i] COMMA values[i] COMMA values[i], expect[i]);
-		sntest(format, values[i] COMMA values[i] COMMA values[i] COMMA values[i], expect[i]);
-		stest(format, values[i] COMMA values[i] COMMA values[i] COMMA values[i], expect[i]);
-
-		vdtest(expect[i], format, values[i], values[i], values[i], values[i]);
-		vftest(expect[i], format, values[i], values[i], values[i], values[i]);
-		vtest(expect[i], format, values[i], values[i], values[i], values[i]);
-		vsntest(expect[i], format, values[i], values[i], values[i], values[i]);
-		vstest(expect[i], format, values[i], values[i], values[i], values[i]);
+		test_assertPrintfs(expect[i], format, values[i], values[i], values[i], values[i]);
+		test_assertVprintfs(expect[i], format, values[i], values[i], values[i], values[i]);
 	}
 }
 
@@ -3394,17 +2367,8 @@ TEST(stdio_printf_rest, lmods_zero_int)
 
 	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 
-		dtest(format, values[i] COMMA values[i], expect[i]);
-		ftest(format, values[i] COMMA values[i], expect[i]);
-		stdtest(format, values[i] COMMA values[i], expect[i]);
-		sntest(format, values[i] COMMA values[i], expect[i]);
-		stest(format, values[i] COMMA values[i], expect[i]);
-
-		vdtest(expect[i], format, values[i], values[i]);
-		vftest(expect[i], format, values[i], values[i]);
-		vtest(expect[i], format, values[i], values[i]);
-		vsntest(expect[i], format, values[i], values[i]);
-		vstest(expect[i], format, values[i], values[i]);
+		test_assertPrintfs(expect[i], format, values[i], values[i]);
+		test_assertVprintfs(expect[i], format, values[i], values[i]);
 	}
 }
 
@@ -3418,17 +2382,8 @@ TEST(stdio_printf_rest, lmods_zero_float)
 
 	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 
-		dtest(format, values[i] COMMA values[i] COMMA values[i], expect[i]);
-		ftest(format, values[i] COMMA values[i] COMMA values[i], expect[i]);
-		stdtest(format, values[i] COMMA values[i] COMMA values[i], expect[i]);
-		sntest(format, values[i] COMMA values[i] COMMA values[i], expect[i]);
-		stest(format, values[i] COMMA values[i] COMMA values[i], expect[i]);
-
-		vdtest(expect[i], format, values[i], values[i], values[i]);
-		vftest(expect[i], format, values[i], values[i], values[i]);
-		vtest(expect[i], format, values[i], values[i], values[i]);
-		vsntest(expect[i], format, values[i], values[i], values[i]);
-		vstest(expect[i], format, values[i], values[i], values[i]);
+		test_assertPrintfs(expect[i], format, values[i], values[i], values[i]);
+		test_assertVprintfs(expect[i], format, values[i], values[i], values[i]);
 	}
 }
 
@@ -3441,17 +2396,8 @@ TEST(stdio_printf_rest, numbered_argument)
 #endif
 	const char *format = "%3$d %2$d %1$d";
 
-	dtest(format, 1 COMMA 2 COMMA 3, "3 2 1");
-	ftest(format, 1 COMMA 2 COMMA 3, "3 2 1");
-	stdtest(format, 1 COMMA 2 COMMA 3, "3 2 1");
-	sntest(format, 1 COMMA 2 COMMA 3, "3 2 1");
-	stest(format, 1 COMMA 2 COMMA 3, "3 2 1");
-
-	vdtest("3 2 1", format, 1 COMMA 2 COMMA 3);
-	vftest("3 2 1", format, 1 COMMA 2 COMMA 3);
-	vtest("3 2 1", format, 1 COMMA 2 COMMA 3);
-	vsntest("3 2 1", format, 1 COMMA 2 COMMA 3);
-	vstest("3 2 1", format, 1 COMMA 2 COMMA 3);
+	test_assertPrintfs("3 2 1", format, 1 COMMA 2 COMMA 3);
+	test_assertVprintfs("3 2 1", format, 1 COMMA 2 COMMA 3);
 }
 
 
@@ -3461,37 +2407,37 @@ TEST(stdio_printf_rest, snprintf_truncation)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wformat-truncation"
 
-	memset(buff, 0, sizeof(buff));
-	snprintf(buff, 0, "%d", 1234567890);
-	TEST_ASSERT_EQUAL_STRING("", buff);
+	memset(test_buff, 0, sizeof(test_buff));
+	snprintf(test_buff, 0, "%d", 1234567890);
+	TEST_ASSERT_EQUAL_STRING("", test_buff);
 
-	memset(buff, 0, sizeof(buff));
-	snprintf(buff, 6, "%d", 1234567890);
-	TEST_ASSERT_EQUAL_STRING("12345", buff);
+	memset(test_buff, 0, sizeof(test_buff));
+	snprintf(test_buff, 6, "%d", 1234567890);
+	TEST_ASSERT_EQUAL_STRING("12345", test_buff);
 
-	memset(buff, 0, sizeof(buff));
-	snprintf(buff, 6, "%f", 1.23456789);
-	TEST_ASSERT_EQUAL_STRING("1.234", buff);
+	memset(test_buff, 0, sizeof(test_buff));
+	snprintf(test_buff, 6, "%f", 1.23456789);
+	TEST_ASSERT_EQUAL_STRING("1.234", test_buff);
 
-	memset(buff, 0, sizeof(buff));
-	snprintf(buff, 0, "%s", "abcdefighjklmnop");
-	TEST_ASSERT_EQUAL_STRING("", buff);
+	memset(test_buff, 0, sizeof(test_buff));
+	snprintf(test_buff, 0, "%s", "abcdefighjklmnop");
+	TEST_ASSERT_EQUAL_STRING("", test_buff);
 
-	memset(buff, 0, sizeof(buff));
-	snprintf(buff, 6, "%s", "abcdefighjklmnop");
-	TEST_ASSERT_EQUAL_STRING("abcde", buff);
+	memset(test_buff, 0, sizeof(test_buff));
+	snprintf(test_buff, 6, "%s", "abcdefighjklmnop");
+	TEST_ASSERT_EQUAL_STRING("abcde", test_buff);
 
-	memset(buff, 0, sizeof(buff));
-	snprintf(buff, 3, "%6s", "abc");
-	TEST_ASSERT_EQUAL_STRING("  ", buff);
+	memset(test_buff, 0, sizeof(test_buff));
+	snprintf(test_buff, 3, "%6s", "abc");
+	TEST_ASSERT_EQUAL_STRING("  ", test_buff);
 
-	memset(buff, 0, sizeof(buff));
-	snprintf(buff, 6, "%6s", "abc");
-	TEST_ASSERT_EQUAL_STRING("   ab", buff);
+	memset(test_buff, 0, sizeof(test_buff));
+	snprintf(test_buff, 6, "%6s", "abc");
+	TEST_ASSERT_EQUAL_STRING("   ab", test_buff);
 
-	memset(buff, 0, sizeof(buff));
-	snprintf(buff, 7, "%6s", "abc");
-	TEST_ASSERT_EQUAL_STRING("   abc", buff);
+	memset(test_buff, 0, sizeof(test_buff));
+	snprintf(test_buff, 7, "%6s", "abc");
+	TEST_ASSERT_EQUAL_STRING("   abc", test_buff);
 
 #pragma GCC diagnostic pop
 }
@@ -3509,7 +2455,7 @@ TEST(stdio_printf_rest, errnos)
 #pragma GCC diagnostic ignored "-Wformat-overflow"
 
 	errno = 0;
-	fprintf(output_file, "%.1000000000000000000000000000000lf %.100000000000000000000lf", DBL_MAX, DBL_MAX);
+	fprintf(test_outFile, "%.1000000000000000000000000000000lf %.100000000000000000000lf", DBL_MAX, DBL_MAX);
 	TEST_ASSERT_TRUE(errno == ENOMEM || errno == EOVERFLOW);
 
 #pragma GCC diagnostic pop
