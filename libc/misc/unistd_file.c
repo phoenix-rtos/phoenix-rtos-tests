@@ -786,7 +786,7 @@ TEST(unistd_file, file_dup_closed)
 TEST(unistd_file, file_dup2)
 {
 	/* some value different than 0, 1, 2 (stdin, stdout, stderr) */
-	int fd2 = 10;
+	int fd2 = 7;
 
 	fd2 = assert_free_fd(fd2);
 
@@ -807,7 +807,7 @@ TEST(unistd_file, file_dup2_opened)
 	const char filename2[] = "unistd_dup_file";
 	int fd2;
 	/* some value different than 0, 1, 2 (stdin, stdout, stderr) */
-	int fdr = 10;
+	int fdr = 7;
 
 	fdr = assert_free_fd(fdr);
 
@@ -840,7 +840,7 @@ TEST(unistd_file, file_dup2_opened)
 TEST(unistd_file, file_dup2_closed)
 {
 	/* some value different than 0, 1, 2 (stdin, stdout, stderr) */
-	int fd2 = 10;
+	int fd2 = 7;
 
 	fd2 = assert_free_fd(fd2);
 
