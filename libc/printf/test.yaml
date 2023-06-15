@@ -6,3 +6,10 @@ test:
       targets:
         exclude: [armv7m4-stm32l4x6-nucleo]
         include: [host-generic-pc]
+
+    # Executing test-printf on 'armv7m4-stm32l4x6-nucleo' takes ~9 min, that's why we want to run it only during nightly campaigns 
+    - name: unit
+      execute: test-libc-printf
+      nightly: true
+      targets:
+        value: [armv7m4-stm32l4x6-nucleo]
