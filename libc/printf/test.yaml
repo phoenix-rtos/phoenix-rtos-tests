@@ -1,0 +1,8 @@
+test:
+  type: unity
+  tests:
+    - name: unit
+      execute: test-libc-printf
+      targets:
+        exclude: [armv7m4-stm32l4x6-nucleo]
+        include: [host-generic-pc]
