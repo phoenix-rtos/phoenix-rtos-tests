@@ -14,7 +14,7 @@
 
 static struct {
 	int fds[255];
-	char buff[21];
+	char buff[21 * 16];
 } common;
 
 

@@ -14,7 +14,7 @@
 
 static struct {
 	int fd;
-	char buffRec[64];
+	char buffRec[64 * 16];
 	char buffMsg[32];
 } common;
 

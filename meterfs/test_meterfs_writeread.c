@@ -14,11 +14,11 @@
 
 static struct {
 	int fd;
-	char buffRec[21];
-	char buffMsg[13];
-	char pattern[6];
-	char buffBigTX[1064];
-	char buffBigRX[1064];
+	char buffRec[21 * 16];
+	char buffMsg[13 * 16];
+	char pattern[6 * 16];
+	char buffBigTX[1064 * 16];
+	char buffBigRX[1064 * 16];
 } common;
 
 
