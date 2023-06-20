@@ -15,13 +15,16 @@ test:
         execute: test_busybox basename
 
       - name: bunzip2
+        # Issue: 181 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/181 
+        # Issue: 200 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/200
         ignore: True
         execute: test_busybox bunzip2
 
       - name: bzcat
         execute: test_busybox bzcat
+        # Issue: 762 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/762
         targets:
-          exclude: [armv7a9-zynq7000-qemu, armv7a9-zynq7000-zedboard] # TODO: investigate reason'
+          exclude: [armv7a9-zynq7000-qemu, armv7a9-zynq7000-zedboard]
 
       - name: cat
         execute: test_busybox cat
@@ -31,8 +34,6 @@ test:
 
       - name: cp
         execute: test_busybox cp
-        targets:
-          exclude: [ia32-generic-qemu] # TODO: investigate reason'
 
       - name: cut
         execute: test_busybox cut
@@ -42,13 +43,12 @@ test:
         execute: test_busybox date
 
       - name: dd
+        # Issue: 197 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/197
         ignore: True
         execute: test_busybox dd
 
       - name: diff
         execute: test_busybox diff
-        targets:
-          exclude: [ia32-generic-qemu] # TODO: investigate reason'
 
       - name: dirname
         execute: test_busybox dirname
@@ -62,21 +62,21 @@ test:
 
       - name: find
         execute: test_busybox find
-        targets:
-          exclude: [ia32-generic-qemu] # TODO: investigate reason'
 
       - name: grep
         ignore: True
         execute: test_busybox grep
 
       - name: gunzip
+        # Issue: 200 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/200
         ignore: True
         execute: test_busybox gunzip
 
       - name: gzip
+        # Issue: 762 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/762
         execute: test_busybox gzip
         targets:
-          exclude: [armv7a9-zynq7000-qemu, armv7a9-zynq7000-zedboard] # TODO: investigate reason'
+          exclude: [armv7a9-zynq7000-qemu, armv7a9-zynq7000-zedboard]
 
       - name: head
         execute: test_busybox head
@@ -85,14 +85,13 @@ test:
         execute: test_busybox id
 
       - name: ln
+        # Issue: 431 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/431
         execute: test_busybox ln
         targets:
-          exclude: [armv7a9-zynq7000-qemu, armv7a9-zynq7000-zedboard] # TODO: investigate reason'
+          exclude: [armv7a9-zynq7000-qemu, armv7a9-zynq7000-zedboard]
 
       - name: ls
         execute: test_busybox ls
-        targets:
-          exclude: [ia32-generic-qemu] # TODO: investigate reason'
 
       - name: md5sum
         execute: test_busybox md5sum
@@ -119,8 +118,6 @@ test:
 
       - name: readlink
         execute: test_busybox readlink
-        targets:
-          exclude: [ia32-generic-qemu] # TODO: investigate reason'
 
       - name: rm
         execute: test_busybox rm
@@ -146,13 +143,9 @@ test:
 
       - name: sort
         execute: test_busybox sort
-        targets:
-          exclude: [ia32-generic-qemu] # TODO: investigate reason'
 
       - name: tail
         execute: test_busybox tail
-        targets:
-          exclude: [ia32-generic-qemu] # TODO: investigate reason'
 
       - name: tar
         ignore: True
@@ -163,24 +156,18 @@ test:
 
       - name: test
         execute: test_busybox test
-        targets:
-          exclude: [ia32-generic-qemu] # TODO: investigate reason'
 
       - name: touch
         execute: test_busybox touch
 
       - name: tr
         execute: test_busybox tr
-        targets:
-          exclude: [ia32-generic-qemu] # TODO: investigate reason'
 
       - name: "true"
         execute: test_busybox "true"
 
       - name: uniq
         execute: test_busybox uniq
-        targets:
-          exclude: [ia32-generic-qemu] # TODO: investigate reason'
 
       - name: wc
         execute: test_busybox wc
