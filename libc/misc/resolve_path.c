@@ -475,6 +475,48 @@ TEST(resolve_path, symlink_rename)
 }
 
 
+/* check if path temporarily longer than PATH_MAX while resolving won't crash */
+TEST(resolve_path, symlink_long_resolution)
+{
+	char symNameLong[NAME_MAX / 2];
+	char resolved[PATH_MAX + 1];
+	char basePath[PATH_MAX - 5] = "symShort/";
+	int basePathLen = strlen(basePath);
+	const char symNameShort[] = "symShort";
+	const char pathSegment[] = "dev/../";
+	const int pathSegmentLen = sizeof(pathSegment) - 1;
+
+	while (basePathLen + pathSegmentLen < sizeof(basePath) - 5) {
+		strcat(basePath, pathSegment);
+		basePathLen += pathSegmentLen;
+	}
+	strcat(basePath, "dev");
+
+	memset(symNameLong, 'a', sizeof(symNameLong));
+	symNameLong[sizeof(symNameLong) - 1] = 0;
+
+	unlink(symNameShort);
+	unlink(symNameLong);
+
+	TEST_ASSERT_EQUAL_INT(0, symlink("/", symNameLong));
+	TEST_ASSERT_EQUAL_INT(0, symlink(symNameLong, symNameShort));
+
+	errno = 0;
+
+	/* As it's described in the `realpath()` doc the function MAY fail in such case */
+	if (realpath(basePath, resolved) != NULL) {
+		TEST_ASSERT_EQUAL_STRING("/dev", resolved);
+	}
+	else {
+		TEST_ASSERT_EQUAL_INT(ENAMETOOLONG, errno);
+	}
+
+	/* cleanup */
+	unlink(symNameShort);
+	unlink(symNameLong);
+}
+
+
 TEST_GROUP_RUNNER(resolve_path)
 {
 	RUN_TEST_CASE(resolve_path, canonicalize_abs_simple);
@@ -497,4 +539,5 @@ TEST_GROUP_RUNNER(resolve_path)
 	RUN_TEST_CASE(resolve_path, symlink_dir);
 	RUN_TEST_CASE(resolve_path, symlink_loop);
 	RUN_TEST_CASE(resolve_path, symlink_rename);
+	RUN_TEST_CASE(resolve_path, symlink_long_resolution);
 }
