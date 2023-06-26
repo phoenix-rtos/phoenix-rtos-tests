@@ -12,12 +12,12 @@ LIBC_UNIT_TESTS += test-libc-$(1)
 SRCS := $(wildcard $(MY_LOCAL_DIR)$(1)/*.c) $(COMMON_SRCS)
 DEP_LIBS := unity
 LOCAL_CFLAGS := -I$(MY_LOCAL_DIR)
-LOCAL_LDFLAGS := $(2)
+LOCAL_LDFLAGS := -z stack-size=12288 $(2)
 include $(binary.mk)
 endef
 
-$(eval $(call add_test_libc,printf, -z stack-size=12288))
-$(eval $(call add_test_libc,pthread, -lpthread -z stack-size=12288))
+$(eval $(call add_test_libc,printf))
+$(eval $(call add_test_libc,pthread, -lpthread))
 $(eval $(call add_test_libc,misc))
 $(eval $(call add_test_libc,stdio))
 $(eval $(call add_test_libc,string))
