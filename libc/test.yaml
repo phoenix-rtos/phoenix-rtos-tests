@@ -30,6 +30,11 @@ test:
       targets:
         include: [host-generic-pc]
 
+    - name: stdlib
+      execute: test-libc-stdlib
+      targets:
+        include: [host-generic-pc]
+
     - name: string
       execute: test-libc-string
       targets:

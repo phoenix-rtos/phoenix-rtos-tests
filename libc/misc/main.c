@@ -28,11 +28,7 @@ void runner(void)
 	RUN_TEST_GROUP(unistd_fsdir);
 	RUN_TEST_GROUP(unistd_file);
 	RUN_TEST_GROUP(wchar_wcscmp);
-	RUN_TEST_GROUP(strtod_family);
-	RUN_TEST_GROUP(stdlib_alloc);
-	RUN_TEST_GROUP(stdlib_env);
 	RUN_TEST_GROUP(ctype);
-	RUN_TEST_GROUP(stdlib_bsearch);
 	RUN_TEST_GROUP(stat_mode);
 	RUN_TEST_GROUP(stat_nlink_size_blk_tim);
 	RUN_TEST_GROUP(stat_errno);
