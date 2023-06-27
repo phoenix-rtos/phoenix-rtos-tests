@@ -18,10 +18,10 @@
 /* no need for forward declarations, RUN_TEST_GROUP does it by itself */
 void runner(void)
 {
-	RUN_TEST_GROUP(strtod_family);
 	RUN_TEST_GROUP(stdlib_alloc);
 	RUN_TEST_GROUP(stdlib_env);
 	RUN_TEST_GROUP(stdlib_bsearch);
+	RUN_TEST_GROUP(stdlib_strto);
 }
 
 
