@@ -242,11 +242,9 @@ TEST(stat_mode, permissions_all)
 
 TEST(stat_mode, reg_type)
 {
-/* Disabled because of #743 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/743 */
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#743 issue");
-#endif
 	struct stat buffer;
+/* Disabled because of #743 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/743 */
+#ifndef __phoenix__
 	int permissions_set;
 	mode_t mask;
 
@@ -256,39 +254,61 @@ TEST(stat_mode, reg_type)
 	mask = umask(0);
 	permissions_set = (NONE_MODE | 0666) & ~mask;
 	umask(mask);
+#endif
 
 	fd = open(path, O_CREAT, 0666);
 
 	TEST_ASSERT_EQUAL_INT(0, stat(path, &buffer));
 	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFREG);
+/* Disabled because of #743 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/743 */
+#ifndef __phoenix__
 	TEST_ASSERT_EQUAL_INT(permissions_set, buffer.st_mode);
+#endif
 
 	TEST_ASSERT_EQUAL_INT(0, lstat(path, &buffer));
 	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFREG);
+/* Disabled because of #743 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/743 */
+#ifndef __phoenix__
 	TEST_ASSERT_EQUAL_INT(permissions_set, buffer.st_mode);
+#endif
 
 	TEST_ASSERT_EQUAL_INT(0, fstat(fd, &buffer));
 	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFREG);
+/* Disabled because of #743 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/743 */
+#ifndef __phoenix__
 	TEST_ASSERT_EQUAL_INT(permissions_set, buffer.st_mode);
+#endif
 
 	close(fd);
 	remove(path);
 
 	fd = open(path, O_CREAT, 0000);
 
+/* Disabled because of #743 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/743 */
+#ifndef __phoenix__
 	permissions_set = NONE_MODE & ~mask;
+#endif
 
 	TEST_ASSERT_EQUAL_INT(0, stat(path, &buffer));
 	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFREG);
+/* Disabled because of #743 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/743 */
+#ifndef __phoenix__
 	TEST_ASSERT_EQUAL_INT(permissions_set, buffer.st_mode);
+#endif
 
 	TEST_ASSERT_EQUAL_INT(0, lstat(path, &buffer));
 	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFREG);
+/* Disabled because of #743 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/743 */
+#ifndef __phoenix__
 	TEST_ASSERT_EQUAL_INT(permissions_set, buffer.st_mode);
+#endif
 
 	TEST_ASSERT_EQUAL_INT(0, fstat(fd, &buffer));
 	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFREG);
+/* Disabled because of #743 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/743 */
+#ifndef __phoenix__
 	TEST_ASSERT_EQUAL_INT(permissions_set, buffer.st_mode);
+#endif
 
 	close(fd);
 	remove(path);
@@ -334,12 +354,10 @@ TEST(stat_mode, dir_type)
 
 TEST(stat_mode, symlink_type)
 {
-/* Disabled because of #743 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/743 */
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#743 issue");
-#endif
 	int sym_fd;
 	struct stat buffer;
+/* Disabled because of #743 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/743 */
+#ifndef __phoenix__
 	int permissions_set;
 	mode_t mask;
 
@@ -349,6 +367,7 @@ TEST(stat_mode, symlink_type)
 	mask = umask(0);
 	permissions_set = (NONE_MODE | 0666) & ~mask;
 	umask(mask);
+#endif
 
 	fd = open(path, O_CREAT, 0666);
 
@@ -358,12 +377,18 @@ TEST(stat_mode, symlink_type)
 
 	TEST_ASSERT_EQUAL_INT(0, stat(symPath, &buffer));
 	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFREG);
+/* Disabled because of #743 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/743 */
+#ifndef __phoenix__
 	TEST_ASSERT_EQUAL_INT(permissions_set, buffer.st_mode);
+#endif
 
 	sym_fd = open(symPath, O_RDONLY);
 	TEST_ASSERT_EQUAL_INT(0, fstat(sym_fd, &buffer));
 	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFREG);
+/* Disabled because of #743 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/743 */
+#ifndef __phoenix__
 	TEST_ASSERT_EQUAL_INT(permissions_set, buffer.st_mode);
+#endif
 
 	close(sym_fd);
 	unlink(symPath);
@@ -373,18 +398,27 @@ TEST(stat_mode, symlink_type)
 	/* Testing with the lowest possible permissions, have to be 0400 to be accessible by fstat() */
 	fd = open(path, O_CREAT, 0400);
 
+/* Disabled because of #743 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/743 */
+#ifndef __phoenix__
 	permissions_set = (NONE_MODE | 0400) & ~mask;
+#endif
 
 	TEST_ASSERT_EQUAL_INT(0, symlink(path, symPath));
 
 	TEST_ASSERT_EQUAL_INT(0, stat(symPath, &buffer));
 	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFREG);
+/* Disabled because of #743 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/743 */
+#ifndef __phoenix__
 	TEST_ASSERT_EQUAL_INT(permissions_set, buffer.st_mode);
+#endif
 
 	sym_fd = open(symPath, O_RDONLY);
 	TEST_ASSERT_EQUAL_INT(0, fstat(sym_fd, &buffer));
 	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFREG);
+/* Disabled because of #743 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/743 */
+#ifndef __phoenix__
 	TEST_ASSERT_EQUAL_INT(permissions_set, buffer.st_mode);
+#endif
 
 	close(sym_fd);
 	unlink(symPath);
@@ -395,15 +429,11 @@ TEST(stat_mode, symlink_type)
 
 TEST(stat_mode, symlink_lstat)
 {
-/* Disabled because of #743 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/743 */
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#743 issue");
-#endif
 	struct stat buffer;
+/* Disabled because of #743 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/743 */
+#ifndef __phoenix__
 	int permissions_set;
 	mode_t mask;
-
-	fd = open(path, O_CREAT, 0666);
 
 	/*
 	 * We subtract the umask because, when we are setting in open() any mask, in reality it is set to 'any_mask & ~umask'
@@ -411,21 +441,27 @@ TEST(stat_mode, symlink_lstat)
 	mask = umask(0);
 	permissions_set = (NONE_MODE | 0666) & ~mask;
 	umask(mask);
+#endif
+	fd = open(path, O_CREAT, 0666);
 
 	unlink(symPath);
 	TEST_ASSERT_EQUAL_INT(0, symlink(path, symPath));
 
 	TEST_ASSERT_EQUAL_INT(0, lstat(path, &buffer));
 	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFREG);
+/* Disabled because of #743 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/743 */
+#ifndef __phoenix__
 	TEST_ASSERT_EQUAL_INT(permissions_set, buffer.st_mode);
-	TEST_ASSERT_EQUAL_INT(0, buffer.st_size);
 
 	permissions_set = LINK_MODE;
+#endif
 
 	TEST_ASSERT_EQUAL_INT(0, lstat(symPath, &buffer));
 	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFLNK);
+/* Disabled because of #743 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/743 */
+#ifndef __phoenix__
 	TEST_ASSERT_EQUAL_INT(permissions_set, buffer.st_mode);
-	TEST_ASSERT_EQUAL_INT(strlen(path), buffer.st_size);
+#endif
 
 	close(fd);
 	remove(path);
@@ -435,21 +471,28 @@ TEST(stat_mode, symlink_lstat)
 
 	fd = open(path, O_CREAT, 0000);
 
+/* Disabled because of #743 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/743 */
+#ifndef __phoenix__
 	permissions_set = (NONE_MODE | 0000) & ~mask;
+#endif
 
 	TEST_ASSERT_EQUAL_INT(0, symlink(path, symPath));
 
 	TEST_ASSERT_EQUAL_INT(0, lstat(path, &buffer));
 	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFREG);
+/* Disabled because of #743 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/743 */
+#ifndef __phoenix__
 	TEST_ASSERT_EQUAL_INT(permissions_set, buffer.st_mode);
-	TEST_ASSERT_EQUAL_INT(0, buffer.st_size);
 
 	permissions_set = LINK_MODE;
+#endif
 
 	TEST_ASSERT_EQUAL_INT(0, lstat(symPath, &buffer));
 	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFLNK);
+/* Disabled because of #743 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/743 */
+#ifndef __phoenix__
 	TEST_ASSERT_EQUAL_INT(permissions_set, buffer.st_mode);
-	TEST_ASSERT_EQUAL_INT(strlen(path), buffer.st_size);
+#endif
 
 	close(fd);
 	remove(path);
@@ -780,6 +823,24 @@ TEST(stat_nlink_size_blk_tim, size_blk_blocks_big)
 }
 
 
+TEST(stat_nlink_size_blk_tim, size_symlink_lstat)
+{
+	struct stat buffer;
+
+	unlink(symPath);
+
+	TEST_ASSERT_EQUAL_INT(0, symlink(path, symPath));
+
+	TEST_ASSERT_EQUAL_INT(0, lstat(path, &buffer));
+	TEST_ASSERT_EQUAL_INT(0, buffer.st_size);
+
+	TEST_ASSERT_EQUAL_INT(0, lstat(symPath, &buffer));
+	TEST_ASSERT_EQUAL_INT(strlen(path), buffer.st_size);
+
+	unlink(symPath);
+}
+
+
 TEST(stat_nlink_size_blk_tim, tim)
 {
 	struct stat buffer;
@@ -787,6 +848,7 @@ TEST(stat_nlink_size_blk_tim, tim)
 
 	temp_fd = open(tempPath, O_CREAT, 0666);
 	time_t currentTime = time(NULL);
+
 
 	TEST_ASSERT_EQUAL_INT(0, stat(tempPath, &buffer));
 	TEST_ASSERT_EQUAL_INT(currentTime, buffer.st_ctim.tv_sec);
@@ -1031,6 +1093,7 @@ TEST_GROUP_RUNNER(stat_nlink_size_blk_tim)
 	RUN_TEST_CASE(stat_nlink_size_blk_tim, size_blk_blocks);
 	RUN_TEST_CASE(stat_nlink_size_blk_tim, size_blk_blocks_zero);
 	RUN_TEST_CASE(stat_nlink_size_blk_tim, size_blk_blocks_big);
+	RUN_TEST_CASE(stat_nlink_size_blk_tim, size_symlink_lstat);
 	RUN_TEST_CASE(stat_nlink_size_blk_tim, tim);
 	RUN_TEST_CASE(stat_nlink_size_blk_tim, a_m_tim_mod);
 	RUN_TEST_CASE(stat_nlink_size_blk_tim, st_dev_ino);
