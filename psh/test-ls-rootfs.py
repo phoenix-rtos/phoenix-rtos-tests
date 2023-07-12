@@ -13,7 +13,7 @@
 #
 
 import psh.tools.psh as psh
-from psh.tools.psh import OPTIONAL_CONTROL_CODE
+from psh.tools.psh import OPTIONAL_CONTROL_CODE, CONTROL_CODE
 from psh.tools.common import SEPARATOR_PATTERN, create_testdir
 
 
@@ -24,7 +24,7 @@ def assert_ls_pshcmds(p, psh_cmds):
     # history and exit symlinks shouldn't be present in bin
     psh_cmds = set(psh_cmds) - {'history', 'exit'}
 
-    psh_cmd_pattern = OPTIONAL_CONTROL_CODE
+    psh_cmd_pattern = CONTROL_CODE
     psh_cmd_pattern += r'(?P<cmd>' + '|'.join(psh_cmds) + r')'
     psh_cmd_pattern += SEPARATOR_PATTERN
 
