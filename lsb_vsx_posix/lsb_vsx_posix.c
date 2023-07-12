@@ -5,6 +5,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <dirent.h>
+#include <sys/stat.h>
 
 int main(int argc, char **argv)
 {
@@ -12,7 +13,6 @@ int main(int argc, char **argv)
 	const char *cmd_single_test = "/usr/test/lsb_vsx_posix/files/bin/tcc -p -e -s /usr/test/lsb_vsx_posix/files/test_sets/scen_single.exec -j -";
 	const char *cmd_clean = "/usr/test/lsb_vsx_posix/files/bin/tcc -p -c -s /usr/test/lsb_vsx_posix/files/test_sets/scen_single.exec";
 	const char *cwd = "/usr/test/lsb_vsx_posix/files/test_sets";
-	const char *resultPath = "/usr/test/lsb_vsx_posix/files/test_sets/results";
 
 	char *line = NULL;
 	char total[40];
@@ -27,7 +27,7 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	/* Set necessary enviroment variables */
+	/* Set necessary environment variables */
 	if (setenv("TET_ROOT", "/usr/test/lsb_vsx_posix/files", 0) != 0) {
 		perror("setenv() - setting \"TET_ROOT\" failed");
 		return 1;
@@ -42,17 +42,17 @@ int main(int argc, char **argv)
 	if (argc == 2) {
 		/* File containing all tests */
 		all_tests_f = fopen("/usr/test/lsb_vsx_posix/files/test_sets/scen.exec", "r");
-		if (all_tests_f == -1) {
+		if (all_tests_f == NULL) {
 			perror("fopen");
 			exit(EXIT_FAILURE);
 		}
 		/* File which we gonna pass to tcc, this file will contain 2 required lines and one test name */
-		single_test_f = open("/usr/test/lsb_vsx_posix/files/test_sets/scen_single.exec", O_WRONLY | O_CREAT | O_TRUNC);
-		if (single_test_f == NULL) {
-			perror("fopen");
+		single_test_f = open("/usr/test/lsb_vsx_posix/files/test_sets/scen_single.exec", O_WRONLY | O_CREAT | O_TRUNC, S_IFREG);
+		if (single_test_f == -1) {
+			perror("open");
 			exit(EXIT_FAILURE);
 		}
-		/* append "all" to start of scenario file in order to follow file format*/
+		/* append "all" to start of scenario file in order to follow file format */
 		write(single_test_f, "all\n", 5);
 
 		while ((nread = getline(&line, &len, all_tests_f)) != -1) {
@@ -61,7 +61,8 @@ int main(int argc, char **argv)
 			 * the line we need will reside in buffer "total".
 			 */
 			if (strstr(line, "total tests in") != NULL) {
-				strncpy(total, line, 40);
+				strncpy(total, line, 39);
+				total[39] = '\0';
 			}
 			if (strstr(line, argv[1]) != NULL) {
 				/* Write second line */
@@ -69,7 +70,7 @@ int main(int argc, char **argv)
 				/* Write test name */
 				write(single_test_f, line, nread);
 
-				/*Test found, everything we need written, so close and clean */
+				/* Test found, everything we need written, so close and clean */
 				fclose(all_tests_f);
 				close(single_test_f);
 				free(line);
