@@ -2040,7 +2040,7 @@ TEST(stdio_printf_cspn, c)
 }
 
 
-TEST(stdio_printf_cspn, c_ascii)
+TEST(stdio_printf_cspn, c_ascii_printf)
 {
 	int i;
 	const char *format = "%c";
@@ -2049,14 +2049,24 @@ TEST(stdio_printf_cspn, c_ascii)
 		char *expect = test_intToAscii(i);
 
 		test_assertPrintfs(expect, format, i);
-		test_assertVprintfs(expect, format, i);
-
-		free(expect);
 	}
 }
 
 
-TEST(stdio_printf_cspn, c_non_ascii)
+TEST(stdio_printf_cspn, c_ascii_vprintf)
+{
+	int i;
+	const char *format = "%c";
+
+	for (i = 1; i < 128; i++) {
+		char *expect = test_intToAscii(i);
+
+		test_assertVprintfs(expect, format, i);
+	}
+}
+
+
+TEST(stdio_printf_cspn, c_non_ascii_printf)
 {
 	int i;
 	const char *format = "%c";
@@ -2065,9 +2075,19 @@ TEST(stdio_printf_cspn, c_non_ascii)
 		char *expect = test_intToAscii(i);
 
 		test_assertPrintfs(expect, format, i);
-		test_assertVprintfs(expect, format, i);
+	}
+}
 
-		free(expect);
+
+TEST(stdio_printf_cspn, c_non_ascii_vprintf)
+{
+	int i;
+	const char *format = "%c";
+
+	for (i = 128; i < 256; i++) {
+		char *expect = test_intToAscii(i);
+
+		test_assertVprintfs(expect, format, i);
 	}
 }
 
@@ -2124,7 +2144,7 @@ TEST(stdio_printf_cspn, s_specific)
 }
 
 
-TEST(stdio_printf_cspn, s_ascii)
+TEST(stdio_printf_cspn, s_ascii_printf)
 {
 	int i;
 	const char *format = "%s";
@@ -2137,9 +2157,23 @@ TEST(stdio_printf_cspn, s_ascii)
 		char *expect = test_intToAscii(i);
 
 		test_assertPrintfs(expect, format, expect);
-		test_assertVprintfs(expect, format, expect);
+	}
+}
 
-		free(expect);
+
+TEST(stdio_printf_cspn, s_ascii_vprintf)
+{
+	int i;
+	const char *format = "%s";
+
+	/*
+	 * In ASCII table from number 33 starts printable characters
+	 * in this case we want to dodge terminating ASCII signs
+	 */
+	for (i = 33; i < 128; i++) {
+		char *expect = test_intToAscii(i);
+
+		test_assertVprintfs(expect, format, expect);
 	}
 }
 
@@ -2586,14 +2620,17 @@ TEST_GROUP_RUNNER(stdio_printf_fega)
 TEST_GROUP_RUNNER(stdio_printf_cspn)
 {
 	RUN_TEST_CASE(stdio_printf_cspn, c);
-	RUN_TEST_CASE(stdio_printf_cspn, c_ascii);
-	RUN_TEST_CASE(stdio_printf_cspn, c_non_ascii);
+	RUN_TEST_CASE(stdio_printf_cspn, c_ascii_printf);
+	RUN_TEST_CASE(stdio_printf_cspn, c_ascii_vprintf);
+	RUN_TEST_CASE(stdio_printf_cspn, c_non_ascii_printf);
+	RUN_TEST_CASE(stdio_printf_cspn, c_non_ascii_vprintf);
 	RUN_TEST_CASE(stdio_printf_cspn, lc);
 	RUN_TEST_CASE(stdio_printf_cspn, C);
 	RUN_TEST_CASE(stdio_printf_cspn, s);
 
 	RUN_TEST_CASE(stdio_printf_cspn, s_specific);
-	RUN_TEST_CASE(stdio_printf_cspn, s_ascii);
+	RUN_TEST_CASE(stdio_printf_cspn, s_ascii_printf);
+	RUN_TEST_CASE(stdio_printf_cspn, s_ascii_vprintf);
 	RUN_TEST_CASE(stdio_printf_cspn, s_huge_string);
 	RUN_TEST_CASE(stdio_printf_cspn, ls);
 	RUN_TEST_CASE(stdio_printf_cspn, S);
