@@ -23,7 +23,7 @@ from psh.tools.psh import CONTROL_CODE
 from psh.tools.randwrapper import TestRandom
 
 # acceptable separators: white spaces (wss) + CC, CC + wss, wss
-SEPARATOR_PATTERN = r'(?:' + CONTROL_CODE + r'|\s)+'
+SEPARATOR_PATTERN = r'(?:' + CONTROL_CODE + r'|\s)+?'
 CHARS = list(set(string.printable) - set(string.whitespace) - set('/'))
 
 
