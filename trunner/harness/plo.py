@@ -10,6 +10,20 @@ from trunner.types import AppOptions, TestResult
 from .base import HarnessError, IntermediateHarness, Rebooter, TerminalHarness
 
 
+@dataclass(frozen=True)
+class PloJffs2CleanmarkerSpec:
+    """Represents the JFFS2 cleanmarkers image specs to be used for formatting"""
+
+    start_block: int
+    number_of_blocks: int
+    block_size: int
+    cleanmarker_size: int
+
+    def __str__(self):
+        """Generate spec as plo jffs2 command argument"""
+        return f"0x{self.start_block:x}:0x{self.number_of_blocks:x}:0x{self.block_size:x}:0x{self.cleanmarker_size:x}"
+
+
 class PloError(HarnessError):
     """Exception thrown by PloInterface class."""
 
@@ -131,6 +145,15 @@ class PloInterface:
         except PloError as e:
             e.cmd = cmd
             raise e
+
+    def jffs2(self, device: str, erase: bool, cleanmarkers: PloJffs2CleanmarkerSpec, timeout: Optional[int] = None):
+        """Performs jffs2 command."""
+
+        cmd = f"jffs2 -d {device} -c {cleanmarkers}"
+        if erase:
+            cmd += " -e"
+
+        self.cmd(cmd, timeout)
 
     def app(
         self, device: str, file: str, imap: str, dmap: str, exec: bool = False

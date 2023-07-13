@@ -21,6 +21,7 @@ from trunner.target import (
     ARMv7A9Zynq7000QemuTarget,
     STM32L4x6Target,
     Zynq7000ZedboardTarget,
+    IMX6ULLEvkTarget,
 )
 from trunner.ctx import TestContext
 from trunner.target.base import TargetBase
@@ -211,6 +212,7 @@ def resolve_targets_and_hosts() -> Tuple[Dict[str, TargetBase], Dict[str, Host]]
         IMXRT106xEvkTarget,
         IMXRT117xEvkTarget,
         Zynq7000ZedboardTarget,
+        IMX6ULLEvkTarget,
     ]
 
     hosts = [EmulatorHost, RpiHost]
