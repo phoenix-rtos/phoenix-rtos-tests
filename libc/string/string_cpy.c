@@ -133,6 +133,7 @@ TEST(string_memcpy, data_types)
 
 TEST(string_memcpy, adjacent)
 {
+
 	char testStr[] = "TEST",
 		 memStr[MAX_STR_LEN] = "\0\0\0\0\0\0\0\0\0\0TEST",
 		 expVal[MAX_STR_LEN] = "\0\0\0\0\0\0TESTTESTTEST",
