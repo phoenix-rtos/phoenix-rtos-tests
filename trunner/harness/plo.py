@@ -130,7 +130,7 @@ class PloInterface:
     def erase(self, device: str, offset: int, size: int, timeout: Optional[int] = None):
         """Performs erase command."""
 
-        cmd = f"erase {device} {offset} {size}"
+        cmd = f"erase {device} 0x{offset:x} 0x{size:x}"
         self.send_cmd(cmd)
 
         try:
