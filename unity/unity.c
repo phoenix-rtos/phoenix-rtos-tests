@@ -772,6 +772,7 @@ void UnityAssertGreaterOrLessOrEqualNumber(const UNITY_INT threshold,
     UnityTestResultsFailBegin(lineNumber); \
     UnityPrint(UnityStrPointless);         \
     UnityAddMsgIfSpecified(msg);           \
+    UNITY_PRINT_EOL();                     \
     UNITY_FAIL_AND_BAIL; }
 
 /*-----------------------------------------------*/
