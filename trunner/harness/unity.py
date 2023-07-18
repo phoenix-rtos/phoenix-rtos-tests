@@ -14,16 +14,16 @@ def _format_result_output(results: Sequence[Dict[str, Any]], ctx: TestContext) -
 
         out = "\t" + bold(f"TEST({res['group']}, {res['name']})") + " "
         if res["status"] == "FAIL":
-            out += red("FAIL") + " at " + bold(f"{res['path']}:{res['line']}") + ": "
-            out += res["msg"]
+            out += red("FAIL") + " at " + bold(f"{res['path']}:{res['line']}")
         elif res["status"] == "PASS":
             out += green("OK")
         elif res["status"] == "IGNORE":
             out += yellow("IGNORE")
-            if "msg" in res:
-                out += ": " + res["msg"]
         elif res["status"] == "INFO":
             out += blue("INFO")
+
+        if "msg" in res:
+            out += ": " + res["msg"]
 
         out += "\n"
 
