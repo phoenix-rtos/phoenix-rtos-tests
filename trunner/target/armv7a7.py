@@ -1,44 +1,26 @@
 from typing import Callable, Optional
 
-from trunner.dut import Dut, SerialDut
+from trunner.dut import SerialDut
 from trunner.harness import (
     HarnessBuilder,
     PloInterface,
     PloImageLoader,
-    PloImageProperty,
+    PloJffsImageProperty,
     ShellHarness,
     Rebooter,
     RebooterHarness,
     PloJffs2CleanmarkerSpec,
 )
 
-from trunner.harness import TerminalHarness
 from trunner.host import Host
 from trunner.tools import Phoenixd, Psu
 from trunner.types import TestResult, TestOptions
-from .base import TargetBase, find_port
+from .base import TargetBase, PsuPloLoader, find_port
 
 
 class ARMv7A7TargetRebooter(Rebooter):
     def _set_flash_mode(self, flash):
         self.host.set_flash_mode(not flash)
-
-
-class PsuPloLoader(TerminalHarness, PloInterface):
-    def __init__(self, dut: Dut, psu: Psu, flash_device_id: str, cleanmarkers_args: PloJffs2CleanmarkerSpec):
-        TerminalHarness.__init__(self)
-        PloInterface.__init__(self, dut)
-        self.psu = psu
-        self.flash_device_id = flash_device_id
-        self.cleanmarkers_args = cleanmarkers_args
-
-    def __call__(self):
-        """Loads plo image to RAM using psu tool and erases an area intended for rootfs."""
-        self.psu.run()
-        self.wait_prompt()
-
-        # Device id and cleanmarkers arguments are set based on target configuration in _targets/_projects.
-        self.jffs2(self.flash_device_id, True, self.cleanmarkers_args, 90)
 
 
 class ARMv7A7Target(TargetBase, PloInterface, Rebooter):
@@ -58,8 +40,6 @@ class ARMv7A7Target(TargetBase, PloInterface, Rebooter):
         plo_loader = PsuPloLoader(
             dut=self.dut,
             psu=Psu(self.plo_psu_script, self.boot_dir()),
-            flash_device_id=self.flash_device_id,
-            cleanmarkers_args=self.cleanmarkers_spec,
         )
 
         loader = PloImageLoader(
@@ -89,15 +69,20 @@ class ARMv7A7Target(TargetBase, PloInterface, Rebooter):
 
 class IMX6ULLEvkTarget(ARMv7A7Target):
     # IMX6ULL with system jffs2 use nor0 as space to hold data
-    image = PloImageProperty(file="phoenix.disk", source="usb0", memory_bank="nor0")
-    name = "armv7a7-imx6ull-evk"
-    cleanmarkers_spec = PloJffs2CleanmarkerSpec(
-        start_block=0x10,
-        number_of_blocks=0x1F0,
-        block_size=0x10000,
-        cleanmarker_size=0x10,
+    image = PloJffsImageProperty(
+        file="phoenix.disk",
+        source="usb0",
+        memory_bank="nor0",
+        flash_device_id="2.0",
+        cleanmarkers_args=PloJffs2CleanmarkerSpec(
+            start_block=0x10,
+            number_of_blocks=0x1f0,
+            block_size=0x10000,
+            cleanmarker_size=0x10,
+        ),
+        timeout=90,
     )
-    flash_device_id = "2.0"
+    name = "armv7a7-imx6ull-evk"
 
     def __init__(self, host: Host, port: Optional[str] = None, baudrate: int = 115200):
         if not port:

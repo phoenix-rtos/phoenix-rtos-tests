@@ -1,8 +1,7 @@
 from typing import Callable, Optional
-from trunner.dut import Dut, SerialDut
+from trunner.dut import SerialDut
 from trunner.harness import (
     HarnessBuilder,
-    PloInterface,
     PloImageLoader,
     PloImageProperty,
     PloPhoenixdAppLoader,
@@ -11,11 +10,10 @@ from trunner.harness import (
     RebooterHarness,
     ShellHarness,
 )
-from trunner.harness.base import TerminalHarness
 from trunner.host import Host
 from trunner.tools import Phoenixd, Psu
 from trunner.types import TestOptions, TestResult
-from .base import TargetBase, find_port
+from .base import TargetBase, PsuPloLoader, find_port
 
 
 class ARMv7M7TargetRebooter(Rebooter):
@@ -27,18 +25,6 @@ class ARMv7M7TargetRebooter(Rebooter):
     def _reboot_hard(self):
         # FIXME due to problems with relay use only soft reboot
         self._reboot_soft()
-
-
-class PsuPloLoader(TerminalHarness, PloInterface):
-    def __init__(self, dut: Dut, psu: Psu):
-        TerminalHarness.__init__(self)
-        PloInterface.__init__(self, dut)
-        self.psu = psu
-
-    def __call__(self):
-        """Loads plo image to RAM using psu tool."""
-        self.psu.run()
-        self.wait_prompt()
 
 
 class ARMv7M7Target(TargetBase):

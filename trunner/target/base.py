@@ -4,6 +4,9 @@ from typing import Callable, Optional
 
 from serial.tools import list_ports
 
+from trunner.dut import Dut
+from trunner.tools import Psu
+from trunner.harness import TerminalHarness, PloInterface
 from trunner.dut import PortNotFound
 from trunner.types import TestOptions, TestResult
 
@@ -27,6 +30,18 @@ def find_port(port_hint: str) -> str:
         )
 
     return port.device
+
+
+class PsuPloLoader(TerminalHarness, PloInterface):
+    def __init__(self, dut: Dut, psu: Psu):
+        TerminalHarness.__init__(self)
+        PloInterface.__init__(self, dut)
+        self.psu = psu
+
+    def __call__(self):
+        """Loads plo image to RAM using psu tool and erases an area intended for rootfs."""
+        self.psu.run()
+        self.wait_prompt()
 
 
 class TargetBase(ABC):
