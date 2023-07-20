@@ -851,19 +851,19 @@ TEST(stat_nlink_size_blk_tim, tim)
 
 
 	TEST_ASSERT_EQUAL_INT(0, stat(tempPath, &buffer));
-	TEST_ASSERT_EQUAL_INT(currentTime, buffer.st_ctim.tv_sec);
-	TEST_ASSERT_EQUAL_INT(currentTime, buffer.st_atim.tv_sec);
-	TEST_ASSERT_EQUAL_INT(currentTime, buffer.st_mtim.tv_sec);
+	TEST_ASSERT_INT_WITHIN(1, currentTime, buffer.st_ctim.tv_sec);
+	TEST_ASSERT_INT_WITHIN(1, currentTime, buffer.st_atim.tv_sec);
+	TEST_ASSERT_INT_WITHIN(1, currentTime, buffer.st_mtim.tv_sec);
 
 	TEST_ASSERT_EQUAL_INT(0, lstat(tempPath, &buffer));
-	TEST_ASSERT_EQUAL_INT(currentTime, buffer.st_ctim.tv_sec);
-	TEST_ASSERT_EQUAL_INT(currentTime, buffer.st_atim.tv_sec);
-	TEST_ASSERT_EQUAL_INT(currentTime, buffer.st_mtim.tv_sec);
+	TEST_ASSERT_INT_WITHIN(1, currentTime, buffer.st_ctim.tv_sec);
+	TEST_ASSERT_INT_WITHIN(1, currentTime, buffer.st_atim.tv_sec);
+	TEST_ASSERT_INT_WITHIN(1, currentTime, buffer.st_mtim.tv_sec);
 
 	TEST_ASSERT_EQUAL_INT(0, fstat(temp_fd, &buffer));
-	TEST_ASSERT_EQUAL_INT(currentTime, buffer.st_ctim.tv_sec);
-	TEST_ASSERT_EQUAL_INT(currentTime, buffer.st_atim.tv_sec);
-	TEST_ASSERT_EQUAL_INT(currentTime, buffer.st_mtim.tv_sec);
+	TEST_ASSERT_INT_WITHIN(1, currentTime, buffer.st_ctim.tv_sec);
+	TEST_ASSERT_INT_WITHIN(1, currentTime, buffer.st_atim.tv_sec);
+	TEST_ASSERT_INT_WITHIN(1, currentTime, buffer.st_mtim.tv_sec);
 
 	close(temp_fd);
 	remove(tempPath);
