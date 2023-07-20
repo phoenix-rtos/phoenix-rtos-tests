@@ -1,6 +1,5 @@
 import subprocess
 import time
-from abc import abstractmethod
 from typing import Callable, Optional
 
 from trunner.ctx import TestContext
@@ -14,6 +13,7 @@ from trunner.harness import (
     Rebooter,
     RebooterHarness,
     FlashError,
+    PloJffs2CleanmarkerSpec,
 )
 from trunner.harness import TerminalHarness
 from trunner.host import Host
@@ -41,12 +41,21 @@ class ARMv7A9TargetRebooter(Rebooter):
 
 
 class ZynqGdbPloLoader(TerminalHarness, PloInterface):
-    def __init__(self, dut: Dut, script: str, cwd: Optional[str] = None):
+    def __init__(
+        self,
+        dut: Dut,
+        script: str,
+        flash_device_id: str,
+        cleanmarkers_args: PloJffs2CleanmarkerSpec,
+        cwd: Optional[str] = None,
+    ):
         TerminalHarness.__init__(self)
         PloInterface.__init__(self, dut)
         self.script = script
         self.cwd = cwd
         self.gdbserver = JLinkGdbServer("Zynq 7020")
+        self.flash_device_id = flash_device_id
+        self.cleanmarkers_args = cleanmarkers_args
 
     def __call__(self):
         """Loads plo image to RAM using gdb."""
@@ -71,28 +80,39 @@ class ZynqGdbPloLoader(TerminalHarness, PloInterface):
 
         self.enter_bootloader()
         self.wait_prompt()
-        # This erase command is not directly related to the plo loading.
-        # We use this callback to clear the flash memory for phoenix image.
-        # This action is unique to zynq-7000 target.
-        self.erase(device=Zynq7000ZedboardTarget.image.memory_bank, offset=0x800000, size=0x1000000, timeout=80)
+
+        # Erase using jjfs2 command with cleanmarkers
+        self.jffs2(self.flash_device_id, True, self.cleanmarkers_args, 140)  # ?Huge erase time?
 
 
 class ARMv7A9Target(TargetBase):
-    image = PloImageProperty(file="phoenix.disk", source="usb0", memory_bank="flash0")
-
     def __init__(self, host: Host, port: str, baudrate: int = 115200):
         self.dut = SerialDut(port, baudrate, encoding="utf-8", codec_errors="ignore")
         self.rebooter = ARMv7A9TargetRebooter(host, self.dut)
         super().__init__()
 
     @classmethod
-    @abstractmethod
-    def from_context(cls, _: TestContext):
-        pass
+    def from_context(cls, ctx: TestContext):
+        return cls(ctx.host, ctx.port, ctx.baudrate)
 
-    @abstractmethod
     def flash_dut(self):
-        pass
+        plo_loader = ZynqGdbPloLoader(
+            dut=self.dut,
+            script=f"{self._project_dir()}/phoenix-rtos-build/scripts/upload-zynq7000.gdb",
+            flash_device_id=self.flash_device_id,
+            cleanmarkers_args=self.cleanmarkers_spec,
+            cwd=self.boot_dir(),
+        )
+
+        loader = PloImageLoader(
+            dut=self.dut,
+            rebooter=self.rebooter,
+            image=self.image,
+            plo_loader=plo_loader,
+            phoenixd=Phoenixd(directory=self.boot_dir()),
+        )
+
+        loader()
 
     def build_test(self, test: TestOptions) -> Callable[[], Optional[TestResult]]:
         builder = HarnessBuilder()
@@ -109,31 +129,19 @@ class ARMv7A9Target(TargetBase):
 
 
 class Zynq7000ZedboardTarget(ARMv7A9Target):
+    # Zynq7000Zedboard with system jffs2 use flash0 as space to hold data
+    image = PloImageProperty(file="phoenix.disk", source="usb0", memory_bank="flash0")
     name = "armv7a9-zynq7000-zedboard"
+    cleanmarkers_spec = PloJffs2CleanmarkerSpec(
+        start_block=0x80,
+        number_of_blocks=0x100,
+        block_size=0x10000,
+        cleanmarker_size=0x10,
+    )
+    flash_device_id = "2.0"
 
     def __init__(self, host: Host, port: Optional[str] = None, baudrate: int = 115200):
         if port is None:
             port = find_port("04b4:0008")
 
         super().__init__(host, port, baudrate)
-
-    def flash_dut(self):
-        plo_loader = ZynqGdbPloLoader(
-            dut=self.dut,
-            script=f"{self._project_dir()}/phoenix-rtos-build/scripts/upload-zynq7000.gdb",
-            cwd=self.boot_dir(),
-        )
-
-        loader = PloImageLoader(
-            dut=self.dut,
-            rebooter=self.rebooter,
-            image=self.image,
-            plo_loader=plo_loader,
-            phoenixd=Phoenixd(directory=self.boot_dir()),
-        )
-
-        loader()
-
-    @classmethod
-    def from_context(cls, ctx: TestContext):
-        return cls(ctx.host, ctx.port, ctx.baudrate)
