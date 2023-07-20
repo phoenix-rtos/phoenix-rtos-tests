@@ -214,6 +214,15 @@ class PloImageProperty:
     memory_bank: str
 
 
+@dataclass(frozen=True)
+class PloJffsImageProperty(PloImageProperty):
+    """Class that represents the OS image for jffs2 file system, which needs erase before flashing."""
+
+    flash_device_id: str
+    cleanmarkers_args: PloJffs2CleanmarkerSpec
+    timeout: int
+
+
 class PloImageLoader(TerminalHarness, PloInterface):
     """Harness to load the image to the memory using plo bootloader and phoenixd program.
 
@@ -247,6 +256,9 @@ class PloImageLoader(TerminalHarness, PloInterface):
     def __call__(self):
         self.rebooter(flash=True, hard=True)
         self.plo_loader()
+
+        if isinstance(self.image, PloJffsImageProperty):
+            self.jffs2(self.image.flash_device_id, True, self.image.cleanmarkers_args, self.image.timeout)
 
         with self.phoenixd.run():
             self.copy_file2mem(
