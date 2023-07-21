@@ -22,9 +22,6 @@ test:
 
       - name: bzcat
         execute: test_busybox bzcat
-        # Issue: 762 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/762
-        targets:
-          exclude: [armv7a9-zynq7000-qemu, armv7a9-zynq7000-zedboard]
 
       - name: cat
         execute: test_busybox cat
@@ -73,10 +70,7 @@ test:
         execute: test_busybox gunzip
 
       - name: gzip
-        # Issue: 762 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/762
         execute: test_busybox gzip
-        targets:
-          exclude: [armv7a9-zynq7000-qemu, armv7a9-zynq7000-zedboard]
 
       - name: head
         execute: test_busybox head
