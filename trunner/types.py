@@ -208,7 +208,7 @@ class TestOptions:
     target: Optional[str] = None
     bootloader: Optional[BootloaderOptions] = None
     shell: Optional[ShellOptions] = None
-    should_reboot: bool = True
+    should_reboot: bool = False
     ignore: bool = False
     nightly: bool = False
     kwargs: Dict = field(default_factory=dict)

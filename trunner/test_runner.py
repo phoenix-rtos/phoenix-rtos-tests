@@ -156,8 +156,22 @@ class TestRunner:
         """
 
         fail, skip = 0, 0
+        # Ensure first test will start with reboot
+        last_test_failed = True
 
-        for idx, test in enumerate(tests):
+        for test in tests:
+            # By default we don't want to reboot the entire device to speed up the test execution)
+            # if not explicitly required by the test.
+            if last_test_failed:
+                test.should_reboot = True
+
+            if self.ctx.nightly:
+                test.should_reboot = True
+
+            # We have to enter the bootloader in order to load applications.
+            if not self.ctx.target.rootfs and test.bootloader is not None and test.bootloader.apps:
+                test.should_reboot = True
+
             result = TestResult(test.name)
             print(f"{result.get_name()}: ", end="", flush=True)
 
@@ -180,41 +194,16 @@ class TestRunner:
             print(result, end="", flush=True)
 
             if result.is_fail():
+                last_test_failed = True
                 fail += 1
+            elif result.is_ok():
+                last_test_failed = False
             elif result.is_skip():
                 skip += 1
 
             if not result.is_skip():
                 testname_stripped = test.name.replace("phoenix-rtos-tests/", "").replace("/", ".")
                 dump_logfiles(self.target.dut, testname_stripped, self.ctx.logdir)
-
-            def set_reboot_flag(tests, idx, result):
-                # If the test is successful and the next test doesn't require loading via
-                # the plo we don't want to reboot the entire device (to speed up the test execution).
-                # There are three exceptions to this rule:
-                # 1. Runner runs in the "nightly" mode when we are not concerned about slow execution.
-                # 2. The test has failed.
-                # 3. We have to enter the bootloader in order to load applications.
-                if idx == len(tests) - 1:
-                    return
-
-                tests[idx + 1].should_reboot = False
-
-                if result.is_skip():
-                    tests[idx + 1].should_reboot = tests[idx].should_reboot
-
-                if (
-                    result.is_fail()
-                    or self.ctx.nightly
-                    or (
-                        not self.ctx.target.rootfs
-                        and tests[idx + 1].bootloader is not None
-                        and tests[idx + 1].bootloader.apps
-                    )
-                ):
-                    tests[idx + 1].should_reboot = True
-
-            set_reboot_flag(tests, idx, result)
 
         return fail, skip
 

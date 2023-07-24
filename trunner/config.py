@@ -169,6 +169,14 @@ class ConfigParser:
             cmd=parsed_cmd,
         )
 
+    def _parse_reboot(self, config: dict) -> None:
+        reboot = config.get("reboot", self.test.should_reboot)
+
+        if not isinstance(reboot, bool):
+            raise ParserError(f"reboot must be a boolean value (true/false) not {reboot}")
+
+        self.test.should_reboot = reboot
+
     def _parse_ignore(self, config: dict) -> None:
         ignore = config.get("ignore", self.main.ignore)
 
@@ -248,6 +256,7 @@ class ConfigParser:
         if self.test.ignore:
             return
 
+        self._parse_reboot(config)
         self._parse_shell_command(config)
         self._parse_load(config)
         self._parse_kwargs(config)
