@@ -6,6 +6,9 @@ test:
     tests:
         - name: gibber
           harness: test-gibber.py
+          # additional resources may be necessary for psh tests, especially on smaller syspage targets
+          # ensure no other binaries are loaded from the previous tests during the psh tests
+          reboot: True
 
         - name: auth
           harness: test-auth.py
