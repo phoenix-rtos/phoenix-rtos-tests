@@ -14,7 +14,7 @@
 
 import psh.tools.psh as psh
 from psh.tools.psh import OPTIONAL_CONTROL_CODE, CONTROL_CODE
-from psh.tools.common import SEPARATOR_PATTERN, create_testdir
+from psh.tools.common import SEPARATOR_PATTERN, OPTIONAL_SEPARATOR_PATTERN, create_testdir
 
 
 ROOT_TEST_DIR = 'test_ls_rootfs_dir'
@@ -70,7 +70,7 @@ def assert_ls_t(p):
 
 
 def assert_ls_S(p):
-    expected_pattern = r'.*?psh' + SEPARATOR_PATTERN + r'.*?empty_file' + SEPARATOR_PATTERN + r'.*?'
+    expected_pattern = r'.*?psh' + SEPARATOR_PATTERN + r'.*?empty_file' + OPTIONAL_SEPARATOR_PATTERN + r'.*?'
     expected_pattern = expected_pattern + psh.EOL
 
     psh.assert_cmd(p, 'touch /bin/empty_file', msg='Wrong output when creating empty file!')
