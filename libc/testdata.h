@@ -23,7 +23,11 @@
 #define ALL_CHARS_STRING_SIZE (CHARS_SET_SIZE + 1)
 
 
-/* returns string filled with all possible chars, which has to be freed after use */
+/* 
+ * for (size >= ALL_CHARS_STRING_SIZE) returns string filled with all possible chars.
+ * for (size < ALL_CHARS_STRING_SIZE) returns string with the following content: {1,1,2,...(size-2),0}.
+ * The returned pointer has to be freed after use!
+ */
 extern char *testdata_createCharStr(int size);
 
 
