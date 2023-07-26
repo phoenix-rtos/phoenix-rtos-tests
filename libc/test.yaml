@@ -39,3 +39,8 @@ test:
       execute: test-libc-string
       targets:
         include: [host-generic-pc]
+
+    - name: math
+      execute: test-libc-math
+      targets:
+        include: [host-generic-pc]

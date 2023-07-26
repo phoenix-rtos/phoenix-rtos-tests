@@ -1,0 +1,648 @@
+/*
+ * Phoenix-RTOS
+ *
+ * POSIX.1-2017 standard library functions tests
+ *
+ * HEADER:
+ *    - math.h
+ *
+ * TESTED:
+ *    - modf(), modff(), fmod()
+ *    - exp(), frexp(), ldexp()
+ *    - log(), log2(), log10()
+ *    - fabs(), pow(), sqrt()
+ *    - ceil, floor()
+ *
+ * Copyright 2023 Phoenix Systems
+ * Author: Mateusz Bloch
+ *
+ * This file is part of Phoenix-RTOS.
+ *
+ * %LICENSE%
+ */
+
+#include <math.h>
+#include <limits.h>
+#include <float.h>
+#include <errno.h>
+#include <unity_fixture.h>
+
+#define M_SQRT3 1.73205080756887719318
+
+
+TEST_GROUP(math_mod);
+TEST_GROUP(math_exp);
+TEST_GROUP(math_power);
+
+
+TEST_SETUP(math_mod)
+{
+}
+
+
+TEST_TEAR_DOWN(math_mod)
+{
+}
+
+
+TEST(math_mod, modf_basic)
+{
+	double intd;
+	float intf;
+
+	TEST_ASSERT_EQUAL_DOUBLE(0.5, modf(10.5, &intd));
+	TEST_ASSERT_EQUAL_DOUBLE(10.0, intd);
+
+	TEST_ASSERT_EQUAL_FLOAT(0.5, modff(10.5, &intf));
+	TEST_ASSERT_EQUAL_FLOAT(10.0, intf);
+
+	TEST_ASSERT_EQUAL_DOUBLE(-0.5, modf(-10.5, &intd));
+	TEST_ASSERT_EQUAL_DOUBLE(-10.0, intd);
+
+	TEST_ASSERT_EQUAL_FLOAT(-0.5, modff(-10.5, &intf));
+	TEST_ASSERT_EQUAL_FLOAT(-10.0, intf);
+
+	TEST_ASSERT_EQUAL_DOUBLE(0.000000123, modf(0.000000123, &intd));
+	TEST_ASSERT_EQUAL_DOUBLE(0.0, intd);
+
+	TEST_ASSERT_EQUAL_FLOAT(0.000000123, modff(0.000000123, &intf));
+	TEST_ASSERT_EQUAL_FLOAT(0.0, intf);
+}
+
+
+TEST(math_mod, modf_zero)
+{
+	double intd;
+	float intf;
+
+	TEST_ASSERT_EQUAL_DOUBLE(0.0, modf(0.0, &intd));
+	TEST_ASSERT_EQUAL_DOUBLE(0.0, intd);
+
+	TEST_ASSERT_EQUAL_FLOAT(0.0, modff(0.0, &intf));
+	TEST_ASSERT_EQUAL_FLOAT(0.0, intf);
+}
+
+
+TEST(math_mod, modf_min_max)
+{
+	double intd;
+	float intf;
+
+	TEST_ASSERT_EQUAL_DOUBLE(0.0, modf(DBL_MAX, &intd));
+	TEST_ASSERT_EQUAL_DOUBLE(DBL_MAX, intd);
+
+	TEST_ASSERT_EQUAL_FLOAT(0.0, modff(FLT_MAX, &intf));
+	TEST_ASSERT_EQUAL_FLOAT(FLT_MAX, intf);
+
+	TEST_ASSERT_EQUAL_DOUBLE(DBL_MIN, modf(DBL_MIN, &intd));
+	TEST_ASSERT_EQUAL_DOUBLE(0.0, intd);
+
+	TEST_ASSERT_EQUAL_FLOAT(FLT_MIN, modff(FLT_MIN, &intf));
+	TEST_ASSERT_EQUAL_FLOAT(0.0, intf);
+}
+
+
+TEST(math_mod, modf_nan_inf)
+{
+	double intd;
+	float intf;
+
+	// TEST_ASSERT_DOUBLE_IS_NAN(modf(NAN, &intd));
+	// TEST_ASSERT_DOUBLE_IS_NAN(intd);
+
+	// TEST_ASSERT_FLOAT_IS_NAN(modff(NAN, &intf));
+	// TEST_ASSERT_FLOAT_IS_NAN(intf);
+
+	TEST_ASSERT_EQUAL_DOUBLE(0.0, modf(INFINITY, &intd));
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, intd);
+
+	TEST_ASSERT_EQUAL_FLOAT(0.0, modff(INFINITY, &intf));
+	TEST_ASSERT_EQUAL_FLOAT(INFINITY, intf);
+
+	TEST_ASSERT_EQUAL_DOUBLE(-0.0, modf(-INFINITY, &intd));
+	TEST_ASSERT_EQUAL_DOUBLE(-INFINITY, intd);
+
+	TEST_ASSERT_EQUAL_FLOAT(-0.0, modff(-INFINITY, &intf));
+	TEST_ASSERT_EQUAL_FLOAT(-INFINITY, intf);
+}
+
+
+TEST(math_mod, fmod_basic)
+{
+	TEST_ASSERT_EQUAL_DOUBLE(0.288872, fmod(1.523372, 1.2345));
+	TEST_ASSERT_EQUAL_DOUBLE(-0.288872, fmod(-1.523372, -1.2345));
+	TEST_ASSERT_EQUAL_DOUBLE(-0.288872, fmod(-1.523372, 1.2345));
+	TEST_ASSERT_EQUAL_DOUBLE(0.288872, fmod(1.523372, -1.2345));
+
+	TEST_ASSERT_EQUAL_FLOAT(0.288872, fmodf(1.523372, 1.2345));
+	TEST_ASSERT_EQUAL_FLOAT(-0.288872, fmodf(-1.523372, -1.2345));
+	TEST_ASSERT_EQUAL_FLOAT(-0.288872, fmodf(-1.523372, 1.2345));
+	TEST_ASSERT_EQUAL_FLOAT(0.288872, fmodf(1.523372, -1.2345));
+}
+
+
+TEST(math_mod, fmod_zero)
+{
+	TEST_ASSERT_EQUAL_DOUBLE(0, fmod(0, 1));
+	TEST_ASSERT_EQUAL_DOUBLE(0, fmod(-0, 1));
+
+	TEST_ASSERT_EQUAL_FLOAT(0, fmodf(0, 1));
+	TEST_ASSERT_EQUAL_FLOAT(0, fmodf(-0, 1));
+}
+
+
+TEST(math_mod, fmod_min_max)
+{
+	TEST_ASSERT_EQUAL_DOUBLE(0.0, fmod(DBL_MAX, DBL_MAX));
+	TEST_ASSERT_EQUAL_DOUBLE(0.0, fmod(DBL_MIN, DBL_MIN));
+
+	TEST_ASSERT_EQUAL_FLOAT(0.0, fmodf(FLT_MAX, FLT_MAX));
+	TEST_ASSERT_EQUAL_FLOAT(0.0, fmodf(FLT_MIN, FLT_MIN));
+}
+
+
+TEST(math_mod, fmod_special_cond)
+{
+	TEST_ASSERT_DOUBLE_IS_NAN(fmod(NAN, 1));
+	TEST_ASSERT_DOUBLE_IS_NAN(fmod(1, NAN));
+	TEST_ASSERT_DOUBLE_IS_NAN(fmod(NAN, NAN));
+
+	errno = 0;
+	TEST_ASSERT_DOUBLE_IS_NAN(fmod(1, 0.0));
+	// TEST_ASSERT_EQUAL_INT(EDOM, errno);
+
+	errno = 0;
+	TEST_ASSERT_DOUBLE_IS_NAN(fmod(INFINITY, 1));
+	// TEST_ASSERT_EQUAL_INT(EDOM, errno);
+
+	TEST_ASSERT_EQUAL_DOUBLE(DBL_MAX, fmod(DBL_MAX, INFINITY));
+	TEST_ASSERT_EQUAL_DOUBLE(DBL_MIN, fmod(DBL_MIN, INFINITY));
+
+	TEST_ASSERT_EQUAL_DOUBLE(1.0e-35, fmod(1.0e-35, 1.0e-30));
+
+
+	TEST_ASSERT_FLOAT_IS_NAN(fmodf(NAN, 1));
+	TEST_ASSERT_FLOAT_IS_NAN(fmodf(1, NAN));
+	TEST_ASSERT_FLOAT_IS_NAN(fmodf(NAN, NAN));
+
+	errno = 0;
+	TEST_ASSERT_FLOAT_IS_NAN(fmodf(1, 0.0));
+	// TEST_ASSERT_EQUAL_INT(EDOM, errno);
+
+	errno = 0;
+	TEST_ASSERT_FLOAT_IS_NAN(fmodf(INFINITY, 1));
+	// TEST_ASSERT_EQUAL_INT(EDOM, errno);
+
+	TEST_ASSERT_EQUAL_FLOAT(FLT_MAX, fmodf(FLT_MAX, INFINITY));
+	TEST_ASSERT_EQUAL_FLOAT(FLT_MIN, fmodf(FLT_MIN, INFINITY));
+
+	TEST_ASSERT_EQUAL_FLOAT(1.0e-35, fmodf(1.0e-35, 1.0e-30));
+}
+
+
+TEST_SETUP(math_exp)
+{
+}
+
+
+TEST_TEAR_DOWN(math_exp)
+{
+}
+
+
+TEST(math_exp, exp_basic)
+{
+	TEST_ASSERT_EQUAL_DOUBLE(1.0, exp(0.0));
+	TEST_ASSERT_EQUAL_DOUBLE(1.0, exp(-0.0));
+
+	TEST_ASSERT_EQUAL_DOUBLE(M_E, exp(1.0));
+	TEST_ASSERT_EQUAL_DOUBLE(1 / M_E, exp(-1.0));
+
+	TEST_ASSERT_EQUAL_DOUBLE(M_E * M_E, exp(2.0));
+}
+
+
+TEST(math_exp, exp_special_cond)
+{
+	// TEST_ASSERT_DOUBLE_IS_NAN(exp(NAN));
+
+	TEST_ASSERT_EQUAL_DOUBLE(1, exp(DBL_MIN));
+
+	TEST_ASSERT_EQUAL_DOUBLE(0, exp(-INFINITY));
+	TEST_ASSERT_EQUAL_DOUBLE(0, exp(-1000.0));
+	TEST_ASSERT_EQUAL_DOUBLE(0, exp(INT_MIN));
+
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, exp(INFINITY));
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, exp(DBL_MAX));
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, exp(1000.0));
+}
+
+
+TEST(math_exp, frexp_basic)
+{
+	int exponent;
+
+	TEST_ASSERT_EQUAL_DOUBLE(0.0, frexp(0.0, &exponent));
+	TEST_ASSERT_EQUAL_INT(0, exponent);
+
+	TEST_ASSERT_EQUAL_DOUBLE(-0.0, frexp(-0.0, &exponent));
+	TEST_ASSERT_EQUAL_INT(0, exponent);
+
+	TEST_ASSERT_EQUAL_DOUBLE(0.5, frexp(8.0, &exponent));
+	TEST_ASSERT_EQUAL_INT(4, exponent);
+
+	TEST_ASSERT_EQUAL_DOUBLE(-0.5, frexp(-0.125, &exponent));
+	TEST_ASSERT_EQUAL_INT(-2, exponent);
+
+	TEST_ASSERT_EQUAL_DOUBLE(0.5, frexp(DBL_MIN, &exponent));
+	TEST_ASSERT_EQUAL_INT(-1021, exponent);
+
+	TEST_ASSERT_EQUAL_DOUBLE(1, frexp(DBL_MAX, &exponent));
+	TEST_ASSERT_EQUAL_INT(1024, exponent);
+}
+
+
+TEST(math_exp, frexp_special_cond)
+{
+	// int exponent;
+
+	// TEST_ASSERT_DOUBLE_IS_NAN(frexp(NAN, &exponent));
+
+	// TEST_ASSERT_EQUAL_DOUBLE(INFINITY, frexp(INFINITY, &exponent));
+	// TEST_ASSERT_EQUAL_DOUBLE(-INFINITY, frexp(-INFINITY, &exponent));
+}
+
+
+TEST(math_exp, ldexp_basic)
+{
+	TEST_ASSERT_EQUAL_DOUBLE(0.0, ldexp(0.0, 1));
+	TEST_ASSERT_EQUAL_DOUBLE(-0.0, ldexp(-0.0, 1));
+
+	TEST_ASSERT_EQUAL_DOUBLE(M_PI, ldexp(M_PI, 0));
+	TEST_ASSERT_EQUAL_DOUBLE(M_PI, ldexp(M_PI, -0));
+
+	TEST_ASSERT_EQUAL_DOUBLE(M_PI * 8, ldexp(M_PI, 3));
+	TEST_ASSERT_EQUAL_DOUBLE(M_PI * 8, ldexp(M_PI, 3));
+
+	TEST_ASSERT_EQUAL_DOUBLE(M_PI * 0.125, ldexp(M_PI, -3));
+	TEST_ASSERT_EQUAL_DOUBLE(M_PI * 0.125, ldexp(M_PI, -3));
+
+	TEST_ASSERT_EQUAL_DOUBLE(1024.0, ldexp(0.5, 11));
+	TEST_ASSERT_EQUAL_DOUBLE(1.0 / 4096.0, ldexp(0.5, -11));
+}
+
+
+TEST(math_exp, ldexp_special_cond)
+{
+	// TEST_ASSERT_DOUBLE_IS_NAN(ldexp(NAN, 1));
+
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, ldexp(INFINITY, 1));
+	TEST_ASSERT_EQUAL_DOUBLE(-INFINITY, ldexp(-INFINITY, 1));
+}
+
+
+TEST(math_exp, log_basic)
+{
+	TEST_ASSERT_EQUAL_DOUBLE(-HUGE_VAL, log(0.0));
+	TEST_ASSERT_EQUAL_DOUBLE(-HUGE_VAL, log(-0.0));
+
+	TEST_ASSERT_EQUAL_DOUBLE(0, log(1.0));
+	TEST_ASSERT_EQUAL_DOUBLE(M_LN2, log(2.0));
+	TEST_ASSERT_EQUAL_DOUBLE(M_LN10, log(10.0));
+	TEST_ASSERT_EQUAL_DOUBLE(1.0, log(M_E));
+
+	TEST_ASSERT_DOUBLE_WITHIN(1e-6, -708.396419, log(DBL_MIN));
+	TEST_ASSERT_DOUBLE_WITHIN(1e-6, 709.782713, log(DBL_MAX));
+}
+
+
+TEST(math_exp, log_special_cond)
+{
+	// TEST_ASSERT_DOUBLE_IS_NAN(log(NAN));
+
+	// TEST_ASSERT_EQUAL_DOUBLE(INFINITY, log(INFINITY));
+
+	errno = 0;
+	TEST_ASSERT_DOUBLE_IS_NAN(log(-1.0));
+	TEST_ASSERT_EQUAL_INT(EDOM, errno);
+
+	errno = 0;
+	TEST_ASSERT_DOUBLE_IS_NAN(log(-INFINITY));
+	TEST_ASSERT_EQUAL_INT(EDOM, errno);
+}
+
+
+TEST(math_exp, log2_basic)
+{
+	TEST_ASSERT_EQUAL_DOUBLE(-HUGE_VAL, log2(0.0));
+	TEST_ASSERT_EQUAL_DOUBLE(-HUGE_VAL, log2(-0.0));
+
+	TEST_ASSERT_EQUAL_DOUBLE(0.0, log2(1.0));
+	TEST_ASSERT_EQUAL_DOUBLE(1.0, log2(2.0));
+	TEST_ASSERT_EQUAL_DOUBLE(8, log2(256));
+
+	TEST_ASSERT_EQUAL_DOUBLE(-1022, log2(DBL_MIN));
+	TEST_ASSERT_EQUAL_DOUBLE(1024, log2(DBL_MAX));
+}
+
+
+TEST(math_exp, log2_special_cond)
+{
+	// TEST_ASSERT_DOUBLE_IS_NAN(log2(NAN));
+
+	// TEST_ASSERT_EQUAL_DOUBLE(INFINITY, log2(INFINITY));
+
+	errno = 0;
+	TEST_ASSERT_DOUBLE_IS_NAN(log2(-1.0));
+	TEST_ASSERT_EQUAL_INT(EDOM, errno);
+
+	errno = 0;
+	TEST_ASSERT_DOUBLE_IS_NAN(log2(-INFINITY));
+	TEST_ASSERT_EQUAL_INT(EDOM, errno);
+}
+
+
+TEST(math_exp, log10_basic)
+{
+	TEST_ASSERT_EQUAL_DOUBLE(-HUGE_VAL, log10(0.0));
+	TEST_ASSERT_EQUAL_DOUBLE(-HUGE_VAL, log10(-0.0));
+
+	TEST_ASSERT_EQUAL_DOUBLE(0, log10(1.0));
+	TEST_ASSERT_EQUAL_DOUBLE(1, log10(10));
+	TEST_ASSERT_EQUAL_DOUBLE(100, log10(1e+100));
+
+	TEST_ASSERT_DOUBLE_WITHIN(1e-6, -307.652656, log10(DBL_MIN));
+	TEST_ASSERT_DOUBLE_WITHIN(1e-6, 308.254716, log10(DBL_MAX));
+}
+
+
+TEST(math_exp, log10_special_cond)
+{
+	// TEST_ASSERT_DOUBLE_IS_NAN(log10(NAN));
+
+	// TEST_ASSERT_EQUAL_DOUBLE(INFINITY, log10(INFINITY));
+
+	errno = 0;
+	TEST_ASSERT_DOUBLE_IS_NAN(log10(-1.0));
+	TEST_ASSERT_EQUAL_INT(EDOM, errno);
+
+	errno = 0;
+	TEST_ASSERT_DOUBLE_IS_NAN(log10(-INFINITY));
+	TEST_ASSERT_EQUAL_INT(EDOM, errno);
+}
+
+
+TEST(math_exp, fabs_basic)
+{
+	TEST_ASSERT_EQUAL_DOUBLE(0, fabs(0.0));
+	TEST_ASSERT_EQUAL_DOUBLE(0, fabs(-0.0));
+
+	TEST_ASSERT_EQUAL_DOUBLE(1, fabs(1.0));
+	TEST_ASSERT_EQUAL_DOUBLE(1, fabs(-1.0));
+
+	TEST_ASSERT_EQUAL_DOUBLE(10, fabs(10));
+	TEST_ASSERT_EQUAL_DOUBLE(10, fabs(-10));
+
+	TEST_ASSERT_EQUAL_DOUBLE(DBL_MIN, fabs(DBL_MIN));
+	TEST_ASSERT_EQUAL_DOUBLE(DBL_MIN, fabs(-DBL_MIN));
+
+	TEST_ASSERT_EQUAL_DOUBLE(DBL_MAX, fabs(DBL_MAX));
+	TEST_ASSERT_EQUAL_DOUBLE(DBL_MAX, fabs(-DBL_MAX));
+
+	TEST_ASSERT_EQUAL_INT(INT_MAX, fabs(INT_MAX));
+	TEST_ASSERT_EQUAL_INT(INT_MAX, fabs(-INT_MAX));
+}
+
+
+TEST(math_exp, fabs_special_cond)
+{
+	TEST_ASSERT_DOUBLE_IS_NAN(fabs(NAN));
+
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, fabs(-INFINITY));
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, fabs(INFINITY));
+}
+
+
+TEST(math_exp, ceil_basic)
+{
+	TEST_ASSERT_EQUAL_DOUBLE(1, ceil(1));
+
+	TEST_ASSERT_EQUAL_DOUBLE(123456790, ceil(123456789.123456789));
+	TEST_ASSERT_EQUAL_DOUBLE(1, ceil(0.000000123456789));
+
+	TEST_ASSERT_EQUAL_DOUBLE(DBL_MAX, ceil(DBL_MAX));
+	TEST_ASSERT_EQUAL_DOUBLE(1, ceil(DBL_MIN));
+}
+
+
+TEST(math_exp, ceil_special_cond)
+{
+	TEST_ASSERT_DOUBLE_IS_NAN(ceil(NAN));
+
+	TEST_ASSERT_EQUAL_DOUBLE(-0, ceil(-0.0));
+	TEST_ASSERT_EQUAL_DOUBLE(0, ceil(0.0));
+
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, ceil(INFINITY));
+	TEST_ASSERT_EQUAL_DOUBLE(-INFINITY, ceil(-INFINITY));
+}
+
+
+TEST(math_exp, floor_basic)
+{
+	TEST_ASSERT_EQUAL_DOUBLE(1, floor(1));
+
+	TEST_ASSERT_EQUAL_DOUBLE(123456789, floor(123456789.123456789));
+	TEST_ASSERT_EQUAL_DOUBLE(0, floor(0.000000123456789));
+
+	TEST_ASSERT_EQUAL_DOUBLE(DBL_MAX, floor(DBL_MAX));
+	TEST_ASSERT_EQUAL_DOUBLE(0, floor(DBL_MIN));
+}
+
+
+TEST(math_exp, floor_special_cond)
+{
+	TEST_ASSERT_DOUBLE_IS_NAN(floor(NAN));
+
+	TEST_ASSERT_EQUAL_DOUBLE(-0, floor(-0.0));
+	TEST_ASSERT_EQUAL_DOUBLE(0, floor(0.0));
+
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, floor(INFINITY));
+	TEST_ASSERT_EQUAL_DOUBLE(-INFINITY, floor(-INFINITY));
+}
+
+
+TEST_SETUP(math_power)
+{
+}
+
+
+TEST_TEAR_DOWN(math_power)
+{
+}
+
+
+TEST(math_power, pow_basic)
+{
+	TEST_ASSERT_EQUAL_DOUBLE(1, pow(2, 0));
+	TEST_ASSERT_EQUAL_DOUBLE(2, pow(2, 1));
+
+	TEST_ASSERT_EQUAL_DOUBLE(M_SQRT2, pow(2, 0.5));
+	TEST_ASSERT_EQUAL_DOUBLE(M_SQRT3, pow(3, 0.5));
+
+	TEST_ASSERT_DOUBLE_WITHIN(1e+2, INT_MAX, pow(2, 31));
+	// TEST_ASSERT_DOUBLE_WITHIN(1e+2, INT_MIN, pow(-2, 31));
+}
+
+
+TEST(math_power, pow_special_cond)
+{
+	errno = 0;
+	TEST_ASSERT_DOUBLE_IS_NAN(pow(-2, 0.125));
+	TEST_ASSERT_EQUAL_INT(EDOM, errno);
+
+	errno = 0;
+	TEST_ASSERT_EQUAL_DOUBLE(HUGE_VAL, pow(0, -2));
+	// TEST_ASSERT_EQUAL_INT(ERANGE, errno);
+
+	TEST_ASSERT_DOUBLE_IS_NAN(pow(NAN, 2));
+	// TEST_ASSERT_DOUBLE_IS_NAN(pow(2, NAN));
+	// TEST_ASSERT_DOUBLE_IS_NAN(pow(NAN, NAN));
+
+	TEST_ASSERT_EQUAL_DOUBLE(1.0, pow(1, DBL_MIN));
+	TEST_ASSERT_EQUAL_DOUBLE(1.0, pow(1, DBL_MAX));
+	// TEST_ASSERT_EQUAL_DOUBLE(1.0, pow(1, NAN));
+
+	TEST_ASSERT_EQUAL_DOUBLE(1.0, pow(DBL_MIN, 0));
+	TEST_ASSERT_EQUAL_DOUBLE(1.0, pow(DBL_MAX, 0));
+	TEST_ASSERT_EQUAL_DOUBLE(1.0, pow(NAN, 0));
+
+	TEST_ASSERT_EQUAL_DOUBLE(1.0, pow(DBL_MIN, -0));
+	TEST_ASSERT_EQUAL_DOUBLE(1.0, pow(DBL_MAX, -0));
+	TEST_ASSERT_EQUAL_DOUBLE(1.0, pow(NAN, -0));
+
+	TEST_ASSERT_EQUAL_DOUBLE(0, pow(0, 2));
+	TEST_ASSERT_EQUAL_DOUBLE(-0, pow(-0, 2));
+	TEST_ASSERT_EQUAL_DOUBLE(0, pow(0, 3));
+	TEST_ASSERT_EQUAL_DOUBLE(0, pow(-0, 3));
+
+	// TEST_ASSERT_EQUAL_DOUBLE(1.0, pow(-1, INFINITY));
+	// TEST_ASSERT_EQUAL_DOUBLE(1.0, pow(-1, -INFINITY));
+
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, pow(0.5, -INFINITY));
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, pow(-0.5, -INFINITY));
+
+	TEST_ASSERT_EQUAL_DOUBLE(0, pow(2, -INFINITY));
+	TEST_ASSERT_EQUAL_DOUBLE(0, pow(2, -INFINITY));
+
+	TEST_ASSERT_EQUAL_DOUBLE(0, pow(0.5, INFINITY));
+	TEST_ASSERT_EQUAL_DOUBLE(0, pow(-0.5, INFINITY));
+
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, pow(2, INFINITY));
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, pow(2, INFINITY));
+
+	TEST_ASSERT_EQUAL_DOUBLE(-0, pow(-INFINITY, -3));
+	TEST_ASSERT_EQUAL_DOUBLE(0, pow(-INFINITY, -2));
+
+	// TEST_ASSERT_EQUAL_DOUBLE(-INFINITY, pow(-INFINITY, 3));
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, pow(-INFINITY, 2));
+
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, pow(INFINITY, 2));
+	TEST_ASSERT_EQUAL_DOUBLE(0, pow(INFINITY, -2));
+}
+
+
+TEST(math_power, sqrt_basic)
+{
+	TEST_ASSERT_EQUAL_DOUBLE(0, sqrt(0.0));
+	TEST_ASSERT_EQUAL_DOUBLE(0, sqrt(-0.0));
+
+	// TEST_ASSERT_EQUAL_DOUBLE(M_SQRT1_2, sqrt(0.5));
+	// TEST_ASSERT_EQUAL_DOUBLE(1, sqrt(1.0));
+	// TEST_ASSERT_EQUAL_DOUBLE(M_SQRT2, sqrt(2.0));
+	// TEST_ASSERT_EQUAL_DOUBLE(M_SQRT3, sqrt(3.0));
+
+	// TEST_ASSERT_EQUAL_DOUBLE(2e+10, sqrt(4.0e+20));
+	// TEST_ASSERT_EQUAL_DOUBLE(2e-10, sqrt(4.0e-20));
+
+	// TEST_ASSERT_EQUAL_DOUBLE(1.49166814624004134866e-154, sqrt(DBL_MIN));
+	// TEST_ASSERT_EQUAL_DOUBLE(1.34078079299425956110e+154, sqrt(DBL_MAX));
+
+	// TEST_ASSERT_EQUAL_DOUBLE(2.22275874948507748344e-162, sqrt(5.0e-324));
+}
+
+
+TEST(math_power, sqrt_special_cond)
+{
+	TEST_ASSERT_DOUBLE_IS_NAN(sqrt(NAN));
+
+	// TEST_ASSERT_EQUAL_DOUBLE(INFINITY, sqrt(INFINITY));
+
+	errno = 0;
+	TEST_ASSERT_DOUBLE_IS_NAN(sqrt(-INFINITY));
+	TEST_ASSERT_EQUAL_INT(EDOM, errno);
+
+	errno = 0;
+	TEST_ASSERT_DOUBLE_IS_NAN(sqrt(-1.0));
+	TEST_ASSERT_EQUAL_INT(EDOM, errno);
+
+	errno = 0;
+	TEST_ASSERT_DOUBLE_IS_NAN(sqrt(INT_MIN));
+	TEST_ASSERT_EQUAL_INT(EDOM, errno);
+
+	errno = 0;
+	TEST_ASSERT_DOUBLE_IS_NAN(sqrt(-DBL_MIN));
+	TEST_ASSERT_EQUAL_INT(EDOM, errno);
+
+	errno = 0;
+	TEST_ASSERT_DOUBLE_IS_NAN(sqrt(-DBL_MAX));
+	TEST_ASSERT_EQUAL_INT(EDOM, errno);
+}
+
+
+TEST_GROUP_RUNNER(math_mod)
+{
+	RUN_TEST_CASE(math_mod, modf_basic);
+	RUN_TEST_CASE(math_mod, modf_zero);
+	RUN_TEST_CASE(math_mod, modf_min_max);
+	RUN_TEST_CASE(math_mod, modf_nan_inf);
+
+	RUN_TEST_CASE(math_mod, fmod_basic);
+	RUN_TEST_CASE(math_mod, fmod_zero);
+	RUN_TEST_CASE(math_mod, fmod_min_max);
+	RUN_TEST_CASE(math_mod, fmod_special_cond);
+}
+
+
+TEST_GROUP_RUNNER(math_exp)
+{
+	RUN_TEST_CASE(math_exp, exp_basic);
+	RUN_TEST_CASE(math_exp, exp_special_cond);
+	RUN_TEST_CASE(math_exp, frexp_basic);
+	RUN_TEST_CASE(math_exp, frexp_special_cond);
+	RUN_TEST_CASE(math_exp, ldexp_basic);
+	RUN_TEST_CASE(math_exp, ldexp_special_cond);
+
+	RUN_TEST_CASE(math_exp, log_basic);
+	RUN_TEST_CASE(math_exp, log_special_cond);
+	RUN_TEST_CASE(math_exp, log2_basic);
+	RUN_TEST_CASE(math_exp, log2_special_cond);
+	RUN_TEST_CASE(math_exp, log10_basic);
+	RUN_TEST_CASE(math_exp, log10_special_cond);
+
+	RUN_TEST_CASE(math_exp, fabs_basic);
+	RUN_TEST_CASE(math_exp, fabs_special_cond);
+
+	RUN_TEST_CASE(math_exp, ceil_basic);
+	RUN_TEST_CASE(math_exp, ceil_special_cond);
+	RUN_TEST_CASE(math_exp, floor_basic);
+	RUN_TEST_CASE(math_exp, floor_special_cond);
+}
+
+
+TEST_GROUP_RUNNER(math_power)
+{
+	RUN_TEST_CASE(math_power, pow_basic);
+	RUN_TEST_CASE(math_power, pow_special_cond);
+	RUN_TEST_CASE(math_power, sqrt_basic);
+	RUN_TEST_CASE(math_power, sqrt_special_cond);
+}
