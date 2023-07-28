@@ -57,20 +57,18 @@ TEST_TEAR_DOWN(math_trig)
 
 TEST(math_trig, tan_basic)
 {
-	TEST_ASSERT_EQUAL_DOUBLE(0, tan(0.0));
-	TEST_ASSERT_EQUAL_DOUBLE(0, tan(-0.0));
+	int i;
+	int iterates = 2000;
+	double start = -DBL_MAX;
+	double end = DBL_MAX;
+	double step = (end - start) / (iterates - 1);
+	double x, y;
 
-	TEST_ASSERT_EQUAL_DOUBLE(M_SQRT3 / 3, tan(M_PI / 6));
-	TEST_ASSERT_EQUAL_DOUBLE(-M_SQRT3 / 3, tan(-M_PI / 6));
-
-	TEST_ASSERT_EQUAL_DOUBLE(1, tan(M_PI_4));
-	TEST_ASSERT_EQUAL_DOUBLE(-1, tan(-M_PI_4));
-
-	TEST_ASSERT_EQUAL_DOUBLE(M_SQRT3, tan(M_PI / 3));
-	TEST_ASSERT_EQUAL_DOUBLE(-M_SQRT3, tan(-M_PI / 3));
-
-	TEST_ASSERT_EQUAL_DOUBLE(1.55740772465490229237, tan(1.0));
-	TEST_ASSERT_EQUAL_DOUBLE(-1.55740772465490229237, tan(-1.0));
+	for (i = 0; i <= iterates; i++) {
+		x = start + i * step;
+		y = tan(x / 2.0);
+		TEST_ASSERT_EQUAL_DOUBLE(tan(x), (2.0 * y) / (1.0 + y * y));
+	}
 }
 
 
@@ -85,18 +83,13 @@ TEST(math_trig, tan_huge_x)
 	TEST_ASSERT_EQUAL_DOUBLE(DBL_MIN, tan(DBL_MIN));
 }
 
-TEST(math_trig, tan_eq_sin_div_cos)
-{
-	TEST_ASSERT_EQUAL_DOUBLE(sin(0) / cos(0), tan(0));
-	TEST_ASSERT_EQUAL_DOUBLE(sin(M_PI / 6) / cos(M_PI / 6), tan(M_PI / 6));
-	TEST_ASSERT_EQUAL_DOUBLE(sin(M_PI_4) / cos(M_PI_4), tan(M_PI_4));
-	TEST_ASSERT_EQUAL_DOUBLE(sin(DBL_MIN) / cos(DBL_MIN), tan(DBL_MIN));
-}
-
 
 TEST(math_trig, tan_special_cond)
 {
 	TEST_ASSERT_DOUBLE_IS_NAN(tan(NAN));
+
+	TEST_ASSERT_EQUAL_DOUBLE(0, tan(0.0));
+	TEST_ASSERT_EQUAL_DOUBLE(0, tan(-0.0));
 
 	TEST_ASSERT_EQUAL_DOUBLE(dblSubnormal(), tan(dblSubnormal()));
 
@@ -112,18 +105,17 @@ TEST(math_trig, tan_special_cond)
 
 TEST(math_trig, atan_basic)
 {
+	int i;
+	int iterates = 2000;
+	double start = -1.0;
+	double end = 1.0;
+	double step = (end - start) / (iterates - 1);
+	double x;
 
-	TEST_ASSERT_EQUAL_DOUBLE(0, atan(0.0));
-	TEST_ASSERT_EQUAL_DOUBLE(0, atan(-0.0));
-
-	TEST_ASSERT_EQUAL_DOUBLE(M_PI / 6, atan(M_SQRT3 / 3));
-	TEST_ASSERT_EQUAL_DOUBLE(-M_PI / 6, atan(-M_SQRT3 / 3));
-
-	TEST_ASSERT_EQUAL_DOUBLE(M_PI_4, atan(1.0));
-	TEST_ASSERT_EQUAL_DOUBLE(-M_PI_4, atan(-1.0));
-
-	TEST_ASSERT_EQUAL_DOUBLE(M_PI / 3, atan(M_SQRT3));
-	TEST_ASSERT_EQUAL_DOUBLE(-M_PI / 3, atan(-M_SQRT3));
+	for (i = 0; i <= iterates; i++) {
+		x = start + i * step;
+		TEST_ASSERT_EQUAL_DOUBLE(x, tan(atan(x)));
+	}
 }
 
 
@@ -144,6 +136,9 @@ TEST(math_trig, atan_special_cond)
 {
 	TEST_ASSERT_DOUBLE_IS_NAN(atan(NAN));
 
+	TEST_ASSERT_EQUAL_DOUBLE(0, atan(0.0));
+	TEST_ASSERT_EQUAL_DOUBLE(0, atan(-0.0));
+
 	TEST_ASSERT_EQUAL_DOUBLE(M_PI_2, atan(INFINITY));
 	TEST_ASSERT_EQUAL_DOUBLE(-M_PI_2, atan(-INFINITY));
 
@@ -153,23 +148,18 @@ TEST(math_trig, atan_special_cond)
 
 TEST(math_trig, sin_basic)
 {
-	TEST_ASSERT_EQUAL_DOUBLE(0, sin(0.0));
-	TEST_ASSERT_EQUAL_DOUBLE(0, sin(-0.0));
+	int i;
+	int iterates = 2000;
+	double start = -DBL_MAX;
+	double end = DBL_MAX;
+	double step = (end - start) / (iterates - 1);
+	double x, y;
 
-	TEST_ASSERT_EQUAL_DOUBLE(0.5, sin(M_PI / 6));
-	TEST_ASSERT_EQUAL_DOUBLE(-0.5, sin(-M_PI / 6));
-
-	TEST_ASSERT_EQUAL_DOUBLE(M_SQRT1_2, sin(M_PI_4));
-	TEST_ASSERT_EQUAL_DOUBLE(-M_SQRT1_2, sin(-M_PI_4));
-
-	TEST_ASSERT_EQUAL_DOUBLE(M_SQRT3 / 2, sin(M_PI / 3));
-	TEST_ASSERT_EQUAL_DOUBLE(-M_SQRT3 / 2, sin(-M_PI / 3));
-
-	TEST_ASSERT_EQUAL_DOUBLE(1, sin(M_PI_2));
-	TEST_ASSERT_EQUAL_DOUBLE(-1, sin(-M_PI_2));
-
-	TEST_ASSERT_EQUAL_DOUBLE(0.84147098480789650488, sin(1.0));
-	TEST_ASSERT_EQUAL_DOUBLE(-0.84147098480789650488, sin(-1.0));
+	for (i = 0; i <= iterates; i++) {
+		x = start + i * step;
+		y = sinh(x / 3.0);
+		TEST_ASSERT_EQUAL_DOUBLE(sinh(x), (3.0 * y) + (4.0 * y * y * y));
+	}
 }
 
 
@@ -189,6 +179,9 @@ TEST(math_trig, sin_special_cond)
 {
 	TEST_ASSERT_DOUBLE_IS_NAN(sin(NAN));
 
+	TEST_ASSERT_EQUAL_DOUBLE(0, sin(0.0));
+	TEST_ASSERT_EQUAL_DOUBLE(0, sin(-0.0));
+
 	TEST_ASSERT_EQUAL_DOUBLE(dblSubnormal(), sin(dblSubnormal()));
 
 	errno = 0;
@@ -203,20 +196,17 @@ TEST(math_trig, sin_special_cond)
 
 TEST(math_trig, asin_basic)
 {
-	// TEST_ASSERT_EQUAL_DOUBLE(0, asin(0.0));
-	// TEST_ASSERT_EQUAL_DOUBLE(0, asin(-0.0));
+	int i;
+	int iterates = 2000;
+	double start = -0.99;
+	double end = 0.99;
+	double step = (end - start) / (iterates - 1);
+	double x;
 
-	TEST_ASSERT_EQUAL_DOUBLE(M_PI_2, asin(1.0));
-	TEST_ASSERT_EQUAL_DOUBLE(-M_PI_2, asin(-1.0));
-
-	TEST_ASSERT_EQUAL_DOUBLE(M_PI / 6, asin(0.5));
-	TEST_ASSERT_EQUAL_DOUBLE(-M_PI / 6, asin(-0.5));
-
-	TEST_ASSERT_EQUAL_DOUBLE(M_PI_4, asin(M_SQRT1_2));
-	TEST_ASSERT_EQUAL_DOUBLE(-M_PI_4, asin(-M_SQRT1_2));
-
-	TEST_ASSERT_EQUAL_DOUBLE(M_PI / 3, asin(M_SQRT3 / 2));
-	TEST_ASSERT_EQUAL_DOUBLE(-M_PI / 3, asin(-M_SQRT3 / 2));
+	for (i = 0; i <= iterates; i++) {
+		x = start + i * step;
+		TEST_ASSERT_EQUAL_DOUBLE(x, sin(asin(x)));
+	}
 }
 
 
@@ -253,6 +243,9 @@ TEST(math_trig, asin_special_cond)
 
 	TEST_ASSERT_DOUBLE_IS_NAN(asin(NAN));
 
+	// TEST_ASSERT_EQUAL_DOUBLE(0, asin(0.0));
+	// TEST_ASSERT_EQUAL_DOUBLE(0, asin(-0.0));
+
 	// TEST_ASSERT_EQUAL_DOUBLE(dblSubnormal(), asin(dblSubnormal()));
 
 	errno = 0;
@@ -267,23 +260,18 @@ TEST(math_trig, asin_special_cond)
 
 TEST(math_trig, cos_basic)
 {
-	TEST_ASSERT_EQUAL_DOUBLE(1, cos(0.0));
-	TEST_ASSERT_EQUAL_DOUBLE(1, cos(-0.0));
+	int i;
+	int iterates = 2000;
+	double start = -DBL_MAX;
+	double end = DBL_MAX;
+	double step = (end - start) / (iterates - 1);
+	double x, y;
 
-	TEST_ASSERT_EQUAL_DOUBLE(M_SQRT3 / 2, cos(M_PI / 6));
-	TEST_ASSERT_EQUAL_DOUBLE(M_SQRT3 / 2, cos(-M_PI / 6));
-
-	TEST_ASSERT_EQUAL_DOUBLE(M_SQRT1_2, cos(M_PI_4));
-	TEST_ASSERT_EQUAL_DOUBLE(M_SQRT1_2, cos(-M_PI_4));
-
-	TEST_ASSERT_EQUAL_DOUBLE(0.5, cos(M_PI / 3));
-	TEST_ASSERT_EQUAL_DOUBLE(0.5, cos(-M_PI / 3));
-
-	TEST_ASSERT_DOUBLE_WITHIN(DELTA, 0, cos(M_PI_2));
-	TEST_ASSERT_DOUBLE_WITHIN(DELTA, 0, cos(-M_PI_2));
-
-	TEST_ASSERT_EQUAL_DOUBLE(0.54030230586813976501, cos(1.0));
-	TEST_ASSERT_EQUAL_DOUBLE(0.54030230586813976501, cos(-1.0));
+	for (i = 0; i <= iterates; i++) {
+		x = start + i * step;
+		y = cos(x / 2.0);
+		TEST_ASSERT_EQUAL_DOUBLE(cos(x), ((2.0 * y * y) - 1.0));
+	}
 }
 
 
@@ -304,6 +292,9 @@ TEST(math_trig, cos_special_cond)
 {
 	TEST_ASSERT_DOUBLE_IS_NAN(cos(NAN));
 
+	TEST_ASSERT_EQUAL_DOUBLE(1, cos(0.0));
+	TEST_ASSERT_EQUAL_DOUBLE(1, cos(-0.0));
+
 	errno = 0;
 	TEST_ASSERT_DOUBLE_IS_NAN(cos(INFINITY));
 	// TEST_ASSERT_EQUAL_INT(EDOM, errno);
@@ -316,17 +307,17 @@ TEST(math_trig, cos_special_cond)
 
 TEST(math_trig, acos_basic)
 {
-	TEST_ASSERT_EQUAL_DOUBLE(M_PI_2, acos(0.0));
-	TEST_ASSERT_EQUAL_DOUBLE(M_PI_2, acos(-0.0));
+	int i;
+	int iterates = 2000;
+	double start = -0.99;
+	double end = 0.99;
+	double step = (end - start) / (iterates - 1);
+	double x;
 
-	TEST_ASSERT_EQUAL_DOUBLE(M_PI / 6, acos(M_SQRT3 / 2));
-
-	TEST_ASSERT_EQUAL_DOUBLE(M_PI_4, acos(M_SQRT1_2));
-
-	TEST_ASSERT_EQUAL_DOUBLE(M_PI / 3, acos(0.5));
-
-	TEST_ASSERT_EQUAL_DOUBLE(0, acos(1.0));
-	TEST_ASSERT_EQUAL_DOUBLE(M_PI, acos(-1.0));
+	for (i = 0; i <= iterates; i++) {
+		x = start + i * step;
+		TEST_ASSERT_EQUAL_DOUBLE(x, cos(acos(x)));
+	}
 }
 
 
@@ -339,6 +330,10 @@ TEST(math_trig, acos_huge_x)
 	errno = 0;
 	TEST_ASSERT_DOUBLE_IS_NAN(acos(-1.0e+6));
 	TEST_ASSERT_EQUAL_INT(EDOM, errno);
+
+	TEST_ASSERT_EQUAL_DOUBLE(M_PI_2, acos(0.0));
+	TEST_ASSERT_EQUAL_DOUBLE(M_PI_2, acos(-0.0));
+
 
 	TEST_ASSERT_DOUBLE_WITHIN(DELTA, M_PI_2, acos(1.0e-6));
 	TEST_ASSERT_DOUBLE_WITHIN(DELTA, M_PI_2, acos(-1.0e-6));
@@ -383,14 +378,18 @@ TEST_TEAR_DOWN(math_hyper)
 
 TEST(math_hyper, tanh_basic)
 {
-	TEST_ASSERT_EQUAL_DOUBLE(0, tanh(0.0));
-	TEST_ASSERT_EQUAL_DOUBLE(0, tanh(-0.0));
+	int i;
+	int iterates = 2000;
+	double start = -DBL_MAX;
+	double end = DBL_MAX;
+	double step = (end - start) / (iterates - 1);
+	double x, y;
 
-	TEST_ASSERT_EQUAL_DOUBLE(0.761594155955764851029, tanh(1.0));
-	TEST_ASSERT_EQUAL_DOUBLE(-0.761594155955764851029, tanh(-1.0));
-
-	// TEST_ASSERT_EQUAL_DOUBLE(1, tanh(INT_MAX));
-	// TEST_ASSERT_EQUAL_DOUBLE(-1, tanh(INT_MIN));
+	for (i = 0; i <= iterates; i++) {
+		x = start + i * step;
+		y = tanh(x / 2.0);
+		TEST_ASSERT_EQUAL_DOUBLE(tanh(x), (2.0 * y) / (1.0 + y * y));
+	}
 }
 
 
@@ -402,6 +401,9 @@ TEST(math_hyper, tanh_huge_x)
 	// TEST_ASSERT_EQUAL_DOUBLE(1e-10, tanh(1.0e-10)); // Sprawdź do którego bitu ma być uwzględnione
 	// TEST_ASSERT_EQUAL_DOUBLE(-1e-10, tanh(-1.0e-10)); // Sprawdź do którego bitu ma być uwzględnione
 
+	// TEST_ASSERT_EQUAL_DOUBLE(1, tanh(INT_MAX));
+	// TEST_ASSERT_EQUAL_DOUBLE(-1, tanh(INT_MIN));
+
 	// TEST_ASSERT_EQUAL_DOUBLE(1, tanh(DBL_MAX));
 	// TEST_ASSERT_EQUAL_DOUBLE(DBL_MIN, tanh(DBL_MIN));
 }
@@ -410,6 +412,9 @@ TEST(math_hyper, tanh_huge_x)
 TEST(math_hyper, tanh_special_cond)
 {
 	// TEST_ASSERT_EQUAL_DOUBLE(NAN, tanh(NAN)); IMX, ZYNQ-QEMU
+
+	TEST_ASSERT_EQUAL_DOUBLE(0, tanh(0.0));
+	TEST_ASSERT_EQUAL_DOUBLE(0, tanh(-0.0));
 
 	// TEST_ASSERT_EQUAL_DOUBLE(1, tanh(INFINITY));
 	// TEST_ASSERT_EQUAL_DOUBLE(-1, tanh(-INFINITY));
@@ -420,14 +425,18 @@ TEST(math_hyper, tanh_special_cond)
 
 TEST(math_hyper, sinh_basic)
 {
-	TEST_ASSERT_EQUAL_DOUBLE(0, sinh(0.0));
-	TEST_ASSERT_EQUAL_DOUBLE(0, sinh(-0.0));
+	int i;
+	int iterates = 2000;
+	double start = -DBL_MAX;
+	double end = DBL_MAX;
+	double step = (end - start) / (iterates - 1);
+	double x, y;
 
-	TEST_ASSERT_EQUAL_DOUBLE(1.17520119364380137839, sinh(1.0));
-	TEST_ASSERT_EQUAL_DOUBLE(-1.17520119364380137839, sinh(-1.0));
-
-	TEST_ASSERT_EQUAL_DOUBLE(11.5487393572577463630, sinh(M_PI));
-	TEST_ASSERT_EQUAL_DOUBLE(-11.5487393572577463630, sinh(-M_PI));
+	for (i = 0; i <= iterates; i++) {
+		x = start + i * step;
+		y = sinh(x / 3.0);
+		TEST_ASSERT_EQUAL_DOUBLE(sinh(x), (3.0 * y) + (4.0 * y * y * y));
+	}
 }
 
 
@@ -449,6 +458,9 @@ TEST(math_hyper, sinh_special_cond)
 {
 	// TEST_ASSERT_DOUBLE_IS_NAN(sinh(NAN));
 
+	TEST_ASSERT_EQUAL_DOUBLE(0, sinh(0.0));
+	TEST_ASSERT_EQUAL_DOUBLE(0, sinh(-0.0));
+
 	// TEST_ASSERT_EQUAL_DOUBLE(dblSubnormal(), sinh(dblSubnormal()));
 
 	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, sinh(INFINITY));
@@ -459,14 +471,18 @@ TEST(math_hyper, sinh_special_cond)
 
 TEST(math_hyper, cosh_basic)
 {
-	TEST_ASSERT_EQUAL_DOUBLE(1.0, cosh(0.0));
-	TEST_ASSERT_EQUAL_DOUBLE(1.0, cosh(-0.0));
+	int i;
+	int iterates = 2000;
+	double start = -DBL_MAX;
+	double end = DBL_MAX;
+	double step = (end - start) / (iterates - 1);
+	double x, y;
 
-	TEST_ASSERT_EQUAL_DOUBLE(1.54308063481524371241, cosh(1.0));
-	TEST_ASSERT_EQUAL_DOUBLE(1.54308063481524371241, cosh(-1.0));
-
-	TEST_ASSERT_EQUAL_DOUBLE(11.5919532755215186626, cosh(M_PI));
-	TEST_ASSERT_EQUAL_DOUBLE(11.5919532755215186626, cosh(-M_PI));
+	for (i = 0; i <= iterates; i++) {
+		x = start + i * step;
+		y = cosh(x / 2.0);
+		TEST_ASSERT_EQUAL_DOUBLE(cosh(x), ((2.0 * y * y) - 1.0));
+	}
 }
 
 
@@ -487,6 +503,9 @@ TEST(math_hyper, cosh_special_cond)
 {
 	// TEST_ASSERT_DOUBLE_IS_NAN(cosh(NAN));
 
+	TEST_ASSERT_EQUAL_DOUBLE(1.0, cosh(0.0));
+	TEST_ASSERT_EQUAL_DOUBLE(1.0, cosh(-0.0));
+
 	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, cosh(INFINITY));
 
 	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, cosh(-INFINITY));
@@ -497,7 +516,6 @@ TEST_GROUP_RUNNER(math_trig)
 {
 	RUN_TEST_CASE(math_trig, tan_basic);
 	RUN_TEST_CASE(math_trig, tan_huge_x);
-	RUN_TEST_CASE(math_trig, tan_eq_sin_div_cos);
 	RUN_TEST_CASE(math_trig, tan_special_cond);
 
 	RUN_TEST_CASE(math_trig, atan_basic);
