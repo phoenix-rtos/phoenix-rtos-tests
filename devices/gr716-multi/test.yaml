@@ -1,0 +1,7 @@
+test:
+  targets:
+    value: [sparcv8leon3-gr716-mini]
+  type: unity
+  tests:
+    - name: unit
+      execute: test-gr716-multi
