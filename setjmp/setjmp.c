@@ -184,6 +184,8 @@ void runner(void)
 
 int main(int argc, char *argv[])
 {
+	int a;
+	int b;
 	UnityMain(argc, (const char **)argv, runner);
 	return 0;
 }

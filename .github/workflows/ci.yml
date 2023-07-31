@@ -14,7 +14,7 @@ on:
 
 jobs:
   call-ci:
-    uses: phoenix-rtos/phoenix-rtos-project/.github/workflows/ci-submodule.yml@master
-    secrets:
-      CI_BOT_EMAIL_USERNAME: ${{ secrets.CI_BOT_EMAIL_USERNAME }}
-      CI_BOT_EMAIL_PASSWORD: ${{ secrets.CI_BOT_EMAIL_PASSWORD }}
+    uses: phoenix-rtos/phoenix-rtos-project/.github/workflows/ci-submodule.yml@jsarzy/cpptest
+    #secrets:
+    #  CI_BOT_EMAIL_USERNAME: ${{ secrets.CI_BOT_EMAIL_USERNAME }}
+    #  CI_BOT_EMAIL_PASSWORD: ${{ secrets.CI_BOT_EMAIL_PASSWORD }}
