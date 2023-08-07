@@ -104,9 +104,13 @@ class TestRunner:
             yamls = []
 
             if path.is_dir():
-                yamls = list(path.rglob("test*.yaml")) + list(path.rglob("test*.yml"))
+                for p in list(path.rglob("test*.yaml")) + list(path.rglob("test*.yml")):
+                    if ".git" not in str(p):
+                        yamls.append(p)
                 if not yamls:
                     raise ValueError(f"{path} does not contain .yaml test configuration")
+                else:
+                    yamls.sort()
             elif path.is_file():
                 if path.suffix != ".yaml" and path.suffix != ".yml":
                     raise ValueError("Test configuration must be a file with .yaml or .yml extension")
