@@ -89,13 +89,6 @@ def assert_prompt_after_cmd(pexpect_proc, cmd, result='success', msg=None):
     return output
 
 
-def assert_only_prompt(pexpect_proc):
-    ''' Expect an erase in display ascii escape sequence and a prompt sign '''
-    prompt = '\x1b[0J' + '(psh)% '
-    got = pexpect_proc.read(len(prompt))
-    assert got == prompt, f'Expected:\n{prompt}\nGot:\n{got}'
-
-
 def assert_prompt(pexpect_proc, msg='', timeout=-1, catch_timeout=True):
     patterns = ['(psh)% ']
     if catch_timeout:
@@ -133,7 +126,7 @@ def get_exit_code(pexpect_proc):
     assert pexpect_proc.expect([rf'(\d+?){EOL}', pexpect.TIMEOUT, pexpect.EOF]) == 0, msg
 
     exit_code = int(pexpect_proc.match.group(1))
-    assert_only_prompt(pexpect_proc)
+    assert_prompt(pexpect_proc)
 
     return exit_code
 
@@ -260,7 +253,7 @@ def init(pexpect_proc):
     exec_cmd = _get_exec_cmd('psh')
     pexpect_proc.sendline(exec_cmd)
     pexpect_proc.expect(rf'{exec_cmd}(\r+)\n')
-    assert_only_prompt(pexpect_proc)
+    assert_prompt(pexpect_proc)
 
 
 def deinit(pexpect_proc):

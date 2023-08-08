@@ -8,8 +8,6 @@ The python module `psh` makes writing harness tests easier. It provides the foll
 
 * `assert_prompt_after_cmd(pexpect_proc, cmd, result='success', msg=None)` - Sends a command and asserts only `EOL` and next prompt. This method can be useful, when expecting command's output is not needed. Sent command isn't also asserted, so this function can be used for sending some unprintable characters. If it does not fail, the output caught before prompt will be returned. If the `msg` argument is not passed, the default error message will be used. The function also checks the exit code of a passed command in the same way as `assert_cmd()`.
 
-* `assert_only_prompt(pexpect_proc)` - Asserts psh prompt with the appropriate esc sequence.
-
 * `assert_prompt(pexpect_proc, msg='', timeout=-1, catch_timeout=True)` - Asserts psh prompt by searching only for `'(psh)% '` in buffer (without checking an escape sequence). There is also a possibility to pass a message to print if the assertion fails and set timeout arguments.
 
 * `assert_prompt_fail(pexpect_proc, msg='', timeout=-1)` - Asserts that there is no psh prompt in the read buffer.
