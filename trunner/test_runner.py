@@ -11,6 +11,10 @@ from trunner.harness import HarnessError, FlashError
 from trunner.text import bold, green, red, yellow
 from trunner.types import Status, TestOptions, TestResult, is_github_actions
 
+import csv
+import re
+from datetime import datetime
+
 
 def _add_tests_module_to_syspath(project_path: Path):
     # Add phoenix-rtos-tests to python path to make sure that module is visible for tests, whenever they are
@@ -85,6 +89,36 @@ def dump_logfiles(dut: Dut, dirname: str, logdir: str):
         # use only out logfile
         logs = logfiles[0].getvalue()
         print(format_logs_for_gh(logs))
+
+
+class CSVCollector:
+    def __init__(self, target):
+        self.filename = f"{target}.csv"
+        self.fieldnames = ["DateStart", "DateEnd", "Catalog", "Type", "Name", "Status", "Run", "Target"]
+        self.data = []
+
+    def add_data(self, test, start, end, status):
+        name = test.name.split("/", 2)
+        entry = {
+            "DateStart": str(start).replace(" ", "T"),
+            "DateEnd": str(end).replace(" ", "T"),
+            "Catalog": name[0],
+            "Type": name[1],
+            "Name": name[2],
+            "Status": re.sub(r'\x1b\[\d+m|\n', '', str(status)),
+            "Run": str(os.environ.get("GITHUB_RUN_ID")),
+            "Target": test.target,
+        }
+        self.data.append(entry)
+
+    def __del__(self):
+        if not is_github_actions():
+            return
+
+        with open(self.filename, mode="w", newline="") as file:
+            writer = csv.DictWriter(file, fieldnames=self.fieldnames)
+            writer.writeheader()
+            writer.writerows(self.data)
 
 
 class TestRunner:
@@ -163,6 +197,8 @@ class TestRunner:
         # Ensure first test will start with reboot
         last_test_failed = True
 
+        collector = CSVCollector(self.ctx.target.name)
+
         for test in tests:
             # By default we don't want to reboot the entire device to speed up the test execution)
             # if not explicitly required by the test.
@@ -178,6 +214,8 @@ class TestRunner:
 
             result = TestResult(test.name)
             print(f"{result.get_name()}: ", end="", flush=True)
+
+            DateStart = datetime.now()
 
             if test.ignore:
                 result.skip()
@@ -195,6 +233,8 @@ class TestRunner:
                     # Returned type of harness is None, reinit result with default
                     result = TestResult(test.name, status=Status.OK)
 
+            DateEnd = datetime.now()
+
             print(result, end="", flush=True)
 
             if result.is_fail():
@@ -208,6 +248,8 @@ class TestRunner:
             if not result.is_skip():
                 testname_stripped = test.name.replace("phoenix-rtos-tests/", "").replace("/", ".")
                 dump_logfiles(self.target.dut, testname_stripped, self.ctx.logdir)
+
+            collector.add_data(test, DateStart, DateEnd, result)
 
         return fail, skip
 
