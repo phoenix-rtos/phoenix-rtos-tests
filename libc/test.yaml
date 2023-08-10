@@ -45,6 +45,11 @@ test:
       targets:
         include: [host-generic-pc]
 
+    - name: math
+      execute: test-libc-math
+      targets:
+        include: [host-generic-pc]
+
     - name: exit
       execute: test-libc-exit
       targets:
