@@ -86,10 +86,6 @@ TEST(string_errsign, strerror_zero)
 
 TEST(string_errsign, strerror_r_basic)
 {
-/* Disabled because of #694 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/694 */
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#694 issue");
-#else
 	char prev_buf[MAX_LEN_STRING] = { 0 };
 	char buf[MAX_LEN_STRING] = { 0 };
 	for (int i = 0; i < error_codes_len; i++) {
@@ -101,30 +97,20 @@ TEST(string_errsign, strerror_r_basic)
 
 		TEST_ASSERT_NOT_NULL(strcpy(prev_buf, buf));
 	}
-#endif
 }
 
 
 TEST(string_errsign, strerror_r_zero)
 {
-/* Disabled because of #694 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/694 */
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#694 issue");
-#else
 	char buf[MAX_LEN_STRING];
 	errno = 0;
 	TEST_ASSERT_EQUAL_INT(0, strerror_r(0, buf, sizeof(buf)));
 	TEST_ASSERT_EQUAL_INT(0, errno);
-#endif
 }
 
 
 TEST(string_errsign, strerror_r_invaild)
 {
-/* Disabled because of #694 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/694 */
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#694 issue");
-#else
 	const int values[] = { INT_MIN, INT_MIN / 2, INT_MIN / 4, -1024, -256, 256, 1024, INT_MAX / 4, INT_MAX / 2, INT_MAX };
 	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		char buf[MAX_LEN_STRING] = { 0 };
@@ -132,16 +118,11 @@ TEST(string_errsign, strerror_r_invaild)
 		TEST_ASSERT_EQUAL_INT(EINVAL, strerror_r(values[i], buf, sizeof(buf)));
 		TEST_ASSERT_EQUAL_INT(0, errno);
 	}
-#endif
 }
 
 
 TEST(string_errsign, strerror_r_overflow)
 {
-/* Disabled because of #694 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/694 */
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#694 issue");
-#else
 	char buf[1];
 	char buf2[MAX_LEN_STRING];
 	for (int i = 0; i < error_codes_len; i++) {
@@ -150,7 +131,6 @@ TEST(string_errsign, strerror_r_overflow)
 		TEST_ASSERT_EQUAL_INT(ERANGE, strerror_r(error_codes[i], buf2, 2));
 		TEST_ASSERT_EQUAL_INT(0, errno);
 	}
-#endif
 }
 
 

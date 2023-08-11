@@ -84,10 +84,6 @@ TEST(ctype, isalpha)
 
 TEST(ctype, isascii)
 {
-/* isascii() not yet implemented in Phoenix-RTOS */
-#ifdef __phoenix__
-	TEST_IGNORE();
-#else
 	for (int i = MIN_VALUE; i <= MAX_VALUE; i++) {
 		if (i >= 0 && i <= 127) {
 			TEST_ASSERT_TRUE(isascii(i));
@@ -98,7 +94,6 @@ TEST(ctype, isascii)
 	}
 
 	TEST_ASSERT_FALSE(isascii(EOF));
-#endif
 }
 
 
