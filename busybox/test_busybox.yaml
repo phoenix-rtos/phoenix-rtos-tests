@@ -40,8 +40,6 @@ test:
         execute: test_busybox date
 
       - name: dd
-        # Issue: 197 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/197
-        ignore: True
         execute: test_busybox dd
 
       - name: diff
