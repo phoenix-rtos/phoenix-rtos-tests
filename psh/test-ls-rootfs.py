@@ -21,8 +21,8 @@ ROOT_TEST_DIR = 'test_ls_rootfs_dir'
 
 
 def assert_ls_pshcmds(p, psh_cmds):
-    # history and exit symlinks shouldn't be present in bin
-    psh_cmds = set(psh_cmds) - {'history', 'exit'}
+    # history, exit, clear and reset symlinks shouldn't be present in bin
+    psh_cmds = set(psh_cmds) - {'history', 'exit', 'clear', 'reset'}
 
     psh_cmd_pattern = CONTROL_CODE
     psh_cmd_pattern += r'(?P<cmd>' + '|'.join(psh_cmds) + r')'
