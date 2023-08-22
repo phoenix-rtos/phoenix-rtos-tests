@@ -194,6 +194,19 @@ class TestResult:
         self.fail()
         self.msg = "\n".join([bold("EXCEPTION:"), traceback.format_exc()])
 
+    @staticmethod
+    def get_csv_header() -> str:
+        data = ["name", "status"]
+        data.extend([str(stage) for stage in TestStage.important()])
+
+        return ",".join(data)
+
+    def to_csv(self) -> str:
+        data = [self.name, self.status.name]
+        data.extend([f"{self._timing_data.get(stage, 0):.3f}" for stage in TestStage.important()])
+
+        return ",".join(data)
+
 
 @dataclass
 class Result:

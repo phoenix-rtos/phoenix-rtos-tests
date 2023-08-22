@@ -257,4 +257,12 @@ class TestRunner:
               f"{red('FAILED')}: {sums.get(Status.FAIL, 0)} "
               f"{yellow('SKIPPED')}: {sums.get(Status.SKIP, 0)}")
 
+        if self.ctx.output_csv:
+            with open(self.ctx.output_csv, 'w', encoding='utf-8') as out_csv:
+                out_csv.write(TestResult.get_csv_header() + "\n")
+                for res in results:
+                    out_csv.write(res.to_csv() + "\n")
+
+            print(f"Test results written to: {self.ctx.output_csv}")
+
         return sums.get(Status.FAIL, 0) == 0
