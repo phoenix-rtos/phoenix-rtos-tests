@@ -90,7 +90,7 @@ def dump_logfiles(dut: Dut, dirname: str, logdir: str):
 class TestRunner:
     """Class responsible for loading, building and running tests"""
 
-    def __init__(self, ctx, test_paths):
+    def __init__(self, ctx: TestContext, test_paths):
         self.ctx = ctx
         self.target = self.ctx.target
         self.test_configs = []
@@ -107,12 +107,12 @@ class TestRunner:
                 for p in list(path.rglob("test*.yaml")) + list(path.rglob("test*.yml")):
                     if ".git" not in str(p):
                         yamls.append(p)
+
+                yamls.sort()
                 if not yamls:
                     raise ValueError(f"{path} does not contain .yaml test configuration")
-                else:
-                    yamls.sort()
             elif path.is_file():
-                if path.suffix != ".yaml" and path.suffix != ".yml":
+                if path.suffix not in (".yaml", ".yml"):
                     raise ValueError("Test configuration must be a file with .yaml or .yml extension")
 
                 yamls = [path]

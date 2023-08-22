@@ -2,7 +2,7 @@ import importlib.util
 import os
 
 from pathlib import Path
-from typing import Callable, List, Sequence, Tuple
+from typing import Callable, Iterable, List, Sequence, Tuple, Type
 
 from trunner.target import TargetBase
 from trunner.host import Host
@@ -21,8 +21,8 @@ def read_extensions_paths() -> List[Path]:
 
     result = []
 
-    for p in paths.split(os.pathsep):
-        p = Path(p)
+    for pstr in paths.split(os.pathsep):
+        p = Path(pstr)
         if not p.is_dir():
             raise ExtensionError(f"Extension path {p} must be a dir!")
 
@@ -47,7 +47,9 @@ def load_register_fn(path: Path):
     return extension_module.register_extension
 
 
-def register_extensions(extensions: Sequence[Callable[[], dict]]) -> Tuple[List[TargetBase], List[Host]]:
+def register_extensions(
+        extensions: Sequence[Callable[[], dict]],
+) -> Tuple[Iterable[Type[TargetBase]], Iterable[Type[Host]]]:
     """Returns lists of targets and hosts returned from given extension functions."""
 
     targets, hosts = [], []
@@ -70,7 +72,7 @@ def register_extensions(extensions: Sequence[Callable[[], dict]]) -> Tuple[List[
     return targets, hosts
 
 
-def load_extensions() -> Tuple[List[TargetBase], List[Host]]:
+def load_extensions() -> Tuple[Iterable[Type[TargetBase]], Iterable[Type[Host]]]:
     """Returns the external targets and hosts defined by user.
 
     This function loads the external targets and hosts found in extensions specified

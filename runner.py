@@ -4,7 +4,7 @@ import dataclasses
 import sys
 import os
 from pathlib import Path
-from typing import Dict, Tuple
+from typing import Dict, List, Tuple, Type
 
 import trunner
 from trunner import resolve_project_path
@@ -46,7 +46,7 @@ def is_raspberry_pi() -> bool:
     return False
 
 
-def parse_args(targets: Dict[str, TargetBase], hosts: Dict[str, Host]):
+def parse_args(targets: Dict[str, Type[TargetBase]], hosts: Dict[str, Type[Host]]):
     """Parses and returns program arguments.
 
     Arguments:
@@ -195,7 +195,7 @@ def parse_args(targets: Dict[str, TargetBase], hosts: Dict[str, Host]):
     return args
 
 
-def resolve_targets_and_hosts() -> Tuple[Dict[str, TargetBase], Dict[str, Host]]:
+def resolve_targets_and_hosts() -> Tuple[Dict[str, Type[TargetBase]], Dict[str, Type[Host]]]:
     """
     Returns a tuple of dictionaries that map host and target names to an equivalent class.
 
@@ -203,7 +203,7 @@ def resolve_targets_and_hosts() -> Tuple[Dict[str, TargetBase], Dict[str, Host]]
     with internal runnner targets.
     """
 
-    targets = [
+    targets: List[Type[TargetBase]] = [
         HostPCGenericTarget,
         IA32GenericQemuTarget,
         RISCV64GenericQemuTarget,
@@ -215,7 +215,7 @@ def resolve_targets_and_hosts() -> Tuple[Dict[str, TargetBase], Dict[str, Host]]
         IMX6ULLEvkTarget,
     ]
 
-    hosts = [EmulatorHost, RpiHost]
+    hosts: List[Type[Host]] = [EmulatorHost, RpiHost]
 
     try:
         ext_targets, ext_hosts = load_extensions()
@@ -227,10 +227,10 @@ def resolve_targets_and_hosts() -> Tuple[Dict[str, TargetBase], Dict[str, Host]]
     hosts.extend(ext_hosts)
 
     # NOTE default targets/hosts can be overwritten if extensions have the same name!
-    targets = {t.name: t for t in targets}
-    hosts = {h.name: h for h in hosts}
+    targets_dict = {t.name: t for t in targets}
+    hosts_dict = {h.name: h for h in hosts}
 
-    return targets, hosts
+    return targets_dict, hosts_dict
 
 
 def main():
@@ -281,6 +281,4 @@ def main():
 
 
 if __name__ == "__main__":
-    res = main()
-    if res != 0:
-        sys.exit(res)
+    sys.exit(main())

@@ -10,7 +10,6 @@ from trunner.ctx import TestContext
 from trunner.dut import Dut, SerialDut, PortError
 from trunner.host import Host
 from trunner.harness import (
-    HarnessBase,
     IntermediateHarness,
     TerminalHarness,
     PloInterface,
@@ -193,7 +192,7 @@ class STM32L4x6Target(TargetBase):
             builder.add(PloHarness(self.dut, app_loader=app_loader))
 
         if test.bootloader is not None and test.bootloader.apps:
-            # In the case we are loading apps using OpenGdbServer we wouild like to run plo
+            # In the case we are loading apps using OpenGdbServer we would like to run plo
             # in the gdb server context. Get the harness that we already build, pack it in gdb
             # server context and continue building harness
             setup = builder.get_harness()

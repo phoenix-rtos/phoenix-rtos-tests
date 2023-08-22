@@ -24,7 +24,8 @@ class ARMv7A7TargetRebooter(Rebooter):
 
 
 class ARMv7A7Target(TargetBase, PloInterface, Rebooter):
-    plo_psu_script = "plo-ram.sdp"
+    plo_psu_script: str = "plo-ram.sdp"
+    image: PloJffsImageProperty
 
     def __init__(self, host: Host, port: str, baudrate: int = 115200):
         dut = SerialDut(port, baudrate, encoding="utf-8", codec_errors="ignore")

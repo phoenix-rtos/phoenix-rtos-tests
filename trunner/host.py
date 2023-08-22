@@ -6,6 +6,7 @@ from trunner.ctx import TestContext
 
 class Host(ABC):  # pylint: disable=too-few-public-methods
     """Base class for Host abstraction"""
+    name: str
 
     @abstractmethod
     def has_gpio(self) -> bool:
