@@ -105,6 +105,13 @@ def parse_args(targets: Dict[str, Type[TargetBase]], hosts: Dict[str, Type[Host]
     )
 
     parser.add_argument(
+        "-O",
+        "--output-csv",
+        action="store",
+        help="Write machine-readable test results as a csv file.",
+    )
+
+    parser.add_argument(
         "-p",
         "--port",
         help="Specify serial to communicate with device board. Default value depends on the target",
@@ -257,6 +264,7 @@ def main():
         should_test=not args.no_test,
         verbosity=args.verbose,
         stream_output=args.stream,
+        output_csv=args.output_csv,
         kwargs=args.kwargs,
     )
 
