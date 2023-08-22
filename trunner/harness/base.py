@@ -1,6 +1,6 @@
 import time
 from abc import ABC, abstractmethod
-from typing import Callable, Optional, List
+from typing import Callable, Dict, Optional, List
 
 from trunner.text import bold
 from trunner.host import Host
@@ -13,7 +13,7 @@ class HarnessError(Exception):
 
     def __init__(self, msg: str = ""):
         self.msg = msg
-        self.additional_info = {}
+        self.additional_info: Dict[str, str] = {}
 
     def add_additional_info(self, header: str, output: str):
         self.additional_info[header] = output
@@ -54,7 +54,7 @@ class ProcessError(HarnessError):
         self.msg = msg
         self.output = output
 
-    def __str__(self):
+    def __str__(self) -> str:
         # TODO format github actions output
         err = [bold(f"{self.name} ERROR: ") + self.msg]
 
@@ -118,7 +118,7 @@ class HarnessBase(ABC):
     """Base class for harnesses functors that are tied together."""
 
     @abstractmethod
-    def __call__(self):
+    def __call__(self) -> Optional[TestResult]:
         """Implements the harness logic. Every class that inherites must to implement this method."""
 
 

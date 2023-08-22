@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import Any
+from io import StringIO
+from typing import Any, Optional, Tuple
 
 import pexpect
 import pexpect.fdpexpect
@@ -37,7 +38,7 @@ class Dut(ABC):
 
     def __init__(self):
         self.pexpect_proc = None
-        self._logfiles = None
+        self._logfiles: Optional[Tuple[StringIO, StringIO, StringIO]] = None
 
     def __getattr__(self, __name: str) -> Any:
         return getattr(self.pexpect_proc, __name)
@@ -48,17 +49,18 @@ class Dut(ABC):
         except AttributeError:
             setattr(self.pexpect_proc, __name, __value)
 
-    def set_logfiles(self, rd, wr, all):
+    def set_logfiles(self, rd: StringIO, wr: StringIO, all: StringIO):
         self._logfiles = rd, wr, all
+        self._set_logfiles()
 
-        if self.pexpect_proc:
-            self._set_logfiles()
+    def get_logfiles(self) -> Tuple[StringIO, StringIO, StringIO]:
+        if not self._logfiles:
+            raise ValueError("logs were never configured")
 
-    def get_logfiles(self):
         return self._logfiles
 
     def _set_logfiles(self):
-        if self._logfiles is not None:
+        if self.pexpect_proc and self._logfiles is not None:
             self.pexpect_proc.logfile_read = self._logfiles[0]
             self.pexpect_proc.logfile_send = self._logfiles[1]
             self.pexpect_proc.logfile = self._logfiles[2]

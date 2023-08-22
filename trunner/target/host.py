@@ -27,7 +27,7 @@ class HostPCGenericTarget(TargetBase):
 
     def __init__(self):
         super().__init__()
-        self.dut = HostDut()
+        self.dut: HostDut = HostDut()
 
     @classmethod
     def from_context(cls, _: TestContext):

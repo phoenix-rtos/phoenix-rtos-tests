@@ -201,10 +201,14 @@ class ShellOptions:
     cmd: Optional[List[str]] = None
 
 
+def void_harness_fn() -> Optional[TestResult]:
+    """dummy harness just to satisfy python typing"""
+    return None
+
 @dataclass
 class TestOptions:
     name: Optional[str] = None
-    harness: Callable[[], Optional[TestResult]] = None
+    harness: Callable[[], Optional[TestResult]] = void_harness_fn
     target: Optional[str] = None
     bootloader: Optional[BootloaderOptions] = None
     shell: Optional[ShellOptions] = None

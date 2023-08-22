@@ -74,6 +74,8 @@ class ZynqGdbPloLoader(TerminalHarness, PloInterface):
 
 
 class ARMv7A9Target(TargetBase):
+    image: PloJffsImageProperty
+
     def __init__(self, host: Host, port: str, baudrate: int = 115200):
         self.dut = SerialDut(port, baudrate, encoding="utf-8", codec_errors="ignore")
         self.rebooter = ARMv7A9TargetRebooter(host, self.dut)

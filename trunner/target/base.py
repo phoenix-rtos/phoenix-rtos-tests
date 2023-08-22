@@ -62,6 +62,7 @@ class TargetBase(ABC):
     def __init__(self):
         self.project_dir = self._project_dir()
         self.prompt_timeout = -1
+        self.dut: Dut
 
     @classmethod
     @abstractmethod
@@ -74,8 +75,8 @@ class TargetBase(ABC):
         for path in file_path.parents:
             if path.name == "phoenix-rtos-tests":
                 return str(path.parent)
-        else:
-            raise FileNotFoundError("phoenix-rtos-tests directory is missing")
+
+        raise FileNotFoundError("phoenix-rtos-tests directory is missing")
 
     def exec_dir(self) -> str:
         """Returns a directory where test binaries are located in rootfs."""
