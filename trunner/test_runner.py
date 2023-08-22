@@ -3,12 +3,13 @@ import shutil
 import sys
 from io import StringIO
 from pathlib import Path
-from typing import List, Sequence
+from typing import List, Sequence, TextIO
 
 from trunner.config import ConfigParser
+from trunner.ctx import TestContext
 from trunner.dut import Dut
 from trunner.harness import HarnessError, FlashError
-from trunner.text import bold, green, red, yellow
+from trunner.text import bold, green, red, yellow, magenta
 from trunner.types import Status, TestOptions, TestResult, is_github_actions
 
 
@@ -22,6 +23,24 @@ def resolve_project_path():
     # file_path is phoenix-rtos-project/phoenix-rtos-tests/trunner/test_runner.py
     project_dir = file_path.parent.parent.parent
     return project_dir
+
+
+class LogWrapper(StringIO):
+    """Wrapper for saving all logs into StringIO and also streaming directly to stream"""
+    def __init__(self, stream: TextIO):
+        super().__init__("")
+        self.stream = stream
+
+    def write(self, message):
+        # skip esc codes intended to clear window when streaming logs
+        stripped_message = message.replace("\033[2J", "").replace("\033c", "").replace("\033[?7l", "")
+        self.stream.write(stripped_message)
+
+        return super().write(message)
+
+    def flush(self):
+        self.stream.flush()
+        return super().flush()
 
 
 def init_logdir(logdir: str):
@@ -38,33 +57,22 @@ def init_logdir(logdir: str):
     os.makedirs(f"{logdir}/test_campaign")
 
 
-def set_logfiles(dut: Dut, logdir: str):
+def set_logfiles(dut: Dut, ctx: TestContext):
     """Sets dut logfiles associated with the pexpect process if needed."""
 
-    if not logdir and not is_github_actions():
+    if not ctx.logdir and not ctx.stream_output:
         return
 
-    logfile_r, logfile_w, logfile_a = StringIO(""), StringIO(""), StringIO("")
+    logfile_r = StringIO()
+    if ctx.stream_output:
+        logfile_r = LogWrapper(sys.stdout)
+
+    logfile_w, logfile_a = StringIO(""), StringIO("")
     dut.set_logfiles(logfile_r, logfile_w, logfile_a)
 
 
-def format_logs_for_gh(logs):
-    """Prepares drop-down list for github actions workflows based on provided raw logs"""
-
-    # skip esc codes intended to clear window and double cr to avoid printing additional newline
-    logs = logs.replace("\r\r", "\r")
-    logs = logs.replace("\033[2J", "")
-    logs = logs.replace("\033c", "")
-    logs = "::group::show logs\n" + logs + "\n::endgroup::"
-
-    return logs
-
-
-def dump_logfiles(dut: Dut, dirname: str, logdir: str):
-    """Dump logfiles to log directory or to gh actions if needed."""
-
-    if not logdir and not is_github_actions():
-        return
+def save_logfiles(dut: Dut, dirname: str, logdir: str):
+    """Save logfiles to log directory if needed."""
 
     # we want to dump logs in the given directory
     if logdir:
@@ -75,16 +83,10 @@ def dump_logfiles(dut: Dut, dirname: str, logdir: str):
                 return
             if not os.path.isdir(f"{logdir}/{dirname}"):
                 os.mkdir(f"{logdir}/{dirname}")
-            with open(f"{logdir}/{dirname}/{logfile_name}.log", "w") as logfile:
+            with open(f"{logdir}/{dirname}/{logfile_name}.log", "w", encoding="utf-8") as logfile:
                 logfile.write(logs)
-            with open(f"{logdir}/test_campaign/{logfile_name}.log", "a") as logfile:
+            with open(f"{logdir}/test_campaign/{logfile_name}.log", "a", encoding="utf-8") as logfile:
                 logfile.write(logs)
-    # we want to dump logs on Github Actions workflow
-    if is_github_actions():
-        logfiles = dut.get_logfiles()
-        # use only out logfile
-        logs = logfiles[0].getvalue()
-        print(format_logs_for_gh(logs))
 
 
 class TestRunner:
@@ -149,6 +151,24 @@ class TestRunner:
 
         print("Done!")
 
+    def _print_test_header_end(self, test: TestOptions):
+        if self.ctx.stream_output:
+            if is_github_actions():
+                print("\n::endgroup::")
+
+            # while streaming output highlight each new test with color
+            print(f"{magenta(test.name)}: ", end="", flush=True)
+
+    def _print_test_header_begin(self, test: TestOptions):
+        if self.ctx.stream_output:
+            if is_github_actions():
+                print("::group::", end="")
+
+            # while streaming output highlight each new test with color
+            print(f"{magenta(test.name)}: ...")
+        else:
+            print(f"{test.name}: ", end="", flush=True)
+
     def run_tests(self, tests: Sequence[TestOptions]):
         """It builds and runs tests based on given test options.
 
@@ -177,12 +197,12 @@ class TestRunner:
                 test.should_reboot = True
 
             result = TestResult(test.name)
-            print(f"{result.get_name()}: ", end="", flush=True)
+            self._print_test_header_begin(test)
 
             if test.ignore:
                 result.skip()
             else:
-                set_logfiles(self.target.dut, self.ctx.logdir)
+                set_logfiles(self.target.dut, self.ctx)
                 harness = self.target.build_test(test)
                 assert harness is not None
 
@@ -195,7 +215,8 @@ class TestRunner:
                     # Returned type of harness is None, reinit result with default
                     result = TestResult(test.name, status=Status.OK)
 
-            print(result, end="", flush=True)
+            self._print_test_header_end(test)
+            print(result.to_str(self.ctx.verbosity), end="", flush=True)
 
             if result.is_fail():
                 last_test_failed = True
@@ -207,7 +228,7 @@ class TestRunner:
 
             if not result.is_skip():
                 testname_stripped = test.name.replace("phoenix-rtos-tests/", "").replace("/", ".")
-                dump_logfiles(self.target.dut, testname_stripped, self.ctx.logdir)
+                save_logfiles(self.target.dut, testname_stripped, self.ctx.logdir)
 
         return fail, skip
 
@@ -222,9 +243,9 @@ class TestRunner:
         init_logdir(self.ctx.logdir)
 
         if self.ctx.should_flash:
-            set_logfiles(self.target.dut, self.ctx.logdir)
+            set_logfiles(self.target.dut, self.ctx)
             self.flash()
-            dump_logfiles(self.target.dut, "flash", self.ctx.logdir)
+            save_logfiles(self.target.dut, "flash", self.ctx.logdir)
 
         if not self.ctx.should_test:
             return True

@@ -19,3 +19,7 @@ def yellow(s: str) -> str:
 
 def blue(s: str) -> str:
     return Fore.BLUE + s + Fore.RESET
+
+
+def magenta(s: str) -> str:
+    return Fore.MAGENTA + s + Fore.RESET
