@@ -23,6 +23,7 @@ class TestContext:
         should_flash: True if device should be flashed.
         should_test: True if tests should be run.
         verbosity: Verbose level of the output of tests.
+        stream_output: Stream DUT output to stdout during test execution.
     """
 
     port: Optional[str]
@@ -33,6 +34,7 @@ class TestContext:
     should_flash: bool
     should_test: bool
     verbosity: int
+    stream_output: bool
     kwargs: dict = field(default_factory=dict)
     target: Optional[TargetBase] = None
     host: Optional[Host] = None

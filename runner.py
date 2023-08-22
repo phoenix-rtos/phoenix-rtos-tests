@@ -25,6 +25,7 @@ from trunner.target import (
 )
 from trunner.ctx import TestContext
 from trunner.target.base import TargetBase
+from trunner.types import is_github_actions
 
 
 def args_file(arg):
@@ -93,6 +94,14 @@ def parse_args(targets: Dict[str, Type[TargetBase]], hosts: Dict[str, Type[Host]
             "If flag is not used then runner searches for tests in "
             "phoenix-rtos-project directory. Flag can be used multiple times."
         ),
+    )
+
+    parser.add_argument(
+        "-S",
+        "--stream",
+        default=True if is_github_actions() else False,
+        action="store_true",
+        help="Stream the DUT output during the test execution. Defaults to %(default)s",
     )
 
     parser.add_argument(
@@ -247,6 +256,7 @@ def main():
         should_flash=not args.no_flash,
         should_test=not args.no_test,
         verbosity=args.verbose,
+        stream_output=args.stream,
         kwargs=args.kwargs,
     )
 
