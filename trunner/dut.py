@@ -1,7 +1,9 @@
 from abc import ABC, abstractmethod
 from io import StringIO
+from pty import STDOUT_FILENO
 from typing import Any, Optional, Tuple
 
+import termios
 import pexpect
 import pexpect.fdpexpect
 import serial
@@ -137,7 +139,22 @@ class ProcessDut(Dut):
 
 
 class QemuDut(ProcessDut):
-    pass
+    @staticmethod
+    def _set_termios_raw():
+        """set current tty not to process newlines"""
+        attr = termios.tcgetattr(STDOUT_FILENO)
+
+        # disable any newline manilpulations in c_oflag
+        attr[1] &= ~(termios.ONLCR | termios.OCRNL | termios.ONOCR | termios.ONLRET)
+
+        termios.tcsetattr(STDOUT_FILENO, termios.TCSANOW, attr)
+
+    def open(self):
+        # qemu when using stdio serial enforces ONLCR termios flag (converting `\n` to `\r\n`)
+        # on proper guest OSes this results in `\r\r\n` which might be incorrectly interpreted by CI log viewers
+        # use custom preexec_fn to setup termios of child PTY
+        self.pexpect_proc = pexpect.spawn(*self.args, preexec_fn=self._set_termios_raw, **self.kwargs)
+        self._set_logfiles()
 
 
 class HostDut(ProcessDut):
