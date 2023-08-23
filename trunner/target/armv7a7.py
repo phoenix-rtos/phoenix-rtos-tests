@@ -54,7 +54,7 @@ class ARMv7A7Target(TargetBase, PloInterface, Rebooter):
         loader()
 
     # Setup environment for tests
-    def build_test(self, test: TestOptions) -> Callable[[], Optional[TestResult]]:
+    def build_test(self, test: TestOptions) -> Callable[[TestResult], TestResult]:
         builder = HarnessBuilder()
 
         if test.should_reboot:

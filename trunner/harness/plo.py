@@ -6,7 +6,7 @@ import pexpect
 from trunner.dut import Dut
 from trunner.text import bold
 from trunner.tools import Phoenixd
-from trunner.types import AppOptions, TestResult
+from trunner.types import AppOptions, TestResult, TestStage
 from .base import HarnessError, IntermediateHarness, Rebooter, TerminalHarness
 
 
@@ -319,10 +319,11 @@ class PloHarness(IntermediateHarness, PloInterface):
         self.dut = dut
         self.app_loader = app_loader
 
-    def __call__(self) -> Optional[TestResult]:
+    def __call__(self, result: TestResult) -> TestResult:
+        result.set_stage(TestStage.FLASH)
         self.enter_bootloader()
         self.wait_prompt()
         if self.app_loader:
             self.app_loader()
         self.go()
-        return self.next_harness()
+        return self.next_harness(result)

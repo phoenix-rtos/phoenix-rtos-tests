@@ -1,10 +1,10 @@
 import shlex
-from typing import Callable, Optional, List
+from typing import Callable, List
 
 from trunner.ctx import TestContext
 from trunner.dut import HostDut
 from trunner.harness import IntermediateHarness, HarnessBuilder
-from trunner.types import Status, TestOptions, TestResult
+from trunner.types import TestOptions, TestResult, TestStage
 from .base import TargetBase
 
 
@@ -20,10 +20,12 @@ class HostPCGenericTarget(TargetBase):
             self.dut = dut
             self.cmd = " ".join(map(shlex.quote, cmd))
 
-        def __call__(self) -> Optional[TestResult]:
+        def __call__(self, result: TestResult) -> TestResult:
+            result.set_stage(TestStage.FLASH)
             self.dut.set_args(self.cmd, encoding="utf-8")
             self.dut.open()
-            return self.next_harness()
+            result.set_stage(TestStage.RUN)
+            return self.next_harness(result)
 
     def __init__(self):
         super().__init__()
@@ -39,13 +41,14 @@ class HostPCGenericTarget(TargetBase):
     def flash_dut(self):
         pass
 
-    def build_test(self, test: TestOptions) -> Callable[[], Optional[TestResult]]:
+    def build_test(self, test: TestOptions) -> Callable[[TestResult], TestResult]:
         builder = HarnessBuilder()
 
         if test.shell is None or test.shell.cmd is None:
             # TODO we should detect it in parsing step, now force fail
-            def fail():
-                return TestResult(msg="There is no command to execute", status=Status.FAIL)
+            def fail(result: TestResult):
+                result.fail(msg="There is no command to execute")
+                return result
 
             builder.add(fail)
             return builder.get_harness()

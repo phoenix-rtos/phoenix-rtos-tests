@@ -3,6 +3,7 @@ import shutil
 import sys
 from io import StringIO
 from pathlib import Path
+from collections import Counter
 from typing import List, Sequence, TextIO
 
 from trunner.config import ConfigParser
@@ -169,7 +170,7 @@ class TestRunner:
         else:
             print(f"{test.name}: ", end="", flush=True)
 
-    def run_tests(self, tests: Sequence[TestOptions]):
+    def run_tests(self, tests: Sequence[TestOptions]) -> Sequence[TestResult]:
         """It builds and runs tests based on given test options.
 
         For each test description in tests this method builds the test, runs it and prints the result.
@@ -179,7 +180,7 @@ class TestRunner:
             tests: Sequence of test options that describe how test looks like.
         """
 
-        fail, skip = 0, 0
+        results = []
         # Ensure first test will start with reboot
         last_test_failed = True
 
@@ -204,33 +205,29 @@ class TestRunner:
             else:
                 set_logfiles(self.target.dut, self.ctx)
                 harness = self.target.build_test(test)
+                test_result = None
                 assert harness is not None
 
                 try:
-                    result = harness()
+                    test_result = harness(result)
+                    assert test_result is not None, "harness needs to return TestResult"
+                    result.overwrite(test_result)
                 except HarnessError as e:
                     result.fail(str(e))
-
-                if result is None:
-                    # Returned type of harness is None, reinit result with default
-                    result = TestResult(test.name, status=Status.OK)
 
             self._print_test_header_end(test)
             print(result.to_str(self.ctx.verbosity), end="", flush=True)
 
-            if result.is_fail():
-                last_test_failed = True
-                fail += 1
-            elif result.is_ok():
-                last_test_failed = False
-            elif result.is_skip():
-                skip += 1
+            results.append(result)
 
-            if not result.is_skip():
-                testname_stripped = test.name.replace("phoenix-rtos-tests/", "").replace("/", ".")
-                save_logfiles(self.target.dut, testname_stripped, self.ctx.logdir)
+            if result.is_skip():
+                continue
 
-        return fail, skip
+            last_test_failed = result.is_fail()
+
+            save_logfiles(self.target.dut, result.shortname, self.ctx.logdir)
+
+        return results
 
     def run(self) -> bool:
         """Runs the entire test campaign based on yamls given in test_paths attribute.
@@ -252,9 +249,12 @@ class TestRunner:
 
         _add_tests_module_to_syspath(self.ctx.project_path)
 
-        fails, skips = self.run_tests(tests)
-        passes = len(tests) - fails - skips
+        results = self.run_tests(tests)
+        sums = Counter(res.status for res in results)
 
-        print(f"TESTS: {len(tests)} {green('PASSED')}: {passes} {red('FAILED')}: {fails} {yellow('SKIPPED')}: {skips}")
+        print(f"TESTS: {len(results)} "
+              f"{green('PASSED')}: {sums.get(Status.OK, 0)} "
+              f"{red('FAILED')}: {sums.get(Status.FAIL, 0)} "
+              f"{yellow('SKIPPED')}: {sums.get(Status.SKIP, 0)}")
 
-        return fails == 0
+        return sums.get(Status.FAIL, 0) == 0
