@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Callable, Optional
+from typing import Callable
 
 from trunner.ctx import TestContext
 from trunner.dut import QemuDut
