@@ -32,7 +32,7 @@ def _format_result_output(results: Sequence[Dict[str, Any]], ctx: TestContext) -
     return "".join(output)
 
 
-def unity_harness(dut: Dut, ctx: TestContext) -> Optional[TestResult]:
+def unity_harness(dut: Dut, ctx: TestContext, result: TestResult) -> Optional[TestResult]:
     assert_re = r"ASSERTION (?P<path>[\S]+):(?P<line>\d+):(?P<status>FAIL|INFO|IGNORE): (?P<msg>.*?)\r"
     result_re = r"TEST\((?P<group>\w+), (?P<name>\w+)\) (?P<status>PASS|IGNORE)"
     # Fail need to have its own regex due to greedy matching
@@ -48,13 +48,19 @@ def unity_harness(dut: Dut, ctx: TestContext) -> Optional[TestResult]:
         parsed = dut.match.groupdict()
 
         if idx == 0:
+            # NOTE: we do not consider INFO messages
             if parsed["status"] in ["FAIL", "IGNORE"]:
                 last_assertion = parsed
         elif idx in (1, 2):
-            # TODO we do not consider INFO messages
-            if last_assertion and last_assertion["status"] != "INFO":
+            if last_assertion:
                 parsed["msg"] = last_assertion["msg"]
                 last_assertion = {}
+
+            status = Status.from_str(parsed["status"])
+            subname = f"{parsed['group']}.{parsed['name']}"
+            if "path" in parsed and "line" in parsed:
+                parsed["msg"] = f"[{parsed['path']}:{parsed['line']}] " + parsed["msg"]
+            result.add_subresult(subname, status, parsed.get("msg", ""))
 
             stats[parsed["status"]] += 1
             results.append(parsed)

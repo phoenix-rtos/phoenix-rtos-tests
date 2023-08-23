@@ -8,7 +8,7 @@ import time
 import traceback
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Callable, Dict, List, Optional, Sequence
+from typing import Callable, Dict, List, Optional
 
 from trunner.ctx import TestContext
 from trunner.text import bold, green, red, yellow
@@ -72,11 +72,17 @@ class TestResult:
         self.msg = msg
         self.status = Status.OK if status is None else status
         self._name = name
+        self.subname = ""
 
+        # test execution tracking
         self._timing_stage: Optional[TestStage] = None
         self._timing_stage_start: float = 0
         self._timing_data: Dict[TestStage, float] = {}
         self.set_stage(TestStage.INIT)
+
+        # subresults
+        self._curr_subresult: TestResult
+        self.subresults: List[TestResult] = []
 
     @property
     def name(self) -> str:
@@ -95,7 +101,7 @@ class TestResult:
         return "\n".join(result)
 
     def overwrite(self, other: TestResult):
-        """Overwrite current result (status, msg) with other one."""
+        """Overwrite current global result (status, msg) with other one. Don't touch subtests"""
         self.msg = other.msg
         self.status = other.status
         self.set_stage(TestStage.DONE)
@@ -111,6 +117,22 @@ class TestResult:
 
         self._timing_stage = stage
         self._timing_stage_start = time.time()
+
+        if stage == TestStage.RUN:
+            self._init_subresult()
+
+    def _init_subresult(self):
+        self._curr_subresult = TestSubResult(self.name)
+
+    def add_subresult(self, subname: str, status: Status, msg: str = ""):
+        subresult = self._curr_subresult
+        subresult.set_stage(TestStage.DONE)
+        subresult.msg = msg
+        subresult.status = status
+        subresult.subname = subname
+
+        self.subresults.append(subresult)
+        self._init_subresult()
 
     def is_fail(self):
         return self.status == Status.FAIL
@@ -196,16 +218,27 @@ class TestResult:
 
     @staticmethod
     def get_csv_header() -> str:
-        data = ["name", "status"]
+        data = ["name", "subname", "status"]
         data.extend([str(stage) for stage in TestStage.important()])
 
         return ",".join(data)
 
     def to_csv(self) -> str:
-        data = [self.name, self.status.name]
+        data = [self.name, self.subname, self.status.name]
         data.extend([f"{self._timing_data.get(stage, 0):.3f}" for stage in TestStage.important()])
 
-        return ",".join(data)
+        return "\n".join([",".join(data), *[subres.to_csv() for subres in self.subresults]])
+
+
+class TestSubResult(TestResult):
+    """Utility class for simplified subresult keeping"""
+
+    def __init__(self, name=None, msg: str = "", status: Optional[Status] = None):
+        super().__init__(name, msg, status)
+        self.set_stage(TestStage.RUN)
+
+    def _init_subresult(self):
+        pass
 
 
 @dataclass

@@ -1,6 +1,7 @@
 from __future__ import annotations
 import inspect
-from typing import Dict, Optional, Tuple
+import warnings
+from typing import Dict, Tuple
 
 from pexpect import TIMEOUT, EOF
 
@@ -34,7 +35,7 @@ class PyHarness(TerminalHarness):
         self.pyharness = pyharness_fn
         self.kwargs = kwargs
 
-    def resolve_pyharness_args(self) -> Tuple[Tuple, Dict]:
+    def resolve_pyharness_args(self, result: TestResult) -> Tuple[Tuple, Dict]:
         parameters = inspect.signature(self.pyharness).parameters
         kwargs = {**self.kwargs, **self.ctx.kwargs}  # always prioritize kwargs from context
 
@@ -43,30 +44,32 @@ class PyHarness(TerminalHarness):
         # Based on parameter list of harness function try to fit arguments.
         # - def harness(dut): (with only dut as a required argument)
         # - def harness(dut, ctx): (with dut and context as required arguments)
+        # - def harness(dut, ctx, result): (with dut, context and result as required arguments)
         # - def harness(dut, **kwargs): (with dut as a required argument and additional keyword arguments)
-        # - def harness(dut, ctx, **kwargs): (with both dut and context required arguments and additional
-        #   keyword arguments)
+        # - def harness(dut, ctx, **kwargs): (with both dut and context required arguments and additional keyword args)
+        # - def harness(dut, ctx, result, **kwargs): (with both dut, context and result required arguments
+        #   and additional keyword arguments)
 
-        if len(parameters) == 0 or len(parameters) > 3:
+        if len(parameters) == 0 or len(parameters) > 4:
             raise HarnessError(
                 "the harness function can be defined only with one, two or three parameters! (dut, ctx and kwargs)"
             )
-        elif len(parameters) == 2:
-            # If the function definition includes `**kwargs`, pass both dut and kwargs as arguments
-            # otherwise, pass dut and context.
-            if any(param.kind == param.VAR_KEYWORD for param in parameters.values()):
-                return (self.dut,), kwargs
-            else:
-                return (self.dut, self.ctx), {}
-        elif len(parameters) == 3:
-            return (self.dut, self.ctx), kwargs
-        else:
-            return (self.dut,), {}
 
-    def __call__(self, result: TestResult) -> Optional[TestResult]:
+        have_kwargs = any(param.kind == param.VAR_KEYWORD for param in parameters.values())
+
+        if len(parameters) != 4 or not have_kwargs:
+            warnings.warn("Deprecated harness signature - use `harness(dut, ctx, result, **kwargs)`",
+                          DeprecationWarning)
+
+        target_positinal_args_cnt = len(parameters) - int(have_kwargs)
+        positional_args = (self.dut, self.ctx, result)[:target_positinal_args_cnt]
+
+        return positional_args, kwargs if have_kwargs else {}
+
+    def __call__(self, result: TestResult) -> TestResult:
         test_result = None
 
-        args, kwargs = self.resolve_pyharness_args()
+        args, kwargs = self.resolve_pyharness_args(result)
         try:
             # TODO maybe we should catch the output from the test, for example based on test configuration
             result.set_stage(TestStage.RUN)
