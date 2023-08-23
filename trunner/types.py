@@ -1,8 +1,10 @@
 from __future__ import annotations
+from functools import total_ordering
 
 import os
 import re
 import sys
+import time
 import traceback
 from dataclasses import dataclass, field
 from enum import Enum, auto
@@ -45,27 +47,70 @@ class Status(Enum):
         return color(self.name)
 
 
+@total_ordering
+class TestStage(Enum):
+    """Testing stage to timed"""
+    INIT = auto()
+    REBOOT = auto()
+    FLASH = auto()
+    RUN = auto()
+    DONE = auto()
+
+    @staticmethod
+    def important():
+        """stages which are worth to be timed"""
+        return [TestStage.REBOOT, TestStage.FLASH, TestStage.RUN]
+
+    def __lt__(self, other):
+        if self.__class__ is other.__class__:
+            return self.value < other.value
+        return NotImplemented
+
+
 class TestResult:
-    def __init__(self, name=None, msg="", output="", status=None, verbosity=0):
+    def __init__(self, name=None, msg: str = "", status: Optional[Status] = None):
         self.msg = msg
         self.status = Status.OK if status is None else status
-        self.name = name
-        self.output = output
-        self.verbosity = verbosity
+        self._name = name
 
-    def get_name(self) -> str:
-        return self.name if self.name else "UNKNOWN TEST NAME"
+        self._timing_stage: Optional[TestStage] = None
+        self._timing_stage_start: float = 0
+        self._timing_data: Dict[TestStage, float] = {}
+        self.set_stage(TestStage.INIT)
+
+    @property
+    def name(self) -> str:
+        return self._name if self._name else "UNKNOWN TEST NAME"
+
+    @property
+    def shortname(self) -> str:
+        return self.name.replace("phoenix-rtos-tests/", "").replace("/", ".")
 
     def __str__(self) -> str:
         result = [str(self.status)]
         if self.msg:
             result.append(self.msg.rstrip())
 
-        if self.output and self.verbosity > 0:
-            result.extend([bold("OUTPUT:"), self.output.rstrip()])
-
         result.append("")
         return "\n".join(result)
+
+    def overwrite(self, other: TestResult):
+        """Overwrite current result (status, msg) with other one."""
+        self.msg = other.msg
+        self.status = other.status
+        self.set_stage(TestStage.DONE)
+
+    def set_stage(self, stage: TestStage):
+        assert self._timing_stage is None or stage >= self._timing_stage
+        if stage == self._timing_stage:
+            return
+
+        if self._timing_stage is not None:
+            duration = time.time() - self._timing_stage_start
+            self._timing_data[self._timing_stage] = duration
+
+        self._timing_stage = stage
+        self._timing_stage_start = time.time()
 
     def is_fail(self):
         return self.status == Status.FAIL
@@ -81,9 +126,11 @@ class TestResult:
             self.msg = msg
 
         self.status = Status.FAIL
+        self.set_stage(TestStage.DONE)
 
     def skip(self):
         self.status = Status.SKIP
+        self.set_stage(TestStage.DONE)
 
     def _failed_traceback(self) -> List[str]:
         _, _, exc_traceback = sys.exc_info()
@@ -201,14 +248,14 @@ class ShellOptions:
     cmd: Optional[List[str]] = None
 
 
-def void_harness_fn() -> Optional[TestResult]:
+def void_harness_fn(result: TestResult) -> TestResult:
     """dummy harness just to satisfy python typing"""
-    return None
+    return result
 
 @dataclass
 class TestOptions:
     name: Optional[str] = None
-    harness: Callable[[], Optional[TestResult]] = void_harness_fn
+    harness: Callable[[TestResult], TestResult] = void_harness_fn
     target: Optional[str] = None
     bootloader: Optional[BootloaderOptions] = None
     shell: Optional[ShellOptions] = None

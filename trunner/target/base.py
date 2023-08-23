@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Callable, Optional
+from typing import Callable
 
 from serial.tools import list_ports
 
@@ -95,5 +95,5 @@ class TargetBase(ABC):
         """Flashes the system image into target device."""
 
     @abstractmethod
-    def build_test(self, test: TestOptions) -> Callable[[], Optional[TestResult]]:
+    def build_test(self, test: TestOptions) -> Callable[[TestResult], TestResult]:
         """Returns the complete harness to run the test secified in `test` argument"""

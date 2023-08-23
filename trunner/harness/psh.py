@@ -5,7 +5,7 @@ import pexpect
 
 from trunner.dut import Dut
 from trunner.text import bold
-from trunner.types import TestResult
+from trunner.types import TestResult, TestStage
 from .base import HarnessError, IntermediateHarness
 
 
@@ -59,7 +59,7 @@ class ShellHarness(IntermediateHarness):
         self.cmd = " ".join(map(shlex.quote, cmd)) if cmd is not None else cmd
         self.prompt_timeout = prompt_timeout
 
-    def __call__(self) -> Optional[TestResult]:
+    def __call__(self, result: TestResult) -> TestResult:
         try:
             self.dut.expect_exact(self.prompt, timeout=self.prompt_timeout)
         except (pexpect.TIMEOUT, pexpect.EOF) as e:
@@ -80,4 +80,5 @@ class ShellHarness(IntermediateHarness):
                     output=self.dut.before,
                 ) from e
 
-        return self.next_harness()
+        result.set_stage(TestStage.RUN)
+        return self.next_harness(result)

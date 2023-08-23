@@ -6,7 +6,7 @@ from pexpect import TIMEOUT, EOF
 
 from trunner.ctx import TestContext
 from trunner.dut import Dut
-from trunner.types import Status, TestResult
+from trunner.types import Status, TestResult, TestStage
 from .base import TerminalHarness, HarnessError
 
 
@@ -63,13 +63,13 @@ class PyHarness(TerminalHarness):
         else:
             return (self.dut,), {}
 
-    def __call__(self) -> Optional[TestResult]:
-        result = TestResult(status=Status.FAIL)
+    def __call__(self, result: TestResult) -> Optional[TestResult]:
         test_result = None
 
         args, kwargs = self.resolve_pyharness_args()
         try:
             # TODO maybe we should catch the output from the test, for example based on test configuration
+            result.set_stage(TestStage.RUN)
             test_result = self.pyharness(*args, **kwargs)
 
             if test_result is None:
@@ -94,6 +94,6 @@ class PyHarness(TerminalHarness):
                         f" {type(test_result).__name__}"
                     )
 
-                result = test_result
+                result.overwrite(test_result)
 
         return result

@@ -1,7 +1,7 @@
 import subprocess
 import time
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import Callable, Optional, Sequence
 
 import pexpect.fdpexpect
 import serial
@@ -42,15 +42,15 @@ class STM32L4x6OpenocdGdbServerHarness(IntermediateHarness):
 
     """
 
-    def __init__(self, harness: HarnessBase):
+    def __init__(self, harness: Callable[[TestResult], TestResult]):
         super().__init__()
         self.harness = harness
 
-    def __call__(self) -> Optional[TestResult]:
+    def __call__(self, result: TestResult) -> TestResult:
         with OpenocdGdbServer(interface="stlink", target="stm32l4x").run():
-            self.harness()
+            self.harness(result)
 
-        return self.next_harness()
+        return self.next_harness(result)
 
 
 class STM32L4x6PloAppLoader(TerminalHarness, PloInterface):

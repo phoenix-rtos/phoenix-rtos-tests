@@ -5,7 +5,7 @@ from typing import Callable, Dict, Optional, List
 from trunner.text import bold
 from trunner.host import Host
 from trunner.dut import Dut
-from trunner.types import TestResult, is_github_actions
+from trunner.types import TestResult, TestStage, is_github_actions
 
 
 class HarnessError(Exception):
@@ -118,8 +118,12 @@ class HarnessBase(ABC):
     """Base class for harnesses functors that are tied together."""
 
     @abstractmethod
-    def __call__(self) -> Optional[TestResult]:
-        """Implements the harness logic. Every class that inherites must to implement this method."""
+    def __call__(self, result: TestResult) -> TestResult:
+        """Implements the harness logic. Every class that inherites must to implement this method.
+
+        Parameters:
+            result (TestResult): test result stub/partial result to be updated by the harness
+        """
 
 
 class TerminalHarness(HarnessBase):
@@ -130,7 +134,7 @@ class IntermediateHarness(HarnessBase):
     def __init__(self):
         self.next_harness = VoidHarness()
 
-    def chain(self, harness: Callable[[], Optional[TestResult]]):
+    def chain(self, harness: Callable[[TestResult], TestResult]):
         """Chains harnesses together in self -> harness order. Returns passed argument."""
         self.next_harness = harness
         return self.next_harness
@@ -143,7 +147,7 @@ class HarnessBuilder:
         self.head = None
         self.tail = None
 
-    def add(self, harness: Callable[[], Optional[TestResult]]):
+    def add(self, harness: Callable[[TestResult], TestResult]):
         """Add harness to the tail of list."""
         if self.tail is None:
             self.tail = harness
@@ -151,7 +155,7 @@ class HarnessBuilder:
         else:
             self.tail = self.tail.chain(harness)
 
-    def get_harness(self) -> Callable[[], Optional[TestResult]]:
+    def get_harness(self) -> Callable[[TestResult], TestResult]:
         """Returns the first harness in list."""
         if self.head is None:
             raise ValueError("Harness chain is empty!")
@@ -162,8 +166,8 @@ class HarnessBuilder:
 class VoidHarness(TerminalHarness):
     """Harness that does nothing."""
 
-    def __call__(self):
-        pass
+    def __call__(self, result: TestResult):
+        return result
 
 
 class RebooterHarness(IntermediateHarness):
@@ -175,8 +179,9 @@ class RebooterHarness(IntermediateHarness):
         self.flash = flash
         self.hard = hard
 
-    def __call__(self) -> Optional[TestResult]:
+    def __call__(self, result: TestResult) -> TestResult:
         """Call rebooter with set flags and continue to execute the next harness."""
 
+        result.set_stage(TestStage.REBOOT)
         self.rebooter(flash=self.flash, hard=self.hard)
-        return self.next_harness()
+        return self.next_harness(result)
