@@ -10,7 +10,6 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Callable, Dict, List, Optional
 
-from trunner.ctx import TestContext
 from trunner.text import bold, green, red, yellow
 
 
@@ -45,6 +44,10 @@ class Status(Enum):
     def __str__(self) -> str:
         color = self.color()
         return color(self.name)
+
+    def should_print(self, verbosity: int):
+        status_for_verbosity = (Status.FAIL, Status.SKIP, Status.OK)
+        return self in status_for_verbosity[:verbosity + 1]
 
 
 @total_ordering
@@ -93,12 +96,21 @@ class TestResult:
         return self.name.replace("phoenix-rtos-tests/", "").replace("/", ".")
 
     def __str__(self) -> str:
-        result = [str(self.status)]
-        if self.msg:
-            result.append(self.msg.rstrip())
+        return self.to_str()
 
-        result.append("")
-        return "\n".join(result)
+    def to_str(self, verbosity: int = 0) -> str:
+        out = [str(self.status)]
+        if self.msg:
+            out.append(self.msg.rstrip())
+
+        for res in self.subresults:
+            if not res.status.should_print(verbosity):
+                continue
+
+            out.append(str(res))
+
+        out.append("")
+        return "\n".join(out)
 
     def overwrite(self, other: TestResult):
         """Overwrite current global result (status, msg) with other one. Don't touch subtests"""
@@ -125,6 +137,7 @@ class TestResult:
         self._curr_subresult = TestSubResult(self.name)
 
     def add_subresult(self, subname: str, status: Status, msg: str = ""):
+        """add sub-testcase result (use for composite tests)"""
         subresult = self._curr_subresult
         subresult.set_stage(TestStage.DONE)
         subresult.msg = msg
@@ -133,6 +146,10 @@ class TestResult:
 
         self.subresults.append(subresult)
         self._init_subresult()
+
+    def add_subresult_obj(self, subresult: TestSubResult):
+        """add sub-testcase result by TetSubResult object"""
+        self.add_subresult(subresult.subname, subresult.status, subresult.msg)
 
     def is_fail(self):
         return self.status == Status.FAIL
@@ -231,47 +248,35 @@ class TestResult:
 
 
 class TestSubResult(TestResult):
-    """Utility class for simplified subresult keeping"""
-
-    def __init__(self, name=None, msg: str = "", status: Optional[Status] = None):
-        super().__init__(name, msg, status)
-        self.set_stage(TestStage.RUN)
-
-    def _init_subresult(self):
-        pass
-
-
-@dataclass
-class Result:
     """Helper class that can be used to build more complex test results.
 
     It may be helpful in more complex harnesses that parses output from other
     testing framework to build output.
 
     Attributes:
-        name: Name of test/subtest
+        subname: Name of subtest
         status: Status of test
         msg: Message that will be printed after test header
+
+    TestSubResult needs to be linked to parent TestResult by add_subresult or add_subresult_obj.
     """
 
-    name: str
-    status: Status = Status.OK
-    msg: str = ""
+    def __init__(self, name=None, subname: str = "", msg: str = "", status: Optional[Status] = None):
+        super().__init__(name, msg, status)
+        self.subname = subname
+        self.set_stage(TestStage.RUN)
 
-    @staticmethod
-    def format_output(results: Sequence[Result], ctx: TestContext) -> str:
-        output = []
+    def __str__(self) -> str:
+        out = f"\t{bold(self.subname)}: {self.status}"
 
-        for res in results:
-            if res.status != Status.FAIL and ctx.verbosity == 0:
-                continue
+        if self.msg and self.status != Status.OK:
+            out += ": " + self.msg
 
-            output.append(f"\t{bold(res.name)}: {res.status}")
-            if res.msg and res.status == Status.FAIL:
-                output.append(res.msg)
+        return out
 
-        output.append("")
-        return "\n".join(output)
+    def _init_subresult(self):
+        # subresults can't contain subresults
+        pass
 
 
 @dataclass
@@ -297,6 +302,7 @@ class ShellOptions:
 def void_harness_fn(result: TestResult) -> TestResult:
     """dummy harness just to satisfy python typing"""
     return result
+
 
 @dataclass
 class TestOptions:

@@ -9,12 +9,11 @@
 
 from trunner.ctx import TestContext
 from trunner.dut import Dut
-from trunner.types import TestResult, Result, Status
+from trunner.types import TestResult, TestSubResult, Status
 
 
-def harness(dut: Dut, ctx: TestContext):
-    results = []
-    result = None
+def harness(dut: Dut, ctx: TestContext, result: TestResult):
+    subresult = None
     msg = []
     test_status = Status.OK
 
@@ -30,19 +29,19 @@ def harness(dut: Dut, ctx: TestContext):
             msg.append("\t\t" + parsed["line"])
             continue
 
-        if result:
+        if subresult:
             # We ended processing test result and message
-            if msg and result.status == Status.FAIL:
+            if msg and subresult.status == Status.FAIL:
                 test_status = Status.FAIL
-                result.msg = "\n".join(msg)
+                subresult.msg = "\n".join(msg)
                 msg = []
 
-            results.append(result)
-            result = None
+            result.add_subresult_obj(subresult)
+            subresult = None
 
         if idx == 0:
-            result = Result(name=parsed["name"], status=Status.from_str(parsed["status"]))
+            subresult = TestSubResult(subname=parsed["name"], status=Status.from_str(parsed["status"]))
         elif idx == 1:
             break
 
-    return TestResult(msg=Result.format_output(results, ctx), status=test_status)
+    return TestResult(status=test_status)
