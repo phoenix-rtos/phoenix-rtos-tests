@@ -1,35 +1,8 @@
-from typing import Any, Dict, Optional, Sequence
+from typing import Optional
 
 from trunner.ctx import TestContext
 from trunner.dut import Dut
-from trunner.text import blue, bold, green, red, yellow
 from trunner.types import Status, TestResult
-
-
-def _format_result_output(results: Sequence[Dict[str, Any]], ctx: TestContext) -> str:
-    output = []
-    for res in results:
-        if res["status"] == "PASS" and ctx.verbosity == 0:
-            continue
-
-        out = "\t" + bold(f"TEST({res['group']}, {res['name']})") + " "
-        if res["status"] == "FAIL":
-            out += red("FAIL") + " at " + bold(f"{res['path']}:{res['line']}")
-        elif res["status"] == "PASS":
-            out += green("OK")
-        elif res["status"] == "IGNORE":
-            out += yellow("IGNORE")
-        elif res["status"] == "INFO":
-            out += blue("INFO")
-
-        if "msg" in res:
-            out += ": " + res["msg"]
-
-        out += "\n"
-
-        output.append(out)
-
-    return "".join(output)
 
 
 def unity_harness(dut: Dut, ctx: TestContext, result: TestResult) -> Optional[TestResult]:
@@ -48,7 +21,6 @@ def unity_harness(dut: Dut, ctx: TestContext, result: TestResult) -> Optional[Te
         parsed = dut.match.groupdict()
 
         if idx == 0:
-            # NOTE: we do not consider INFO messages
             if parsed["status"] in ["FAIL", "IGNORE"]:
                 last_assertion = parsed
         elif idx in (1, 2):
@@ -82,4 +54,4 @@ def unity_harness(dut: Dut, ctx: TestContext, result: TestResult) -> Optional[Te
             break
 
     status = Status.FAIL if stats["FAIL"] != 0 else Status.OK
-    return TestResult(msg=_format_result_output(results, ctx), status=status)
+    return TestResult(status=status)

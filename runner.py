@@ -146,7 +146,7 @@ def parse_args(targets: Dict[str, Type[TargetBase]], hosts: Dict[str, Type[Host]
         "--verbose",
         action="count",
         default=0,
-        help="Increases verbosity level",
+        help="Increate result verbosity level (0={FAIL}, 1={FAIL, SKIP}, 2={FAIL, SKIP, OK})",
     )
 
     parser.add_argument(
