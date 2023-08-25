@@ -106,9 +106,12 @@ def parse_args(targets: Dict[str, Type[TargetBase]], hosts: Dict[str, Type[Host]
 
     parser.add_argument(
         "-O",
-        "--output-csv",
+        "--output",
         action="store",
-        help="Write machine-readable test results as a csv file.",
+        const="report.xml",
+        nargs='?',
+        help=("Write machine-readable test results as csv and xml file. "
+              "When no value is provided uses %(const)s"),
     )
 
     parser.add_argument(
@@ -208,6 +211,10 @@ def parse_args(targets: Dict[str, Type[TargetBase]], hosts: Dict[str, Type[Host]
     if not args.test:
         args.test = [resolve_project_path()]
 
+    if args.output and "." in args.output:
+        # remove extension for output stem if possibly exists
+        args.output = args.output.rsplit(".", 1)[0]
+
     return args
 
 
@@ -264,7 +271,7 @@ def main():
         should_test=not args.no_test,
         verbosity=args.verbose,
         stream_output=args.stream,
-        output_csv=args.output_csv,
+        output=args.output,
         kwargs=args.kwargs,
     )
 

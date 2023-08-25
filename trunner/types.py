@@ -1,4 +1,5 @@
 from __future__ import annotations
+from datetime import datetime
 from functools import total_ordering
 
 import os
@@ -6,15 +7,24 @@ import re
 import sys
 import time
 import traceback
+import junitparser
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Callable, Dict, List, Optional
 
-from trunner.text import bold, green, red, yellow
+from trunner.text import bold, green, red, remove_ansi_sequences, yellow
 
 
 def is_github_actions() -> bool:
     return "GITHUB_ACTIONS" in os.environ
+
+
+def get_ci_url() -> str:
+    if is_github_actions():
+        return (f"{os.environ['GITHUB_SERVER_URL']}/{os.environ['GITHUB_REPOSITORY']}"
+                f"/actions/runs/{os.environ['GITHUB_RUN_ID']}")
+
+    return ""
 
 
 class Status(Enum):
@@ -45,6 +55,13 @@ class Status(Enum):
         color = self.color()
         return color(self.name)
 
+    def to_junit(self, msg: str):
+        assert self != Status.OK
+        if self == Status.SKIP:
+            return junitparser.Skipped(msg)
+
+        return junitparser.Failure(msg)
+
     def should_print(self, verbosity: int):
         status_for_verbosity = (Status.FAIL, Status.SKIP, Status.OK)
         return self in status_for_verbosity[:verbosity + 1]
@@ -73,6 +90,7 @@ class TestStage(Enum):
 class TestResult:
     def __init__(self, name=None, msg: str = "", status: Optional[Status] = None):
         self.msg = msg
+        self.summary = ""
         self.status = Status.OK if status is None else status
         self._name = name
         self.subname = ""
@@ -81,6 +99,7 @@ class TestResult:
         self._timing_stage: Optional[TestStage] = None
         self._timing_stage_start: float = 0
         self._timing_data: Dict[TestStage, float] = {}
+        self._start_time = None
         self.set_stage(TestStage.INIT)
 
         # subresults
@@ -90,6 +109,14 @@ class TestResult:
     @property
     def name(self) -> str:
         return self._name if self._name else "UNKNOWN TEST NAME"
+
+    @property
+    def full_name(self) -> str:
+        """full canonical name of (sub)test"""
+        out = self.name
+        if self.subname:
+            out += f".{self.subname}"
+        return out
 
     @property
     def shortname(self) -> str:
@@ -112,6 +139,37 @@ class TestResult:
         out.append("")
         return "\n".join(out)
 
+    def to_junit_testcase(self, target: str):
+        out = junitparser.TestCase(f"{target}:{self.full_name}")
+        out.classname = self.name
+        out.time = round(self._timing_data.get(TestStage.RUN, 0), 3)
+        if self.status != Status.OK:
+            # remove ANSI codes (not valid within XML)
+            msg = remove_ansi_sequences(self.msg)
+            summary = remove_ansi_sequences(self.summary)
+            if not summary:
+                # put first line as a failure reason
+                summary = msg.splitlines()[0] if msg else ""
+            out.result = [self.status.to_junit(summary)]
+            if msg and msg != summary:
+                # put detailed multi-line message as a system-out only if it brings new information
+                out.system_out = msg
+
+        return out
+
+    def to_junit_testsuite(self, target: str):
+        """return test result in junit format"""
+        out = junitparser.TestSuite(f"{target}:{self.name}")
+        if self._start_time:
+            out.timestamp = self._start_time.isoformat()
+        if not self.subresults:
+            out.add_testcase(self.to_junit_testcase(target))
+        else:
+            for res in self.subresults:
+                out.add_testcase(res.to_junit_testcase(target))
+
+        return out
+
     def overwrite(self, other: TestResult):
         """Overwrite current global result (status, msg) with other one. Don't touch subtests"""
         self.msg = other.msg
@@ -131,10 +189,15 @@ class TestResult:
         self._timing_stage_start = time.time()
 
         if stage == TestStage.RUN:
+            self._start_time = datetime.utcnow()
             self._init_subresult()
 
     def _init_subresult(self):
         self._curr_subresult = TestSubResult(self.name)
+
+    def _commit_subresult(self):
+        self.subresults.append(self._curr_subresult)
+        self._init_subresult()
 
     def add_subresult(self, subname: str, status: Status, msg: str = ""):
         """add sub-testcase result (use for composite tests)"""
@@ -144,8 +207,7 @@ class TestResult:
         subresult.status = status
         subresult.subname = subname
 
-        self.subresults.append(subresult)
-        self._init_subresult()
+        self._commit_subresult()
 
     def add_subresult_obj(self, subresult: TestSubResult):
         """add sub-testcase result by TetSubResult object"""
@@ -160,9 +222,12 @@ class TestResult:
     def is_ok(self):
         return self.status == Status.OK
 
-    def fail(self, msg=None):
+    def fail(self, msg=None, summary=None):
         if msg is not None:
             self.msg = msg
+
+        if summary is not None:
+            self.summary = summary
 
         self.status = Status.FAIL
         self.set_stage(TestStage.DONE)
@@ -183,7 +248,7 @@ class TestResult:
         return dut.buffer.replace("\r", "")
 
     def fail_pexpect(self, dut, exc):
-        self.fail()
+        self.fail(summary="Pexpect failure")
         r_searched = r"[\d+]: (?:re.compile\()?b?['\"](.*)['\"]\)?"
         searched_patterns = re.findall(r_searched, exc.value)
 
@@ -198,8 +263,13 @@ class TestResult:
             ]
         )
 
+        # if composite test case - fail the sub-result
+        if self.subresults:
+            self._curr_subresult.fail_pexpect(dut, exc)
+            self._commit_subresult()
+
     def fail_decode(self, dut, exc):
-        self.fail()
+        self.fail(summary="Unicode Decode Error")
         self.msg = "\n".join(
             [
                 bold("Unicode Decode Error detected!"),
@@ -213,7 +283,7 @@ class TestResult:
         )
 
     def fail_assertion(self, dut, exc):
-        self.fail()
+        self.fail(summary="Assertion failed")
         msg = [*self._failed_traceback()]
 
         if exc.args:
@@ -225,12 +295,17 @@ class TestResult:
         msg.append("")
         self.msg = "\n".join(msg)
 
+        # if composite test case - fail the sub-result
+        if self.subresults:
+            self._curr_subresult.fail_assertion(dut, exc)
+            self._commit_subresult()
+
     def fail_harness_exception(self, exc):
-        self.fail()
+        self.fail(summary="Harness Exception")
         self.msg = "\n".join([*self._failed_traceback(), str(exc)])
 
     def fail_unknown_exception(self):
-        self.fail()
+        self.fail(summary="Unknown Exception")
         self.msg = "\n".join([bold("EXCEPTION:"), traceback.format_exc()])
 
     @staticmethod

@@ -1,4 +1,8 @@
+import re
 from colorama import Style, Fore
+
+
+ANSI_ESCAPE = re.compile(r'(?:\x1B[@-_]|[\x80-\x9F])[0-?]*[ -/]*[@-~]')
 
 
 def bold(s: str) -> str:
@@ -23,3 +27,7 @@ def blue(s: str) -> str:
 
 def magenta(s: str) -> str:
     return Fore.MAGENTA + s + Fore.RESET
+
+
+def remove_ansi_sequences(line: str) -> str:
+    return ANSI_ESCAPE.sub('', line)

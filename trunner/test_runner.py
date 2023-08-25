@@ -1,6 +1,7 @@
 import os
 import shutil
 import sys
+import junitparser
 from io import StringIO
 from pathlib import Path
 from collections import Counter
@@ -11,7 +12,7 @@ from trunner.ctx import TestContext
 from trunner.dut import Dut
 from trunner.harness import HarnessError, FlashError
 from trunner.text import bold, green, red, yellow, magenta
-from trunner.types import Status, TestOptions, TestResult, is_github_actions
+from trunner.types import Status, TestOptions, TestResult, is_github_actions, get_ci_url
 
 
 def _add_tests_module_to_syspath(project_path: Path):
@@ -257,12 +258,28 @@ class TestRunner:
               f"{red('FAILED')}: {sums.get(Status.FAIL, 0)} "
               f"{yellow('SKIPPED')}: {sums.get(Status.SKIP, 0)}")
 
-        if self.ctx.output_csv:
-            with open(self.ctx.output_csv, 'w', encoding='utf-8') as out_csv:
+        if self.ctx.output:
+            with open(self.ctx.output + ".csv", 'w', encoding='utf-8') as out_csv:
                 out_csv.write(TestResult.get_csv_header() + "\n")
                 for res in results:
                     out_csv.write(res.to_csv() + "\n")
 
-            print(f"Test results written to: {self.ctx.output_csv}")
+            # we should be able to have testsuites within testsuites but many tools doesn't support that
+            # map every TestResult to TestSuite instead
+
+            xml = junitparser.JUnitXml()
+            for res in results:
+                suite = res.to_junit_testsuite(self.ctx.target.name)
+                suite.hostname = self.ctx.host.name
+                if is_github_actions():
+                    suite.add_property('url', get_ci_url())
+                    suite.add_property('SHA', os.environ['GITHUB_SHA'])
+
+                xml.add_testsuite(suite)
+
+            xml.update_statistics()
+            xml.write(self.ctx.output + ".xml", pretty=True)  # TODO: remove pretty
+
+            print(f"Test results written to: {self.ctx.output}{{.csv,.xml}}")
 
         return sums.get(Status.FAIL, 0) == 0
