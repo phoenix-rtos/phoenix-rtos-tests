@@ -24,7 +24,7 @@ class TestContext:
         should_test: True if tests should be run.
         verbosity: Verbose level of the output of tests.
         stream_output: Stream DUT output to stdout during test execution.
-        output_csv: If not None - file name to store the test results.
+        output: If not None - file name stem to store the test results ([stem].csv, [stem].xml).
     """
 
     port: Optional[str]
@@ -36,7 +36,7 @@ class TestContext:
     should_test: bool
     verbosity: int
     stream_output: bool
-    output_csv: Optional[str]
+    output: Optional[str]
     kwargs: dict = field(default_factory=dict)
     target: Optional[TargetBase] = None
     host: Optional[Host] = None
