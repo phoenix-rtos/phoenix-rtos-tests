@@ -3,7 +3,7 @@ from typing import Callable
 
 from trunner.ctx import TestContext
 from trunner.dut import QemuDut
-from trunner.harness import HarnessBuilder, RebooterHarness, ShellHarness
+from trunner.harness import HarnessBuilder, RebooterHarness, ShellHarness, TestStartRunningHarness
 from trunner.types import TestOptions, TestResult
 from .base import TargetBase
 
@@ -48,6 +48,8 @@ class QemuTarget(TargetBase):
                     prompt_timeout=self.prompt_timeout,
                 )
             )
+        else:
+            builder.add(TestStartRunningHarness())
 
         builder.add(test.harness)
 

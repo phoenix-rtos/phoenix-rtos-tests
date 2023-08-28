@@ -15,6 +15,7 @@ from trunner.harness import (
     PloInterface,
     PloHarness,
     ShellHarness,
+    TestStartRunningHarness,
     Rebooter,
     RebooterHarness,
     HarnessBuilder,
@@ -201,6 +202,8 @@ class STM32L4x6Target(TargetBase):
 
         if test.shell is not None:
             builder.add(ShellHarness(self.dut, self.shell_prompt, test.shell.cmd))
+        else:
+            builder.add(TestStartRunningHarness())
 
         builder.add(test.harness)
 
