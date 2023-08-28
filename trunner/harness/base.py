@@ -185,3 +185,11 @@ class RebooterHarness(IntermediateHarness):
         result.set_stage(TestStage.REBOOT)
         self.rebooter(flash=self.flash, hard=self.hard)
         return self.next_harness(result)
+
+
+class TestStartRunningHarness(IntermediateHarness):
+    """Harness for explicitly stating the place the test has started running"""
+
+    def __call__(self, result: TestResult) -> TestResult:
+        result.set_stage(TestStage.RUN)
+        return self.next_harness(result)

@@ -9,6 +9,7 @@ from trunner.harness import (
     Rebooter,
     RebooterHarness,
     ShellHarness,
+    TestStartRunningHarness,
 )
 from trunner.host import Host
 from trunner.tools import Phoenixd, Psu
@@ -75,6 +76,8 @@ class ARMv7M7Target(TargetBase):
 
         if test.shell is not None:
             builder.add(ShellHarness(self.dut, self.shell_prompt, test.shell.cmd))
+        else:
+            builder.add(TestStartRunningHarness())
 
         builder.add(test.harness)
 

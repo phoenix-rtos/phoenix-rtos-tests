@@ -10,6 +10,7 @@ from trunner.harness import (
     PloJffsImageProperty,
     PloImageLoader,
     ShellHarness,
+    TestStartRunningHarness,
     Rebooter,
     RebooterHarness,
     FlashError,
@@ -110,6 +111,8 @@ class ARMv7A9Target(TargetBase):
 
         if test.shell is not None:
             builder.add(ShellHarness(self.dut, self.shell_prompt, test.shell.cmd))
+        else:
+            builder.add(TestStartRunningHarness())
 
         builder.add(test.harness)
 
