@@ -4305,7 +4305,7 @@ TEST(stdio_scanf_rest, m_s)
 	int i;
 	const char *format = "%ms";
 
-	for (i = 1; i < BUFF_LEN - 1; i++) {
+	for (i = 0; i < BUFF_LEN - 1; i++) {
 		chrArray[i] = 'a';
 	}
 	chrArray[i] = '\0';
