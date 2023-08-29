@@ -25,7 +25,7 @@ from datetime import datetime
 
 EOL = r'(?:\r+)\n'
 EOT = '\x04'
-PROMPT = r'(\r*)\x1b\[0J' + r'\(psh\)% '
+PROMPT = r'(\r*)\x1b\[0J' + r'\(psh\)%'
 # according to control sequence introducer pattern
 CONTROL_CODE = r'(\x1b\[[\x30-\x3F]*[\x20-\x2F]*[\x40-\x7E])'
 OPTIONAL_CONTROL_CODE = CONTROL_CODE + r'?'
@@ -65,7 +65,7 @@ def assert_cmd(pexpect_proc, cmd, *, expected='', result='success', msg='', is_r
             line = re.escape(line)
             exp_regex += line + EOL
 
-    exp_regex = cmd + EOL + exp_regex + PROMPT
+    exp_regex = rf"^(?=.*{cmd})(?=.*{exp_regex})(?=.*{PROMPT}).*$"
     exp_readable = _readable(exp_regex)
     msg = f'Expected output regex was: \n---\n{exp_readable}\n---\n' + msg
 
