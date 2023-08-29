@@ -142,71 +142,59 @@ static void test_assertVprintfs(char *expect, const char *format, ...)
 
 
 /* other functions */
-static char *test_signedToStr(long long value, int base)
+static int test_signedToStr(long long value, int base, char *out)
 {
 	int len = 1;
 	long long n = value;
-	unsigned long long val = value, rem;
+	char *const out_orig = out;
 
-	if (value == LLONG_MIN) {
-		val = value++;
+	if (value < 0) {
+		*out++ = '-';
 	}
 
 	while (n /= base) {
 		len++;
 	}
 
-	if (value < 0) {
-		len++;
-		val = -val;
-	}
-
-	char *str = malloc((len + 1) * sizeof(char));
-
-	str[len] = '\0';
-
 	for (int i = len - 1; i >= 0; i--) {
-		rem = val % base;
-		str[i] = (rem > 9) ? (rem - 10) + 'a' : rem + '0';
-		val /= base;
+		int rem = value % base;
+		if (rem < 0) {
+			rem = -rem; /* support negative values by negating the remainder only*/
+		}
+		out[i] = (rem > 9) ? (rem - 10) + 'a' : rem + '0';
+		value /= base;
 	}
+	out += len;
+	*out = '\0';
 
-	if (value < 0) {
-		str[0] = '-';
-	}
-
-	if (value == LLONG_MIN) {
-		str[len - 1]--;
-	}
-
-	return str;
+	return out - out_orig;
 }
 
 
-static char *test_unsignedToStr(unsigned long long int value, int base, bool bigLetters)
+static int test_unsignedToStr(unsigned long long int value, int base, bool bigLetters, char *out)
 {
 	int len = 1;
-	unsigned long long n = value, rem;
+	unsigned long long n = value;
 
 	while (n /= base) {
 		len++;
 	}
 
-	char *str = malloc((len + 1) * sizeof(char));
-
-	str[len] = '\0';
+	char *const out_orig = out;
 
 	for (int i = len - 1; i >= 0; i--) {
-		rem = value % base;
+		int rem = value % base;
 		if (bigLetters)
-			str[i] = (rem > 9) ? (rem - 10) + 'A' : rem + '0';
+			out[i] = (rem > 9) ? (rem - 10) + 'A' : rem + '0';
 		else
-			str[i] = (rem > 9) ? (rem - 10) + 'a' : rem + '0';
+			out[i] = (rem > 9) ? (rem - 10) + 'a' : rem + '0';
 		value /= base;
 	}
 
-	return str;
+	out += len;
+	*out = '\0';
 
+	return out - out_orig;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -236,19 +224,16 @@ TEST_TEAR_DOWN(stdio_printf_d)
 
 TEST(stdio_printf_d, d)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%d %d %d %d %d";
 	const int values[] = { INT_MAX, INT_MAX / 2, 0, INT_MIN / 2, INT_MIN };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_signedToStr(values[i], 10);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_signedToStr(values[i], 10, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
@@ -258,19 +243,16 @@ TEST(stdio_printf_d, d)
 
 TEST(stdio_printf_d, hhd)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%hhd %hhd %hhd %hhd %hhd";
 	const signed char values[] = { SCHAR_MAX, SCHAR_MAX / 2, 0, SCHAR_MIN / 2, SCHAR_MIN };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_signedToStr(values[i], 10);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_signedToStr(values[i], 10, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
@@ -280,19 +262,16 @@ TEST(stdio_printf_d, hhd)
 
 TEST(stdio_printf_d, hd)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%hd %hd %hd %hd %hd";
 	const short values[] = { SHRT_MAX, SHRT_MAX / 2, 0, SHRT_MIN / 2, SHRT_MIN };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_signedToStr(values[i], 10);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_signedToStr(values[i], 10, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
@@ -302,19 +281,16 @@ TEST(stdio_printf_d, hd)
 
 TEST(stdio_printf_d, ld)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%ld %ld %ld %ld %ld";
 	const long int values[] = { LONG_MAX, LONG_MAX / 2, 0, LONG_MIN / 2, LONG_MIN };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_signedToStr(values[i], 10);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_signedToStr(values[i], 10, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
@@ -324,19 +300,16 @@ TEST(stdio_printf_d, ld)
 
 TEST(stdio_printf_d, lld)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%lld %lld %lld %lld %lld";
 	const long long int values[] = { LLONG_MAX, LLONG_MAX / 2, 0, LLONG_MIN / 2, LLONG_MIN };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_signedToStr(values[i], 10);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_signedToStr(values[i], 10, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
@@ -346,19 +319,16 @@ TEST(stdio_printf_d, lld)
 
 TEST(stdio_printf_d, jd)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%jd %jd %jd %jd %jd";
 	const intmax_t values[] = { INTMAX_MAX, INTMAX_MAX / 2, 0, INTMAX_MIN / 2, INTMAX_MIN };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_signedToStr(values[i], 10);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_signedToStr(values[i], 10, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
@@ -368,19 +338,16 @@ TEST(stdio_printf_d, jd)
 
 TEST(stdio_printf_d, zd)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%zd %zd %zd";
 	const size_t values[] = { SSIZE_MAX, SSIZE_MAX / 2, 0 };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_signedToStr(values[i], 10);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_signedToStr(values[i], 10, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
@@ -390,19 +357,16 @@ TEST(stdio_printf_d, zd)
 
 TEST(stdio_printf_d, td)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%td %td %td %td %td";
 	const ptrdiff_t values[] = { PTRDIFF_MAX, PTRDIFF_MAX / 2, 0, PTRDIFF_MIN / 2, PTRDIFF_MIN };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_signedToStr(values[i], 10);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_signedToStr(values[i], 10, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
@@ -412,19 +376,15 @@ TEST(stdio_printf_d, td)
 
 TEST(stdio_printf_d, out_of_bonds)
 {
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%hhd %hd";
 
 	/* Creating string with expecting output */
-	temp = test_signedToStr((signed char)(INT_MAX), 10);
-	strcat(expect, temp);
-	free(temp);
+	buf += test_signedToStr((signed char)(INT_MAX), 10, buf);
 
-	strcat(expect, " ");
-	temp = test_signedToStr((short)(INT_MAX), 10);
-	strcat(expect, temp);
-	free(temp);
+	*buf++ = ' ';
+	buf += test_signedToStr((short)(INT_MAX), 10, buf);
 
 	test_assertPrintfs(expect, format, INT_MAX, INT_MAX);
 	test_assertVprintfs(expect, format, INT_MAX, INT_MAX);
@@ -447,19 +407,16 @@ TEST_TEAR_DOWN(stdio_printf_i)
 
 TEST(stdio_printf_i, i)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%i %i %i %i %i";
 	const int values[] = { INT_MAX, INT_MAX / 2, 0, INT_MIN / 2, INT_MIN };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_signedToStr(values[i], 10);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_signedToStr(values[i], 10, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
@@ -469,19 +426,16 @@ TEST(stdio_printf_i, i)
 
 TEST(stdio_printf_i, hhi)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%hhi %hhi %hhi %hhi %hhi";
 	const signed char values[] = { SCHAR_MAX, SCHAR_MAX / 2, 0, SCHAR_MIN / 2, SCHAR_MIN };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_signedToStr(values[i], 10);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_signedToStr(values[i], 10, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
@@ -491,19 +445,16 @@ TEST(stdio_printf_i, hhi)
 
 TEST(stdio_printf_i, hi)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%hi %hi %hi %hi %hi";
 	const short values[] = { SHRT_MAX, SHRT_MAX / 2, 0, SHRT_MIN / 2, SHRT_MIN };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_signedToStr(values[i], 10);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_signedToStr(values[i], 10, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
@@ -513,19 +464,16 @@ TEST(stdio_printf_i, hi)
 
 TEST(stdio_printf_i, li)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%li %li %li %li %li";
 	const long int values[] = { LONG_MAX, LONG_MAX / 2, 0, LONG_MIN / 2, LONG_MIN };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_signedToStr(values[i], 10);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_signedToStr(values[i], 10, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
@@ -535,19 +483,16 @@ TEST(stdio_printf_i, li)
 
 TEST(stdio_printf_i, lli)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%lli %lli %lli %lli %lli";
 	const long long int values[] = { LLONG_MAX, LLONG_MAX / 2, 0, LLONG_MIN / 2, LLONG_MIN };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_signedToStr(values[i], 10);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_signedToStr(values[i], 10, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
@@ -557,19 +502,16 @@ TEST(stdio_printf_i, lli)
 
 TEST(stdio_printf_i, ji)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%ji %ji %ji %ji %ji";
 	const intmax_t values[] = { INTMAX_MAX, INTMAX_MAX / 2, 0, INTMAX_MIN / 2, INTMAX_MIN };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_signedToStr(values[i], 10);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_signedToStr(values[i], 10, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
@@ -579,19 +521,16 @@ TEST(stdio_printf_i, ji)
 
 TEST(stdio_printf_i, zi)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%zi %zi %zi";
 	const size_t values[] = { SSIZE_MAX, SSIZE_MAX / 2, 0 };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_signedToStr(values[i], 10);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_signedToStr(values[i], 10, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
@@ -601,19 +540,16 @@ TEST(stdio_printf_i, zi)
 
 TEST(stdio_printf_i, ti)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%ti %ti %ti %ti %ti";
 	const ptrdiff_t values[] = { PTRDIFF_MAX, PTRDIFF_MAX / 2, 0, PTRDIFF_MIN / 2, PTRDIFF_MIN };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_signedToStr(values[i], 10);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_signedToStr(values[i], 10, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
@@ -623,19 +559,15 @@ TEST(stdio_printf_i, ti)
 
 TEST(stdio_printf_i, out_of_bonds)
 {
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%hhi %hi";
 
 	/* Creating string with expecting output */
-	temp = test_signedToStr((signed char)(INT_MAX), 10);
-	strcat(expect, temp);
-	free(temp);
+	buf += test_signedToStr((signed char)(INT_MAX), 10, buf);
+	*buf++ = ' ';
 
-	strcat(expect, " ");
-	temp = test_signedToStr((short)(INT_MAX), 10);
-	strcat(expect, temp);
-	free(temp);
+	buf += test_signedToStr((short)(INT_MAX), 10, buf);
 
 	test_assertPrintfs(expect, format, INT_MAX, INT_MAX);
 
@@ -659,19 +591,16 @@ TEST_TEAR_DOWN(stdio_printf_o)
 
 TEST(stdio_printf_o, o)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%o %o %o";
 	const unsigned int values[] = { UINT_MAX, UINT_MAX / 2, 0 };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_unsignedToStr(values[i], 8, false);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_unsignedToStr(values[i], 8, false, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
@@ -681,19 +610,16 @@ TEST(stdio_printf_o, o)
 
 TEST(stdio_printf_o, hho)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%hho %hho %hho";
 	const unsigned char values[] = { UCHAR_MAX, UCHAR_MAX / 2, 0 };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_unsignedToStr(values[i], 8, false);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_unsignedToStr(values[i], 8, false, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
@@ -703,19 +629,16 @@ TEST(stdio_printf_o, hho)
 
 TEST(stdio_printf_o, ho)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%ho %ho %ho";
 	const unsigned short values[] = { USHRT_MAX, USHRT_MAX / 2, 0 };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_unsignedToStr(values[i], 8, false);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_unsignedToStr(values[i], 8, false, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
@@ -725,19 +648,16 @@ TEST(stdio_printf_o, ho)
 
 TEST(stdio_printf_o, lo)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%lo %lo %lo";
 	const unsigned long int values[] = { ULONG_MAX, ULONG_MAX / 2, 0 };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_unsignedToStr(values[i], 8, false);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_unsignedToStr(values[i], 8, false, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
@@ -747,19 +667,16 @@ TEST(stdio_printf_o, lo)
 
 TEST(stdio_printf_o, llo)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%llo %llo %llo";
 	const unsigned long long int values[] = { ULLONG_MAX, ULLONG_MAX / 2, 0 };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_unsignedToStr(values[i], 8, false);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_unsignedToStr(values[i], 8, false, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
@@ -769,19 +686,16 @@ TEST(stdio_printf_o, llo)
 
 TEST(stdio_printf_o, jo)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%jo %jo %jo";
 	const uintmax_t values[] = { UINTMAX_MAX, UINTMAX_MAX / 2, 0 };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_unsignedToStr(values[i], 8, false);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_unsignedToStr(values[i], 8, false, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
@@ -791,19 +705,16 @@ TEST(stdio_printf_o, jo)
 
 TEST(stdio_printf_o, zo)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%zo %zo %zo";
 	const size_t values[] = { SIZE_MAX, SIZE_MAX / 2, 0 };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_unsignedToStr(values[i], 8, false);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_unsignedToStr(values[i], 8, false, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
@@ -813,20 +724,17 @@ TEST(stdio_printf_o, zo)
 
 TEST(stdio_printf_o, to)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%to %to %to";
 	/* only max tested because %to, applies to unsigned type argument; */
 	const ptrdiff_t values[] = { PTRDIFF_MAX, PTRDIFF_MAX / 2, 0 };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_unsignedToStr(values[i], 8, false);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_unsignedToStr(values[i], 8, false, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
@@ -836,19 +744,15 @@ TEST(stdio_printf_o, to)
 
 TEST(stdio_printf_o, out_of_bonds)
 {
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%hho %ho";
 
 	/* Creating string with expecting output */
-	temp = test_unsignedToStr((unsigned char)(UINT_MAX), 8, false);
-	strcat(expect, temp);
-	free(temp);
+	buf += test_unsignedToStr((unsigned char)(UINT_MAX), 8, false, buf);
+	*buf++ = ' ';
 
-	strcat(expect, " ");
-	temp = test_unsignedToStr((unsigned short)(UINT_MAX), 8, false);
-	strcat(expect, temp);
-	free(temp);
+	buf += test_unsignedToStr((unsigned short)(UINT_MAX), 8, false, buf);
 
 	test_assertPrintfs(expect, format, UINT_MAX, UINT_MAX);
 	test_assertVprintfs(expect, format, UINT_MAX, UINT_MAX);
@@ -871,19 +775,16 @@ TEST_TEAR_DOWN(stdio_printf_u)
 
 TEST(stdio_printf_u, u)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%u %u %u";
 	const unsigned int values[] = { UINT_MAX, UINT_MAX / 2, 0 };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_unsignedToStr(values[i], 10, false);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_unsignedToStr(values[i], 10, false, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
@@ -893,19 +794,16 @@ TEST(stdio_printf_u, u)
 
 TEST(stdio_printf_u, hhu)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%hhu %hhu %hhu";
 	const unsigned char values[] = { UCHAR_MAX, UCHAR_MAX / 2, 0 };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_unsignedToStr(values[i], 10, false);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_unsignedToStr(values[i], 10, false, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
@@ -915,19 +813,16 @@ TEST(stdio_printf_u, hhu)
 
 TEST(stdio_printf_u, hu)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%hu %hu %hu";
 	const unsigned short values[] = { USHRT_MAX, USHRT_MAX / 2, 0 };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_unsignedToStr(values[i], 10, false);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_unsignedToStr(values[i], 10, false, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
@@ -937,19 +832,16 @@ TEST(stdio_printf_u, hu)
 
 TEST(stdio_printf_u, lu)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%lu %lu %lu";
 	const unsigned long int values[] = { ULONG_MAX, ULONG_MAX / 2, 0 };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_unsignedToStr(values[i], 10, false);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_unsignedToStr(values[i], 10, false, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
@@ -959,19 +851,16 @@ TEST(stdio_printf_u, lu)
 
 TEST(stdio_printf_u, llu)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%llu %llu %llu";
 	const unsigned long long int values[] = { ULLONG_MAX, ULLONG_MAX / 2, 0 };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_unsignedToStr(values[i], 10, false);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_unsignedToStr(values[i], 10, false, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
@@ -981,19 +870,16 @@ TEST(stdio_printf_u, llu)
 
 TEST(stdio_printf_u, ju)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%ju %ju %ju";
 	const uintmax_t values[] = { UINTMAX_MAX, UINTMAX_MAX / 2, 0 };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_unsignedToStr(values[i], 10, false);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_unsignedToStr(values[i], 10, false, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
@@ -1003,19 +889,16 @@ TEST(stdio_printf_u, ju)
 
 TEST(stdio_printf_u, zu)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%zu %zu %zu";
 	const size_t values[] = { SIZE_MAX, SIZE_MAX / 2, 0 };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_unsignedToStr(values[i], 10, false);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_unsignedToStr(values[i], 10, false, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
@@ -1025,20 +908,17 @@ TEST(stdio_printf_u, zu)
 
 TEST(stdio_printf_u, tu)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%tu %tu %tu";
 	/* only max tested because %tu, applies to unsigned type argument; */
 	const ptrdiff_t values[] = { PTRDIFF_MAX, PTRDIFF_MAX / 2, 0 };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_unsignedToStr(values[i], 10, false);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_unsignedToStr(values[i], 10, false, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
@@ -1048,18 +928,13 @@ TEST(stdio_printf_u, tu)
 
 TEST(stdio_printf_u, out_of_bonds)
 {
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%hhu %hu";
 
-	temp = test_unsignedToStr((unsigned char)(UINT_MAX), 10, false);
-	strcat(expect, temp);
-	free(temp);
-
-	strcat(expect, " ");
-	temp = test_unsignedToStr((unsigned short)(UINT_MAX), 10, false);
-	strcat(expect, temp);
-	free(temp);
+	buf += test_unsignedToStr((unsigned char)(UINT_MAX), 10, false, buf);
+	*buf++ = ' ';
+	buf += test_unsignedToStr((unsigned short)(UINT_MAX), 10, false, buf);
 
 	test_assertPrintfs(expect, format, UINT_MAX, UINT_MAX);
 	test_assertVprintfs(expect, format, UINT_MAX, UINT_MAX);
@@ -1082,41 +957,34 @@ TEST_TEAR_DOWN(stdio_printf_x)
 
 TEST(stdio_printf_x, x)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%x %x %x";
 	const unsigned int values[] = { UINT_MAX, UINT_MAX / 2, 0 };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_unsignedToStr(values[i], 16, false);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_unsignedToStr(values[i], 16, false, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
 	test_assertVprintfs(expect, format, values[0], values[1], values[2]);
 }
 
-
 TEST(stdio_printf_x, hhx)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%hhx %hhx %hhx";
 	const unsigned char values[] = { UCHAR_MAX, UCHAR_MAX / 2, 0 };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_unsignedToStr(values[i], 16, false);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_unsignedToStr(values[i], 16, false, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
@@ -1126,19 +994,16 @@ TEST(stdio_printf_x, hhx)
 
 TEST(stdio_printf_x, hx)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%hx %hx %hx";
 	const unsigned short values[] = { USHRT_MAX, USHRT_MAX / 2, 0 };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_unsignedToStr(values[i], 16, false);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_unsignedToStr(values[i], 16, false, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
@@ -1148,19 +1013,16 @@ TEST(stdio_printf_x, hx)
 
 TEST(stdio_printf_x, lx)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%lx %lx %lx";
 	const unsigned long int values[] = { ULONG_MAX, ULONG_MAX / 2, 0 };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_unsignedToStr(values[i], 16, false);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_unsignedToStr(values[i], 16, false, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
@@ -1170,19 +1032,16 @@ TEST(stdio_printf_x, lx)
 
 TEST(stdio_printf_x, llx)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%llx %llx %llx";
 	const unsigned long long int values[] = { ULLONG_MAX, ULLONG_MAX / 2, 0 };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_unsignedToStr(values[i], 16, false);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_unsignedToStr(values[i], 16, false, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
@@ -1192,19 +1051,16 @@ TEST(stdio_printf_x, llx)
 
 TEST(stdio_printf_x, jx)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%jx %jx %jx";
 	const uintmax_t values[] = { UINTMAX_MAX, UINTMAX_MAX / 2, 0 };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_unsignedToStr(values[i], 16, false);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_unsignedToStr(values[i], 16, false, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
@@ -1214,19 +1070,16 @@ TEST(stdio_printf_x, jx)
 
 TEST(stdio_printf_x, zx)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%zx %zx %zx";
 	const size_t values[] = { SIZE_MAX, SIZE_MAX / 2, 0 };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_unsignedToStr(values[i], 16, false);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_unsignedToStr(values[i], 16, false, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
@@ -1236,20 +1089,17 @@ TEST(stdio_printf_x, zx)
 
 TEST(stdio_printf_x, tx)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%tx %tx %tx";
 	/* only max tested because %tx, applies to unsigned type argument; */
 	const ptrdiff_t values[] = { PTRDIFF_MAX, PTRDIFF_MAX / 2, 0 };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_unsignedToStr(values[i], 16, false);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_unsignedToStr(values[i], 16, false, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
@@ -1259,18 +1109,13 @@ TEST(stdio_printf_x, tx)
 
 TEST(stdio_printf_x, x_out_of_bonds)
 {
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%hhx %hx";
 
-	temp = test_unsignedToStr((unsigned char)(UINT_MAX), 16, false);
-	strcat(expect, temp);
-	free(temp);
-
-	strcat(expect, " ");
-	temp = test_unsignedToStr((unsigned short)(UINT_MAX), 16, false);
-	strcat(expect, temp);
-	free(temp);
+	buf += test_unsignedToStr((unsigned char)(UINT_MAX), 16, false, buf);
+	*buf++ = ' ';
+	buf += test_unsignedToStr((unsigned short)(UINT_MAX), 16, false, buf);
 
 	test_assertPrintfs(expect, format, UINT_MAX, UINT_MAX);
 	test_assertVprintfs(expect, format, UINT_MAX, UINT_MAX);
@@ -1280,19 +1125,16 @@ TEST(stdio_printf_x, x_out_of_bonds)
 
 TEST(stdio_printf_x, X)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%X %X %X";
 	const unsigned int values[] = { UINT_MAX, UINT_MAX / 2, 0 };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_unsignedToStr(values[i], 16, true);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_unsignedToStr(values[i], 16, true, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
@@ -1302,19 +1144,16 @@ TEST(stdio_printf_x, X)
 
 TEST(stdio_printf_x, hhX)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%hhX %hhX %hhX";
 	const unsigned char values[] = { UCHAR_MAX, UCHAR_MAX / 2, 0 };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_unsignedToStr(values[i], 16, true);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_unsignedToStr(values[i], 16, true, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
@@ -1324,19 +1163,16 @@ TEST(stdio_printf_x, hhX)
 
 TEST(stdio_printf_x, hX)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%hX %hX %hX";
 	const unsigned short values[] = { USHRT_MAX, USHRT_MAX / 2, 0 };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_unsignedToStr(values[i], 16, true);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_unsignedToStr(values[i], 16, true, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
@@ -1346,19 +1182,16 @@ TEST(stdio_printf_x, hX)
 
 TEST(stdio_printf_x, lX)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%lX %lX %lX";
 	const unsigned long int values[] = { ULONG_MAX, ULONG_MAX / 2, 0 };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_unsignedToStr(values[i], 16, true);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_unsignedToStr(values[i], 16, true, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
@@ -1368,19 +1201,16 @@ TEST(stdio_printf_x, lX)
 
 TEST(stdio_printf_x, llX)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%llX %llX %llX";
 	const unsigned long long int values[] = { ULLONG_MAX, ULLONG_MAX / 2, 0 };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_unsignedToStr(values[i], 16, true);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_unsignedToStr(values[i], 16, true, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
@@ -1390,19 +1220,16 @@ TEST(stdio_printf_x, llX)
 
 TEST(stdio_printf_x, jX)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%jX %jX %jX";
 	const uintmax_t values[] = { UINTMAX_MAX, UINTMAX_MAX / 2, 0 };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_unsignedToStr(values[i], 16, true);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_unsignedToStr(values[i], 16, true, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
@@ -1412,19 +1239,16 @@ TEST(stdio_printf_x, jX)
 
 TEST(stdio_printf_x, zX)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%zX %zX %zX";
 	const size_t values[] = { SIZE_MAX, SIZE_MAX / 2, 0 };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_unsignedToStr(values[i], 16, true);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_unsignedToStr(values[i], 16, true, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
@@ -1434,20 +1258,17 @@ TEST(stdio_printf_x, zX)
 
 TEST(stdio_printf_x, tX)
 {
-	int i;
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%tX %tX %tX";
 	/* only max tested because %tX, applies to unsigned type argument; */
 	const ptrdiff_t values[] = { PTRDIFF_MAX, PTRDIFF_MAX / 2, 0 };
 
-	for (i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
+	for (int i = 0; i < (sizeof(values) / sizeof(values[0])); i++) {
 		if (i > 0) {
-			strcat(expect, " ");
+			*buf++ = ' ';
 		}
-		temp = test_unsignedToStr(values[i], 16, true);
-		strcat(expect, temp);
-		free(temp);
+		buf += test_unsignedToStr(values[i], 16, true, buf);
 	}
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2]);
@@ -1460,18 +1281,13 @@ TEST(stdio_printf_x, X_out_of_bonds)
 #ifdef __phoenix__
 	TEST_IGNORE();
 #endif
-	char *temp;
 	char expect[256] = { 0 };
+	char *buf = expect;
 	const char *format = "%hhX %hX";
 
-	temp = test_unsignedToStr((unsigned char)(UINT_MAX), 16, true);
-	strcat(expect, temp);
-	free(temp);
-
-	strcat(expect, " ");
-	temp = test_unsignedToStr((unsigned short)(UINT_MAX), 16, true);
-	strcat(expect, temp);
-	free(temp);
+	buf += test_unsignedToStr((unsigned char)(UINT_MAX), 16, true, buf);
+	*buf++ = ' ';
+	buf += test_unsignedToStr((unsigned short)(UINT_MAX), 16, true, buf);
 
 	test_assertPrintfs(expect, format, UINT_MAX, UINT_MAX);
 	test_assertVprintfs(expect, format, UINT_MAX, UINT_MAX);
