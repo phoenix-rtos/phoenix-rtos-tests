@@ -206,15 +206,7 @@ static char *test_unsignedToStr(unsigned long long int value, int base, bool big
 	}
 
 	return str;
-}
 
-
-static char *test_intToAscii(int value)
-{
-	char *str = malloc(2 * sizeof(char));
-	str[0] = value;
-	str[1] = '\0';
-	return str;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2042,11 +2034,11 @@ TEST(stdio_printf_cspn, c)
 
 TEST(stdio_printf_cspn, c_ascii_printf)
 {
-	int i;
 	const char *format = "%c";
+	char expect[2] = { 0 };
 
-	for (i = 1; i < 128; i++) {
-		char *expect = test_intToAscii(i);
+	for (int i = 1; i < 128; i++) {
+		expect[0] = i;
 
 		test_assertPrintfs(expect, format, i);
 	}
@@ -2055,11 +2047,11 @@ TEST(stdio_printf_cspn, c_ascii_printf)
 
 TEST(stdio_printf_cspn, c_ascii_vprintf)
 {
-	int i;
 	const char *format = "%c";
+	char expect[2] = { 0 };
 
-	for (i = 1; i < 128; i++) {
-		char *expect = test_intToAscii(i);
+	for (int i = 1; i < 128; i++) {
+		expect[0] = i;
 
 		test_assertVprintfs(expect, format, i);
 	}
@@ -2068,11 +2060,11 @@ TEST(stdio_printf_cspn, c_ascii_vprintf)
 
 TEST(stdio_printf_cspn, c_non_ascii_printf)
 {
-	int i;
 	const char *format = "%c";
+	char expect[2] = { 0 };
 
-	for (i = 128; i < 256; i++) {
-		char *expect = test_intToAscii(i);
+	for (int i = 128; i < 256; i++) {
+		expect[0] = i;
 
 		test_assertPrintfs(expect, format, i);
 	}
@@ -2081,11 +2073,11 @@ TEST(stdio_printf_cspn, c_non_ascii_printf)
 
 TEST(stdio_printf_cspn, c_non_ascii_vprintf)
 {
-	int i;
 	const char *format = "%c";
+	char expect[2] = { 0 };
 
-	for (i = 128; i < 256; i++) {
-		char *expect = test_intToAscii(i);
+	for (int i = 128; i < 256; i++) {
+		expect[0] = i;
 
 		test_assertVprintfs(expect, format, i);
 	}
@@ -2146,15 +2138,15 @@ TEST(stdio_printf_cspn, s_specific)
 
 TEST(stdio_printf_cspn, s_ascii_printf)
 {
-	int i;
 	const char *format = "%s";
+	char expect[2] = { 0 };
 
 	/*
 	 * In ASCII table from number 33 starts printable characters
 	 * in this case we want to dodge terminating ASCII signs
 	 */
-	for (i = 33; i < 128; i++) {
-		char *expect = test_intToAscii(i);
+	for (int i = 33; i < 128; i++) {
+		expect[0] = i;
 
 		test_assertPrintfs(expect, format, expect);
 	}
@@ -2163,15 +2155,15 @@ TEST(stdio_printf_cspn, s_ascii_printf)
 
 TEST(stdio_printf_cspn, s_ascii_vprintf)
 {
-	int i;
 	const char *format = "%s";
+	char expect[2] = { 0 };
 
 	/*
 	 * In ASCII table from number 33 starts printable characters
 	 * in this case we want to dodge terminating ASCII signs
 	 */
-	for (i = 33; i < 128; i++) {
-		char *expect = test_intToAscii(i);
+	for (int i = 33; i < 128; i++) {
+		expect[0] = i;
 
 		test_assertVprintfs(expect, format, expect);
 	}
