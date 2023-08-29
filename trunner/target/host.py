@@ -25,7 +25,17 @@ class HostPCGenericTarget(TargetBase):
             self.dut.set_args(self.cmd, encoding="utf-8")
             self.dut.open()
             result.set_stage(TestStage.RUN)
-            return self.next_harness(result)
+            res = self.next_harness(result)
+
+            # ensure the process exited with status = 0 and we've processed all of the output
+            try:
+                exitstatus = self.dut.wait()
+                if exitstatus != 0:
+                    result.fail(msg=f"non-zero exit status: {exitstatus}", summary="Exit Status failure")
+            except TimeoutError as exc:
+                result.fail_harness_exception(exc)
+
+            return res
 
     def __init__(self):
         super().__init__()

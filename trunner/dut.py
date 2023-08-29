@@ -1,3 +1,5 @@
+import time
+
 from abc import ABC, abstractmethod
 from io import StringIO
 from pty import STDOUT_FILENO
@@ -5,6 +7,7 @@ from typing import Any, Optional, Tuple
 
 import termios
 import pexpect
+from pexpect.exceptions import EOF
 import pexpect.fdpexpect
 import serial
 
@@ -126,6 +129,7 @@ class ProcessDut(Dut):
         self.kwargs = kwargs
 
     def close(self):
+        """Forcefully close the child process"""
         if self.pexpect_proc:
             self.pexpect_proc.close()
 
@@ -136,6 +140,27 @@ class ProcessDut(Dut):
     def set_args(self, *args, **kwargs):
         self.args = args
         self.kwargs = kwargs
+
+    def wait(self, timeout=5):
+        """Wait with timeout for process end. Read out all data in the mean time (push it to logs)"""
+
+        wait_start = time.time()
+        while True:
+            if wait_start + timeout < time.time():
+                raise TimeoutError("Timed out waiting for EOF")
+            try:
+                # read out all remaining output from the program
+                self.pexpect_proc.read_nonblocking(size=512)
+            except EOF:
+                break
+
+        while self.pexpect_proc.isalive():
+            time.sleep(0.1)
+
+            if wait_start + timeout < time.time():
+                raise TimeoutError("Timed out waiting for process end")
+
+        return self.pexpect_proc.exitstatus
 
 
 class QemuDut(ProcessDut):
