@@ -35,6 +35,9 @@ jobs:
         pip install flake8 pytest
         pip install -r requirements.txt
 
+    - name: Setup flake8 annotations
+      uses: rbialon/flake8-annotations@v1
+
     - name: Lint with flake8
       run: |
         flake8 . --max-line-length 120 --exclude ./net
