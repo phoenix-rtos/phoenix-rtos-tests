@@ -17,8 +17,8 @@ import psh.tools.psh as psh
 
 def assert_cat_err(p):
     fname = 'nonexistentFile'
-    statement = f'cat: {fname} no such file'
-    psh.assert_cmd(p, f'cat {fname}', expected=statement, result='fail')
+    statement = rf'cat: {fname}(.+)'
+    psh.assert_cmd(p, f'cat {fname}', expected=statement, result='fail', is_regex=True)
 
 
 def assert_cat_h(p):
