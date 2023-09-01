@@ -70,6 +70,29 @@ class Dut(ABC):
             self.pexpect_proc.logfile_send = self._logfiles[1]
             self.pexpect_proc.logfile = self._logfiles[2]
 
+    def read(self, size: int = 512, timeout: float = 0.1) -> str:
+        """read out RAW output from the DUT with configurable timeout"""
+        if not self.pexpect_proc:
+            return ""
+
+        ret = ""
+        abs_timeout = time.time() + timeout
+        remaining_size = size
+        remaining_time = abs_timeout - time.time()
+
+        while remaining_time > 0 and remaining_size > 0:
+            try:
+                ret += self.pexpect_proc.read_nonblocking(size=remaining_size, timeout=remaining_time)
+                remaining_size = size - len(ret)
+            except pexpect.TIMEOUT:
+                pass
+            except EOF:
+                break
+
+            remaining_time = abs_timeout - time.time()
+
+        return ret
+
     def clear_buffer(self):
         """
         Clears the pexpect buffer.
