@@ -12,7 +12,7 @@ from trunner.ctx import TestContext
 from trunner.dut import Dut
 from trunner.harness import HarnessError, FlashError
 from trunner.text import bold, green, red, yellow, magenta
-from trunner.types import Status, TestOptions, TestResult, is_github_actions, get_ci_url
+from trunner.types import Status, TestOptions, TestResult, TestStage, is_github_actions, get_ci_url
 
 
 def _add_tests_module_to_syspath(project_path: Path):
@@ -139,19 +139,25 @@ class TestRunner:
 
         return tests
 
-    def flash(self):
+    def flash(self) -> TestResult:
         """Flashes the device under test."""
 
         print("Flashing an image to device...")
 
+        # report flashing as a test result to include in export (especially useful when failed)
+        result = TestResult("flash")
+
         try:
+            result.set_stage(TestStage.RUN)
             self.target.flash_dut()
-        except (FlashError, HarnessError) as e:
+            result.set_stage(TestStage.DONE)
+        except (FlashError, HarnessError) as exc:
             print(bold("ERROR WHILE FLASHING THE DEVICE"))
-            print(e)
-            sys.exit(1)
+            print(exc)
+            result.fail_harness_exception(exc)
 
         print("Done!")
+        return result
 
     def _print_test_header_end(self, test: TestOptions):
         if self.ctx.stream_output:
@@ -290,18 +296,23 @@ class TestRunner:
         tests = self.parse_tests()
 
         init_logdir(self.ctx.logdir)
+        results = []
+
+        run_tests = self.ctx.should_test
 
         if self.ctx.should_flash:
             set_logfiles(self.target.dut, self.ctx)
-            self.flash()
+            flash_result = self.flash()
             save_logfiles(self.target.dut, "flash", self.ctx.logdir)
+            results.append(flash_result)
 
-        if not self.ctx.should_test:
-            return True
+            if not flash_result.is_ok():
+                run_tests = False
 
-        _add_tests_module_to_syspath(self.ctx.project_path)
+        if run_tests:
+            _add_tests_module_to_syspath(self.ctx.project_path)
+            results.extend(self.run_tests(tests))
 
-        results = self.run_tests(tests)
         sums = Counter(res.status for res in results)
 
         print(f"TESTS: {len(results)} "
