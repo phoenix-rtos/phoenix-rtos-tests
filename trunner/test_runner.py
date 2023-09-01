@@ -278,7 +278,19 @@ class TestRunner:
                 xml.add_testsuite(suite)
 
             xml.update_statistics()
-            xml.write(self.ctx.output + ".xml", pretty=True)  # TODO: remove pretty
+            try:
+                xml.write(self.ctx.output + ".xml", pretty=True)  # TODO: remove pretty
+            except Exception:
+                # in case of XML error - try dumping to stdout to inspect the XML
+                try:
+                    from lxml import etree
+                except ImportError:
+                    from xml.etree import ElementTree as etree
+                with open(self.ctx.output + ".xml", 'wb') as out_xml:
+                    text = etree.tostring(xml._elem)
+                    out_xml.write(text)
+
+                raise
 
             print(f"Test results written to: {self.ctx.output}{{.csv,.xml}}")
 
