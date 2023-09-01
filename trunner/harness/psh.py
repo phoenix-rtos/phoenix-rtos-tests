@@ -61,6 +61,7 @@ class ShellHarness(IntermediateHarness):
 
     def __call__(self, result: TestResult) -> TestResult:
         try:
+            self.dut.send("\n")
             self.dut.expect_exact(self.prompt, timeout=self.prompt_timeout)
         except (pexpect.TIMEOUT, pexpect.EOF) as e:
             raise ShellError(

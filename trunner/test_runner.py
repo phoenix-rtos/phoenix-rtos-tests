@@ -164,7 +164,7 @@ class TestRunner:
     def _print_test_header_begin(self, test: TestOptions):
         if self.ctx.stream_output:
             if is_github_actions():
-                print("::group::", end="")
+                print("\n::group::", end="")
 
             # while streaming output highlight each new test with color
             print(f"{magenta(test.name)}: ...")
@@ -266,6 +266,7 @@ class TestRunner:
                 except HarnessError as e:
                     result.fail(str(e))
 
+            self.target.dut.read(timeout=0.1)  # try to read (pass to logs) remaining test output
             self._print_test_header_end(test)
             print(result.to_str(self.ctx.verbosity), end="", flush=True)
 
