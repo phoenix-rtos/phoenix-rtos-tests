@@ -171,6 +171,56 @@ class TestRunner:
         else:
             print(f"{test.name}: ", end="", flush=True)
 
+    def _export_results_csv(self, results: Sequence[TestResult]):
+        """write results to fname in CSV format"""
+        if not self.ctx.output:
+            return
+
+        fname = self.ctx.output + ".csv"
+
+        with open(fname, 'w', encoding='utf-8') as out_csv:
+            out_csv.write(TestResult.get_csv_header() + "\n")
+            for res in results:
+                out_csv.write(res.to_csv() + "\n")
+
+        print(f"Test results written to: {fname}")
+
+    def _export_results_xml(self, results: Sequence[TestResult]):
+        """write results to fname in jUnit XML format"""
+        if not self.ctx.output:
+            return
+
+        fname = self.ctx.output + ".xml"
+        # we should be able to have testsuites within testsuites but many tools doesn't support that
+        # map every TestResult to TestSuite instead
+
+        xml = junitparser.JUnitXml()
+        for res in results:
+            suite = res.to_junit_testsuite(self.ctx.target.name)
+            suite.hostname = self.ctx.host.name
+            if is_github_actions():
+                suite.add_property('url', get_ci_url())
+                suite.add_property('SHA', os.environ['GITHUB_SHA'])
+
+            xml.add_testsuite(suite)
+
+        xml.update_statistics()
+        try:
+            xml.write(fname, pretty=True)  # TODO: remove pretty
+        except Exception:
+            # DEBUG: in case of XML error - try dumping to stdout to inspect the XML
+            try:
+                from lxml import etree
+            except ImportError:
+                from xml.etree import ElementTree as etree
+            with open(fname, 'wb') as out_xml:
+                text = etree.tostring(xml._elem)
+                out_xml.write(text)
+
+            raise
+
+        print(f"Test results written to: {fname}")
+
     def run_tests(self, tests: Sequence[TestOptions]) -> Sequence[TestResult]:
         """It builds and runs tests based on given test options.
 
@@ -258,40 +308,7 @@ class TestRunner:
               f"{red('FAILED')}: {sums.get(Status.FAIL, 0)} "
               f"{yellow('SKIPPED')}: {sums.get(Status.SKIP, 0)}")
 
-        if self.ctx.output:
-            with open(self.ctx.output + ".csv", 'w', encoding='utf-8') as out_csv:
-                out_csv.write(TestResult.get_csv_header() + "\n")
-                for res in results:
-                    out_csv.write(res.to_csv() + "\n")
-
-            # we should be able to have testsuites within testsuites but many tools doesn't support that
-            # map every TestResult to TestSuite instead
-
-            xml = junitparser.JUnitXml()
-            for res in results:
-                suite = res.to_junit_testsuite(self.ctx.target.name)
-                suite.hostname = self.ctx.host.name
-                if is_github_actions():
-                    suite.add_property('url', get_ci_url())
-                    suite.add_property('SHA', os.environ['GITHUB_SHA'])
-
-                xml.add_testsuite(suite)
-
-            xml.update_statistics()
-            try:
-                xml.write(self.ctx.output + ".xml", pretty=True)  # TODO: remove pretty
-            except Exception:
-                # in case of XML error - try dumping to stdout to inspect the XML
-                try:
-                    from lxml import etree
-                except ImportError:
-                    from xml.etree import ElementTree as etree
-                with open(self.ctx.output + ".xml", 'wb') as out_xml:
-                    text = etree.tostring(xml._elem)
-                    out_xml.write(text)
-
-                raise
-
-            print(f"Test results written to: {self.ctx.output}{{.csv,.xml}}")
+        self._export_results_csv(results)
+        self._export_results_xml(results)
 
         return sums.get(Status.FAIL, 0) == 0
