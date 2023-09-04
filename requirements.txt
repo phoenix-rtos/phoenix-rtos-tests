@@ -7,9 +7,8 @@ packaging==23.1
 pexpect==4.8.0
 pluggy==0.13.1
 ptyprocess==0.7.0
-py==1.11.0
 pyserial==3.5
-pytest==6.2.3
+pytest==7.4.1
 PyYAML==6.0.1
 RPi.GPIO==0.7.1
 toml==0.10.2
