@@ -161,8 +161,9 @@ class TestRunner:
 
     def _print_test_header_end(self, test: TestOptions):
         if self.ctx.stream_output:
+            print("")  # add newline as test logs might have not ended with it
             if is_github_actions():
-                print("\n::endgroup::")
+                print("::endgroup::")
 
             # while streaming output highlight each new test with color
             print(f"{magenta(test.name)}: ", end="", flush=True)
@@ -170,7 +171,7 @@ class TestRunner:
     def _print_test_header_begin(self, test: TestOptions):
         if self.ctx.stream_output:
             if is_github_actions():
-                print("\n::group::", end="")
+                print("::group::", end="")
 
             # while streaming output highlight each new test with color
             print(f"{magenta(test.name)}: ...")
