@@ -35,7 +35,7 @@ class LogWrapper(StringIO):
 
     def write(self, message):
         # skip esc codes intended to clear window when streaming logs
-        stripped_message = message.replace("\033[2J", "").replace("\033c", "").replace("\033[?7l", "")
+        stripped_message = message.replace("\033[2J", "").replace("\033c", "")
         self.stream.write(stripped_message)
 
         return super().write(message)
@@ -262,6 +262,10 @@ class TestRunner:
                 result.skip()
             else:
                 set_logfiles(self.target.dut, self.ctx)
+                if not test.should_reboot:
+                    # if not rebooting - force new prompt to appear
+                    self.target.dut.send("\n")
+
                 harness = self.target.build_test(test)
                 test_result = None
                 assert harness is not None
