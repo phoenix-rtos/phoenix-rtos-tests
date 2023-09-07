@@ -92,7 +92,7 @@ static const virtio_devinfo_t info[] = {
 	/* VirtIO Memory devices */
 	{ .type = vdevPCI, .id = 0x1058 },
 	{ .type = vdevMMIO, .id = 0x18 },
-#ifdef TARGET_RISCV64
+#ifdef __TARGET_RISCV64
 	/* Direct VirtIO MMIO QEMU descriptors */
 	{ .type = vdevMMIO, .irq = 8, .base = { (void *)0x10008000, 0x1000 } },
 	{ .type = vdevMMIO, .irq = 7, .base = { (void *)0x10007000, 0x1000 } },
