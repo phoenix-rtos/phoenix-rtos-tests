@@ -262,11 +262,12 @@ class TestRunner:
                 result.skip()
             else:
                 set_logfiles(self.target.dut, self.ctx)
-                if not test.should_reboot:
+                harness = self.target.build_test(test)
+
+                if not test.should_reboot:  # WARN: build_test may change TestOptions
                     # if not rebooting - force new prompt to appear
                     self.target.dut.send("\n")
 
-                harness = self.target.build_test(test)
                 test_result = None
                 assert harness is not None
 
