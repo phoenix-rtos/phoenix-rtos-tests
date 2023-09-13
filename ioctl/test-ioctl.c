@@ -54,7 +54,7 @@ typedef uint8_t test_ioctlBuf_t[1024];
 static void *test_thread(void *arg)
 {
 	msg_t msg;
-	unsigned long int rid;
+	msg_rid_t rid;
 	int32_t out;
 	test_ioctlBuf_t out2;
 	int ret;
