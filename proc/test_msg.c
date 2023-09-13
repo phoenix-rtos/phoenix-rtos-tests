@@ -132,7 +132,7 @@ int test_ping(unsigned seed, unsigned port, unsigned count)
 int test_pong(unsigned port)
 {
 	msg_t msg;
-	unsigned long rid;
+	msg_rid_t rid;
 
 	printf("test_msg/pong: starting\n");
 
