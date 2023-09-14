@@ -100,3 +100,9 @@ class IMXRT106xEvkTarget(IMXTarget):
 class IMXRT117xEvkTarget(IMXTarget):
     name = "armv7m7-imxrt117x-evk"
     image = PloImageProperty(file="phoenix.disk", source="usb0", memory_bank="flash0")
+
+    def build_test(self, test: TestOptions) -> Callable[[TestResult], TestResult]:
+        # FIXME due to https://github.com/phoenix-rtos/phoenix-rtos-project/issues/580 always reboot
+        test.should_reboot = True
+
+        return super().build_test(test)
