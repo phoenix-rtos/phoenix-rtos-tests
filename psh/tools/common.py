@@ -110,6 +110,36 @@ def assert_dir_created(p, name):
     _assert_created(p, name, dir=True)
 
 
+def _assert_deleted(p, name, dir=False):
+    ''' Asserts that the `name` file/directory is properly deleted.
+    Name can also be the file/directory absolute path'''
+
+    cmd = 'rmdir' if dir else 'rm'
+    psh.assert_cmd(p, f'{cmd} {name}', result='success', msg=f'Failed to delete: {name} using {cmd}')
+
+
+def assert_file_deleted(p, name):
+    _assert_deleted(p, name, dir=False)
+
+
+def assert_dir_deleted(p, name):
+    _assert_deleted(p, name, dir=True)
+
+
+def assert_deleted_rec(p, dir):
+    ''' Asserts that the directory and its contents are deleted recursively '''
+
+    dir_contents = psh.ls(p, dir)
+    for file in dir_contents:
+        if file.is_dir:
+            if file.name in [".", ".."]:
+                continue
+            assert_deleted_rec(p, dir + "/" + file.name)
+        else:
+            assert_file_deleted(p, dir + "/" + file.name)
+    assert_dir_deleted(p, dir)
+
+
 def _assert_random(p, pool, path, count, random_wrapper: TestRandom, dir=False):
     ''' Asserts that `count` number of files/directories with random names
     (created by matching chars from the `pool` list) are properly created

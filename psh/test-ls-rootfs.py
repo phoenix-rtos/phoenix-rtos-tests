@@ -14,7 +14,7 @@
 
 import psh.tools.psh as psh
 from psh.tools.psh import OPTIONAL_CONTROL_CODE, CONTROL_CODE
-from psh.tools.common import SEPARATOR_PATTERN, OPTIONAL_SEPARATOR_PATTERN, create_testdir
+from psh.tools.common import SEPARATOR_PATTERN, OPTIONAL_SEPARATOR_PATTERN, create_testdir, assert_deleted_rec
 
 
 ROOT_TEST_DIR = 'test_ls_rootfs_dir'
@@ -124,3 +124,5 @@ def harness(p):
     assert_ls_t(p)
     assert_ls_S(p)
     assert_ls_pshcmds(p, psh_cmds)
+
+    assert_deleted_rec(p, ROOT_TEST_DIR)
