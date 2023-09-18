@@ -1,6 +1,6 @@
 import psh.tools.psh as psh
 from psh.tools.randwrapper import TestRandom
-from psh.tools.common import CHARS, assert_dir_created, assert_random_dirs
+from psh.tools.common import CHARS, assert_dir_created, assert_random_dirs, assert_deleted_rec
 
 ROOT_TEST_DIR = 'test_mkdir_dir'
 
@@ -27,3 +27,5 @@ def harness(p):
 
     psh.assert_prompt_after_cmd(p, 'mkdir /', result='fail')
     psh.assert_prompt_after_cmd(p, f'mkdir {ROOT_TEST_DIR}', result='fail')
+
+    assert_deleted_rec(p, ROOT_TEST_DIR)
