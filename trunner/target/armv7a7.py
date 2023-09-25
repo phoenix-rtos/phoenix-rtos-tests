@@ -80,11 +80,11 @@ class IMX6ULLEvkTarget(ARMv7A7Target):
         flash_device_id="2.0",
         cleanmarkers_args=PloJffs2CleanmarkerSpec(
             start_block=0x10,
-            number_of_blocks=0x1f0,
+            number_of_blocks=0x1F0,
             block_size=0x10000,
             cleanmarker_size=0x10,
         ),
-        timeout=90,
+        timeout=275,
     )
     name = "armv7a7-imx6ull-evk"
 
