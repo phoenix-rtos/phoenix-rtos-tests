@@ -13,10 +13,11 @@
 #
 
 import psh.tools.psh as psh
-import trunner.config as config
+import trunner.ctx as ctx
 from psh.tools.randwrapper import TestRandom
 from psh.tools.common import (CHARS, assert_present, assert_file_created, assert_dir_created,
-                              assert_random_files, get_rand_strings, create_testdir, assert_mtime)
+                              assert_random_files, get_rand_strings, create_testdir,
+                              assert_mtime, assert_deleted_rec)
 
 
 ROOT_TEST_DIR = 'test_touch_dir'
@@ -26,7 +27,7 @@ def assert_executable(p):
     # psh is the example of executable which exists in file system
     msg = "Prompt hasn't been seen after the executable touch: /usr/bin/hello"
     date = psh.date(p)
-    if config.CURRENT_TARGET in config.SYSEXEC_TARGETS:
+    if not ctx.target.rootfs:
         psh.assert_cmd(p, 'touch /syspage/psh', result='success', msg=msg)
         assert_mtime(p, {'psh': date}, '/syspage')
     else:
@@ -75,7 +76,7 @@ def assert_existing_dirs(p):
     # we assume that syspage directory exists on syspage targets and bin directory exists on root-fs targets
     msg = "Prompt hasn't been seen after the executable touch: /usr/bin/hello"
     date = psh.date(p)
-    if config.CURRENT_TARGET in config.SYSEXEC_TARGETS:
+    if not ctx.target.rootfs:
         psh.assert_cmd(p, 'touch /syspage/', result='success', msg=msg)
         assert_mtime(p, {'syspage': date}, '/')
     else:
@@ -104,3 +105,5 @@ def harness(p):
 
     assert_devices(p)
     assert_executable(p)
+
+    assert_deleted_rec(p, ROOT_TEST_DIR)
