@@ -119,6 +119,7 @@ test:
         execute: test_suite_memory_buffer_alloc /mbedtls_test_configs/test_suite_memory_buffer_alloc.datax
       - name: test_suite_mpi
         execute: test_suite_mpi /mbedtls_test_configs/test_suite_mpi.datax
+        ignore: True #issue #829 https://github.com/phoenix-rtos/phoenix-rtos-project/issues/829
       - name: test_suite_mps
         execute: test_suite_mps /mbedtls_test_configs/test_suite_mps.datax
       - name: test_suite_net
