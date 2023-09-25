@@ -13,7 +13,6 @@
 #
 import psh.tools.psh as psh
 
-
 TAB = '\x09'
 ENTER = '\x0D'
 
@@ -87,3 +86,4 @@ def harness(p):
 
     # TODO Tests: backspace handling, symlink handling
     # TODO cleanup folders after tests
+

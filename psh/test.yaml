@@ -52,9 +52,7 @@ test:
           harness: test-mkdir.py
 
         - name: touch
-          # TODO touch of netsocket and pf fails...
           harness: test-touch.py
-          ignore: True
 
         - name: touch-rootfs
           harness: test-touch-rootfs.py
