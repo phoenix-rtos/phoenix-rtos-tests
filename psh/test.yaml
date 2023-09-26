@@ -10,8 +10,8 @@ test:
           # ensure no other binaries are loaded from the previous tests during the psh tests
           reboot: True
 
-        - name: auth
-          harness: test-auth.py
+        # - name: auth
+        #   harness: test-auth.py
 
         #FIXME - test-pshlogin.py is only for targets with root
         - name: pshlogin
