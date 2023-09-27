@@ -12,21 +12,12 @@
 # %LICENSE%
 #
 import psh.tools.psh as psh
+from psh.tools.common import create_testdir, assert_file_created, assert_dir_created, assert_deleted_rec
 
 TAB = '\x09'
 ENTER = '\x0D'
-
-
-def mkdir(p, path):
-    p.send('mkdir ' + path + ENTER)
-    p.expect_exact('mkdir ' + path)
-    psh.assert_prompt(p, msg='Cannot make directory: ' + path, timeout=1)
-
-
-def touch(p, path):
-    p.send('touch ' + path + ENTER)
-    p.expect_exact('touch ' + path)
-    psh.assert_prompt(p, msg='Cannot make file: ' + path, timeout=1)
+ROOT_TEST_DIR = 'test_autocompletion_dir'
+TEST_DIR_BASIC = f'{ROOT_TEST_DIR}/loremipsum'
 
 
 def assert_completion(p, comptab):
@@ -52,38 +43,40 @@ def assert_hints(p, path, hints):
 
 @psh.run
 def harness(p):
-    mkdir(p, 'etc')
+    p.sendline('mkdir etc')
+    p.expect_exact('mkdir etc')
 
     # Create test environment
-    mkdir(p, 'testenv')
-    mkdir(p, 'testenv/ipsum')
-    mkdir(p, 'testenv/lorem')
-    mkdir(p, 'testenv/loremipsum')
-    touch(p, 'testenv/loremipsum/dolor.txt')
-    touch(p, 'testenv/loremipsum/sit.jpg')
-    touch(p, 'testenv/loremipsum/amet.exe')
+    create_testdir(p, ROOT_TEST_DIR)
+    assert_dir_created(p, f'{ROOT_TEST_DIR}/ipsum')
+    assert_dir_created(p, f'{ROOT_TEST_DIR}/lorem')
+    assert_dir_created(p, TEST_DIR_BASIC)
+    assert_file_created(p, f'{TEST_DIR_BASIC}/dolor.txt')
+    assert_file_created(p, f'{TEST_DIR_BASIC}/sit.jpg')
+    assert_file_created(p, f'{TEST_DIR_BASIC}/amet.exe')
 
     # Check autocompletion in command
     assert_completion(p, [['ls e', 'tc/']])
     assert_completion(p, [['ls /e', 'tc/']])
     assert_completion(p, [['ls /etc', '/']])
 
-    assert_completion(p, [['ls testen', 'v/']])
-    assert_completion(p, [['ls /testen', 'v/']])
-    assert_completion(p, [['ls testenv/i', 'psum/']])
+    assert_completion(p, [['ls test_autocompletion_', 'dir/']])
+    assert_completion(p, [['ls /test_autocompletion_', 'dir/']])
+    assert_completion(p, [[f'ls {ROOT_TEST_DIR}/i', 'psum/']])
 
-    longpath = 'ls testenv/lorem/./../lorem/../../testenv/ip'
+    longpath = f'ls {ROOT_TEST_DIR}/lorem/./../lorem/../../{ROOT_TEST_DIR}/ip'
     assert_completion(p, [[longpath, 'sum']])
-    assert_completion(p, [['ls ../testenv/ip', 'sum']])
+    assert_completion(p, [[f'ls ../{ROOT_TEST_DIR}/ip', 'sum']])
 
     # Check multiple autocompletion in one
-    assert_completion(p, [['ls testen', 'v/'], ['loremi', 'psum/'], ['dol', 'or.txt']])
+    assert_completion(p, [['ls test_autocompletion_', 'dir/'], ['loremi', 'psum/'], ['dol', 'or.txt']])
 
     # Check hints
-    assert_hints(p, path='ls testenv/', hints=['ipsum', 'lorem', 'loremipsum'])
-    assert_hints(p, path='ls testenv/lorem/../', hints=['ipsum', 'lorem', 'loremipsum'])
-    assert_hints(p, path='ls testenv/loremipsum/', hints=['amet', 'dolor', 'sit'])
+    assert_hints(p, path=f'ls {ROOT_TEST_DIR}/', hints=['ipsum', 'lorem', 'loremipsum'])
+    assert_hints(p, path=f'ls {ROOT_TEST_DIR}/lorem/../', hints=['ipsum', 'lorem', 'loremipsum'])
+    assert_hints(p, path=f'ls {ROOT_TEST_DIR}/loremipsum/', hints=['amet', 'dolor', 'sit'])
+
+    # Cleanup
+    assert_deleted_rec(p, ROOT_TEST_DIR)
 
     # TODO Tests: backspace handling, symlink handling
-    # TODO cleanup folders after tests
-
