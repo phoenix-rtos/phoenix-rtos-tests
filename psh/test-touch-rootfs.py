@@ -18,7 +18,12 @@ from psh.tools.common import assert_mtime
 def assert_bin(p):
     ''' Asserts that all files in /bin are able to be touched'''
     dates = {}
-    for file in psh.ls_simple(p, 'bin'):
+    for file_info in psh.ls(p, 'bin'):
+        # If file has multiple links, dates of all linked files will change when one is touched
+        if file_info.n_links > 1:
+            continue
+
+        file = file_info.name
         file_path = f'/bin/{file}'
         dates[file] = psh.date(p)
         msg = f"Prompt hasn't been seen after touching the following file: {file_path}"

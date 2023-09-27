@@ -50,22 +50,21 @@ def create_testdir(p, dirname):
 def assert_mtime(p, datetimes: Dict[str, datetime], dir=''):
     ''' Asserts that files (keys in datetimes dictionary) have modification time
     equal to corresponding datetime values with 1 min margin.
-    Year and seconds are not checked. All files shall be present in the `dir` directory. '''
+    Seconds are not checked. If file's modification year is different from year
+    currently set on the device, the hours and minutes will not be checked either. '''
 
     dir_files = {file.name: file for file in psh.ls(p, dir)}
 
     for filename, target_datetime in datetimes.items():
         assert filename in dir_files, f'File {filename} is not present in the {dir} directory!'
-        date = dir_files[filename].datetime
+        date: datetime = dir_files[filename].datetime
+        date_resolution: timedelta = dir_files[filename].datetime_resolution
 
-        # we do not want to compare years and seconds (not printed by ls -l)
-        date = date.replace(year=target_datetime.year, second=target_datetime.second)
+        delta = target_datetime - date
 
-        # to prevent failed assertion when typing date in 00:59 and touch in 01:00
-        if date - target_datetime == timedelta(minutes=1):
-            date = target_datetime
-
-        assert date == target_datetime, "".join((
+        # Check if delta is smaller than resolution and allow for file to be up to 1 second
+        # newer (this can happen because `date` is called first, then `touch`)
+        assert delta < date_resolution and delta >= timedelta(seconds=-1), "".join((
             f'The modification time for {filename} is not equal to the target one! ',
             f'file datetime: {date} target datetime: {target_datetime}'))
 
