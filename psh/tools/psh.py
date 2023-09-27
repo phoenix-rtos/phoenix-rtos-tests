@@ -21,7 +21,7 @@ import pexpect
 
 import trunner
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 EOL = r'(?:\r+)\n'
 EOT = '\x04'
@@ -179,8 +179,9 @@ def date(pexpect_proc):
 
 def ls(pexpect_proc, dir=''):
     ''' Returns the list with named tuples containing information about files present in the specified directory '''
-    File = namedtuple('File', ['name', 'owner', 'is_dir', 'datetime'])
+    File = namedtuple('File', ['name', 'owner', 'is_dir', 'datetime', 'datetime_resolution', 'n_links'])
 
+    current_year = date(pexpect_proc).year
     _send(pexpect_proc, f'ls -la {dir}')
 
     pexpect_proc.expect_exact('\n')
@@ -195,16 +196,27 @@ def ls(pexpect_proc, dir=''):
         # temporary solution to match line with missing `---` in owner position (issue #254)
         line = line.replace('    ---', '--- ---')
         try:
-            permissions, _, owner, _, _, month, mday, time, name = line.split(maxsplit=9)
+            permissions, n_links_str, owner, _, _, month, mday, time_year, name = line.split(maxsplit=9)
         except ValueError:
             assert False, f'wrong ls output: {line}'
 
         # Name is printed with ascii escape characters - remove them
         name = re.sub(CONTROL_CODE, '', name)
 
-        # the year is set to default 1970, 1 min resolution
-        file_datetime = datetime.strptime(f'1970 {month} {mday} {time}:00', '%Y %b %d %X')
-        f = File(name, owner, permissions[0] == 'd', file_datetime)
+        # time_year can contain either time (HH:MM) or year (YYYY)
+        # If year was not printed, replace it with current year
+        if ':' in time_year:
+            time = time_year
+            year = current_year
+            resolution = timedelta(minutes=1)
+        else:
+            time = '00:00'
+            year = time_year
+            resolution = timedelta(days=1)
+
+        file_datetime = datetime.strptime(f'{year} {month} {mday} {time}:00', '%Y %b %d %X')
+
+        f = File(name, owner, permissions[0] == 'd', file_datetime, resolution, int(n_links_str))
         files.append(f)
 
     return files
