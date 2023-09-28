@@ -266,6 +266,9 @@ def deinit(pexpect_proc):
 def run(harness):
     @functools.wraps(harness)
     def wrapper_harness(*args, **kwargs):
+        # to avoid CI fails caused by https://github.com/phoenix-rtos/phoenix-rtos-project/issues/866
+        if trunner.ctx.target.name == "armv7m7-imxrt117x-evk":
+            return harness(*args, **kwargs)
         dut = args[0]
         init(dut)
         res = harness(*args, **kwargs)
