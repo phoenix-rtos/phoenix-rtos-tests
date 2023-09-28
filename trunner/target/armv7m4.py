@@ -3,11 +3,8 @@ import time
 from pathlib import Path
 from typing import Callable, Optional, Sequence
 
-import pexpect.fdpexpect
-import serial
-
 from trunner.ctx import TestContext
-from trunner.dut import Dut, SerialDut, PortError
+from trunner.dut import Dut, SerialDut
 from trunner.host import Host
 from trunner.harness import (
     IntermediateHarness,
@@ -101,31 +98,6 @@ class STM32L4x6PloAppLoader(TerminalHarness, PloInterface):
             offset += self._aligned_app_size(path)
 
 
-class fdspawncustom(pexpect.fdpexpect.fdspawn):
-    """
-    The current UART implementation on the STM32L4 breaks when bytes are sent too fast.
-    To alleviate this problem, we override the pexpect class and introduce a delay in the send function.
-    """
-
-    def send(self, s):
-        ret = 0
-        for c in s:
-            ret += super().send(c)
-            time.sleep(0.03)
-
-        return ret
-
-
-class STM32L4SerialDut(SerialDut):
-    def open(self):
-        try:
-            self.serial = serial.Serial(self.port, self.baudrate)
-        except serial.SerialException as e:
-            raise PortError(str(e)) from e
-
-        self.pexpect_proc = fdspawncustom(self.serial, *self.args, **self.kwargs)
-
-
 class STM32L4x6Target(TargetBase):
     name = "armv7m4-stm32l4x6-nucleo"
     rootfs = False
@@ -138,7 +110,7 @@ class STM32L4x6Target(TargetBase):
             # Try to find USB-Serial controller
             port = find_port("USB-Serial|UART")
 
-        self.dut = STM32L4SerialDut(port, baudrate, encoding="utf-8", codec_errors="ignore")
+        self.dut = SerialDut(port, baudrate, encoding="utf-8", codec_errors="ignore")
         self.rebooter = ARMv7M4Rebooter(host, self.dut)
         super().__init__()
 
