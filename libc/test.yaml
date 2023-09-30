@@ -44,3 +44,10 @@ test:
       execute: test-libc-string
       targets:
         include: [host-generic-pc]
+
+    - name: exit
+      execute: test-libc-exit
+      targets:
+        # Excluded due to lack of fork() related functionality
+        exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo]
+        include: [host-generic-pc]
