@@ -3545,11 +3545,6 @@ TEST(stdio_scanf_cspn, percent)
 
 TEST(stdio_scanf_cspn, ptr)
 {
-	/* Disabled because of issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/677 */
-#ifdef __phoenix__
-	TEST_IGNORE();
-#endif
-
 	char buff[BUFF_LEN];
 	char format[] = "%p %p %p %p";
 	void *const expPtr = (void *)0xDEADBEEF;
