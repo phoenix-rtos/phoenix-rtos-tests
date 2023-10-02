@@ -15,6 +15,11 @@ test:
       targets:
         value: [armv7m4-stm32l4x6-nucleo]
 
+    - name: scanf
+      execute: test-libc-scanf
+      targets:
+        include: [host-generic-pc]
+
     - name: pthread
       execute: test-libc-pthread
       targets:
