@@ -27,7 +27,8 @@ SEPARATOR_PATTERN_BASE = r'(?:' + CONTROL_CODE + r'|\s)'
 SEPARATOR_PATTERN = SEPARATOR_PATTERN_BASE + r'+?'
 # acceptable patterns: white spaces (wss) + CC, CC + wss, wss, nothing
 OPTIONAL_SEPARATOR_PATTERN = SEPARATOR_PATTERN_BASE + r'*?'
-CHARS = list(set(string.printable) - set(string.whitespace) - set('/'))
+# all printable chars excluding whitespaces and SH syntax
+CHARS = list(set(string.printable) - set(string.whitespace) - set('/<>;|&$!*\\()[]{}'))
 
 
 def get_rand_strings(pool, count, random_wrapper: TestRandom, min_chars=8, max_chars=16):
