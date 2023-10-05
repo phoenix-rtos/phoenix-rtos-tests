@@ -41,20 +41,23 @@ TEST(test_pthread_cond, pthread_condattr_setclock)
 {
 	pthread_condattr_t attr;
 	TEST_ASSERT_EQUAL(0, pthread_condattr_init(&attr));
-	TEST_ASSERT_EQUAL(0, pthread_condattr_setclock(&attr, CLOCK_MONOTONIC));
 
 	clockid_t clock;
-	/* Only 'CLOCK_MONOTONIC' supported Phoenix-RTOS */
+
+	TEST_ASSERT_EQUAL(0, pthread_condattr_setclock(&attr, CLOCK_MONOTONIC));
 	TEST_ASSERT_EQUAL(0, pthread_condattr_getclock(&attr, &clock));
 	TEST_ASSERT_EQUAL(CLOCK_MONOTONIC, clock);
-	TEST_ASSERT_EQUAL(EINVAL, pthread_condattr_setclock(&attr, CLOCK_MONOTONIC_RAW));
+
+	/* glibc don't want to use CLOCK_MONOTONIC_RAW */
 #ifdef __phoenix__
-	TEST_ASSERT_EQUAL(EINVAL, pthread_condattr_setclock(&attr, CLOCK_REALTIME));
-#else
+	TEST_ASSERT_EQUAL(0, pthread_condattr_setclock(&attr, CLOCK_MONOTONIC_RAW));
+	TEST_ASSERT_EQUAL(0, pthread_condattr_getclock(&attr, &clock));
+	TEST_ASSERT_EQUAL(CLOCK_MONOTONIC_RAW, clock);
+#endif
+
 	TEST_ASSERT_EQUAL(0, pthread_condattr_setclock(&attr, CLOCK_REALTIME));
 	TEST_ASSERT_EQUAL(0, pthread_condattr_getclock(&attr, &clock));
 	TEST_ASSERT_EQUAL(CLOCK_REALTIME, clock);
-#endif
 }
 
 
