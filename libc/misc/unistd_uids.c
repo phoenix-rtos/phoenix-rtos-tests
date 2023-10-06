@@ -115,11 +115,8 @@ TEST(unistd_uids, setpuids_setsid)
 
 	/* assert correctness of child pid/group/session before setsid */
 	TEST_ASSERT_NOT_EQUAL_INT(parent[0], child[0]); /* parent-child have different pid */
-/* skipped because of #600 issue */
-#ifndef __phoenix__
 	TEST_ASSERT_EQUAL_INT(parent[1], child[1]);     /* equal pgrp */
 	TEST_ASSERT_EQUAL_INT(parent[2], child[2]);     /* equal sid */
-#endif
 
 	/* after setsid the pid, group id and session id of child should be equal */
 	TEST_ASSERT_NOT_EQUAL_INT(parent[0], child[3]); /* parent-child have different pid */

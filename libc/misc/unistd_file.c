@@ -517,10 +517,6 @@ TEST(unistd_file, file_truncate_up)
 	/* truncate file length to higher than it already is */
 	TEST_ASSERT_EQUAL_INT(0, truncate(FNAME, datalen));
 
-	/* temporary disabled part, because of #599 issue */
-#ifdef __phoenix__
-	TEST_IGNORE();
-#endif
 	/* reopen file and read everything that's inside */
 	fd = open(FNAME, O_RDONLY, S_IRUSR);
 	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fd);
@@ -658,10 +654,6 @@ TEST(unistd_file, file_ftruncate_up)
 	TEST_ASSERT_EQUAL_INT(0, ftruncate(fd, datalen));
 	TEST_ASSERT_EQUAL_INT(0, close(fd));
 
-	/* temporary disabled part, because of #599 issue */
-#ifdef __phoenix__
-	TEST_IGNORE();
-#endif
 	/* reopen file */
 	fd = open(FNAME, O_RDONLY);
 	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fd);
@@ -722,14 +714,6 @@ TEST(unistd_file, file_ftruncate_einval)
 /* ftruncate()-ing file with invalid file descriptors */
 TEST(unistd_file, file_ftruncate_ebadf)
 {
-	/* <posix incmpliance> ftruncate() can truncate readoonly files and closed files on Phoenix-RTOS
-
-	Issue link: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/364
-	*/
-#ifdef __phoenix__
-	TEST_IGNORE();
-#endif
-
 	/* try to truncate on closed descriptor */
 	TEST_ASSERT_EQUAL_INT(0, close(fd));
 	TEST_ASSERT_EQUAL_INT(-1, ftruncate(fd, 0));
