@@ -58,10 +58,10 @@ def assert_cmd(pexpect_proc, cmd, *, expected='', result='success', msg='', is_r
     with optional expected output and next prompt. Exit status is asserted depending on `result`'''
     pexpect_proc.sendline(cmd)
     cmd = re.escape(cmd)
-    exp_regex = ''
+    exp_regex = ""
     if is_regex:
         exp_regex = expected
-    elif expected != '':
+    elif expected != "":
         if not (isinstance(expected, tuple) or isinstance(expected, list)):
             expected = tuple((expected,))
         for line in expected:
@@ -70,7 +70,7 @@ def assert_cmd(pexpect_proc, cmd, *, expected='', result='success', msg='', is_r
 
     exp_regex = cmd + EOL + exp_regex + PROMPT
     exp_readable = _readable(exp_regex)
-    msg = f'Expected output regex was: \n---\n{exp_readable}\n---\n' + msg
+    msg = f"Expected output regex was: \n---\n{exp_readable}\n---\n" + msg
 
     assert pexpect_proc.expect([exp_regex, pexpect.TIMEOUT, pexpect.EOF], timeout=timeout) == 0, msg
 
