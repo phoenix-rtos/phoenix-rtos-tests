@@ -13,7 +13,7 @@ test:
         - name: auth
           harness: test-auth.py
 
-        #FIXME - test-pshlogin.py is only for targets with root
+          # FIXME - test-pshlogin.py is only for targets with root
         - name: pshlogin
           harness: test-pshlogin.py
           targets:
@@ -68,7 +68,23 @@ test:
           harness: test-runfile.py
           targets:
               # runfile applet is not intended for non-rootfs targets
-              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo, riscv64-generic-qemu]
+              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo]
 
         - name: history
           harness: test-history.py
+
+        - name: ping_lan
+          harness: test-ping-lan.py
+          reboot: True
+          nightly: True
+          targets:
+              # runfile applet is not intended for non-rootfs targets
+              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo, armv7a9-zynq7000-zedboard, armv7a9-zynq7000-qemu, ia32-generic-qemu]
+
+        - name: ping_wan
+          harness: test-ping-wan.py
+          reboot: True
+          nightly: True
+          targets:
+              # runfile applet is not intended for non-rootfs targets
+              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo, armv7a9-zynq7000-zedboard, armv7a9-zynq7000-qemu, ia32-generic-qemu]
