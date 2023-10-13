@@ -12,9 +12,6 @@ test:
 
         - name: auth
           harness: test-auth.py
-          # issue https://github.com/phoenix-rtos/phoenix-rtos-project/issues/860
-          targets:
-              exclude: [riscv64-generic-qemu]
 
         #FIXME - test-pshlogin.py is only for targets with root
         - name: pshlogin

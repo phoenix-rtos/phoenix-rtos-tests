@@ -53,18 +53,18 @@ def harness(p):
 
     # Wrong credentials
     assert_auth(p)
-    logintools.assert_login_fail(p, cred_ok.user, cred_bad.passwd, expect_psh_afterwards=True)
+    logintools.assert_auth_fail(p, cred_ok.user, cred_bad.passwd)
 
     assert_auth(p)
-    logintools.assert_login_fail(p, cred_bad.user, cred_ok.passwd, expect_psh_afterwards=True)
+    logintools.assert_auth_fail(p, cred_bad.user, cred_ok.passwd)
     assert_auth(p)
-    logintools.assert_login_fail(p, cred_bad.user, cred_bad.passwd, expect_psh_afterwards=True)
+    logintools.assert_auth_fail(p, cred_bad.user, cred_bad.passwd)
 
     # Empty Credentials
     assert_auth(p)
-    logintools.assert_login_fail(p, cred_ok.user, cred_empty.passwd, expect_psh_afterwards=True)
+    logintools.assert_auth_fail(p, cred_ok.user, cred_empty.passwd)
     assert_auth(p)
-    logintools.assert_login_fail(p, cred_bad.user, cred_empty.passwd, expect_psh_afterwards=True)
+    logintools.assert_auth_fail(p, cred_bad.user, cred_empty.passwd)
     assert_auth(p)
     logintools.assert_login_empty(p, cred_empty.user)
     p.send(EOT)  # assert_login_empty() with empty login does not go back to psh, exit needed
@@ -75,7 +75,7 @@ def harness(p):
     assert_auth(p)
     p.send(printables + '\n')
     assert p.expect_exact(['Login:', pexpect.TIMEOUT]) == 0, 'Long login does not repeat login procedure'
-    logintools.assert_login_fail(p, cred_ok.user, printables)  # too long password
+    logintools.assert_auth_fail(p, cred_ok.user, printables)  # too long password
 
     # Test backspace
     assert_auth(p)
@@ -89,3 +89,4 @@ def harness(p):
         p.send(BACKSPACE)
     p.send(cred_ok.passwd + '\n')
     psh.assert_prompt(p, msg='Login should pass but failed', timeout=1)
+    psh.assert_cmd_successed(p)
