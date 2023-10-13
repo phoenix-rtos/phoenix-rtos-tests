@@ -45,13 +45,13 @@ def harness(p):
     assert_pshlogin(p)
 
     # Wrong credentials
-    logintools.assert_login_fail(p, cred_ok_etc.user, cred_bad.passwd)  # good login, wrong password
-    logintools.assert_login_fail(p, cred_bad.user, cred_ok_etc.passwd)  # bad login, good password
-    logintools.assert_login_fail(p, cred_bad.user, cred_bad.passwd)  # bad login, bad password
+    logintools.assert_pshlogin_fail(p, cred_ok_etc.user, cred_bad.passwd)  # good login, wrong password
+    logintools.assert_pshlogin_fail(p, cred_bad.user, cred_ok_etc.passwd)  # bad login, good password
+    logintools.assert_pshlogin_fail(p, cred_bad.user, cred_bad.passwd)  # bad login, bad password
 
     # Empty Credentials
-    logintools.assert_login_fail(p, cred_ok_etc.user, cred_empty.passwd)  # good login, empty password
-    logintools.assert_login_fail(p, cred_bad.user, cred_empty.passwd)  # bad login, empty password
+    logintools.assert_pshlogin_fail(p, cred_ok_etc.user, cred_empty.passwd)  # good login, empty password
+    logintools.assert_pshlogin_fail(p, cred_bad.user, cred_empty.passwd)  # bad login, empty password
     logintools.assert_login_empty(p, cred_empty.user)  # empty login, good password
 
     # Good login, new psh is created
@@ -62,7 +62,7 @@ def harness(p):
     psh.assert_prompt(p)
 
     assert_pshlogin(p)
-    logintools.assert_login_fail(p, cred_ok.user, cred_bad.passwd)
+    logintools.assert_pshlogin_fail(p, cred_ok.user, cred_bad.passwd)
     logintools.assert_login(p, cred_ok.user, cred_ok.passwd)
 
     p.send(EOT)
@@ -72,7 +72,7 @@ def harness(p):
     assert_pshlogin(p)
     p.send(string.printable + '\n')
     assert p.expect_exact(['Login:', pexpect.TIMEOUT], timeout=2) == 0, 'Long login does not repeat login procedure'
-    logintools.assert_login_fail(p, cred_ok.user, string.printable)  # too long password
+    logintools.assert_pshlogin_fail(p, cred_ok.user, string.printable)  # too long password
 
     # Proper login to go back to psh
     logintools.assert_login(p, cred_ok_etc.user, cred_ok_etc.passwd)

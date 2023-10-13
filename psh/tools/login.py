@@ -33,13 +33,20 @@ def log_in(p, login, passwd):
 def assert_login(p, login, passwd):
     log_in(p, login, passwd)
     psh.assert_prompt(p, msg='Login should pass but failed (or hasn\'t been completed in 2s)', timeout=2)
+    psh.assert_cmd_successed(p)
 
 
-def assert_login_fail(p, login, passwd, expect_psh_afterwards=False):
+def assert_pshlogin_fail(p, login, passwd):
     log_in(p, login, passwd)
-    psh.assert_prompt_fail(p, msg='Login should fail but passed in 2s', timeout=2)
-    if expect_psh_afterwards:
-        psh.assert_prompt(p, msg='Login should pass but failed')
+    # prompt should not been seen after passing wrong data when logging in using pshapp
+    psh.assert_prompt_fail(p, msg='Login should fail but passed (prompt appeared in 2s)', timeout=2)
+
+
+def assert_auth_fail(p, login, passwd):
+    log_in(p, login, passwd)
+    # prompt should been seen even after passing wrong data when logging in using auth applet
+    psh.assert_prompt(p, 'Prompt not seen after an attempt to log in')
+    psh.assert_cmd_failed(p)
 
 
 def assert_login_empty(p, login):
