@@ -1,3 +1,4 @@
+from abc import abstractmethod
 import subprocess
 import time
 from typing import Callable, Optional
@@ -18,7 +19,7 @@ from trunner.harness import (
 )
 from trunner.harness import TerminalHarness
 from trunner.host import Host
-from trunner.tools import JLinkGdbServer, Phoenixd
+from trunner.tools import Phoenixd, OpenocdGdbServer
 from trunner.types import TestResult, TestOptions
 from .base import TargetBase, find_port
 
@@ -41,13 +42,13 @@ class ARMv7A9TargetRebooter(Rebooter):
         self.host.set_flash_mode(not flash)
 
 
-class ZynqGdbPloLoader(TerminalHarness, PloInterface):
+class ZynqZedboardGdbPloLoader(TerminalHarness, PloInterface):
     def __init__(self, dut: Dut, script: str, cwd: Optional[str] = None):
         TerminalHarness.__init__(self)
         PloInterface.__init__(self, dut)
         self.script = script
         self.cwd = cwd
-        self.gdbserver = JLinkGdbServer("Zynq 7020")
+        self.gdbserver = OpenocdGdbServer(board="digilent_zedboard")
 
     def __call__(self):
         """Loads plo image to RAM using gdb."""
@@ -86,22 +87,10 @@ class ARMv7A9Target(TargetBase):
     def from_context(cls, ctx: TestContext):
         return cls(ctx.host, ctx.port, ctx.baudrate)
 
+    @abstractmethod
     def flash_dut(self):
-        plo_loader = ZynqGdbPloLoader(
-            dut=self.dut,
-            script=f"{self._project_dir()}/phoenix-rtos-build/scripts/upload-zynq7000-jlink.gdb",
-            cwd=self.boot_dir(),
-        )
-
-        loader = PloImageLoader(
-            dut=self.dut,
-            rebooter=self.rebooter,
-            image=self.image,
-            plo_loader=plo_loader,
-            phoenixd=Phoenixd(directory=self.boot_dir()),
-        )
-
-        loader()
+        # for now there is no common flashing approach for all future armv7a9 targets
+        pass
 
     def build_test(self, test: TestOptions) -> Callable[[TestResult], TestResult]:
         builder = HarnessBuilder()
@@ -141,3 +130,20 @@ class Zynq7000ZedboardTarget(ARMv7A9Target):
             port = find_port("04b4:0008")
 
         super().__init__(host, port, baudrate)
+
+    def flash_dut(self):
+        plo_loader = ZynqZedboardGdbPloLoader(
+            dut=self.dut,
+            script=f"{self._project_dir()}/phoenix-rtos-build/scripts/upload-zynq7000-smt2.gdb",
+            cwd=self.boot_dir(),
+        )
+
+        loader = PloImageLoader(
+            dut=self.dut,
+            rebooter=self.rebooter,
+            image=self.image,
+            plo_loader=plo_loader,
+            phoenixd=Phoenixd(directory=self.boot_dir()),
+        )
+
+        loader()
