@@ -2,7 +2,7 @@ import io
 import signal
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Union
+from typing import Optional, Union
 
 import pexpect
 
@@ -94,30 +94,32 @@ class OpenocdError(ProcessError):
 class OpenocdGdbServer:
     """Handler for OpenocdGdbServer process"""
 
-    def __init__(self, interface: str, target: str):
+    def __init__(self, interface: str, target: str, extra_args: Optional[list[str]] = None):
         self.proc = None
         self.target = target
         self.interface = interface
         self.output = ""
         self.logfile = io.StringIO()
+        self.extra_args = extra_args
 
     @contextmanager
     @add_output_to_exception(OpenocdError)
     def run(self):
         try:
             # Use pexpect.spawn to run a process as PTY, so it will flush on a new line
+            args = [
+                "-f",
+                f"interface/{self.interface}.cfg",
+                "-f",
+                f"target/{self.target}.cfg",
+            ]
+
+            if self.extra_args:
+                args.extend(self.extra_args)
+
             self.proc = pexpect.spawn(
                 "openocd",
-                [
-                    "-f",
-                    f"interface/{self.interface}.cfg",
-                    "-f",
-                    f"target/{self.target}.cfg",
-                    "-c",
-                    "reset_config srst_only srst_nogate connect_assert_srst",
-                    "-c",
-                    "init;reset",
-                ],
+                args,
                 encoding="ascii",
                 logfile=self.logfile,
             )
