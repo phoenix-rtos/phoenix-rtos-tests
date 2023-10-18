@@ -2,7 +2,7 @@ import io
 import signal
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional, Union, List
 
 import pexpect
 
@@ -94,35 +94,42 @@ class OpenocdError(ProcessError):
 class OpenocdGdbServer:
     """Handler for OpenocdGdbServer process"""
 
-    def __init__(self, interface: str, target: str, extra_args: Optional[list[str]] = None):
+    def __init__(
+        self,
+        interface: Optional[str] = None,
+        target: Optional[str] = None,
+        board: Optional[str] = None,
+        extra_args: Optional[List[str]] = None,
+    ):
         self.proc = None
         self.target = target
         self.interface = interface
+        self.board = board
         self.output = ""
         self.logfile = io.StringIO()
         self.extra_args = extra_args
+
+        if board:
+            if target or interface:
+                raise OpenocdError("Target or Interface arguments provided when board is specified")
+        else:
+            if not target or not interface:
+                raise OpenocdError("Target or Interface arguments missing")
 
     @contextmanager
     @add_output_to_exception(OpenocdError)
     def run(self):
         try:
             # Use pexpect.spawn to run a process as PTY, so it will flush on a new line
-            args = [
-                "-f",
-                f"interface/{self.interface}.cfg",
-                "-f",
-                f"target/{self.target}.cfg",
-            ]
+            if self.board:
+                args = ["-f", f"board/{self.board}.cfg"]
+            else:
+                args = ["-f", f"interface/{self.interface}.cfg", "-f", f"target/{self.target}.cfg"]
 
             if self.extra_args:
                 args.extend(self.extra_args)
 
-            self.proc = pexpect.spawn(
-                "openocd",
-                args,
-                encoding="ascii",
-                logfile=self.logfile,
-            )
+            self.proc = pexpect.spawn("openocd", args, encoding="ascii", logfile=self.logfile)
 
             try:
                 self.proc.expect_exact("Info : Listening on port 3333 for gdb connections")
