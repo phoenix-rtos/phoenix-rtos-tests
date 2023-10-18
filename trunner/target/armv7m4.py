@@ -45,7 +45,10 @@ class STM32L4x6OpenocdGdbServerHarness(IntermediateHarness):
         self.harness = harness
 
     def __call__(self, result: TestResult) -> TestResult:
-        with OpenocdGdbServer(interface="stlink", target="stm32l4x").run():
+        # Set of config parameters used in Openocd to flash up stm32l4a6
+        openocd_args = ["-c", "reset_config srst_only srst_nogate connect_assert_srst", "-c", "init;reset"]
+
+        with OpenocdGdbServer(interface="stlink", target="stm32l4x", extra_args=openocd_args).run():
             self.harness(result)
 
         return self.next_harness(result)
