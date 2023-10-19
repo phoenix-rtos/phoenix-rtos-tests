@@ -132,7 +132,7 @@ class Zynq7000ZedboardTarget(ARMv7A9Target):
             block_size=0x10000,
             cleanmarker_size=0x10,
         ),
-        timeout=140,
+        timeout=210,
     )
     name = "armv7a9-zynq7000-zedboard"
 
