@@ -89,7 +89,7 @@ class ARMv7A9Target(TargetBase):
     def flash_dut(self):
         plo_loader = ZynqGdbPloLoader(
             dut=self.dut,
-            script=f"{self._project_dir()}/phoenix-rtos-build/scripts/upload-zynq7000.gdb",
+            script=f"{self._project_dir()}/phoenix-rtos-build/scripts/upload-zynq7000-jlink.gdb",
             cwd=self.boot_dir(),
         )
 
