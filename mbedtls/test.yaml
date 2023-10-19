@@ -190,6 +190,7 @@ test:
         execute: test_suite_random /mbedtls_test_configs/test_suite_random.datax
       - name: test_suite_rsa
         execute: test_suite_rsa /mbedtls_test_configs/test_suite_rsa.datax
+        ignore: True #issue #829 https://github.com/phoenix-rtos/phoenix-rtos-project/issues/829
       - name: test_suite_shax
         execute: test_suite_shax /mbedtls_test_configs/test_suite_shax.datax
       - name: test_suite_ssl
