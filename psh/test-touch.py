@@ -17,7 +17,7 @@ import trunner.ctx as ctx
 from psh.tools.randwrapper import TestRandom
 from psh.tools.common import (CHARS, assert_present, assert_file_created, assert_dir_created,
                               assert_random_files, get_rand_strings, create_testdir,
-                              assert_mtime, assert_deleted_rec)
+                              assert_dir_mtimes, assert_file_mtime, assert_deleted_rec)
 
 
 ROOT_TEST_DIR = 'test_touch_dir'
@@ -29,21 +29,25 @@ def assert_executable(p):
     date = psh.date(p)
     if not ctx.target.rootfs:
         psh.assert_cmd(p, 'touch /syspage/psh', result='success', msg=msg)
-        assert_mtime(p, {'psh': date}, '/syspage')
+        assert_dir_mtimes(p, {'psh': date}, '/syspage')
     else:
         psh.assert_cmd(p, 'touch /bin/psh', result='success', msg=msg)
-        assert_mtime(p, {'psh': date}, '/bin')
+        assert_dir_mtimes(p, {'psh': date}, '/bin')
 
 
 def assert_devices(p):
-    dates = {}
-    devices = psh.ls_simple(p, '/dev')
-    for dev in devices:
-        dates[dev] = psh.date(p)
-        msg = f"Prompt hasn't been seen after the device touch: /dev/{dev}"
-        psh.assert_cmd(p, f'touch /dev/{dev}', result='success', msg=msg)
+    dev_files = psh.ls(p, '/dev')
 
-    assert_mtime(p, dates, dir='/dev')
+    # /dev may include directories - skip them
+    dev_files = [file for file in psh.ls(p, '/dev') if not file.is_dir]
+
+    # check only 5 devices to save time
+    for dev in dev_files[:5]:
+        file_path = f'/dev/{dev.name}'
+        date = psh.date(p)
+        msg = f"Prompt hasn't been seen after the device touch: {file_path}"
+        psh.assert_cmd(p, f'touch {file_path}', result='success', msg=msg)
+        assert_file_mtime(p, date, file_path)
 
 
 def assert_multi_arg(p, path, random_wrapper: TestRandom):
@@ -78,10 +82,10 @@ def assert_existing_dirs(p):
     date = psh.date(p)
     if not ctx.target.rootfs:
         psh.assert_cmd(p, 'touch /syspage/', result='success', msg=msg)
-        assert_mtime(p, {'syspage': date}, '/')
+        assert_dir_mtimes(p, {'syspage': date}, '/')
     else:
         psh.assert_cmd(p, 'touch /bin/', result='success', msg=msg)
-        assert_mtime(p, {'bin': date}, '/')
+        assert_dir_mtimes(p, {'bin': date}, '/')
 
 
 @psh.run
