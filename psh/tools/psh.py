@@ -31,6 +31,9 @@ CONTROL_CODE = r'(\x1b\[[\x30-\x3F]*[\x20-\x2F]*[\x40-\x7E])'
 OPTIONAL_CONTROL_CODE = CONTROL_CODE + r'?'
 
 
+File = namedtuple('File', ['name', 'owner', 'is_dir', 'datetime', 'datetime_resolution', 'n_links'])
+
+
 def _readable(exp_regex):
     ''' Gets more readable expected regex with new lines instead of raw string EOL,
     and prompt without raw esc sequences. '''
@@ -178,8 +181,8 @@ def date(pexpect_proc):
 
 
 def ls(pexpect_proc, dir=''):
-    ''' Returns the list with named tuples containing information about files present in the specified directory '''
-    File = namedtuple('File', ['name', 'owner', 'is_dir', 'datetime', 'datetime_resolution', 'n_links'])
+    ''' Returns the list with named tuples containing information about files present in the specified directory
+    Alternatively, the list with only 1 file is returned providing file path has been passed.'''
 
     current_year = date(pexpect_proc).year
     _send(pexpect_proc, f'ls -la {dir}')

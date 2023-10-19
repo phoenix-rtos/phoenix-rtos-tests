@@ -12,7 +12,7 @@
 # %LICENSE%
 
 import psh.tools.psh as psh
-from psh.tools.common import assert_mtime
+from psh.tools.common import assert_dir_mtimes
 
 
 def assert_bin(p):
@@ -29,7 +29,7 @@ def assert_bin(p):
         msg = f"Prompt hasn't been seen after touching the following file: {file_path}"
         psh.assert_cmd(p, f'touch {file_path}', result='success', msg=msg)
 
-    assert_mtime(p, dates, '/bin')
+    assert_dir_mtimes(p, dates, '/bin')
 
 
 @psh.run

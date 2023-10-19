@@ -19,7 +19,7 @@ from typing import Dict
 
 import psh.tools.psh as psh
 
-from psh.tools.psh import CONTROL_CODE
+from psh.tools.psh import CONTROL_CODE, File
 from psh.tools.randwrapper import TestRandom
 
 SEPARATOR_PATTERN_BASE = r'(?:' + CONTROL_CODE + r'|\s)'
@@ -47,7 +47,19 @@ def create_testdir(p, dirname):
     psh.assert_cmd(p, f'mkdir {dirname}', result='success', msg=msg)
 
 
-def assert_mtime(p, datetimes: Dict[str, datetime], dir=''):
+def _assert_mtime(target_datetime: datetime, file: File):
+    date: datetime = file.datetime
+    date_resolution: timedelta = file.datetime_resolution
+
+    # Check if delta is smaller than resolution and allow for file to be up to 2 seconds
+    # newer (this can happen because `date` is called first, then `touch`)
+    delta = target_datetime - date
+    assert delta < date_resolution and delta >= timedelta(seconds=-2), "".join((
+        f'The modification time for {file.name} is not equal to the target one! ',
+        f'file datetime: {date} target datetime: {target_datetime}'))
+
+
+def assert_dir_mtimes(p, datetimes: Dict[str, datetime], dir=''):
     ''' Asserts that files (keys in datetimes dictionary) have modification time
     equal to corresponding datetime values with 1 min margin.
     Seconds are not checked. If file's modification year is different from year
@@ -57,16 +69,17 @@ def assert_mtime(p, datetimes: Dict[str, datetime], dir=''):
 
     for filename, target_datetime in datetimes.items():
         assert filename in dir_files, f'File {filename} is not present in the {dir} directory!'
-        date: datetime = dir_files[filename].datetime
-        date_resolution: timedelta = dir_files[filename].datetime_resolution
 
-        delta = target_datetime - date
+        _assert_mtime(target_datetime, dir_files[filename])
 
-        # Check if delta is smaller than resolution and allow for file to be up to 1 second
-        # newer (this can happen because `date` is called first, then `touch`)
-        assert delta < date_resolution and delta >= timedelta(seconds=-1), "".join((
-            f'The modification time for {filename} is not equal to the target one! ',
-            f'file datetime: {date} target datetime: {target_datetime}'))
+
+def assert_file_mtime(p, target_datetime, file_path):
+    ''' Asserts that the file has modification time
+    equal to corresponding target datetime value with 1 min margin.
+    Seconds are not checked. If file's modification year is different from year
+    currently set on the device, the hours and minutes will not be checked either. '''
+    file = psh.ls(p, file_path)[0]
+    _assert_mtime(target_datetime, file)
 
 
 def assert_present(name, files, dir=False):
