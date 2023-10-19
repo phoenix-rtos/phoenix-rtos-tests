@@ -53,7 +53,7 @@ def _check_result(pexpect_proc, result):
                         'Please choose between susccess/fail/dont-check')))
 
 
-def assert_cmd(pexpect_proc, cmd, *, expected='', result='success', msg='', is_regex=False):
+def assert_cmd(pexpect_proc, cmd, *, expected='', result='success', msg='', is_regex=False, timeout=-1):
     ''' Sends specified command and asserts that it's displayed correctly
     with optional expected output and next prompt. Exit status is asserted depending on `result`'''
     pexpect_proc.sendline(cmd)
@@ -72,7 +72,7 @@ def assert_cmd(pexpect_proc, cmd, *, expected='', result='success', msg='', is_r
     exp_readable = _readable(exp_regex)
     msg = f'Expected output regex was: \n---\n{exp_readable}\n---\n' + msg
 
-    assert pexpect_proc.expect([exp_regex, pexpect.TIMEOUT, pexpect.EOF]) == 0, msg
+    assert pexpect_proc.expect([exp_regex, pexpect.TIMEOUT, pexpect.EOF], timeout=timeout) == 0, msg
 
     _check_result(pexpect_proc, result)
 
@@ -180,9 +180,9 @@ def date(pexpect_proc):
     return datetime(*map(int, m.groups()))
 
 
-def ls(pexpect_proc, dir=''):
+def ls(pexpect_proc, dir='', timeout=-1):
     ''' Returns the list with named tuples containing information about files present in the specified directory
-    Alternatively, the list with only 1 file is returned providing file path has been passed.'''
+    Alternatively, the list with only 1 file is returned providing file path has been passed. '''
 
     current_year = date(pexpect_proc).year
     _send(pexpect_proc, f'ls -la {dir}')
@@ -191,7 +191,7 @@ def ls(pexpect_proc, dir=''):
 
     files = []
     while True:
-        idx = pexpect_proc.expect([r'\(psh\)\% ', r'([^\r\n]+(\r+\n))'])
+        idx = pexpect_proc.expect([r'\(psh\)\% ', r'([^\r\n]+(\r+\n))'], timeout=timeout)
         if idx == 0:
             break
 

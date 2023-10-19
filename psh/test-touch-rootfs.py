@@ -18,7 +18,9 @@ from psh.tools.common import assert_dir_mtimes
 def assert_bin(p):
     ''' Asserts that all files in /bin are able to be touched'''
     dates = {}
-    for file_info in psh.ls(p, 'bin'):
+    # Due to the long execution time on zynq-qemu target (especially during CI) after reboot timeout is increased
+    # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/893
+    for file_info in psh.ls(p, 'bin', timeout=40):
         # If file has multiple links, dates of all linked files will change when one is touched
         if file_info.n_links > 1:
             continue
