@@ -1040,9 +1040,6 @@ TEST(stdlib_exit, atexit_few_calls)
 
 TEST(stdlib_exit, atexit_register_inside)
 {
-#ifdef phoenix
-	TEST_IGNORE_MESSAGE("#871 issue");
-#endif
 	/* Test that func registered inside previously registered funcs are invoked */
 	pid_t pid;
 	int fd;
