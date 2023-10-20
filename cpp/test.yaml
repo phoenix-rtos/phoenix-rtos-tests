@@ -1,0 +1,9 @@
+test:
+
+  tests:
+    - name: hello-cpp
+      harness: test-hello-cpp.py
+      execute: /usr/bin/hellocpp
+        # targets excluded because of insufficient space in RAM
+      targets:
+        exclude: [armv7m4-stm32l4x6-nucleo]
