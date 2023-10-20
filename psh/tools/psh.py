@@ -177,6 +177,8 @@ def date(pexpect_proc):
     pexpect_proc.expect(rf'(?P<year>\d+):(?P<month>\d+):(?P<day>\d+):(?P<hour>\d+):(?P<min>\d+):(?P<sec>\d+){EOL}')
 
     m = pexpect_proc.match
+
+    assert_prompt(pexpect_proc)
     return datetime(*map(int, m.groups()))
 
 
