@@ -2,12 +2,11 @@ import re
 
 from trunner.ctx import TestContext
 from trunner.dut import Dut
-from trunner.types import TestResult, Status, TestSubResult
+from trunner.types import TestResult, Status
 
 
 def harness(dut: Dut, ctx: TestContext, result: TestResult):
     subresult = None
-    msg = []
     test_status = Status.OK
 
     RESULT = r"(?P<name>.{67}\s)(?P<status>(PASS|----|FAILED))\r+\n"
@@ -19,28 +18,24 @@ def harness(dut: Dut, ctx: TestContext, result: TestResult):
         parsed = dut.match.groupdict()
 
         if idx == 2:
-            msg.append(parsed["line"])
-            continue
-
-        if subresult:
-            # We ended processing test result and message
-            if msg and subresult.status == Status.FAIL:
-                test_status = Status.FAIL
-                subresult.msg = " ".join(msg)
-                msg = []
-
-            result.add_subresult_obj(subresult)
-            subresult = None
+            # append extra message to the last test (if available)
+            if subresult:
+                subresult.msg += parsed["line"] + " "
 
         if idx == 0:
+            # the subresult finished running - add it to result now to ensure correct run time
             if parsed["status"] == "----":
                 status = Status.SKIP
             else:
                 status = Status.from_str(parsed["status"])
 
+            if status == Status.FAIL:
+                test_status = Status.FAIL
+
             # if there are dots after test name - remove them
             subname = re.sub(r" \.+ ", "", parsed["name"])
-            subresult = TestSubResult(subname=subname, status=status)
+            subresult = result.add_subresult(subname=subname, status=status)
+
         if idx == 1:
             break
 
