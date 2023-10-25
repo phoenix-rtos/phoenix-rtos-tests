@@ -200,7 +200,10 @@ class TestResult:
         self._init_subresult()
 
     def add_subresult(self, subname: str, status: Status, msg: str = ""):
-        """add sub-testcase result (use for composite tests)"""
+        """Add sub-testcase result (use for composite tests).
+
+        Returns subresult object which can be modified at a later time.
+        """
         subresult = self._curr_subresult
         subresult.set_stage(TestStage.DONE)
         subresult.msg = msg
@@ -208,10 +211,7 @@ class TestResult:
         subresult.subname = subname
 
         self._commit_subresult()
-
-    def add_subresult_obj(self, subresult: TestSubResult):
-        """add sub-testcase result by TetSubResult object"""
-        self.add_subresult(subresult.subname, subresult.status, subresult.msg)
+        return subresult
 
     def is_fail(self):
         return self.status == Status.FAIL
