@@ -4,6 +4,15 @@ from trunner.ctx import TestContext
 from trunner.dut import Dut
 from trunner.types import TestResult, Status
 
+EXAMPLE_INPUT = """
+MPS Reader: Single step, single round, pausing disabled ........... ----
+Context init-free-init-free ....................................... PASS
+net_poll beyond FD_SETSIZE ........................................ FAILED
+  dup2( got_fd, wanted_fd ) >= 0
+  at line 39, suites/test_suite_net.function
+OID get Any Policy certificate policy ............................. PASS
+"""
+
 
 def harness(dut: Dut, ctx: TestContext, result: TestResult):
     subresult = None
