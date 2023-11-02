@@ -486,7 +486,7 @@ static int test_disk_zone(int fd, uint64_t disksz, uint64_t blocksz)
 	unsigned int nzones = 0; 
 	char *buff, prefix[8];
 
-	if ((buff = mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_PRIVATE, NULL, 0)) == MAP_FAILED) {
+	if ((buff = mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0)) == MAP_FAILED) {
 		fprintf(stderr, "test_disk: failed to allocate memory\n");
 		return -ENOMEM;
 	}
