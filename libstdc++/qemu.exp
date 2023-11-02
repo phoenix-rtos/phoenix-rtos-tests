@@ -1,4 +1,4 @@
-# This file should contain all necesery functions for interactions between our target/board and DejaGNU.
+# This file should contain all necessary functions for interactions between our target/board and DejaGNU.
 
 # Execute a "program" with pargs on the board.
 proc qemu_exec { boardname program pargs args } {
@@ -47,9 +47,7 @@ proc qemu_exec { boardname program pargs args } {
 
    set tmp_output $program_output
 
-   #
    # Check the program status to determine if the test passed.
-   #
 
    send -- "echo $?\r"
    expect {
@@ -106,9 +104,6 @@ proc qemu_spawn { dest commandline args } {
       }
    }
 
-   # Execute the command on the system.
-   # set command "/usr/bin/$program $pargs"
-
    send -- "$commandline\r"
    set program_output ""
 
@@ -119,7 +114,7 @@ proc qemu_spawn { dest commandline args } {
 
 # Here the name of this function is tricky. This function sends
 # files to the target.
-proc qemu_download { dest file destfile } {
+proc upload_qemu { dest file destfile } {
    global phoenix_rtos_system_files
 
    if { $destfile == [file tail $destfile] } {
@@ -130,7 +125,7 @@ proc qemu_download { dest file destfile } {
    set status [catch "exec cp $file $destfile" output]
 
    if { $status != 0 } {
-      verbose "qemu_downloade failed: $output" 2
+      verbose "upload_qemu failed: $output" 2
       return ""
    }
 
@@ -146,7 +141,7 @@ proc qemu_load { dest prog args } {
    #
    # Send the binary to system.
    #
-   qemu_download $dest $prog "$phoenix_rtos_system_files/_fs/$dest/root/usr/bin/$name_without"
+   upload_qemu $dest $prog "$phoenix_rtos_system_files/_fs/$dest/root/usr/bin/$name_without"
 
    # Change a current dir to the system dir.
    set old_path [pwd]

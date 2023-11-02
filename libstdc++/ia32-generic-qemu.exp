@@ -6,7 +6,7 @@ set_board_info compiler "${target_triplet}-gcc"
 
 # Choose the simulator script
 global phoenix_rtos_system_files
-setup_qemu "$phoenix_rtos_system_files/scripts" "ia32-generic-qemu.sh"
+setup_qemu "$phoenix_rtos_system_files/scripts" "ia32-generic-qemu-test.sh"
 
 # Load qemu functions needed to communicate with the target
 load_generic_config "qemu"

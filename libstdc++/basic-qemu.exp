@@ -14,5 +14,5 @@ proc setup_qemu {dir_for_scripts script_name} {
     verbose "Using simulator [board_info $board sim]\n"
 }
 
-# It is importand to indicate that we use any simulator
+# It is important to indicate that we use any simulator
 set_board_info is_simulator 1
