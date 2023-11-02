@@ -116,9 +116,6 @@ class Phoenixd:
     def _run(self):
         try:
             self.port = wait_for_vid_pid(self.vid, self.pid, timeout=10)
-            # such wait avoids a following issue with loading an app:
-            # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/545
-            time.sleep(0.5)
         except (TimeoutError, Exception) as exc:
             raise PhoenixdError(str(exc)) from exc
 
