@@ -1,5 +1,5 @@
 #!/bin/bash
-# $1 - toolchain target (e.g. arm-phoenix)
+# $1 - toolchain target (e.g. i386-pc-phoenix)
 # $2 - toolchain install absolute path (i.e. no "." or ".." in the path)
 
 set -e
@@ -29,7 +29,7 @@ update_config_file() {
         return 0
     fi
 
-    echo "No config file"
+    echo "No config file: $FILE"
     return 1
 }
 
@@ -47,7 +47,7 @@ case $TARGET_B in
     ;;
 esac
 
-GCC=gcc-9.3.0
+GCC=gcc-9.5.0
 
 BUILD_ROOT="$2"
 BILDIR="$BUILD_ROOT/$GCC/build"
@@ -86,7 +86,7 @@ fi
 log "Preparing config file"
 if ! update_config_file "$FILE" ; then
     pushd "$BILDIR" > /dev/null
-    echo "---------------- Genereting necessary files ----------------"
+    echo "---------------- Generating necessary files ----------------"
     make check-target-libstdc++-v3
     echo "---------------- -------------------------- ----------------"
     popd > /dev/null
@@ -100,6 +100,6 @@ fi
 pushd "$BILDIR" > /dev/null
 
 log "Starting tests"
-make check-target-libstdc++-v3
+make -s check-target-libstdc++-v3
 
 popd > /dev/null
