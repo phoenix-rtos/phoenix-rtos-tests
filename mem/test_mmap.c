@@ -75,7 +75,7 @@ void test_mmap(void *threadId)
 
 		sz = _PAGE_SIZE * (1 + rand_r(&seed) % 32);
 
-		buf[i] = mmap(NULL, sz, PROT_READ | PROT_WRITE, MAP_PRIVATE, NULL, 0);
+		buf[i] = mmap(NULL, sz, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 
 		if (buf[i] != (char*) -1) {
 			sizes[i] = sz;
