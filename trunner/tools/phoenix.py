@@ -3,9 +3,11 @@ import os
 import signal
 import threading
 import time
+import traceback
 import pexpect
 
 from trunner.harness import ProcessError
+from typing import Optional
 from serial.tools import list_ports
 from contextlib import contextmanager
 from .common import add_output_to_exception
@@ -24,7 +26,7 @@ def wait_for_vid_pid(vid: int, pid: int, timeout=0):
         found_ports = [port for port in list_ports.comports() if port.pid == pid and port.vid == vid]
 
         if len(found_ports) > 1:
-            raise Exception(
+            raise ValueError(
                 "More than one plo port was found! Maybe more than one device is connected? Hint used to find port:"
                 f"{vid:04x}:{pid:04x}"
             )
@@ -79,6 +81,10 @@ class Psu:
 class PhoenixdError(ProcessError):
     name = "PHOENIXD"
 
+    def __init__(self, msg: str = "", output: Optional[str] = None, traceback: str = None):
+        super().__init__(msg, output)
+        self.traceback = traceback
+
 
 class Phoenixd:
     """Handler for phoenixd process"""
@@ -119,8 +125,11 @@ class Phoenixd:
             # such wait avoids a following issue with loading an app:
             # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/545
             time.sleep(0.5)
-        except (TimeoutError, Exception) as exc:
+        except (TimeoutError, ValueError) as exc:
             raise PhoenixdError(str(exc)) from exc
+        except Exception as exc:
+            # add traceback if it's an internal exception
+            raise PhoenixdError(str(exc), traceback=traceback.format_exc()) from exc
 
         # Use pexpect.spawn to run a process as PTY, so it will flush on a new line
         self.proc = pexpect.spawn(

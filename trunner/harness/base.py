@@ -62,6 +62,11 @@ class ProcessError(HarnessError):
             err.extend([bold("OUTPUT:"), self.output])
 
         err.extend(self._format_additional_info())
+
+        if self.traceback:
+            err.append(bold("TRACEBACK:"))
+            err.extend([self.traceback])
+
         err.append("")
         return "\n".join(err)
 
