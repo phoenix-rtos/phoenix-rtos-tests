@@ -352,9 +352,6 @@ TEST(unistd_exit, exit_status_waitpid)
 
 TEST(unistd_exit, chk_if_exits)
 {
-#ifdef phoenix
-	TEST_IGNORE_MESSAGE("#870 issue");
-#endif
 	/* Check if process terminates after _exit call */
 	pid_t pid;
 
