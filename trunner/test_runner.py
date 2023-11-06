@@ -29,6 +29,7 @@ def resolve_project_path():
 
 class LogWrapper(StringIO):
     """Wrapper for saving all logs into StringIO and also streaming directly to stream"""
+
     def __init__(self, stream: TextIO):
         super().__init__("")
         self.stream = stream
@@ -186,7 +187,7 @@ class TestRunner:
 
         fname = self.ctx.output + ".csv"
 
-        with open(fname, 'w', encoding='utf-8') as out_csv:
+        with open(fname, "w", encoding="utf-8") as out_csv:
             out_csv.write(TestResult.get_csv_header() + "\n")
             for res in results:
                 out_csv.write(res.to_csv() + "\n")
@@ -207,8 +208,8 @@ class TestRunner:
             suite = res.to_junit_testsuite(self.ctx.target.name)
             suite.hostname = self.ctx.host.name
             if is_github_actions():
-                suite.add_property('url', get_ci_url())
-                suite.add_property('SHA', os.environ['GITHUB_SHA'])
+                suite.add_property("url", get_ci_url())
+                suite.add_property("SHA", os.environ["GITHUB_SHA"])
 
             xml.add_testsuite(suite)
 
@@ -221,7 +222,7 @@ class TestRunner:
                 from lxml import etree
             except ImportError:
                 from xml.etree import ElementTree as etree
-            with open(fname, 'wb') as out_xml:
+            with open(fname, "wb") as out_xml:
                 text = etree.tostring(xml._elem)
                 out_xml.write(text)
 
@@ -322,10 +323,12 @@ class TestRunner:
 
         sums = Counter(res.status for res in results)
 
-        print(f"TESTS: {len(results)} "
-              f"{green('PASSED')}: {sums.get(Status.OK, 0)} "
-              f"{red('FAILED')}: {sums.get(Status.FAIL, 0)} "
-              f"{yellow('SKIPPED')}: {sums.get(Status.SKIP, 0)}")
+        print(
+            f"TESTS: {len(results)} "
+            f"{green('PASSED')}: {sums.get(Status.OK, 0)} "
+            f"{red('FAILED')}: {sums.get(Status.FAIL, 0)} "
+            f"{yellow('SKIPPED')}: {sums.get(Status.SKIP, 0)}"
+        )
 
         self._export_results_csv(results)
         self._export_results_xml(results)
