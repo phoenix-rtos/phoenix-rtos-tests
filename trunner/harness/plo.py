@@ -146,14 +146,24 @@ class PloInterface:
             e.cmd = cmd
             raise e
 
-    def jffs2(self, device: str, erase: bool, cleanmarkers: PloJffs2CleanmarkerSpec, timeout: Optional[int] = None):
+    def jffs2(self, device: str, erase: bool, cleanmarkers: PloJffs2CleanmarkerSpec, block_timeout: int):
         """Performs jffs2 command."""
+
+        block_count = cleanmarkers.number_of_blocks
 
         cmd = f"jffs2 -d {device} -c {cleanmarkers}"
         if erase:
             cmd += " -e"
 
-        self.cmd(cmd, timeout)
+        self.send_cmd(cmd)
+
+        for i in range(0, block_count):
+            try:
+                self.dut.expect_exact(f"jffs2: block {i}/{block_count}", timeout=block_timeout)
+            except pexpect.TIMEOUT as e:
+                raise PloError("Wrong jffs2 command output!", cmd=cmd, output=self.dut.before) from e
+
+        self._assert_prompt()
 
     def app(
         self, device: str, file: str, imap: str, dmap: str, exec: bool = False
@@ -220,7 +230,8 @@ class PloJffsImageProperty(PloImageProperty):
 
     flash_device_id: str
     cleanmarkers_args: PloJffs2CleanmarkerSpec
-    timeout: int
+    # optimal timeout for erasing 1 block using jffs2 command
+    block_timeout: Optional[int] = 1
 
 
 class PloImageLoader(TerminalHarness, PloInterface):
@@ -258,7 +269,7 @@ class PloImageLoader(TerminalHarness, PloInterface):
         self.plo_loader()
 
         if isinstance(self.image, PloJffsImageProperty):
-            self.jffs2(self.image.flash_device_id, True, self.image.cleanmarkers_args, self.image.timeout)
+            self.jffs2(self.image.flash_device_id, True, self.image.cleanmarkers_args, self.image.block_timeout)
 
         with self.phoenixd.run():
             self.copy_file2mem(
