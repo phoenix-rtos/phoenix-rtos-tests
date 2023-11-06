@@ -77,4 +77,8 @@ test:
           harness: test-help.py
 
         - name: exit
+          targets:
+              # imxrt117x target skipped, because of the following issue
+              # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/866
+              exclude: [armv7m7-imxrt117x-evk]
           harness: test-exit.py
