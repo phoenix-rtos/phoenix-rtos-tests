@@ -152,7 +152,8 @@ class TestRunner:
             self.target.flash_dut()
             result.set_stage(TestStage.DONE)
         except (FlashError, HarnessError) as exc:
-            print(bold("ERROR WHILE FLASHING THE DEVICE"))
+            # the newline is needed to avoid printing exception in the same line as plo prompt
+            print(bold("\nERROR WHILE FLASHING THE DEVICE"))
             print(exc)
             result.fail_harness_exception(exc)
 
