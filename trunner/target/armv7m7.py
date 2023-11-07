@@ -69,7 +69,9 @@ class ARMv7M7Target(TargetBase):
 
             if test.bootloader.apps:
                 app_loader = PloPhoenixdAppLoader(
-                    dut=self.dut, apps=test.bootloader.apps, phoenixd=Phoenixd(directory=self.bin_dir())
+                    dut=self.dut,
+                    apps=test.bootloader.apps,
+                    phoenixd=Phoenixd(directory=self.root_dir() / test.shell.path),
                 )
 
             builder.add(PloHarness(self.dut, app_loader=app_loader))

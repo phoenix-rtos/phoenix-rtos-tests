@@ -122,7 +122,7 @@ class Phoenixd:
         # Use pexpect.spawn to run a process as PTY, so it will flush on a new line
         self.proc = pexpect.spawn(
             "phoenixd",
-            ["-p", self.port, "-s", self.dir],
+            ["-p", self.port, "-s", str(self.dir)],
             cwd=self.cwd,
             encoding="ascii",
             logfile=self.logfile,

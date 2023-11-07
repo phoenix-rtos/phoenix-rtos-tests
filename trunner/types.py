@@ -11,7 +11,7 @@ import junitparser
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Callable, Dict, List, Optional
-
+from pathlib import Path
 from trunner.text import bold, green, red, remove_ansi_sequences, yellow
 
 
@@ -372,6 +372,7 @@ class BootloaderOptions:
 class ShellOptions:
     binary: Optional[str] = None
     cmd: Optional[List[str]] = None
+    path: Optional[Path] = Path("bin")
 
 
 def void_harness_fn(result: TestResult) -> TestResult:

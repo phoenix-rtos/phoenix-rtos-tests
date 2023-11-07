@@ -157,16 +157,25 @@ class ConfigParser:
             raise ParserError("execute/run attribute cannot be empty")
 
         if execute_binary:
-            prefix = self.ctx.target.exec_dir() + "/" if self.ctx.target.rootfs else "sysexec "
-            parsed_cmd = shlex.split(prefix + cmd[0]) + cmd[1:]
-            binary = cmd[0]
+            # it may be both an absolute path to a binary or just binary name
+            binary_path = Path(cmd[0])
+
+            binary = binary_path.name
+            path = binary_path.parent if binary_path.is_absolute() else self.ctx.target.exec_dir()
+            prefix = str(path) + "/" if self.ctx.target.rootfs else "sysexec "
+            parsed_cmd = shlex.split(prefix + binary) + cmd[1:]
         else:
             binary = None
             parsed_cmd = cmd
+            path = Path()
 
         self.test.shell = ShellOptions(
             binary=binary,
             cmd=parsed_cmd,
+            # when launching host tools like phoenixd absolute path
+            # from phoenix has to be combined with absolute path for host.
+            # Two absolute paths can't be combined, so phoenix path is transformed to a relative one
+            path=path.relative_to("/"),
         )
 
     def _parse_reboot(self, config: dict) -> None:
