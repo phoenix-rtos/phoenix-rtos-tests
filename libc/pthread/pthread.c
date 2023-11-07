@@ -24,7 +24,91 @@
 #include "pthread_cond_test_functions.h"
 
 
+static void test_cleanupHandler1(void *arg)
+{
+	int *val = (int *)arg;
+	(*val) *= 2;
+}
+
+
+static void test_cleanupHandler2(void *arg)
+{
+	int *val = (int *)arg;
+	(*val) *= 3;
+}
+
+/* NOTE: Do not remove matching push/pop calls - even if they are not executed:
+ * POSIX permits pthread_cleanup_push/pop() to be implemented as macros that expandto text containing '{' and '}',
+ * respectively. For this reason, the caller must ensure that calls to these functions are paired within the same function,
+ * and at the same lexical nesting level.
+ */
+
+
+static void *test_threadCleanup1(void *arg)
+{
+	int *val = (int *)arg;
+	pthread_cleanup_push(test_cleanupHandler1, val);
+	pthread_cleanup_push(test_cleanupHandler2, val);
+
+	pthread_exit(NULL);
+
+	pthread_cleanup_pop(0);
+	pthread_cleanup_pop(0);
+
+	return NULL;
+}
+
+
+static void *test_threadCleanup2(void *arg)
+{
+	int *val = (int *)arg;
+	pthread_cleanup_push(test_cleanupHandler1, val);
+	pthread_cleanup_push(test_cleanupHandler2, val);
+
+	pthread_cleanup_pop(0);
+	pthread_cleanup_pop(0);
+
+	pthread_exit(NULL);
+
+	return NULL;
+}
+
+
+static void *test_threadCleanup3(void *arg)
+{
+	int *val = (int *)arg;
+	pthread_cleanup_push(test_cleanupHandler1, &val[0]);
+	pthread_cleanup_push(test_cleanupHandler2, &val[0]);
+
+	pthread_cleanup_pop(1);
+	val[1] = val[0];
+	pthread_cleanup_pop(1);
+
+	pthread_exit(NULL);
+
+	return NULL;
+}
+
+
+static void *test_threadCleanup4(void *arg)
+{
+	int *val = (int *)arg;
+	pthread_cleanup_push(test_cleanupHandler1, &val[0]);
+	pthread_cleanup_push(test_cleanupHandler2, &val[0]);
+
+	pthread_cleanup_pop(1);
+	val[1] = val[0];
+
+	pthread_exit(NULL);
+
+	pthread_cleanup_pop(0);
+
+	return NULL;
+}
+
+
 TEST_GROUP(test_pthread_cond);
+TEST_GROUP(test_pthread_cleanup);
 
 
 TEST_SETUP(test_pthread_cond)
@@ -235,6 +319,66 @@ TEST(test_pthread_cond, pthread_cond_timedwait_fail_broadcast_incorrect_timeout)
 }
 
 
+TEST_SETUP(test_pthread_cleanup)
+{
+}
+
+
+TEST_TEAR_DOWN(test_pthread_cleanup)
+{
+}
+
+
+TEST(test_pthread_cleanup, pthread_cleanup_push_exit)
+{
+	pthread_t thread;
+	int val1 = 42;
+
+	TEST_ASSERT_EQUAL(0, pthread_create(&thread, NULL, test_threadCleanup1, &val1));
+	TEST_ASSERT_EQUAL(0, pthread_join(thread, NULL));
+
+	TEST_ASSERT_EQUAL(42 * 3 * 2, val1);
+}
+
+
+TEST(test_pthread_cleanup, pthread_cleanup_push_pop_no_exec)
+{
+	pthread_t thread;
+	int val1 = 42;
+
+	TEST_ASSERT_EQUAL(0, pthread_create(&thread, NULL, test_threadCleanup2, &val1));
+	TEST_ASSERT_EQUAL(0, pthread_join(thread, NULL));
+
+	TEST_ASSERT_EQUAL(42, val1);
+}
+
+
+TEST(test_pthread_cleanup, pthread_cleanup_push_pop_exec)
+{
+	pthread_t thread;
+	int vals[2] = { 42, 0 };
+
+	TEST_ASSERT_EQUAL(0, pthread_create(&thread, NULL, test_threadCleanup3, &vals));
+	TEST_ASSERT_EQUAL(0, pthread_join(thread, NULL));
+
+	TEST_ASSERT_EQUAL(42 * 3 * 2, vals[0]);
+	TEST_ASSERT_EQUAL(42 * 3, vals[1]);
+}
+
+
+TEST(test_pthread_cleanup, pthread_cleanup_push_pop_exec_pthread_exit)
+{
+	pthread_t thread;
+	int vals[2] = { 42, 0 };
+
+	TEST_ASSERT_EQUAL(0, pthread_create(&thread, NULL, test_threadCleanup4, &vals));
+	TEST_ASSERT_EQUAL(0, pthread_join(thread, NULL));
+
+	TEST_ASSERT_EQUAL(42 * 3 * 2, vals[0]);
+	TEST_ASSERT_EQUAL(42 * 3, vals[1]);
+}
+
+
 TEST_GROUP_RUNNER(test_pthread_cond)
 {
 	RUN_TEST_CASE(test_pthread_cond, pthread_cond_init);
@@ -246,4 +390,13 @@ TEST_GROUP_RUNNER(test_pthread_cond)
 	RUN_TEST_CASE(test_pthread_cond, pthread_cond_timedwait_fail_signal_incorrect_timeout);
 	RUN_TEST_CASE(test_pthread_cond, pthread_cond_timedwait_pass_broadcast);
 	RUN_TEST_CASE(test_pthread_cond, pthread_cond_timedwait_fail_broadcast_incorrect_timeout);
+}
+
+
+TEST_GROUP_RUNNER(test_pthread_cleanup)
+{
+	RUN_TEST_CASE(test_pthread_cleanup, pthread_cleanup_push_exit);
+	RUN_TEST_CASE(test_pthread_cleanup, pthread_cleanup_push_pop_no_exec);
+	RUN_TEST_CASE(test_pthread_cleanup, pthread_cleanup_push_pop_exec);
+	RUN_TEST_CASE(test_pthread_cleanup, pthread_cleanup_push_pop_exec_pthread_exit);
 }
