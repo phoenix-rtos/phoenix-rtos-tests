@@ -78,13 +78,13 @@ class TargetBase(ABC):
 
         raise FileNotFoundError("phoenix-rtos-tests directory is missing")
 
-    def exec_dir(self) -> str:
+    def exec_dir(self) -> Path:
         """Returns a directory where test binaries are located in rootfs."""
-        return "/bin"
+        return Path("/bin")
 
-    def bin_dir(self) -> str:
-        """Returns a directory with binaries that will be loaded by bootloader."""
-        return f"{self.project_dir}/_fs/{self.name}/root/bin"
+    def root_dir(self) -> Path:
+        """Returns a host path to root directory for the specified target"""
+        return Path(f"{self.project_dir}/_fs/{self.name}/root")
 
     def boot_dir(self) -> str:
         """Returns a directory with system and bootloader images."""

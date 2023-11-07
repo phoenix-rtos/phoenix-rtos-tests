@@ -78,7 +78,7 @@ class GdbInteractive:
                 "gdb-multiarch",
                 encoding="ascii",
                 timeout=8,
-                cwd=self.cwd,
+                cwd=str(self.cwd),
                 logfile=self.logfile,
             )
             self.proc.expect_exact("(gdb) ")

@@ -162,7 +162,7 @@ class STM32L4x6Target(TargetBase):
                 app_loader = STM32L4x6PloAppLoader(
                     dut=self.dut,
                     apps=test.bootloader.apps,
-                    gdb=GdbInteractive(port=3333, cwd=self.bin_dir()),
+                    gdb=GdbInteractive(port=3333, cwd=self.root_dir() / test.shell.path),
                 )
 
             builder.add(PloHarness(self.dut, app_loader=app_loader))

@@ -45,9 +45,6 @@ class HostPCGenericTarget(TargetBase):
     def from_context(cls, _: TestContext):
         return cls()
 
-    def exec_dir(self) -> str:
-        return self.bin_dir()
-
     def flash_dut(self):
         pass
 
@@ -63,6 +60,7 @@ class HostPCGenericTarget(TargetBase):
             builder.add(fail)
             return builder.get_harness()
 
+        test.shell.cmd[0] = f"{self.root_dir()}{test.shell.cmd[0]}"
         builder.add(self.ExecHarness(self.dut, test.shell.cmd))
         builder.add(test.harness)
 
