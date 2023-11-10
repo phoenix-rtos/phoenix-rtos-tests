@@ -11,7 +11,7 @@
  *    - strsignal()
  *
  * Copyright 2023 Phoenix Systems
- * Author: Mateusz Bloch
+ * Authors: Mateusz Bloch, Arkadiusz Kozlowski
  *
  * This file is part of Phoenix-RTOS.
  *
@@ -174,4 +174,41 @@ TEST_GROUP_RUNNER(string_errsign)
 
 	RUN_TEST_CASE(string_errsign, strsignal_basic);
 	RUN_TEST_CASE(string_errsign, strsignal_real_time);
+}
+
+
+TEST_GROUP(string_perror);
+
+TEST_SETUP(string_perror)
+{
+}
+
+
+TEST_TEAR_DOWN(string_perror)
+{
+}
+
+TEST(string_perror, perror_basic)
+{
+	FILE *errorFile = fopen("error.log", "w+");
+	char *lineptr;
+	size_t n;
+
+	TEST_ASSERT_NOT_NULL(errorFile);
+	TEST_ASSERT_NOT_EQUAL(-1, dup2(fileno(errorFile), 2));
+
+	char msg[] = "Some error message";
+
+	perror(msg);
+
+	getline(lineptr, &n, errorFile);
+	TEST_ASSERT_EQUAL_STRING("Some error message: Success\n", lineptr);
+
+	fclose(errorFile);
+	remove("error.log");
+}
+
+TEST_GROUP_RUNNER(string_perror)
+{
+	RUN_TEST_CASE(string_perror, perror_basic);
 }
