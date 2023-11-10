@@ -1,0 +1,19 @@
+test:
+  tests:
+    - name: mprotect-fault
+      harness: fault_harness.py
+      execute: test-mprotect-fault
+      targets:
+        # mprotect: is noop on NOMMU architecture
+        exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo]
+
+    - name: mprotect
+      type: unity
+      execute: test-mprotect
+      # FIXME: this reboot is placed here as after mprotect-fault is run target need to be rebooter.
+      # Currently rebooting after the test is not implemented in the runner.
+      reboot: True
+      targets:
+        # mprotect: is noop on NOMMU architecture
+        exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo]
+
