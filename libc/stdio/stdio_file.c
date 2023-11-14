@@ -558,6 +558,7 @@ TEST(stdio_line, getline_allocated)
 	TEST_ASSERT_NOT_NULL(filep);
 	{
 		line = malloc(len);
+		TEST_ASSERT_NOT_NULL(line);
 		rewind(filep);
 		TEST_ASSERT_EQUAL_INT(6, getline(&line, &len, filep));
 		TEST_ASSERT_EQUAL_INT(50, len);
