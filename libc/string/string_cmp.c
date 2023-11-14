@@ -78,6 +78,8 @@ TEST(string_memcmp, emptyInput)
 	char *asciiSet = testdata_createCharStr(BUFF_SIZE),
 		 separated[] = "\0\0\0\0\0TEST\0\0";
 
+	TEST_ASSERT_NOT_NULL(asciiSet);
+
 	asciiSet[0] = 0;
 
 	TEST_ASSERT_LESS_THAN_INT(0, memcmp(empty, asciiSet, sizeof(empty)));
@@ -95,6 +97,8 @@ TEST(string_memcmp, big)
 {
 	char *hugeStr = testdata_createCharStr(BIG_SIZE),
 		 hugeStr2[BIG_SIZE];
+
+	TEST_ASSERT_NOT_NULL(hugeStr);
 
 	memcpy(hugeStr2, hugeStr, BIG_SIZE);
 
@@ -118,6 +122,8 @@ TEST(string_memcmp, various_sizes)
 
 	char *asciiStr = testdata_createCharStr(BUFF_SIZE),
 		 asciiStr2[BUFF_SIZE];
+
+	TEST_ASSERT_NOT_NULL(asciiStr);
 
 	memcpy(asciiStr2, asciiStr, sizeof(asciiStr2));
 	for (i = 1; i < BUFF_SIZE - 1; i++) {
@@ -205,6 +211,8 @@ TEST(string_strncmp, emptyInput)
 	char *asciiStr = testdata_createCharStr(BUFF_SIZE),
 		 separated[] = "\0\0\0\0\0TEST\0\0";
 
+	TEST_ASSERT_NOT_NULL(asciiStr);
+
 	TEST_ASSERT_EQUAL_INT(0, strncmp(empty, empty, BUFF_SIZE));
 	TEST_ASSERT_LESS_THAN_INT(0, strncmp(empty, asciiStr, BUFF_SIZE));
 	TEST_ASSERT_GREATER_THAN_INT(0, strncmp(asciiStr, empty, BUFF_SIZE));
@@ -220,6 +228,8 @@ TEST(string_strncmp, big)
 {
 	char *hugeStr = testdata_createCharStr(BIG_SIZE),
 		 hugeStr2[BIG_SIZE];
+
+	TEST_ASSERT_NOT_NULL(hugeStr);
 
 	memcpy(hugeStr2, hugeStr, BIG_SIZE);
 
@@ -243,6 +253,8 @@ TEST(string_strncmp, various_sizes)
 
 	char *asciiStr = testdata_createCharStr(BUFF_SIZE),
 		 asciiStr2[BUFF_SIZE];
+
+	TEST_ASSERT_NOT_NULL(asciiStr);
 
 	memcpy(asciiStr2, asciiStr, sizeof(asciiStr2));
 	for (i = 1; i < BUFF_SIZE - 1; i++) {
@@ -332,6 +344,8 @@ TEST(string_strcmp, emptyInput)
 	char *asciiStr = testdata_createCharStr(BUFF_SIZE),
 		 separated[] = "\0\0\0\0\0TEST\0\0";
 
+	TEST_ASSERT_NOT_NULL(asciiStr);
+
 	TEST_ASSERT_LESS_THAN_INT(0, strcmp(empty, asciiStr));
 	TEST_ASSERT_GREATER_THAN_INT(0, strcmp(asciiStr, empty));
 	TEST_ASSERT_EQUAL_INT(0, strcmp(empty, empty));
@@ -347,6 +361,8 @@ TEST(string_strcmp, big)
 {
 	char *hugeStr = testdata_createCharStr(BIG_SIZE),
 		 hugeStr2[BIG_SIZE];
+
+	TEST_ASSERT_NOT_NULL(hugeStr);
 
 	memcpy(hugeStr2, hugeStr, BIG_SIZE);
 
@@ -431,6 +447,8 @@ TEST(string_strcoll, emptyInput)
 	char *asciiStr = testdata_createCharStr(BUFF_SIZE),
 		 separated[] = "\0\0\0\0\0TEST\0\0";
 
+	TEST_ASSERT_NOT_NULL(asciiStr);
+
 	TEST_ASSERT_EQUAL_INT(0, strcoll(empty, empty));
 	TEST_ASSERT_LESS_THAN_INT(0, strcoll(empty, asciiStr));
 	TEST_ASSERT_GREATER_THAN_INT(0, strcoll(asciiStr, empty));
@@ -446,6 +464,8 @@ TEST(string_strcoll, big)
 {
 	char *hugeStr = testdata_createCharStr(BIG_SIZE),
 		 hugeStr2[BIG_SIZE];
+
+	TEST_ASSERT_NOT_NULL(hugeStr);
 
 	memcpy(hugeStr2, hugeStr, BIG_SIZE);
 

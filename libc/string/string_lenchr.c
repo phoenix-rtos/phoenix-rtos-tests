@@ -61,6 +61,8 @@ TEST(string_len, ascii)
 	TEST_ASSERT_EQUAL_INT(0, strlen(""));
 	asciiSet = testdata_createCharStr(BUFF_SIZE + 1);
 
+	TEST_ASSERT_NOT_NULL(asciiSet);
+
 	/* Pangram with a whole alphabet set */
 	len = sizeof(pangram) - 1;
 	TEST_ASSERT_EQUAL_INT(len, strlen(pangram));
@@ -188,6 +190,7 @@ TEST(string_spn, ascii)
 
 	asciiStr = testdata_createCharStr(BUFF_SIZE + 1);
 
+	TEST_ASSERT_NOT_NULL(asciiStr);
 
 	for (i = 1; i < BUFF_SIZE; i++) {
 		supportCharSet[i - 1] = i;
@@ -310,6 +313,8 @@ TEST(string_spn, mixed_order)
 		*testStr;
 
 	testStr = testdata_createCharStr(BUFF_SIZE);
+
+	TEST_ASSERT_NOT_NULL(testStr);
 
 	TEST_ASSERT_NOT_NULL(reversStr);
 
@@ -470,6 +475,9 @@ TEST(string_chr, ascii)
 	char *asciiStr;
 
 	asciiStr = testdata_createCharStr(INT8_MAX + 1);
+
+	TEST_ASSERT_NOT_NULL(asciiStr);
+
 	len = INT8_MAX;
 
 

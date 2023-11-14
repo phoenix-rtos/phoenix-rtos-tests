@@ -282,6 +282,9 @@ TEST(string_memccpy, stop_char_found)
 	int i;
 
 	testStr = testdata_createCharStr(ALL_CHARS_STRING_SIZE);
+
+	TEST_ASSERT_NOT_NULL(testStr);
+
 	/* 1 skipped, because of double one at the beginning of testStr */
 	for (i = 2; i < ALL_CHARS_STRING_SIZE; i++) {
 		TEST_ASSERT_EQUAL_PTR(&bigStrDest[i + 1], memccpy(bigStrDest, testStr, testStr[i], ALL_CHARS_STRING_SIZE));
@@ -310,6 +313,9 @@ TEST(string_memccpy, stop_int_found)
 
 	/* testing all possible chars + 1 byte for NUL term */
 	testStr = testdata_createCharStr(ALL_CHARS_STRING_SIZE);
+
+	TEST_ASSERT_NOT_NULL(testStr);
+
 	for (i = 0; i < intsNr; i++) {
 		if ((unsigned char)bigIntDest[i] != 1) {
 			pos = (unsigned char)bigIntDest[i] + 1;
@@ -497,6 +503,9 @@ TEST(string_memccpy, big)
 
 	/* Checking capability of handling big blocks of data */
 	longStr = testdata_createCharStr(BIG_NUMB);
+
+	TEST_ASSERT_NOT_NULL(longStr);
+
 	TEST_ASSERT_EQUAL_PTR(&buff[sizeof(buff)], memccpy(buff, longStr, 0, BIG_NUMB));
 	TEST_ASSERT_EQUAL_CHAR_ARRAY(buff, longStr, BIG_NUMB);
 
@@ -669,6 +678,8 @@ TEST(string_strncpy, big)
 
 	longStr = testdata_createCharStr(BIG_NUMB);
 
+	TEST_ASSERT_NOT_NULL(longStr);
+
 	/* Ability to copy long string */
 	TEST_ASSERT_EQUAL_PTR(bigBuff, strncpy(bigBuff, longStr, sizeof(bigBuff) - 1));
 	TEST_ASSERT_EQUAL_CHAR_ARRAY(bigBuff, longStr, sizeof(bigBuff));
@@ -685,6 +696,8 @@ TEST(string_strncpy, append_null)
 	int i;
 
 	testStr = testdata_createCharStr(BIG_NUMB);
+
+	TEST_ASSERT_NOT_NULL(testStr);
 
 	/* Creating string without null terminators */
 	for (i = 0; i < BIG_NUMB / 2 - 1; i++) {
@@ -925,6 +938,8 @@ TEST(string_stpncpy, big)
 
 	longStr = testdata_createCharStr(BIG_NUMB);
 
+	TEST_ASSERT_NOT_NULL(longStr);
+
 	/* Ability to copy long string */
 	TEST_ASSERT_EQUAL_PTR(&bigBuff[strlen(longStr)], stpncpy(bigBuff, longStr, sizeof(bigBuff) - 1));
 	TEST_ASSERT_EQUAL_CHAR_ARRAY(bigBuff, longStr, sizeof(bigBuff));
@@ -948,6 +963,8 @@ TEST(string_stpncpy, append_null)
 	int i;
 
 	testStr = testdata_createCharStr(BIG_NUMB);
+
+	TEST_ASSERT_NOT_NULL(testStr);
 
 	/* Creating string without null terminators */
 	for (i = 0; i < BIG_NUMB / 2 - 1; i++) {
@@ -1154,6 +1171,8 @@ TEST(string_strcpy_stpcpy, big)
 	char *longStr;
 
 	longStr = testdata_createCharStr(BIG_NUMB);
+
+	TEST_ASSERT_NOT_NULL(longStr);
 
 	/* Ability to copy long string */
 	TEST_ASSERT_EQUAL_PTR(bigBuff, strcpy(bigBuff, longStr));

@@ -39,6 +39,8 @@ static char *create_extAscii_set(void)
 	int i;
 	char *hold = malloc(EXTENDED_ASCII_LENGTH);
 
+	TEST_ASSERT_NOT_NULL(hold);
+
 	for (i = 1; i < EXTENDED_ASCII_LENGTH; i++) {
 		hold[i - 1] = i;
 	}
@@ -136,6 +138,8 @@ TEST(string_tok, multi_call)
 	char multiCallStr[ASCII_LENGTH] = { 0 };
 	char *asciiStr = testdata_createCharStr(ASCII_LENGTH);
 	int i;
+
+	TEST_ASSERT_NOT_NULL(asciiStr);
 
 	/*
 	 * In this case we are checking if it is possible to
@@ -472,6 +476,8 @@ TEST(string_tok_r, multi_call)
 	char *rest;
 	int i;
 
+	TEST_ASSERT_NOT_NULL(asciiStr);
+
 	/*
 	 * In this case we are checking if it is possible to
 	 * pass different stop points in each call to
@@ -643,6 +649,7 @@ TEST(string_tok_r, same_state)
 		 *asciiStr = testdata_createCharStr(ASCII_LENGTH);
 	int i;
 
+	TEST_ASSERT_NOT_NULL(asciiStr);
 
 	for (i = 0; i < ASCII_LENGTH - 1; i++) {
 		TEST_ASSERT_EQUAL_PTR(&asciiStr[1], strtok_r(&asciiStr[1], &asciiStr[i + 2], &rest[i]));
@@ -709,6 +716,8 @@ TEST(string_str, basic)
 	const char loremIpsum[BUFFSIZE] = LOREM_IPSUM;
 	char *asciiStr = testdata_createCharStr(ASCII_LENGTH);
 
+	TEST_ASSERT_NOT_NULL(asciiStr);
+
 	/* Standard use of strstr on arrays */
 	TEST_ASSERT_EQUAL_PTR(loremIpsum, strstr(loremIpsum, "Lorem"));
 	TEST_ASSERT_EQUAL_PTR(&loremIpsum[6], strstr(loremIpsum, "Ipsum"));
@@ -729,8 +738,9 @@ TEST(string_str, empty_args)
 {
 	const char str[] = "Lorem";
 
-
 	char *asciiStr = testdata_createCharStr(ASCII_LENGTH);
+
+	TEST_ASSERT_NOT_NULL(asciiStr);
 
 	/* Different scenarios of using empty input or output*/
 	TEST_ASSERT_EQUAL_PTR(NULL, strstr("", str));
@@ -768,6 +778,7 @@ TEST(string_str, strstr_order)
 	testStr = testdata_createCharStr(ASCII_LENGTH);
 
 	TEST_ASSERT_NOT_NULL(reversStr);
+	TEST_ASSERT_NOT_NULL(testStr);
 
 	for (i = 0; i < ASCII_LENGTH - 1; i++) {
 		reversStr[i] = testStr[ASCII_LENGTH - i - 2];
@@ -832,6 +843,8 @@ TEST(string_pbrk, basic)
 
 	asciiStr = testdata_createCharStr(ASCII_LENGTH);
 
+	TEST_ASSERT_NOT_NULL(asciiStr);
+
 	TEST_ASSERT_EQUAL_PTR(loremIpsum, strpbrk(loremIpsum, "Lorem"));
 
 	/*
@@ -886,7 +899,7 @@ TEST(string_pbrk, strpbrk_order)
 
 	testStr = testdata_createCharStr(ASCII_LENGTH);
 
-	TEST_ASSERT_NOT_NULL(reversStr);
+	TEST_ASSERT_NOT_NULL(testStr);
 
 	for (i = 0; i < ASCII_LENGTH - 1; i++) {
 		reversStr[i] = testStr[ASCII_LENGTH - i - 2];
@@ -953,6 +966,8 @@ TEST(string_pbrk, not_present)
 	int i;
 	char *asciiStr = testdata_createCharStr(ASCII_LENGTH + 1);
 	char holder[2] = { 0 };
+
+	TEST_ASSERT_NOT_NULL(asciiStr);
 
 	for (i = 1; i < ASCII_LENGTH; i++) {
 		holder[0] = i;
