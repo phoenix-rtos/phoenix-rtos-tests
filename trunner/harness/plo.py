@@ -72,12 +72,15 @@ class PloInterface:
     def enter_bootloader(self):
         """Interrupts timer counting to enter plo."""
 
+        # If armv7a9-zynq7000-zedboard is flashed for the first time (or after full flash0 erase) it will throw error
+        # magic number mismatch, to avoid interrupt and flash it anyway those are taken as false negative and execute
+        # further code.
         try:
-            self.dut.expect_exact("Waiting for input", timeout=3)
+            if self.dut.expect_exact(["Waiting for input", "Magic number for user.plo is wrong."], timeout=3) == 0:
+                self.dut.send("\n")
+
         except (pexpect.TIMEOUT, pexpect.EOF) as e:
             raise PloError("Failed to go into bootloader mode", output=self.dut.before) from e
-
-        self.dut.send("\n")
 
     def _assert_prompt(self, timeout: Optional[int] = None, error_check=True):
         """Asserts that plo prompt was outputted by dut.
