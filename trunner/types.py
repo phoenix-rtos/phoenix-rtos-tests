@@ -38,7 +38,7 @@ class Status(Enum):
             return Status.FAIL
         if s in ("OK", "PASS", "PASSED"):
             return Status.OK
-        if s in ("SKIP", "SKIPPED", "IGNORE", "IGNORED"):
+        if s in ("SKIP", "SKIPPED", "IGNORE", "IGNORED", "UNTESTED"):
             return Status.SKIP
 
         raise ValueError(f"Cannot create {cls.__name__} from string {s}")
