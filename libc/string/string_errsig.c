@@ -24,6 +24,7 @@
 #include <signal.h>
 #include <limits.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <unity_fixture.h>
 
 #include "testdata.h"
@@ -53,10 +54,30 @@ const unsigned int signal_codes_len = sizeof(signal_codes) / sizeof(signal_codes
 
 char *perrorToFile(char *msg)
 {
-	FILE *file = fopen("error.log", "w+");
+	remove("error.txt");
+
+	errno = 0;
+
+	creat("error.txt", 0777);
+
+
+	printf("%d, %s\n\n", errno, strerror(errno));
+
+	FILE *file = fopen("error.txt", "w+");
+
+	printf("%d, %s\n\n", errno, strerror(errno));
+
+
+	TEST_MESSAGE(strerror(errno));
+
+	chmod("error.txt", 0777);
+
+	TEST_MESSAGE(strerror(errno));
 
 	TEST_ASSERT_NOT_NULL(file);
 	TEST_ASSERT_NOT_EQUAL(-1, dup2(fileno(file), 2));
+
+	TEST_MESSAGE(strerror(errno));
 
 	perror(msg);
 
@@ -73,7 +94,6 @@ char *perrorToFile(char *msg)
 	buffer[fileSize] = '\0';
 
 	fclose(file);
-	remove("error.log");
 
 	return buffer;
 }
@@ -213,6 +233,7 @@ TEST_GROUP(string_perror);
 
 TEST_SETUP(string_perror)
 {
+	errno = 0;
 }
 
 
@@ -236,9 +257,9 @@ TEST(string_perror, perror_basic)
 
 TEST(string_perror, perror_empty_message)
 {
-	errno = 0;
 	char *res;
 
+	errno = 0;
 	TEST_ASSERT_EQUAL_STRING("Success\n", res = perrorToFile(""));
 	free(res);
 }

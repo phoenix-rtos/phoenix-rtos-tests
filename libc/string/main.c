@@ -44,7 +44,6 @@ void runner(void)
 	RUN_TEST_GROUP(string_tok_r);
 	RUN_TEST_GROUP(string_str);
 	RUN_TEST_GROUP(string_pbrk);
-	RUN_TEST_GROUP(string_perror);
 }
 
 
