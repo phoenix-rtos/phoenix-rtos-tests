@@ -17,6 +17,7 @@ EXAMPLE_INPUT = """
 echo -ne '' >input
 echo -ne '' | ./unknown 2>&1
 SKIPPED: busybox --help
+UNTESTED: cp-parents
 PASS: busybox as unknown name
 ---Testcase 'date-@-works' starting---
 FAIL: date-@-works
@@ -36,7 +37,7 @@ def harness(dut: Dut, ctx: TestContext, result: TestResult):
     test_status = Status.OK
 
     START = r"---Testcase '(?P<name>.+?)' starting---\r+\n"
-    RESULT = r"(?P<status>PASS|SKIPPED|FAIL): (?P<name>.+?)\r+\n"
+    RESULT = r"(?P<status>PASS|SKIPPED|UNTESTED|FAIL): (?P<name>.+?)\r+\n"
     FINAL = r"\*\*\*\*(The Busybox Test Suite completed|A single test of the Busybox Test Suite completed)\*\*\*\*\r+\n"
     MESSAGE = r"(?P<line>.*?)\r+\n"
 
