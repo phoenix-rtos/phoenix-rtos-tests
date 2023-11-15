@@ -54,31 +54,17 @@ const unsigned int signal_codes_len = sizeof(signal_codes) / sizeof(signal_codes
 
 char *perrorToFile(char *msg)
 {
-	remove("error.txt");
-
-	errno = 0;
-
-	creat("error.txt", 0777);
-
-
-	printf("%d, %s\n\n", errno, strerror(errno));
+	int errnoBefore = errno;
 
 	FILE *file = fopen("error.txt", "w+");
 
-	printf("%d, %s\n\n", errno, strerror(errno));
 
-
-	TEST_MESSAGE(strerror(errno));
-
-	chmod("error.txt", 0777);
-
-	TEST_MESSAGE(strerror(errno));
+	// chmod("error.txt", 0777);
 
 	TEST_ASSERT_NOT_NULL(file);
 	TEST_ASSERT_NOT_EQUAL(-1, dup2(fileno(file), 2));
 
-	TEST_MESSAGE(strerror(errno));
-
+	errno = errnoBefore;
 	perror(msg);
 
 	fseek(file, 0, SEEK_END);
@@ -96,6 +82,7 @@ char *perrorToFile(char *msg)
 	fclose(file);
 
 	return buffer;
+	remove("error.txt");
 }
 
 
@@ -246,11 +233,13 @@ TEST(string_perror, perror_basic)
 
 	errno = 0;
 	char msg[] = "Some error message";
-
 	char *res;
+	char exp[100];
+	sprintf(exp, "Some error message: %s\n", strerror(errno));
+
 	res = perrorToFile(msg);
 
-	TEST_ASSERT_EQUAL_STRING("Some error message: Success\n", res);
+	TEST_ASSERT_EQUAL_STRING(exp, res);
 	free(res);
 }
 
@@ -259,8 +248,11 @@ TEST(string_perror, perror_empty_message)
 {
 	char *res;
 
-	errno = 0;
-	TEST_ASSERT_EQUAL_STRING("Success\n", res = perrorToFile(""));
+	errno = 31;
+
+	char exp[50];
+	sprintf(exp, "%s\n", strerror(errno));
+	TEST_ASSERT_EQUAL_STRING(exp, res = perrorToFile(""));
 	free(res);
 }
 
@@ -275,7 +267,7 @@ TEST(string_perror, perror_every_ascii)
 	res = perrorToFile(msg);
 
 	char expected[356];
-	sprintf(expected, "%s: Exec format error\n", msg);
+	sprintf(expected, "%s: %s\n", msg, strerror(errno));
 	TEST_ASSERT_EQUAL_STRING(expected, res);
 	free(res);
 	free(msg);
@@ -291,7 +283,7 @@ TEST(string_perror, perror_huge_argument)
 	res = perrorToFile(msg);
 
 	char expected[4400];
-	sprintf(expected, "%s: No message of desired type\n", msg);
+	sprintf(expected, "%s: %s\n", msg, strerror(errno));
 	TEST_ASSERT_EQUAL_STRING(expected, res);
 	free(res);
 }
@@ -304,10 +296,12 @@ TEST(string_perror, perror_every_errno)
 
 	errno = 0;
 
-	while (errno < 150) {
+	for (int i = 0; i < 150; i++) {
+		errno = i;
 		old_msg = perrorToFile("Some msg");
 		errno++;
 		new_msg = perrorToFile("Some msg");
+		errno--;
 		TEST_ASSERT_NOT_EQUAL(0, strcmp(old_msg, new_msg));
 		free(new_msg);
 		free(old_msg);
