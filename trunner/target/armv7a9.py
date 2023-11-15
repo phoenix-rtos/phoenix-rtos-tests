@@ -19,7 +19,7 @@ from trunner.harness import (
 )
 from trunner.harness import TerminalHarness
 from trunner.host import Host
-from trunner.tools import Phoenixd, OpenocdGdbServer
+from trunner.tools import Phoenixd, OpenocdGdbServer, wait_for_vid_pid
 from trunner.types import TestResult, TestOptions
 from .base import TargetBase, find_port
 
@@ -52,6 +52,9 @@ class ZynqZedboardGdbPloLoader(TerminalHarness, PloInterface):
 
     def __call__(self):
         """Loads plo image to RAM using gdb."""
+
+        # after reboot we need to wait for smt2 device
+        wait_for_vid_pid(vid=0x0403, pid=0x6014, timeout=5)
 
         with self.gdbserver.run():
             try:
