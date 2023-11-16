@@ -17,10 +17,16 @@
 
 #include <unity_fixture.h>
 
+#include "testdata.h"
 
-#define TMP_FILE "tmpstdin.txt"
 
-void gets_wrapped2(char *msg, char *buf)
+#define TMP_FILE "res.txt"
+
+static FILE *output_stream;
+static int stdout_copy;
+static char *buf;
+
+static void gets_wrapped2(const char *msg, char *buf)
 {
 	FILE *input_stream = fopen(TMP_FILE, "w+");
 
@@ -55,69 +61,74 @@ void gets_wrapped2(char *msg, char *buf)
 }
 
 
-void gets_wrapped(char *msg, char *buf)
+static void gets_wrapped(const char *msg, char *buf)
 {
-	FILE *input_stream = fopen(TMP_FILE, "r+");
+	FILE *input_stream = freopen(TMP_FILE, "w+", stdin);  // Redirect stdin to the input file
 
-	if (input_stream == NULL) {
-		perror("Error opening file");
+	if (!input_stream) {
+		perror("File opening");
 		return;
 	}
 
 	fprintf(input_stream, "%s", msg);
 	rewind(input_stream);
 
-	FILE *stdin_backup = freopen(TMP_FILE, "r", stdin);  // Redirect stdin to the input file
-
-	if (stdin_backup == NULL) {
-		perror("Error redirecting stdin");
-		fclose(input_stream);
-		return;
-	}
-
 	gets(buf);
 
-
 	fclose(input_stream);
-	fclose(stdin_backup);
 
 	freopen("/dev/tty", "r", stdin);  // Restore stdin to default (console)
 }
 
 
-void puts_wrapped(char *msg, char *buf)
+static char *puts_wrapped(char *msg)
 {
-	FILE *output_stream = fopen(TMP_FILE, "w+");
+	char *buf;
+	long tmpEnd = ftell(output_stream);
+
+	puts(msg);  // Write to the redirected stdout using puts()
+
+	fseek(output_stream, 0, SEEK_END);
+	long fileSize = ftell(output_stream);
+	fseek(output_stream, tmpEnd, SEEK_SET);
+
+	buf = malloc(fileSize - tmpEnd + 1);
+	buf[fileSize - tmpEnd] = '\0';
+	fread(buf, fileSize - tmpEnd, 1, output_stream);
+	fflush(stdout);  // Flush the redirected stdout to ensure the data is written
+
+	return buf;
+}
 
 
-	rewind(output_stream);
-	fflush(output_stream);
+static void stdoutRedirect(const char *f)
+{
+	output_stream = fopen(f, "w+");
+	stdout_copy = dup(fileno(stdout));
 
-	int stdout_copy = dup(fileno(stdout));  // Save a copy of stdin
+	if (output_stream == NULL || stdout_copy == -1)
+		TEST_FAIL_MESSAGE("Error opening file");
 
-	if (output_stream == NULL) {
-		perror("Error opening file");
-		return;
-	}
+	/* Redirect stdout to the output file using dup2() */
+	if (dup2(fileno(output_stream), fileno(stdout)) == -1)
+		TEST_FAIL_MESSAGE("Error redirecting stdout");
 
-	// Redirect stdin to the input file using dup2()
-	if (dup2(fileno(output_stream), fileno(stdout)) == -1) {
-		perror("Error redirecting stdin");
-		return;
-	}
+	buf = NULL;
+}
 
-	puts(msg);
 
-	fclose(output_stream);  // Close the file stream
-
-	// Restore original stdin using dup2()
+static void stdoutRestore(const char *f)
+{
+	/* Restore original stdout using dup2() */
 	if (dup2(stdout_copy, fileno(stdout)) == -1) {
-		perror("Error restoring stdin");
-		return;
+		TEST_FAIL_MESSAGE("Error restoring stdout");
 	}
+	fflush(stdout);
+	close(stdout_copy);
 
-
-	close(stdout_copy);  // Close the copied file descriptor
+	free(buf);
+	fclose(output_stream);
+	remove(f);
 }
 
 
@@ -169,8 +180,8 @@ TEST(stdio_gets, gets_empty_stdin)
 TEST(stdio_gets, gets_other_escape_chars)
 {
 	char res[20];
-	gets_wrapped("\a\b\e\f\r\t\v\\\`\"\?", res);
-	TEST_ASSERT_EQUAL_STRING("\a\b\e\f\r\t\v\\\`\"\?", res);
+	gets_wrapped("\a\b\e\f\r\t\v\\\"\?", res);
+	TEST_ASSERT_EQUAL_STRING("\a\b\e\f\r\t\v\\\"\?", res);
 }
 
 TEST(stdio_gets, gets_multiple_calls)
@@ -202,9 +213,72 @@ TEST_GROUP(stdio_puts);
 
 TEST_SETUP(stdio_puts)
 {
+	stdoutRedirect(TMP_FILE);
 }
 
 
 TEST_TEAR_DOWN(stdio_puts)
 {
+	stdoutRestore(TMP_FILE);
+}
+
+
+TEST(stdio_puts, puts_basic)
+{
+	buf = puts_wrapped("Some\nmessage");
+	TEST_ASSERT_EQUAL_STRING("Some\nmessage\n", buf);
+}
+
+TEST(stdio_puts, puts_only_newlines)
+{
+	buf = puts_wrapped("\n\n\n");
+	TEST_ASSERT_EQUAL_STRING("\n\n\n\n", buf);
+}
+
+
+TEST(stdio_puts, puts_null_terminator_in_argument)
+{
+	char *msg = "ABC\0DEF";
+	buf = puts_wrapped(msg);
+	TEST_ASSERT_EQUAL_STRING("ABC\n", buf);
+	free(buf);
+	buf = puts_wrapped(msg);
+	TEST_ASSERT_EQUAL_STRING("ABC\n", buf);
+}
+
+
+TEST(stdio_puts, puts_long_text)
+{
+
+	char exp[testdata_hugeSize + 2];
+	sprintf(exp, "%s\n", testdata_hugeStr);
+
+	buf = puts_wrapped(testdata_hugeStr);
+	TEST_ASSERT_EQUAL_STRING(exp, buf);
+}
+
+
+TEST(stdio_puts, puts_every_ascii)
+{
+	char exp[260];
+	char *data = testdata_createCharStr(258);
+
+	TEST_ASSERT_NOT_NULL(data);
+	sprintf(exp, "%s\n", data);
+
+	buf = puts_wrapped(data);
+
+	TEST_ASSERT_EQUAL_STRING(exp, buf);
+
+	free(data);
+}
+
+
+TEST_GROUP_RUNNER(stdio_puts)
+{
+	RUN_TEST_CASE(stdio_puts, puts_basic);
+	RUN_TEST_CASE(stdio_puts, puts_only_newlines);
+	RUN_TEST_CASE(stdio_puts, puts_null_terminator_in_argument);
+	RUN_TEST_CASE(stdio_puts, puts_long_text);
+	RUN_TEST_CASE(stdio_puts, puts_every_ascii);
 }
