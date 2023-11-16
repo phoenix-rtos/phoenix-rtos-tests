@@ -4,7 +4,7 @@
  * libc-tests
  *
  * libphoenix functions tests from stdio/file.c
- * 
+ *
  * TESTED:
  * fopen, fclose, fdopen, freopen,
  * fwrite, fread,
@@ -17,7 +17,7 @@
  * fileno, feof, remove,
  * ferror, clearerr,
  * setvbuf, setbuf, fflush,
- * 
+ *
  * UNTESTED:
  * puts, gets < needs writing to stdin/unimplemented
  * popen, pclose, tmpfile < not usable on all targets
@@ -51,7 +51,7 @@ static FILE *filep, *filep2;
 static const char teststr[] = "test_string_123";
 static char toolongpath[PATH_MAX + 16];
 
-/* 
+/*
 Tets group for:
 fopen, fclose,
 fdopen, freopen
@@ -143,7 +143,7 @@ TEST(stdio_fopenfclose, stdio_fopenfclose_wrongflags)
 	assert_fopen_error(STDIO_TEST_FILENAME, "", EINVAL);
 	assert_fopen_error(STDIO_TEST_FILENAME, "phoenix-rtos", EINVAL);
 	// FIXME: invalid test, function argument defined as nonnull
-	//assert_fopen_error(STDIO_TEST_FILENAME, NULL, EINVAL);
+	// assert_fopen_error(STDIO_TEST_FILENAME, NULL, EINVAL);
 }
 
 TEST(stdio_fopenfclose, stdio_fopenfclose_toolongname)
@@ -213,7 +213,7 @@ TEST_GROUP_RUNNER(stdio_fopenfclose)
 }
 
 
-/* 
+/*
 Tets group for:
 - fwrite, fread
 - putc, fputc,
@@ -374,11 +374,11 @@ TEST(stdio_getput, getsputs_basic)
 
 IGNORE_TEST(stdio_getput, getsputs_readonly)
 {
-	/* 
-	Upon successful completion, fputc() shall return the value it has written. 
-	Otherwise, it shall return EOF, the error indicator for the stream shall be set 
-	and errno shall be set to indicate the error. 
-	
+	/*
+	Upon successful completion, fputc() shall return the value it has written.
+	Otherwise, it shall return EOF, the error indicator for the stream shall be set
+	and errno shall be set to indicate the error.
+
 	https://github.com/phoenix-rtos/phoenix-rtos-project/issues/260
 	*/
 
@@ -420,8 +420,8 @@ TEST(stdio_getput, ungetc_basic)
 	assert_fclosed(&filep);
 
 	/*	EOF pushback test
-		If the value of c equals that of the macro EOF, 
-		the operation shall fail and the input stream shall be left unchanged. 
+		If the value of c equals that of the macro EOF,
+		the operation shall fail and the input stream shall be left unchanged.
 	*/
 	filep = fopen(STDIO_TEST_FILENAME, "r");
 	TEST_ASSERT_NOT_NULL(filep);
@@ -609,7 +609,7 @@ TEST_GROUP_RUNNER(stdio_line)
 }
 
 
-/* 
+/*
 Test group for:
 fseek, fseeko, fsetpos(), rewind()
 ftell, ftello
