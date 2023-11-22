@@ -11,7 +11,7 @@
  *    - strsignal()
  *
  * Copyright 2023 Phoenix Systems
- * Author: Mateusz Bloch
+ * Authors: Mateusz Bloch, Arkadiusz Kozlowski
  *
  * This file is part of Phoenix-RTOS.
  *
