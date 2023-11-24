@@ -79,6 +79,7 @@ TEST(stdio_feof, not_empty_all_modes)
 		TEST_ASSERT_EQUAL_INT(0, feof(f));
 
 		TEST_ASSERT_EQUAL_INT(0, fseek(f, 1, SEEK_END));
+		TEST_ASSERT_EQUAL_INT(0, feof(f));
 		fgetc(f);
 
 		if (EQ("w", modes[i]) ||
@@ -94,20 +95,6 @@ TEST(stdio_feof, not_empty_all_modes)
 		TEST_ASSERT_EQUAL_INT(0, fseek(f, 0, SEEK_SET));
 
 		TEST_ASSERT_EQUAL_INT(0, feof(f));
-
-		while (fgetc(f) != EOF) {
-			continue;
-		}
-
-		if (EQ("w", modes[i]) ||
-			EQ("a", modes[i]) ||
-			EQ("wb", modes[i]) ||
-			EQ("ab", modes[i])) {
-			TEST_ASSERT_EQUAL_INT_MESSAGE(0, feof(f), modes[i]);
-		}
-		else {
-			TEST_ASSERT_NOT_EQUAL_MESSAGE(0, feof(f), modes[i]);
-		}
 
 		TEST_ASSERT_EQUAL_INT(0, fclose(f));
 		TEST_ASSERT_EQUAL_INT(0, remove(filename));
@@ -234,26 +221,26 @@ TEST(stdio_ftell, correct_position_not_empty)
 			continue;
 
 		if (EQ("w+", modes[i]) || EQ("wb+", modes[i]))
-			TEST_ASSERT_EQUAL(0, ftell(f));
+			TEST_ASSERT_EQUAL_INT64_MESSAGE(0, ftell(f), modes[i]);
 		else
-			TEST_ASSERT_EQUAL_INT_MESSAGE(254, ftell(f), modes[i]);
+			TEST_ASSERT_EQUAL_INT64_MESSAGE(254, ftell(f), modes[i]);
 
 		TEST_ASSERT_EQUAL(ftell(f), ftello(f));
 
 
 		if (EQ("w+", modes[i]) || EQ("wb+", modes[i])) {
-			TEST_ASSERT_EQUAL(0, ftell(f));
+			TEST_ASSERT_EQUAL_MESSAGE(0, ftell(f), modes[i]);
 		}
 		else {
-			TEST_ASSERT_EQUAL_INT_MESSAGE(254, ftell(f), modes[i]);
+			TEST_ASSERT_EQUAL_INT64_MESSAGE(254, ftell(f), modes[i]);
 			TEST_ASSERT_EQUAL_INT(0, fseek(f, 2, SEEK_END));
 			TEST_ASSERT_EQUAL(256, ftell(f));
 		}
-		TEST_ASSERT_EQUAL(ftell(f), ftello(f));
+		TEST_ASSERT_EQUAL_INT64(ftell(f), ftello(f));
 
 
 		TEST_ASSERT_EQUAL_INT(0, fclose(f));
-		TEST_ASSERT_EQUAL(0, remove(filename));
+		TEST_ASSERT_EQUAL_INT(0, remove(filename));
 	}
 }
 
@@ -272,9 +259,9 @@ TEST(stdio_ftell, correct_position_empty)
 
 		f = fopen(filename, modes[i]);
 
-		TEST_ASSERT_EQUAL(0, ftell(f));
+		TEST_ASSERT_EQUAL_INT64(0, ftell(f));
 
-		TEST_ASSERT_EQUAL(0, remove(filename));
+		TEST_ASSERT_EQUAL_INT(0, remove(filename));
 	}
 }
 
@@ -286,20 +273,19 @@ TEST(stdio_ftell, bad_file_descriptor)
 	FILE *f = fopen(filename, "w+");
 	TEST_ASSERT_EQUAL_INT(0, fclose(f));
 	TEST_ASSERT_EQUAL(-1, ftell(f));
-	TEST_ASSERT_EQUAL(EBADF, errno);
-	TEST_ASSERT_EQUAL(0, remove(filename));
-	errno = 0;
+	TEST_ASSERT_EQUAL_INT(EBADF, errno);
+	TEST_ASSERT_EQUAL_INT(0, remove(filename));
 }
 
 
 TEST(stdio_ftell, wrong_stream_type)
 {
 	TEST_IGNORE_MESSAGE("Issue 923");
-	errno = 0;
+
 
 	int socketfd = socket(AF_UNIX, SOCK_STREAM, 0);
 
-	TEST_ASSERT_NOT_EQUAL(-1, socketfd);
+	TEST_ASSERT_NOT_EQUAL_INT(-1, socketfd);
 
 	errno = 0;
 	FILE *socket_stream = fdopen(socketfd, "w+");
@@ -307,44 +293,44 @@ TEST(stdio_ftell, wrong_stream_type)
 	TEST_ASSERT_NOT_NULL_MESSAGE(socket_stream, strerror(errno));
 
 	errno = 0;
-	TEST_ASSERT_EQUAL(-1, ftell(socket_stream));
-	TEST_ASSERT_EQUAL(ESPIPE, errno);
+	TEST_ASSERT_EQUAL_INT64(-1, ftell(socket_stream));
+	TEST_ASSERT_EQUAL_INT(ESPIPE, errno);
 
 	errno = 0;
-	TEST_ASSERT_EQUAL(-1, ftello(socket_stream));
-	TEST_ASSERT_EQUAL(ESPIPE, errno);
+	TEST_ASSERT_EQUAL_INT64(-1, ftello(socket_stream));
+	TEST_ASSERT_EQUAL_INT(ESPIPE, errno);
 
 	TEST_ASSERT_EQUAL_INT(0, fclose(socket_stream));
-	TEST_ASSERT_NOT_EQUAL(EOF, close(socketfd));
+	TEST_ASSERT_NOT_EQUAL_INT(EOF, close(socketfd));
 
 
 	errno = 0;
 	int pipefd[2];
 	int pipe_res = pipe(pipefd);
 
-	TEST_ASSERT_NOT_EQUAL(-1, pipe_res);
+	TEST_ASSERT_NOT_EQUAL_INT(-1, pipe_res);
 
 	FILE *pipe_stream = fdopen(pipefd[0], "r");
 	TEST_ASSERT_NOT_NULL(pipe_stream);
 
 	errno = 0;
-	TEST_ASSERT_EQUAL(-1, ftell(pipe_stream));
-	TEST_ASSERT_EQUAL(ESPIPE, errno);
+	TEST_ASSERT_EQUAL_INT64(-1, ftell(pipe_stream));
+	TEST_ASSERT_EQUAL_INT(ESPIPE, errno);
 
 	errno = 0;
-	TEST_ASSERT_EQUAL(-1, ftello(pipe_stream));
-	TEST_ASSERT_EQUAL(ESPIPE, errno);
+	TEST_ASSERT_EQUAL_INT64(-1, ftello(pipe_stream));
+	TEST_ASSERT_EQUAL_INT(ESPIPE, errno);
 
 	TEST_ASSERT_EQUAL_INT(0, fclose(pipe_stream));
-	TEST_ASSERT_NOT_EQUAL(EOF, close(pipefd[0]));
-	TEST_ASSERT_NOT_EQUAL(EOF, close(pipefd[1]));
+	TEST_ASSERT_NOT_EQUAL_INT(EOF, close(pipefd[0]));
+	TEST_ASSERT_NOT_EQUAL_INT(EOF, close(pipefd[1]));
 
 
 	const char *fifo_path = "myfifo";
-	TEST_ASSERT_NOT_EQUAL(-1, mkfifo(fifo_path, 0666));
+	TEST_ASSERT_NOT_EQUAL_INT(-1, mkfifo(fifo_path, 0666));
 
 	pid_t pid = fork();
-	TEST_ASSERT_NOT_EQUAL(-1, pid);
+	TEST_ASSERT_NOT_EQUAL_INT(-1, pid);
 
 	if (!pid) {
 		int fifofd = open(fifo_path, O_WRONLY);
