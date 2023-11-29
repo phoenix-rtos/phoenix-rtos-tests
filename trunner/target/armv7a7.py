@@ -84,6 +84,10 @@ class IMX6ULLEvkTarget(ARMv7A7Target):
             block_size=0x10000,
             cleanmarker_size=0x10,
         ),
+        # Based on MT25QL256 IC docs 4KB subsector erase time equals 0.4s max.
+        # Blocksize set for jffs2 command is 64KB, so 16 sectors have to be erased for 1 block
+        # That's why we set (0.4 * 16 / 2) as a timeout. The value is divided by 2 to early detect slowing the flash
+        block_timeout=3.2,
     )
     name = "armv7a7-imx6ull-evk"
 
