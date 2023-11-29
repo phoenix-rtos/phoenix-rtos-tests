@@ -230,7 +230,7 @@ class PloJffsImageProperty(PloImageProperty):
 
     flash_device_id: str
     cleanmarkers_args: PloJffs2CleanmarkerSpec
-    # !!! NOTE: For new flash memories, block_timeout should be set with documentation.
+    # For new flash memories, block_timeout should be set with documentation.
     block_timeout: int
 
 
