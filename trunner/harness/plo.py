@@ -230,8 +230,8 @@ class PloJffsImageProperty(PloImageProperty):
 
     flash_device_id: str
     cleanmarkers_args: PloJffs2CleanmarkerSpec
-    # optimal timeout for erasing 1 block using jffs2 command
-    block_timeout: Optional[int] = 1
+    # !!! NOTE: For new flash memories, block_timeout should be set with documentation.
+    block_timeout: int
 
 
 class PloImageLoader(TerminalHarness, PloInterface):
