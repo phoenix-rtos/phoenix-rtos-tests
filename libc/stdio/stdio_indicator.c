@@ -39,6 +39,13 @@
 
 static char *modes[] = { "r", "r+", "w", "w+", "a", "a+", "rb", "rb+", "wb", "wb+", "ab", "ab+" };
 
+const char *tellMode(char *mode)
+{
+	static char msg[80];
+	sprintf(msg, "Tested file mode: %sError: %s", mode, strerror(errno));
+	return msg;
+}
+
 
 TEST_GROUP(stdio_feof);
 
@@ -54,69 +61,62 @@ TEST_TEAR_DOWN(stdio_feof)
 
 TEST(stdio_feof, not_empty_all_modes)
 {
-
+	char filename[FNAME_LEN] = "file_FEOF_filled";
 	for (int i = 0; i < sizeof(modes) / sizeof(char *); ++i) {
-		char filename[FNAME_LEN];
-		TEST_ASSERT_GREATER_OR_EQUAL(0, sprintf(filename, "file_FEOF_filled_%s", modes[i]));
 
 		FILE *f;
 		f = fopen(filename, "w+");
 		char *data = testdata_createCharStr(255);
 
-		TEST_ASSERT_NOT_NULL(f);
-		TEST_ASSERT_NOT_NULL(data);
+		TEST_ASSERT_NOT_NULL_MESSAGE(f, tellMode(modes[i]));
+		TEST_ASSERT_NOT_NULL_MESSAGE(data, tellMode(modes[i]));
 
-		TEST_ASSERT_NOT_EQUAL_INT(EOF, fputs(data, f));
+		TEST_ASSERT_NOT_EQUAL_INT_MESSAGE(EOF, fputs(data, f), tellMode(modes[i]));
 		free(data);
-		TEST_ASSERT_EQUAL_INT(0, fclose(f));
+		TEST_ASSERT_EQUAL_INT_MESSAGE(0, fclose(f), tellMode(modes[i]));
 
 		f = fopen(filename, modes[i]);
 
-		TEST_ASSERT_NOT_NULL(f);
-		TEST_ASSERT_EQUAL_INT(0, feof(f));
+		TEST_ASSERT_NOT_NULL_MESSAGE(f, tellMode(modes[i]));
+		TEST_ASSERT_EQUAL_INT_MESSAGE(0, feof(f), tellMode(modes[i]));
 
-		TEST_ASSERT_EQUAL_INT(0, fseek(f, 0, SEEK_SET));
-		TEST_ASSERT_EQUAL_INT(0, feof(f));
-
-		TEST_ASSERT_EQUAL_INT(0, fseek(f, 1, SEEK_END));
-		TEST_ASSERT_EQUAL_INT(0, feof(f));
+		TEST_ASSERT_EQUAL_INT_MESSAGE(0, fseek(f, 0, SEEK_END), tellMode(modes[i]));
+		TEST_ASSERT_EQUAL_INT_MESSAGE(0, feof(f), tellMode(modes[i]));
 		fgetc(f);
 
 		if (EQ("w", modes[i]) ||
 			EQ("a", modes[i]) ||
 			EQ("wb", modes[i]) ||
 			EQ("ab", modes[i])) {
-			TEST_ASSERT_EQUAL_MESSAGE(0, feof(f), modes[i]);
+			TEST_ASSERT_EQUAL_MESSAGE(0, feof(f), tellMode(modes[i]));
 		}
 		else {
-			TEST_ASSERT_NOT_EQUAL_MESSAGE(0, feof(f), modes[i]);
+			TEST_ASSERT_NOT_EQUAL_MESSAGE(0, feof(f), tellMode(modes[i]));
 		}
 
-		TEST_ASSERT_EQUAL_INT(0, fseek(f, 0, SEEK_SET));
+		TEST_ASSERT_EQUAL_INT_MESSAGE(0, fseek(f, 0, SEEK_SET), tellMode(modes[i]));
 
-		TEST_ASSERT_EQUAL_INT(0, feof(f));
+		TEST_ASSERT_EQUAL_INT_MESSAGE(0, feof(f), tellMode(modes[i]));
 
-		TEST_ASSERT_EQUAL_INT(0, fclose(f));
-		TEST_ASSERT_EQUAL_INT(0, remove(filename));
+		TEST_ASSERT_EQUAL_INT_MESSAGE(0, fclose(f), tellMode(modes[i]));
 	}
+	TEST_ASSERT_EQUAL_INT(0, remove(filename));
 }
 
 TEST(stdio_feof, empty_all_modes)
 {
+	FILE *f;
+	char filename[] = "file_FEOF_empty";
+	f = fopen(filename, "w+");
+	TEST_ASSERT_NOT_NULL(f);
+	TEST_ASSERT_EQUAL_INT(0, fclose(f));
 	for (int i = 0; i < sizeof(modes) / sizeof(char *); ++i) {
-		FILE *f;
-		char filename[FNAME_LEN];
 
-		TEST_ASSERT_GREATER_OR_EQUAL(0, sprintf(filename, "file_FEOF_empty_%s", modes[i]));
-
-		f = fopen(filename, "w+");
-		TEST_ASSERT_EQUAL_INT(0, fclose(f));
-		TEST_ASSERT_NOT_NULL(f);
 
 		f = fopen(filename, modes[i]);
-		TEST_ASSERT_NOT_NULL(f);
+		TEST_ASSERT_NOT_NULL_MESSAGE(f, tellMode(modes[i]));
 
-		TEST_ASSERT_EQUAL_INT(0, feof(f));
+		TEST_ASSERT_EQUAL_INT_MESSAGE(0, feof(f), tellMode(modes[i]));
 
 		fgetc(f);
 
@@ -124,18 +124,18 @@ TEST(stdio_feof, empty_all_modes)
 			EQ("w", modes[i]) ||
 			EQ("ab", modes[i]) ||
 			EQ("wb", modes[i])) {
-			TEST_ASSERT_EQUAL_INT_MESSAGE(0, feof(f), modes[i]);
+			TEST_ASSERT_EQUAL_INT_MESSAGE(0, feof(f), tellMode(modes[i]));
 		}
 		else {
-			TEST_ASSERT_NOT_EQUAL_INT_MESSAGE(0, feof(f), modes[i]);
+			TEST_ASSERT_NOT_EQUAL_INT_MESSAGE(0, feof(f), tellMode(modes[i]));
 		}
 
-		TEST_ASSERT_EQUAL_INT(0, fclose(f));
-		TEST_ASSERT_EQUAL_INT(0, feof(f));
+		TEST_ASSERT_EQUAL_INT_MESSAGE(0, fclose(f), tellMode(modes[i]));
+		TEST_ASSERT_EQUAL_INT_MESSAGE(0, feof(f), tellMode(modes[i]));
 
-		TEST_ASSERT_EQUAL(0, remove(filename));
-		TEST_ASSERT_EQUAL_INT(0, feof(f));
+		TEST_ASSERT_EQUAL_INT_MESSAGE(0, feof(f), tellMode(modes[i]));
 	}
+	TEST_ASSERT_EQUAL(0, remove(filename));
 }
 
 
@@ -193,27 +193,27 @@ TEST(stdio_ftell, correct_position_not_empty)
 	for (int i = 0; i < sizeof(modes) / sizeof(char *); ++i) {
 
 		char filename[FNAME_LEN];
-		TEST_ASSERT_GREATER_OR_EQUAL(0, sprintf(filename, "file_FTELL_filled_%s", modes[i]));
+		TEST_ASSERT_GREATER_OR_EQUAL_MESSAGE(0, sprintf(filename, "file_FTELL_filled_%s", modes[i]), tellMode(modes[i]));
 
 		f = fopen(filename, "w+");
 		char *data = testdata_createCharStr(255);
-		TEST_ASSERT_NOT_EQUAL_INT(EOF, fputs(data, f));
+		TEST_ASSERT_NOT_EQUAL_INT_MESSAGE(EOF, fputs(data, f), tellMode(modes[i]));
 		free(data);
-		TEST_ASSERT_EQUAL_INT(0, fclose(f));
+		TEST_ASSERT_EQUAL_INT_MESSAGE(0, fclose(f), tellMode(modes[i]));
 
 		errno = 0;
-		TEST_ASSERT_EQUAL(-1, ftell(f));
-		TEST_ASSERT_EQUAL(ftell(f), ftello(f));
-		TEST_ASSERT_EQUAL(EBADF, errno);
+		TEST_ASSERT_EQUAL_MESSAGE(-1, ftell(f), tellMode(modes[i]));
+		TEST_ASSERT_EQUAL_MESSAGE(ftell(f), ftello(f), tellMode(modes[i]));
+		TEST_ASSERT_EQUAL_MESSAGE(EBADF, errno, tellMode(modes[i]));
 
 		f = fopen(filename, modes[i]);
 
-		TEST_ASSERT_NOT_NULL(f);
-		TEST_ASSERT_EQUAL(ftell(f), ftello(f));
+		TEST_ASSERT_NOT_NULL_MESSAGE(f, tellMode(modes[i]));
+		TEST_ASSERT_EQUAL_MESSAGE(ftell(f), ftello(f), tellMode(modes[i]));
 
 		if (EQ("w", modes[i]) || EQ("wb", modes[i])) { /* can't read in "w" mode */
-			TEST_ASSERT_EQUAL_INT(0, fclose(f));
-			TEST_ASSERT_EQUAL(0, remove(filename));
+			TEST_ASSERT_EQUAL_INT_MESSAGE(0, fclose(f), tellMode(modes[i]));
+			TEST_ASSERT_EQUAL_MESSAGE(0, remove(filename), tellMode(modes[i]));
 			continue;
 		}
 
@@ -221,26 +221,26 @@ TEST(stdio_ftell, correct_position_not_empty)
 			continue;
 
 		if (EQ("w+", modes[i]) || EQ("wb+", modes[i]))
-			TEST_ASSERT_EQUAL_INT64_MESSAGE(0, ftell(f), modes[i]);
+			TEST_ASSERT_EQUAL_INT64_MESSAGE(0, ftell(f), tellMode(modes[i]));
 		else
-			TEST_ASSERT_EQUAL_INT64_MESSAGE(254, ftell(f), modes[i]);
+			TEST_ASSERT_EQUAL_INT64_MESSAGE(254, ftell(f), tellMode(modes[i]));
 
-		TEST_ASSERT_EQUAL(ftell(f), ftello(f));
+		TEST_ASSERT_EQUAL_MESSAGE(ftell(f), ftello(f), tellMode(modes[i]));
 
 
 		if (EQ("w+", modes[i]) || EQ("wb+", modes[i])) {
-			TEST_ASSERT_EQUAL_MESSAGE(0, ftell(f), modes[i]);
+			TEST_ASSERT_EQUAL_MESSAGE(0, ftell(f), tellMode(modes[i]));
 		}
 		else {
-			TEST_ASSERT_EQUAL_INT64_MESSAGE(254, ftell(f), modes[i]);
-			TEST_ASSERT_EQUAL_INT(0, fseek(f, 2, SEEK_END));
-			TEST_ASSERT_EQUAL(256, ftell(f));
+			TEST_ASSERT_EQUAL_INT64_MESSAGE(254, ftell(f), tellMode(modes[i]));
+			TEST_ASSERT_EQUAL_INT_MESSAGE(0, fseek(f, 2, SEEK_END), tellMode(modes[i]));
+			TEST_ASSERT_EQUAL_MESSAGE(256, ftell(f), tellMode(modes[i]));
 		}
-		TEST_ASSERT_EQUAL_INT64(ftell(f), ftello(f));
+		TEST_ASSERT_EQUAL_INT64_MESSAGE(ftell(f), ftello(f), tellMode(modes[i]));
 
 
-		TEST_ASSERT_EQUAL_INT(0, fclose(f));
-		TEST_ASSERT_EQUAL_INT(0, remove(filename));
+		TEST_ASSERT_EQUAL_INT_MESSAGE(0, fclose(f), tellMode(modes[i]));
+		TEST_ASSERT_EQUAL_INT_MESSAGE(0, remove(filename), tellMode(modes[i]));
 	}
 }
 
@@ -248,21 +248,19 @@ TEST(stdio_ftell, correct_position_not_empty)
 TEST(stdio_ftell, correct_position_empty)
 {
 	FILE *f;
+	char filename[FNAME_LEN] = "file_FTELL_empty";
+	f = fopen(filename, "w+");
+	TEST_ASSERT_NOT_NULL(f);
+	TEST_ASSERT_EQUAL_INT(0, fclose(f));
 
 	for (int i = 0; i < sizeof(modes) / sizeof(char *); ++i) {
 
-		char filename[FNAME_LEN];
-		TEST_ASSERT_GREATER_OR_EQUAL(0, sprintf(filename, "file_FTELL_empty_%s", modes[i]));
-
-		f = fopen(filename, "w+");
-		TEST_ASSERT_EQUAL_INT(0, fclose(f));
-
 		f = fopen(filename, modes[i]);
+		TEST_ASSERT_NOT_NULL_MESSAGE(f, tellMode(modes[i]));
 
-		TEST_ASSERT_EQUAL_INT64(0, ftell(f));
-
-		TEST_ASSERT_EQUAL_INT(0, remove(filename));
+		TEST_ASSERT_EQUAL_INT64_MESSAGE(0, ftell(f), tellMode(modes[i]));
 	}
+	TEST_ASSERT_EQUAL_INT(0, remove(filename));
 }
 
 
@@ -280,7 +278,7 @@ TEST(stdio_ftell, bad_file_descriptor)
 
 TEST(stdio_ftell, wrong_stream_type)
 {
-	TEST_IGNORE_MESSAGE("Issue 923");
+	TEST_IGNORE_MESSAGE("#923 issue");
 
 
 	int socketfd = socket(AF_UNIX, SOCK_STREAM, 0);
