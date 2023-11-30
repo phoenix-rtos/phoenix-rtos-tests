@@ -311,19 +311,8 @@ TEST(unistd_file, file_lseek)
 	/* assert EOF */
 	TEST_ASSERT_EQUAL_INT(0, read(fd, buf, sizeof(LINE1)));
 
-	/* <posix incmpliance> lseek() does not clear EOF flag
-	
-	It is impossible to read() after reaching EOF and lseek()-ing somwehre inside the file as
-	lseek() does not clear EOF flag 
-
-	Issue link: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/360
-	*/
-#ifdef __phoenix__
-	TEST_IGNORE();
-#endif
-
 	/* fallback relative to current */
-	TEST_ASSERT_EQUAL_INT(0, (off_t)lseek(fd, -sizeof(LINE1), SEEK_CUR));
+	TEST_ASSERT_EQUAL_INT(0, (off_t)lseek(fd, -(off_t)sizeof(LINE1), SEEK_CUR));
 	/* read line */
 	assert_read(fd, buf, sizeof(LINE1));
 	TEST_ASSERT_EQUAL_STRING(LINE1, buf);
@@ -331,7 +320,7 @@ TEST(unistd_file, file_lseek)
 	TEST_ASSERT_EQUAL_INT(0, read(fd, buf, sizeof(LINE1)));
 
 	/* fallback relative to file end */
-	TEST_ASSERT_EQUAL_INT(0, (off_t)lseek(fd, -sizeof(LINE1), SEEK_END));
+	TEST_ASSERT_EQUAL_INT(0, (off_t)lseek(fd, -(off_t)sizeof(LINE1), SEEK_END));
 	/* read line */
 	assert_read(fd, buf, sizeof(LINE1));
 	TEST_ASSERT_EQUAL_STRING(LINE1, buf);
@@ -392,28 +381,14 @@ TEST(unistd_file, file_lseek_negative)
 {
 	assert_write(fd, LINE1);
 
-	/* <posix incmpliance> lseek() error with negative offset + strange errno on Phoenix-RTOS
-	If lseek() is presented with negative offset value (or such that would make final offset negative),
-	it returns -1 but sets errno to the offset that would have been set if negative offsets were possible.
-	Also, even if it fails, the file offset is set to -1 instead of remaining unchanged
-
-	Issue link: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/361
-	*/
-
-	TEST_ASSERT_EQUAL_INT(-1, lseek(fd, (off_t) - sizeof(LINE1), SEEK_SET));
-#ifndef __phoenix__
+	TEST_ASSERT_EQUAL_INT(-1, lseek(fd, (off_t)-1 * sizeof(LINE1), SEEK_SET));
 	TEST_ASSERT_EQUAL_INT(EINVAL, errno);
-#endif
 
 	TEST_ASSERT_EQUAL_INT(-1, lseek(fd, (off_t)-2 * sizeof(LINE1), SEEK_CUR));
-#ifndef __phoenix__
 	TEST_ASSERT_EQUAL_INT(EINVAL, errno);
-#endif
 
 	TEST_ASSERT_EQUAL_INT(-1, lseek(fd, (off_t)-2 * sizeof(LINE1), SEEK_END));
-#ifndef __phoenix__
 	TEST_ASSERT_EQUAL_INT(EINVAL, errno);
-#endif
 }
 
 
@@ -586,7 +561,7 @@ TEST(unistd_file, file_truncate_enoent)
 /* truncate()-ing on directory */
 TEST(unistd_file, file_truncate_eisdir)
 {
-	/* <posix incmpliance> truncate() wrong errno returned 
+	/* <posix incmpliance> truncate() wrong errno returned
 
 	truncate() called on directory returns errno 22 (EINVAL) - ext2 or errno 13 (EACCESS)
 	instead of errno 21 (EISDIR)
