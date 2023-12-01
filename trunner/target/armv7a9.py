@@ -74,7 +74,6 @@ class ZynqZedboardGdbPloLoader(TerminalHarness, PloInterface):
             except subprocess.TimeoutExpired as e:
                 raise FlashError(msg=str(e), output=e.stdout.decode("ascii") if e.stdout else None) from e
 
-        self.enter_bootloader()
         self.wait_prompt()
 
 
