@@ -26,39 +26,41 @@ static FILE *output_stream;
 static int stdout_copy;
 static char *buf;
 
-static void gets_wrapped2(const char *msg, char *buf)
-{
-	FILE *input_stream = fopen(TMP_FILE, "w+");
+// static void gets_wrapped(const char *msg, char *buf)
+// {
+// 	FILE *input_stream = fopen(TMP_FILE, "w+");
 
-	fprintf(input_stream, "%s", msg);
-	rewind(input_stream);
-	fflush(input_stream);
+// 	TEST_ASSERT_NOT_NULL(input_stream);
 
-	int stdin_copy = dup(fileno(stdin));  // Save a copy of stdin
+// 	fprintf(input_stream, "%s", msg);
+// 	rewind(input_stream);
+// 	fflush(input_stream);
 
-	if (input_stream == NULL) {
-		perror("Error opening file");
-		return;
-	}
+// 	int stdin_copy = dup(fileno(stdin));  // Save a copy of stdin
 
-	// Redirect stdin to the input file using dup2()
-	if (dup2(fileno(input_stream), fileno(stdin)) == -1) {
-		perror("Error redirecting stdin");
-		return;
-	}
+// 	if (input_stream == NULL) {
+// 		perror("Error opening file");
+// 		return;
+// 	}
 
-	gets(buf);
+// 	// Redirect stdin to the input file using dup2()
+// 	if (dup2(fileno(input_stream), fileno(stdin)) == -1) {
+// 		perror("Error redirecting stdin");
+// 		return;
+// 	}
 
-	fclose(input_stream);  // Close the file stream
+// 	gets(buf);
 
-	// Restore original stdin using dup2()
-	if (dup2(stdin_copy, fileno(stdin)) == -1) {
-		perror("Error restoring stdin");
-		return;
-	}
+// 	fclose(input_stream);  // Close the file stream
 
-	close(stdin_copy);  // Close the copied file descriptor
-}
+// 	// Restore original stdin using dup2()
+// 	if (dup2(stdin_copy, fileno(stdin)) == -1) {
+// 		perror("Error restoring stdin");
+// 		return;
+// 	}
+
+// 	close(stdin_copy);  // Close the copied file descriptor
+// }
 
 
 static void gets_wrapped(const char *msg, char *buf)
@@ -73,7 +75,7 @@ static void gets_wrapped(const char *msg, char *buf)
 	fprintf(input_stream, "%s", msg);
 	rewind(input_stream);
 
-	gets(buf);
+	TEST_ASSERT_EQUAL_CHAR(msg[0], getchar());
 
 	fclose(input_stream);
 
@@ -81,9 +83,8 @@ static void gets_wrapped(const char *msg, char *buf)
 }
 
 
-static char *puts_wrapped(char *msg)
+static char *puts_wrapped(const char *msg)
 {
-	char *buf;
 	long tmpEnd = ftell(output_stream);
 
 	puts(msg);  // Write to the redirected stdout using puts()
@@ -92,6 +93,7 @@ static char *puts_wrapped(char *msg)
 	long fileSize = ftell(output_stream);
 	fseek(output_stream, tmpEnd, SEEK_SET);
 
+	/* Allow for saving previous messages */
 	buf = malloc(fileSize - tmpEnd + 1);
 	buf[fileSize - tmpEnd] = '\0';
 	fread(buf, fileSize - tmpEnd, 1, output_stream);
@@ -274,6 +276,20 @@ TEST(stdio_puts, puts_every_ascii)
 }
 
 
+TEST(stdio_puts, puts_empty)
+{
+	buf = puts_wrapped("");
+	TEST_ASSERT_EQUAL_STRING("\n", buf);
+}
+
+
+TEST(stdio_puts, puts_only_term_char)
+{
+	buf = puts_wrapped("\0");
+	TEST_ASSERT_EQUAL_STRING("\n", buf);
+}
+
+
 TEST_GROUP_RUNNER(stdio_puts)
 {
 	RUN_TEST_CASE(stdio_puts, puts_basic);
@@ -281,4 +297,6 @@ TEST_GROUP_RUNNER(stdio_puts)
 	RUN_TEST_CASE(stdio_puts, puts_null_terminator_in_argument);
 	RUN_TEST_CASE(stdio_puts, puts_long_text);
 	RUN_TEST_CASE(stdio_puts, puts_every_ascii);
+	RUN_TEST_CASE(stdio_puts, puts_empty);
+	RUN_TEST_CASE(stdio_puts, puts_only_term_char);
 }
