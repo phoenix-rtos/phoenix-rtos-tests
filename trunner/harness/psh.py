@@ -52,14 +52,22 @@ class ShellHarness(IntermediateHarness):
 
     """
 
-    def __init__(self, dut: Dut, prompt: str, cmd: Optional[List[str]] = None, prompt_timeout: Optional[int] = -1):
+    def __init__(
+        self,
+        dut: Dut,
+        prompt: str,
+        cmd: Optional[List[str]] = None,
+        prompt_timeout: int = -1,
+        suppress_dmesg: bool = True,
+    ):
         super().__init__()
         self.dut = dut
         self.prompt = prompt
         self.cmd = " ".join(map(shlex.quote, cmd)) if cmd is not None else cmd
         self.prompt_timeout = prompt_timeout
+        self.suppress_dmesg = suppress_dmesg
 
-    def __call__(self, result: TestResult) -> TestResult:
+    def assert_prompt(self):
         try:
             self.dut.expect_exact(self.prompt, timeout=self.prompt_timeout)
         except (pexpect.TIMEOUT, pexpect.EOF) as e:
@@ -68,6 +76,14 @@ class ShellHarness(IntermediateHarness):
                 expected=self.prompt,
                 output=self.dut.before,
             ) from e
+
+    def __call__(self, result: TestResult) -> TestResult:
+        self.assert_prompt()
+
+        # suppress klog output to console while test is running to avoid problems with parsing
+        if self.suppress_dmesg:
+            self.dut.pexpect_proc.sendline("dmesg -D")
+            self.assert_prompt()
 
         if self.cmd is not None:
             self.dut.send(self.cmd + "\n")
@@ -81,4 +97,12 @@ class ShellHarness(IntermediateHarness):
                 ) from e
 
         result.set_stage(TestStage.RUN)
-        return self.next_harness(result)
+        test_result = self.next_harness(result)
+        self.assert_prompt()
+
+        # re-enable log output to release collected output
+        if self.suppress_dmesg:
+            self.dut.pexpect_proc.sendline("dmesg -E")
+            self.assert_prompt()
+
+        return test_result
