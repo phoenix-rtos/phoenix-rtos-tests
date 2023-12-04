@@ -176,7 +176,16 @@ class STM32L4x6Target(TargetBase):
             builder.add(STM32L4x6OpenocdGdbServerHarness(setup))
 
         if test.shell is not None:
-            builder.add(ShellHarness(self.dut, self.shell_prompt, test.shell.cmd))
+            builder.add(
+                ShellHarness(
+                    self.dut,
+                    self.shell_prompt,
+                    test.shell.cmd,
+                    # /dev/klogctl support missing on stm32.
+                    # related to issue :https://github.com/phoenix-rtos/phoenix-rtos-project/issues/948
+                    suppress_dmesg=False,
+                )
+            )
         else:
             builder.add(TestStartRunningHarness())
 
