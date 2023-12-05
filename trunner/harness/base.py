@@ -109,6 +109,9 @@ class Rebooter:
 
         self._set_flash_mode(flash)
 
+        # Ensuring that first up target will change state before restart
+        time.sleep(0.5)
+
         if self.host.has_gpio():
             self._reboot_dut_gpio(hard=hard)
         else:
