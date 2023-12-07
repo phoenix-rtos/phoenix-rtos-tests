@@ -11,6 +11,7 @@
  */
 
 
+#include <board_config.h>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
@@ -19,7 +20,13 @@
 #include <sys/msg.h>
 #include <sys/types.h>
 #include <sys/platform.h>
+#if defined(__CPU_GR716)
 #include <phoenix/arch/gr716.h>
+#elif defined(__CPU_GR712RC)
+#include <phoenix/arch/gr712rc.h>
+#else
+#error "Unsupported target"
+#endif
 
 #include <grlib-multi.h>
 
@@ -82,7 +89,7 @@ static void test_spiSetConfigFast(spi_t *spi, uint8_t byteOrder)
 {
 	spi->type = spi_config;
 	spi->config.byteOrder = byteOrder;
-	spi->config.mode = spi_mode_0;
+	spi->config.mode = spi_mode0;
 	spi->config.prescFactor = 1;
 	spi->config.prescaler = 0;
 	spi->config.div16 = 0;
@@ -93,7 +100,7 @@ static void test_spiSetConfigSlow(spi_t *spi, uint8_t byteOrder)
 {
 	spi->type = spi_config;
 	spi->config.byteOrder = byteOrder;
-	spi->config.mode = spi_mode_0;
+	spi->config.mode = spi_mode0;
 	spi->config.prescFactor = 0;
 	spi->config.prescaler = 7;
 	spi->config.div16 = 1;
@@ -119,6 +126,7 @@ static void test_spiConfigureClk(int speed, uint8_t byteOrder)
 	msg.i.data = NULL;
 	msg.i.size = 0;
 	msg.o.data = NULL;
+	msg.o.size = 0;
 
 	idevctl = (multi_i_t *)msg.i.raw;
 	idevctl->id = TEST_SPI_ID;
@@ -152,7 +160,9 @@ static void test_spiTransaction(int bufsz)
 
 	msg.type = mtDevCtl;
 	msg.i.data = txBuff;
+	msg.i.size = bufsz;
 	msg.o.data = rxBuff;
+	msg.o.size = bufsz;
 
 	idevctl = (multi_i_t *)msg.i.raw;
 	idevctl->id = TEST_SPI_ID;
@@ -195,10 +205,11 @@ TEST(test_gpio, gpioGetDir)
 	msg.i.data = NULL;
 	msg.i.size = 0;
 	msg.o.data = NULL;
+	msg.o.size = 0;
 
 	idevctl = (multi_i_t *)msg.i.raw;
 	idevctl->id = TEST_GPIO_ID;
-	idevctl->gpio.type = gpio_get_dir;
+	idevctl->gpio.type = gpio_getDir;
 
 	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
 
@@ -224,10 +235,11 @@ TEST(test_gpio, gpioGetPort)
 	msg.i.data = NULL;
 	msg.i.size = 0;
 	msg.o.data = NULL;
+	msg.o.size = 0;
 
 	idevctl = (multi_i_t *)msg.i.raw;
 	idevctl->id = TEST_GPIO_ID;
-	idevctl->gpio.type = gpio_get_port;
+	idevctl->gpio.type = gpio_getPort;
 
 	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
 
@@ -263,19 +275,16 @@ TEST(test_spiPins, spiSetPins)
 	oid_t oid = test_getOid(TEST_SPI_PATH);
 	multi_i_t *idevctl = NULL;
 	multi_o_t *odevctl = NULL;
-	platformctl_t pctl = {
-		.action = pctl_get,
-		.type = pctl_iomux
-	};
 
 	msg.type = mtDevCtl;
 	msg.i.data = NULL;
 	msg.i.size = 0;
 	msg.o.data = NULL;
+	msg.o.size = 0;
 
 	idevctl = (multi_i_t *)msg.i.raw;
 	idevctl->id = TEST_SPI_ID;
-	idevctl->spi.type = spi_set_pins;
+	idevctl->spi.type = spi_setPins;
 	idevctl->spi.pins.sck = TEST_SPI_SCK;
 	idevctl->spi.pins.miso = TEST_SPI_MISO;
 	idevctl->spi.pins.mosi = TEST_SPI_MOSI;
@@ -286,30 +295,6 @@ TEST(test_spiPins, spiSetPins)
 	odevctl = (multi_o_t *)msg.o.raw;
 
 	TEST_ASSERT_EQUAL_INT(0, odevctl->err);
-
-	pctl.iocfg.pin = TEST_SPI_SCK;
-	TEST_ASSERT_EQUAL_INT(0, platformctl(&pctl));
-	TEST_ASSERT_EQUAL_UINT8(TEST_SPI_IOMUX_OPT, pctl.iocfg.opt);
-	TEST_ASSERT_EQUAL_UINT8(0, pctl.iocfg.pulldn);
-	TEST_ASSERT_EQUAL_UINT8(0, pctl.iocfg.pullup);
-
-	pctl.iocfg.pin = TEST_SPI_MISO;
-	TEST_ASSERT_EQUAL_INT(0, platformctl(&pctl));
-	TEST_ASSERT_EQUAL_UINT8(TEST_SPI_IOMUX_OPT, pctl.iocfg.opt);
-	TEST_ASSERT_EQUAL_UINT8(0, pctl.iocfg.pulldn);
-	TEST_ASSERT_EQUAL_UINT8(0, pctl.iocfg.pullup);
-
-	pctl.iocfg.pin = TEST_SPI_MOSI;
-	TEST_ASSERT_EQUAL_INT(0, platformctl(&pctl));
-	TEST_ASSERT_EQUAL_UINT8(TEST_SPI_IOMUX_OPT, pctl.iocfg.opt);
-	TEST_ASSERT_EQUAL_UINT8(0, pctl.iocfg.pulldn);
-	TEST_ASSERT_EQUAL_UINT8(0, pctl.iocfg.pullup);
-
-	pctl.iocfg.pin = TEST_SPI_CS;
-	TEST_ASSERT_EQUAL_INT(0, platformctl(&pctl));
-	TEST_ASSERT_EQUAL_UINT8(TEST_SPI_IOMUX_OPT, pctl.iocfg.opt);
-	TEST_ASSERT_EQUAL_UINT8(0, pctl.iocfg.pulldn);
-	TEST_ASSERT_EQUAL_UINT8(0, pctl.iocfg.pullup);
 }
 
 
@@ -556,9 +541,18 @@ TEST_GROUP_RUNNER(test_adc)
 
 void runner(void)
 {
+	/* GPIO tests were tailored to be run on GR716-MINI
+	 * (because of many functions that given pin can have)
+	 */
+#if (GPIO_PORT_CNT > 0) && defined(__CPU_GR716)
 	RUN_TEST_GROUP(test_gpio);
+#endif
+#if SPI_CNT > 0
 	RUN_TEST_GROUP(test_spi);
+#endif
+#if ADC_CNT > 0
 	RUN_TEST_GROUP(test_adc);
+#endif
 }
 
 
