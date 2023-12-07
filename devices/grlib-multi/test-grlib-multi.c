@@ -1,7 +1,7 @@
 /*
  * Phoenix-RTOS
  *
- * GR716 multi driver tests
+ * GRLIB multi driver tests
  *
  * Copyright 2023 Phoenix Systems
  *
@@ -21,7 +21,7 @@
 #include <sys/platform.h>
 #include <phoenix/arch/gr716.h>
 
-#include <gr716-multi.h>
+#include <grlib-multi.h>
 
 #include <unity_fixture.h>
 

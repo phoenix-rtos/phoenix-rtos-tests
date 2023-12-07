@@ -1,0 +1,7 @@
+test:
+  targets:
+    value: [sparcv8leon3-gr716-mini, sparcv8leon3-gr712rc-board]
+  type: unity
+  tests:
+    - name: unit
+      execute: test-grlib-multi
