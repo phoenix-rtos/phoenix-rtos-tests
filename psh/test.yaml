@@ -82,3 +82,6 @@ test:
               # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/866
               exclude: [armv7m7-imxrt117x-evk]
           harness: test-exit.py
+        
+        - name: control-codes
+          harness: test-control.py
