@@ -42,22 +42,23 @@ TEST(test_waitpid, waitpid_wnohang)
 	int res, i, j;
 	char *const arg[][2] = { { "exec_while_process", NULL }, { "exec_sum_process", NULL } };
 
-	/* 1 iteration for easier problem reproduction, in the future there will be more irerations */
+	/* 1 iteration for easier problem reproduction, in the future there will be more iterations */
 	for (i = 1; i > 0; i--) {
 		for (j = 0; j < 2; j++) {
-			if ((pid[j] = vfork()) < 0) {
+			pid[j] = vfork();
+			if (pid[j] < 0) {
 				fprintf(stderr, "vfork function failed: %s\n", strerror(errno));
 				return;
 			}
 			/* child process j */
-			else if (!pid[j]) {
+			else if (pid[j] == 0) {
 				execv("/bin/test-waitpid", arg[j]);
 				fprintf(stderr, "exec function failed: %s\n", strerror(errno));
 				_exit(EXIT_FAILURE);
 			}
 		}
 		/* wait for process 1 to become a zombie process */
-		usleep(200000);
+		usleep(100000 * 10);
 		res = waitpid(pid[0], NULL, WNOHANG);
 		/* instead of returning 0 at once waitpid function waits for a process state change */
 		TEST_ASSERT_EQUAL_INT(0, res);
@@ -83,17 +84,19 @@ int main(int argc, char *argv[])
 {
 	int sum;
 	if (!strcmp(basename(argv[0]), "exec_while_process")) {
-		while (1)
+		for (;;) {
 			;
+		}
 	}
 	else if (!strcmp(basename(argv[0]), "exec_sum_process")) {
-		if ((sum = 1 + 2) == 3)
+		sum = 1 + 2;
+		if (sum == 3) {
 			usleep(100000);
+		}
 	}
 	else {
-
 		UnityMain(argc, (const char **)argv, runner);
-
-		return 0;
 	}
+
+	return 0;
 }
