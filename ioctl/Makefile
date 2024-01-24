@@ -1,3 +1,4 @@
+LOCAL_CFLAGS := -fno-builtin
 LOCAL_LDFLAGS := -lpthread
 LOCAL_LDFLAGS += -z stack-size=12288
 

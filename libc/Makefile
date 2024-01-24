@@ -11,7 +11,7 @@ NAME := test-libc-$(1)
 LIBC_UNIT_TESTS += test-libc-$(1)
 SRCS := $(wildcard $(MY_LOCAL_DIR)$(1)/*.c) $(COMMON_SRCS)
 DEP_LIBS := unity
-LOCAL_CFLAGS := -I$(MY_LOCAL_DIR) $(3)
+LOCAL_CFLAGS := -I$(MY_LOCAL_DIR) -fno-builtin $(3)
 LOCAL_LDFLAGS := -z stack-size=12288 $(2)
 
 include $(binary.mk)
@@ -26,6 +26,5 @@ $(eval $(call add_test_libc,stdlib))
 $(eval $(call add_test_libc,string))
 $(eval $(call add_test_libc,exit, -lpthread))
 $(eval $(call add_test_libc,time))
-# -fno-bultin - prevent compiler to replace math funcs with compiler builtins
 # -ffloat-store - prevent extended precision on ia32
-$(eval $(call add_test_libc,math, -lm, -fno-builtin -ffloat-store))
+$(eval $(call add_test_libc,math, -lm, -ffloat-store))
