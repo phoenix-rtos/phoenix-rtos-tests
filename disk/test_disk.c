@@ -609,7 +609,7 @@ static int test_disk_perfone(int fd, uint64_t offs, uint64_t blocksz, uint64_t n
 
 	printf("| %5sB  | %-5" PRIu64 "  | %6sB/s  | %7sB/s  |\n",
 		test_disk_prefix(2, blocksz, 0, 0, bprefix),
-		2000000ULL * n / ((uint64_t)srtime + (uint64_t)swtime),
+		UINT64_C(2000000) * n / ((uint64_t)srtime + (uint64_t)swtime),
 		test_disk_prefix(2, 1000000ULL * n * blocksz / (uint64_t)srtime, 0, 1, srprefix),
 		test_disk_prefix(2, 1000000ULL * n * blocksz / (uint64_t)swtime, 0, 1, swprefix));
 
