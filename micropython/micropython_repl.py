@@ -1,11 +1,12 @@
 import re
 
 from trunner.types import Status, TestResult
+from trunner.text import bold
 
-PROMPT = r"(\r+)\x1b\[0J" + r"\(psh\)% "
-EOL = r"\r+\n"
+PROMPT = r"(\r*)\x1b\[0J" + r"\(psh\)% "
+EOL = r"(?:\r+)\n"
 UPYTH_PROMPT = ">>>"
-MICROPYTHON = "/bin/micropython"
+MICROPYTHON = "/bin/micropython "
 
 
 def standard_regex_escape(text):
@@ -17,7 +18,7 @@ def standard_regex_escape(text):
         if c == "\r":
             continue
         if c == "\n":
-            result.append(EOL)
+            result.append(r"(?:\r+)")
             result.append("\n")
         elif escape:
             escape = False
@@ -45,14 +46,6 @@ def create_regex(text):
     return text
 
 
-def send_micropython_cmd(dut, cmd: str):
-    dut.sendline(cmd)
-    dut.expect(UPYTH_PROMPT)
-
-    return dut.before + UPYTH_PROMPT
-
-
-# TODO this test does not work
 def harness(dut):
     """Harness for testing MicroPython REPL"""
 
@@ -64,22 +57,29 @@ def harness(dut):
     cmd = "cat " + test_path
     dut.sendline(cmd)
     dut.expect(cmd + EOL)
-    dut.expect(PROMPT)
 
+    dut.expect(PROMPT)
     script = dut.before
+    script = script.replace("        ", "\t")  # workaround
     script = re.split(EOL, script)
-    script = script[:-1]  # remove empty string at the end
 
     # sending cat with path to the expected output from test
     dut.sendline(cmd + ".exp")
     dut.expect(cmd + ".exp" + EOL)
     dut.expect(PROMPT)
 
-    exp_output = dut.before
+    # remove trailing characters
+    exp_output = dut.before[:-3]
 
-    # Start micropython interpreter
-    dut.sendline(MICROPYTHON)
-    dut.expect(MICROPYTHON + EOL)
+    # parse additional arguments for the interpreter
+    args = ""
+    for line in script:
+        if line.startswith("# cmdline: -"):
+            args = line[len("# cmdline:"):].strip()
+
+    # start micropython interpreter
+    dut.sendline(MICROPYTHON + args)
+    dut.expect(MICROPYTHON + standard_regex_escape(args) + EOL)
 
     test_output = []
 
@@ -89,15 +89,17 @@ def harness(dut):
         test_output.append(dut.before + prompts[idx])
         dut.sendline(line)
 
-    dut.sendcontrol("d")
+    dut.expect_exact(UPYTH_PROMPT)
+    # exit MicroPython REPL
+    dut.sendline("\x04")
     dut.expect(PROMPT)
 
-    test_output.append(dut.before)
     test_output = "".join(test_output)
     expected_output_re = create_regex(exp_output)
 
     if re.match(expected_output_re, test_output):
         return TestResult(status=Status.OK)
     else:
-        msg = f"Incorrect output\n\nExpected result:\n{expected_output_re}\nTest result:\n{test_output}"
+        msg = f"{bold('INCORRECT OUTPUT')}\n\n{bold('EXPECTED RESULT:')}\n{expected_output_re}"
+        msg += f"\n\n{bold('TEST RESULT:')}\n{test_output}"
         return TestResult(msg=msg, status=Status.FAIL)
