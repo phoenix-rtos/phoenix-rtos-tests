@@ -6,6 +6,7 @@
  *    - dirent.h
  * TESTED:
  *    - readdir()
+ *
  * Copyright 2023 Phoenix Systems
  * Author: Arkadiusz Kozlowski
  *
@@ -24,6 +25,7 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <string.h>
+#include <fcntl.h>
 
 #include <unity_fixture.h>
 
@@ -34,36 +36,41 @@
 #define INO_T_TEST_MAX_DIRS 10
 
 
+int d_ino_in(ino_t arg, ino_t *arr)
+{
+	for (int i = 0; i < INO_T_TEST_MAX_DIRS; ++i) {
+		if (arg == arr[i]) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+
 TEST_GROUP(dirent_readdir);
 
 TEST_SETUP(dirent_readdir)
 {
-	mkdir(MAIN_DIR, 0777);
+	mkdir(MAIN_DIR, 0700);
 
-	mkdir(MAIN_DIR "/dir1", 0777);
-	mkdir(MAIN_DIR "/dir2", 0777);
+	mkdir(MAIN_DIR "/dir1", S_IRUSR | S_IWUSR | S_IXUSR);
+	mkdir(MAIN_DIR "/dir2", S_IRUSR | S_IWUSR | S_IXUSR);
 
-	mkdir(MAIN_DIR "/dir1/nest1", 0777);
-	mkdir(MAIN_DIR "/dir1/nest2", 0777);
+	mkdir(MAIN_DIR "/dir1/nest1", S_IRUSR);
+	mkdir(MAIN_DIR "/dir1/nest2", S_IRUSR);
 
-	mkdir(MAIN_DIR "/dir2/nest1", 0777);
-	mkdir(MAIN_DIR "/dir2/nest2", 0777);
+	mkdir(MAIN_DIR "/dir2/nest1", S_IRUSR);
+	mkdir(MAIN_DIR "/dir2/nest2", S_IRUSR);
 
-	FILE *files[] = {
-		fopen(MAIN_DIR "/file1.txt", "w+"),
-		fopen(MAIN_DIR "/file2.dat", "w+"),
-		fopen(MAIN_DIR "/file3.json", "w+")
+	int files[] = {
+		creat(MAIN_DIR "/file1.txt", S_IRUSR),
+		creat(MAIN_DIR "/file2.dat", S_IRUSR),
+		creat(MAIN_DIR "/file3.json", S_IRUSR)
 	};
 
-	if (files[0]) {
-		fprintf(files[0], "Some data");
-		fprintf(files[1], "Some other data");
-
-
-		fclose(files[0]);
-		fclose(files[1]);
-		fclose(files[2]);
-	}
+	close(files[0]);
+	close(files[1]);
+	close(files[2]);
 }
 
 
@@ -88,25 +95,24 @@ TEST_TEAR_DOWN(dirent_readdir)
 
 TEST(dirent_readdir, long_name_directory_check)
 {
-	DIR *dp = test_opendir_asserted(MAIN_DIR);
+	DIR *dp = TEST_OPENDIR_ASSERTED(MAIN_DIR);
 	struct dirent *info;
-	char longDirName[NAME_MAX];
+	char longDirName[NAME_MAX + 1];
 	char longDirPath[NAME_MAX + 2 + sizeof(MAIN_DIR)];
 
-	longDirName[NAME_MAX - 1] = '\0';
 
 	TEST_ASSERT_NOT_NULL(dp);
 
-	memset(longDirName, 'a', NAME_MAX - 1);
+	memset(longDirName, 'a', NAME_MAX);
+	longDirName[NAME_MAX] = '\0';
 	sprintf(longDirPath, MAIN_DIR "/%s", longDirName);
 
 	errno = 0;
-	if (mkdir(longDirPath, 0777) == -1 && errno != EEXIST)
-		TEST_IGNORE_MESSAGE(strerror(errno));
+	TEST_MKDIR_ASSERTED(longDirPath, S_IRUSR);
 
 	while ((info = readdir(dp)) != NULL) {
 		if (!strcmp(longDirName, info->d_name)) {
-			TEST_ASSERT_EQUAL_INT(NAME_MAX - 1, strlen(info->d_name));
+			TEST_ASSERT_EQUAL_INT(NAME_MAX, strlen(info->d_name));
 			closedir(dp);
 			rmdir(longDirPath);
 			TEST_PASS();
@@ -114,22 +120,19 @@ TEST(dirent_readdir, long_name_directory_check)
 	}
 
 	closedir(dp);
-	rmdir(longDirPath);
 	TEST_FAIL();
 }
 
 
 TEST(dirent_readdir, basic_listing_count)
 {
-	DIR *dp = test_opendir_asserted(MAIN_DIR);
+	DIR *dp = TEST_OPENDIR_ASSERTED(MAIN_DIR);
 	int entry_counter = 0;
 	struct dirent *info;
 
-	if (!dp)
-		TEST_FAIL_MESSAGE(strerror(errno));
-
-	while ((info = readdir(dp)) != NULL)
+	while ((info = readdir(dp)) != NULL) {
 		entry_counter++;
+	}
 
 	/* 5 files from setup, and both . and .. directories */
 	TEST_ASSERT_EQUAL_INT(7, entry_counter);
@@ -142,62 +145,64 @@ TEST(dirent_readdir, reading_in_parent_and_child)
 {
 	DIR *dp1, *dp2;
 
-	dp1 = test_opendir_asserted(MAIN_DIR "/dir1");
-	dp2 = test_opendir_asserted(MAIN_DIR "/dir2");
-
+	dp1 = TEST_OPENDIR_ASSERTED(MAIN_DIR "/dir1");
+	dp2 = TEST_OPENDIR_ASSERTED(MAIN_DIR "/dir2");
 
 	TEST_ASSERT_NOT_NULL(readdir(dp1));
 	TEST_ASSERT_NOT_NULL(readdir(dp2));
 
-	/* After first readdir is done, removing contents from directory shall not influence output from readdir */
-
 	pid_t pid = fork();
+
+	if (pid == -1) {
+		TEST_IGNORE_MESSAGE("Fork failed");
+	}
+
 	/* Since there are two different dir streams, there is no reading from the same stream in two processes */
-
-	TEST_ASSERT_NOT_EQUAL_INT(-1, pid);
-
 	if (pid) {
+		int cresult;
 		/* Check for parent */
 		TEST_ASSERT_NOT_NULL(readdir(dp1));
 		rewinddir(dp1);
 		TEST_ASSERT_NOT_NULL(readdir(dp1));
-
 		closedir(dp1);
 		closedir(dp2);
-		wait(NULL);
+		wait(&cresult);
+		TEST_ASSERT_EQUAL_INT(EXIT_SUCCESS, cresult);
 	}
 
 	else {
 		/* Check for child */
-		TEST_ASSERT_NOT_NULL(readdir(dp2));
+		int status = EXIT_SUCCESS;
+		if (!readdir(dp2)) {
+			status = EXIT_FAILURE;
+		}
+
 		rewinddir(dp2);
-		TEST_ASSERT_NOT_NULL(readdir(dp2));
+
+		if (!readdir(dp2)) {
+			status = EXIT_FAILURE;
+		}
 
 		closedir(dp1);
 		closedir(dp2);
-		exit(EXIT_SUCCESS);
+		exit(status);
 	}
 }
 
 
 TEST(dirent_readdir, hardlink_inode_correct_number)
 {
-
 	const char *originalFilePath = MAIN_DIR "/original_file.txt";
-
 	const char *linkFilePath = MAIN_DIR "/linked_file.txt";
 
-	/* Create the file */
 	fclose(fopen(originalFilePath, "w+"));
 
-	int fileLinkResult = link(originalFilePath, linkFilePath);
-
-	TEST_ASSERT_EQUAL_INT(0, fileLinkResult);
+	TEST_ASSERT_EQUAL_INT(0, link(originalFilePath, linkFilePath));
 
 	struct stat originalFileStat, linkFileStat;
 
-	stat(originalFilePath, &originalFileStat);
-	stat(linkFilePath, &linkFileStat);
+	TEST_ASSERT_EQUAL_INT(0, stat(originalFilePath, &originalFileStat));
+	TEST_ASSERT_EQUAL_INT(0, stat(linkFilePath, &linkFileStat));
 
 	TEST_ASSERT_EQUAL_UINT64(originalFileStat.st_ino, linkFileStat.st_ino);
 
@@ -209,7 +214,7 @@ TEST(dirent_readdir, hardlink_inode_correct_number)
 TEST(dirent_readdir, distinct_inode_nums)
 {
 	ino_t inode_arr[INO_T_TEST_MAX_DIRS];
-	DIR *dp = test_opendir_asserted(MAIN_DIR);
+	DIR *dp = TEST_OPENDIR_ASSERTED(MAIN_DIR);
 	struct dirent *info;
 	int inode_counter = 0;
 
@@ -231,8 +236,8 @@ TEST(dirent_readdir, distinct_inode_nums)
 TEST(dirent_readdir, same_file_reading_by_two_pointers)
 {
 	DIR *dp1, *dp2;
-	dp1 = test_opendir_asserted(MAIN_DIR);
-	dp2 = test_opendir_asserted(MAIN_DIR);
+	dp1 = TEST_OPENDIR_ASSERTED(MAIN_DIR);
+	dp2 = TEST_OPENDIR_ASSERTED(MAIN_DIR);
 
 	int counter = 2;
 
@@ -241,13 +246,15 @@ TEST(dirent_readdir, same_file_reading_by_two_pointers)
 
 	errno = 0;
 
-	while (readdir(dp2) != NULL)
+	while (readdir(dp2) != NULL) {
 		continue;
+	}
 
 	TEST_ASSERT_EQUAL_INT(0, errno);
 
-	while (readdir(dp1) != NULL)
+	while (readdir(dp1) != NULL) {
 		counter++;
+	}
 
 	TEST_ASSERT_EQUAL_INT(0, errno);
 
@@ -262,31 +269,39 @@ TEST(dirent_readdir, correct_dirent_names)
 {
 	struct dirent *info;
 	int filename_bits = 0;
-	DIR *dp = test_opendir_asserted(MAIN_DIR);
+	DIR *dp = TEST_OPENDIR_ASSERTED(MAIN_DIR);
 
 	while ((info = readdir(dp)) != NULL) {
 
 		/* Set corresponding bit of filename_bits each time info->d_name is encountered */
-		if (!strcmp(info->d_name, "dir1"))
+		if (!strcmp(info->d_name, "dir1")) {
+
 			filename_bits |= 1;
+		}
 
-		else if (!strcmp(info->d_name, "file1.txt"))
+		else if (!strcmp(info->d_name, "file1.txt")) {
 			filename_bits |= 2;
+		}
 
-		else if (!strcmp(info->d_name, "file2.dat"))
+		else if (!strcmp(info->d_name, "file2.dat")) {
 			filename_bits |= 4;
+		}
 
-		else if (!strcmp(info->d_name, "."))
+		else if (!strcmp(info->d_name, ".")) {
 			filename_bits |= 8;
+		}
 
-		else if (!strcmp(info->d_name, "file3.json"))
+		else if (!strcmp(info->d_name, "file3.json")) {
 			filename_bits |= 16;
+		}
 
-		else if (!strcmp(info->d_name, ".."))
+		else if (!strcmp(info->d_name, "..")) {
 			filename_bits |= 32;
+		}
 
-		else if (!strcmp(info->d_name, "dir2"))
+		else if (!strcmp(info->d_name, "dir2")) {
 			filename_bits |= 64;
+		}
 
 		else
 			TEST_FAIL_MESSAGE(info->d_name);

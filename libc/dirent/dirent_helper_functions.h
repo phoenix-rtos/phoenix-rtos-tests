@@ -5,16 +5,15 @@
 #include <sys/stat.h>
 #include <string.h>
 
-#define INO_T_TEST_MAX_DIRS 10
 
+#define TEST_MKDIR_ASSERTED(path, mode) TEST_ASSERT_TRUE_MESSAGE(mkdir(path, mode) != -1 || errno == EEXIST, strerror(errno))
 
-void test_mkdir_asserted(char *path, mode_t mode);
-
-int test_create_directories(int num_of_dirs);
-
-int d_ino_in(ino_t arg, ino_t *arr);
-
-DIR *test_opendir_asserted(const char *path);
+#define TEST_OPENDIR_ASSERTED(path) \
+	({ \
+		DIR *dp = opendir(path); \
+		TEST_ASSERT_NOT_NULL(dp); \
+		dp; \
+	})
 
 
 #endif
