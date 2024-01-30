@@ -71,7 +71,6 @@ class IA32GenericQemuTarget(QemuTarget):
 class RISCV64GenericQemuTarget(QemuTarget):
     name = "riscv64-generic-qemu"
     rootfs = True
-    experimental = True
 
     def __init__(self):
         super().__init__("riscv64-generic-qemu.sh")
