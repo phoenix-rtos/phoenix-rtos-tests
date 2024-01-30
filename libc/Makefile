@@ -26,6 +26,7 @@ $(eval $(call add_test_libc,stdlib))
 $(eval $(call add_test_libc,string))
 $(eval $(call add_test_libc,exit, -lpthread))
 $(eval $(call add_test_libc,time))
+$(eval $(call add_test_libc,dirent, -lpthread))
 # -fno-bultin - prevent compiler to replace math funcs with compiler builtins
 # -ffloat-store - prevent extended precision on ia32
 $(eval $(call add_test_libc,math, -lm, -fno-builtin -ffloat-store))

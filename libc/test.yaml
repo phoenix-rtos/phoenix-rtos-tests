@@ -61,3 +61,9 @@ test:
       execute: test-libc-time
       targets:
         include: [host-generic-pc]
+
+    - name: dirent
+      execute: test-libc-dirent
+      targets:
+        include: [host-generic-pc]
+
