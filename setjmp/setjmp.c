@@ -36,6 +36,8 @@ TEST(test_setjmp, _setjmp)
 	if ((res = _setjmp(jb)) == 0) {
 		longjmp(jb, 0xDA);
 		FAIL("unreachable code execution");
+	FAIL("unreachable code execution") ;
+
 	}
 	else {
 		TEST_ASSERT_EQUAL_INT(0xDA, res);
@@ -47,7 +49,7 @@ TEST(test_setjmp, sigsetjmp)
 	int res;
 	sigjmp_buf jb;
 
-	if ((res = sigsetjmp(jb, 0)) == 0) {
+	if ((res = sigsetjmp(jb, 0)) == 0){
 		siglongjmp(jb, 24);
 		FAIL("unreachable code execution");
 	}
@@ -56,8 +58,7 @@ TEST(test_setjmp, sigsetjmp)
 	}
 }
 
-TEST(test_setjmp, sigsetjmp_savesigs_0)
-{
+TEST(test_setjmp, sigsetjmp_savesigs_0){
 	int res;
 	jmp_buf jb;
 	sigset_t old, new, act;
