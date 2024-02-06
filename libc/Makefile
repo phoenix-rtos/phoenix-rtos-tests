@@ -18,11 +18,11 @@ include $(binary.mk)
 endef
 
 # Add libc test using custom sources from subdir
-# $(eval $(call add_libc_test,SUBDIR_NAME,NAME[,LOCAL_LDFLAGS][,LOCAL_CFLAGS]))
+# $(eval $(call add_libc_test,SUBDIR_NAME,NAME[,LOCAL_LDFLAGS][,LOCAL_CFLAGS], CUSTOM_SRCS))
 define add_test_libc_custom
 NAME := test-libc-$(2)
 LIBC_UNIT_TESTS += test-libc-$(2)
-SRCS := $(addprefix $(MY_LOCAL_DIR)$(1)/, $(CUSTOM_SRCS)) $(COMMON_SRCS)
+SRCS := $(addprefix $(MY_LOCAL_DIR)$(1)/, $(5)) $(COMMON_SRCS)
 DEP_LIBS := unity
 LOCAL_CFLAGS := -I$(MY_LOCAL_DIR) $(4)
 LOCAL_LDFLAGS := -z stack-size=12288 $(3)
@@ -39,9 +39,7 @@ $(eval $(call add_test_libc,stdlib))
 $(eval $(call add_test_libc,string))
 $(eval $(call add_test_libc,exit, -lpthread))
 $(eval $(call add_test_libc,time))
-# -ffloat-store - prevent extended precision on ia32
-$(eval $(call add_test_libc,math, -lm, -ffloat-store))
-CUSTOM_SRCS := inet-socket.c common.c
-$(eval $(call add_test_libc_custom,socket,inet-socket,, -Wno-attribute-warning))
-CUSTOM_SRCS := unix-socket.c common.c
-$(eval $(call add_test_libc_custom,socket,unix-socket,, -Wno-attribute-warning))
+$(eval $(call add_test_libc,math, -lm, -ffloat-store)) # -ffloat-store - prevent extended precision on ia32
+# -Wno-attribute-warning - ignore warning when using sendmsg/recvmsg, we know it's not fully supported
+$(eval $(call add_test_libc_custom,socket,inet-socket,, -Wno-attribute-warning, inet-socket.c common.c))
+$(eval $(call add_test_libc_custom,socket,unix-socket,, -Wno-attribute-warning, unix-socket.c common.c))
