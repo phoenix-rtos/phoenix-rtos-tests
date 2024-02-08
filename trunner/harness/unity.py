@@ -15,9 +15,12 @@ def unity_harness(dut: Dut, ctx: TestContext, result: TestResult) -> Optional[Te
     last_assertion = {}
     stats = {"FAIL": 0, "IGNORE": 0, "PASS": 0}
     results = []
+    timeout_val = 30
+    if ctx.nightly:
+        timeout_val = 60
 
     while True:
-        idx = dut.expect([assert_re, result_re, result_fail_re, final_re])
+        idx = dut.expect([assert_re, result_re, result_fail_re, final_re], timeout=timeout_val)
         parsed = dut.match.groupdict()
 
         if idx == 0:
