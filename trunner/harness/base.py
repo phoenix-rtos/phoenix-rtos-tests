@@ -79,7 +79,7 @@ class Rebooter:
 
     def _reboot_soft(self):
         self.host.set_reset(0)
-        time.sleep(0.05)
+        time.sleep(0.10)
         self.dut.clear_buffer()
         self.host.set_reset(1)
         # delay needed for plo usb device to disappear
