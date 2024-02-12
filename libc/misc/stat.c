@@ -470,10 +470,11 @@ TEST(stat_mode, symloop_max)
 
 TEST(stat_mode, fifo_type)
 {
-/* Disabled on Phoenix-RTOS because of #680 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/680 */
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#680 issue");
-#else
+/* issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1013*/
+#ifdef __CPU_STM32L4X6
+	TEST_IGNORE();
+#endif /* __CPU_STM32L4X6 */
+
 	int fifo_fd;
 	struct stat buffer;
 
@@ -485,7 +486,7 @@ TEST(stat_mode, fifo_type)
 	TEST_ASSERT_EQUAL_INT(0, lstat(tempPath, &buffer));
 	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFIFO);
 
-	fifo_fd = open(tempPath, O_RDWR);
+	fifo_fd = open(tempPath, O_NONBLOCK);
 	TEST_ASSERT_EQUAL_INT(0, fstat(fifo_fd, &buffer));
 	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFIFO);
 
@@ -500,9 +501,12 @@ TEST(stat_mode, fifo_type)
 	TEST_ASSERT_EQUAL_INT(0, lstat(tempPath, &buffer));
 	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFIFO);
 
+	fifo_fd = open(tempPath, O_NONBLOCK);
+	TEST_ASSERT_EQUAL_INT(0, fstat(fifo_fd, &buffer));
+	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFIFO);
+
 	close(fifo_fd);
 	remove(tempPath);
-#endif
 }
 
 
