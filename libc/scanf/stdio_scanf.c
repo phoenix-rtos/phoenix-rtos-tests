@@ -10,7 +10,7 @@
  *    - vfscanf()
  *    - vsscanf()
  *
- * Copyright 2023 Phoenix Systems
+ * Copyright 2023, 2024 Phoenix Systems
  * Author: Damian Modzelewski
  *
  * This file is part of Phoenix-RTOS.
@@ -4071,7 +4071,7 @@ TEST(stdio_scanf_squareBrackets, ascii)
 
 	/*
 	 * Scanf will try to find all elements of ascii table in filep
-	 * (Without ] sign because it equals end of format) and store it in res
+	 * (Without ] sign because it equals the end of format) and store it in res
 	 */
 	memset(res, 0, sizeof(res));
 	TEST_ASSERT_EQUAL_INT(1, test_vfscanfWrapper(filep, format, res));
@@ -4097,75 +4097,85 @@ TEST(stdio_scanf_squareBrackets, ranges)
 {
 	const char *buff = "loremIPSUM IPSUMdolor dolorSitAmet";
 	const char *buff2 = "123loremIPSUM IPSUMdolor123 dolor123SitAmet";
-	char res[3][MAX_TESTSTR_WORDLEN];
-	char *format = "%[A-z] %[A-Z] %[a-z]";
+	char res[4][BUFF_LEN / 3];
+	char *format = "%[A-z] %[A-Z] %[a-z] %[A-z]";
 
 	fprintf(filep, "%s", buff);
 	rewind(filep);
 
 	/*
-	 * In this situation scanf will search all elements in range declared
+	 * In this situation scanf will search all elements in the range declared
 	 * inside brackets and stop right after it will be out of range.
-	 * (after finding a white sign in this case)
+	 * (after finding a white sign in this case but if it will face a matching pattern with space
+	 * it will continue matching and stop right after the nonmatching element. The cursor will be placed
+	 * on the last white space to match further part of the pattern)
 	 */
 	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(3, fscanf(filep, format, res[0], res[1], res[2]));
+	TEST_ASSERT_EQUAL_INT(4, fscanf(filep, format, res[0], res[1], res[2], res[3]));
 	TEST_ASSERT_EQUAL_STRING("loremIPSUM", res[0]);
 	TEST_ASSERT_EQUAL_STRING("IPSUM", res[1]);
 	TEST_ASSERT_EQUAL_STRING("dolor", res[2]);
+	TEST_ASSERT_EQUAL_STRING("dolorSitAmet", res[3]);
 
 	rewind(filep);
 
 	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(3, test_vfscanfWrapper(filep, format, res[0], res[1], res[2]));
+	TEST_ASSERT_EQUAL_INT(4, test_vfscanfWrapper(filep, format, res[0], res[1], res[2], res[3]));
 	TEST_ASSERT_EQUAL_STRING("loremIPSUM", res[0]);
 	TEST_ASSERT_EQUAL_STRING("IPSUM", res[1]);
 	TEST_ASSERT_EQUAL_STRING("dolor", res[2]);
+	TEST_ASSERT_EQUAL_STRING("dolorSitAmet", res[3]);
 
 	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(3, test_vsscanfWrapper(buff, format, res[0], res[1], res[2]));
+	TEST_ASSERT_EQUAL_INT(4, test_vsscanfWrapper(buff, format, res[0], res[1], res[2], res[3]));
 	TEST_ASSERT_EQUAL_STRING("loremIPSUM", res[0]);
 	TEST_ASSERT_EQUAL_STRING("IPSUM", res[1]);
 	TEST_ASSERT_EQUAL_STRING("dolor", res[2]);
+	TEST_ASSERT_EQUAL_STRING("dolorSitAmet", res[3]);
 
 	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(3, sscanf(buff, format, res[0], res[1], res[2]));
+	TEST_ASSERT_EQUAL_INT(4, sscanf(buff, format, res[0], res[1], res[2], res[3]));
 	TEST_ASSERT_EQUAL_STRING("loremIPSUM", res[0]);
 	TEST_ASSERT_EQUAL_STRING("IPSUM", res[1]);
 	TEST_ASSERT_EQUAL_STRING("dolor", res[2]);
+	TEST_ASSERT_EQUAL_STRING("dolorSitAmet", res[3]);
 
 	fclose(filep);
-	filep = fopen(TESTFILE_PATH, "w+");
-	format = "%[1-9] %[^1-9] %[1-9]";
 
+	filep = fopen(TESTFILE_PATH, "w+");
+	format = "%[1-9] %[^1-9] %[1-9] %[A-z1-9]";
 	fprintf(filep, "%s", buff2);
 	rewind(filep);
 
 	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(3, fscanf(filep, format, res[1], res[2], res[3]));
-	TEST_ASSERT_EQUAL_STRING("123", res[1]);
-	TEST_ASSERT_EQUAL_STRING("loremIPSUM IPSUMdolor", res[2]);
-	TEST_ASSERT_EQUAL_STRING("123", res[3]);
+	TEST_ASSERT_EQUAL_INT(4, fscanf(filep, format, res[0], res[1], res[2], res[3]));
+	TEST_ASSERT_EQUAL_STRING("123", res[0]);
+	TEST_ASSERT_EQUAL_STRING("loremIPSUM IPSUMdolor", res[1]);
+	TEST_ASSERT_EQUAL_STRING("123", res[2]);
+	TEST_ASSERT_EQUAL_STRING("dolor123SitAmet", res[3]);
 
 	rewind(filep);
 
 	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(3, test_vfscanfWrapper(filep, format, res[1], res[2], res[3]));
-	TEST_ASSERT_EQUAL_STRING("123", res[1]);
-	TEST_ASSERT_EQUAL_STRING("loremIPSUM IPSUMdolor", res[2]);
-	TEST_ASSERT_EQUAL_STRING("123", res[3]);
+	TEST_ASSERT_EQUAL_INT(4, test_vfscanfWrapper(filep, format, res[0], res[1], res[2], res[3]));
+	TEST_ASSERT_EQUAL_STRING("123", res[0]);
+	TEST_ASSERT_EQUAL_STRING("loremIPSUM IPSUMdolor", res[1]);
+	TEST_ASSERT_EQUAL_STRING("123", res[2]);
+	TEST_ASSERT_EQUAL_STRING("dolor123SitAmet", res[3]);
 
 	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(3, test_vsscanfWrapper(buff2, format, res[1], res[2], res[3]));
-	TEST_ASSERT_EQUAL_STRING("123", res[1]);
-	TEST_ASSERT_EQUAL_STRING("loremIPSUM IPSUMdolor", res[2]);
-	TEST_ASSERT_EQUAL_STRING("123", res[3]);
+	TEST_ASSERT_EQUAL_INT(4, test_vsscanfWrapper(buff2, format, res[0], res[1], res[2], res[3]));
+	TEST_ASSERT_EQUAL_STRING("123", res[0]);
+	TEST_ASSERT_EQUAL_STRING("loremIPSUM IPSUMdolor", res[1]);
+	TEST_ASSERT_EQUAL_STRING("123", res[2]);
+	TEST_ASSERT_EQUAL_STRING("dolor123SitAmet", res[3]);
 
 	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(3, sscanf(buff2, format, res[1], res[2], res[3]));
-	TEST_ASSERT_EQUAL_STRING("123", res[1]);
-	TEST_ASSERT_EQUAL_STRING("loremIPSUM IPSUMdolor", res[2]);
-	TEST_ASSERT_EQUAL_STRING("123", res[3]);
+	TEST_ASSERT_EQUAL_INT(4, sscanf(buff2, format, res[0], res[1], res[2], res[3]));
+	TEST_ASSERT_EQUAL_STRING("123", res[0]);
+	TEST_ASSERT_EQUAL_STRING("loremIPSUM IPSUMdolor", res[1]);
+	TEST_ASSERT_EQUAL_STRING("123", res[2]);
+	TEST_ASSERT_EQUAL_STRING("dolor123SitAmet", res[3]);
 }
 
 
@@ -4452,7 +4462,7 @@ TEST(stdio_scanf_rest, m_c)
 	TEST_IGNORE();
 #endif
 
-	/* Address sanitizer used on Ubuntu 22.04 fails in such case, because of the following issue:
+	/* Address sanitizer used on Ubuntu 22.04 fails in such cases, because of the following issue:
 	 * https://github.com/llvm/llvm-project/issues/61768
 	 */
 #if defined(__SANITIZE_ADDRESS__)
@@ -4729,6 +4739,7 @@ TEST_GROUP_RUNNER(stdio_scanf_squareBrackets)
 	RUN_TEST_CASE(stdio_scanf_squareBrackets, pos);
 	RUN_TEST_CASE(stdio_scanf_squareBrackets, white_spaces);
 	RUN_TEST_CASE(stdio_scanf_squareBrackets, ascii);
+	RUN_TEST_CASE(stdio_scanf_squareBrackets, ranges)
 	remove(TESTFILE_PATH);
 }
 
