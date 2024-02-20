@@ -470,11 +470,6 @@ TEST(stat_mode, symloop_max)
 
 TEST(stat_mode, fifo_type)
 {
-/* issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1013*/
-#ifdef __CPU_STM32L4X6
-	TEST_IGNORE();
-#endif /* __CPU_STM32L4X6 */
-
 	int fifo_fd;
 	struct stat buffer;
 
