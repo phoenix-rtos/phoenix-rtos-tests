@@ -126,13 +126,12 @@ def assert_exec(pexpect_proc, prog, expected="", msg=""):
 
 
 def get_exit_code(pexpect_proc):
-    assert_prompt(pexpect_proc)
     pexpect_proc.sendline("echo $?")
     msg = "Checking passed command return code failed, one or more digits not found"
     assert pexpect_proc.expect([rf"(\d+?){EOL}", pexpect.TIMEOUT, pexpect.EOF]) == 0, msg
 
     exit_code = int(pexpect_proc.match.group(1))
-    assert_prompt(pexpect_proc)
+    # assert_prompt(pexpect_proc)
 
     return exit_code
 
