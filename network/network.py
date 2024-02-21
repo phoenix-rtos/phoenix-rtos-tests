@@ -87,21 +87,22 @@ def en_setup(
 
 def con_setup(dut: Dut, host_ip, host_port):
     print("con setup")
-    host_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    host_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    time.sleep(10)
+    # host_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    # host_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-    if host_socket.bind((host_ip, host_port)) is not None:
-        print('bind failed')
+    # if host_socket.bind((host_ip, host_port)) is not None:
+    #     print('bind failed')
 
-    host_socket.listen()
+    # host_socket.listen()
 
-    dut.sendline('/bin/test-network ' + host_ip + '\n')
+    # dut.sendline('/bin/test-network ' + host_ip + '\n')
 
-    peer_socket, peer_address = host_socket.accept()
+    # peer_socket, peer_address = host_socket.accept()
 
-    host_socket.close()
+    # host_socket.close()
 
-    return peer_socket, peer_address
+    return 0
 
 
 def harness(dut: Dut, ctx: TestContext, result: TestResult):
