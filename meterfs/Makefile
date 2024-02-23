@@ -13,7 +13,7 @@ DEPS := unity
 
 TEST_LIBS :=
 ifeq ("$(TARGET_FAMILY)-$(TARGET_SUBFAMILY)","host-generic")
-  TEST_LIBS += host-flash libmeterfs libphoenix
+  TEST_LIBS += host-flash libmeterfs libphoenix libtinyaes
   LOCAL_SRCS += file_pc.c
 else
   LOCAL_SRCS += file_phx.c
