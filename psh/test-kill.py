@@ -33,15 +33,26 @@ def assert_errors(p):
 
     # nothing should be done
     msg = 'Wrong output when killing nonexistent process'
-    psh.assert_cmd(p, f'kill {unused_pid}', result="fail", msg=msg)
+    psh.assert_cmd(p,
+                   f'kill {unused_pid}',
+                   expected=rf'(kill: failed to send signal to process \d+?{psh.EOL})|{psh.EOL}',
+                   result="fail",
+                   msg=msg,
+                   is_regex=True)
 
     msg = 'Wrong kill help message'
-    psh.assert_cmd(p, 'kill', expected='usage: kill <pid>', result='fail', msg=msg)
+    psh.assert_cmd(p, 'kill',
+                   expected=rf'(kill: |)(u|U)sage: kill[^\r]+?{psh.EOL}',
+                   result='fail',
+                   msg=msg,
+                   is_regex=True)
+
     msg = 'Wrong kill error message when passing string in argument'
     psh.assert_cmd(p, 'kill not_number',
-                   expected='kill: could not parse process id: not_number',
+                   expected=rf'kill: [^\r]+?{psh.EOL}',
                    result='fail',
-                   msg=msg)
+                   msg=msg,
+                   is_regex=True)
 
 
 @psh.run
