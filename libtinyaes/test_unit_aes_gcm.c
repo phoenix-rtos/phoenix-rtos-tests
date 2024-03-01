@@ -15,27 +15,27 @@ TEST_GROUP(aes_gcm);
 
 TEST_SETUP(aes_gcm)
 {
-    // Nothing to do here
+	// Nothing to do here
 }
 
 
 TEST_TEAR_DOWN(aes_gcm)
 {
-    // Nothing to do here
+	// Nothing to do here
 }
 
 
 struct test_vector {
-    uint8_t key[16];
-    uint8_t iv[12];
-    uint8_t tag[16];
+	uint8_t key[16];
+	uint8_t iv[12];
+	uint8_t tag[16];
 
-    const uint8_t* aad;
-    size_t aad_len;
+	const uint8_t *aad;
+	size_t aad_len;
 
-    const uint8_t* ptext;
-    const uint8_t* ctext;
-    size_t xtext_len;
+	const uint8_t *ptext;
+	const uint8_t *ctext;
+	size_t xtext_len;
 };
 
 
@@ -97,54 +97,54 @@ static const struct test_vector vectors[] = {
 // clang-format on
 
 
-static inline void test_xcrypt(const struct test_vector* tv)
+static inline void test_xcrypt(const struct test_vector *tv)
 {
-    uint8_t xbuf[64];
-    struct AES_ctx aes_ctx;
+	uint8_t xbuf[64];
+	struct AES_ctx aes_ctx;
 
-    TEST_ASSERT_LESS_OR_EQUAL_size_t(sizeof(xbuf), tv->xtext_len);
+	TEST_ASSERT_LESS_OR_EQUAL_size_t(sizeof(xbuf), tv->xtext_len);
 
-    memcpy(xbuf, tv->ptext, tv->xtext_len);
+	memcpy(xbuf, tv->ptext, tv->xtext_len);
 
-    AES_GCM_init(&aes_ctx, tv->key);
-    AES_GCM_crypt(&aes_ctx, tv->iv, xbuf, tv->xtext_len);
-    TEST_ASSERT_EQUAL_UINT8_ARRAY(tv->ctext, xbuf, tv->xtext_len);
+	AES_GCM_init(&aes_ctx, tv->key);
+	AES_GCM_crypt(&aes_ctx, tv->iv, xbuf, tv->xtext_len);
+	TEST_ASSERT_EQUAL_UINT8_ARRAY(tv->ctext, xbuf, tv->xtext_len);
 
-    AES_GCM_init(&aes_ctx, tv->key);
-    AES_GCM_crypt(&aes_ctx, tv->iv, xbuf, tv->xtext_len);
-    TEST_ASSERT_EQUAL_UINT8_ARRAY(tv->ptext, xbuf, tv->xtext_len);
+	AES_GCM_init(&aes_ctx, tv->key);
+	AES_GCM_crypt(&aes_ctx, tv->iv, xbuf, tv->xtext_len);
+	TEST_ASSERT_EQUAL_UINT8_ARRAY(tv->ptext, xbuf, tv->xtext_len);
 };
 
 
-static inline void test_tag(const struct test_vector* tv)
+static inline void test_tag(const struct test_vector *tv)
 {
-    uint8_t tag[16] = { 0 };
-    struct AES_ctx aes_ctx;
+	uint8_t tag[16] = { 0 };
+	struct AES_ctx aes_ctx;
 
-    AES_GCM_init(&aes_ctx, tv->key);
-    AES_GCM_mac(&aes_ctx, tv->iv, tv->aad, tv->aad_len, tv->ctext, tv->xtext_len, tag);
-    TEST_ASSERT_EQUAL_UINT8_ARRAY(tv->tag, tag, sizeof(tag));
+	AES_GCM_init(&aes_ctx, tv->key);
+	AES_GCM_mac(&aes_ctx, tv->iv, tv->aad, tv->aad_len, tv->ctext, tv->xtext_len, tag);
+	TEST_ASSERT_EQUAL_UINT8_ARRAY(tv->tag, tag, sizeof(tag));
 };
 
 
 TEST(aes_gcm, xcrypt)
 {
-    for (size_t i = 0; i < sizeof(vectors) / sizeof(vectors[0]); ++i) {
-        test_xcrypt(&vectors[i]);
-    }
+	for (size_t i = 0; i < sizeof(vectors) / sizeof(vectors[0]); ++i) {
+		test_xcrypt(&vectors[i]);
+	}
 }
 
 
 TEST(aes_gcm, tag)
 {
-    for (size_t i = 0; i < sizeof(vectors) / sizeof(vectors[0]); ++i) {
-        test_tag(&vectors[i]);
-    }
+	for (size_t i = 0; i < sizeof(vectors) / sizeof(vectors[0]); ++i) {
+		test_tag(&vectors[i]);
+	}
 }
 
 
 TEST_GROUP_RUNNER(aes_gcm)
 {
-    RUN_TEST_CASE(aes_gcm, xcrypt);
-    RUN_TEST_CASE(aes_gcm, tag);
+	RUN_TEST_CASE(aes_gcm, xcrypt);
+	RUN_TEST_CASE(aes_gcm, tag);
 }
