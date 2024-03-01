@@ -13,19 +13,19 @@ TEST_GROUP(aes_ccm_s);
 
 TEST_SETUP(aes_ccm_s)
 {
-    /* Nothing to do here */
+	/* Nothing to do here */
 }
 
 TEST_TEAR_DOWN(aes_ccm_s)
 {
-    /* Nothing to do here */
+	/* Nothing to do here */
 }
 
 struct frame_ptrs {
-    uint8_t* mhr;
-    uint8_t* payload;
-    uint8_t* mic;
-    uint8_t* end;
+	uint8_t *mhr;
+	uint8_t *payload;
+	uint8_t *mic;
+	uint8_t *end;
 };
 
 #define BUF_SIZE 512
@@ -41,42 +41,42 @@ static const uint8_t nonce[] = { 0x78, 0x1d, 0x00, 0x2a, 0x78, 0x1d, 0x00, 0x2a,
 static const uint8_t adata[] = { 0x69, 0x88, 0x29, 0x1d, 0x78, 0x0c, 0x01, 0x2a, 0x00, 0x0d, 0x23, 0x51, 0x12, 0xa0, 0x00 };
 
 #if defined(PS_DEBUG) && (PS_DEBUG == 1)
-static void print_bytestream(FILE* fout, uint8_t* ptr, uint16_t len, uint8_t fg, uint8_t bg, uint8_t width, uint8_t reset)
+static void print_bytestream(FILE *fout, uint8_t *ptr, uint16_t len, uint8_t fg, uint8_t bg, uint8_t width, uint8_t reset)
 {
-    static int cntr = 0, ofs = 0;
-    uint8_t* endptr = ptr + len;
+	static int cntr = 0, ofs = 0;
+	uint8_t *endptr = ptr + len;
 
-    if (reset) {
-        cntr = 0;
-        ofs = 0;
-    }
+	if (reset) {
+		cntr = 0;
+		ofs = 0;
+	}
 
-    fg &= 0xf, bg &= 0xf;
-    fg = fg > 7 ? 90 + (fg & 7) : 30 + fg;  /* foreground color 0..7 dim, 8..15 bright */
-    bg = bg > 7 ? 100 + (bg & 7) : 40 + bg; /* background color 0..7 dim, 8..15 bright */
+	fg &= 0xf, bg &= 0xf;
+	fg = fg > 7 ? 90 + (fg & 7) : 30 + fg;  /* foreground color 0..7 dim, 8..15 bright */
+	bg = bg > 7 ? 100 + (bg & 7) : 40 + bg; /* background color 0..7 dim, 8..15 bright */
 
-    fprintf(fout, "\033[%02d;%02dm", fg, bg);
-    while (ptr < endptr) {
-        if (cntr == 0) {
-            fprintf(fout, "\033[90m %05d\033[0m | \033[%02d;%02dm", ofs, fg, bg);
-            ofs += width;
-        }
-        fprintf(fout, "%02X ", *ptr++);
-        if (cntr++ > width) {
-            cntr = 0;
-            fputs("\n", fout);
-        }
-    }
-    fputs("\033[0m", fout);
+	fprintf(fout, "\033[%02d;%02dm", fg, bg);
+	while (ptr < endptr) {
+		if (cntr == 0) {
+			fprintf(fout, "\033[90m %05d\033[0m | \033[%02d;%02dm", ofs, fg, bg);
+			ofs += width;
+		}
+		fprintf(fout, "%02X ", *ptr++);
+		if (cntr++ > width) {
+			cntr = 0;
+			fputs("\n", fout);
+		}
+	}
+	fputs("\033[0m", fout);
 }
 
-static void dump_frame(struct frame_ptrs* ptr, const char msg[])
+static void dump_frame(struct frame_ptrs *ptr, const char msg[])
 {
-    fprintf(stderr, "\n%s:\n", msg);
-    print_bytestream(stderr, ptr->mhr, ptr->payload - ptr->mhr, 14, 0, 20, 1);
-    print_bytestream(stderr, ptr->payload, ptr->mic - ptr->payload, 10, 0, 20, 0);
-    print_bytestream(stderr, ptr->mic, ptr->end - ptr->mic, 13, 0, 20, 0);
-    fputs("\n", stderr);
+	fprintf(stderr, "\n%s:\n", msg);
+	print_bytestream(stderr, ptr->mhr, ptr->payload - ptr->mhr, 14, 0, 20, 1);
+	print_bytestream(stderr, ptr->payload, ptr->mic - ptr->payload, 10, 0, 20, 0);
+	print_bytestream(stderr, ptr->mic, ptr->end - ptr->mic, 13, 0, 20, 0);
+	fputs("\n", stderr);
 }
 
 #else
@@ -84,61 +84,61 @@ static void dump_frame(struct frame_ptrs* ptr, const char msg[])
 #endif
 
 /* store complete IEEE 802.15.4 frame in two buffers 'work-on' and 'compare-with' */
-static struct frame_ptrs build_frame(const uint8_t* mhr, uint16_t mhr_len, const uint8_t* payload, uint16_t payload_len, const uint8_t* mic, uint8_t mic_len)
+static struct frame_ptrs build_frame(const uint8_t *mhr, uint16_t mhr_len, const uint8_t *payload, uint16_t payload_len, const uint8_t *mic, uint8_t mic_len)
 {
-    struct frame_ptrs ptr;
+	struct frame_ptrs ptr;
 
-    TEST_ASSERT_LESS_THAN_MESSAGE(BUF_SIZE, mhr_len + payload_len + mic_len, "Frame bigger than buffer size");
+	TEST_ASSERT_LESS_THAN_MESSAGE(BUF_SIZE, mhr_len + payload_len + mic_len, "Frame bigger than buffer size");
 
-    /* start with copy buffer to save ptrs */
-    ptr.mhr = work_buf;
-    memcpy(ptr.mhr, mhr, mhr_len);
+	/* start with copy buffer to save ptrs */
+	ptr.mhr = work_buf;
+	memcpy(ptr.mhr, mhr, mhr_len);
 
-    /* store Encrypted payload */
-    ptr.payload = ptr.mhr + mhr_len;
-    memcpy(ptr.payload, payload, payload_len);
+	/* store Encrypted payload */
+	ptr.payload = ptr.mhr + mhr_len;
+	memcpy(ptr.payload, payload, payload_len);
 
-    /* store ENC-MIC-32 tag */
-    ptr.mic = ptr.payload + payload_len;
-    memcpy(ptr.mic, mic, mic_len);
+	/* store ENC-MIC-32 tag */
+	ptr.mic = ptr.payload + payload_len;
+	memcpy(ptr.mic, mic, mic_len);
 
-    ptr.end = ptr.mic + mic_len;
+	ptr.end = ptr.mic + mic_len;
 
-    /* duplicate 'work-on' copy buffer to 'compare-with' buffer */
-    memcpy(cmp_buf, work_buf, ptr.end - ptr.mhr);
+	/* duplicate 'work-on' copy buffer to 'compare-with' buffer */
+	memcpy(cmp_buf, work_buf, ptr.end - ptr.mhr);
 
-    return ptr;
+	return ptr;
 }
 
 static void make_test(struct frame_ptrs ptr, uint8_t decr_byte)
 {
-    unsigned int n;
-    struct AES_ctx ctx;
-    AES_CCM_S_set_key(&ctx, gmk_key);
+	unsigned int n;
+	struct AES_ctx ctx;
+	AES_CCM_S_set_key(&ctx, gmk_key);
 
-    dump_frame(&ptr, "encrypted frame");
+	dump_frame(&ptr, "encrypted frame");
 
-    /* ENC-MIC-32 is always 4 bytes wide */
-    AES_CCM_S_crypt(&ctx, nonce, ptr.mhr, ptr.payload - ptr.mhr, ptr.payload, ptr.mic - ptr.payload, ptr.mic, 4, aes_ccm_s__decrypt);
+	/* ENC-MIC-32 is always 4 bytes wide */
+	AES_CCM_S_crypt(&ctx, nonce, ptr.mhr, ptr.payload - ptr.mhr, ptr.payload, ptr.mic - ptr.payload, ptr.mic, 4, aes_ccm_s__decrypt);
 
-    dump_frame(&ptr, "decrypted frame");
+	dump_frame(&ptr, "decrypted frame");
 
-    /* payload is now decrypted verify its content */
-    for (n = 0; n < (ptr.mic - ptr.payload); n++) {
-        TEST_ASSERT(ptr.payload[n] == decr_byte);
-    }
+	/* payload is now decrypted verify its content */
+	for (n = 0; n < (ptr.mic - ptr.payload); n++) {
+		TEST_ASSERT(ptr.payload[n] == decr_byte);
+	}
 
-    AES_CCM_S_crypt(&ctx, nonce, ptr.mhr, ptr.payload - ptr.mhr, ptr.payload, ptr.mic - ptr.payload, ptr.mic, 4, aes_ccm_s__encrypt);
+	AES_CCM_S_crypt(&ctx, nonce, ptr.mhr, ptr.payload - ptr.mhr, ptr.payload, ptr.mic - ptr.payload, ptr.mic, 4, aes_ccm_s__encrypt);
 
-    dump_frame(&ptr, "previously decrypted frame is now encrypted again");
+	dump_frame(&ptr, "previously decrypted frame is now encrypted again");
 
-    TEST_ASSERT_EQUAL_INT(0, memcmp(cmp_buf, work_buf, ptr.end - ptr.mhr));
+	TEST_ASSERT_EQUAL_INT(0, memcmp(cmp_buf, work_buf, ptr.end - ptr.mhr));
 }
 
 /* test vector of "II.1.1 Short frame ciphering" Rec. ITU.T G.9903 (08/2017) */
 static void g3_frame_test_short(void)
 {
-    /* clang-format off */
+	/* clang-format off */
     /* encrypted payload after segment reassembly (if decrypted it contain a set of octets value=0x75) */
     uint8_t decr_byte = 0x75;
     const uint8_t cdata[] = {
@@ -150,14 +150,14 @@ static void g3_frame_test_short(void)
     const uint8_t mic[] = { 0xb8, 0x7a, 0xb7, 0xb7 };
 
     make_test(build_frame(adata, sizeof(adata), cdata, sizeof(cdata), mic, sizeof(mic)), decr_byte);
-    /* clang-format on */
+	/* clang-format on */
 }
 
 
 /* test vector of "II.1.2 Long frame ciphering" Rec. ITU.T G.9903 (08/2017) */
 static void g3_frame_test_long(void)
 {
-    /* clang-format off */
+	/* clang-format off */
     /* encrypted payload after segment reassembly (if decrypted it contain a set of octets value=0xA2) */
     uint8_t decr_byte = 0xA2;
     const uint8_t cdata[] = {
@@ -182,23 +182,23 @@ static void g3_frame_test_long(void)
     const uint8_t mic[] = { 0xdd, 0x28, 0xe3, 0x42 };
 
     make_test(build_frame(adata, sizeof(adata), cdata, sizeof(cdata), mic, sizeof(mic)), decr_byte);
-    /* clang-format on */
+	/* clang-format on */
 }
 
 TEST(aes_ccm_s, g3_plc_test_vector__short_frame)
 {
-    g3_frame_test_short();
+	g3_frame_test_short();
 }
 
 TEST(aes_ccm_s, g3_plc_test_vector__long_frame)
 {
-    g3_frame_test_long();
+	g3_frame_test_long();
 }
 
 TEST_GROUP_RUNNER(aes_ccm_s)
 {
-    RUN_TEST_CASE(aes_ccm_s, g3_plc_test_vector__short_frame);
-    RUN_TEST_CASE(aes_ccm_s, g3_plc_test_vector__long_frame);
+	RUN_TEST_CASE(aes_ccm_s, g3_plc_test_vector__short_frame);
+	RUN_TEST_CASE(aes_ccm_s, g3_plc_test_vector__long_frame);
 }
 
 #endif /* end of WITH_AES_CCM_S */
