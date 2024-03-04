@@ -66,8 +66,6 @@ test:
     - name: unix-socket
       execute: test-libc-unix-socket
       targets:
-        # Excluded due to long execution time
-        exclude: [armv7m4-stm32l4x6-nucleo]
         include: [host-generic-pc]
 
     - name: inet-socket

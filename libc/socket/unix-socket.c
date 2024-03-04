@@ -106,7 +106,7 @@ TEST_TEAR_DOWN(test_unix_socket)
 }
 
 
-TEST(test_unix_socket, unix_zero_len_send)
+TEST(test_unix_socket, zero_len_send)
 {
 	int fd[3];
 	struct msghdr msg;
@@ -230,7 +230,7 @@ TEST(test_unix_socket, unix_zero_len_send)
 }
 
 
-TEST(test_unix_socket, unix_zero_len_recv)
+TEST(test_unix_socket, zero_len_recv)
 {
 	int fd[2];
 	struct msghdr msg;
@@ -314,7 +314,7 @@ TEST(test_unix_socket, unix_zero_len_recv)
 }
 
 
-TEST(test_unix_socket, unix_close)
+TEST(test_unix_socket, close)
 {
 	unsigned int i;
 	int fd[2];
@@ -405,7 +405,8 @@ void unix_msg_data_only(int type)
 	close(fd[1]);
 }
 
-TEST(test_unix_socket, unix_msg_data_only)
+
+TEST(test_unix_socket, msg_data_only)
 {
 	unix_msg_data_only(SOCK_STREAM);
 	unix_msg_data_only(SOCK_DGRAM);
@@ -475,9 +476,14 @@ void unix_msg_data_and_fd(int type)
 }
 
 
-TEST(test_unix_socket, unix_msg_data_and_fd)
+TEST(test_unix_socket, stream_sock_data_and_fd)
 {
 	unix_msg_data_and_fd(SOCK_STREAM);
+}
+
+
+TEST(test_unix_socket, dgram_sock_data_and_fd)
+{
 	unix_msg_data_and_fd(SOCK_DGRAM);
 }
 
@@ -556,12 +562,21 @@ void unix_msg_fork(int type)
 }
 
 
-TEST(test_unix_socket, unix_msg_fork)
+TEST(test_unix_socket, stream_sock_msg_fork)
 {
 	unsigned int i;
 
 	for (i = 0; i < FORK_LOOP_CNT; ++i) {
 		unix_msg_fork(SOCK_STREAM);
+	}
+}
+
+
+TEST(test_unix_socket, dgram_sock_msg_fork)
+{
+	unsigned int i;
+
+	for (i = 0; i < FORK_LOOP_CNT; ++i) {
 		unix_msg_fork(SOCK_DGRAM);
 	}
 }
@@ -646,7 +661,7 @@ void unix_transfer(int type)
 }
 
 
-TEST(test_unix_socket, unix_transfer)
+TEST(test_unix_socket, transfer)
 {
 	unsigned int i;
 
@@ -669,7 +684,7 @@ void unix_close_connected(int type)
 }
 
 
-TEST(test_unix_socket, unix_close_connected)
+TEST(test_unix_socket, close_connected)
 {
 	unsigned int i;
 
@@ -718,7 +733,7 @@ void unix_send_after_close(int type, int epipe, int err)
 }
 
 
-TEST(test_unix_socket, unix_send_after_close)
+TEST(test_unix_socket, send_after_close)
 {
 	unsigned int i;
 
@@ -765,7 +780,7 @@ void unix_recv_after_close(int type)
 }
 
 
-TEST(test_unix_socket, unix_recv_after_close)
+TEST(test_unix_socket, recv_after_close)
 {
 	unsigned int i;
 
@@ -798,7 +813,7 @@ void unix_connect_after_close(int type)
 }
 
 
-TEST(test_unix_socket, unix_connect_after_close)
+TEST(test_unix_socket, connect_after_close)
 {
 	unsigned int i;
 
@@ -881,7 +896,7 @@ void unix_poll(int type)
 }
 
 
-TEST(test_unix_socket, unix_poll)
+TEST(test_unix_socket, poll)
 {
 	unix_poll(SOCK_STREAM);
 	unix_poll(SOCK_DGRAM);
@@ -891,18 +906,20 @@ TEST(test_unix_socket, unix_poll)
 
 TEST_GROUP_RUNNER(test_unix_socket)
 {
-	RUN_TEST_CASE(test_unix_socket, unix_zero_len_send);
-	RUN_TEST_CASE(test_unix_socket, unix_zero_len_recv);
-	RUN_TEST_CASE(test_unix_socket, unix_close);
-	RUN_TEST_CASE(test_unix_socket, unix_msg_data_only);
-	RUN_TEST_CASE(test_unix_socket, unix_msg_data_and_fd);
-	RUN_TEST_CASE(test_unix_socket, unix_msg_fork);
-	RUN_TEST_CASE(test_unix_socket, unix_transfer);
-	RUN_TEST_CASE(test_unix_socket, unix_close_connected);
-	RUN_TEST_CASE(test_unix_socket, unix_send_after_close);
-	RUN_TEST_CASE(test_unix_socket, unix_recv_after_close);
-	RUN_TEST_CASE(test_unix_socket, unix_connect_after_close);
-	RUN_TEST_CASE(test_unix_socket, unix_poll);
+	RUN_TEST_CASE(test_unix_socket, zero_len_send);
+	RUN_TEST_CASE(test_unix_socket, zero_len_recv);
+	RUN_TEST_CASE(test_unix_socket, close);
+	RUN_TEST_CASE(test_unix_socket, msg_data_only);
+	RUN_TEST_CASE(test_unix_socket, stream_sock_data_and_fd);
+	RUN_TEST_CASE(test_unix_socket, dgram_sock_data_and_fd);
+	RUN_TEST_CASE(test_unix_socket, stream_sock_msg_fork);
+	RUN_TEST_CASE(test_unix_socket, dgram_sock_msg_fork);
+	RUN_TEST_CASE(test_unix_socket, transfer);
+	RUN_TEST_CASE(test_unix_socket, close_connected);
+	RUN_TEST_CASE(test_unix_socket, send_after_close);
+	RUN_TEST_CASE(test_unix_socket, recv_after_close);
+	RUN_TEST_CASE(test_unix_socket, connect_after_close);
+	RUN_TEST_CASE(test_unix_socket, poll);
 }
 
 void runner(void)
