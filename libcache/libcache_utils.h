@@ -51,10 +51,7 @@ struct cache_devCtx_s {
 };
 
 
-int srcMem; /* File descriptor - simulates cached source memory */
-uint8_t offBitsNum;
-uint64_t offMask;
-cache_ops_t ops;
+extern int srcMem; /* File descriptor - simulates cached source memory */
 
 
 /* Generates a file that simulates a cached source memory and fills it with random chars */
