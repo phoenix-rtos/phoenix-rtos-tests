@@ -21,6 +21,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <stdint.h>
 #include <fcntl.h>
 
 
@@ -29,6 +30,9 @@
 #define LIBCACHE_ADDR_OFF_27 0x239bULL
 #define LIBCACHE_ADDR_INT    0x23f8ULL /* Address with offset divisible by sizeof(int) for proper integer alignment in cache line */
 
+
+static uint64_t offMask;
+static cache_ops_t ops;
 
 TEST_GROUP(test_init);
 
@@ -134,7 +138,7 @@ TEST_SETUP(test_read_write)
 {
 	ops.readCb = test_readCb;
 	ops.writeCb = test_writeCb;
-	offBitsNum = LOG2(LIBCACHE_LINE_SIZE);
+	uint8_t offBitsNum = LOG2(LIBCACHE_LINE_SIZE);
 	offMask = ((uint64_t)1 << offBitsNum) - 1;
 }
 
@@ -678,7 +682,7 @@ TEST_SETUP(test_flush)
 {
 	ops.readCb = test_readCb;
 	ops.writeCb = test_writeCb;
-	offBitsNum = LOG2(LIBCACHE_LINE_SIZE);
+	uint8_t offBitsNum = LOG2(LIBCACHE_LINE_SIZE);
 	offMask = ((uint64_t)1 << offBitsNum) - 1;
 }
 

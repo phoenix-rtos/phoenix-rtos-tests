@@ -23,6 +23,9 @@
 #include <unistd.h>
 
 
+int srcMem; /* File descriptor - simulates cached source memory */
+
+
 int test_genCharFile(void)
 {
 	int i, ret = -1;
