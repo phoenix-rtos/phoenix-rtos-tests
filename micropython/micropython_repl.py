@@ -2,6 +2,9 @@ import re
 
 from trunner.types import Status, TestResult
 from trunner.text import bold
+from trunner.dut import Dut
+
+import psh.tools.psh as psh
 
 PROMPT = r"(\r*)\x1b\[0J" + r"\(psh\)% "
 EOL = r"(?:\r+)\n"
@@ -46,12 +49,13 @@ def create_regex(text):
     return text
 
 
-def harness(dut):
+@psh.run
+def harness(dut: Dut, **kwargs):
     """Harness for testing MicroPython REPL"""
 
-    # At first echo prints path to the test
-    dut.expect(PROMPT)
-    test_path = dut.before.rstrip()
+    args = kwargs.get("args", "")
+    test_path = kwargs.get("path")
+    assert test_path is not None
 
     # sending cat with path to the test to get commands to insert in micropython terminal
     cmd = "cat " + test_path
@@ -70,12 +74,6 @@ def harness(dut):
 
     # remove trailing characters
     exp_output = dut.before[:-3]
-
-    # parse additional arguments for the interpreter
-    args = ""
-    for line in script:
-        if line.startswith("# cmdline: -"):
-            args = line[len("# cmdline:"):].strip()
 
     # start micropython interpreter
     dut.sendline(MICROPYTHON + args)
