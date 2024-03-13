@@ -1,0 +1,7 @@
+test:
+  type: harness
+  harness: network.py
+  targets:
+    value: [armv7a7-imx6ull-evk]
+  tests:
+    - name: test-network
