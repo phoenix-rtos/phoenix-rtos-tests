@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import Callable, Optional, Sequence
+import time
 
 import pexpect
 
@@ -77,6 +78,7 @@ class PloInterface:
         except (pexpect.TIMEOUT, pexpect.EOF) as e:
             raise PloError("Failed to go into bootloader mode", output=self.dut.before) from e
 
+        time.sleep(0.1)
         self.dut.send("\n")
 
     def _assert_prompt(self, timeout: Optional[int] = None, error_check=True):
