@@ -56,12 +56,12 @@ int file_open(const char *name)
 	int err;
 	id_t id;
 
-	err = lookup_rel(name, &msg.i.openclose.oid, NULL);
+	err = lookup_rel(name, &msg.oid, NULL);
 	if (err < 0) {
 		return err;
 	}
 
-	id = msg.i.openclose.oid.id;
+	id = msg.oid.id;
 
 	msg.type = mtOpen;
 	msg.i.data = NULL;
@@ -72,7 +72,7 @@ int file_open(const char *name)
 
 	TEST_ASSERT_EQUAL(0, msgSend(meterfs.port, &msg));
 
-	return (msg.o.io.err < 0) ? msg.o.io.err : id;
+	return (msg.o.err < 0) ? msg.o.err : id;
 }
 
 
@@ -85,12 +85,12 @@ int file_close(id_t fid)
 	msg.i.size = 0;
 	msg.o.data = NULL;
 	msg.o.size = 0;
-	msg.i.openclose.oid.port = meterfs.port;
-	msg.i.openclose.oid.id = fid;
+	msg.oid.port = meterfs.port;
+	msg.oid.id = fid;
 
 	TEST_ASSERT_EQUAL(0, msgSend(meterfs.port, &msg));
 
-	return msg.o.io.err;
+	return msg.o.err;
 }
 
 
@@ -99,8 +99,8 @@ int file_write(id_t fid, const void *buff, size_t bufflen)
 	msg_t msg;
 
 	msg.type = mtWrite;
-	msg.i.io.oid.port = meterfs.port;
-	msg.i.io.oid.id = fid;
+	msg.oid.port = meterfs.port;
+	msg.oid.id = fid;
 	msg.i.io.offs = 0;
 	msg.i.io.len = bufflen;
 	msg.i.io.mode = 0;
@@ -112,7 +112,7 @@ int file_write(id_t fid, const void *buff, size_t bufflen)
 
 	TEST_ASSERT_EQUAL(0, msgSend(meterfs.port, &msg));
 
-	return msg.o.io.err;
+	return msg.o.err;
 }
 
 int file_read(id_t fid, off_t offset, void *buff, size_t bufflen)
@@ -120,8 +120,8 @@ int file_read(id_t fid, off_t offset, void *buff, size_t bufflen)
 	msg_t msg;
 
 	msg.type = mtRead;
-	msg.i.io.oid.port = meterfs.port;
-	msg.i.io.oid.id = fid;
+	msg.oid.port = meterfs.port;
+	msg.oid.id = fid;
 	msg.i.io.offs = offset;
 	msg.i.io.len = bufflen;
 	msg.i.io.mode = 0;
@@ -132,7 +132,7 @@ int file_read(id_t fid, off_t offset, void *buff, size_t bufflen)
 
 	TEST_ASSERT_EQUAL(0, msgSend(meterfs.port, &msg));
 
-	return msg.o.io.err;
+	return msg.o.err;
 }
 
 
@@ -140,7 +140,6 @@ int file_allocate(const char *name, size_t sectors, size_t filesz, size_t record
 {
 	msg_t msg;
 	meterfs_i_devctl_t *iptr = (meterfs_i_devctl_t *)msg.i.raw;
-	meterfs_o_devctl_t *optr = (meterfs_o_devctl_t *)msg.o.raw;
 	size_t len = 0;
 
 	file_prepareDevCtl(&msg);
@@ -157,7 +156,7 @@ int file_allocate(const char *name, size_t sectors, size_t filesz, size_t record
 
 	TEST_ASSERT_EQUAL(0, msgSend(meterfs.port, &msg));
 
-	return optr->err;
+	return msg.o.err;
 }
 
 
@@ -165,7 +164,6 @@ int file_resize(id_t fid, size_t filesz, size_t recordsz)
 {
 	msg_t msg;
 	meterfs_i_devctl_t *iptr = (meterfs_i_devctl_t *)msg.i.raw;
-	meterfs_o_devctl_t *optr = (meterfs_o_devctl_t *)msg.o.raw;
 
 	file_prepareDevCtl(&msg);
 
@@ -176,7 +174,7 @@ int file_resize(id_t fid, size_t filesz, size_t recordsz)
 
 	TEST_ASSERT_EQUAL(0, msgSend(meterfs.port, &msg));
 
-	return optr->err;
+	return msg.o.err;
 }
 
 
@@ -193,8 +191,8 @@ int file_getInfo(id_t fid, size_t *sectors, size_t *filesz, size_t *recordsz, si
 
 	TEST_ASSERT_EQUAL(0, msgSend(meterfs.port, &msg));
 
-	if (optr->err < 0) {
-		return optr->err;
+	if (msg.o.err; < 0) {
+		return msg.o.err;
 	}
 
 	if (sectors != NULL) {
@@ -221,7 +219,6 @@ int file_eraseAll(void)
 {
 	msg_t msg;
 	meterfs_i_devctl_t *iptr = (meterfs_i_devctl_t *)msg.i.raw;
-	meterfs_o_devctl_t *optr = (meterfs_o_devctl_t *)msg.o.raw;
 
 	file_prepareDevCtl(&msg);
 
@@ -229,7 +226,7 @@ int file_eraseAll(void)
 
 	TEST_ASSERT_EQUAL(0, msgSend(meterfs.port, &msg));
 
-	return optr->err;
+	return msg.o.err;
 }
 
 
@@ -237,7 +234,6 @@ int file_devInfo(file_fsInfo_t *fsInfo)
 {
 	msg_t msg;
 	meterfs_i_devctl_t *iptr = (meterfs_i_devctl_t *)msg.i.raw;
-	meterfs_o_devctl_t *optr = (meterfs_o_devctl_t *)msg.o.raw;
 
 	file_prepareDevCtl(&msg);
 
@@ -250,7 +246,7 @@ int file_devInfo(file_fsInfo_t *fsInfo)
 	fsInfo->sz = optr->fsInfo.sz;
 	fsInfo->sectorsz = optr->fsInfo.sectorsz;
 
-	return optr->err;
+	return msg.o.err;
 }
 
 
