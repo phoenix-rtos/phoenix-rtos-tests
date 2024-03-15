@@ -129,16 +129,16 @@ static void test_spiConfigureClk(int speed, uint8_t byteOrder)
 	msg_t msg;
 	oid_t oid = test_getOid(TEST_SPI_PATH);
 	multi_i_t *idevctl = NULL;
-	multi_o_t *odevctl = NULL;
 
 	msg.type = mtDevCtl;
 	msg.i.data = NULL;
 	msg.i.size = 0;
 	msg.o.data = NULL;
 	msg.o.size = 0;
+	msg.oid.id = TEST_SPI_ID;
+	msg.oid.port = oid.port;
 
 	idevctl = (multi_i_t *)msg.i.raw;
-	idevctl->id = TEST_SPI_ID;
 
 	if (speed == TEST_SPI_SLOW_CLK) {
 		test_spiSetConfigSlow(&idevctl->spi, byteOrder);
@@ -149,8 +149,7 @@ static void test_spiConfigureClk(int speed, uint8_t byteOrder)
 
 	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
 
-	odevctl = (multi_o_t *)msg.o.raw;
-	TEST_ASSERT_EQUAL_INT(0, odevctl->err);
+	TEST_ASSERT_EQUAL_INT(0, msg.o.err);
 }
 
 
@@ -159,7 +158,6 @@ static void test_spiTransaction(int bufsz)
 	msg_t msg;
 	oid_t oid = test_getOid(TEST_SPI_PATH);
 	multi_i_t *idevctl = NULL;
-	multi_o_t *odevctl = NULL;
 	uint8_t *txBuff = test_common.txBuff;
 	uint8_t *rxBuff = test_common.rxBuff;
 
@@ -172,15 +170,15 @@ static void test_spiTransaction(int bufsz)
 	msg.i.size = bufsz;
 	msg.o.data = rxBuff;
 	msg.o.size = bufsz;
+	msg.oid.id = TEST_SPI_ID;
+	msg.oid.port = oid.port;
 
 	idevctl = (multi_i_t *)msg.i.raw;
-	idevctl->id = TEST_SPI_ID;
 	test_spiSetTransaction(&idevctl->spi, bufsz);
 
 	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
 
-	odevctl = (multi_o_t *)msg.o.raw;
-	TEST_ASSERT_EQUAL_INT(0, odevctl->err);
+	TEST_ASSERT_EQUAL_INT(0, msg.o.err);
 
 	TEST_ASSERT_EQUAL_UINT8_ARRAY(txBuff, rxBuff, bufsz);
 }
@@ -215,16 +213,17 @@ TEST(test_gpio, gpioGetDir)
 	msg.i.size = 0;
 	msg.o.data = NULL;
 	msg.o.size = 0;
+	msg.oid.id = TEST_GPIO_ID;
+	msg.oid.port = oid.port;
 
 	idevctl = (multi_i_t *)msg.i.raw;
-	idevctl->id = TEST_GPIO_ID;
 	idevctl->gpio.type = gpio_getDir;
 
 	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
 
 	odevctl = (multi_o_t *)msg.o.raw;
 
-	TEST_ASSERT_EQUAL_INT(0, odevctl->err);
+	TEST_ASSERT_EQUAL_INT(0, msg.o.err);
 
 	dir = *(TEST_GPIO_BASE + TEST_GPIO_DIR_OFFS);
 
@@ -245,16 +244,17 @@ TEST(test_gpio, gpioGetPort)
 	msg.i.size = 0;
 	msg.o.data = NULL;
 	msg.o.size = 0;
+	msg.oid.id = TEST_GPIO_ID;
+	msg.oid.port = oid.port;
 
 	idevctl = (multi_i_t *)msg.i.raw;
-	idevctl->id = TEST_GPIO_ID;
 	idevctl->gpio.type = gpio_getPort;
 
 	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
 
 	odevctl = (multi_o_t *)msg.o.raw;
 
-	TEST_ASSERT_EQUAL_INT(0, odevctl->err);
+	TEST_ASSERT_EQUAL_INT(0, msg.o.err);
 
 	port = *(TEST_GPIO_BASE + TEST_GPIO_PORT_OFFS);
 
@@ -290,9 +290,10 @@ TEST(test_spiPins, spiSetPins)
 	msg.i.size = 0;
 	msg.o.data = NULL;
 	msg.o.size = 0;
+	msg.oid.id = TEST_SPI_ID;
+	msg.oid.port = oid.port;
 
 	idevctl = (multi_i_t *)msg.i.raw;
-	idevctl->id = TEST_SPI_ID;
 	idevctl->spi.type = spi_setPins;
 	idevctl->spi.pins.sck = TEST_SPI_SCK;
 	idevctl->spi.pins.miso = TEST_SPI_MISO;
@@ -303,7 +304,7 @@ TEST(test_spiPins, spiSetPins)
 
 	odevctl = (multi_o_t *)msg.o.raw;
 
-	TEST_ASSERT_EQUAL_INT(0, odevctl->err);
+	TEST_ASSERT_EQUAL_INT(0, msg.o.err);
 }
 
 
@@ -498,7 +499,8 @@ TEST(test_adc, adcDefaultConfigConversion)
 	TEST_ASSERT_EQUAL_INT(0, platformctl(&pctl));
 
 	msg.type = mtRead;
-	msg.i.io.oid.id = TEST_ADC_ID;
+	msg.oid.id = TEST_ADC_ID;
+	msg.oid.port = oid.port;
 	msg.i.data = NULL;
 	msg.i.size = 0;
 	msg.o.size = sizeof(uint32_t);
@@ -506,7 +508,7 @@ TEST(test_adc, adcDefaultConfigConversion)
 
 	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
 
-	TEST_ASSERT_EQUAL_INT(0, msg.o.io.err);
+	TEST_ASSERT_EQUAL_INT(0, msg.o.err);
 }
 
 
@@ -520,17 +522,18 @@ static unsigned int test_spwConfigureRx(const oid_t rxOid, const size_t nPackets
 		.type = mtDevCtl,
 		.i = { .data = NULL, .size = 0 },
 		.o = { .data = NULL, .size = 0 },
+		.oid.id = TEST_SPW_ID0,
+		.oid.port = rxOid.port,
 	};
 
 	multi_i_t *idevctl = (multi_i_t *)msg.i.raw;
 	multi_o_t *odevctl = (multi_o_t *)msg.o.raw;
 
-	idevctl->id = TEST_SPW_ID0;
 	idevctl->spw.type = spw_rxConfig;
 	idevctl->spw.task.rxConfig.nPackets = nPackets;
 
 	TEST_ASSERT_EQUAL_INT(0, msgSend(rxOid.port, &msg));
-	TEST_ASSERT_EQUAL_INT(nPackets, odevctl->err);
+	TEST_ASSERT_EQUAL_INT(nPackets, msg.o.err);
 
 	return odevctl->val;
 }
@@ -542,18 +545,18 @@ static void test_spwTx(const oid_t txOid, uint8_t *txBuf, const size_t txBufsz, 
 		.type = mtDevCtl,
 		.i = { .data = txBuf, .size = txBufsz },
 		.o = { .data = NULL, .size = 0 },
+		.oid.id = TEST_SPW_ID1,
+		.oid.port = txOid.port,
 	};
 
 	multi_i_t *idevctl = (multi_i_t *)msg.i.raw;
-	multi_o_t *odevctl = (multi_o_t *)msg.o.raw;
 
-	idevctl->id = TEST_SPW_ID1;
 	idevctl->spw.type = spw_tx;
 	idevctl->spw.task.tx.nPackets = nPackets;
 	idevctl->spw.task.tx.async = async;
 
 	TEST_ASSERT_EQUAL_INT(0, msgSend(txOid.port, &msg));
-	TEST_ASSERT_EQUAL_INT(nPackets, odevctl->err);
+	TEST_ASSERT_EQUAL_INT(nPackets, msg.o.err);
 }
 
 
@@ -563,17 +566,17 @@ static void test_spwRxRead(const oid_t rxOid, const unsigned int firstDesc, uint
 		.type = mtDevCtl,
 		.i = { .data = NULL, .size = 0 },
 		.o = { .data = rxBuf, .size = rxBufsz },
+		.oid.id = TEST_SPW_ID0,
+		.oid.port = rxOid.port,
 	};
 	multi_i_t *idevctl = (multi_i_t *)msg.i.raw;
-	multi_o_t *odevctl = (multi_o_t *)msg.o.raw;
 
-	idevctl->id = TEST_SPW_ID0;
 	idevctl->spw.type = spw_rx;
 	idevctl->spw.task.rx.nPackets = nPackets;
 	idevctl->spw.task.rx.firstDesc = firstDesc;
 
 	TEST_ASSERT_EQUAL_INT(0, msgSend(rxOid.port, &msg));
-	TEST_ASSERT_EQUAL_INT(nPackets, odevctl->err);
+	TEST_ASSERT_EQUAL_INT(nPackets, msg.o.err);
 
 	for (size_t i = 0; i < nPackets; i++) {
 		rxBuf += multi_spwDeserializeRxMsg(rxBuf, &packets[i]);
@@ -640,11 +643,11 @@ TEST(test_spw, spwSetAddress)
 		.type = mtDevCtl,
 		.i = { .data = NULL, .size = 0 },
 		.o = { .data = NULL, .size = 0 },
+		.oid.id = TEST_SPW_ID0,
+		.oid.port = oid.port,
 	};
 	multi_i_t *idevctl = (multi_i_t *)msg.i.raw;
-	multi_o_t *odevctl = (multi_o_t *)msg.o.raw;
 
-	idevctl->id = TEST_SPW_ID0;
 	idevctl->spw.type = spw_config;
 	idevctl->spw.task.config.node.addr = TEST_SPW_ADDR0;
 	idevctl->spw.task.config.node.mask = 0x0;
@@ -652,10 +655,10 @@ TEST(test_spw, spwSetAddress)
 	idevctl->spw.task.config.dma.mask = 0x0;
 
 	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
-	TEST_ASSERT_EQUAL_INT(0, odevctl->err);
+	TEST_ASSERT_EQUAL_INT(0, msg.o.err);
 
 	oid = test_getOid(TEST_SPW_PATH1);
-	idevctl->id = TEST_SPW_ID1;
+	msg.oid.id = TEST_SPW_ID1;
 	idevctl->spw.type = spw_config;
 	idevctl->spw.task.config.node.addr = TEST_SPW_ADDR1;
 	idevctl->spw.task.config.node.mask = 0x0;
@@ -663,7 +666,7 @@ TEST(test_spw, spwSetAddress)
 	idevctl->spw.task.config.dma.mask = 0x0;
 
 	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
-	TEST_ASSERT_EQUAL_INT(0, odevctl->err);
+	TEST_ASSERT_EQUAL_INT(0, msg.o.err);
 }
 
 
