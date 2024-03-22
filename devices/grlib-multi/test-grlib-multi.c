@@ -283,7 +283,6 @@ TEST(test_spiPins, spiSetPins)
 	msg_t msg;
 	oid_t oid = test_getOid(TEST_SPI_PATH);
 	multi_i_t *idevctl = NULL;
-	multi_o_t *odevctl = NULL;
 
 	msg.type = mtDevCtl;
 	msg.i.data = NULL;
@@ -301,9 +300,6 @@ TEST(test_spiPins, spiSetPins)
 	idevctl->spi.pins.cs = TEST_SPI_CS;
 
 	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
-
-	odevctl = (multi_o_t *)msg.o.raw;
-
 	TEST_ASSERT_EQUAL_INT(0, msg.o.err);
 }
 
