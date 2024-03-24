@@ -88,7 +88,15 @@ class ShellHarness(IntermediateHarness):
         if self.cmd is not None:
             self.dut.send(self.cmd + "\n")
             try:
-                self.dut.expect(f"{self.cmd}(\r+)\n")
+                # ash wraps up lines longer than 80 characters
+                if len(self.cmd) <= 80 - len(self.prompt):
+                    self.dut.expect(f"{self.cmd}(\r+)\n")
+                else:
+                    full_cmd = ""
+                    while full_cmd not in self.cmd:
+                        self.dut.expect("(\r+)\n")
+                        full_cmd += self.dut.before
+
             except (pexpect.TIMEOUT, pexpect.EOF) as e:
                 raise ShellError(
                     msg="Couldn't find the echoed command!",

@@ -1,0 +1,15 @@
+# This yaml contain ia32-generic-qemu specific fs_mark tests
+test:
+  type: harness
+  harness: fs_mark.py
+  # nightly: true
+
+  targets:
+    value: [ia32-generic-qemu]
+
+# One simple test in order to suppress no test found trunner error
+# For now no test due to issue #927
+  tests:
+    # empty files
+    - name: test1
+      execute: fs_mark -d /fs_mark_test -s 0 -n 10 -v -S 0 -L 10
