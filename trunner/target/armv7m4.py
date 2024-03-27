@@ -1,5 +1,6 @@
 import subprocess
 import time
+import os
 from pathlib import Path
 from typing import Callable, Optional, Sequence
 
@@ -24,9 +25,26 @@ from .base import TargetBase, find_port
 
 
 class ARMv7M4Rebooter(Rebooter):
-    # TODO add text mode
-    # NOTE: changing boot modes not needed/supported for this target
-    pass
+    def _reboot_dut_text(self, hard):
+        # self.dut.send(" reboot\r\n")
+        subprocess.run(
+            [
+                "openocd",
+                "-f",
+                "interface/stlink.cfg",
+                "-f",
+                "target/stm32l4x.cfg",
+                "-c",
+                "reset_config srst_only srst_nogate connect_assert_srst",
+                "-c",
+                "init;reset;exit",
+            ],
+            encoding="ascii",
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            timeout=20,
+            cwd=os.getcwd(),
+        )
 
 
 class STM32L4x6OpenocdGdbServerHarness(IntermediateHarness):
@@ -46,9 +64,16 @@ class STM32L4x6OpenocdGdbServerHarness(IntermediateHarness):
 
     def __call__(self, result: TestResult) -> TestResult:
         # Set of config parameters used in Openocd to flash up stm32l4a6
-        openocd_args = ["-c", "reset_config srst_only srst_nogate connect_assert_srst", "-c", "init;reset"]
+        openocd_args = [
+            "-c",
+            "reset_config srst_only srst_nogate connect_assert_srst",
+            "-c",
+            "init;reset",
+        ]
 
-        with OpenocdGdbServer(interface="stlink", target="stm32l4x", extra_args=openocd_args).run():
+        with OpenocdGdbServer(
+            interface="stlink", target="stm32l4x", extra_args=openocd_args
+        ).run():
             self.harness(result)
 
         return self.next_harness(result)
@@ -94,7 +119,6 @@ class STM32L4x6PloAppLoader(TerminalHarness, PloInterface):
         for app in self.apps:
             path = self.gdb.cwd / Path(app.file)
             sz = path.stat().st_size
-
             self.alias(app.file, offset=offset, size=sz)
             self.app("ramdev", app.file, "ram", "ram")
 
@@ -147,7 +171,9 @@ class STM32L4x6Target(TargetBase):
         except subprocess.CalledProcessError as e:
             raise FlashError(msg=str(e), output=e.stdout) from e
         except subprocess.TimeoutExpired as e:
-            raise FlashError(msg=str(e), output=e.stdout.decode("ascii") if e.stdout else None) from e
+            raise FlashError(
+                msg=str(e), output=e.stdout.decode("ascii") if e.stdout else None
+            ) from e
 
     def build_test(self, test: TestOptions):
         builder = HarnessBuilder()
@@ -162,7 +188,9 @@ class STM32L4x6Target(TargetBase):
                 app_loader = STM32L4x6PloAppLoader(
                     dut=self.dut,
                     apps=test.bootloader.apps,
-                    gdb=GdbInteractive(port=3333, cwd=self.root_dir() / test.shell.path),
+                    gdb=GdbInteractive(
+                        port=3333, cwd=self.root_dir() / test.shell.path
+                    ),
                 )
 
             builder.add(PloHarness(self.dut, app_loader=app_loader))
