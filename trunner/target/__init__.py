@@ -3,6 +3,7 @@ from .armv7m7 import IMXRT106xEvkTarget, IMXRT117xEvkTarget, ARMv7M7Target
 from .armv7m4 import STM32L4x6Target
 from .armv7a7 import IMX6ULLEvkTarget
 from .armv7a9 import Zynq7000ZedboardTarget
+from .sparcv8 import MimasSparcV8EvkTarget
 from .emulated import (
     IA32GenericQemuTarget,
     RISCV64GenericQemuTarget,
@@ -23,4 +24,5 @@ __all__ = [
     "TargetBase",
     "find_port",
     "IMX6ULLEvkTarget",
+    "MimasSparcV8EvkTarget",
 ]
