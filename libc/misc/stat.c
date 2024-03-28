@@ -552,10 +552,12 @@ TEST(stat_mode, sock_type)
 
 	TEST_ASSERT_EQUAL_INT(0, lstat(socketPath, &buffer));
 	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFSOCK);
-#endif
 
 	TEST_ASSERT_EQUAL_INT(0, fstat(sfd, &buffer));
 	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFSOCK);
+#else
+	(void)buffer;
+#endif
 
 	close(sfd);
 	unlink(socketPath);
