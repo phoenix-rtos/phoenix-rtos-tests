@@ -11,7 +11,7 @@
  *    - strsignal()
  *
  * Copyright 2023 Phoenix Systems
- * Author: Mateusz Bloch
+ * Author: Mateusz Bloch, Arkadiusz Kozlowski
  *
  * This file is part of Phoenix-RTOS.
  *
@@ -24,7 +24,10 @@
 #include <signal.h>
 #include <limits.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <unity_fixture.h>
+
+#include "testdata.h"
 
 /* Typical error message does not exceed ~60 characters, that's why we expect a maximum value a little bit bigger */
 #define MAX_LEN_STRING 100
@@ -47,6 +50,41 @@ const int signal_codes[] = { SIGABRT, SIGALRM, SIGBUS, SIGCHLD, SIGCONT, SIGFPE,
 static const unsigned int error_codes_len = sizeof(error_codes) / sizeof(error_codes[0]);
 
 const unsigned int signal_codes_len = sizeof(signal_codes) / sizeof(signal_codes[0]);
+
+
+char *perrorToFile(char *msg)
+{
+	int errnoBefore = errno;
+
+	FILE *file = fopen("error.txt", "w+");
+
+
+	// chmod("error.txt", 0777);
+
+	TEST_ASSERT_NOT_NULL(file);
+	TEST_ASSERT_NOT_EQUAL(-1, dup2(fileno(file), 2));
+
+	errno = errnoBefore;
+	perror(msg);
+
+	fseek(file, 0, SEEK_END);
+	long fileSize = ftell(file);
+	rewind(file);
+
+	rewind(file);
+
+	char *buffer = (char *)malloc(fileSize + 1);
+
+
+	fread(buffer, 1, fileSize, file);
+	buffer[fileSize] = '\0';
+
+	fclose(file);
+
+	return buffer;
+	remove("error.txt");
+}
+
 
 TEST_GROUP(string_errsign);
 
@@ -174,4 +212,108 @@ TEST_GROUP_RUNNER(string_errsign)
 
 	RUN_TEST_CASE(string_errsign, strsignal_basic);
 	RUN_TEST_CASE(string_errsign, strsignal_real_time);
+}
+
+
+TEST_GROUP(string_perror);
+
+
+TEST_SETUP(string_perror)
+{
+	errno = 0;
+}
+
+
+TEST_TEAR_DOWN(string_perror)
+{
+}
+
+TEST(string_perror, perror_basic)
+{
+
+	errno = 0;
+	char msg[] = "Some error message";
+	char *res;
+	char exp[100];
+	sprintf(exp, "Some error message: %s\n", strerror(errno));
+
+	res = perrorToFile(msg);
+
+	TEST_ASSERT_EQUAL_STRING(exp, res);
+	free(res);
+}
+
+
+TEST(string_perror, perror_empty_message)
+{
+	char *res;
+
+	errno = 31;
+
+	char exp[50];
+	sprintf(exp, "%s\n", strerror(errno));
+	TEST_ASSERT_EQUAL_STRING(exp, res = perrorToFile(""));
+	free(res);
+}
+
+
+TEST(string_perror, perror_every_ascii)
+{
+	char *msg = testdata_createCharStr(257);
+
+
+	char *res;
+	errno = 8;
+	res = perrorToFile(msg);
+
+	char expected[356];
+	sprintf(expected, "%s: %s\n", msg, strerror(errno));
+	TEST_ASSERT_EQUAL_STRING(expected, res);
+	free(res);
+	free(msg);
+}
+
+
+TEST(string_perror, perror_huge_argument)
+{
+	char *msg = testdata_hugeStr;
+
+	char *res;
+	errno = 42;
+	res = perrorToFile(msg);
+
+	char expected[4400];
+	sprintf(expected, "%s: %s\n", msg, strerror(errno));
+	TEST_ASSERT_EQUAL_STRING(expected, res);
+	free(res);
+}
+
+
+TEST(string_perror, perror_every_errno)
+{
+	char *old_msg;
+	char *new_msg;
+
+	errno = 0;
+
+	for (int i = 0; i < 150; i++) {
+		errno = i;
+		old_msg = perrorToFile("Some msg");
+		errno++;
+		new_msg = perrorToFile("Some msg");
+		errno--;
+		TEST_ASSERT_NOT_EQUAL(0, strcmp(old_msg, new_msg));
+		free(new_msg);
+		free(old_msg);
+	}
+}
+
+
+TEST_GROUP_RUNNER(string_perror)
+{
+	RUN_TEST_CASE(string_perror, perror_basic);
+	RUN_TEST_CASE(string_perror, perror_empty_message);
+	RUN_TEST_CASE(string_perror, perror_every_ascii);
+	RUN_TEST_CASE(string_perror, perror_huge_argument);
+	RUN_TEST_CASE(string_perror, perror_every_errno);
 }
