@@ -25,6 +25,9 @@ void runner(void)
 	RUN_TEST_GROUP(stdio_fileseek);
 	RUN_TEST_GROUP(stdio_fileop);
 	RUN_TEST_GROUP(stdio_bufs);
+	RUN_TEST_GROUP(stdio_feof);
+	RUN_TEST_GROUP(stdio_ftell);
+	RUN_TEST_GROUP(stdio_getdelim);
 }
 
 
