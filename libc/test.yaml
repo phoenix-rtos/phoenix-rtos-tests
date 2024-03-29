@@ -9,7 +9,7 @@ test:
         include: [host-generic-pc]
 
     # Executing test-printf alone on 'armv7m4-stm32l4x6-nucleo' takes ~4 min, because of large amount of test cases.
-    # That's why we want to run it only during nightly campaigns 
+    # That's why we want to run it only during nightly campaigns
     - name: printf-nucleo
       execute: test-libc-printf
       nightly: true

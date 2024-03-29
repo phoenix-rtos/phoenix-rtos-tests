@@ -103,9 +103,9 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	UnityMain(argc, (const char **)argv, runner);
+	int failures = UnityMain(argc, (const char **)argv, runner);
 
 	unsetenv(var);
 
-	return 0;
+	return (failures == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }

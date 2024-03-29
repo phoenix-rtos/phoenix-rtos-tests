@@ -395,7 +395,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	UnityMain(argc, (const char **)argv, runner);
+	int failures = UnityMain(argc, (const char **)argv, runner);
 	portDestroy(test_port);
 	pthread_join(tid, NULL);
 
@@ -404,5 +404,5 @@ int main(int argc, char *argv[])
 	remove(PATH_TF);
 	remove(DEV_IOCTL_TEST);
 
-	return 0;
+	return (failures == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
