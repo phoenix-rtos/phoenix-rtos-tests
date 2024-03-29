@@ -1,4 +1,16 @@
-#ifdef WITH_AES_CCM_S
+/*
+ * Phoenix-RTOS
+ *
+ * Tests for AES-CCM
+ *
+ * Copyright 2020-2021, 2024 by Phoenix Systems
+ * Authors: Gerard Świderski, Mateusz Bloch
+ *
+ * This file is a part of Phoenix-RTOS.
+ *
+ * %LICENSE%
+ */
+
 
 #include <stdint.h>
 #include <stdio.h>
@@ -6,8 +18,8 @@
 
 #include <unity_fixture.h>
 
-#include <aes.h>
-#include <aes_ccm_s.h>
+#include <tinyaes/aes.h>
+#include <tinyaes/aes_ccm_s.h>
 
 TEST_GROUP(aes_ccm_s);
 
@@ -40,7 +52,7 @@ static const uint8_t nonce[] = { 0x78, 0x1d, 0x00, 0x2a, 0x78, 0x1d, 0x00, 0x2a,
 /* adata is: G3-PLC, IEEE 802.15.4 MHR with Auxiliary Security Header as received with the first segment */
 static const uint8_t adata[] = { 0x69, 0x88, 0x29, 0x1d, 0x78, 0x0c, 0x01, 0x2a, 0x00, 0x0d, 0x23, 0x51, 0x12, 0xa0, 0x00 };
 
-#if defined(PS_DEBUG) && (PS_DEBUG == 1)
+#if defined(DEBUG) && (DEBUG == 1)
 static void print_bytestream(FILE *fout, uint8_t *ptr, uint16_t len, uint8_t fg, uint8_t bg, uint8_t width, uint8_t reset)
 {
 	static int cntr = 0, ofs = 0;
@@ -200,5 +212,3 @@ TEST_GROUP_RUNNER(aes_ccm_s)
 	RUN_TEST_CASE(aes_ccm_s, g3_plc_test_vector__short_frame);
 	RUN_TEST_CASE(aes_ccm_s, g3_plc_test_vector__long_frame);
 }
-
-#endif /* end of WITH_AES_CCM_S */

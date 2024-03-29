@@ -1,23 +1,24 @@
 /*
  * Phoenix-RTOS
  *
- * AES Key Wrapping unit tests
+ * Tests for AES Key Wrapping
  *
- * Copyright 2021 Phoenix Systems
- * Author: Daniel Sawka
+ * Copyright 2021, 2024 by Phoenix Systems
+ * Authors: Daniel Sawka, Mateusz Bloch
+ *
+ * This file is a part of Phoenix-RTOS.
  *
  * %LICENSE%
  */
 
-#ifdef WITH_AES_KW
 
 #include <stdio.h>
 #include <string.h>
 
 #include <unity_fixture.h>
 
-#include <aes.h>
-#include <aes_kw.h>
+#include <tinyaes/aes.h>
+#include <tinyaes/aes_kw.h>
 
 TEST_GROUP(aes_kw);
 
@@ -31,7 +32,7 @@ TEST_TEAR_DOWN(aes_kw)
 	/* Nothing to do here */
 }
 
-#if defined(PS_DEBUG) && (PS_DEBUG == 1)
+#if defined(DEBUG) && (DEBUG == 1)
 
 #define PRINT(...) \
 	printf(__VA_ARGS__)
@@ -301,5 +302,3 @@ TEST_GROUP_RUNNER(aes_kw)
 	RUN_TEST_CASE(aes_kw, test_kwp_ae);
 	RUN_TEST_CASE(aes_kw, test_kwp_ad);
 }
-
-#endif

@@ -1,4 +1,15 @@
-#ifdef WITH_AES_EAX
+/*
+ * Phoenix-RTOS
+ *
+ * Tests for AES-EAX Mode
+ *
+ * Copyright 2020, 2024 by Phoenix Systems
+ * Authors: Gerard Świderski, Mateusz Bloch
+ *
+ * This file is a part of Phoenix-RTOS.
+ *
+ * %LICENSE%
+ */
 
 #include <stdint.h>
 #include <stdio.h>
@@ -8,8 +19,8 @@
 
 #include <unity_fixture.h>
 
-#include <aes.h>
-#include <aes_eax.h>
+#include <tinyaes/aes.h>
+#include <tinyaes/aes_eax.h>
 
 TEST_GROUP(aes_eax);
 
@@ -26,7 +37,6 @@ TEST_TEAR_DOWN(aes_eax)
 TEST(aes_eax, aes_eax__encr_decr_w_damage_test_short)
 {
 	size_t idx;
-	struct AES_ctx aes;
 
 	uint8_t msg[] = { 0xF7, 0xFB };
 	uint8_t key[] = { 0x91, 0x94, 0x5D, 0x3F, 0x4D, 0xCB, 0xEE, 0x0B, 0xF4, 0x5E, 0xF5, 0x22, 0x55, 0xF0, 0x95, 0xA4 };
@@ -76,7 +86,6 @@ TEST(aes_eax, aes_eax__encr_decr_w_damage_test_short)
 TEST(aes_eax, aes_eax__encr_decr_w_damage_test_long)
 {
 	size_t idx;
-	struct AES_ctx aes;
 
 	uint8_t msg[] = {
 		0xA0, 0x02, 0x1D, 0x02, 0x00, 0xED, 0x27, 0x11, 0x00, 0xAF, 0x4D, 0x6D, 0xCC, 0xF1, 0x4D, 0xE7, /* 0000 */
@@ -139,5 +148,3 @@ TEST_GROUP_RUNNER(aes_eax)
 	RUN_TEST_CASE(aes_eax, aes_eax__encr_decr_w_damage_test_short);
 	RUN_TEST_CASE(aes_eax, aes_eax__encr_decr_w_damage_test_long);
 }
-
-#endif /* end of WITH_AES_EAX */

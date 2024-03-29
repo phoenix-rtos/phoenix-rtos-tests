@@ -1,3 +1,15 @@
+/*
+ * Phoenix-RTOS
+ *
+ * Tests for AES GCM
+ *
+ * Copyright 2023-2024 by Phoenix Systems
+ * Authors: Jan Wiśniewski, Mateusz Bloch
+ *
+ * This file is a part of Phoenix-RTOS.
+ *
+ * %LICENSE%
+ */
 
 #include <stdlib.h>
 #include <stdint.h>
@@ -6,8 +18,8 @@
 
 #include <unity_fixture.h>
 
-#include <aes.h>
-#include <aes_gcm.h>
+#include <tinyaes/aes.h>
+#include <tinyaes/aes_gcm.h>
 
 
 TEST_GROUP(aes_gcm);

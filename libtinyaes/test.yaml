@@ -1,0 +1,7 @@
+test:
+  type: unity
+  tests:
+    - name: test-libtinyaes
+      execute: test-libtinyaes
+      targets:
+        include: [host-generic-pc]
