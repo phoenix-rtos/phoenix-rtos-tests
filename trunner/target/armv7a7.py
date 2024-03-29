@@ -1,3 +1,4 @@
+import time
 from typing import Callable, Optional
 
 from trunner.dut import SerialDut
@@ -20,6 +21,15 @@ from .base import TargetBase, PsuPloLoader, find_port
 
 
 class ARMv7A7TargetRebooter(Rebooter):
+    def _reboot_soft(self):
+        # 0.2s sleep set due to #1047 issue
+        self.host.set_reset(0)
+        time.sleep(0.2)
+        self.dut.clear_buffer()
+        self.host.set_reset(1)
+        # delay needed for plo usb device to disappear
+        time.sleep(0.25)
+
     def _set_flash_mode(self, flash):
         self.host.set_flash_mode(not flash)
 
