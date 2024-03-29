@@ -1,22 +1,23 @@
 /*
  * Phoenix-RTOS
  *
- * CMAC unit tests
+ * Tests for AES CMAC
  *
- * Copyright 2020 Phoenix Systems
- * Author: Daniel Sawka
+ * Copyright 2020, 2024 by Phoenix Systems
+ * Authors: Daniel Sawka, Mateusz Bloch
+ *
+ * This file is a part of Phoenix-RTOS.
  *
  * %LICENSE%
  */
-
-#ifdef WITH_AES_CMAC
 
 #include <stdio.h>
 #include <string.h>
 
 #include <unity_fixture.h>
 
-#include <cmac.h>
+#include <tinyaes/aes.h>
+#include <tinyaes/cmac.h>
 
 TEST_GROUP(aes_cmac);
 
@@ -30,7 +31,7 @@ TEST_TEAR_DOWN(aes_cmac)
 	/* Nothing to do here */
 }
 
-#if defined(PS_DEBUG) && (PS_DEBUG == 1)
+#if defined(DEBUG) && (DEBUG == 1)
 
 #define PRINT(...) \
 	printf(__VA_ARGS__)
@@ -214,5 +215,3 @@ TEST_GROUP_RUNNER(aes_cmac)
 	RUN_TEST_CASE(aes_cmac, test_cmac_four_full_blocks);
 	RUN_TEST_CASE(aes_cmac, test_cmac_five_variable_strings);
 }
-
-#endif
