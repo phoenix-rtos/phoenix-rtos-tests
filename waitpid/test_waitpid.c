@@ -82,6 +82,7 @@ void runner(void)
 
 int main(int argc, char *argv[])
 {
+	int failures = 0;
 	int sum;
 	if (!strcmp(basename(argv[0]), "exec_while_process")) {
 		for (;;) {
@@ -95,8 +96,8 @@ int main(int argc, char *argv[])
 		}
 	}
 	else {
-		UnityMain(argc, (const char **)argv, runner);
+		failures = UnityMain(argc, (const char **)argv, runner);
 	}
 
-	return 0;
+	return (failures == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }

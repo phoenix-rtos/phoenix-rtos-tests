@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "unity_fixture.h"
 
@@ -41,6 +42,5 @@ void runner(void)
 
 int main(int argc, char *argv[])
 {
-	UnityMain(argc, (const char**)argv, runner);
-	return 0;
+	return (UnityMain(argc, (const char **)argv, runner) == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
