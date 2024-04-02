@@ -4,7 +4,7 @@ test:
     nightly: true
 
     targets:
-      value: [ia32-generic-qemu, armv7a9-zynq7000-qemu, armv7a9-zynq7000-zedboard]
+      value: [ia32-generic-qemu, armv7a9-zynq7000-qemu, armv7a9-zynq7000-zedboard, armv7a7-imx6ull-evk]
 
     tests:
 
@@ -80,7 +80,7 @@ test:
         # Issue: 431 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/431
         execute: test_busybox ln
         targets:
-          exclude: [armv7a9-zynq7000-qemu, armv7a9-zynq7000-zedboard]
+          exclude: [armv7a9-zynq7000-qemu, armv7a9-zynq7000-zedboard, armv7a7-imx6ull-evk]
 
       - name: ls
         execute: test_busybox ls
