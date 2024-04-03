@@ -2,11 +2,15 @@ import importlib
 from abc import ABC, abstractmethod
 
 from trunner.ctx import TestContext
+from trunner.dut import HostDut
 
 
 class Host(ABC):  # pylint: disable=too-few-public-methods
     """Base class for Host abstraction"""
     name: str
+
+    def __init__(self):
+        self.dut: HostDut = HostDut()
 
     @abstractmethod
     def has_gpio(self) -> bool:
@@ -68,6 +72,7 @@ class RpiHost(Host):
     name = "rpi"
 
     def __init__(self):
+        super().__init__()
         self.reset_gpio = GPIO(17, init=1)
         self.power_gpio = GPIO(2, init=1)
         self.boot_gpio = GPIO(4, init=0)

@@ -263,7 +263,7 @@ class TestRunner:
             if test.ignore:
                 result.skip()
             else:
-                set_logfiles(self.target.dut, self.ctx)
+                set_logfiles(self.ctx.target.dut and self.ctx.host.dut, self.ctx)
                 harness = self.target.build_test(test)
 
                 if not test.should_reboot:  # WARN: build_test may change TestOptions
