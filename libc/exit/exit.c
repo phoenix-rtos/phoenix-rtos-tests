@@ -44,6 +44,7 @@
 	}
 
 
+#define TEST_TINI_PATH      "/usr/bin/tini"
 #define TEST_EXIT_PATH      "exit_test_file"
 #define TEST_EXIT_STR       "test123"
 #define TEST_EXIT_DUMMY_VAL 12345678
@@ -100,11 +101,11 @@ struct test_ThreadArgs {
 
 
 /* SIGCHLD signal handler */
-static void test_sigchldHandler(int signum)
+static void test_sigChldHandler(int signum)
 {
 	struct sigaction sa;
 
-	sa.sa_handler = SIG_DFL;  // Set the handler to default action
+	sa.sa_handler = SIG_DFL;  // Set the handler back to default action
 	sigemptyset(&sa.sa_mask);
 	sa.sa_flags = 0;
 	TEST_ASSERT_EQUAL_INT(0, sigaction(SIGCHLD, &sa, NULL));
@@ -113,8 +114,22 @@ static void test_sigchldHandler(int signum)
 	test_common.test_handlerFlag = TEST_EXIT_DUMMY_VAL;
 }
 
+/* SIGPIPE signal handler */
+static void test_sigPipeHandler(int signum)
+{
+	struct sigaction sa;
 
-static void test_sigusrHandler(int signum)
+	sa.sa_handler = SIG_DFL;  // Set the handler back to default action
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = 0;
+	TEST_ASSERT_EQUAL_INT(0, sigaction(SIGPIPE, &sa, NULL));
+
+	/* Change value of variable to confirm that handler has been invoked */
+	test_common.test_handlerFlag = TEST_EXIT_DUMMY_VAL;
+}
+
+/* SIGUSR signal handler */
+static void test_sigUsrHandler(int signum)
 {
 	struct sigaction sa;
 
@@ -578,6 +593,15 @@ TEST(unistd_exit, close_streams)
 	/* parent */
 	else {
 		int status, ret;
+		struct sigaction sa;
+
+		sa.sa_handler = test_sigPipeHandler;
+		TEST_ASSERT_EQUAL_INT(0, sigemptyset(&sa.sa_mask));
+		sa.sa_flags = 0;
+		TEST_ASSERT_EQUAL_INT(0, sigaction(SIGPIPE, &sa, NULL));
+
+		/* Check handlerFlag has initial value */
+		TEST_ASSERT_EQUAL_INT(0, test_common.test_handlerFlag);
 
 		ret = wait(&status);
 		TEST_ASSERT_EQUAL_INT(pid, ret);
@@ -588,6 +612,9 @@ TEST(unistd_exit, close_streams)
 		ret = write(pipefd[1], TEST_EXIT_STR, sizeof(TEST_EXIT_STR));
 		TEST_ASSERT_EQUAL_INT(-1, ret);
 		TEST_ASSERT_EQUAL_INT(EPIPE, errno);
+#ifndef phoenix  // #733 issue - https://github.com/phoenix-rtos/phoenix-rtos-project/issues/733
+		TEST_ASSERT_EQUAL_INT(TEST_EXIT_DUMMY_VAL, test_common.test_handlerFlag);
+#endif                    /* phoenix */
 		close(pipefd[1]); /* close write pipe end */
 	}
 }
@@ -595,13 +622,15 @@ TEST(unistd_exit, close_streams)
 
 TEST(unistd_exit, orphaned_child)
 {
-#ifndef phoenix
-	TEST_IGNORE_MESSAGE("Lack of init system in docker container");
-#endif
 	/* Test if parent _exit affect child process */
 	pid_t pid;
 	int pipefd[2];
 	struct sigaction sa;
+
+	/* If run in docker container - check if tini is available */
+	if (getenv("HOSTNAME") != NULL && access(TEST_TINI_PATH, F_OK) != 0) {
+		TEST_IGNORE_MESSAGE("Lack of init system in docker container");
+	}
 
 	sa.sa_handler = test_dummyHandler;
 	sigemptyset(&sa.sa_mask);
@@ -675,13 +704,15 @@ TEST(unistd_exit, orphaned_child)
 
 TEST(unistd_exit, new_parent_id)
 {
-#ifndef phoenix
-	TEST_IGNORE_MESSAGE("Lack of init system in docker container");
-#endif
 	/* Test that child acquire new parent ID */
 	pid_t pid;
 	int pipefd[2];
 	struct sigaction sa;
+
+	/* If run in docker container - check if tini is available */
+	if (getenv("HOSTNAME") != NULL && access(TEST_TINI_PATH, F_OK) != 0) {
+		TEST_IGNORE_MESSAGE("Lack of init system in docker container");
+	}
 
 	sa.sa_handler = test_dummyHandler;
 	sigemptyset(&sa.sa_mask);
@@ -767,7 +798,7 @@ TEST(unistd_exit, SIGCHLD_sent)
 	pid_t pid;
 	struct sigaction sa;
 
-	sa.sa_handler = test_sigchldHandler;
+	sa.sa_handler = test_sigChldHandler;
 	TEST_ASSERT_EQUAL_INT(0, sigemptyset(&sa.sa_mask));
 	sa.sa_flags = 0;
 	TEST_ASSERT_EQUAL_INT(0, sigaction(SIGCHLD, &sa, NULL));
@@ -926,7 +957,7 @@ TEST(unistd_exit, no_handler)
 	if (pid == 0) {
 		struct sigaction sa;
 
-		sa.sa_handler = test_sigusrHandler;
+		sa.sa_handler = test_sigUsrHandler;
 		TEST_ASSERT_EQUAL_INT(0, sigemptyset(&sa.sa_mask));
 		sa.sa_flags = 0;
 		TEST_ASSERT_EQUAL_INT(0, sigaction(SIGUSR1, &sa, NULL));
@@ -1214,7 +1245,22 @@ void runner(void)
 
 int main(int argc, char *argv[])
 {
+	/*
+	 * When running test in docker container during CI there is no default init system,
+	 * which cause 'orphaned_child' and 'new_parent_id' testcases to fail.
+	 * Workaround is to run this test using tini (lightweight init system).
+	 */
+
+	/* Checking if HOSTNAME is set tells if test is being run in docker container */
+	if (getenv("HOSTNAME") != NULL && access(TEST_TINI_PATH, F_OK) == 0 && getenv("USE_TINI") == NULL) {
+		setenv("USE_TINI", "yes", 1);
+		execl(TEST_TINI_PATH, "tini", "-s", argv[0], NULL);
+		exit(EXIT_FAILURE);
+	}
+
 	UnityMain(argc, (const char **)argv, runner);
+
+	unsetenv("USE_TINI");
 }
 
 #pragma GCC diagnostic push
