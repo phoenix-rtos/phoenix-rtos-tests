@@ -11,3 +11,10 @@ test:
           type: unity
           targets:
               include: [host-generic-pc]
+
+        - name: pytest
+          type: pytest
+          kwargs:
+            path: phoenix-rtos-tests/sample/test/test-pytest.py
+          targets:
+              include: [host-generic-pc]
