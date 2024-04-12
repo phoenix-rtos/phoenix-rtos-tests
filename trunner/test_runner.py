@@ -143,10 +143,11 @@ class TestRunner:
     def flash(self) -> TestResult:
         """Flashes the device under test."""
 
-        print("Flashing an image to device...")
-
         # report flashing as a test result to include in export (especially useful when failed)
         result = TestResult("flash")
+
+        self._print_test_header_begin(result)
+        print("Flashing an image to device...")
 
         try:
             result.set_stage(TestStage.RUN)
@@ -158,7 +159,10 @@ class TestRunner:
             print(exc)
             result.fail_harness_exception(exc)
 
-        print("Done!")
+        self._print_test_header_end(result)
+
+        print(result.status)
+
         return result
 
     def _print_test_header_end(self, test: TestOptions):
