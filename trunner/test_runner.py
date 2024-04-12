@@ -11,7 +11,7 @@ from trunner.config import ConfigParser
 from trunner.ctx import TestContext
 from trunner.dut import Dut
 from trunner.harness import HarnessError, FlashError
-from trunner.text import bold, green, red, yellow, magenta
+from trunner.text import green, red, yellow, magenta
 from trunner.types import Status, TestOptions, TestResult, TestStage, is_github_actions, get_ci_url
 
 
@@ -143,22 +143,22 @@ class TestRunner:
     def flash(self) -> TestResult:
         """Flashes the device under test."""
 
-        print("Flashing an image to device...")
-
         # report flashing as a test result to include in export (especially useful when failed)
         result = TestResult("flash")
+
+        self._print_test_header_begin(result)
 
         try:
             result.set_stage(TestStage.RUN)
             self.target.flash_dut()
             result.set_stage(TestStage.DONE)
         except (FlashError, HarnessError) as exc:
-            # the newline is needed to avoid printing exception in the same line as plo prompt
-            print(bold("\nERROR WHILE FLASHING THE DEVICE"))
-            print(exc)
-            result.fail_harness_exception(exc)
+            result.fail(str(exc))
 
-        print("Done!")
+        self._print_test_header_end(result)
+
+        print(result.to_str(self.ctx.verbosity), end="", flush=True)
+
         return result
 
     def _print_test_header_end(self, test: TestOptions):
