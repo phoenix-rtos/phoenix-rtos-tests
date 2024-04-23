@@ -1,15 +1,9 @@
-attrs==23.1.0
-colorama==0.4.4
+colorama==0.4.6
 future==0.18.3
-iniconfig==2.0.0
-junitparser==3.1.0
-packaging==23.1
-pexpect==4.8.0
-pluggy==0.13.1
-ptyprocess==0.7.0
+junitparser==3.1.2
+pexpect==4.9.0
 pyserial==3.5
 pytest==7.4.1
 PyYAML==6.0.1
-RPi.GPIO==0.7.1
-toml==0.10.2
 pyusb==1.2.1
+RPi.GPIO==0.7.1; platform_machine == 'armv7l' or platform_machine == 'aarch64'
