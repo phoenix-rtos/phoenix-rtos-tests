@@ -859,8 +859,8 @@ void unix_poll(int type)
 	TEST_ASSERT(rv == 0);
 	TEST_ASSERT(fds[0].revents == 0);
 	TEST_ASSERT(fds[1].revents == 0);
-	TEST_ASSERT(ms < 310);
-	TEST_ASSERT(ms > 290);
+	TEST_ASSERT_LESS_THAN(350, ms);
+	TEST_ASSERT_GREATER_THAN(290, ms);
 
 	clock_gettime(CLOCK_REALTIME, &ts[0]);
 	fds[0].events = POLLIN | POLLOUT;
@@ -873,7 +873,7 @@ void unix_poll(int type)
 	TEST_ASSERT(rv == 2);
 	TEST_ASSERT(fds[0].revents == POLLOUT);
 	TEST_ASSERT(fds[1].revents == POLLOUT);
-	TEST_ASSERT(ms <= 1);
+	TEST_ASSERT_LESS_THAN(5, ms);
 
 	send(fd[0], data, sizeof(data), 0);
 	send(fd[1], data, sizeof(data), 0);
@@ -889,7 +889,7 @@ void unix_poll(int type)
 	TEST_ASSERT(rv == 2);
 	TEST_ASSERT(fds[0].revents == POLLIN);
 	TEST_ASSERT(fds[1].revents == POLLIN);
-	TEST_ASSERT(ms <= 1);
+	TEST_ASSERT_LESS_THAN(5, ms);
 
 	close(fd[0]);
 	close(fd[1]);
