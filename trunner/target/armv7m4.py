@@ -24,9 +24,28 @@ from .base import TargetBase, find_port
 
 
 class ARMv7M4Rebooter(Rebooter):
-    # TODO add text mode
-    # NOTE: changing boot modes not needed/supported for this target
-    pass
+
+    def _reboot_dut_text(self, hard):
+        self.dut.send(" reboot\r\n")
+
+    def _reboot_dut_command(self, hard):
+        subprocess.run(
+            [
+                "openocd",
+                "-f",
+                "interface/stlink.cfg",
+                "-f",
+                "target/stm32l4x.cfg",
+                "-c",
+                "reset_config srst_only srst_nogate connect_assert_srst",
+                "-c",
+                "init;reset;exit",
+            ],
+            encoding="ascii",
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            timeout=20,
+        )
 
 
 class STM32L4x6OpenocdGdbServerHarness(IntermediateHarness):
@@ -113,6 +132,7 @@ class STM32L4x6Target(TargetBase):
     experimental = False
     image_file = "phoenix.disk"
     image_addr = 0x08000000
+    openocd_utility = True
 
     def __init__(self, host: Host, port: Optional[str] = None, baudrate: int = 115200):
         if port is None:
@@ -120,7 +140,7 @@ class STM32L4x6Target(TargetBase):
             port = find_port("USB-Serial|UART")
 
         self.dut = SerialDut(port, baudrate, encoding="utf-8", codec_errors="ignore")
-        self.rebooter = ARMv7M4Rebooter(host, self.dut)
+        self.rebooter = ARMv7M4Rebooter(host, self.dut, openocd_rst=True)
         super().__init__()
 
     @classmethod
