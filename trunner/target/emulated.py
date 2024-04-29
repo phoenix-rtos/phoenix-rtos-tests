@@ -3,7 +3,12 @@ from typing import Callable, TextIO
 
 from trunner.ctx import TestContext
 from trunner.dut import QemuDut
-from trunner.harness import HarnessBuilder, RebooterHarness, ShellHarness, TestStartRunningHarness
+from trunner.harness import (
+    HarnessBuilder,
+    RebooterHarness,
+    ShellHarness,
+    TestStartRunningHarness,
+)
 from trunner.types import TestOptions, TestResult
 from .base import TargetBase
 
@@ -22,7 +27,9 @@ class QemuTarget(TargetBase):
         super().__init__()
         self.script = script
         # TODO Make sure that script path exists
-        self.dut = QemuDut(f"{self.project_dir}/scripts/{self.script}", encoding="utf-8")
+        self.dut = QemuDut(
+            f"{self.project_dir}/scripts/{self.script}", encoding="utf-8"
+        )
         self.rebooter = QemuDutRebooter(self.dut)
 
     @classmethod
