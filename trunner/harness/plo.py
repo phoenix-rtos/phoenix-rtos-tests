@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import Callable, Optional, Sequence
+import time
 
 import pexpect
 
@@ -76,6 +77,9 @@ class PloInterface:
             self.dut.expect_exact("Waiting for input", timeout=3)
         except (pexpect.TIMEOUT, pexpect.EOF) as e:
             raise PloError("Failed to go into bootloader mode", output=self.dut.before) from e
+
+        # Temporary fix for [https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1040]
+        time.sleep(0.1)
 
         self.dut.send("\n")
 
