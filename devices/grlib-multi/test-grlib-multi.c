@@ -484,7 +484,7 @@ TEST(test_adc, adcDefaultConfigConversion)
 	platformctl_t pctl = {
 		.action = pctl_set,
 		.type = pctl_iomux,
-		.iocfg = {
+		.task.iocfg = {
 			.opt = TEST_ADC_IOMUX_OPT,
 			.pin = TEST_ADC_PIN,
 			.pulldn = 0,
