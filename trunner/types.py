@@ -242,10 +242,12 @@ class TestResult:
         return [bold("ASSERTION TRACEBACK (most recent call last):"), "".join(tb_info)]
 
     def _failed_before_buffer(self, dut) -> str:
-        return dut.before.replace("\r", "")
+        # Remove carriage returns and clear screen escape code
+        return re.sub(r"\r|\x1b\[14A", "", dut.before)
 
     def _failed_buffer(self, dut) -> str:
-        return dut.buffer.replace("\r", "")
+        # Remove carriage returns and clear screen escape code
+        return re.sub(r"\r|\x1b\[14A", "", dut.buffer)
 
     def fail_pexpect(self, dut, exc):
         self.fail(summary="Pexpect failure")
