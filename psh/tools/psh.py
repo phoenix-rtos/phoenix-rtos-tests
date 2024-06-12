@@ -289,12 +289,6 @@ def run(harness):
     @functools.wraps(harness)
     def wrapper_harness(*args, **kwargs):
         dut = args[0]
-        # to avoid CI fails caused by https://github.com/phoenix-rtos/phoenix-rtos-project/issues/866
-        if trunner.ctx.target.name == "armv7m7-imxrt117x-evk":
-            ret = harness(*args, **kwargs)
-            # one prompt after a test should be left to be asserted by test runner
-            dut.sendline("\n")
-            return ret
         init(dut)
         res = harness(*args, **kwargs)
         deinit(dut)
