@@ -76,12 +76,6 @@ def assert_executables(p, ctx):
     _exit_spawned_psh(p)
 
 
-def assert_devices(p):
-    devs = psh.ls_simple(p, '/dev')
-    for dev in devs:
-        psh.assert_prompt_after_cmd(p, f'/dev/{dev}', result='fail')
-
-
 def assert_text_files(p):
     etc_content = psh.ls_simple(p, '/etc')
     if 'passwd' in etc_content:
@@ -99,6 +93,4 @@ def harness(p, ctx):
     assert_dirs(p, root_dirs)
     assert_hardlinks(p)
     assert_executables(p, ctx)
-    # skipped test case because of https://github.com/phoenix-rtos/phoenix-rtos-project/issues/262
-    # assert_devices(p)
     assert_text_files(p)
