@@ -5,7 +5,7 @@ import pexpect
 
 from trunner.dut import Dut
 from trunner.text import bold
-from trunner.types import TestResult, TestStage
+from trunner.types import TestResult, TestStage, Status
 from .base import HarnessError, IntermediateHarness
 
 
@@ -98,11 +98,13 @@ class ShellHarness(IntermediateHarness):
 
         result.set_stage(TestStage.RUN)
         test_result = self.next_harness(result)
-        self.assert_prompt()
 
-        # re-enable log output to release collected output
-        if self.suppress_dmesg:
-            self.dut.pexpect_proc.sendline("dmesg -E")
+        if test_result.status is not Status.FAIL:
             self.assert_prompt()
+
+            # re-enable log output to release collected output
+            if self.suppress_dmesg:
+                self.dut.pexpect_proc.sendline("dmesg -E")
+                self.assert_prompt()
 
         return test_result

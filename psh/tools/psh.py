@@ -296,10 +296,8 @@ def run(harness):
             dut.sendline("\n")
             return ret
         init(dut)
-        try:
-            res = harness(*args, **kwargs)
-        finally:
-            deinit(dut)
+        res = harness(*args, **kwargs)
+        deinit(dut)
         return res
 
     return wrapper_harness
