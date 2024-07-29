@@ -34,6 +34,14 @@
 static int fd;
 static char buf[50];
 
+#ifdef __phoenix__
+/* libphoenix internal functions */
+extern ssize_t __safe_write(int fd, const void *buff, size_t size);
+extern ssize_t __safe_read(int fd, void *buf, size_t size);
+extern int __safe_open(const char *path, int oflag, mode_t mode);
+extern int __safe_close(int fd);
+#endif
+
 
 /* Assert that string pointed to by str has been correctly written to a specified file */
 static void assert_write(const int fildes, const char *str)
@@ -113,6 +121,94 @@ static int assert_free_fd(int fildes)
 
 	return fildes;
 }
+
+#ifdef __phoenix__ /* test libphoenix internal functions */
+
+
+TEST_GROUP(unistd_file_safe);
+
+
+TEST_SETUP(unistd_file_safe)
+{
+	/* open a file */
+	fd = __safe_open(FNAME, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+	TEST_ASSERT_GREATER_OR_EQUAL(0, fd);
+	memset(buf, '\0', sizeof(buf));
+}
+
+
+TEST_TEAR_DOWN(unistd_file_safe)
+{
+	memset(buf, '\0', sizeof(buf));
+	if (fd >= 0) {
+		TEST_ASSERT_EQUAL_INT(0, __safe_close(fd));
+	}
+	TEST_ASSERT_EQUAL_INT(0, remove(FNAME));
+}
+
+
+TEST(unistd_file_safe, file_safe_readwrite)
+{
+	ssize_t ret;
+
+	ret = __safe_write(fd, LINE1, sizeof(LINE1));
+	TEST_ASSERT_EQUAL_INT(sizeof(LINE1), ret);
+
+	/* repoen file readonly */
+	TEST_ASSERT_EQUAL_INT(0, __safe_close(fd));
+	fd = __safe_open(FNAME, O_RDONLY, S_IRUSR | S_IWUSR);
+	TEST_ASSERT_GREATER_OR_EQUAL(0, fd);
+	{
+		ret = __safe_read(fd, buf, sizeof(LINE1));
+		TEST_ASSERT_EQUAL_INT(sizeof(LINE1), ret);
+		TEST_ASSERT_EQUAL_STRING(LINE1, buf);
+
+		/* assert EOF */
+		TEST_ASSERT_EQUAL_INT(0, __safe_read(fd, buf, sizeof(LINE1)));
+	}
+}
+
+
+TEST(unistd_file_safe, file_safe_readwrite_zero)
+{
+	ssize_t ret;
+
+	ret = __safe_write(fd, NULL, 0);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+
+	ret = __safe_read(fd, buf, 0);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+}
+
+
+TEST(unistd_file_safe, file_safe_readwrite_badfd)
+{
+	ssize_t ret;
+
+	TEST_ASSERT_EQUAL_INT(0, __safe_close(fd));
+
+	ret = __safe_write(fd, LINE1, sizeof(LINE1));
+	TEST_ASSERT_EQUAL_INT(-1, ret);
+	TEST_ASSERT_EQUAL_INT(EBADF, errno);
+
+	ret = __safe_read(fd, buf, sizeof(LINE1));
+	TEST_ASSERT_EQUAL_INT(-1, ret);
+	TEST_ASSERT_EQUAL_INT(EBADF, errno);
+
+	/* this test closes fd by itself, invalidate it */
+	fd = -1;
+}
+
+
+TEST_GROUP_RUNNER(unistd_file_safe)
+{
+	RUN_TEST_CASE(unistd_file_safe, file_safe_readwrite);
+	RUN_TEST_CASE(unistd_file_safe, file_safe_readwrite_zero);
+	RUN_TEST_CASE(unistd_file_safe, file_safe_readwrite_badfd);
+}
+
+
+#endif /* __phoenix__ */
 
 
 TEST_GROUP(unistd_file);

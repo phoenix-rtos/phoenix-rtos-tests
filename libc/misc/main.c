@@ -26,6 +26,10 @@ void runner(void)
 	RUN_TEST_GROUP(unistd_getopt);
 	RUN_TEST_GROUP(unistd_uids);
 	RUN_TEST_GROUP(unistd_fsdir);
+#ifdef __phoenix__
+	/* tests libphoenix internal functions */
+	RUN_TEST_GROUP(unistd_file_safe);
+#endif
 	RUN_TEST_GROUP(unistd_file);
 	RUN_TEST_GROUP(wchar_wcscmp);
 	RUN_TEST_GROUP(ctype);
