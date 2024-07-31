@@ -76,7 +76,9 @@ class ARMv7M7Target(TargetBase):
 
             builder.add(PloHarness(self.dut, app_loader=app_loader))
 
-        if test.shell is not None:
+        if test.type == "pytest":
+            builder.add(TestStartRunningHarness())
+        elif test.shell is not None:
             builder.add(ShellHarness(self.dut, self.shell_prompt, test.shell.cmd))
         else:
             builder.add(TestStartRunningHarness())
