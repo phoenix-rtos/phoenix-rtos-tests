@@ -22,6 +22,7 @@ from trunner.target import (
     STM32L4x6Target,
     Zynq7000ZedboardTarget,
     IMX6ULLEvkTarget,
+    MimasSparcV8EvkTarget,
 )
 from trunner.ctx import TestContext
 from trunner.target.base import TargetBase
@@ -109,9 +110,11 @@ def parse_args(targets: Dict[str, Type[TargetBase]], hosts: Dict[str, Type[Host]
         "--output",
         action="store",
         const="report.xml",
-        nargs='?',
-        help=("Write machine-readable test results as csv and xml file. "
-              "When no value is provided uses %(const)s"),
+        nargs="?",
+        help=(
+            "Write machine-readable test results as csv and xml file. "
+            "When no value is provided uses %(const)s"
+        ),
     )
 
     parser.add_argument(
@@ -218,7 +221,9 @@ def parse_args(targets: Dict[str, Type[TargetBase]], hosts: Dict[str, Type[Host]
     return args
 
 
-def resolve_targets_and_hosts() -> Tuple[Dict[str, Type[TargetBase]], Dict[str, Type[Host]]]:
+def resolve_targets_and_hosts() -> (
+    Tuple[Dict[str, Type[TargetBase]], Dict[str, Type[Host]]]
+):
     """
     Returns a tuple of dictionaries that map host and target names to an equivalent class.
 
@@ -236,6 +241,7 @@ def resolve_targets_and_hosts() -> Tuple[Dict[str, Type[TargetBase]], Dict[str, 
         IMXRT117xEvkTarget,
         Zynq7000ZedboardTarget,
         IMX6ULLEvkTarget,
+        MimasSparcV8EvkTarget,
     ]
 
     hosts: List[Type[Host]] = [EmulatorHost, RpiHost]
