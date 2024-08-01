@@ -1,6 +1,6 @@
 test:
   targets:
-    value: [sparcv8leon3-gr716-mini, sparcv8leon3-gr712rc-board]
+    value: [sparcv8leon-gr716-mini, sparcv8leon-gr712rc-board]
   type: unity
   tests:
     - name: unit
