@@ -6,31 +6,34 @@ import time
 import pexpect
 
 from trunner.harness import ProcessError
+from trunner.dut import PortNotFound
 from serial.tools import list_ports
 from contextlib import contextmanager
 from .common import add_output_to_exception
 
 
-def wait_for_vid_pid(vid: int, pid: int, timeout=0):
+def wait_for_vid_pid(vid: int, pid: int, timeout: int = 0):
     """wait for connected usb serial device with required vendor & product id"""
-
     asleep = 0
     found_ports = []
 
     while not found_ports:
-        time.sleep(0.01)
-        asleep += 0.01
-
         found_ports = [port for port in list_ports.comports() if port.pid == pid and port.vid == vid]
 
         if len(found_ports) > 1:
-            raise Exception(
-                "More than one plo port was found! Maybe more than one device is connected? Hint used to find port:"
+            raise PortNotFound(
+                "More than one port was found! Maybe more than one device is connected? Hint used to find port:"
                 f"{vid:04x}:{pid:04x}"
             )
 
         if timeout and asleep >= timeout:
-            raise TimeoutError(f"Couldn't find plo USB device with vid/pid: '{vid:04x}:{pid:04x}'")
+            raise PortNotFound(
+                "Couldn't find port to communicate with device! Make sure device is connected. Hint used to find port:"
+                f"{vid:04x}:{pid:04x}"
+            )
+
+        time.sleep(0.01)
+        asleep += 0.01
 
     return found_ports[0].device
 
