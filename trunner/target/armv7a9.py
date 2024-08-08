@@ -54,7 +54,7 @@ class ZynqZedboardGdbPloLoader(TerminalHarness, PloInterface):
         """Loads plo image to RAM using gdb."""
 
         # after reboot we need to wait for smt2 device
-        wait_for_vid_pid(vid=0x0403, pid=0x6014, timeout=5)
+        wait_for_vid_pid(vid=0x0403, pid=0x6014, device="smt2", timeout=5)
 
         with self.gdbserver.run():
             try:
