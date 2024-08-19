@@ -2,7 +2,7 @@ from abc import abstractmethod
 from typing import Callable
 
 from trunner.ctx import TestContext
-from trunner.dut import QemuDut
+from trunner.dut import QemuDut, ARMv8R52MPS3AN536_Dut
 from trunner.harness import HarnessBuilder, RebooterHarness, ShellHarness, TestStartRunningHarness
 from trunner.types import TestOptions, TestResult
 from .base import TargetBase
@@ -103,6 +103,21 @@ class ARMv7A9Zynq7000QemuTarget(QemuTarget):
         # Start of the zynq target take around 45 seconds due to the slow filesystem initialization.
         # Iterate over harness chain to find a ShellHarness to increase prompt_timeout value.
         self.prompt_timeout = 60
+
+    @classmethod
+    def from_context(cls, _: TestContext):
+        return cls()
+
+
+class ARMv8R52MPS3AN536QemuTarget(QemuTarget):
+    name = "armv8r52-mps3an536-qemu"
+    rootfs = False
+    experimental = True
+
+    def __init__(self):
+        super().__init__("armv8r52-mps3an536-qemu.sh")
+        self.dut = ARMv8R52MPS3AN536_Dut(f"{self.project_dir}/scripts/{self.script}", encoding="utf-8")
+        self.rebooter = QemuDutRebooter(self.dut)
 
     @classmethod
     def from_context(cls, _: TestContext):
