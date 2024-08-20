@@ -27,20 +27,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <limits.h>
-
-
-/*
- * All tests for floats are disabled in this test of
- * issues #652 and #634 which cause problems with scanning these values.
- * #652 https://github.com/phoenix-rtos/phoenix-rtos-project/issues/652
- * #634 https://github.com/phoenix-rtos/phoenix-rtos-project/issues/634
- */
-
-
-/* Disabled because of #656 issue */
-#ifndef __phoenix__
 #include <float.h>
-#endif
 
 #include <unity_fixture.h>
 
@@ -2638,18 +2625,6 @@ TEST_TEAR_DOWN(stdio_scanf_aefg)
 
 TEST(stdio_scanf_aefg, f)
 {
-	/*
-	 * <posix incmpliance> Scanf doesn't support longer floating-point numbers
-	 * Problems occur when scanf needs to read big numbers after coma.
-	 * example: 0.234234345345 scanf will read
-	 * example 2.212121e-100 scanf won't read because this is along float after a coma.
-	 * Issue link: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/652
-	 */
-
-#ifdef __phoenix__
-	TEST_IGNORE();
-#endif
-
 	char buff[BUFF_LEN] = { 0 };
 	float fltMax, fltMaxH, zero, fltMin, negFltMax, negFltMaxH, negFltMin;
 	const char *format = "%f %f %f %f %f %f %f";
@@ -2691,18 +2666,6 @@ TEST(stdio_scanf_aefg, f)
 
 TEST(stdio_scanf_aefg, F)
 {
-	/*
-	 * <posix incmpliance> Scanf doesn't support longer floating-point numbers
-	 * Problems occur when scanf needs to read big numbers after coma.
-	 * example: 0.234234345345 scanf will read
-	 * example 2.212121e-100 scanf won't read because this is along float after a coma.
-	 * Issue link: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/652
-	 */
-
-#ifdef __phoenix__
-	TEST_IGNORE();
-#endif
-
 	char buff[BUFF_LEN] = { 0 };
 	float fltMax, fltMaxH, zero, fltMin, negFltMax, negFltMaxH, negFltMin;
 	const char *format = "%F %F %F %F %F %F %F";
@@ -2744,18 +2707,6 @@ TEST(stdio_scanf_aefg, F)
 
 TEST(stdio_scanf_aefg, a)
 {
-	/*
-	 * <posix incmpliance> Scanf doesn't support longer floating-point numbers
-	 * Problems occur when scanf needs to read big numbers after coma.
-	 * example: 0.234234345345 scanf will read
-	 * example 2.212121e-100 scanf won't read because this is along float after a coma.
-	 * Issue link: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/652
-	 */
-
-#ifdef __phoenix__
-	TEST_IGNORE();
-#endif
-
 	char buff[BUFF_LEN] = { 0 };
 	float fltMax, fltMaxH, zero, fltMin, negFltMax, negFltMaxH, negFltMin;
 	const char *format = "%a %a %a %a %a %a %a";
@@ -2792,18 +2743,6 @@ TEST(stdio_scanf_aefg, a)
 
 TEST(stdio_scanf_aefg, A)
 {
-	/*
-	 * <posix incmpliance> Scanf doesn't support longer floating-point numbers
-	 * Problems occur when scanf needs to read big numbers after coma.
-	 * example: 0.234234345345 scanf will read
-	 * example 2.212121e-100 scanf won't read because this is along float after a coma.
-	 * Issue link: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/652
-	 */
-
-#ifdef __phoenix__
-	TEST_IGNORE();
-#endif
-
 	char buff[BUFF_LEN] = { 0 };
 	float fltMax, fltMaxH, zero, fltMin, negFltMax, negFltMaxH, negFltMin;
 	const char *format = "%A %A %A %A %A %A %A";
@@ -2840,18 +2779,6 @@ TEST(stdio_scanf_aefg, A)
 
 TEST(stdio_scanf_aefg, e)
 {
-	/*
-	 * <posix incmpliance> Scanf doesn't support longer floating-point numbers
-	 * Problems occur when scanf needs to read big numbers after coma.
-	 * example: 0.234234345345 scanf will read
-	 * example 2.212121e-100 scanf won't read because this is along float after a coma.
-	 * Issue link: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/652
-	 */
-
-#ifdef __phoenix__
-	TEST_IGNORE();
-#endif
-
 	char buff[BUFF_LEN] = { 0 };
 	float fltMax, fltMaxH, zero, fltMin, negFltMax, negFltMaxH, negFltMin;
 	const char *format = "%e %e %e %e %e %e %e";
@@ -2888,18 +2815,6 @@ TEST(stdio_scanf_aefg, e)
 
 TEST(stdio_scanf_aefg, E)
 {
-	/*
-	 * <posix incmpliance> Scanf doesn't support longer floating-point numbers
-	 * Problems occur when scanf needs to read big numbers after coma.
-	 * example: 0.234234345345 scanf will read
-	 * example 2.212121e-100 scanf won't read because this is along float after a coma.
-	 * Issue link: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/652
-	 */
-
-#ifdef __phoenix__
-	TEST_IGNORE();
-#endif
-
 	char buff[BUFF_LEN] = { 0 };
 	float fltMax, fltMaxH, zero, fltMin, negFltMax, negFltMaxH, negFltMin;
 	const char *format = "%E %E %E %E %E %E %E";
@@ -2936,18 +2851,6 @@ TEST(stdio_scanf_aefg, E)
 
 TEST(stdio_scanf_aefg, g)
 {
-	/*
-	 * <posix incmpliance> Scanf doesn't support longer floating-point numbers
-	 * Problems occur when scanf needs to read big numbers after coma.
-	 * example: 0.234234345345 scanf will read
-	 * example 2.212121e-100 scanf won't read because this is along float after a coma.
-	 * Issue link: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/652
-	 */
-
-#ifdef __phoenix__
-	TEST_IGNORE();
-#endif
-
 	char buff[BUFF_LEN] = { 0 };
 	float fltMax, fltMaxH, zero, fltMin, negFltMax, negFltMaxH, negFltMin;
 	const char *format = "%g %g %g %g %g %g %g";
@@ -2984,18 +2887,6 @@ TEST(stdio_scanf_aefg, g)
 
 TEST(stdio_scanf_aefg, G)
 {
-	/*
-	 * <posix incmpliance> Scanf doesn't support longer floating-point numbers
-	 * Problems occur when scanf needs to read big numbers after coma.
-	 * example: 0.234234345345 scanf will read
-	 * example 2.212121e-100 scanf won't read because this is along float after a coma.
-	 * Issue link: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/652
-	 */
-
-#ifdef __phoenix__
-	TEST_IGNORE();
-#endif
-
 	char buff[BUFF_LEN] = { 0 };
 	float fltMax, fltMaxH, zero, fltMin, negFltMax, negFltMaxH, negFltMin;
 	const char *format = "%G %G %G %G %G %G %G";
@@ -3032,15 +2923,6 @@ TEST(stdio_scanf_aefg, G)
 
 TEST(stdio_scanf_aefg, inf_nan_f)
 {
-	/*
-	 * <posix incmpliance> Scanf Inf and Nan handling problem
-	 * There is a problem with Scanf where it is unable to read any representation of valInf or valNan.
-	 * Issue link: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/634
-	 */
-#ifdef __phoenix__
-	TEST_IGNORE();
-#endif
-
 	char buff[BUFF_LEN] = { 0 };
 	double valInf, valNan, valNegInf;
 	const char *format = "%lf %lf %lf";
@@ -3088,15 +2970,6 @@ TEST(stdio_scanf_aefg, inf_nan_f)
 
 TEST(stdio_scanf_aefg, inf_nan_a)
 {
-	/*
-	 * <posix incmpliance> Scanf Inf and Nan handling problem
-	 * There is a problem with Scanf where it is unable to read any representation of valInf or valNan.
-	 * Issue link: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/634
-	 */
-#ifdef __phoenix__
-	TEST_IGNORE();
-#endif
-
 	char buff[BUFF_LEN] = { 0 };
 	double valInf, valNan, valNegInf;
 	const char *format = "%la %la %la";
@@ -3144,15 +3017,6 @@ TEST(stdio_scanf_aefg, inf_nan_a)
 
 TEST(stdio_scanf_aefg, inf_nan_e)
 {
-	/*
-	 * <posix incmpliance> Scanf Inf and Nan handling problem
-	 * There is a problem with Scanf where it is unable to read any representation of valInf or valNan.
-	 * Issue link: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/634
-	 */
-#ifdef __phoenix__
-	TEST_IGNORE();
-#endif
-
 	char buff[BUFF_LEN] = { 0 };
 	double valInf, valNan, valNegInf;
 	const char *format = "%le %le %le";
@@ -3200,15 +3064,6 @@ TEST(stdio_scanf_aefg, inf_nan_e)
 
 TEST(stdio_scanf_aefg, inf_nan_g)
 {
-	/*
-	 * <posix incmpliance> Scanf Inf and Nan handling problem
-	 * There is a problem with Scanf where it is unable to read any representation of valInf or valNan.
-	 * Issue link: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/634
-	 */
-#ifdef __phoenix__
-	TEST_IGNORE();
-#endif
-
 	char buff[BUFF_LEN] = { 0 };
 	double valInf, valNan, valNegInf;
 	const char *format = "%lg %lg %lg";
@@ -4538,11 +4393,6 @@ TEST(stdio_scanf_rest, star)
 
 TEST(stdio_scanf_rest, field_width)
 {
-/* Test ignored because of issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/681 */
-#ifdef __phoenix__
-	TEST_IGNORE();
-#endif
-
 	char buff[BUFF_LEN], valStr[BUFF_LEN], str[] = "LoreIpsumDolorSitAmet";
 	int intMax = 2147483647, intMin = -2147483647, valIntMin, valIntMax;
 	float fltMax = 3.40282347e+7F, fltMin = 3.40282347e-4F, valFltMin, valFltMax;
