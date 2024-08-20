@@ -64,10 +64,6 @@ TEST(stdlib_strto, strtod_basic)
 
 TEST(stdlib_strto, strtod_basic_hex)
 {
-/* Disabled because of #703 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/703 */
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#703 issue");
-#endif
 	char *end;
 	const char *str[] = { "0X0.0P+0", "0X1.0P+0", "-0X1.0P+0", "0X1.0P-126", "0X1.FFFFFEP+127", "-0X1.0P-126", "-0X1.FFFFFEP+127" };
 	const double expected[] = { 0.0, 1, -1, FLT_MIN, FLT_MAX, -FLT_MIN, -FLT_MAX };
@@ -91,11 +87,6 @@ TEST(stdlib_strto, strtod_min_max)
 	errno = 0;
 	TEST_ASSERT_EQUAL_DOUBLE(DBL_MAX, strtod("1.797693134862315e+308", NULL));
 	TEST_ASSERT_EQUAL_INT(0, errno);
-
-/* Disabled because of #703 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/703 */
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#703 issue");
-#endif
 
 	errno = 0;
 	TEST_ASSERT_EQUAL_DOUBLE(DBL_MIN, strtod("0x1p-1022", NULL));
@@ -127,10 +118,6 @@ TEST(stdlib_strto, strtof_basic)
 
 TEST(stdlib_strto, strtof_basic_hex)
 {
-/* Disabled because of #703 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/703 */
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#703 issue");
-#endif
 	char *end;
 	const char *str[] = { "0X0.0P+0", "0X1.0P+0", "-0X1.0P+0", "0x1.81cd6e631f8a1p+13", "-0x1.81cd6e631f8a1p+13" };
 	const float expected[] = { 0.0, 1, -1, 12345.67890, -12345.67890 };
@@ -154,11 +141,6 @@ TEST(stdlib_strto, strtof_min_max)
 	errno = 0;
 	TEST_ASSERT_EQUAL_FLOAT(FLT_MAX, strtof("3.40282347e+38", NULL));
 	TEST_ASSERT_EQUAL_INT(0, errno);
-
-/* Disabled because of #703 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/703 */
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#703 issue");
-#endif
 
 	errno = 0;
 	TEST_ASSERT_EQUAL_FLOAT(FLT_MIN, strtof("0X1.0P-126", NULL));
@@ -190,10 +172,6 @@ TEST(stdlib_strto, strtold_basic)
 
 TEST(stdlib_strto, strtold_basic_hex)
 {
-/* Disabled because of #703 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/703 */
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#703 issue");
-#endif
 	char *end;
 	const char *str[] = { "0X0.0P+0", "0X1.0P+0", "-0X1.0P+0", "0X1.0P-126", "0X1.FFFFFEP+127", "-0X1.0P-126", "-0X1.FFFFFEP+127", "0x1p-1022", "0x1.fffffffffffffp+1023" };
 	const long double expected[] = { 0.0, 1, -1, FLT_MIN, FLT_MAX, -FLT_MIN, -FLT_MAX, DBL_MIN, DBL_MAX };
@@ -222,11 +200,6 @@ TEST(stdlib_strto, strtold_min_max)
 	errno = 0;
 	TEST_ASSERT_EQUAL_DOUBLE(DBL_MAX, strtold("1.797693134862315e+308", NULL));
 	TEST_ASSERT_EQUAL_INT(0, errno);
-
-/* Disabled because of #703 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/703 */
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#703 issue");
-#endif
 
 	errno = 0;
 	TEST_ASSERT_EQUAL_DOUBLE(DBL_MIN, strtold("0x1p-1022", NULL));
@@ -697,10 +670,6 @@ TEST(stdlib_strto, strtoull_min_max)
 
 TEST(stdlib_strto, inf_nan)
 {
-/* Disabled because of #704 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/704 */
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#704 issue");
-#endif
 	char *end;
 	const char *str[] = { "Inf", "-Inf", "INF", "-INF", "NaN", "-NaN", "NAN", "-NAN" };
 	const double exp_double[] = { INFINITY, -INFINITY, INFINITY, -INFINITY, NAN, -NAN, NAN, -NAN };
