@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2023/07/05 22:42:46 riastradh Exp $
+NAME := libh_def_static
+LOCAL_SRCS := h_def_static.c
 
-LIB=		h_def_static
-SRCS=		h_def_static.c
+LOCAL_INSTALL_PATH := /bin/rtld
 
-.include "../helper.mk"
+include $(shared-lib.mk)

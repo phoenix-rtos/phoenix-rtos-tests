@@ -20,6 +20,11 @@ DEFAULT_INSTALL_PATH := /bin
 
 # read out all components
 ALL_MAKES := $(shell find . -mindepth 2 -name Makefile -not -path '*/.*')
+ifneq ($(HAVE_SHLIB), y)
+# Disable ld.elf_so tests
+ALL_MAKES := $(filter-out ./ld.elf_so%, $(ALL_MAKES))
+endif
+
 include $(ALL_MAKES)
 
 # by default compile all tests, but allow custom values on per-TARGET_FAMILY basys

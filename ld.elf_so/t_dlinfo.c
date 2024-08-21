@@ -29,93 +29,116 @@
 
 #include <sys/types.h>
 
-#include <atf-c.h>
-#include <dlfcn.h>
-#include <link_elf.h>
+#include <unity_fixture.h>
+#include <stdlib.h>
+#include <string.h>
+#include <NetBSD/dlfcn.h>
+#include <NetBSD/link_elf.h>
 
-#include "h_macros.h"
+#include "helpers.h"
 
-ATF_TC(rtld_dlinfo_linkmap_self);
-ATF_TC_HEAD(rtld_dlinfo_linkmap_self, tc)
+
+void *handle, *tmp;
+
+
+TEST_GROUP(t_dlinfo);
+
+
+TEST_SETUP(t_dlinfo)
 {
-	atf_tc_set_md_var(tc, "descr", "dlinfo with RTLD_SELF handle works");
+	handle = NULL;
+	tmp = NULL;
 }
-ATF_TC_BODY(rtld_dlinfo_linkmap_self, tc)
+
+
+TEST_TEAR_DOWN(t_dlinfo)
+{
+	if (handle != NULL) {
+		(void)dlclose(handle);
+	}
+	if (tmp != NULL) {
+		(void)dlclose(tmp);
+	}
+}
+
+/* dlinfo with RTLD_SELF handle works */
+TEST(t_dlinfo, rtld_dlinfo_linkmap_self)
 {
 	struct link_map *map;
 	int rv;
 
 	rv = dlinfo(RTLD_SELF, RTLD_DI_LINKMAP, &map);
-	ATF_REQUIRE_EQ_MSG(rv, 0, "dlinfo: %s", dlerror());
-	ATF_CHECK((strstr(map->l_name, "t_dlinfo") != NULL));
+	TEST_ASSERT_EQ_MSGF(rv, 0, "dlinfo: %s", dlerror());
+	TEST_ASSERT((strstr(map->l_name, "t_dlinfo") != NULL));
 }
 
-ATF_TC(rtld_dlinfo_linkmap_inval);
-ATF_TC_HEAD(rtld_dlinfo_linkmap_inval, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "dlinfo with invalid handle fails");
-}
-ATF_TC_BODY(rtld_dlinfo_linkmap_inval, tc)
+/* dlinfo with invalid handle fails */
+TEST(t_dlinfo, rtld_dlinfo_linkmap_inval)
 {
 	void *v;
 	int rv;
 
 	rv = dlinfo(NULL, RTLD_DI_LINKMAP, &v);
-	ATF_CHECK_EQ_MSG(rv, -1, "rv=%d", rv);
+	TEST_ASSERT_EQ_MSGF(rv, -1, "rv=%d", rv);
 }
 
-ATF_TC(rtld_dlinfo_linkmap_dlopen);
-ATF_TC_HEAD(rtld_dlinfo_linkmap_dlopen, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "dlinfo dlopen'd handle works");
-}
-ATF_TC_BODY(rtld_dlinfo_linkmap_dlopen, tc)
+/* dlinfo dlopen'd handle works */
+TEST(t_dlinfo, rtld_dlinfo_linkmap_dlopen)
 {
 	struct link_map *map;
-	void *handle;
 	int rv;
 
-	handle = dlopen("libutil.so", RTLD_LAZY);
-	ATF_REQUIRE_MSG(handle, "dlopen: %s", dlerror());
+	/* NOTE: libutil can't be used as is nonexistent on phoenix */
+	handle = dlopen("libh_helper_ifunc_dso.so", RTLD_LAZY);
+	TEST_ASSERT_MSGF(handle, "dlopen: %s", dlerror());
 
 	rv = dlinfo(handle, RTLD_DI_LINKMAP, &map);
-	ATF_REQUIRE_EQ_MSG(rv, 0, "dlinfo: %s", dlerror());
-	ATF_CHECK((strstr(map->l_name, "libutil.so") != NULL));
-	ATF_CHECK_EQ_MSG(dlclose(handle), 0, "dlclose: %s", dlerror());
+	TEST_ASSERT_EQ_MSGF(rv, 0, "dlinfo: %s", dlerror());
+	TEST_ASSERT((strstr(map->l_name, "libh_helper_ifunc_dso.so") != NULL));
+	TEST_ASSERT_EQ_MSGF(dlclose(handle), 0, "dlclose: %s", dlerror());
+	handle = NULL;
 }
 
-ATF_TC(rtld_dlinfo_linkmap_dlopen_iter);
-ATF_TC_HEAD(rtld_dlinfo_linkmap_dlopen_iter, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "dlopen'd dso's show up in the list");
-}
-ATF_TC_BODY(rtld_dlinfo_linkmap_dlopen_iter, tc)
+/* dlopen'd dso's show up in the list */
+TEST(t_dlinfo, rtld_dlinfo_linkmap_dlopen_iter)
 {
 	struct link_map *map;
-	void *handle;
 
-	handle = dlopen("libutil.so", RTLD_LAZY);
-	ATF_REQUIRE_MSG(handle, "dlopen: %s", dlerror());
+	/* NOTE: libutil can't be used as is nonexistent on phoenix */
+	handle = dlopen("libh_helper_ifunc_dso.so", RTLD_LAZY);
+	TEST_ASSERT_MSGF(handle, "dlopen: %s", dlerror());
 
-	ATF_REQUIRE_EQ_MSG(dlinfo(RTLD_SELF, RTLD_DI_LINKMAP, &map), 0,
+	TEST_ASSERT_EQ_MSGF(dlinfo(RTLD_SELF, RTLD_DI_LINKMAP, &map), 0,
 	    "dlinfo: %s", dlerror());
 
 	for (; map->l_next; map = map->l_next)
 		continue;
 	for (; map; map = map->l_prev)
-		if (strstr(map->l_name, "libutil.so") != NULL)
+		if (strstr(map->l_name, "libh_helper_ifunc_dso.so") != NULL)
 			break;
 
-	ATF_REQUIRE_MSG(map, "dlopen()d object not found from linkmap");
-	ATF_REQUIRE_MSG(dlopen(map->l_name, RTLD_LAZY) != NULL,
-	    "could not dlopen() name in linkmap: %s", dlerror());
+	TEST_ASSERT_MSGF(map, "dlopen()d object not found from linkmap");
+	tmp = dlopen(map->l_name, RTLD_LAZY);
+	TEST_ASSERT_MSGF(tmp != NULL, "could not dlopen() name in linkmap: %s", dlerror());
 }
 
-ATF_TP_ADD_TCS(tp)
+
+TEST_GROUP_RUNNER(t_dlinfo)
 {
-	ATF_TP_ADD_TC(tp, rtld_dlinfo_linkmap_self);
-	ATF_TP_ADD_TC(tp, rtld_dlinfo_linkmap_inval);
-	ATF_TP_ADD_TC(tp, rtld_dlinfo_linkmap_dlopen);
-	ATF_TP_ADD_TC(tp, rtld_dlinfo_linkmap_dlopen_iter);
-	return atf_no_error();
+	RUN_TEST_CASE(t_dlinfo, rtld_dlinfo_linkmap_self);
+	RUN_TEST_CASE(t_dlinfo, rtld_dlinfo_linkmap_inval);
+	RUN_TEST_CASE(t_dlinfo, rtld_dlinfo_linkmap_dlopen);
+	RUN_TEST_CASE(t_dlinfo, rtld_dlinfo_linkmap_dlopen_iter);
+}
+
+
+void runner(void)
+{
+	RUN_TEST_GROUP(t_dlinfo);
+}
+
+
+int main(int argc, char **argv)
+{
+	return UnityMain(argc, (const char **)argv, runner) == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }

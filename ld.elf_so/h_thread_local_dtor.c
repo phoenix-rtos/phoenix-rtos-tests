@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <dlfcn.h>
+#include <NetBSD/dlfcn.h>
 #include <err.h>
 #include <pthread.h>
 #include <stdio.h>
