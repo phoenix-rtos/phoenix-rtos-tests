@@ -29,93 +29,116 @@
 
 #include <sys/types.h>
 
-#include <atf-c.h>
-#include <dlfcn.h>
-#include <util.h>
+#include <unity_fixture.h>
+#include <string.h>
+#include <errno.h>
+#include <NetBSD/dlfcn.h>
+#include <stdlib.h>
+#include <unistd.h>
 
-#include "h_macros.h"
+#include <NetBSD/cdefs.h>
 
-#if \
-    defined(__aarch64__) || \
-    defined(__arm__) || \
-    defined(__i386__) || \
-    defined(__powerpc__) || \
-    defined(__sparc__) || \
-    defined(__x86_64__)
-#define	LINKER_SUPPORT 1
-#else
-#define	LINKER_SUPPORT 0
+#include "libexecassert/execassert.h"
+
+
+#ifndef _RTLD_TEST_SRCDIR
+#error "_RTLD_TEST_SRCDIR" not defined!
 #endif
 
-ATF_TC(rtld_ifunc);
+/* Phoenix doesn't have util.h header. */
+#define easprintf(str, fmt, ...) TEST_ASSERT(asprintf(str, fmt, __VA_ARGS__) != -1)
 
-ATF_TC_HEAD(rtld_ifunc, tc)
+#if defined(__aarch64__) || \
+	defined(__arm__) || \
+	defined(__i386__) || \
+	defined(__powerpc__) || \
+	defined(__sparc__) || \
+	defined(__x86_64__)
+#define LINKER_SUPPORT 1
+#else
+#define LINKER_SUPPORT 0
+#endif
+
+
+void *handle;
+
+
+TEST_GROUP(t_ifunc);
+
+
+TEST_SETUP(t_ifunc)
 {
-	atf_tc_set_md_var(tc, "descr", "ifunc functions are resolved");
+	handle = NULL;
 }
 
-ATF_TC_BODY(rtld_ifunc, tc)
+
+TEST_TEAR_DOWN(t_ifunc)
+{
+	if (handle != NULL) {
+		(void)dlclose(handle);
+	}
+}
+
+
+/* ifunc functions are resolved */
+TEST(t_ifunc, rtld_ifunc)
 {
 	const char *envstr[] = {
-	    "0", "1"
+		"0", "1"
 	};
 	long long expected_result[] = {
-	    0xdeadbeefll, 0xbeefdeadll
+		0xdeadbeefll, 0xbeefdeadll
 	};
-	void *handle;
 	long long (*sym)(void);
 	long long result;
 	const char *error;
 	size_t i;
 
 	if (!LINKER_SUPPORT)
-		atf_tc_skip("Missing linker support for ifunc relocations");
+		TEST_IGNORE_MESSAGE("Missing linker support for ifunc relocations");
 
 	for (i = 0; i < __arraycount(envstr); ++i) {
 		setenv("USE_IFUNC2", envstr[i], 1);
 
 		handle = dlopen("libh_helper_ifunc_dso.so", RTLD_LAZY);
 		error = dlerror();
-		ATF_CHECK(error == NULL);
-		ATF_CHECK(handle != NULL);
+		TEST_ASSERT(error == NULL);
+		TEST_ASSERT(handle != NULL);
 
 		sym = dlsym(handle, "ifunc");
 		error = dlerror();
-		ATF_CHECK(error == NULL);
-		ATF_CHECK(sym != NULL);
+		TEST_ASSERT(error == NULL);
+		TEST_ASSERT(sym != NULL);
 
 		result = (*sym)();
-		ATF_CHECK(result == expected_result[i]);
+		TEST_ASSERT(result == expected_result[i]);
 
 		dlclose(handle);
+		/* Mark as NULL to avoid closing again in TEARDOWN. */
+		handle = NULL;
 		error = dlerror();
-		ATF_CHECK(error == NULL);
+		TEST_ASSERT(error == NULL);
 
-		char *command;
-		easprintf(&command, "%s/h_ifunc %lld",
-		    atf_tc_get_config_var(tc, "srcdir"), expected_result[i]);
-		if (system(command) != EXIT_SUCCESS)
-			atf_tc_fail("Test failed; see output for details");
-		free(command);
+		/* clang-format off */
+		char *command = _RTLD_TEST_SRCDIR "/" "h_ifunc";
+		/* clang-format on */
+		char exp_res[32];
+		(void)snprintf(exp_res, sizeof(exp_res), "%lld", expected_result[i]);
+		char *const argv[] = { command, exp_res, NULL };
+		int retCode = EXIT_SUCCESS;
+		execAssert_execve(command, argv, environ, &retCode, NULL, NULL);
 	}
 }
 
-ATF_TC(rtld_hidden_ifunc);
-
-ATF_TC_HEAD(rtld_hidden_ifunc, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "hidden ifunc functions are resolved");
-}
-
-ATF_TC_BODY(rtld_hidden_ifunc, tc)
+/* hidden ifunc functions are resolved */
+TEST(t_ifunc, rtld_hidden_ifunc)
 {
 	const char *envstr[] = {
-	    "0", "1"
+		"0", "1"
 	};
 	long long expected_result[] = {
-	    0xdeadbeefll, 0xbeefdeadll
+		0xdeadbeefll, 0xbeefdeadll
 	};
-	void *handle;
 	long long (*sym)(void);
 	long long (*(*sym2)(void))(void);
 	long long result;
@@ -123,51 +146,48 @@ ATF_TC_BODY(rtld_hidden_ifunc, tc)
 	size_t i;
 
 	if (!LINKER_SUPPORT)
-		atf_tc_skip("Missing linker support for ifunc relocations");
+		TEST_IGNORE_MESSAGE("Missing linker support for ifunc relocations");
 
 	for (i = 0; i < __arraycount(envstr); ++i) {
 		setenv("USE_IFUNC2", envstr[i], 1);
 
 		handle = dlopen("libh_helper_ifunc_dso.so", RTLD_LAZY);
 		error = dlerror();
-		ATF_CHECK(error == NULL);
-		ATF_CHECK(handle != NULL);
+		TEST_ASSERT(error == NULL);
+		TEST_ASSERT(handle != NULL);
 
 		sym = dlsym(handle, "ifunc_plt");
 		error = dlerror();
-		ATF_CHECK(error == NULL);
-		ATF_CHECK(sym != NULL);
+		TEST_ASSERT(error == NULL);
+		TEST_ASSERT(sym != NULL);
 
 		result = (*sym)();
-		ATF_CHECK(result == expected_result[!i]);
+		TEST_ASSERT(result == expected_result[!i]);
 
 		sym2 = dlsym(handle, "ifunc_indirect");
 		error = dlerror();
-		ATF_CHECK(error == NULL);
-		ATF_CHECK(sym2 != NULL);
+		TEST_ASSERT(error == NULL);
+		TEST_ASSERT(sym2 != NULL);
 
 		sym = (*sym2)();
 		result = (*sym)();
-		ATF_CHECK(result == expected_result[!i]);
+		TEST_ASSERT(result == expected_result[!i]);
 
 		dlclose(handle);
+		/* Mark as NULL to avoid closing again in TEARDOWN. */
+		handle = NULL;
 		error = dlerror();
-		ATF_CHECK(error == NULL);
+		TEST_ASSERT(error == NULL);
 
-		char *command;
-		easprintf(&command, "%s/h_ifunc %lld",
-		    atf_tc_get_config_var(tc, "srcdir"), expected_result[i]);
-		if (system(command) != EXIT_SUCCESS)
-			atf_tc_fail("Test failed; see output for details");
-		free(command);
+		/* clang-format off */
+		char *command = _RTLD_TEST_SRCDIR "/" "h_ifunc";
+		/* clang-format on */
+		char exp_res[32];
+		(void)snprintf(exp_res, sizeof(exp_res), "%lld", expected_result[i]);
+		char *const argv[] = { command, exp_res, NULL };
+		int retCode = EXIT_SUCCESS;
+		execAssert_execve(command, argv, environ, &retCode, NULL, NULL);
 	}
-}
-
-ATF_TC(rtld_main_ifunc);
-ATF_TC_HEAD(rtld_main_ifunc, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "ifunc functions are resolved in the executable");
 }
 
 #if LINKER_SUPPORT
@@ -177,8 +197,7 @@ ifunc_helper(void)
 	return 0xdeadbeefll;
 }
 
-static __attribute__((used))
-long long (*resolve_ifunc(void))(void)
+static __attribute__((used)) long long (*resolve_ifunc(void))(void)
 {
 	return ifunc_helper;
 }
@@ -186,17 +205,30 @@ __hidden_ifunc(ifunc, resolve_ifunc);
 #endif
 long long ifunc(void);
 
-ATF_TC_BODY(rtld_main_ifunc, tc)
+/* ifunc functions are resolved in the executable */
+TEST(t_ifunc, rtld_main_ifunc)
 {
 	if (!LINKER_SUPPORT)
-		atf_tc_skip("Missing linker support for ifunc relocations");
-	ATF_CHECK(ifunc() == 0xdeadbeefll);
+		TEST_IGNORE_MESSAGE("Missing linker support for ifunc relocations");
+	TEST_ASSERT(ifunc() == 0xdeadbeefll);
 }
 
-ATF_TP_ADD_TCS(tp)
+
+TEST_GROUP_RUNNER(t_ifunc)
 {
-	ATF_TP_ADD_TC(tp, rtld_ifunc);
-	ATF_TP_ADD_TC(tp, rtld_hidden_ifunc);
-	ATF_TP_ADD_TC(tp, rtld_main_ifunc);
-	return atf_no_error();
+	RUN_TEST_CASE(t_ifunc, rtld_main_ifunc);
+	RUN_TEST_CASE(t_ifunc, rtld_hidden_ifunc);
+	RUN_TEST_CASE(t_ifunc, rtld_ifunc);
+}
+
+
+void runner(void)
+{
+	RUN_TEST_GROUP(t_ifunc);
+}
+
+
+int main(int argc, char **argv)
+{
+	return UnityMain(argc, (const char **)argv, runner) == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }

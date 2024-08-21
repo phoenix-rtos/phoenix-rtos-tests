@@ -1,6 +1,6 @@
-# $NetBSD: Makefile,v 1.2 2023/07/05 22:42:46 riastradh Exp $
+NAME := libh_helper_dso1
+LOCAL_SRCS := h_helper_dso1.c
 
-LIB=		h_helper_dso1
-SRCS=		h_helper_dso1.c
+LOCAL_INSTALL_PATH := /bin/rtld
 
-.include "../helper.mk"
+include $(shared-lib.mk)

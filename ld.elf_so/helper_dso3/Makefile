@@ -1,9 +1,11 @@
-# $NetBSD: Makefile,v 1.2 2023/07/05 22:42:47 riastradh Exp $
+NAME := libh_helper_dso3
+LOCAL_SRCS := h_helper_dso3.cpp
 
-LIB=		h_helper_dso3
-LIBISCXX=	yes
-SRCS=		h_helper_dso3.cpp
+LOCAL_INSTALL_PATH := /bin/rtld
+# TODO: why is it needed?
+LIBS_SHARED := libstdc++
+LOCAL_LDFLAGS := -static-libgcc
 
-CXXFLAGS+=	-std=c++11
+include $(shared-lib.mk)
 
-.include "../helper.mk"
+# $(error $(RESOLVED_LIBS_SHARED))

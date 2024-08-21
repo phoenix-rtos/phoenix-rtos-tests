@@ -1,0 +1,51 @@
+test:
+    type: unity
+    targets:
+      value: [ia32-generic-qemu, riscv64-generic-qemu, armv7a9-zynq7000-qemu, armv7a9-zynq7000-zedboard, armv7a7-imx6ull-evk]
+    tests:
+        - name: t_df_1_noopen
+          execute: t_df_1_noopen
+
+        - name: t_dl_symver
+          execute: t_dl_symver
+
+        - name: t_dlerror-cleared
+          execute: t_dlerror-cleared
+
+        - name: t_dlerror-false
+          execute: t_dlerror-false
+
+        - name: t_dlinfo
+          execute: t_dlinfo
+
+        - name: t_hash
+          execute: t_hash
+
+        - name: t_ifunc
+          execute: t_ifunc
+
+        # FIXME: this test case doesn't even work on NetBSD
+        # NetBSD issue: http://gnats.netbsd.org/57792
+        # - name: t_ifunc_now
+        #   execute: t_ifunc_now
+
+        - name: t_ifunc_norelro
+          execute: t_ifunc_norelro
+
+        - name: t_ifunc_norelro_now
+          execute: t_ifunc_norelro_now
+
+        - name: t_rtld_r_debug
+          execute: t_rtld_r_debug
+
+        - name: t_thread_local_dtor
+          execute: t_thread_local_dtor
+
+        - name: t_tls_extern
+          execute: t_tls_extern
+
+        # FIXME: libs required by this test have dependcy on libgcc which makes the loading process too slow.
+        # - name: t_tls_extern-nightly
+        #   execute: t_tls_extern-nightly
+        #   # Runs around 45s locally.
+        #   nightly: true

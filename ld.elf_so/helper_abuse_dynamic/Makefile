@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.2 2023/07/05 22:42:46 riastradh Exp $
+NAME := libh_abuse_dynamic
+LOCAL_SRCS := h_abuse_dynamic.c
 
-LIB=		h_abuse_dynamic
-SRCS=		h_abuse_dynamic.c
+LOCAL_INSTALL_PATH := /bin/rtld
 
-DEF_DIR_cmd=	cd ${.CURDIR}/../helper_def_dynamic && ${PRINTOBJDIR}
-DEF_DIR=	${DEF_DIR_cmd:sh}
-LDADD+=		-Wl,-rpath,${TESTSDIR} -L${DEF_DIR} -lh_def_dynamic
+LOCAL_LDFLAGS := -Wl,-rpath,${LOCAL_INSTALL_PATH}
 
-.include "../helper.mk"
+DEP_LIBS_SHARED := libh_def_dynamic
+
+include $(shared-lib.mk)

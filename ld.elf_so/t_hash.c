@@ -26,12 +26,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-
-#include <atf-c.h>
+#include <unity_fixture.h>
+#include <stdlib.h>
 #include <stdint.h>
 
+#include <NetBSD/cdefs.h>
+
+#include "helpers.h"
+
 #include "hash.h"
+
 
 /* known-answer tests */
 struct kat {
@@ -60,12 +64,24 @@ sysv_broken_hash(const char *name)
 	return h;
 }
 
-ATF_TC(sysv);
-ATF_TC_HEAD(sysv, tc)
+
+TEST_GROUP(t_hash);
+
+
+TEST_SETUP(t_hash)
 {
-	atf_tc_set_md_var(tc, "descr", "SysV hash (32-bit)");
+	/* Nothing to do here. */
 }
-ATF_TC_BODY(sysv, tc)
+
+
+TEST_TEAR_DOWN(t_hash)
+{
+	/* Nothing to do here. */
+}
+
+
+/* SysV hash (32-bit) */
+TEST(t_hash, sysv)
 {
 	static const struct kat kat[] = {
 		{ "", 0x00000000 },
@@ -103,19 +119,15 @@ ATF_TC_BODY(sysv, tc)
 	for (i = 0; i < __arraycount(kat); i++) {
 		unsigned long long h = _rtld_sysv_hash(kat[i].in);
 
-		ATF_CHECK_EQ_MSG(h, kat[i].out,
+		TEST_ASSERT_EQ_MSGF(h, kat[i].out,
 		    "[%u] _rtld_hash_sysv(\"%s\") = 0x%08llx != 0x%08llx",
 		    i, kat[i].in, h, kat[i].out);
 	}
 }
 
-ATF_TC(sysv_broken);
-ATF_TC_HEAD(sysv_broken, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "SysV hash (broken with 64-bit unsigned long)");
-}
-ATF_TC_BODY(sysv_broken, tc)
+
+/* SysV hash (broken with 64-bit unsigned long) */
+TEST(t_hash, sysv_broken)
 {
 	static const struct kat kat[] = {
 		{ "", 0x00000000 },
@@ -153,18 +165,15 @@ ATF_TC_BODY(sysv_broken, tc)
 	for (i = 0; i < __arraycount(kat); i++) {
 		unsigned long long h = sysv_broken_hash(kat[i].in);
 
-		ATF_CHECK_EQ_MSG(h, kat[i].out,
+		TEST_ASSERT_EQ_MSGF(h, kat[i].out,
 		    "[%u] sysv_broken_hash(\"%s\") = 0x%08llx != 0x%08llx",
 		    i, kat[i].in, h, kat[i].out);
 	}
 }
 
-ATF_TC(gnu);
-ATF_TC_HEAD(gnu, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "GNU hash (djb2)");
-}
-ATF_TC_BODY(gnu, tc)
+
+/* GNU hash (djb2) */
+TEST(t_hash, gnu)
 {
 	static const struct kat kat[] = {
 		{ """", 0x00001505 },
@@ -201,18 +210,28 @@ ATF_TC_BODY(gnu, tc)
 	for (i = 0; i < __arraycount(kat); i++) {
 		unsigned long long h = _rtld_gnu_hash(kat[i].in);
 
-		ATF_CHECK_EQ_MSG(h, kat[i].out,
+		TEST_ASSERT_EQ_MSGF(h, kat[i].out,
 		    "[%u] _rtld_gnu_hash(\"%s\") = 0x%08llx != 0x%08llx",
 		    i, kat[i].in, h, kat[i].out);
 	}
 }
 
-ATF_TP_ADD_TCS(tp)
+
+TEST_GROUP_RUNNER(t_hash)
 {
+	RUN_TEST_CASE(t_hash, gnu);
+	RUN_TEST_CASE(t_hash, sysv);
+	RUN_TEST_CASE(t_hash, sysv_broken);
+}
 
-	ATF_TP_ADD_TC(tp, gnu);
-	ATF_TP_ADD_TC(tp, sysv);
-	ATF_TP_ADD_TC(tp, sysv_broken);
 
-	return atf_no_error();
+void runner(void)
+{
+	RUN_TEST_GROUP(t_hash);
+}
+
+
+int main(int argc, char **argv)
+{
+	return UnityMain(argc, (const char **)argv, runner) == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }

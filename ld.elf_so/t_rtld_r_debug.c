@@ -29,12 +29,14 @@
 
 #include <sys/types.h>
 
-#include <atf-c.h>
-#include <dlfcn.h>
-#include <link_elf.h>
+#include <unity_fixture.h>
+#include <stdlib.h>
+#include <string.h>
 #include <stdbool.h>
+#include <NetBSD/dlfcn.h>
+#include <NetBSD/link_elf.h>
 
-#include "h_macros.h"
+#include "helpers.h"
 
 static long int
 getauxval(unsigned int type)
@@ -60,8 +62,8 @@ get_dynamic_section(void)
 	phdr = (void *)getauxval(AT_PHDR);
 	phnum = (Elf_Half)getauxval(AT_PHNUM);
 
-	ATF_CHECK(phdr != NULL);
-	ATF_CHECK(phnum != (Elf_Half)~0);
+	TEST_ASSERT(phdr != NULL);
+	TEST_ASSERT(phnum != (Elf_Half)~0);
 
 	phlimit = phdr + phnum;
 	dynphdr = NULL;
@@ -88,7 +90,7 @@ get_rtld_r_debug(void)
 			break;
 		}
 	}
-	ATF_CHECK(debug != NULL);
+	TEST_ASSERT(debug != NULL);
 
 	return debug;
 }
@@ -103,12 +105,12 @@ check_r_debug_return_link_map(const char *name, struct link_map **rmap)
 
 	loader = NULL;
 	debug = get_rtld_r_debug();
-	ATF_CHECK(debug != NULL);
-	ATF_CHECK_EQ_MSG(debug->r_version, R_DEBUG_VERSION,
+	TEST_ASSERT(debug != NULL);
+	TEST_ASSERT_EQ_MSGF(debug->r_version, R_DEBUG_VERSION,
 	    "debug->r_version=%d R_DEBUG_VERSION=%d",
 	    debug->r_version, R_DEBUG_VERSION);
 	map = debug->r_map;
-	ATF_CHECK(map != NULL);
+	TEST_ASSERT(map != NULL);
 
 	for (found = false; map; map = map->l_next) {
 		if (strstr(map->l_name, name) != NULL) {
@@ -119,53 +121,79 @@ check_r_debug_return_link_map(const char *name, struct link_map **rmap)
 			loader = (void *)map->l_addr;
 		}
 	}
-	ATF_CHECK(found);
-	ATF_CHECK(loader != NULL);
-	ATF_CHECK(debug->r_brk != NULL);
-	ATF_CHECK_EQ_MSG(debug->r_state, RT_CONSISTENT,
+	TEST_ASSERT(found);
+	TEST_ASSERT(loader != NULL);
+	TEST_ASSERT(debug->r_brk != NULL);
+	TEST_ASSERT_EQ_MSGF(debug->r_state, RT_CONSISTENT,
 	    "debug->r_state=%d RT_CONSISTENT=%d",
 	    debug->r_state, RT_CONSISTENT);
-	ATF_CHECK_EQ_MSG(debug->r_ldbase, loader,
+	TEST_ASSERT_EQ_MSGF(debug->r_ldbase, loader,
 	    "debug->r_ldbase=%p loader=%p",
 	    debug->r_ldbase, loader);
 }
 
-ATF_TC(self);
-ATF_TC_HEAD(self, tc)
+
+void *handle;
+
+
+TEST_GROUP(t_rtld_r_debug);
+
+
+TEST_SETUP(t_rtld_r_debug)
 {
-	atf_tc_set_md_var(tc, "descr", "check whether r_debug is well-formed");
+	handle = NULL;
 }
-ATF_TC_BODY(self, tc)
+
+
+TEST_TEAR_DOWN(t_rtld_r_debug)
+{
+	if (handle != NULL) {
+		(void)dlclose(handle);
+	}
+}
+
+
+/* check whether r_debug is well-formed */
+TEST(t_rtld_r_debug, self)
 {
 	check_r_debug_return_link_map("t_rtld_r_debug", NULL);
 }
 
-ATF_TC(dlopen);
-ATF_TC_HEAD(dlopen, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "check whether r_debug is well-formed after an dlopen(3) call");
-}
-ATF_TC_BODY(dlopen, tc)
+
+/* check whether r_debug is well-formed after an dlopen(3) call */
+TEST(t_rtld_r_debug, dlopen)
 {
 	void *handle;
 	struct link_map *map, *r_map;
 
-	handle = dlopen("libutil.so", RTLD_LAZY);
-	ATF_REQUIRE_MSG(handle, "dlopen: %s", dlerror());
+	handle = dlopen("libh_helper_ifunc_dso.so", RTLD_LAZY);
+	TEST_ASSERT_MSGF(handle, "dlopen: %s", dlerror());
 
-	check_r_debug_return_link_map("libutil.so", &r_map);
+	check_r_debug_return_link_map("libh_helper_ifunc_dso.so", &r_map);
 
-	ATF_REQUIRE_EQ_MSG(dlinfo(handle, RTLD_DI_LINKMAP, &map), 0,
+	TEST_ASSERT_EQ_MSGF(dlinfo(handle, RTLD_DI_LINKMAP, &map), 0,
 	    "dlinfo: %s", dlerror());
 
-	ATF_CHECK_EQ_MSG(map, r_map, "map=%p r_map=%p", map, r_map);
-	ATF_CHECK_EQ_MSG(dlclose(handle), 0, "dlclose: %s", dlerror());
+	TEST_ASSERT_EQ_MSGF(map, r_map, "map=%p r_map=%p", map, r_map);
+	TEST_ASSERT_EQ_MSGF(dlclose(handle), 0, "dlclose: %s", dlerror());
+	handle = NULL;
 }
 
-ATF_TP_ADD_TCS(tp)
+
+TEST_GROUP_RUNNER(t_rtld_r_debug)
 {
-	ATF_TP_ADD_TC(tp, self);
-	ATF_TP_ADD_TC(tp, dlopen);
-	return atf_no_error();
+	RUN_TEST_CASE(t_rtld_r_debug, self);
+	RUN_TEST_CASE(t_rtld_r_debug, dlopen);
+}
+
+
+void runner(void)
+{
+	RUN_TEST_GROUP(t_rtld_r_debug);
+}
+
+
+int main(int argc, char **argv)
+{
+	return UnityMain(argc, (const char **)argv, runner) == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }

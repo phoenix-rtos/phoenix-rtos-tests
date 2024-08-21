@@ -30,6 +30,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* TODO: find way to include header from phoenix-rtos-utils/ld.elf_so */
+#include <NetBSD/cdefs.h>
+
 /*
  * Not supported on hppa
  */

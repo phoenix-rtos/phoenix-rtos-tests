@@ -30,13 +30,13 @@
  */
 
 #include <stdlib.h>
+#include <stdio.h>
 
 extern long long ifunc(void);
 
 int
 main(int argc, char **argv)
 {
-
 	if (argc != 2)
 		return 1;
 /*
