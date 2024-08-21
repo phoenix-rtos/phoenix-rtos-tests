@@ -28,7 +28,7 @@
  */
 
 #include <stdio.h>
-#include <dlfcn.h>
+#include <NetBSD/dlfcn.h>
 #include <err.h>
 #include <unistd.h>
 
@@ -37,10 +37,13 @@ main(void)
 {
 	void *handle;
 
-	handle = dlopen("libpthread.so", RTLD_NOLOAD);
-	if (handle == NULL)
-		errx(1, "%s", dlerror());
+	/* NOTE: libpthread can't be used as it is a copy of libphoenix with the same soname */
+	handle = dlopen("libh_helper_ifunc_dso.so", RTLD_NOLOAD);
+	if (handle == NULL) {
+		printf("%s\n", dlerror());
+		return 1;
+	}
 
-	printf("libpthread loaded successfully\n");
+	printf("libh_helper_ifunc_dso loaded successfully\n");
 	return 0;
 }
