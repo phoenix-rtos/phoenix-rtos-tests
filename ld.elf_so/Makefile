@@ -1,106 +1,173 @@
-# $NetBSD: Makefile,v 1.24 2024/07/22 02:34:58 riastradh Exp $
-#
+TESTSDIR := /bin
+SHARED_LIBS_DIR := /bin/rtld
+CPPFLAGS += -D_RTLD_TEST_SRCDIR=\"$(TESTSDIR)\"
+CPPFLAGS += -D_RTLD_TEST_SHARED_LIBS_DIR=\"$(SHARED_LIBS_DIR)\"
 
-NOMAN=		# defined
 
-.include <bsd.own.mk>
+# t_df_1_noopen
+NAME := h_df_1_noopen1
+LOCAL_SRCS := h_df_1_noopen.c
+LOCAL_LDFLAGS := $(LDFLAGS_PREFIX)-rpath,$(SHARED_LIBS_DIR)
+LIBS_SHARED := librtld_stubs
+include $(binary-dyn.mk)
 
-.if ${MKPIC} != "no"
+NAME := h_df_1_noopen2
+LOCAL_SRCS := h_df_1_noopen.c
+LOCAL_LDFLAGS := $(LDFLAGS_PREFIX)-rpath,$(SHARED_LIBS_DIR)
+DEP_LIBS_SHARED := libh_helper_ifunc_dso
+LIBS_SHARED := librtld_stubs
+include $(binary-dyn.mk)
 
-SUBDIR+=	helper_dso1 helper_dso3 .WAIT helper_dso2 .WAIT \
-		helper_ifunc_dso \
-		helper_symver_dso0 .WAIT helper_symver_dso1 .WAIT \
-		helper_symver_dso2 .WAIT \
-		data
+NAME := t_df_1_noopen
+LOCAL_SRCS := t_df_1_noopen.c
+DEP_LIBS := unity libexecassert
+DEPS := h_df_1_noopen1 h_df_1_noopen2
+LIBS_SHARED := librtld_stubs
+include $(binary-dyn.mk)
 
-SUBDIR+=	helper_def_dynamic
-SUBDIR+=	helper_def_static
-SUBDIR+=	helper_onlydef
-SUBDIR+=	.WAIT
-SUBDIR+=	helper_abuse_dynamic
-SUBDIR+=	helper_abuse_static
-SUBDIR+=	helper_onlyctor_dynamic
-SUBDIR+=	helper_onlyuse_dynamic
-SUBDIR+=	helper_onlyuse_static
-SUBDIR+=	helper_use_dynamic
-SUBDIR+=	helper_use_static
+# t_dl_symver
+NAME := h_dl_symver_v0
+LOCAL_SRCS := h_dl_symver.c
+LOCAL_LDFLAGS := $(LDFLAGS_PREFIX)-rpath,$(SHARED_LIBS_DIR)/h_helper_symver_dso0
+DEP_LIBS_SHARED := libh_helper_symver_dso0
+LIBS_SHARED := librtld_stubs
+include $(binary-dyn.mk)
 
-TESTSDIR=	${TESTSBASE}/libexec/ld.elf_so
+NAME := h_dl_symver_v1
+LOCAL_SRCS := h_dl_symver.c
+LOCAL_LDFLAGS := $(LDFLAGS_PREFIX)-rpath,$(SHARED_LIBS_DIR)/h_helper_symver_dso1
+DEP_LIBS_SHARED := libh_helper_symver_dso1
+LIBS_SHARED := librtld_stubs
+include $(binary-dyn.mk)
 
-TESTS_C+=	t_dlerror-cleared t_dlerror-false t_dlinfo t_dlvsym t_ifunc
-TESTS_C+=	t_ifunc_now
-TESTS_C+=	t_ifunc_norelro
-TESTS_C+=	t_ifunc_norelro_now
-TESTS_C+=	t_rtld_r_debug
-TESTS_C+=	t_tls_extern
-TESTS_C+=	t_hash
+NAME := h_dl_symver_v2
+LOCAL_SRCS := h_dl_symver.c
+LOCAL_LDFLAGS := $(LDFLAGS_PREFIX)-rpath,$(SHARED_LIBS_DIR)/h_helper_symver_dso2
+DEP_LIBS_SHARED := libh_helper_symver_dso2
+LIBS_SHARED := librtld_stubs
+include $(binary-dyn.mk)
 
-SRCS.t_ifunc_now=		t_ifunc.c
-SRCS.t_ifunc_norelro=		t_ifunc.c
-SRCS.t_ifunc_norelro_now=	t_ifunc.c
+NAME := t_dl_symver
+LOCAL_SRCS := t_dl_symver.c
+DEP_LIBS := unity libexecassert
+DEPS := h_dl_symver_v0 h_dl_symver_v1 h_dl_symver_v2
+LIBS_SHARED := librtld_stubs
+include $(binary-dyn.mk)
 
-LDADD.t_ifunc+=			${${MKRELRO} != "no":?-Wl,-z,relro:}
-LDADD.t_ifunc_now+=		${${MKRELRO} != "no":?-Wl,-z,relro:} -Wl,-z,now
-LDADD.t_ifunc_norelro+=		${${MKRELRO} != "no":?-Wl,-z,norelro:}
-LDADD.t_ifunc_norelro_now+=	${${MKRELRO} != "no":?-Wl,-z,norelro:} -Wl,-z,now
 
-.PATH:	${NETBSDSRCDIR}/libexec/ld.elf_so
-SRCS.t_hash+=	t_hash.c
-SRCS.t_hash+=	hash.c
-CPPFLAGS.t_hash.c+=	-I${NETBSDSRCDIR}/libexec/ld.elf_so
+# t_dlerror-cleared
+NAME := t_dlerror-cleared
+LOCAL_SRCS := t_dlerror-cleared.c
+DEP_LIBS := unity
+LIBS_SHARED := librtld_stubs
+include $(binary-dyn.mk)
 
-COPTS.t_rtld_r_debug.c += ${CC_WNO_MAYBE_UNINITIALIZED}
+# t_dlerror-false
+NAME := t_dlerror-false
+LOCAL_SRCS := t_dlerror-false.c
+LOCAL_LDFLAGS := $(LDFLAGS_PREFIX)-rpath,/var/nonexistent/lib
+DEP_LIBS := unity
+LIBS_SHARED := librtld_stubs
+include $(binary-dyn.mk)
 
-LDADD.t_dlerror-false=	-Wl,-rpath,/var/nonexistent/lib
-LDADD.t_dlvsym=		-Wl,-rpath,${TESTSDIR}/h_helper_symver_dso2
-.for t in t_ifunc t_ifunc_now t_ifunc_norelro t_ifunc_norelro_now
-LDADD.${t}+=		-Wl,-rpath,${TESTSDIR} -lutil
-DPADD.${t}+=		${LIBUTIL}
-.endfor
-LDADD.t_tls_extern+=	-Wl,-rpath,${TESTSDIR}
+# t_dlinfo
+NAME := t_dlinfo
+LOCAL_SRCS := t_dlinfo.c
+LOCAL_LDFLAGS := $(LDFLAGS_PREFIX)-rpath,$(SHARED_LIBS_DIR)
+DEPS := libh_helper_ifunc_dso
+DEP_LIBS := unity
+LIBS_SHARED := librtld_stubs
+include $(binary-dyn.mk)
 
-TESTS_SH+=		t_df_1_noopen t_dl_symver t_thread_local_dtor
+# t_dlvsym
+NAME := t_dlvsym
+LOCAL_SRCS := t_dlvsym.c
+LOCAL_LDFLAGS := $(LDFLAGS_PREFIX)-rpath,$(SHARED_LIBS_DIR)/h_helper_symver_dso2
+DEPS := libh_helper_symver_dso2
+DEP_LIBS := unity
+LIBS_SHARED := librtld_stubs
+include $(binary-dyn.mk)
 
-BINDIR=			${TESTSDIR}
-PROGS+=			h_df_1_noopen1
-SRCS.h_df_1_noopen1=	h_df_1_noopen.c
+# t_hash
+NAME := t_hash
+LOCAL_SRCS := t_hash.c
+LIBS_SHARED := librtld_stubs
+DEP_LIBS := unity
+LOCAL_LDFLAGS := $(LDFLAGS_PREFIX)-rpath,$(SHARED_LIBS_DIR)
+# Link with hashing implementation from ld.elf_so
+LOCAL_CFLAGS := -I../phoenix-rtos-utils/ld.elf_so
+SRCS := ../phoenix-rtos-utils/ld.elf_so/hash.c
+include $(binary-dyn.mk)
 
-PROGS+=			h_df_1_noopen2
-SRCS.h_df_1_noopen2=	h_df_1_noopen.c
-LDADD.h_df_1_noopen2=	-lpthread
+# t_ifunc
+NAME := h_ifunc
+LOCAL_SRCS := h_ifunc.c
+LOCAL_LDFLAGS := $(LDFLAGS_PREFIX)-rpath,$(SHARED_LIBS_DIR)
+DEP_LIBS_SHARED := libh_helper_ifunc_dso
+LIBS_SHARED := librtld_stubs
+include $(binary-dyn.mk)
 
-PROGS+=			h_thread_local_dtor
-LDADD.h_thread_local_dtor=	-Wl,-rpath,${TESTSDIR}  -lpthread
 
-PROGS+=			h_ifunc
-SRCS.h_ifunc=		h_ifunc.c
-IFUNCDIR!=		cd ${.CURDIR}/helper_ifunc_dso && ${PRINTOBJDIR}
-LDADD.h_ifunc=		-Wl,-rpath,${TESTSDIR} -L${IFUNCDIR} -lh_helper_ifunc_dso
+define ifunc_test
+NAME := $(1)
+LOCAL_SRCS := t_ifunc.c
+DEP_LIBS := unity libexecassert
+LOCAL_LDFLAGS := $(LDFLAGS_PREFIX)-rpath,$(SHARED_LIBS_DIR)
+LOCAL_LDFLAGS += $(2)
+DEPS := h_ifunc
+LIBS_SHARED := librtld_stubs
+include $(binary-dyn.mk)
+endef
 
-PROGS+=			h_locking
-SRCS.h_locking=		h_locking.c
-LDADD.h_locking=	-lpthread -Wl,--export-dynamic -Wl,-rpath,${TESTSDIR}
+# Workaround to pass a single argument.
+T_IFUNC_LDFLAGS := $(LDFLAGS_PREFIX)-z,relro
+T_IFUNC_NOW_LDFLAGS := $(LDFLAGS_PREFIX)-z,relro $(LDFLAGS_PREFIX)-z,now
+T_IFUNC_NORELRO_LDFLAGS := $(LDFLAGS_PREFIX)-z,norelro
+T_IFUNC_NORELRO_NOW_LDFLAGS :=  $(LDFLAGS_PREFIX)-z,norelro $(LDFLAGS_PREFIX)-z,now
 
-PROGS+=			h_dl_symver_v0
-SRCS.h_dl_symver_v0=	h_dl_symver.c
-V0ODIR!=		cd ${.CURDIR}/helper_symver_dso0 && ${PRINTOBJDIR}
-LDADD.h_dl_symver_v0=	-L${V0ODIR} -lh_helper_symver_dso
+$(eval $(call ifunc_test, t_ifunc, $(T_IFUNC_LDFLAGS)))
+$(eval $(call ifunc_test, t_ifunc_now, $(T_IFUNC_NOW_LDFLAGS)))
+$(eval $(call ifunc_test, t_ifunc_norelro, $(T_IFUNC_NORELRO_LDFLAGS)))
+$(eval $(call ifunc_test, t_ifunc_norelro_now, $(T_IFUNC_NORELRO_NOW_LDFLAGS)))
 
-PROGS+=			h_dl_symver_v1
-SRCS.h_dl_symver_v1=	h_dl_symver.c
-V1ODIR!=		cd ${.CURDIR}/helper_symver_dso1 && ${PRINTOBJDIR}
-LDADD.h_dl_symver_v1=	-L${V1ODIR} -lh_helper_symver_dso
+# t_rtld_r_debug
+NAME := t_rtld_r_debug
+LOCAL_SRCS := t_rtld_r_debug.c
+LOCAL_LDFLAGS := $(LDFLAGS_PREFIX)-rpath,$(SHARED_LIBS_DIR)
+LIBS_SHARED := librtld_stubs
+DEPS := libh_helper_ifunc_dso
+DEP_LIBS := unity
+include $(binary-dyn.mk)
 
-PROGS+=			h_dl_symver_v2
-SRCS.h_dl_symver_v2=	h_dl_symver.c
-V2ODIR!=		cd ${.CURDIR}/helper_symver_dso2 && ${PRINTOBJDIR}
-LDADD.h_dl_symver_v2=	-L${V2ODIR} -lh_helper_symver_dso
+# t_thread_local_dtor
+NAME := h_thread_local_dtor
+LOCAL_SRCS := h_thread_local_dtor.c
+LOCAL_LDFLAGS := $(LDFLAGS_PREFIX)-rpath,$(SHARED_LIBS_DIR)
+LIBS_SHARED := libpthread librtld_stubs
+DEPS := libh_helper_dso3
+include $(binary-dyn.mk)
 
-.include <bsd.test.mk>
+NAME := t_thread_local_dtor
+LOCAL_SRCS := t_thread_local_dtor.c
+DEP_LIBS := unity libexecassert
+DEPS := h_thread_local_dtor
+LIBS_SHARED := librtld_stubs
+include $(binary-dyn.mk)
 
-.else
+# t_tls_extern
+NAME := t_tls_extern
+LOCAL_SRCS := t_tls_extern.c
+LOCAL_LDFLAGS := $(LDFLAGS_PREFIX)-rpath,$(SHARED_LIBS_DIR)
+DEP_LIBS := unity
+DEPS := libh_def_dynamic libh_use_dynamic libh_onlyuse_static libh_onlyuse_dynamic libh_onlydef libh_def_static libh_use_static libh_abuse_static libh_abuse_dynamic
+LIBS_SHARED := librtld_stubs
+include $(binary-dyn.mk)
 
-NOPROG=	# defined
-.include <bsd.prog.mk>
-
-.endif
+# t_tls_extern-nightly
+NAME := t_tls_extern-nightly
+LOCAL_SRCS := t_tls_extern-nightly.c
+LOCAL_LDFLAGS := $(LDFLAGS_PREFIX)-rpath,$(SHARED_LIBS_DIR)
+DEP_LIBS := unity
+DEPS := libh_def_dynamic libh_use_dynamic
+LIBS_SHARED := librtld_stubs
+include $(binary-dyn.mk)

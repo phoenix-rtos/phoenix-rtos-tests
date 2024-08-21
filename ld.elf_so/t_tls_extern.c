@@ -28,10 +28,16 @@
 
 #include <sys/types.h>
 
-#include <atf-c.h>
-#include <dlfcn.h>
+#include <unity_fixture.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <errno.h>
+#include <NetBSD/dlfcn.h>
 
-#define	ATF_REQUIRE_DL(x) ATF_REQUIRE_MSG((x) != 0, "%s: %s", #x, dlerror())
+#include "helpers.h"
+
 
 enum order {
 	DEF_USE_EAGER,
@@ -40,10 +46,53 @@ enum order {
 	USE_DEF_NOLOAD,
 };
 
+
+/* Define handle to dlopen. tmp is for dlopen not assiging to any value in origin code. */
+void *use, *def, *use_dynamic, *use_static, *tmp[3];
+
+
+TEST_GROUP(t_tls_extern);
+
+
+TEST_SETUP(t_tls_extern)
+{
+	use = NULL;
+	def = NULL;
+	use_dynamic = NULL;
+	use_static = NULL;
+	for (int i = 0; i < sizeof(tmp) / sizeof(*tmp); i++){
+		tmp[i] = NULL;
+	}
+}
+
+
+TEST_TEAR_DOWN(t_tls_extern)
+{
+	/* Guarantee dlclose being run at the end of the test. 
+	 * each dlclose in test case must always assign corresponding variable to NULL.
+	 * each dlopen must assign to one of the variables. */
+	if (use != NULL) {
+		(void)dlclose(use);
+	}
+	if (def != NULL) {
+		(void)dlclose(def);
+	}
+	if (use_dynamic != NULL) {
+		(void)dlclose(use_dynamic);
+	}
+	if (use_static != NULL) {
+		(void)dlclose(use_static);
+	}
+	for (int i = 0; i < sizeof(tmp) / sizeof(*tmp); i++){
+		if (tmp[i] != NULL) {
+			(void)dlclose(tmp[i]);
+		}
+	}
+}
+
 static void
 tls_extern(const char *libdef, const char *libuse, enum order order)
 {
-	void *def, *use;
 	int *(*fdef)(void), *(*fuse)(void);
 	int *pdef, *puse;
 
@@ -51,418 +100,281 @@ tls_extern(const char *libdef, const char *libuse, enum order order)
 
 	switch (order) {
 	case DEF_USE_EAGER:
-		ATF_REQUIRE_DL(def = dlopen(libdef, 0));
-		ATF_REQUIRE_DL(fdef = dlsym(def, "fdef"));
+		TEST_ASSERT_DL(def = dlopen(libdef, 0));
+		TEST_ASSERT_DL(fdef = dlsym(def, "fdef"));
 		pdef = (*fdef)();
-		ATF_REQUIRE_DL(use = dlopen(libuse, 0));
-		ATF_REQUIRE_DL(fuse = dlsym(use, "fuse"));
+		TEST_ASSERT_DL(use = dlopen(libuse, 0));
+		TEST_ASSERT_DL(fuse = dlsym(use, "fuse"));
 		puse = (*fuse)();
 		break;
 	case DEF_USE_LAZY:
-		ATF_REQUIRE_DL(def = dlopen(libdef, 0));
-		ATF_REQUIRE_DL(use = dlopen(libuse, 0));
+		TEST_ASSERT_DL(def = dlopen(libdef, 0));
+		TEST_ASSERT_DL(use = dlopen(libuse, 0));
 		goto lazy;
 	case USE_DEF:
-		ATF_REQUIRE_DL(use = dlopen(libuse, 0));
-		ATF_REQUIRE_DL(def = dlopen(libdef, 0));
+		TEST_ASSERT_DL(use = dlopen(libuse, 0));
+		TEST_ASSERT_DL(def = dlopen(libdef, 0));
 		goto lazy;
 	case USE_DEF_NOLOAD:
-		ATF_REQUIRE_DL(use = dlopen(libuse, 0));
-		ATF_REQUIRE_DL(def = dlopen(libdef, RTLD_NOLOAD));
-lazy:		ATF_REQUIRE_DL(fdef = dlsym(def, "fdef"));
-		ATF_REQUIRE_DL(fuse = dlsym(use, "fuse"));
+		TEST_ASSERT_DL(use = dlopen(libuse, 0));
+		TEST_ASSERT_DL(def = dlopen(libdef, RTLD_NOLOAD));
+lazy:		TEST_ASSERT_DL(fdef = dlsym(def, "fdef"));
+		TEST_ASSERT_DL(fuse = dlsym(use, "fuse"));
 		pdef = (*fdef)();
 		puse = (*fuse)();
 		break;
 	}
 
-	ATF_CHECK_EQ_MSG(pdef, puse,
+	TEST_ASSERT_EQ_MSGF(pdef, puse,
 	    "%p in defining library != %p in using library",
 	    pdef, puse);
 }
 
-ATF_TC(dynamic_abusedef);
-ATF_TC_HEAD(dynamic_abusedef, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "extern __thread for TLS works,"
-	    " loading static use than dynamic def");
-}
-ATF_TC_BODY(dynamic_abusedef, tc)
+/* "descr", "extern __thread for TLS works,"
+	    " loading static use than dynamic def") */
+TEST(t_tls_extern, dynamic_abusedef)
 {
 	tls_extern("libh_def_dynamic.so", "libh_abuse_dynamic.so", USE_DEF);
 }
 
-ATF_TC(dynamic_abusedefnoload);
-ATF_TC_HEAD(dynamic_abusedefnoload, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "extern __thread for TLS works,"
-	    " loading static use then dynamic def with RTLD_NOLOAD");
-}
-ATF_TC_BODY(dynamic_abusedefnoload, tc)
+/* "extern __thread for TLS works,"
+	    " loading static use then dynamic def with RTLD_NOLOAD" */
+TEST(t_tls_extern, dynamic_abusedefnoload)
 {
 	tls_extern("libh_def_dynamic.so", "libh_abuse_dynamic.so",
 	    USE_DEF_NOLOAD);
 }
 
-ATF_TC(dynamic_defabuse_eager);
-ATF_TC_HEAD(dynamic_defabuse_eager, tc)
+/* "descr", "dlopen refuses extern __thread for TLS,"
+	    " loading dynamic def then static use eagerly" */
+TEST(t_tls_extern, dynamic_defabuse_eager)
 {
-	atf_tc_set_md_var(tc, "descr", "dlopen refuses extern __thread for TLS,"
-	    " loading dynamic def then static use eagerly");
-}
-ATF_TC_BODY(dynamic_defabuse_eager, tc)
-{
-	void *def;
 	int *(*fdef)(void);
 
-	ATF_REQUIRE_DL(def = dlopen("libh_def_dynamic.so", 0));
-	ATF_REQUIRE_DL(fdef = dlsym(def, "fdef"));
+	TEST_ASSERT_DL(def = dlopen("libh_def_dynamic.so", 0));
+	TEST_ASSERT_DL(fdef = dlsym(def, "fdef"));
 	(void)(*fdef)();
-	ATF_CHECK_EQ_MSG(NULL, dlopen("libh_abuse_dynamic.so", 0),
+	TEST_ASSERT_EQ_MSGF(NULL, tmp[0] = dlopen("libh_abuse_dynamic.so", 0),
 	    "dlopen failed to detect static-then-dynamic abuse");
 }
 
-ATF_TC(dynamic_defabuse_lazy);
-ATF_TC_HEAD(dynamic_defabuse_lazy, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "extern __thread for TLS works,"
-	    " loading dynamic def then static use lazily");
-}
-ATF_TC_BODY(dynamic_defabuse_lazy, tc)
+/* "extern __thread for TLS works,"
+	    " loading dynamic def then static use lazily" */
+TEST(t_tls_extern, dynamic_defabuse_lazy)
 {
 	tls_extern("libh_def_dynamic.so", "libh_abuse_dynamic.so",
 	    DEF_USE_LAZY);
 }
 
-ATF_TC(dynamic_defuse_eager);
-ATF_TC_HEAD(dynamic_defuse_eager, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "extern __thread for dynamic TLS works,"
-	    " loading def then use eagerly");
-}
-ATF_TC_BODY(dynamic_defuse_eager, tc)
+/* "extern __thread for dynamic TLS works,"
+	    " loading def then use eagerly" */
+TEST(t_tls_extern, dynamic_defuse_eager)
 {
 	tls_extern("libh_def_dynamic.so", "libh_use_dynamic.so",
 	    DEF_USE_EAGER);
 }
 
-ATF_TC(dynamic_defuse_lazy);
-ATF_TC_HEAD(dynamic_defuse_lazy, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "extern __thread for dynamic TLS works,"
-	    " loading def then use lazyly");
-}
-ATF_TC_BODY(dynamic_defuse_lazy, tc)
+/* "extern __thread for dynamic TLS works,"
+	    " loading def then use lazyly" */
+TEST(t_tls_extern, dynamic_defuse_lazy)
 {
 	tls_extern("libh_def_dynamic.so", "libh_use_dynamic.so",
 	    DEF_USE_LAZY);
 }
 
-ATF_TC(dynamic_usedef);
-ATF_TC_HEAD(dynamic_usedef, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "extern __thread for dynamic TLS works,"
-	    " loading use then def");
-}
-ATF_TC_BODY(dynamic_usedef, tc)
+/* "extern __thread for dynamic TLS works,"
+	    " loading use then def" */
+TEST(t_tls_extern, dynamic_usedef)
 {
 	tls_extern("libh_def_dynamic.so", "libh_use_dynamic.so",
 	    USE_DEF);
 }
 
-ATF_TC(dynamic_usedefnoload);
-ATF_TC_HEAD(dynamic_usedefnoload, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "extern __thread for dynamic TLS works,"
-	    " loading use then def with RTLD_NOLOAD");
-}
-ATF_TC_BODY(dynamic_usedefnoload, tc)
+/* "extern __thread for dynamic TLS works,"
+	    " loading use then def with RTLD_NOLOAD" */
+TEST(t_tls_extern, dynamic_usedefnoload)
 {
 	tls_extern("libh_def_dynamic.so", "libh_use_dynamic.so",
 	    USE_DEF_NOLOAD);
 }
 
-ATF_TC(static_abusedef);
-ATF_TC_HEAD(static_abusedef, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "extern __thread for TLS works,"
-	    " loading dynamic use then static def");
-}
-ATF_TC_BODY(static_abusedef, tc)
+/* "extern __thread for TLS works,"
+	    " loading dynamic use then static def" */
+TEST(t_tls_extern, static_abusedef)
 {
 	tls_extern("libh_def_static.so", "libh_abuse_static.so", USE_DEF);
 }
 
-ATF_TC(static_abusedefnoload);
-ATF_TC_HEAD(static_abusedefnoload, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "extern __thread for TLS works,"
-	    " loading dynamic use then static def with RTLD_NOLOAD");
-}
-ATF_TC_BODY(static_abusedefnoload, tc)
+/* "extern __thread for TLS works,"
+	    " loading dynamic use then static def with RTLD_NOLOAD" */
+TEST(t_tls_extern, static_abusedefnoload)
 {
 	tls_extern("libh_def_static.so", "libh_abuse_static.so",
 	    USE_DEF_NOLOAD);
 }
 
-ATF_TC(static_defabuse_eager);
-ATF_TC_HEAD(static_defabuse_eager, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "extern __thread for TLS works,"
-	    " loading static def then dynamic use eagerly");
-}
-ATF_TC_BODY(static_defabuse_eager, tc)
+/* "extern __thread for TLS works,"
+	    " loading static def then dynamic use eagerly" */
+TEST(t_tls_extern, static_defabuse_eager)
 {
 	tls_extern("libh_def_static.so", "libh_abuse_static.so",
 	    DEF_USE_EAGER);
 }
 
-ATF_TC(static_defabuse_lazy);
-ATF_TC_HEAD(static_defabuse_lazy, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "extern __thread for TLS works,"
-	    " loading static def then dynamic use lazyly");
-}
-ATF_TC_BODY(static_defabuse_lazy, tc)
+/* "extern __thread for TLS works,"
+	    " loading static def then dynamic use lazyly" */
+TEST(t_tls_extern, static_defabuse_lazy)
 {
 	tls_extern("libh_def_static.so", "libh_abuse_static.so",
 	    DEF_USE_LAZY);
 }
 
-ATF_TC(static_defuse_eager);
-ATF_TC_HEAD(static_defuse_eager, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "extern __thread for static TLS works,"
-	    " loading def then use eagerly");
-}
-ATF_TC_BODY(static_defuse_eager, tc)
+/* "extern __thread for static TLS works,"
+	    " loading def then use eagerly" */
+TEST(t_tls_extern, static_defuse_eager)
 {
 	tls_extern("libh_def_static.so", "libh_use_static.so",
 	    DEF_USE_EAGER);
 }
 
-ATF_TC(static_defuse_lazy);
-ATF_TC_HEAD(static_defuse_lazy, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "extern __thread for static TLS works,"
-	    " loading def then use lazyly");
-}
-ATF_TC_BODY(static_defuse_lazy, tc)
+/* "extern __thread for static TLS works,"
+	    " loading def then use lazyly" */
+TEST(t_tls_extern, static_defuse_lazy)
 {
 	tls_extern("libh_def_static.so", "libh_use_static.so",
 	    DEF_USE_LAZY);
 }
 
-ATF_TC(static_usedef);
-ATF_TC_HEAD(static_usedef, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "extern __thread for static TLS works,"
-	    " loading use then def");
-}
-ATF_TC_BODY(static_usedef, tc)
+/* "extern __thread for static TLS works,"
+	    " loading use then def" */
+TEST(t_tls_extern, static_usedef)
 {
 	tls_extern("libh_def_static.so", "libh_use_static.so",
 	    USE_DEF);
 }
 
-ATF_TC(static_usedefnoload);
-ATF_TC_HEAD(static_usedefnoload, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "extern __thread for static TLS works,"
-	    " loading use then def with RTLD_NOLOAD");
-}
-ATF_TC_BODY(static_usedefnoload, tc)
+/* "extern __thread for static TLS works,"
+	    " loading use then def with RTLD_NOLOAD" */
+TEST(t_tls_extern, static_usedefnoload)
 {
 	tls_extern("libh_def_static.so", "libh_use_static.so",
 	    USE_DEF_NOLOAD);
 }
 
-ATF_TC(onlydef_dynamic_static_ctor);
-ATF_TC_HEAD(onlydef_dynamic_static_ctor, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "definition-only library,"
-	    " dynamic load and use in ctor, then static load fails");
-}
-ATF_TC_BODY(onlydef_dynamic_static_ctor, tc)
+/* "definition-only library,"
+	    " dynamic load and use in ctor, then static load fails" */
+TEST(t_tls_extern, onlydef_dynamic_static_ctor)
 {
 
-	ATF_REQUIRE_DL(dlopen("libh_onlydef.so", 0));
-	ATF_REQUIRE_DL(dlopen("libh_onlyctor_dynamic.so", 0));
-	ATF_CHECK_EQ_MSG(NULL, dlopen("libh_onlyuse_static.so", 0),
+	TEST_ASSERT_DL(tmp[0] = dlopen("libh_onlydef.so", 0));
+	TEST_ASSERT_DL(tmp[1] = dlopen("libh_onlyctor_dynamic.so", 0));
+	TEST_ASSERT_EQ_MSGF(NULL, tmp[2] = dlopen("libh_onlyuse_static.so", 0),
 	    "dlopen failed to detect dynamic-then-static abuse");
 }
 
-ATF_TC(onlydef_dynamic_static_eager);
-ATF_TC_HEAD(onlydef_dynamic_static_eager, tc)
+/* "definition-only library,"
+	    " dynamic load and use, then static load fails" */
+TEST(t_tls_extern, onlydef_dynamic_static_eager)
 {
-	atf_tc_set_md_var(tc, "descr", "definition-only library,"
-	    " dynamic load and use, then static load fails");
-}
-ATF_TC_BODY(onlydef_dynamic_static_eager, tc)
-{
-	void *use_dynamic;
 	int *(*fdynamic)(void);
 
-	ATF_REQUIRE_DL(use_dynamic = dlopen("libh_onlyuse_dynamic.so", 0));
-	ATF_REQUIRE_DL(fdynamic = dlsym(use_dynamic, "fdynamic"));
+	TEST_ASSERT_DL(use_dynamic = dlopen("libh_onlyuse_dynamic.so", 0));
+	TEST_ASSERT_DL(fdynamic = dlsym(use_dynamic, "fdynamic"));
 	(void)(*fdynamic)();
-	ATF_CHECK_EQ_MSG(NULL, dlopen("libh_onlyuse_static.so", 0),
+	TEST_ASSERT_EQ_MSGF(NULL, tmp[0] = dlopen("libh_onlyuse_static.so", 0),
 	    "dlopen failed to detect dynamic-then-static abuse");
 }
 
-ATF_TC(onlydef_dynamic_static_lazy);
-ATF_TC_HEAD(onlydef_dynamic_static_lazy, tc)
+/* "extern __thread for TLS works,"
+	    " with definition-only library, dynamic and static load and use" */
+TEST(t_tls_extern, onlydef_dynamic_static_lazy)
 {
-	atf_tc_set_md_var(tc, "descr", "extern __thread for TLS works,"
-	    " with definition-only library, dynamic and static load and use");
-}
-ATF_TC_BODY(onlydef_dynamic_static_lazy, tc)
-{
-	void *use_dynamic, *use_static;
 	int *(*fdynamic)(void), *(*fstatic)(void);
 	int *pdynamic, *pstatic;
 
-	ATF_REQUIRE_DL(use_dynamic = dlopen("libh_onlyuse_dynamic.so", 0));
-	ATF_REQUIRE_DL(use_static = dlopen("libh_onlyuse_static.so", 0));
-	ATF_REQUIRE_DL(fdynamic = dlsym(use_dynamic, "fdynamic"));
-	ATF_REQUIRE_DL(fstatic = dlsym(use_static, "fstatic"));
+	TEST_ASSERT_DL(use_dynamic = dlopen("libh_onlyuse_dynamic.so", 0));
+	TEST_ASSERT_DL(use_static = dlopen("libh_onlyuse_static.so", 0));
+	TEST_ASSERT_DL(fdynamic = dlsym(use_dynamic, "fdynamic"));
+	TEST_ASSERT_DL(fstatic = dlsym(use_static, "fstatic"));
 	pdynamic = (*fdynamic)();
 	pstatic = (*fstatic)();
-	ATF_CHECK_EQ_MSG(pdynamic, pstatic,
+	TEST_ASSERT_EQ_MSGF(pdynamic, pstatic,
 	    "%p in dynamic tls user != %p in static tls user",
 	    pdynamic, pstatic);
 }
 
-ATF_TC(onlydef_static_dynamic_eager);
-ATF_TC_HEAD(onlydef_static_dynamic_eager, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "extern __thread for TLS works,"
+/* "extern __thread for TLS works,"
 	    " with definition-only library,"
-	    " static load and use, then dynamic load and use");
-}
-ATF_TC_BODY(onlydef_static_dynamic_eager, tc)
+	    " static load and use, then dynamic load and use" */
+TEST(t_tls_extern, onlydef_static_dynamic_eager)
 {
-	void *use_static, *use_dynamic;
 	int *(*fstatic)(void), *(*fdynamic)(void);
 	int *pstatic, *pdynamic;
 
-	ATF_REQUIRE_DL(dlopen("libh_onlydef.so", 0));
-	ATF_REQUIRE_DL(use_static = dlopen("libh_onlyuse_static.so", 0));
-	ATF_REQUIRE_DL(fstatic = dlsym(use_static, "fstatic"));
+	TEST_ASSERT_DL(tmp[0] = dlopen("libh_onlydef.so", 0));
+	TEST_ASSERT_DL(use_static = dlopen("libh_onlyuse_static.so", 0));
+	TEST_ASSERT_DL(fstatic = dlsym(use_static, "fstatic"));
 	pstatic = (*fstatic)();
-	ATF_REQUIRE_DL(use_dynamic = dlopen("libh_onlyuse_dynamic.so", 0));
-	ATF_REQUIRE_DL(fdynamic = dlsym(use_dynamic, "fdynamic"));
+	TEST_ASSERT_DL(use_dynamic = dlopen("libh_onlyuse_dynamic.so", 0));
+	TEST_ASSERT_DL(fdynamic = dlsym(use_dynamic, "fdynamic"));
 	pdynamic = (*fdynamic)();
-	ATF_CHECK_EQ_MSG(pstatic, pdynamic,
+	TEST_ASSERT_EQ_MSGF(pstatic, pdynamic,
 	    "%p in static tls user != %p in dynamic tls user",
 	    pstatic, pdynamic);
 }
 
-ATF_TC(onlydef_static_dynamic_lazy);
-ATF_TC_HEAD(onlydef_static_dynamic_lazy, tc)
+/* "extern __thread for TLS works,"
+	    " with definition-only library, static and dynamic load and use" */
+TEST(t_tls_extern, onlydef_static_dynamic_lazy)
 {
-	atf_tc_set_md_var(tc, "descr", "extern __thread for TLS works,"
-	    " with definition-only library, static and dynamic load and use");
-}
-ATF_TC_BODY(onlydef_static_dynamic_lazy, tc)
-{
-	void *use_static, *use_dynamic;
 	int *(*fstatic)(void), *(*fdynamic)(void);
 	int *pstatic, *pdynamic;
 
-	ATF_REQUIRE_DL(dlopen("libh_onlydef.so", 0));
-	ATF_REQUIRE_DL(use_static = dlopen("libh_onlyuse_static.so", 0));
-	ATF_REQUIRE_DL(use_dynamic = dlopen("libh_onlyuse_dynamic.so", 0));
-	ATF_REQUIRE_DL(fstatic = dlsym(use_static, "fstatic"));
-	ATF_REQUIRE_DL(fdynamic = dlsym(use_dynamic, "fdynamic"));
+	TEST_ASSERT_DL(tmp[0] = dlopen("libh_onlydef.so", 0));
+	TEST_ASSERT_DL(use_static = dlopen("libh_onlyuse_static.so", 0));
+	TEST_ASSERT_DL(use_dynamic = dlopen("libh_onlyuse_dynamic.so", 0));
+	TEST_ASSERT_DL(fstatic = dlsym(use_static, "fstatic"));
+	TEST_ASSERT_DL(fdynamic = dlsym(use_dynamic, "fdynamic"));
 	pstatic = (*fstatic)();
 	pdynamic = (*fdynamic)();
-	ATF_CHECK_EQ_MSG(pstatic, pdynamic,
+	TEST_ASSERT_EQ_MSGF(pstatic, pdynamic,
 	    "%p in static tls user != %p in dynamic tls user",
 	    pstatic, pdynamic);
 }
 
-ATF_TC(opencloseloop_use);
-ATF_TC_HEAD(opencloseloop_use, tc)
+TEST_GROUP_RUNNER(t_tls_extern)
 {
-	atf_tc_set_md_var(tc, "descr", "Testing opening and closing in a loop,"
-	    " then opening and using dynamic TLS");
-}
-ATF_TC_BODY(opencloseloop_use, tc)
-{
-	unsigned i;
-	void *def, *use;
-	int *(*fdef)(void), *(*fuse)(void);
-	int *pdef, *puse;
-
-	/*
-	 * Open and close the definition library repeatedly.  This
-	 * should trigger allocation of many DTV offsets, which are
-	 * (currently) not recycled, so the required DTV offsets should
-	 * become very long -- pages past what is actually allocated
-	 * before we attempt to use it.
-	 *
-	 * This way, we will exercise the wrong-way-conditional fast
-	 * path of PR lib/58154.
-	 */
-	for (i = sysconf(_SC_PAGESIZE); i --> 0;) {
-		ATF_REQUIRE_DL(def = dlopen("libh_def_dynamic.so", 0));
-		ATF_REQUIRE_EQ_MSG(dlclose(def), 0,
-		    "dlclose(def): %s", dlerror());
-	}
-
-	/*
-	 * Now open the definition library and keep it open.
-	 */
-	ATF_REQUIRE_DL(def = dlopen("libh_def_dynamic.so", 0));
-	ATF_REQUIRE_DL(fdef = dlsym(def, "fdef"));
-
-	/*
-	 * Open libraries that use the definition and verify they
-	 * observe the same pointer.
-	 */
-	ATF_REQUIRE_DL(use = dlopen("libh_use_dynamic.so", 0));
-	ATF_REQUIRE_DL(fuse = dlsym(use, "fuse"));
-	pdef = (*fdef)();
-	puse = (*fuse)();
-	ATF_CHECK_EQ_MSG(pdef, puse,
-	    "%p in defining library != %p in using library",
-	    pdef, puse);
-
-	/*
-	 * Also verify the pointer can be used.
-	 */
-	*pdef = 123;
-	*puse = 456;
-	ATF_CHECK_EQ_MSG(*pdef, *puse,
-	    "%d in defining library != %d in using library",
-	    *pdef, *puse);
+	RUN_TEST_CASE(t_tls_extern, dynamic_abusedef);
+	RUN_TEST_CASE(t_tls_extern, dynamic_abusedefnoload);
+	RUN_TEST_CASE(t_tls_extern, dynamic_defabuse_eager);
+	RUN_TEST_CASE(t_tls_extern, dynamic_defabuse_lazy);
+	RUN_TEST_CASE(t_tls_extern, dynamic_defuse_eager);
+	RUN_TEST_CASE(t_tls_extern, dynamic_defuse_lazy);
+	RUN_TEST_CASE(t_tls_extern, dynamic_usedef);
+	RUN_TEST_CASE(t_tls_extern, dynamic_usedefnoload);
+	RUN_TEST_CASE(t_tls_extern, onlydef_dynamic_static_ctor);
+	RUN_TEST_CASE(t_tls_extern, onlydef_dynamic_static_eager);
+	RUN_TEST_CASE(t_tls_extern, onlydef_dynamic_static_lazy);
+	RUN_TEST_CASE(t_tls_extern, onlydef_static_dynamic_eager);
+	RUN_TEST_CASE(t_tls_extern, onlydef_static_dynamic_lazy);
+	RUN_TEST_CASE(t_tls_extern, static_abusedef);
+	RUN_TEST_CASE(t_tls_extern, static_abusedefnoload);
+	RUN_TEST_CASE(t_tls_extern, static_defabuse_eager);
+	RUN_TEST_CASE(t_tls_extern, static_defabuse_lazy);
+	RUN_TEST_CASE(t_tls_extern, static_defuse_eager);
+	RUN_TEST_CASE(t_tls_extern, static_defuse_lazy);
+	RUN_TEST_CASE(t_tls_extern, static_usedef);
+	RUN_TEST_CASE(t_tls_extern, static_usedefnoload);
 }
 
-ATF_TP_ADD_TCS(tp)
-{
 
-	ATF_TP_ADD_TC(tp, dynamic_abusedef);
-	ATF_TP_ADD_TC(tp, dynamic_abusedefnoload);
-	ATF_TP_ADD_TC(tp, dynamic_defabuse_eager);
-	ATF_TP_ADD_TC(tp, dynamic_defabuse_lazy);
-	ATF_TP_ADD_TC(tp, dynamic_defuse_eager);
-	ATF_TP_ADD_TC(tp, dynamic_defuse_lazy);
-	ATF_TP_ADD_TC(tp, dynamic_usedef);
-	ATF_TP_ADD_TC(tp, dynamic_usedefnoload);
-	ATF_TP_ADD_TC(tp, onlydef_dynamic_static_ctor);
-	ATF_TP_ADD_TC(tp, onlydef_dynamic_static_eager);
-	ATF_TP_ADD_TC(tp, onlydef_dynamic_static_lazy);
-	ATF_TP_ADD_TC(tp, onlydef_static_dynamic_eager);
-	ATF_TP_ADD_TC(tp, onlydef_static_dynamic_lazy);
-	ATF_TP_ADD_TC(tp, opencloseloop_use);
-	ATF_TP_ADD_TC(tp, static_abusedef);
-	ATF_TP_ADD_TC(tp, static_abusedefnoload);
-	ATF_TP_ADD_TC(tp, static_defabuse_eager);
-	ATF_TP_ADD_TC(tp, static_defabuse_lazy);
-	ATF_TP_ADD_TC(tp, static_defuse_eager);
-	ATF_TP_ADD_TC(tp, static_defuse_lazy);
-	ATF_TP_ADD_TC(tp, static_usedef);
-	ATF_TP_ADD_TC(tp, static_usedefnoload);
-	return atf_no_error();
+void runner(void)
+{
+	RUN_TEST_GROUP(t_tls_extern);
+}
+
+
+int main(int argc, char **argv)
+{
+	return UnityMain(argc, (const char **)argv, runner) == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }

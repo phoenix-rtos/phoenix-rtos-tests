@@ -31,18 +31,37 @@
 
 #include <sys/types.h>
 
-#include <atf-c.h>
+#include <unity_fixture.h>
 #include <stdlib.h>
-#include <dlfcn.h>
+#include <NetBSD/dlfcn.h>
 
-ATF_TC(rtld_dlvsym_v1);
-ATF_TC_HEAD(rtld_dlvsym_v1, tc)
+
+void *handle;
+
+
+TEST_GROUP(t_dlvsym);
+
+
+TEST_SETUP(t_dlvsym)
 {
-	atf_tc_set_md_var(tc, "descr", "Check dlvsym() function (V_1)");
+	handle = NULL;
 }
-ATF_TC_BODY(rtld_dlvsym_v1, tc)
+
+
+TEST_TEAR_DOWN(t_dlvsym)
 {
-	void *handle;
+	/* Guarantee dlclose being run at the end of the test. 
+	 * each dlclose in test case must always assign corresponding variable to NULL.
+	 * each dlopen must assign to one of the variables. */
+	if (handle != NULL) {
+		(void)dlclose(handle);
+	}
+}
+
+
+/* Check dlvsym() function (V_1) */
+TEST(t_dlvsym, rtld_dlvsym_v1)
+{
 	char *error;
 	int (*sym)(void);
 	int result;
@@ -52,29 +71,26 @@ ATF_TC_BODY(rtld_dlvsym_v1, tc)
 
 	handle = dlopen("libh_helper_symver_dso.so", RTLD_LAZY);
 	error = dlerror();
-	ATF_CHECK(error == NULL);
-	ATF_CHECK(handle != NULL);
+	TEST_ASSERT(error == NULL);
+	TEST_ASSERT(handle != NULL);
 
 	sym = dlvsym(handle, "testfunc", "V_1");
 	error = dlerror();
-	ATF_CHECK(error == NULL);
+	TEST_ASSERT(error == NULL);
 
 	result = (*sym)();
-	ATF_CHECK(result == 1);
+	TEST_ASSERT(result == 1);
 
 	dlclose(handle);
+	handle = NULL;
 	error = dlerror();
-	ATF_CHECK(error == NULL);
+	TEST_ASSERT(error == NULL);
 }
 
-ATF_TC(rtld_dlvsym_v3);
-ATF_TC_HEAD(rtld_dlvsym_v3, tc)
+
+/* Check dlvsym() function (V_3) */
+TEST(t_dlvsym, rtld_dlvsym_v3)
 {
-	atf_tc_set_md_var(tc, "descr", "Check dlvsym() function (V_3)");
-}
-ATF_TC_BODY(rtld_dlvsym_v3, tc)
-{
-	void *handle;
 	char *error;
 	int (*sym)(void);
 	int result;
@@ -84,30 +100,26 @@ ATF_TC_BODY(rtld_dlvsym_v3, tc)
 
 	handle = dlopen("libh_helper_symver_dso.so", RTLD_LAZY);
 	error = dlerror();
-	ATF_CHECK(error == NULL);
-	ATF_CHECK(handle != NULL);
+	TEST_ASSERT(error == NULL);
+	TEST_ASSERT(handle != NULL);
 
 	sym = dlvsym(handle, "testfunc", "V_3");
 	error = dlerror();
-	ATF_CHECK(error == NULL);
+	TEST_ASSERT(error == NULL);
 
 	result = (*sym)();
-	ATF_CHECK(result == 3);
+	TEST_ASSERT(result == 3);
 
 	dlclose(handle);
+	handle = NULL;
 	error = dlerror();
-	ATF_CHECK(error == NULL);
+	TEST_ASSERT(error == NULL);
 }
 
-ATF_TC(rtld_dlvsym_symbol_nonexistent);
-ATF_TC_HEAD(rtld_dlvsym_symbol_nonexistent, tc)
+
+/* Check dlvsym() function (symbol is nonexistent) */
+TEST(t_dlvsym, rtld_dlvsym_symbol_nonexistent)
 {
-	atf_tc_set_md_var(tc, "descr",
-	    "Check dlvsym() function (symbol is nonexistent)");
-}
-ATF_TC_BODY(rtld_dlvsym_symbol_nonexistent, tc)
-{
-	void *handle;
 	char *error;
 	int (*sym)(void);
 
@@ -116,28 +128,24 @@ ATF_TC_BODY(rtld_dlvsym_symbol_nonexistent, tc)
 
 	handle = dlopen("libh_helper_symver_dso.so", RTLD_LAZY);
 	error = dlerror();
-	ATF_CHECK(error == NULL);
-	ATF_CHECK(handle != NULL);
+	TEST_ASSERT(error == NULL);
+	TEST_ASSERT(handle != NULL);
 
 	sym = dlvsym(handle, "symbol_nonexistent", "V_3");
 	error = dlerror();
-	ATF_CHECK(sym == NULL);
-	ATF_CHECK(error != NULL);
+	TEST_ASSERT(sym == NULL);
+	TEST_ASSERT(error != NULL);
 
 	dlclose(handle);
+	handle = NULL;
 	error = dlerror();
-	ATF_CHECK(error == NULL);
+	TEST_ASSERT(error == NULL);
 }
 
-ATF_TC(rtld_dlvsym_version_nonexistent);
-ATF_TC_HEAD(rtld_dlvsym_version_nonexistent, tc)
+
+/* Check dlvsym() function (version is nonexistent) */
+TEST(t_dlvsym, rtld_dlvsym_version_nonexistent)
 {
-	atf_tc_set_md_var(tc, "descr",
-	    "Check dlvsym() function (version is nonexistent)");
-}
-ATF_TC_BODY(rtld_dlvsym_version_nonexistent, tc)
-{
-	void *handle;
 	char *error;
 	int (*sym)(void);
 
@@ -146,28 +154,24 @@ ATF_TC_BODY(rtld_dlvsym_version_nonexistent, tc)
 
 	handle = dlopen("libh_helper_symver_dso.so", RTLD_LAZY);
 	error = dlerror();
-	ATF_CHECK(error == NULL);
-	ATF_CHECK(handle != NULL);
+	TEST_ASSERT(error == NULL);
+	TEST_ASSERT(handle != NULL);
 
 	sym = dlvsym(handle, "testfunc", "");
 	error = dlerror();
-	ATF_CHECK(sym == NULL);
-	ATF_CHECK(error != NULL);
+	TEST_ASSERT(sym == NULL);
+	TEST_ASSERT(error != NULL);
 
 	dlclose(handle);
+	handle = NULL;
 	error = dlerror();
-	ATF_CHECK(error == NULL);
+	TEST_ASSERT(error == NULL);
 }
 
-ATF_TC(rtld_dlvsym_version_null);
-ATF_TC_HEAD(rtld_dlvsym_version_null, tc)
+
+/* Check dlvsym() function (version is NULL) */
+TEST(t_dlvsym, rtld_dlvsym_version_null)
 {
-	atf_tc_set_md_var(tc, "descr",
-	    "Check dlvsym() function (version is NULL)");
-}
-ATF_TC_BODY(rtld_dlvsym_version_null, tc)
-{
-	void *handle;
 	char *error;
 	int (*sym)(void);
 	int result;
@@ -177,27 +181,40 @@ ATF_TC_BODY(rtld_dlvsym_version_null, tc)
 
 	handle = dlopen("libh_helper_symver_dso.so", RTLD_LAZY);
 	error = dlerror();
-	ATF_CHECK(error == NULL);
-	ATF_CHECK(handle != NULL);
+	TEST_ASSERT(error == NULL);
+	TEST_ASSERT(handle != NULL);
 
 	sym = dlvsym(handle, "testfunc", NULL);
 	error = dlerror();
-	ATF_CHECK(error == NULL);
+	TEST_ASSERT(error == NULL);
 
 	result = (*sym)();
-	ATF_CHECK(result == 3);
+	TEST_ASSERT(result == 3);
 
 	dlclose(handle);
+	handle = NULL;
 	error = dlerror();
-	ATF_CHECK(error == NULL);
+	TEST_ASSERT(error == NULL);
 }
 
-ATF_TP_ADD_TCS(tp)
+
+TEST_GROUP_RUNNER(t_dlvsym)
 {
-	ATF_TP_ADD_TC(tp, rtld_dlvsym_v1);
-	ATF_TP_ADD_TC(tp, rtld_dlvsym_v3);
-	ATF_TP_ADD_TC(tp, rtld_dlvsym_symbol_nonexistent);
-	ATF_TP_ADD_TC(tp, rtld_dlvsym_version_nonexistent);
-	ATF_TP_ADD_TC(tp, rtld_dlvsym_version_null);
-	return atf_no_error();
+	RUN_TEST_CASE(t_dlvsym, rtld_dlvsym_v1);
+	RUN_TEST_CASE(t_dlvsym, rtld_dlvsym_v3);
+	RUN_TEST_CASE(t_dlvsym, rtld_dlvsym_symbol_nonexistent);
+	RUN_TEST_CASE(t_dlvsym, rtld_dlvsym_version_nonexistent);
+	RUN_TEST_CASE(t_dlvsym, rtld_dlvsym_version_null);
+}
+
+
+void runner(void)
+{
+	RUN_TEST_GROUP(t_dlvsym);
+}
+
+
+int main(int argc, char **argv)
+{
+	return UnityMain(argc, (const char **)argv, runner) == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }
