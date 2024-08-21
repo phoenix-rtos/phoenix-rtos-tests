@@ -29,11 +29,7 @@
 
 #include <poll.h>
 #include <stddef.h>
-#include <sys/tls.h>
 
-#ifdef __HAVE_NO___THREAD
-#define	__thread
-#endif
 
 extern int sleep_init;
 extern int sleep_fini;

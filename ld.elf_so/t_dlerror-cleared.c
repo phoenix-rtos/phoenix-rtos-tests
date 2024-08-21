@@ -29,39 +29,64 @@
 
 #include <sys/types.h>
 
-#include <atf-c.h>
-#include <dlfcn.h>
-#include <link_elf.h>
+#include <unity_fixture.h>
+#include <NetBSD/dlfcn.h>
+#include <stdlib.h>
 
-#include "h_macros.h"
 
-ATF_TC(rtld_dlerror_cleared);
-ATF_TC_HEAD(rtld_dlerror_cleared, tc)
+void *handle;
+
+
+TEST_GROUP(t_dlerror_cleared);
+
+
+TEST_SETUP(t_dlerror_cleared)
 {
-	atf_tc_set_md_var(tc, "descr",
-	    "error set by dlopen persists past a successful dlopen call");
+	handle = NULL;
 }
 
-ATF_TC_BODY(rtld_dlerror_cleared, tc)
+
+TEST_TEAR_DOWN(t_dlerror_cleared)
 {
-	void *handle;
+	/* Guarantee dlclose being run at the end of the test. 
+	 * each dlclose in test case must always assign corresponding variable to NULL.
+	 * each dlopen must assign to one of the variables. */
+	if (handle != NULL) {
+		(void)dlclose(handle);
+	}
+}
+
+
+TEST(t_dlerror_cleared, rtld_dlerror_cleared)
+{
 	char *error;
-	
+
 	/*
 	 * Test that an error set by dlopen() persists past a successful
 	 * dlopen() call.
 	 */
 	handle = dlopen("libnonexistent.so", RTLD_LAZY);
-	ATF_CHECK(handle == NULL);
+	TEST_ASSERT(handle == NULL);
 	handle = dlopen("libm.so", RTLD_NOW);
-	ATF_CHECK(handle);
+	TEST_ASSERT(handle);
 	error = dlerror();
-	ATF_CHECK(error);
+	TEST_ASSERT(error);
+}	
 
+
+TEST_GROUP_RUNNER(t_dlerror_cleared)
+{
+	RUN_TEST_CASE(t_dlerror_cleared, rtld_dlerror_cleared);
 }
 
-ATF_TP_ADD_TCS(tp)
+
+void runner(void)
 {
-	ATF_TP_ADD_TC(tp, rtld_dlerror_cleared);
-	return atf_no_error();
+	RUN_TEST_GROUP(t_dlerror_cleared);
+}
+
+
+int main(int argc, char **argv)
+{
+	return UnityMain(argc, (const char **)argv, runner) == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }

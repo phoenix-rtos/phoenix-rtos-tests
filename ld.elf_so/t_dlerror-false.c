@@ -29,22 +29,37 @@
 
 #include <sys/types.h>
 
-#include <atf-c.h>
-#include <dlfcn.h>
-#include <link_elf.h>
+#include <unity_fixture.h>
+#include <stdlib.h>
+#include <NetBSD/dlfcn.h>
 
-#include "h_macros.h"
 
-ATF_TC(rtld_dlerror_false);
-ATF_TC_HEAD(rtld_dlerror_false, tc)
+void *handle;
+
+
+TEST_GROUP(t_dlerror_false);
+
+
+TEST_SETUP(t_dlerror_false)
 {
-	atf_tc_set_md_var(tc, "descr",
-	    "error set by dlopen persists past a successful dlopen call");
+	handle = NULL;
 }
 
-ATF_TC_BODY(rtld_dlerror_false, tc)
+
+TEST_TEAR_DOWN(t_dlerror_false)
 {
-	void *handle, *sym;
+	/* Guarantee dlclose being run at the end of the test. 
+	 * each dlclose in test case must always assign corresponding variable to NULL.
+	 * each dlopen must assign to one of the variables. */
+	if (handle != NULL) {
+		(void)dlclose(handle);
+	}
+}
+
+
+TEST(t_dlerror_false, rtld_dlerror_false)
+{
+	void *sym;
 	char *error;
 
 	/*
@@ -56,24 +71,36 @@ ATF_TC_BODY(rtld_dlerror_false, tc)
 
 	handle = dlopen("libm.so", RTLD_LAZY);
 	error = dlerror();
-	ATF_CHECK(error == NULL);
-	ATF_CHECK(handle != NULL);
+	TEST_ASSERT(error == NULL);
+	TEST_ASSERT(handle != NULL);
 
 	sym = dlsym(handle, "sin");
 	error = dlerror();
-	ATF_CHECK(sym != NULL);
-	ATF_CHECK(error == NULL);
+	TEST_ASSERT(sym != NULL);
+	TEST_ASSERT(error == NULL);
 
 	dlclose(handle);
+	/* Mark as NULL to avoid closing again in TEARDOWN. */
+	handle = NULL;
 	error = dlerror();
 
-	ATF_CHECK(error == NULL);
-
+	TEST_ASSERT(error == NULL);
 }
 
-ATF_TP_ADD_TCS(tp)
-{
-	ATF_TP_ADD_TC(tp, rtld_dlerror_false);
 
-	return atf_no_error();
+TEST_GROUP_RUNNER(t_dlerror_false)
+{
+	RUN_TEST_CASE(t_dlerror_false, rtld_dlerror_false);
+}
+
+
+void runner(void)
+{
+	RUN_TEST_GROUP(t_dlerror_false);
+}
+
+
+int main(int argc, char **argv)
+{
+	return UnityMain(argc, (const char **)argv, runner) == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }
