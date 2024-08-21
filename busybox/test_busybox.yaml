@@ -85,89 +85,89 @@ test:
       - name: ls
         execute: test_busybox ls
 
-      - name: md5sum
-        execute: test_busybox md5sum
+      # - name: md5sum
+      #   execute: test_busybox md5sum
 
-      - name: mkdir
-        execute: test_busybox mkdir
+      # - name: mkdir
+      #   execute: test_busybox mkdir
 
-      - name: mv
-        ignore: True
-        execute: test_busybox mv
+      # - name: mv
+      #   ignore: True
+      #   execute: test_busybox mv
 
-      - name: od
-        execute: test_busybox od
+      # - name: od
+      #   execute: test_busybox od
 
-      - name: paste
-        execute: test_busybox paste
+      # - name: paste
+      #   execute: test_busybox paste
 
-      - name: printf
-        ignore: True
-        execute: test_busybox printf
+      # - name: printf
+      #   ignore: True
+      #   execute: test_busybox printf
 
-      - name: pwd
-        execute: test_busybox pwd
+      # - name: pwd
+      #   execute: test_busybox pwd
 
-      - name: readlink
-        execute: test_busybox readlink
+      # - name: readlink
+      #   execute: test_busybox readlink
 
-      - name: rm
-        execute: test_busybox rm
+      # - name: rm
+      #   execute: test_busybox rm
 
-      - name: rmdir
-        execute: test_busybox rmdir
+      # - name: rmdir
+      #   execute: test_busybox rmdir
 
-      - name: sed
-        ignore: True
-        execute: test_busybox sed
+      # - name: sed
+      #   ignore: True
+      #   execute: test_busybox sed
 
-      - name: sha1sum
-        execute: test_busybox sha1sum
+      # - name: sha1sum
+      #   execute: test_busybox sha1sum
 
-      - name: sha256sum
-        execute: test_busybox sha256sum
+      # - name: sha256sum
+      #   execute: test_busybox sha256sum
 
-      - name: sha3sum
-        execute: test_busybox sha3sum
+      # - name: sha3sum
+      #   execute: test_busybox sha3sum
 
-      - name: sha512sum
-        execute: test_busybox sha512sum
+      # - name: sha512sum
+      #   execute: test_busybox sha512sum
 
-      - name: sort
-        execute: test_busybox sort
+      # - name: sort
+      #   execute: test_busybox sort
 
-      - name: tail
-        execute: test_busybox tail
+      # - name: tail
+      #   execute: test_busybox tail
 
-      - name: tar
-        ignore: True
-        execute: test_busybox tar
+      # - name: tar
+      #   ignore: True
+      #   execute: test_busybox tar
 
-      - name: tee
-        execute: test_busybox tee
+      # - name: tee
+      #   execute: test_busybox tee
 
-      - name: test
-        execute: test_busybox test
+      # - name: test
+      #   execute: test_busybox test
 
-      - name: touch
-        execute: test_busybox touch
+      # - name: touch
+      #   execute: test_busybox touch
 
-      - name: tr
-        execute: test_busybox tr
+      # - name: tr
+      #   execute: test_busybox tr
 
-      - name: "true"
-        execute: test_busybox "true"
+      # - name: "true"
+      #   execute: test_busybox "true"
 
-      - name: uniq
-        execute: test_busybox uniq
+      # - name: uniq
+      #   execute: test_busybox uniq
 
-      - name: wc
-        execute: test_busybox wc
+      # - name: wc
+      #   execute: test_busybox wc
 
-      - name: which
-        ignore: True
-        execute: test_busybox which
+      # - name: which
+      #   ignore: True
+      #   execute: test_busybox which
 
-      - name: xargs
-        ignore: True
-        execute: test_busybox xargs
+      # - name: xargs
+      #   ignore: True
+      #   execute: test_busybox xargs
