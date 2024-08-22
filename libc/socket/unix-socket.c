@@ -1449,6 +1449,32 @@ TEST(test_unix_socket, recv_msg_peek)
 
 // TODO: add listen() backlog test when implemented
 
+TEST(test_unix_socket, flags)
+{
+	int fd, err;
+
+	fd = socket(AF_UNIX, SOCK_STREAM, 0);
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fd);
+
+	errno = 0;
+	err = fcntl(fd, F_GETFL);
+	TEST_ASSERT_EQUAL_INT(O_RDWR, err);
+	TEST_ASSERT_EQUAL_INT(0, errno);
+
+	errno = 0;
+	err = fcntl(fd, F_SETFL, O_NONBLOCK);
+	TEST_ASSERT_EQUAL_INT(0, err);
+	TEST_ASSERT_EQUAL_INT(0, errno);
+
+	errno = 0;
+	err = fcntl(fd, F_GETFL);
+	TEST_ASSERT_EQUAL_INT(O_RDWR | O_NONBLOCK, err);
+	TEST_ASSERT_EQUAL_INT(0, errno);
+
+	close(fd);
+}
+
+
 TEST_GROUP_RUNNER(test_unix_socket)
 {
 	RUN_TEST_CASE(test_unix_socket, zero_len_send);
@@ -1469,6 +1495,7 @@ TEST_GROUP_RUNNER(test_unix_socket)
 	RUN_TEST_CASE(test_unix_socket, accept_connect_errnos);
 	RUN_TEST_CASE(test_unix_socket, accept_connect_async);
 	RUN_TEST_CASE(test_unix_socket, accept_connect_liveness);
+	RUN_TEST_CASE(test_unix_socket, flags);
 }
 
 void runner(void)
