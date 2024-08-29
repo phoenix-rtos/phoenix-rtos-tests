@@ -1,7 +1,7 @@
 test:
     type: unity
     targets:
-      value: [ia32-generic-qemu, ia32-generic-pc]
+      value: [ia32-generic-qemu, riscv64-generic-qemu, armv7a9-zynq7000-qemu]
     tests:
         - name: t_df_1_noopen
           execute: t_df_1_noopen
