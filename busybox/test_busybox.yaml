@@ -7,6 +7,10 @@ test:
       value: [ia32-generic-qemu, armv7a9-zynq7000-qemu, armv7a9-zynq7000-zedboard, armv7a7-imx6ull-evk]
 
     tests:
+      # ls have to be run first, before any file gets deleted due to the issue below:
+      # Issue: 1117 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1117
+      - name: ls
+        execute: test_busybox ls
 
       - name: busybox
         execute: test_busybox busybox
@@ -81,9 +85,6 @@ test:
         execute: test_busybox ln
         targets:
           exclude: [armv7a9-zynq7000-qemu, armv7a9-zynq7000-zedboard, armv7a7-imx6ull-evk]
-
-      - name: ls
-        execute: test_busybox ls
 
       - name: md5sum
         execute: test_busybox md5sum
