@@ -977,32 +977,67 @@ TEST(stdlib_strto, too_long_numbers_float)
 
 TEST(stdlib_strto, too_long_numbers_int)
 {
-	const char num[] = "2797693134862315708145274237317043567980705675258449965989174768031572607800285387605895586327668781715404589535143824642343213268894641";
+	const char num_negative[] = "-2797693134862315708145274237317043567980705675258449965989174768031572607800285387605895586327668781715404589535143824642343213268894641";
+	const char *num_positive = num_negative + 1;
 
 	errno = 0;
-	strtol(num, NULL, 10);
+	TEST_ASSERT_EQUAL_INT(LONG_MAX, strtol(num_positive, NULL, 10));
 	TEST_ASSERT_EQUAL_INT(ERANGE, errno);
 
 	errno = 0;
-	strtoul(num, NULL, 10);
-	TEST_ASSERT_EQUAL_INT(ERANGE, errno);
-
-	/*
-	 * Disabled because of #543 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/543
-	 * strtoll, strtoull doesn't set errno
-	 */
-
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#543 issue");
-#endif
-
-	errno = 0;
-	strtoll(num, NULL, 10);
+	TEST_ASSERT_EQUAL_INT(ULONG_MAX, strtoul(num_positive, NULL, 10));
 	TEST_ASSERT_EQUAL_INT(ERANGE, errno);
 
 	errno = 0;
-	strtoull(num, NULL, 10);
+	TEST_ASSERT_EQUAL_INT(LLONG_MAX, strtoll(num_positive, NULL, 10));
 	TEST_ASSERT_EQUAL_INT(ERANGE, errno);
+
+	errno = 0;
+	TEST_ASSERT_EQUAL_INT(ULLONG_MAX, strtoull(num_positive, NULL, 10));
+	TEST_ASSERT_EQUAL_INT(ERANGE, errno);
+
+	errno = 0;
+	TEST_ASSERT_EQUAL_INT(LONG_MIN, strtol(num_negative, NULL, 10));
+	TEST_ASSERT_EQUAL_INT(ERANGE, errno);
+
+	errno = 0;
+	TEST_ASSERT_EQUAL_INT(ULONG_MAX, strtoul(num_negative, NULL, 10));
+	TEST_ASSERT_EQUAL_INT(ERANGE, errno);
+
+	errno = 0;
+	TEST_ASSERT_EQUAL_INT(LLONG_MIN, strtoll(num_negative, NULL, 10));
+	TEST_ASSERT_EQUAL_INT(ERANGE, errno);
+
+	errno = 0;
+	TEST_ASSERT_EQUAL_INT(ULLONG_MAX, strtoull(num_negative, NULL, 10));
+	TEST_ASSERT_EQUAL_INT(ERANGE, errno);
+}
+
+
+TEST(stdlib_strto, zero_x_int)
+{
+	const char *nums[] = { "0x", "0xz" };
+	char *end;
+
+	errno = 0;
+	for (int i = 0; i < (sizeof(nums) / sizeof(nums[0])); i++) {
+		const char *num = nums[i];
+		TEST_ASSERT_EQUAL_INT(0, strtol(num, &end, 0));
+		TEST_ASSERT_EQUAL_INT(0, errno);
+		TEST_ASSERT_EQUAL_PTR(end, num + 1);
+
+		TEST_ASSERT_EQUAL_INT(0, strtoul(num, &end, 0));
+		TEST_ASSERT_EQUAL_INT(0, errno);
+		TEST_ASSERT_EQUAL_PTR(end, num + 1);
+
+		TEST_ASSERT_EQUAL_INT(0, strtoll(num, &end, 0));
+		TEST_ASSERT_EQUAL_INT(0, errno);
+		TEST_ASSERT_EQUAL_PTR(end, num + 1);
+
+		TEST_ASSERT_EQUAL_INT(0, strtoull(num, &end, 0));
+		TEST_ASSERT_EQUAL_INT(0, errno);
+		TEST_ASSERT_EQUAL_PTR(end, num + 1);
+	}
 }
 
 
@@ -1070,15 +1105,6 @@ TEST(stdlib_strto, invalid_base)
 	errno = 0;
 	strtoul("1234", NULL, INT_MIN);
 	TEST_ASSERT_EQUAL_INT(EINVAL, errno);
-
-	/*
-	 * Disabled because of #543 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/543
-	 * strtoll, strtoull doesn't set errno
-	 */
-
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#543 issue");
-#endif
 
 	errno = 0;
 	strtoll("1234", NULL, 1);
@@ -1208,6 +1234,7 @@ TEST_GROUP_RUNNER(stdlib_strto)
 	RUN_TEST_CASE(stdlib_strto, truncate_whitespaces);
 	RUN_TEST_CASE(stdlib_strto, too_long_numbers_float)
 	RUN_TEST_CASE(stdlib_strto, too_long_numbers_int)
+	RUN_TEST_CASE(stdlib_strto, zero_x_int);
 	RUN_TEST_CASE(stdlib_strto, invalid);
 	RUN_TEST_CASE(stdlib_strto, invalid_base);
 	RUN_TEST_CASE(stdlib_strto, float_remaining_string);
