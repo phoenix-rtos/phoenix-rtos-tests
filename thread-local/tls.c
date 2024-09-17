@@ -81,10 +81,10 @@ TEST(test_tls, test_tls_set_tls_variables)
 	}
 	for (int i = 0; i < THREAD_NUM + 1; i++) {
 		TEST_ASSERT_EQUAL(CHECKS, results[i].passed);
+		TEST_ASSERT_NOT_EQUAL(results[i].tbss_value_addr, results[i].tdata_value_addr);
 		for (int j = i + 1; j < THREAD_NUM + 1; j++) {
 			TEST_ASSERT_NOT_EQUAL(results[i].tbss_value_addr, results[j].tbss_value_addr);
 			TEST_ASSERT_NOT_EQUAL(results[i].tdata_value_addr, results[j].tdata_value_addr);
-			TEST_ASSERT_NOT_EQUAL(results[i].tbss_value_addr, results[i].tdata_value_addr);
 		}
 	}
 }
