@@ -29,6 +29,8 @@ void *tls_assign_defaults(void *args)
 	usleep(100);
 	res->actual_tdata_value = tdata;
 	res->tdata_value_addr = &tdata;
+	/* Make sure that all threads are alive at the same time to check if the assigned TLS addresses, are different. */
+	sleep(1); /* TODO: Change to barrier once implemented in pthreads. */
 	return NULL;
 }
 
