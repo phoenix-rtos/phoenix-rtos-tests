@@ -23,3 +23,5 @@ LOCAL_SRCS := test_mprotect_fault.c
 DEP_LIBS := unity
 
 include $(binary.mk)
+
+$(eval $(call add_unity_test, test_mmap_new))
