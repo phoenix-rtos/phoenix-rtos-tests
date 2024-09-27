@@ -6,7 +6,7 @@ from trunner.types import Status, TestResult
 
 
 def unity_harness(dut: Dut, ctx: TestContext, result: TestResult) -> Optional[TestResult]:
-    assert_re = r"ASSERTION (?P<path>[\S]+):(?P<line>\d+):(?P<status>FAIL|INFO|IGNORE): (?P<msg>.*?)\r"
+    assert_re = r"ASSERTION [\S]+:\d+:(?P<status>FAIL|INFO|IGNORE)(: (?P<msg>.*?))?\r"
     result_re = r"TEST\((?P<group>\w+), (?P<name>\w+)\) (?P<status>PASS|IGNORE)"
     # Fail need to have its own regex due to greedy matching
     result_fail_re = r"TEST\((?P<group>\w+), (?P<name>\w+)\) (?P<status>FAIL) at (?P<path>.*?):(?P<line>\d+)\r"
@@ -27,14 +27,14 @@ def unity_harness(dut: Dut, ctx: TestContext, result: TestResult) -> Optional[Te
             if parsed["status"] in ["FAIL", "IGNORE"]:
                 last_assertion = parsed
         elif idx in (1, 2):
-            if last_assertion:
+            if last_assertion.get("msg"):
                 parsed["msg"] = last_assertion["msg"]
                 last_assertion = {}
 
             status = Status.from_str(parsed["status"])
             subname = f"{parsed['group']}.{parsed['name']}"
             if "path" in parsed and "line" in parsed:
-                parsed["msg"] = f"[{parsed['path']}:{parsed['line']}] " + parsed["msg"]
+                parsed["msg"] = f"[{parsed['path']}:{parsed['line']}] " + parsed.get("msg", "")
             result.add_subresult(subname, status, parsed.get("msg", ""))
 
             stats[parsed["status"]] += 1

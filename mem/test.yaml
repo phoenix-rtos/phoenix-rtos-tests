@@ -1,5 +1,9 @@
 test:
   tests:
+    - name: mmap
+      type: unity
+      execute: test_mmap_new
+
     - name: mprotect-fault
       harness: fault_harness.py
       execute: test-mprotect-fault
@@ -17,4 +21,3 @@ test:
       targets:
         # mprotect: is noop on NOMMU architecture
         exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo]
-
