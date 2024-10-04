@@ -111,7 +111,7 @@ class STM32L4x6Target(TargetBase):
     def __init__(self, host: Host, port: Optional[str] = None, baudrate: int = 115200):
         if port is None:
             # Try to find USB-Serial controller
-            port = find_port("USB-Serial|UART")
+            port = find_port(["067b:2303", "10c4:ea60"])
 
         self.dut = SerialDut(port, baudrate, encoding="utf-8", codec_errors="ignore")
         self.rebooter = ARMv7M4Rebooter(host, self.dut)

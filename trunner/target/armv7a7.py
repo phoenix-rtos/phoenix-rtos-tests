@@ -103,6 +103,6 @@ class IMX6ULLEvkTarget(ARMv7A7Target):
 
     def __init__(self, host: Host, port: Optional[str] = None, baudrate: int = 115200):
         if not port:
-            port = find_port("10c4:ea60")  # vid:pid Product=CP2102 USB to UART Bridge Controller for imx6ull-evk
+            port = find_port(["10c4:ea60"])  # vid:pid Product=CP2102 USB to UART Bridge Controller for imx6ull-evk
 
         super().__init__(host, port, baudrate)

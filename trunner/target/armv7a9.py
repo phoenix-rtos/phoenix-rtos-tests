@@ -132,7 +132,7 @@ class Zynq7000ZedboardTarget(ARMv7A9Target):
 
     def __init__(self, host: Host, port: Optional[str] = None, baudrate: int = 115200):
         if port is None:
-            port = find_port("04b4:0008")
+            port = find_port(["04b4:0008"])
 
         super().__init__(host, port, baudrate)
 
