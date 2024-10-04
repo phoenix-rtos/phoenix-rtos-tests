@@ -11,25 +11,42 @@ from trunner.dut import PortNotFound
 from trunner.types import TestOptions, TestResult
 
 
-def find_port(port_hint: str) -> str:
-    port = None
+def vid_pid_parser(vid_pid_string):
+    list = []
+    for vid_pid in vid_pid_string:
+        try:
+            vid_str, pid_str = vid_pid.split(":")
+            vid = int(vid_str, 16)
+            pid = int(pid_str, 16)
+            list.append((vid, pid))
+        except ValueError:
+            raise PortNotFound(f"Wrong format: {vid_pid}. Use 'VID:PID'.")
+    return list
 
-    for p in list_ports.grep(port_hint):
-        if port is not None:
-            raise PortNotFound(
-                "More than one port was found! Maybe more than one device is connected? Hint used to find port:"
-                f" {port_hint}"
-            )
 
-        port = p
+def find_port(port_hint: list[str]) -> list:
 
-    if port is None:
+    all_ports = list_ports.comports()
+    vid_pid_list = vid_pid_parser(port_hint)
+    ports = []
+
+    for port in all_ports:
+        for vid, pid in vid_pid_list:
+            if port.vid == vid and port.pid == pid:
+                ports.append(port)
+
+    if len(ports) > 1:
+        raise PortNotFound(
+            "More than one port was found! Maybe more than one device is connected? Hint used to find port:"
+            f" {port_hint}"
+        )
+    elif len(ports) < 1:
         raise PortNotFound(
             "Couldn't find port to communicate with device! Make sure device is connected. Hint used to find port:"
             f" {port_hint}"
         )
 
-    return port.device
+    return ports[0].device
 
 
 class PsuPloLoader(TerminalHarness, PloInterface):
