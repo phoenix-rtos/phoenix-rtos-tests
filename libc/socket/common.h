@@ -29,9 +29,6 @@
 #define DATA_SIZE 10000
 #endif
 
-extern char data[DATA_SIZE];
-extern char buf[DATA_SIZE];
-
 ssize_t msg_send(int sock, void *buf, size_t len, int *fd, size_t fdcnt);
 
 ssize_t msg_recv(int sock, void *buf, size_t len, int *fd, size_t *fdcnt);
