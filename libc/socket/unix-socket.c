@@ -57,8 +57,9 @@
 #define MS_BETWEEN(ts0, ts1) \
 	((ts1).tv_sec - (ts0).tv_sec) * 1000 + ((ts1).tv_nsec - (ts0).tv_nsec) / 1000000;
 
-char data[DATA_SIZE];
-char buf[DATA_SIZE];
+static char data[DATA_SIZE];
+static char buf[DATA_SIZE];
+static int pollTimeoutDelay = 30;
 
 
 static ssize_t unix_named_socket(int type, const char *name)
@@ -883,7 +884,7 @@ static void unix_poll(int type)
 	TEST_ASSERT(rv == 0);
 	TEST_ASSERT(fds[0].revents == 0);
 	TEST_ASSERT(fds[1].revents == 0);
-	TEST_ASSERT_LESS_THAN(350, ms);
+	TEST_ASSERT_LESS_THAN(300 + pollTimeoutDelay, ms);
 	TEST_ASSERT_GREATER_THAN(290, ms);
 
 	clock_gettime(CLOCK_REALTIME, &ts[0]);
@@ -1478,8 +1479,21 @@ void runner(void)
 
 int main(int argc, char *argv[])
 {
-	/* Assume /tmp dir is missing */
-	int isMissing = 0;
+	/* Due to scheduling delays of host system on which emulator runs,
+	 * add some extra value to poll timeout checks
+	 */
+	for (int i = 1; i < argc; i++) {
+		if (strcmp(argv[i], "--extra-poll-delay-ms") == 0) {
+			pollTimeoutDelay = atoi(argv[i + 1]);
+			if (pollTimeoutDelay <= 0) {
+				fprintf(stderr, "--extra-poll-delay-ms argument is not positive integer\n");
+				exit(EXIT_FAILURE);
+			}
+			break;
+		}
+	}
+
+	int isMissing;
 
 	if (createTmpIfMissing(&isMissing) < 0) {
 		exit(EXIT_FAILURE);
@@ -1487,7 +1501,7 @@ int main(int argc, char *argv[])
 
 	int failures = UnityMain(argc, (const char **)argv, runner);
 
-	if (isMissing) {
+	if (isMissing != 0) {
 		rmdir("/tmp");
 	}
 
