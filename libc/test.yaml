@@ -66,7 +66,13 @@ test:
     - name: unix-socket
       execute: test-libc-unix-socket
       targets:
+        exclude: [armv7a9-zynq7000-qemu]
         include: [host-generic-pc]
+
+    - name: unix-socket
+      execute: test-libc-unix-socket --extra-poll-delay-ms 150
+      targets:
+        value: [armv7a9-zynq7000-qemu]
 
     - name: inet-socket
       execute: test-libc-inet-socket
