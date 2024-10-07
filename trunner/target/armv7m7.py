@@ -89,7 +89,7 @@ class ARMv7M7Target(TargetBase):
 class IMXTarget(ARMv7M7Target):
     def __init__(self, host: Host, port: Optional[str] = None, baudrate: int = 115200):
         if not port:
-            port = find_port("0D28:0204")  # vid:pid
+            port = find_port("CMSIS-DAP")
 
         super().__init__(host, port, baudrate)
 
