@@ -38,6 +38,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <sys/types.h>
+#include <sys/socket.h>
+
 #include <unity_fixture.h>
 
 
@@ -76,7 +79,7 @@ TEST_TEAR_DOWN(stdio_fopenfclose)
 		fclose(filep2);
 	}
 
-	/* remove the testfile even if some tet cases failed */
+	/* remove the testfile even if some test cases failed */
 	remove(STDIO_TEST_FILENAME);
 }
 
@@ -236,7 +239,7 @@ TEST_TEAR_DOWN(stdio_getput)
 		fclose(filep);
 	}
 
-	/* remove the testfile even if some tet cases failed */
+	/* remove the testfile even if some test cases failed */
 	remove(STDIO_TEST_FILENAME);
 }
 
@@ -478,7 +481,7 @@ TEST_TEAR_DOWN(stdio_line)
 		fclose(filep);
 	}
 
-	/* remove the testfile even if some tet cases failed */
+	/* remove the testfile even if some test cases failed */
 	remove(STDIO_TEST_FILENAME);
 }
 
@@ -633,7 +636,7 @@ TEST_TEAR_DOWN(stdio_fileseek)
 		fclose(filep);
 	}
 
-	/* remove the testfile even if some tet cases failed */
+	/* remove the testfile even if some test cases failed */
 	remove(STDIO_TEST_FILENAME);
 }
 
@@ -801,7 +804,7 @@ TEST_TEAR_DOWN(stdio_fileop)
 		filep = NULL;
 	}
 
-	/* remove the testfile even if some tet cases failed */
+	/* remove the testfile even if some test cases failed */
 	remove(STDIO_TEST_FILENAME);
 }
 
@@ -922,7 +925,7 @@ TEST_TEAR_DOWN(stdio_bufs)
 		filep = NULL;
 	}
 
-	/* remove the testfile even if some tet cases failed */
+	/* remove the testfile even if some test cases failed */
 	remove(STDIO_TEST_FILENAME);
 }
 
@@ -1023,4 +1026,439 @@ TEST_GROUP_RUNNER(stdio_bufs)
 	RUN_TEST_CASE(stdio_bufs, setvbuf_fullbuffer_overflow);
 	RUN_TEST_CASE(stdio_bufs, setvbuf_linebuffer);
 	RUN_TEST_CASE(stdio_bufs, setvbuf_nobuffer);
+}
+
+
+/*
+Test group for fread.
+*/
+TEST_GROUP(stdio_fread);
+
+
+TEST_SETUP(stdio_fread)
+{
+	size_t n;
+	FILE *filep;
+
+	/* create the testfile */
+	filep = fopen(STDIO_TEST_FILENAME, "w");
+	TEST_ASSERT_NOT_NULL(filep);
+	n = fwrite("1234567", 1, 7, filep);
+	TEST_ASSERT_EQUAL_INT(7, n);
+	fclose(filep);
+}
+
+
+TEST_TEAR_DOWN(stdio_fread)
+{
+	/* remove the testfile even if some test cases failed */
+	remove(STDIO_TEST_FILENAME);
+}
+
+
+TEST(stdio_fread, stdio_fread_unbuffered_error)
+{
+	int err;
+	size_t n;
+	FILE *filep;
+	char buf[16];
+
+	filep = fopen(STDIO_TEST_FILENAME, "r");
+	TEST_ASSERT_NOT_NULL(filep);
+
+	/* force unbuffered IO */
+	err = setvbuf(filep, NULL, _IONBF, 0);
+	TEST_ASSERT_EQUAL_INT(0, err);
+
+	/* force EBADF on fread() */
+	close(fileno(filep));
+
+	errno = 0;
+	n = fread(buf, 1, 1, filep);
+	TEST_ASSERT_EQUAL_INT(0, n);
+	TEST_ASSERT_EQUAL_INT(EBADF, errno);
+	TEST_ASSERT_EQUAL_INT(1, ferror(filep));
+	TEST_ASSERT_EQUAL_INT(0, feof(filep));
+
+	fclose(filep);
+}
+
+
+TEST(stdio_fread, stdio_fread_unbuffered_eof)
+{
+	int err;
+	size_t n;
+	FILE *filep;
+	char buf[16];
+
+	filep = fopen(STDIO_TEST_FILENAME, "r");
+	TEST_ASSERT_NOT_NULL(filep);
+
+	/* force unbuffered IO */
+	err = setvbuf(filep, NULL, _IONBF, 0);
+	TEST_ASSERT_EQUAL_INT(0, err);
+
+	errno = 0;
+	n = fread(buf, 1, 3, filep);
+	TEST_ASSERT_EQUAL_INT(3, n);
+	TEST_ASSERT_EQUAL_INT(0, errno);
+	TEST_ASSERT_EQUAL_INT(0, ferror(filep));
+	TEST_ASSERT_EQUAL_INT(0, feof(filep));
+
+	errno = 0;
+	n = fread(buf, 1, 4, filep);
+	TEST_ASSERT_EQUAL_INT(4, n);
+	TEST_ASSERT_EQUAL_INT(0, errno);
+	TEST_ASSERT_EQUAL_INT(0, ferror(filep));
+	TEST_ASSERT_EQUAL_INT(0, feof(filep));
+
+	errno = 0;
+	n = fread(buf, 1, 1, filep);
+	TEST_ASSERT_EQUAL_INT(0, n);
+	TEST_ASSERT_EQUAL_INT(0, errno);
+	TEST_ASSERT_EQUAL_INT(0, ferror(filep));
+	TEST_ASSERT_EQUAL_INT(1, feof(filep));
+
+	fclose(filep);
+
+	filep = fopen(STDIO_TEST_FILENAME, "r");
+	TEST_ASSERT_NOT_NULL(filep);
+
+	/* force unbuffered IO */
+	err = setvbuf(filep, NULL, _IONBF, 0);
+	TEST_ASSERT_EQUAL_INT(0, err);
+
+	errno = 0;
+	n = fread(buf, 1, 8, filep);
+	TEST_ASSERT_EQUAL_INT(7, n);
+	TEST_ASSERT_EQUAL_INT(0, errno);
+	TEST_ASSERT_EQUAL_INT(0, ferror(filep));
+	TEST_ASSERT_EQUAL_INT(1, feof(filep));
+
+	fclose(filep);
+
+	filep = fopen(STDIO_TEST_FILENAME, "r");
+	TEST_ASSERT_NOT_NULL(filep);
+
+	/* force unbuffered IO */
+	err = setvbuf(filep, NULL, _IONBF, 0);
+	TEST_ASSERT_EQUAL_INT(0, err);
+
+	errno = 0;
+	n = fread(buf, 3, 3, filep);
+	TEST_ASSERT_EQUAL_INT(2, n);
+	TEST_ASSERT_EQUAL_INT(0, errno);
+	TEST_ASSERT_EQUAL_INT(0, ferror(filep));
+	TEST_ASSERT_EQUAL_INT(1, feof(filep));
+
+	fclose(filep);
+}
+
+
+TEST(stdio_fread, stdio_fread_unbuffered_eagain)
+{
+	int err;
+	size_t n;
+	int fd[2];
+	FILE *filep[2];
+	char buf[16];
+
+	err = socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, fd);
+	TEST_ASSERT_EQUAL_INT(0, err);
+
+	filep[0] = fdopen(fd[0], "r");
+	TEST_ASSERT_NOT_NULL(filep[0]);
+	filep[1] = fdopen(fd[1], "w");
+	TEST_ASSERT_NOT_NULL(filep[0]);
+
+	/* force unbuffered IO */
+	err = setvbuf(filep[0], NULL, _IONBF, 0);
+	TEST_ASSERT_EQUAL_INT(0, err);
+
+	errno = 0;
+	n = fwrite("1234567", 1, 7, filep[1]);
+	TEST_ASSERT_EQUAL_INT(7, n);
+	TEST_ASSERT_EQUAL_INT(0, errno);
+	TEST_ASSERT_EQUAL_INT(0, ferror(filep[1]));
+	TEST_ASSERT_EQUAL_INT(0, feof(filep[1]));
+	fflush(filep[1]);
+
+	errno = 0;
+	n = fread(buf, 1, 3, filep[0]);
+	TEST_ASSERT_EQUAL_INT(3, n);
+	TEST_ASSERT_EQUAL_INT(0, errno);
+	TEST_ASSERT_EQUAL_INT(0, ferror(filep[0]));
+	TEST_ASSERT_EQUAL_INT(0, feof(filep[0]));
+
+	errno = 0;
+	n = fread(buf, 1, 4, filep[0]);
+	TEST_ASSERT_EQUAL_INT(4, n);
+	TEST_ASSERT_EQUAL_INT(0, errno);
+	TEST_ASSERT_EQUAL_INT(0, ferror(filep[0]));
+	TEST_ASSERT_EQUAL_INT(0, feof(filep[0]));
+
+	errno = 0;
+	n = fread(buf, 1, 1, filep[0]);
+	TEST_ASSERT_EQUAL_INT(0, n);
+	TEST_ASSERT_EQUAL_INT(EAGAIN, errno);
+	TEST_ASSERT_EQUAL_INT(1, ferror(filep[0]));
+	TEST_ASSERT_EQUAL_INT(0, feof(filep[0]));
+
+	errno = 0;
+	n = fwrite("1234567", 1, 7, filep[1]);
+	TEST_ASSERT_EQUAL_INT(7, n);
+	TEST_ASSERT_EQUAL_INT(0, errno);
+	TEST_ASSERT_EQUAL_INT(0, ferror(filep[1]));
+	TEST_ASSERT_EQUAL_INT(0, feof(filep[1]));
+	fflush(filep[1]);
+
+	errno = 0;
+	clearerr(filep[0]);
+	n = fread(buf, 3, 3, filep[0]);
+	TEST_ASSERT_EQUAL_INT(2, n);
+	TEST_ASSERT_EQUAL_INT(EAGAIN, errno);
+	TEST_ASSERT_EQUAL_INT(1, ferror(filep[0]));
+	TEST_ASSERT_EQUAL_INT(0, feof(filep[0]));
+
+	fclose(filep[0]);
+	fclose(filep[1]);
+}
+
+
+TEST(stdio_fread, stdio_fread_buffered_error)
+{
+	int err;
+	size_t n;
+	FILE *filep;
+	char buf[16];
+
+	filep = fopen(STDIO_TEST_FILENAME, "r");
+	TEST_ASSERT_NOT_NULL(filep);
+
+	/* force EBADF on fread() */
+	close(fileno(filep));
+
+	errno = 0;
+	n = fread(buf, 1, 1, filep);
+	TEST_ASSERT_EQUAL_INT(0, n);
+	TEST_ASSERT_EQUAL_INT(EBADF, errno);
+	TEST_ASSERT_EQUAL_INT(1, ferror(filep));
+	TEST_ASSERT_EQUAL_INT(0, feof(filep));
+
+	fclose(filep);
+
+	filep = fopen(STDIO_TEST_FILENAME, "r");
+	TEST_ASSERT_NOT_NULL(filep);
+
+	err = setvbuf(filep, buf, _IOFBF, 6);
+	TEST_ASSERT_EQUAL_INT(0, err);
+
+	errno = 0;
+	n = fread(buf, 1, 3, filep);
+	TEST_ASSERT_EQUAL_INT(3, n);
+	TEST_ASSERT_EQUAL_INT(0, errno);
+	TEST_ASSERT_EQUAL_INT(0, ferror(filep));
+	TEST_ASSERT_EQUAL_INT(0, feof(filep));
+
+	/* force EBADF on reading the remaining bytes */
+	close(fileno(filep));
+
+	errno = 0;
+	n = fread(buf, 1, 4, filep);
+	TEST_ASSERT_EQUAL_INT(3, n);
+	TEST_ASSERT_EQUAL_INT(EBADF, errno);
+	TEST_ASSERT_EQUAL_INT(1, ferror(filep));
+	TEST_ASSERT_EQUAL_INT(0, feof(filep));
+
+	fclose(filep);
+}
+
+
+TEST(stdio_fread, stdio_fread_buffered_eagain)
+{
+	int err;
+	size_t n;
+	int fd[2];
+	FILE *filep[2];
+	char buf[16];
+
+	err = socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, fd);
+	TEST_ASSERT_EQUAL_INT(0, err);
+
+	filep[0] = fdopen(fd[0], "r");
+	TEST_ASSERT_NOT_NULL(filep[0]);
+	filep[1] = fdopen(fd[1], "w");
+	TEST_ASSERT_NOT_NULL(filep[0]);
+
+	err = setvbuf(filep[0], buf, _IOFBF, sizeof(buf));
+	TEST_ASSERT_EQUAL_INT(0, err);
+
+	errno = 0;
+	n = fwrite("01234567890123456789", 1, 20, filep[1]);
+	TEST_ASSERT_EQUAL_INT(20, n);
+	TEST_ASSERT_EQUAL_INT(0, errno);
+	TEST_ASSERT_EQUAL_INT(0, ferror(filep[1]));
+	TEST_ASSERT_EQUAL_INT(0, feof(filep[1]));
+	fflush(filep[1]);
+
+	errno = 0;
+	n = fread(buf, 1, 21, filep[0]);
+	TEST_ASSERT_EQUAL_INT(20, n);
+	TEST_ASSERT_EQUAL_INT(EAGAIN, errno);
+	TEST_ASSERT_EQUAL_INT(1, ferror(filep[0]));
+	TEST_ASSERT_EQUAL_INT(0, feof(filep[0]));
+
+	errno = 0;
+	n = fwrite("01234567890123456789", 1, 20, filep[1]);
+	TEST_ASSERT_EQUAL_INT(20, n);
+	TEST_ASSERT_EQUAL_INT(0, errno);
+	TEST_ASSERT_EQUAL_INT(0, ferror(filep[1]));
+	TEST_ASSERT_EQUAL_INT(0, feof(filep[1]));
+	fflush(filep[1]);
+
+	errno = 0;
+	clearerr(filep[0]);
+	n = fread(buf, 3, 7, filep[0]);
+	TEST_ASSERT_EQUAL_INT(6, n);
+	TEST_ASSERT_EQUAL_INT(EAGAIN, errno);
+	TEST_ASSERT_EQUAL_INT(1, ferror(filep[0]));
+	TEST_ASSERT_EQUAL_INT(0, feof(filep[0]));
+
+	fclose(filep[0]);
+	fclose(filep[1]);
+}
+
+
+TEST(stdio_fread, stdio_fread_buffered_eof)
+{
+	int err;
+	size_t n;
+	FILE *filep;
+	char buf[16];
+
+	filep = fopen(STDIO_TEST_FILENAME, "r");
+	TEST_ASSERT_NOT_NULL(filep);
+
+	errno = 0;
+	n = fread(buf, 1, 3, filep);
+	TEST_ASSERT_EQUAL_INT(3, n);
+	TEST_ASSERT_EQUAL_INT(0, errno);
+	TEST_ASSERT_EQUAL_INT(0, ferror(filep));
+	TEST_ASSERT_EQUAL_INT(0, feof(filep));
+
+	errno = 0;
+	n = fread(buf, 1, 4, filep);
+	TEST_ASSERT_EQUAL_INT(4, n);
+	TEST_ASSERT_EQUAL_INT(0, errno);
+	TEST_ASSERT_EQUAL_INT(0, ferror(filep));
+	TEST_ASSERT_EQUAL_INT(0, feof(filep));
+
+	errno = 0;
+	n = fread(buf, 1, 1, filep);
+	TEST_ASSERT_EQUAL_INT(0, n);
+	TEST_ASSERT_EQUAL_INT(0, errno);
+	TEST_ASSERT_EQUAL_INT(0, ferror(filep));
+	TEST_ASSERT_EQUAL_INT(1, feof(filep));
+
+	fclose(filep);
+
+	filep = fopen(STDIO_TEST_FILENAME, "r");
+	TEST_ASSERT_NOT_NULL(filep);
+
+	err = setvbuf(filep, buf, _IOFBF, 6);
+	TEST_ASSERT_EQUAL_INT(0, err);
+
+	errno = 0;
+	n = fread(buf, 1, 8, filep);
+	TEST_ASSERT_EQUAL_INT(7, n);
+	TEST_ASSERT_EQUAL_INT(0, errno);
+	TEST_ASSERT_EQUAL_INT(0, ferror(filep));
+	TEST_ASSERT_EQUAL_INT(1, feof(filep));
+
+	fclose(filep);
+}
+
+
+TEST_GROUP_RUNNER(stdio_fread)
+{
+	RUN_TEST_CASE(stdio_fread, stdio_fread_unbuffered_error);
+	RUN_TEST_CASE(stdio_fread, stdio_fread_unbuffered_eof);
+	RUN_TEST_CASE(stdio_fread, stdio_fread_unbuffered_eagain);
+	RUN_TEST_CASE(stdio_fread, stdio_fread_buffered_error);
+	RUN_TEST_CASE(stdio_fread, stdio_fread_buffered_eagain);
+	RUN_TEST_CASE(stdio_fread, stdio_fread_buffered_eof);
+}
+
+
+/*
+Test group for fwrite.
+*/
+TEST_GROUP(stdio_fwrite);
+
+
+TEST_SETUP(stdio_fwrite)
+{
+}
+
+
+TEST_TEAR_DOWN(stdio_fwrite)
+{
+}
+
+
+TEST(stdio_fwrite, stdio_fwrite_espipe)
+{
+	int err;
+	size_t n;
+	int fd[2];
+	FILE *filep[2];
+	char buf[16];
+
+	err = socketpair(AF_UNIX, SOCK_STREAM, 0, fd);
+	TEST_ASSERT_EQUAL_INT(0, err);
+
+	filep[0] = fdopen(fd[0], "r+");
+	TEST_ASSERT_NOT_NULL(filep[0]);
+	filep[1] = fdopen(fd[1], "r+");
+	TEST_ASSERT_NOT_NULL(filep[0]);
+
+	err = setvbuf(filep[0], buf, _IOFBF, 10);
+	TEST_ASSERT_EQUAL_INT(0, err);
+
+	errno = 0;
+	n = fwrite("01234567890123456789", 1, 20, filep[1]);
+	TEST_ASSERT_EQUAL_INT(20, n);
+	TEST_ASSERT_EQUAL_INT(0, errno);
+	TEST_ASSERT_EQUAL_INT(0, ferror(filep[1]));
+	TEST_ASSERT_EQUAL_INT(0, feof(filep[1]));
+
+	err = fflush(filep[1]);
+	TEST_ASSERT_EQUAL_INT(0, err);
+
+	errno = 0;
+	n = fread(buf, 1, 5, filep[0]);
+	TEST_ASSERT_EQUAL_INT(5, n);
+	TEST_ASSERT_EQUAL_INT(0, errno);
+	TEST_ASSERT_EQUAL_INT(0, ferror(filep[0]));
+	TEST_ASSERT_EQUAL_INT(0, feof(filep[0]));
+
+	/*
+	 * Cannot write now because the buffer still holds read data
+	 * and seeking is not supported by Unix sockets.
+	 */
+	errno = 0;
+	n = fwrite("01", 1, 2, filep[0]);
+	TEST_ASSERT_EQUAL_INT(0, n);
+	TEST_ASSERT_EQUAL_INT(ESPIPE, errno);
+	TEST_ASSERT_EQUAL_INT(0, ferror(filep[0]));
+	TEST_ASSERT_EQUAL_INT(0, feof(filep[0]));
+
+	fclose(filep[0]);
+	fclose(filep[1]);
+}
+
+
+TEST_GROUP_RUNNER(stdio_fwrite)
+{
+	RUN_TEST_CASE(stdio_fwrite, stdio_fwrite_espipe);
 }
