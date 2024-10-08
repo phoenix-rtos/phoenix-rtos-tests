@@ -3,7 +3,12 @@ from typing import Callable
 
 from trunner.ctx import TestContext
 from trunner.dut import QemuDut
-from trunner.harness import HarnessBuilder, RebooterHarness, ShellHarness, TestStartRunningHarness
+from trunner.harness import (
+    HarnessBuilder,
+    RebooterHarness,
+    ShellHarness,
+    TestStartRunningHarness,
+)
 from trunner.types import TestOptions, TestResult
 from .base import TargetBase
 
@@ -22,7 +27,9 @@ class QemuTarget(TargetBase):
         super().__init__()
         self.script = script
         # TODO Make sure that script path exists
-        self.dut = QemuDut(f"{self.project_dir}/scripts/{self.script}", encoding="utf-8")
+        self.dut = QemuDut(
+            f"{self.project_dir}/scripts/{self.script}", encoding="utf-8"
+        )
         self.rebooter = QemuDutRebooter(self.dut)
 
     @classmethod
@@ -86,7 +93,7 @@ class ARMv7A9Zynq7000QemuTarget(QemuTarget):
     shell_prompt = "root@?:~ # "
 
     def __init__(self):
-        super().__init__("armv7a9-zynq7000-qemu.sh")
+        super().__init__("armv7a9-zynq7000-qemu-test.sh")
         # Start of the zynq target take around 45 seconds due to the slow filesystem initialization.
         # Iterate over harness chain to find a ShellHarness to increase prompt_timeout value.
         self.prompt_timeout = 60
