@@ -94,3 +94,15 @@ class ARMv7A9Zynq7000QemuTarget(QemuTarget):
     @classmethod
     def from_context(cls, _: TestContext):
         return cls()
+
+
+class ARMv8R52_MPS3_AN536QemuTarget(QemuTarget):
+    name = "armv8r52-mps3an536-qemu"
+    rootfs = False
+
+    def __init__(self):
+        super().__init__("armv8r52-mps3an536-qemu.sh")
+
+    @classmethod
+    def from_context(cls, _: TestContext):
+        return cls()

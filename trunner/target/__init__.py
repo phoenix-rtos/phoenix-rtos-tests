@@ -7,6 +7,7 @@ from .emulated import (
     IA32GenericQemuTarget,
     RISCV64GenericQemuTarget,
     ARMv7A9Zynq7000QemuTarget,
+    ARMv8R52_MPS3_AN536QemuTarget,
 )
 from .host import HostPCGenericTarget
 
@@ -17,6 +18,7 @@ __all__ = [
     "IA32GenericQemuTarget",
     "RISCV64GenericQemuTarget",
     "ARMv7A9Zynq7000QemuTarget",
+    "ARMv8R52_MPS3_AN536QemuTarget",
     "HostPCGenericTarget",
     "STM32L4x6Target",
     "Zynq7000ZedboardTarget",
