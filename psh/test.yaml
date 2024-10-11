@@ -1,4 +1,7 @@
 test:
+    targets:
+        include: [sparcv8leon3-generic-qemu]
+
     tests:
         - name: gibber
           harness: test-gibber.py
@@ -13,7 +16,7 @@ test:
         - name: pshlogin
           harness: test-pshlogin.py
           targets:
-              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo]
+              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo, sparcv8leon3-generic-qemu]
 
         - name: echo
           harness: test-echo.py
@@ -36,7 +39,7 @@ test:
         - name: cat-shells
           harness: test-cat-shells.py
           targets:
-              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo]
+              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo, sparcv8leon3-generic-qemu]
 
         - name: kill
           harness: test-kill.py
@@ -50,7 +53,7 @@ test:
         - name: touch-rootfs
           harness: test-touch-rootfs.py
           targets:
-              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo]
+              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo, sparcv8leon3-generic-qemu]
 
         - name: ls
           harness: test-ls.py
@@ -58,13 +61,13 @@ test:
         - name: ls-rootfs
           harness: test-ls-rootfs.py
           targets:
-              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo]
+              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo, sparcv8leon3-generic-qemu]
 
         - name: runfile
           harness: test-runfile.py
           targets:
               # runfile applet is not intended for non-rootfs targets
-              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo]
+              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo, sparcv8leon3-generic-qemu]
 
         - name: history
           harness: test-history.py
