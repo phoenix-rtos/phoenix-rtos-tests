@@ -80,6 +80,19 @@ class RISCV64GenericQemuTarget(QemuTarget):
         return cls()
 
 
+class SPARCV8Leon3GenericQemuTarget(QemuTarget):
+    name = "sparcv8leon3-generic-qemu"
+    rootfs = False
+    experimental = True
+
+    def __init__(self):
+        super().__init__("sparcv8leon3-generic-qemu-test.sh")
+
+    @classmethod
+    def from_context(cls, _: TestContext):
+        return cls()
+
+
 class ARMv7A9Zynq7000QemuTarget(QemuTarget):
     name = "armv7a9-zynq7000-qemu"
     rootfs = True
