@@ -980,7 +980,10 @@ TEST(stdio_bufs, setvbuf_fullbuffer_overflow)
 	TEST_ASSERT_EQUAL_INT(0, setvbuf(filep, buf2, _IOFBF, sizeof(buf2)));
 
 	TEST_ASSERT_GREATER_THAN_INT(0, fputs(data, filep));
+	/* Flush is used, because it's possible that overflow data will be written anyway (glibc) */
+	fflush(filep);
 	TEST_ASSERT_NOT_NULL(fgets(buf, sizeof(buf), filep2));
+	TEST_ASSERT_EQUAL_STRING(data, buf);
 	TEST_ASSERT_EQUAL_INT(strlen(data), strlen(buf));
 }
 
