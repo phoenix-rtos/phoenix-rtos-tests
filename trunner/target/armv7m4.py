@@ -175,7 +175,9 @@ class STM32L4x6Target(TargetBase):
             builder = HarnessBuilder()
             builder.add(STM32L4x6OpenocdGdbServerHarness(setup))
 
-        if test.shell is not None:
+        if test.type == "pytest":
+            builder.add(TestStartRunningHarness())
+        elif test.shell is not None:
             builder.add(
                 ShellHarness(
                     self.dut,
