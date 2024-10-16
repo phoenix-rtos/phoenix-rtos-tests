@@ -18,6 +18,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <sys/wait.h>
 
 #include "unity_fixture.h"
 
@@ -67,9 +68,70 @@ TEST(test_mprotect, test_mprotect_singlecore)
 	TEST_ASSERT_EQUAL(0, munmap(area, page_size * PAGES));
 }
 
+
+TEST(test_mprotect, pages_in_child_copied)
+{
+	unsigned char *area = mmap(NULL, page_size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+	TEST_ASSERT(area != MAP_FAILED);
+
+	area[0] = 0x42;
+
+	TEST_ASSERT_EQUAL_INT(0, mprotect(area, page_size, PROT_READ));
+
+	pid_t pid = fork();
+	TEST_ASSERT(pid >= 0);
+	if (pid == 0) {
+		/* Wait for modifications in parent. */
+		sleep(1);
+		if (area[0] != 0x42) {
+			exit(1);
+		}
+		exit(0);
+	}
+
+	TEST_ASSERT_EQUAL_INT(0, mprotect(area, page_size, PROT_READ | PROT_WRITE));
+	area[0] = 0x41;
+
+	int returnStatus;
+	TEST_ASSERT(pid == waitpid(pid, &returnStatus, 0));
+	TEST_ASSERT_EQUAL_INT(0, WEXITSTATUS(returnStatus));
+
+	TEST_ASSERT_EQUAL_INT(0, munmap(area, page_size));
+}
+
+
+TEST(test_mprotect, pages_in_parent_copied)
+{
+	unsigned char *area = mmap(NULL, page_size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+	TEST_ASSERT(area != MAP_FAILED);
+
+	area[0] = 0x42;
+
+	TEST_ASSERT_EQUAL_INT(0, mprotect(area, page_size, PROT_READ));
+
+	pid_t pid = fork();
+	TEST_ASSERT(pid >= 0);
+	if (pid == 0) {
+		TEST_ASSERT_EQUAL_INT(0, mprotect(area, page_size, PROT_READ | PROT_WRITE));
+		area[0] = 0x41;
+		exit(0);
+	}
+
+	int returnStatus;
+	TEST_ASSERT(pid == waitpid(pid, &returnStatus, 0));
+	TEST_ASSERT_EQUAL_INT(0, WEXITSTATUS(returnStatus));
+
+	TEST_ASSERT_EQUAL_INT(0x42, area[0]);
+
+	TEST_ASSERT_EQUAL_INT(0, munmap(area, page_size));
+}
+
+
 TEST_GROUP_RUNNER(test_mprotect)
 {
 	RUN_TEST_CASE(test_mprotect, test_mprotect_singlecore);
+	RUN_TEST_CASE(test_mprotect, pages_in_child_copied);
+	RUN_TEST_CASE(test_mprotect, pages_in_parent_copied);
 }
 
 
