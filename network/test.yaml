@@ -1,0 +1,9 @@
+test:
+  type: harness
+  harness: tcp-harness.py
+  targets:
+    value: [armv7a7-imx6ull-evk]
+  tests:
+    - name: tcp
+
+    # TODO: stress tcp test
