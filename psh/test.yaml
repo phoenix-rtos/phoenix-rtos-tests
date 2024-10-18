@@ -12,7 +12,7 @@ test:
         - name: auth
           harness: test-auth.py
 
-        #FIXME - test-pshlogin.py is only for targets with root
+          # FIXME - test-pshlogin.py is only for targets with root
         - name: pshlogin
           harness: test-pshlogin.py
           targets:
@@ -77,3 +77,21 @@ test:
 
         - name: exit
           harness: test-exit.py
+
+        - name: ping_lan
+          harness: test-hw-ping-lan.py
+          load:
+              # In this case we need to use the relative path to load and execute lwip binary
+              # because it is placed in a different directory than other binaries
+            - app: ../sbin/lwip;pppou:460800:/dev/uart2:up
+          targets:
+              # Ethernet driver is not available on all EVK except armv7a7-imx6ull-evk
+              # and Ethernet capabilities are different for EVK and emulators
+              exclude: [ armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo, armv7a9-zynq7000-zedboard, armv7a9-zynq7000-qemu, ia32-generic-qemu, riscv64-generic-qemu]
+
+        - name: ping_wan
+          harness: test-hw-ping-wan.py
+          targets:
+              # Ethernet driver is not available on all EVK except armv7a7-imx6ull-evk
+              # and Ethernet capabilities are different for EVK and emulators
+              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo, armv7a9-zynq7000-zedboard, armv7a9-zynq7000-qemu, ia32-generic-qemu, riscv64-generic-qemu]
