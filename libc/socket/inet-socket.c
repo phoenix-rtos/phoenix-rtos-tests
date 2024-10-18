@@ -28,9 +28,7 @@
 #include "common.h"
 #include "unity_fixture.h"
 
-char data[DATA_SIZE];
-char buf[DATA_SIZE];
-
+static char data[DATA_SIZE];
 
 TEST_GROUP(test_inet_socket);
 
