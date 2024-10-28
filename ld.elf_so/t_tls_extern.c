@@ -71,11 +71,18 @@ TEST_TEAR_DOWN(t_tls_extern)
 	/* Guarantee dlclose being run at the end of the test. 
 	 * each dlclose in test case must always assign corresponding variable to NULL.
 	 * each dlopen must assign to one of the variables. */
-	if (use != NULL) {
-		(void)dlclose(use);
-	}
+
+	/* TODO: switching order of dlclose(def) and dlclose(use) on SPARC causes dynamic_abusedef to fail.
+	         After some investigation this looks like an error in dynamic linker.
+			 def also needs use thus use is first loaded as a dependency of def.
+			 If there's a symbol lookup in a destructor in use it cannot traverse the DAG of libraries as it's removed during cleanup of def,
+			 thus it is not able to find symbol from needed shared libraries.
+			 On SPARC for some reason __deregister_frame_info(defined in libgcc_s) has to be looked up for the second time during destructor handling, thus an error occurs. */
 	if (def != NULL) {
 		(void)dlclose(def);
+	}
+	if (use != NULL) {
+		(void)dlclose(use);
 	}
 	if (use_dynamic != NULL) {
 		(void)dlclose(use_dynamic);
