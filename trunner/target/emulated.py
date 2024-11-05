@@ -80,13 +80,13 @@ class RISCV64GenericQemuTarget(QemuTarget):
         return cls()
 
 
-class SPARCV8Leon3GenericQemuTarget(QemuTarget):
-    name = "sparcv8leon3-generic-qemu"
+class SPARCV8LeonGenericQemuTarget(QemuTarget):
+    name = "sparcv8leon-generic-qemu"
     rootfs = False
     experimental = True
 
     def __init__(self):
-        super().__init__("sparcv8leon3-generic-qemu-test.sh")
+        super().__init__("sparcv8leon-generic-qemu-test.sh")
 
     @classmethod
     def from_context(cls, _: TestContext):
