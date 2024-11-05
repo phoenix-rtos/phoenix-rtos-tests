@@ -1,3 +1,3 @@
-ifneq ($(TARGET), sparcv8leon3-generic-qemu)
+ifneq ($(TARGET), sparcv8leon-generic-qemu)
 DEFAULT_COMPONENTS += test-grlib-multi
 endif
