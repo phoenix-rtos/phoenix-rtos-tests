@@ -73,9 +73,10 @@ class FlashError(ProcessError):
 class Rebooter:
     """Class that provides all necessary methods needed for rebooting target device."""
 
-    def __init__(self, host: Host, dut: Dut):
+    def __init__(self, host: Host, dut: Dut, openocd_rst: Optional[bool] = False):
         self.host = host
         self.dut = dut
+        self.openocd_rst = openocd_rst
 
     def _reboot_soft(self):
         self.host.set_reset(0)
@@ -101,6 +102,9 @@ class Rebooter:
     def _reboot_dut_text(self, hard):
         pass
 
+    def _reboot_dut_command(self, hard):
+        pass
+
     def _set_flash_mode(self, flash):
         pass
 
@@ -110,10 +114,16 @@ class Rebooter:
         self._set_flash_mode(flash)
 
         if self.host.has_gpio():
-            self._reboot_dut_gpio(hard=hard)
+            if self.openocd_rst is True:
+                self._reboot_dut_command(hard=hard)
+            else:
+                self._reboot_dut_gpio(hard=hard)
         else:
             # Perform rebooting with user interaction
-            self._reboot_dut_text(hard=hard)
+            if self.openocd_rst is True:
+                self._reboot_dut_command(hard=hard)
+            else:
+                self._reboot_dut_text(hard=hard)
 
 
 class HarnessBase(ABC):
