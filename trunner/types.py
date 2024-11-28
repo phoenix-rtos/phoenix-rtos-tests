@@ -345,7 +345,18 @@ class TestSubResult(TestResult):
         out = f"\t{bold(self.subname)}: {self.status}"
 
         if self.msg and self.status != Status.OK:
-            out += ": " + self.msg
+            shift_length = len(f"{self.subname}: {self.status.name}: ")
+            first_line, *remaining_lines = self.msg.splitlines()
+            # Make msg with newlines aligned
+            if remaining_lines:
+                remaining_lines = "\n" + "\n".join(
+                    f'\t{" " * shift_length}{line}'
+                    for line in remaining_lines
+                )
+            else:
+                remaining_lines = ""
+
+            out += ": " + first_line + remaining_lines
 
         return out
 
