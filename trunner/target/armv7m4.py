@@ -18,7 +18,7 @@ from trunner.harness import (
     HarnessBuilder,
     FlashError,
 )
-from trunner.tools import GdbInteractive, OpenocdGdbServer
+from trunner.tools import GdbInteractive, OpenocdGdbServer, OpenocdProcess
 from trunner.types import AppOptions, TestOptions, TestResult
 from .base import TargetBase, find_port
 
@@ -26,7 +26,26 @@ from .base import TargetBase, find_port
 class ARMv7M4Rebooter(Rebooter):
     # TODO add text mode
     # NOTE: changing boot modes not needed/supported for this target
-    pass
+
+    def __call__(self, flash=False, hard=False):
+        """Sets flash mode and perform hard or soft & debugger reboot based on `hard` flag."""
+
+        if hard:
+            if self.host.has_gpio():
+                self._reboot_dut_gpio(hard=hard)
+            else:
+                self._reboot_by_debugger()
+        else:
+            self._reboot_by_debugger()
+
+    def _reboot_by_debugger(self):
+        # after flashing device is necessary to wait bit of time to free all resources
+        OpenocdProcess(
+            interface="stlink",
+            target="stm32l4x",
+            extra_args=["-c", "reset_config srst_only srst_nogate connect_assert_srst", "-c init; reset; exit"],
+        )
+        time.sleep(0.5)
 
 
 class STM32L4x6OpenocdGdbServerHarness(IntermediateHarness):
@@ -152,8 +171,8 @@ class STM32L4x6Target(TargetBase):
     def build_test(self, test: TestOptions):
         builder = HarnessBuilder()
 
-        if test.should_reboot:
-            builder.add(RebooterHarness(self.rebooter, hard=False))
+        if test.should_reboot and not test.bootloader:
+            builder.add(RebooterHarness(self.rebooter))
 
         if test.bootloader is not None:
             app_loader = None
