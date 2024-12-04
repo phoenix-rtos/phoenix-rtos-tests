@@ -151,6 +151,45 @@ class OpenocdGdbServer:
         self.logfile.close()
 
 
+def OpenocdProcess(
+    interface: Optional[str] = None,
+    target: Optional[str] = None,
+    board: Optional[str] = None,
+    extra_args: Optional[List[str]] = None,
+):
+    proc = None
+    logfile = io.StringIO()
+
+    try:
+        # Use pexpect.spawn to run a process as PTY, so it will flush on a new line
+        if board:
+            if target or interface:
+                raise OpenocdError("Target or Interface arguments provided when board is specified")
+
+            args = ["-f", f"board/{board}.cfg"]
+
+        else:
+            if not target or not interface:
+                raise OpenocdError("Target or Interface arguments missing")
+
+            args = ["-f", f"interface/{interface}.cfg", "-f", f"target/{target}.cfg"]
+
+        if extra_args:
+            args.extend(extra_args)
+
+        proc = pexpect.spawn("openocd", args, encoding="ascii", logfile=logfile, echo=True)
+
+        try:
+            proc.expect_exact("Info : Listening on port")
+        except (pexpect.TIMEOUT, pexpect.EOF) as e:
+            raise OpenocdError("Failed to connect to target", logfile.getvalue()) from e
+    finally:
+        clear_pexpect_buffer(proc)
+        proc.close(True)
+        proc.wait()
+        logfile.close()
+
+
 class JLinkGdbServer:
     def __init__(self, device):
         self.device = device
