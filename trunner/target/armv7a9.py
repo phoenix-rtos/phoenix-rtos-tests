@@ -19,7 +19,7 @@ from trunner.harness import (
 )
 from trunner.harness import TerminalHarness
 from trunner.host import Host
-from trunner.tools import Phoenixd, OpenocdGdbServer, wait_for_vid_pid
+from trunner.tools import Phoenixd, OpenocdGdbServer, OpenocdProcess, wait_for_vid_pid
 from trunner.types import TestResult, TestOptions
 from .base import TargetBase, find_port
 
@@ -27,16 +27,45 @@ from .base import TargetBase, find_port
 class ARMv7A9TargetRebooter(Rebooter):
     # TODO add text mode reboot
 
+    def __call__(self, flash=False, hard=False):
+        """Sets flash mode and perform hard or soft & debugger reboot based on `hard` flag."""
+
+        self._set_flash_mode(flash)
+        if hard:
+            if self.host.has_gpio():
+                self._reboot_dut_gpio(hard=hard)
+            else:
+                self._reboot_dut_text(self)
+        else:
+            self._reboot_by_debugger()
+
+    def _reboot_by_debugger(self):
+        OpenocdProcess(
+            board="digilent_zedboard",
+            extra_args=[
+                "-c adapter srst pulse_width 250",
+                "-c adapter srst delay 250",
+                "-c adapter speed 10000",
+                "-c init; reset; continue",
+            ],
+        ).run()
+
     def _reboot_soft(self):
         self._reboot_hard()
 
     def _reboot_hard(self):
+
         self.host.set_power(False)
         # optimal power off time to prevent sustaining chips, e.g. flash memory, related to #540 issue
         time.sleep(0.75)
         self.dut.clear_buffer()
         self.host.set_power(True)
-        time.sleep(0.05)
+        # needed to make sure that smt2 debugger device has disappeared
+        time.sleep(0.5)
+        # after reboot, we need to wait for starting the smt2 device
+        wait_for_vid_pid(vid=0x0403, pid=0x6014, device="smt2", timeout=5)
+        # after power off it is necessary to wait more time to free all resources
+        time.sleep(2)
 
     def _set_flash_mode(self, flash):
         self.host.set_flash_mode(not flash)
@@ -52,9 +81,6 @@ class ZynqZedboardGdbPloLoader(TerminalHarness, PloInterface):
 
     def __call__(self):
         """Loads plo image to RAM using gdb."""
-
-        # after reboot we need to wait for smt2 device
-        wait_for_vid_pid(vid=0x0403, pid=0x6014, device="smt2", timeout=5)
 
         with self.gdbserver.run():
             try:

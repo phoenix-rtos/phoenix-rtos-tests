@@ -71,13 +71,22 @@ class FlashError(ProcessError):
 
 
 class Rebooter:
-    """Class that provides all necessary methods needed for rebooting target device."""
+    """
+    Class that provides all necessary methods needed for rebooting target device.
+
+    Possible ways to reboot targets:
+    _reboot_soft / _reboot_hard / _reboot_via_debugger
+    """
 
     def __init__(self, host: Host, dut: Dut):
         self.host = host
         self.dut = dut
 
     def _reboot_soft(self):
+        """
+        Resets DUT by pulling down NRST pin for a while. It needs the specific Rpi pin (declared in host.py)
+        to be connected to NRST on the evaluation board via a proper resistor.
+        """
         self.host.set_reset(0)
         time.sleep(0.10)
         self.dut.clear_buffer()
@@ -86,11 +95,22 @@ class Rebooter:
         time.sleep(0.25)
 
     def _reboot_hard(self):
+        """
+        Uses signal to cut down power from device and perform clean start of all components.
+        It needs the specific Rpi pin (declared in host.py) to be connected to relay on board power line.
+        """
         self.host.set_power(False)
         time.sleep(0.5)
         self.dut.clear_buffer()
         self.host.set_power(True)
         time.sleep(0.5)
+
+    def _reboot_by_debugger(self):
+        """
+        Uses debug interface to reboot device (Depends what resources are available on device).
+        To utilize end device must be connected to host device using debugger.
+        """
+        raise NotImplementedError
 
     def _reboot_dut_gpio(self, hard):
         if hard:
@@ -99,7 +119,7 @@ class Rebooter:
             self._reboot_soft()
 
     def _reboot_dut_text(self, hard):
-        pass
+        raise NotImplementedError
 
     def _set_flash_mode(self, flash):
         pass

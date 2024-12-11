@@ -18,15 +18,28 @@ from trunner.harness import (
     HarnessBuilder,
     FlashError,
 )
-from trunner.tools import GdbInteractive, OpenocdGdbServer
+from trunner.tools import GdbInteractive, OpenocdGdbServer, OpenocdProcess
 from trunner.types import AppOptions, TestOptions, TestResult
 from .base import TargetBase, find_port
 
 
 class ARMv7M4Rebooter(Rebooter):
-    # TODO add text mode
     # NOTE: changing boot modes not needed/supported for this target
-    pass
+
+    def __call__(self, flash=False, hard=False):
+        """Sets flash mode and perform hard or soft & debugger reboot based on `hard` flag."""
+
+        if hard and self.host.has_gpio():
+            self._reboot_dut_gpio(hard=hard)
+        else:
+            self._reboot_by_debugger()
+
+    def _reboot_by_debugger(self):
+        OpenocdProcess(
+            interface="stlink",
+            target="stm32l4x",
+            extra_args=["-c reset_config srst_only srst_nogate connect_assert_srst", "-c init; reset; exit"],
+        ).run()
 
 
 class STM32L4x6OpenocdGdbServerHarness(IntermediateHarness):
@@ -123,25 +136,15 @@ class STM32L4x6Target(TargetBase):
 
     def flash_dut(self):
         try:
-            subprocess.run(
-                [
-                    "openocd",
-                    "-f",
-                    "interface/stlink.cfg",
-                    "-f",
-                    "target/stm32l4x.cfg",
-                    "-c",
-                    "reset_config srst_only srst_nogate connect_assert_srst",
-                    "-c",
-                    f"program {self.image_file} {self.image_addr:#x} verify reset exit",
-                ],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                check=True,
-                encoding="ascii",
-                timeout=20,
-                cwd=self.boot_dir(),
-            )
+            extra_args = [
+                "-c",
+                "reset_config srst_only srst_nogate connect_assert_srst",
+                "-c",
+                f"program {self.image_file} {self.image_addr:#x} verify reset exit",
+            ]
+
+            OpenocdProcess(interface="stlink", target="stm32l4x", extra_args=extra_args).run()
+
         except FileNotFoundError as e:
             raise FlashError(msg=str(e)) from e
         except subprocess.CalledProcessError as e:
@@ -152,8 +155,9 @@ class STM32L4x6Target(TargetBase):
     def build_test(self, test: TestOptions):
         builder = HarnessBuilder()
 
-        if test.should_reboot:
-            builder.add(RebooterHarness(self.rebooter, hard=False))
+        # DUT is already rebooted by OpenocdGdbServer when loading tests
+        if test.should_reboot and not test.bootloader:
+            builder.add(RebooterHarness(self.rebooter))
 
         if test.bootloader is not None:
             app_loader = None
