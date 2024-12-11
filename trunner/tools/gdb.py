@@ -91,8 +91,8 @@ class OpenocdError(ProcessError):
     name = "OPENOCD"
 
 
-class OpenocdGdbServer:
-    """Handler for OpenocdGdbServer process"""
+class OpenocdProcess:
+    """Handler for Openocd process"""
 
     def __init__(
         self,
@@ -116,29 +116,22 @@ class OpenocdGdbServer:
             if not target or not interface:
                 raise OpenocdError("Target or Interface arguments missing")
 
-    @contextmanager
-    @add_output_to_exception(OpenocdError)
-    def run(self):
+    def _start(self):
+        # Use pexpect.spawn to run a process as PTY, so it will flush on a new line
+        if self.board:
+            args = ["-f", f"board/{self.board}.cfg"]
+        else:
+            args = ["-f", f"interface/{self.interface}.cfg", "-f", f"target/{self.target}.cfg"]
+
+        if self.extra_args:
+            args.extend(self.extra_args)
+
+        self.proc = pexpect.spawn("openocd", args, encoding="ascii", logfile=self.logfile)
+
         try:
-            # Use pexpect.spawn to run a process as PTY, so it will flush on a new line
-            if self.board:
-                args = ["-f", f"board/{self.board}.cfg"]
-            else:
-                args = ["-f", f"interface/{self.interface}.cfg", "-f", f"target/{self.target}.cfg"]
-
-            if self.extra_args:
-                args.extend(self.extra_args)
-
-            self.proc = pexpect.spawn("openocd", args, encoding="ascii", logfile=self.logfile)
-
-            try:
-                self.proc.expect_exact("Info : Listening on port 3333 for gdb connections")
-            except (pexpect.TIMEOUT, pexpect.EOF) as e:
-                raise OpenocdError("Failed to start gdb server", self.logfile.getvalue()) from e
-
-            yield
-        finally:
-            self._close()
+            self.proc.expect_exact("Info : Listening on port")
+        except (pexpect.TIMEOUT, pexpect.EOF) as e:
+            raise OpenocdError("Failed to connect to target", self.logfile.getvalue()) from e
 
     def _close(self):
         if not self.proc:
@@ -149,6 +142,25 @@ class OpenocdGdbServer:
         self.proc.wait()
         self.output = self.logfile.getvalue()
         self.logfile.close()
+
+    def run(self):
+        try:
+            self._start()
+        finally:
+            self._close()
+
+
+class OpenocdGdbServer(OpenocdProcess):
+    """Handler for OpenocdGdbServer process"""
+
+    @contextmanager
+    @add_output_to_exception(OpenocdError)
+    def run(self):
+        try:
+            self._start()
+            yield
+        finally:
+            self._close()
 
 
 class JLinkGdbServer:
