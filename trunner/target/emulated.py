@@ -39,7 +39,9 @@ class QemuTarget(TargetBase):
         if test.should_reboot:
             builder.add(RebooterHarness(self.rebooter))
 
-        if test.shell is not None:
+        if test.type == "pytest":
+            builder.add(TestStartRunningHarness())
+        elif test.shell is not None:
             builder.add(
                 ShellHarness(
                     self.dut,
