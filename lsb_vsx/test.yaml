@@ -1,0 +1,548 @@
+test:
+    harness: lsb_vsx.py
+    nightly: true
+    targets:
+      value: [ia32-generic-qemu]
+
+    # Any test ignored without issue linked is due to build error - lack of some functions defined
+
+    tests:
+        - name: T.isalnum
+          execute: run-test /tset/ANSI.os/charhandle/isalnum/T.isalnum
+        - name: T.isalpha
+          execute: run-test /tset/ANSI.os/charhandle/isalpha/T.isalpha
+        - name: T.iscntrl
+          execute: run-test /tset/ANSI.os/charhandle/iscntrl/T.iscntrl
+        - name: T.isdigit
+          execute: run-test /tset/ANSI.os/charhandle/isdigit/T.isdigit
+        - name: T.isgraph
+          execute: run-test /tset/ANSI.os/charhandle/isgraph/T.isgraph
+        - name: T.islower
+          execute: run-test /tset/ANSI.os/charhandle/islower/T.islower
+        - name: T.isprint
+          execute: run-test /tset/ANSI.os/charhandle/isprint/T.isprint
+        - name: T.ispunct
+          execute: run-test /tset/ANSI.os/charhandle/ispunct/T.ispunct
+        - name: T.isspace
+          execute: run-test /tset/ANSI.os/charhandle/isspace/T.isspace
+        - name: T.isupper
+          execute: run-test /tset/ANSI.os/charhandle/isupper/T.isupper
+        - name: T.isxdigit
+          execute: run-test /tset/ANSI.os/charhandle/isxdigit/T.isxdigit
+        - name: T.tolower
+          execute: run-test /tset/ANSI.os/charhandle/tolower/T.tolower
+        - name: T.toupper
+          execute: run-test /tset/ANSI.os/charhandle/toupper/T.toupper
+        - name: T.assert
+          execute: run-test /tset/ANSI.os/diagnostics/assert/T.assert
+        - name: T.abort
+          ignore: True
+          execute: run-test /tset/ANSI.os/genuts/abort/T.abort
+        - name: T.abs
+          execute: run-test /tset/ANSI.os/genuts/abs/T.abs
+        - name: T.atof
+          execute: run-test /tset/ANSI.os/genuts/atof/T.atof
+        - name: T.atoi
+          execute: run-test /tset/ANSI.os/genuts/atoi/T.atoi
+        - name: T.atol
+          execute: run-test /tset/ANSI.os/genuts/atol/T.atol
+        - name: T.bsearch
+          execute: run-test /tset/ANSI.os/genuts/bsearch/T.bsearch
+        - name: T.calloc
+          execute: run-test /tset/ANSI.os/genuts/calloc/T.calloc
+        - name: T.exit
+          ignore: True
+          execute: run-test /tset/ANSI.os/genuts/exit/T.exit
+        - name: T.free
+          execute: run-test /tset/ANSI.os/genuts/free/T.free
+        - name: T.malloc
+          execute: run-test /tset/ANSI.os/genuts/malloc/T.malloc
+        - name: T.qsort
+          execute: run-test /tset/ANSI.os/genuts/qsort/T.qsort
+        - name: T.rand
+          execute: run-test /tset/ANSI.os/genuts/rand/T.rand
+        - name: T.realloc
+          execute: run-test /tset/ANSI.os/genuts/realloc/T.realloc
+        - name: T.srand
+          execute: run-test /tset/ANSI.os/genuts/srand/T.srand
+        - name: T.longjmp
+          execute: run-test /tset/ANSI.os/jump/longjmp/T.longjmp
+        - name: T.setjmp
+          execute: run-test /tset/ANSI.os/jump/setjmp/T.setjmp
+        - name: T.acos
+          execute: run-test /tset/ANSI.os/maths/acos/T.acos
+        - name: T.asin
+          execute: run-test /tset/ANSI.os/maths/asin/T.asin
+        - name: T.atan
+          execute: run-test /tset/ANSI.os/maths/atan/T.atan
+        - name: T.atan2
+          execute: run-test /tset/ANSI.os/maths/atan2/T.atan2
+        - name: T.ceil
+          execute: run-test /tset/ANSI.os/maths/ceil/T.ceil
+        - name: T.cos
+          execute: run-test /tset/ANSI.os/maths/cos/T.cos
+        - name: T.cosh
+          execute: run-test /tset/ANSI.os/maths/cosh/T.cosh
+        - name: T.exp
+          execute: run-test /tset/ANSI.os/maths/exp/T.exp
+        - name: T.fabs
+          execute: run-test /tset/ANSI.os/maths/fabs/T.fabs
+        - name: T.floor
+          execute: run-test /tset/ANSI.os/maths/floor/T.floor
+        - name: T.fmod
+          # Issue: 1229 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1229
+          ignore: True
+          execute: run-test /tset/ANSI.os/maths/fmod/T.fmod
+        - name: T.frexp
+          execute: run-test /tset/ANSI.os/maths/frexp/T.frexp
+        - name: T.ldexp
+          execute: run-test /tset/ANSI.os/maths/ldexp/T.ldexp
+        - name: T.log
+          execute: run-test /tset/ANSI.os/maths/log/T.log
+        - name: T.log10
+          execute: run-test /tset/ANSI.os/maths/log10/T.log10
+        - name: T.modf
+          execute: run-test /tset/ANSI.os/maths/modf/T.modf
+        - name: T.pow
+          execute: run-test /tset/ANSI.os/maths/pow/T.pow
+        - name: T.sin
+          execute: run-test /tset/ANSI.os/maths/sin/T.sin
+        - name: T.sinh
+          execute: run-test /tset/ANSI.os/maths/sinh/T.sinh
+        - name: T.sqrt
+          execute: run-test /tset/ANSI.os/maths/sqrt/T.sqrt
+        - name: T.tan
+          execute: run-test /tset/ANSI.os/maths/tan/T.tan
+        - name: tanh
+          execute: run-test /tset/ANSI.os/maths/tanh/T.tanh
+        - name: T.clearerr
+          execute: run-test /tset/ANSI.os/streamio/clearerr/T.clearerr
+        - name: T.fclose
+          ignore: True
+          execute: run-test /tset/ANSI.os/streamio/fclose/T.fclose
+        - name: T.feof
+          execute: run-test /tset/ANSI.os/streamio/feof/T.feof
+        - name: T.ferror
+          execute: run-test /tset/ANSI.os/streamio/ferror/T.ferror
+        - name: T.fflush
+          ignore: True
+          execute: run-test /tset/ANSI.os/streamio/fflush/T.fflush
+        - name: T.fgets
+          ignore: True
+          execute: run-test /tset/ANSI.os/streamio/fgets/T.fgets
+        - name: T.fopen
+          ignore: True
+          execute: run-test /tset/ANSI.os/streamio/fopen/T.fopen
+        - name: T.fputs
+          ignore: True
+          execute: run-test /tset/ANSI.os/streamio/fputs/T.fputs
+        - name: T.fread
+          ignore: True
+          execute: run-test /tset/ANSI.os/streamio/fread/T.fread
+        - name: T.freopen
+          ignore: True
+          execute: run-test /tset/ANSI.os/streamio/freopen/T.freopen
+        - name: T.fseek
+          execute: run-test /tset/ANSI.os/streamio/fseek/T.fseek{-10}{12-}
+        - name: T.ftell
+          execute: run-test /tset/ANSI.os/streamio/ftell/T.ftell
+        - name: T.fwrite
+          ignore: True
+          execute: run-test /tset/ANSI.os/streamio/fwrite/T.fwrite
+        - name: T.getc
+          ignore: True
+          execute: run-test /tset/ANSI.os/streamio/getc/T.getc
+        - name: T.gets
+          ignore: True
+          execute: run-test /tset/ANSI.os/streamio/gets/T.gets
+        - name: T.perror
+          execute: run-test /tset/ANSI.os/streamio/perror/T.perror
+        - name: T.printf
+          ignore: True
+          execute: run-test /tset/ANSI.os/streamio/printf/T.printf
+        - name: T.putc
+          ignore: True
+          execute: run-test /tset/ANSI.os/streamio/putc/T.putc
+        - name: T.puts
+          ignore: True
+          execute: run-test /tset/ANSI.os/streamio/puts/T.puts
+        - name: T.remove
+          ignore: True
+          execute: run-test /tset/ANSI.os/streamio/remove/T.remove
+        - name: T.rewind
+          execute: run-test /tset/ANSI.os/streamio/rewind/T.rewind
+        - name: T.scanf
+          ignore: True
+          execute: run-test /tset/ANSI.os/streamio/remove/T.remove
+        - name: T.setbuf
+          ignore: True
+          execute: run-test /tset/ANSI.os/streamio/setbuf/T.setbuf
+        - name: T.tmpfile
+          ignore: True
+          execute: run-test /tset/ANSI.os/streamio/tmpfile/T.tmpfile
+        - name: T.tmpnam
+          ignore: True
+          execute: run-test /tset/ANSI.os/streamio/tmpnam/T.tmpnam
+        - name: T.ungetc
+          execute: run-test /tset/ANSI.os/streamio/ungetc/T.ungetc
+        - name: T.vprintf
+          ignore: True
+          execute: run-test /tset/ANSI.os/streamio/vprintf/T.vprintf
+        - name: T.strcat
+          execute: run-test /tset/ANSI.os/string/strcat/T.strcat
+        - name: T.strchr
+          execute: run-test /tset/ANSI.os/string/strchr/T.strchr
+        - name: T.strcmp
+          execute: run-test /tset/ANSI.os/string/strcmp/T.strcmp
+        - name: T.strcpy
+          execute: run-test /tset/ANSI.os/string/strcpy/T.strcpy
+        - name: T.strscpn
+          execute: run-test /tset/ANSI.os/string/strcspn/T.strcspn
+        - name: T.strlen
+          execute: run-test /tset/ANSI.os/string/strlen/T.strlen
+        - name: T.strncat
+          execute: run-test /tset/ANSI.os/string/strncat/T.strncat
+        - name: T.strncmp
+          execute: run-test /tset/ANSI.os/string/strncmp/T.strncmp
+        - name: T.strncpy
+          execute: run-test /tset/ANSI.os/string/strncpy/T.strncpy
+        - name: T.strpbrk
+          execute: run-test /tset/ANSI.os/string/strpbrk/T.strpbrk
+        - name: T.strrchr
+          execute: run-test /tset/ANSI.os/string/strrchr/T.strrchr
+        - name: T.strspn
+          execute: run-test /tset/ANSI.os/string/strspn/T.strspn
+        - name: T.strstr
+          execute: run-test /tset/ANSI.os/string/strstr/T.strstr
+        - name: T.strtok
+          execute: run-test /tset/ANSI.os/string/strtok/T.strtok
+        - name: T.asctime
+          execute: run-test /tset/ANSI.os/time/asctime/T.asctime
+        - name: T.ctime
+          ignore: True
+          execute: run-test /tset/ANSI.os/time/ctime/T.ctime
+        - name: T.gmtime
+          execute: run-test /tset/ANSI.os/time/gmtime/T.gmtime
+        - name: T.localtime
+          ignore: True
+          execute: run-test /tset/ANSI.os/time/localtime/T.localtime
+        - name: T.mktime
+          # Issue: 1243 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1243
+          ignore: True
+          execute: run-test /tset/ANSI.os/time/mktime/T.mktime
+        - name: T.strftime
+          ignore: True
+          execute: run-test /tset/ANSI.os/time/strftime/T.strftime
+        - name: T.fdopen
+          execute: run-test /tset/POSIX.os/Csupport/fdopen/T.fdopen
+        - name: T.fileno
+          execute: run-test /tset/POSIX.os/Csupport/fileno/T.fileno
+        - name: T.siglongjmp
+          execute: run-test /tset/POSIX.os/Csupport/siglongjmp/T.siglongjmp
+        - name: T.sigsetjmp
+          execute: run-test /tset/POSIX.os/Csupport/sigsetjmp/T.sigsetjmp
+        - name: T.tzset
+          # Issue: 1243 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1243
+          ignore: True
+          execute: run-test /tset/POSIX.os/Csupport/tzset/T.tzset
+        - name: T.cpio
+          ignore: True
+          execute: run-test /tset/POSIX.os/dataform/cpio/T.cpio
+        - name: T.tar
+          ignore: True
+          execute: run-test /tset/POSIX.hdr/misc/tar/T.tar
+        - name: T.T.c_cc
+          ignore: True
+          execute: run-test /tset/POSIX.os/devclass/c_cc/T.c_cc
+        - name: T.c_cflag
+          ignore: True
+          execute: run-test /tset/POSIX.os/devclass/c_cflag/T.c_cflag
+        - name: T.c_iflag
+          ignore: True
+          execute: run-test /tset/POSIX.os/devclass/c_iflag/T.c_iflag
+        - name: T.c_lflag
+          ignore: True
+          execute: run-test /tset/POSIX.os/devclass/c_lflag/T.c_lflag
+        - name: T.c_oflag
+          ignore: True
+          execute: run-test /tset/POSIX.os/devclass/c_oflag/T.c_oflag
+        - name: T.cfgetispee
+          execute: run-test /tset/POSIX.os/devclass/cfgetispee/T.cfgetispee
+        - name: T.cfgetospee
+          execute: run-test /tset/POSIX.os/devclass/cfgetospee/T.cfgetospee
+        - name: T.cfsetispee
+          ignore: True
+          execute: run-test /tset/POSIX.os/devclass/cfsetispee/T.cfsetispee
+        - name: T.cfsetospee
+          ignore: True
+          execute: run-test /tset/POSIX.os/devclass/cfsetospee/T.cfsetospee
+        - name: T.i_access
+          ignore: True
+          execute: run-test /tset/POSIX.os/devclass/i_access/T.i_access
+        - name: T.i_canon
+          ignore: True
+          execute: run-test /tset/POSIX.os/devclass/i_canon/T.i_canon
+        - name: T.i_close
+          ignore: True
+          execute: run-test /tset/POSIX.os/devclass/i_close/T.i_close
+        - name: T.i_ctty
+          ignore: True
+          execute: run-test /tset/POSIX.os/devclass/i_ctty/T.i_ctty
+        - name: T.i_inproc
+          ignore: True
+          execute: run-test /tset/POSIX.os/devclass/i_inproc/T.i_inproc
+        - name: T.i_modem
+          ignore: True
+          execute: run-test /tset/POSIX.os/devclass/i_modem/T.i_modem
+        - name: T.i_noncanon
+          ignore: True
+          execute: run-test /tset/POSIX.os/devclass/i_noncanon/T.i_noncanon
+        - name: T.i_spchars
+          ignore: True
+          execute: run-test /tset/POSIX.os/devclass/i_spchars/T.i_spchars
+        - name: T.tcdrain
+          ignore: True
+          execute: run-test /tset/POSIX.os/devclass/tcdrain/T.tcdrain
+        - name: T.tcflow
+          ignore: True
+          execute: run-test /tset/POSIX.os/devclass/tcflow/T.tcflow
+        - name: T.tcflush
+          ignore: True
+          execute: run-test /tset/POSIX.os/devclass/tcflush/T.tcflush
+        - name: T.tcgetattr
+          ignore: True
+          execute: run-test /tset/POSIX.os/devclass/tcgetattr/T.tcgetattr
+        - name: T.tcgetpgrp
+          ignore: True
+          execute: run-test /tset/POSIX.os/devclass/tcgetpgrp/T.tcgetpgrp
+        - name: T.tcsendbrea
+          ignore: True
+          execute: run-test /tset/POSIX.os/devclass/tcsendbrea/T.tcsendbrea
+        - name: T.tcsetattr
+          ignore: True
+          execute: run-test /tset/POSIX.os/devclass/tcsetattr/T.tcsetattr
+        - name: T.tcsetpgrp
+          ignore: True
+          execute: run-test /tset/POSIX.os/devclass/tcsetpgrp/T.tcsetpgrp
+        - name: T.access
+          ignore: True
+          execute: run-test /tset/POSIX.os/files/access/T.access
+        - name: T.chdir
+          ignore: True
+          execute: run-test /tset/POSIX.os/files/chdir/T.chdir
+        - name: T.chmod
+          ignore: True
+          execute: run-test /tset/POSIX.os/files/chmod/T.chmod
+        - name: T.chown
+          ignore: True
+          execute: run-test /tset/POSIX.os/files/chown/T.chown
+        - name: T.closedir
+          execute: run-test /tset/POSIX.os/files/closedir/T.closedir
+        - name: T.creat
+          ignore: True
+          execute: run-test /tset/POSIX.os/files/creat/T.creat
+        - name: T.fpathconf
+          ignore: True
+          execute: run-test /tset/POSIX.os/files/fpathconf/T.fpathconf
+        - name: T.fstat
+          execute: run-test /tset/POSIX.os/files/fstat/T.fstat
+        - name: T.getcwd
+          execute: run-test /tset/POSIX.os/files/getcwd/T.getcwd
+        - name: T.link
+          ignore: True
+          execute: run-test /tset/POSIX.os/files/link/T.link
+        - name: T.mkdir
+          ignore: True
+          execute: run-test /tset/POSIX.os/files/mkdir/T.mkdir
+        - name: T.mkfifo
+          ignore: True
+          execute: run-test /tset/POSIX.os/files/mkfifo/T.mkfifo
+        - name: T.open
+          ignore: True
+          execute: run-test /tset/POSIX.os/files/open/T.open
+        - name: T.opendir
+          ignore: True
+          execute: run-test /tset/POSIX.os/files/opendir/T.opendir
+        - name: T.pathconf
+          ignore: True
+          execute: run-test /tset/POSIX.os/files/pathconf/T.pathconf
+        - name: T.readdir
+          ignore: True
+          execute: run-test /tset/POSIX.os/files/readdir/T.readdir
+        - name: T.rename
+          ignore: True
+          execute: run-test /tset/POSIX.os/files/rename/T.rename
+        - name: T.rewinddir
+          execute: run-test /tset/POSIX.os/files/rewinddir/T.rewinddir
+        - name: T.rmdir
+          ignore: True
+          execute: run-test /tset/POSIX.os/files/rmdir/T.rmdir
+        - name: T.stat
+          ignore: True
+          execute: run-test /tset/POSIX.os/files/stat/T.stat
+        - name: T.umask
+          ignore: True # stub
+          execute: run-test /tset/POSIX.os/files/umask/T.umask
+        - name: T.unlink
+          ignore: True
+          execute: run-test /tset/POSIX.os/files/unlink/T.unlink
+        - name: T.utime
+          ignore: True
+          execute: run-test /tset/POSIX.os/files/utime/T.utime
+        - name: T.close
+          # Issue: 1230 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1230
+          ignore: True
+          execute: run-test /tset/POSIX.os/ioprim/close/T.close
+        - name: T.dup
+          # Issue: 1235 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1235
+          ignore: True
+          execute: run-test /tset/POSIX.os/ioprim/dup/T.dup
+        - name: T.dup2
+          ignore: True
+          execute: run-test /tset/POSIX.os/ioprim/dup2/T.dup2
+        - name: T.fcntl
+          ignore: True
+          execute: run-test /tset/POSIX.os/ioprim/fcntl/T.fcntl
+        - name: T.lseek
+          execute: run-test /tset/POSIX.os/ioprim/lseek/T.lseek
+        - name: T.pipe
+          ignore: True
+          execute: run-test /tset/POSIX.os/ioprim/pipe/T.pipe
+        - name: T.read
+          ignore: True
+          execute: run-test /tset/POSIX.os/ioprim/read/T.read
+        - name: T.write
+          ignore: True
+          execute: run-test /tset/POSIX.os/ioprim/write/T.write
+        - name: T.ctermid
+          ignore: True
+          execute: run-test /tset/POSIX.os/procenv/ctermid/T.ctermid
+        - name: T.getegid
+          ignore: True # stub
+          execute: run-test /tset/POSIX.os/procenv/getegid/T.getegid
+        - name: T.getenv
+          execute: run-test /tset/POSIX.os/procenv/getenv/T.getenv
+        - name: T.geteuid
+          ignore: True # stub
+          execute: run-test /tset/POSIX.os/procenv/geteuid/T.geteuid
+        - name: T.getgid
+          ignore: True # stub
+          execute: run-test /tset/POSIX.os/procenv/getgid/T.getgid
+        - name: T.getgroups
+          ignore: True # stub
+          execute: run-test /tset/POSIX.os/procenv/getgroups/T.getgroups
+        - name: T.getlogin
+          ignore: True # stub
+          execute: run-test /tset/POSIX.os/procenv/getlogin/T.getlogin
+        - name: T.getpgrp
+          execute: run-test /tset/POSIX.os/procenv/getpgrp/T.getpgrp
+        - name: T.getpid
+          execute: run-test /tset/POSIX.os/procenv/getpid/T.getpid
+        - name: getppid
+          execute: run-test /tset/POSIX.os/procenv/getppid/T.getppid
+        - name: T.getuid
+          ignore: True # stub
+          execute: run-test /tset/POSIX.os/procenv/getuid/T.getuid
+        - name: T.isatty
+          execute: run-test /tset/POSIX.os/procenv/isatty/T.isatty
+        - name: T.setgid
+          ignore: True # stub
+          execute: run-test /tset/POSIX.os/procenv/setgid/T.setgid
+        - name: setpgid
+          # Issue: 1236 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1236
+          ignore: True
+          execute: run-test /tset/POSIX.os/procenv/setpgid/T.setpgid
+        - name: T.setsid
+          ignore: True
+          execute: run-test /tset/POSIX.os/procenv/setsid/T.setsid
+        - name: T.setuid
+          ignore: True # stub
+          execute: run-test /tset/POSIX.os/procenv/setuid/T.setuid
+        - name: T.sysconf
+          # Issue: 1236 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1236
+          ignore: True
+          execute: run-test /tset/POSIX.os/procenv/sysconf/T.sysconf
+        - name: T.time
+          # not compatible with POSIX
+          ignore: True
+          execute: run-test /tset/POSIX.os/procenv/time/T.time
+        - name: T.times
+          ignore: True # stub
+          execute: run-test /tset/POSIX.os/procenv/times/T.times
+        - name: T.ttyname
+          ignore: True # stub
+          execute: run-test /tset/POSIX.os/procenv/ttyname/T.ttyname
+        - name: T.uname
+          ignore: True # almost stub
+          execute: run-test /tset/POSIX.os/procenv/uname/T.uname
+        - name: T._exit
+          ignore: True
+          execute: run-test /tset/POSIX.os/procprim/_exit/T._exit
+        - name: T.alarm
+          # Issue: 1241 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1241
+          # Issue: 1233 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1233
+          ignore: True
+          execute: run-test /tset/POSIX.os/procprim/alarm/T.alarm
+        - name: T.exec
+          ignore: True
+          execute: run-test /tset/POSIX.os/procprim/exec/T.exec
+        - name: T.fork
+          ignore: True
+          execute: run-test /tset/POSIX.os/procprim/fork/T.fork
+        - name: T.kill
+          # Issue: 1233 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1233
+          # Issue: 1232 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1232
+          ignore: True
+          execute: run-test /tset/POSIX.os/procprim/kill/T.kill
+        - name: T.pause
+          execute: run-test /tset/POSIX.os/procprim/pause/T.pause
+        - name: T.sigaction
+          # Issue: 1234 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1234
+          # Issue: 1232 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1232
+          ignore: True
+          execute: run-test /tset/POSIX.os/procprim/sigaction/T.sigaction
+        - name: T.sigaddset
+          execute: run-test /tset/POSIX.os/procprim/sigaddset/T.sigaddset
+        - name: T.sigconcept
+          ignore: True
+          execute: run-test /tset/POSIX.os/procprim/sigconcept/T.sigconcept
+        - name: T.sigdelset
+          execute: run-test /tset/POSIX.os/procprim/sigdelset/T.sigdelset
+        - name: T.sigemptyse
+          execute: run-test /tset/POSIX.os/procprim/sigemptyse/T.sigemptyse
+        - name: T.sigfillset
+          execute: run-test /tset/POSIX.os/procprim/sigfillset/T.sigfillset
+        - name: T.sigismembe
+          execute: run-test /tset/POSIX.os/procprim/sigismembe/T.sigismembe
+        - name: T.sigpending
+          ignore: True
+          execute: run-test /tset/POSIX.os/procprim/sigpending/T.sigpending
+        - name: T.sigprocmas
+          # Issue: 1233 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1233
+          # Issue: 1232 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1232
+          ignore: True
+          execute: run-test /tset/POSIX.os/procprim/sigprocmas/T.sigprocmas
+        - name: T.sigsuspend
+          # Issue: 1233 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1233
+          # Issue: 1232 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1232
+          ignore: True
+          execute: run-test /tset/POSIX.os/procprim/sigsuspend/T.sigsuspend
+        - name: T.sleep
+          execute: run-test /tset/POSIX.os/procprim/sleep/T.sleep
+        - name: T.wait
+          # Issue: 1233 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1233
+          ignore: True
+          execute: run-test /tset/POSIX.os/procprim/wait/T.wait
+        - name: T.waitpid
+          ignore: True
+          execute: run-test /tset/POSIX.os/procprim/waitpid/T.waitpid
+        - name: T.getgrgid
+          ignore: True # stub
+          execute: run-test /tset/POSIX.os/sysdb/getgrgid/T.getgrgid
+        - name: T.getgrnam
+          ignore: True # stub
+          execute: run-test /tset/POSIX.os/sysdb/getgrnam/T.getgrnam
+        - name: T.getpwnam
+          execute: run-test /tset/POSIX.os/sysdb/getpwnam/T.getpwnam
+        - name: T.getpwuid
+          execute: run-test /tset/POSIX.os/sysdb/getpwuid/T.getpwuid
