@@ -50,6 +50,9 @@ class ARMv7A9TargetRebooter(Rebooter):
             ],
         ).run()
 
+        # TODO: resolve race condition with clearing first logs after reset
+        self.dut.clear_buffer()
+
     def _reboot_soft(self):
         self._reboot_hard()
 
