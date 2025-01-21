@@ -285,6 +285,11 @@ TEST(stdio_scanf_aefg, A)
 
 TEST(stdio_scanf_aefg, e)
 {
+#ifdef __TARGET_SPARCV8LEON
+	/* Disabled on SPARC because of issue https://github.com/phoenix-rtos/phoenix-rtos-project/issues/970 */
+	TEST_IGNORE();
+#endif
+
 	char buff[BUFF_LEN] = { 0 };
 	float fltMax, fltMaxH, zero, fltMin, negFltMax, negFltMaxH, negFltMin;
 	const char *format = "%e %e %e %e %e %e %e";
@@ -321,6 +326,11 @@ TEST(stdio_scanf_aefg, e)
 
 TEST(stdio_scanf_aefg, E)
 {
+#ifdef __TARGET_SPARCV8LEON
+	/* Disabled on SPARC because of issue https://github.com/phoenix-rtos/phoenix-rtos-project/issues/970 */
+	TEST_IGNORE();
+#endif
+
 	char buff[BUFF_LEN] = { 0 };
 	float fltMax, fltMaxH, zero, fltMin, negFltMax, negFltMaxH, negFltMin;
 	const char *format = "%E %E %E %E %E %E %E";
@@ -357,6 +367,11 @@ TEST(stdio_scanf_aefg, E)
 
 TEST(stdio_scanf_aefg, g)
 {
+#ifdef __TARGET_SPARCV8LEON
+	/* Disabled on SPARC because of issue https://github.com/phoenix-rtos/phoenix-rtos-project/issues/970 */
+	TEST_IGNORE();
+#endif
+
 	char buff[BUFF_LEN] = { 0 };
 	float fltMax, fltMaxH, zero, fltMin, negFltMax, negFltMaxH, negFltMin;
 	const char *format = "%g %g %g %g %g %g %g";
@@ -393,6 +408,11 @@ TEST(stdio_scanf_aefg, g)
 
 TEST(stdio_scanf_aefg, G)
 {
+#ifdef __TARGET_SPARCV8LEON
+	/* Disabled on SPARC because of issue https://github.com/phoenix-rtos/phoenix-rtos-project/issues/970 */
+	TEST_IGNORE();
+#endif
+
 	char buff[BUFF_LEN] = { 0 };
 	float fltMax, fltMaxH, zero, fltMin, negFltMax, negFltMaxH, negFltMin;
 	const char *format = "%G %G %G %G %G %G %G";
