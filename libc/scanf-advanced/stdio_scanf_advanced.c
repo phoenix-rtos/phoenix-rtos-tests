@@ -1559,22 +1559,23 @@ TEST_TEAR_DOWN(stdio_scanf_rest)
 
 TEST(stdio_scanf_rest, modifiers_mix)
 {
-	int int1, int2, int3, int4, int5;
+	int int1, int2, int3, int4;
 	unsigned int res2;
 	float flt1, flt2, flt3;
 	long long int llint1;
 	char char1;
+	unsigned char uchar1;
 	ptrdiff_t ptr1;
 	char strTab[4][MAX_TESTSTR_WORDLEN] = { 0 };
-	const char *str = "~~1`2l 0.1!_2@lorem#0x233$ 1.2e-5 % nowy 1.200020e-5 nal^ 132 *{}:|?><[]',./5/123456/+123456-a(loremipsum\0)";
+	const char *str = "~~1`2l 0.1!_2@lorem#0x233$ 1.2e-5 % nowy 1.200020e-5 nal^ 132 *{}:|?><[]',./5/123456/+56-a(loremipsum\0)";
 	const char *format = "~~%d`%ul %f!_%x@%[lorem]#%p$%a %% %s %e nal^ %i *{}:|?><[]',./%o/%lld/+%hhx-%c(%[^ipsum]%s)";
 
 	fprintf(filep, "%s", str);
 	rewind(filep);
 
-	ptr1 = int1 = int2 = int3 = int4 = int5 = res2 = flt1 = flt2 = flt3 = llint1 = char1 = 1;
+	ptr1 = int1 = int2 = int3 = int4 = res2 = flt1 = flt2 = flt3 = llint1 = char1 = uchar1 = 1;
 	memset(strTab, 0, sizeof(strTab));
-	TEST_ASSERT_EQUAL_INT(16, sscanf(str, format, &int1, &res2, &flt1, &int2, strTab[0], &ptr1, &flt2, strTab[1], &flt3, &int3, &int4, &llint1, &int5, &char1, strTab[2], strTab[3]));
+	TEST_ASSERT_EQUAL_INT(16, sscanf(str, format, &int1, &res2, &flt1, &int2, strTab[0], &ptr1, &flt2, strTab[1], &flt3, &int3, &int4, &llint1, &uchar1, &char1, strTab[2], strTab[3]));
 
 	TEST_ASSERT_EQUAL_INT(1, int1);
 	TEST_ASSERT_EQUAL_UINT(2, res2);
@@ -1588,14 +1589,14 @@ TEST(stdio_scanf_rest, modifiers_mix)
 	TEST_ASSERT_EQUAL_UINT(132, int3);
 	TEST_ASSERT_EQUAL_INT(5, int4);
 	TEST_ASSERT_EQUAL_INT64(123456, llint1);
-	TEST_ASSERT_EQUAL_HEX8(0x56, int5);
+	TEST_ASSERT_EQUAL_HEX8(0x56, uchar1);
 	TEST_ASSERT_EQUAL_CHAR('a', char1);
 	TEST_ASSERT_EQUAL_STRING("lore", strTab[2]);
 	TEST_ASSERT_EQUAL_STRING("mipsum", strTab[3]);
 
-	ptr1 = int1 = int2 = int3 = int4 = int5 = res2 = flt1 = flt2 = flt3 = llint1 = char1 = 1;
+	ptr1 = int1 = int2 = int3 = int4 = res2 = flt1 = flt2 = flt3 = llint1 = char1 = 1;
 	memset(strTab, 0, sizeof(strTab));
-	TEST_ASSERT_EQUAL_INT(16, fscanf(filep, format, &int1, &res2, &flt1, &int2, strTab[0], &ptr1, &flt2, strTab[1], &flt3, &int3, &int4, &llint1, &int5, &char1, strTab[2], strTab[3]));
+	TEST_ASSERT_EQUAL_INT(16, fscanf(filep, format, &int1, &res2, &flt1, &int2, strTab[0], &ptr1, &flt2, strTab[1], &flt3, &int3, &int4, &llint1, &uchar1, &char1, strTab[2], strTab[3]));
 
 	TEST_ASSERT_EQUAL_INT(1, int1);
 	TEST_ASSERT_EQUAL_UINT(2, res2);
@@ -1609,15 +1610,15 @@ TEST(stdio_scanf_rest, modifiers_mix)
 	TEST_ASSERT_EQUAL_UINT(132, int3);
 	TEST_ASSERT_EQUAL_INT(5, int4);
 	TEST_ASSERT_EQUAL_INT64(123456, llint1);
-	TEST_ASSERT_EQUAL_HEX8(0x56, int5);
+	TEST_ASSERT_EQUAL_HEX8(0x56, uchar1);
 	TEST_ASSERT_EQUAL_CHAR('a', char1);
 	TEST_ASSERT_EQUAL_STRING("lore", strTab[2]);
 	TEST_ASSERT_EQUAL_STRING("mipsum", strTab[3]);
 
-	ptr1 = int1 = int2 = int3 = int4 = int5 = res2 = flt1 = flt2 = flt3 = llint1 = char1 = 1;
+	ptr1 = int1 = int2 = int3 = int4 = res2 = flt1 = flt2 = flt3 = llint1 = char1 = uchar1 = 1;
 	memset(strTab, 0, sizeof(strTab));
 	rewind(filep);
-	TEST_ASSERT_EQUAL_INT(16, test_vfscanfWrapper(filep, format, &int1, &res2, &flt1, &int2, strTab[0], &ptr1, &flt2, strTab[1], &flt3, &int3, &int4, &llint1, &int5, &char1, strTab[2], strTab[3]));
+	TEST_ASSERT_EQUAL_INT(16, test_vfscanfWrapper(filep, format, &int1, &res2, &flt1, &int2, strTab[0], &ptr1, &flt2, strTab[1], &flt3, &int3, &int4, &llint1, &uchar1, &char1, strTab[2], strTab[3]));
 
 	TEST_ASSERT_EQUAL_INT(1, int1);
 	TEST_ASSERT_EQUAL_UINT(2, res2);
@@ -1631,14 +1632,14 @@ TEST(stdio_scanf_rest, modifiers_mix)
 	TEST_ASSERT_EQUAL_UINT(132, int3);
 	TEST_ASSERT_EQUAL_INT(5, int4);
 	TEST_ASSERT_EQUAL_INT64(123456, llint1);
-	TEST_ASSERT_EQUAL_HEX8(0x56, int5);
+	TEST_ASSERT_EQUAL_HEX8(0x56, uchar1);
 	TEST_ASSERT_EQUAL_CHAR('a', char1);
 	TEST_ASSERT_EQUAL_STRING("lore", strTab[2]);
 	TEST_ASSERT_EQUAL_STRING("mipsum", strTab[3]);
 
-	ptr1 = int1 = int2 = int3 = int4 = int5 = res2 = flt1 = flt2 = flt3 = llint1 = char1 = 1;
+	ptr1 = int1 = int2 = int3 = int4 = res2 = flt1 = flt2 = flt3 = llint1 = char1 = uchar1 = 1;
 	memset(strTab, 0, sizeof(strTab));
-	TEST_ASSERT_EQUAL_INT(16, test_vsscanfWrapper(str, format, &int1, &res2, &flt1, &int2, strTab[0], &ptr1, &flt2, strTab[1], &flt3, &int3, &int4, &llint1, &int5, &char1, strTab[2], strTab[3]));
+	TEST_ASSERT_EQUAL_INT(16, test_vsscanfWrapper(str, format, &int1, &res2, &flt1, &int2, strTab[0], &ptr1, &flt2, strTab[1], &flt3, &int3, &int4, &llint1, &uchar1, &char1, strTab[2], strTab[3]));
 
 	TEST_ASSERT_EQUAL_INT(1, int1);
 	TEST_ASSERT_EQUAL_UINT(2, res2);
@@ -1652,7 +1653,7 @@ TEST(stdio_scanf_rest, modifiers_mix)
 	TEST_ASSERT_EQUAL_UINT(132, int3);
 	TEST_ASSERT_EQUAL_INT(5, int4);
 	TEST_ASSERT_EQUAL_INT64(123456, llint1);
-	TEST_ASSERT_EQUAL_HEX8(0x56, int5);
+	TEST_ASSERT_EQUAL_HEX8(0x56, uchar1);
 	TEST_ASSERT_EQUAL_CHAR('a', char1);
 	TEST_ASSERT_EQUAL_STRING("lore", strTab[2]);
 	TEST_ASSERT_EQUAL_STRING("mipsum", strTab[3]);
