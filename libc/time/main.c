@@ -20,6 +20,9 @@ void runner(void)
 	RUN_TEST_GROUP(time_mktime);
 	RUN_TEST_GROUP(time_gmtime);
 	RUN_TEST_GROUP(time_strftime);
+	RUN_TEST_GROUP(test_utimes);
+	RUN_TEST_GROUP(test_futimes);
+	RUN_TEST_GROUP(test_lutimes);
 }
 
 
