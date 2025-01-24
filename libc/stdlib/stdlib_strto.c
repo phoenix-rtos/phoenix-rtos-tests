@@ -80,6 +80,10 @@ TEST(stdlib_strto, strtod_basic_hex)
 
 TEST(stdlib_strto, strtod_min_max)
 {
+#ifdef __TARGET_SPARCV8LEON
+	/* Disabled on SPARC because of issue https://github.com/phoenix-rtos/phoenix-rtos-project/issues/970 */
+	TEST_IGNORE();
+#endif
 	errno = 0;
 	TEST_ASSERT_EQUAL_DOUBLE(DBL_MIN, strtod("2.2250738585072013e-308", NULL));
 	TEST_ASSERT_EQUAL_INT(0, errno);
@@ -134,6 +138,10 @@ TEST(stdlib_strto, strtof_basic_hex)
 
 TEST(stdlib_strto, strtof_min_max)
 {
+#ifdef __TARGET_SPARCV8LEON
+	/* Disabled on SPARC because of issue https://github.com/phoenix-rtos/phoenix-rtos-project/issues/970 */
+	TEST_IGNORE();
+#endif
 	errno = 0;
 	TEST_ASSERT_EQUAL_FLOAT(FLT_MIN, strtof("1.17549435e-38", NULL));
 	TEST_ASSERT_EQUAL_INT(0, errno);
@@ -188,6 +196,10 @@ TEST(stdlib_strto, strtold_basic_hex)
 
 TEST(stdlib_strto, strtold_min_max)
 {
+#ifdef __TARGET_SPARCV8LEON
+	/* Disabled on SPARC because of issue https://github.com/phoenix-rtos/phoenix-rtos-project/issues/970 */
+	TEST_IGNORE();
+#endif
 	/*
 	 * Phoenix-RTOS does not currently support long double numbers.
 	 * Consequently, long doubles are not being tested, instead, for this case, we have decided to test doubles
