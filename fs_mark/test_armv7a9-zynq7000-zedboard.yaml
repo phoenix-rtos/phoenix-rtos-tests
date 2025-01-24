@@ -1,0 +1,132 @@
+# This yaml contains armv7a9-zynq7000-zedboard specific fs_mark tests
+test:
+  type: harness
+  harness: fs_mark.py
+  # nightly: true
+
+  targets:
+    value: [armv7a9-zynq7000-zedboard]
+
+# TODO: full fs filling tests
+  tests:
+    # empty files
+    - name: fs_mark_emptyFiles
+      execute: fs_mark -d /fs_mark_test -s 0 -n 100 -v -S 0 -L 30
+
+    - name: fs_mark_emptyFiles_5_dirs
+      execute: fs_mark -d /fs_mark_test -D 5 -N 20 -s 0 -n 100 -v -S 0 -L 30
+
+    - name: fs_mark_emptyFiles_100_dirs
+      execute: fs_mark -d /fs_mark_test -D 100 -N 1 -s 0 -n 100 -v -S 0 -L 30
+
+    - name: fs_mark_emptyFiles_5_threads
+      execute: fs_mark -d /fs_mark_test -t 5 -D 4 -N 20 -s 0 -n 100 -v -S 0 -L 30
+
+    - name: fs_mark_emptyFiles_64_threads
+      execute: fs_mark -d /fs_mark_test -t 64 -D 64 -N 1 -s 0 -n 64 -v -S 0
+
+    # big file
+    - name: fs_mark_bigFile_allignedWrite
+      execute: fs_mark -d /fs_mark_test -s 1000000 -w 32 -n 1 -v -S 0
+
+    - name: fs_mark_bigFile_notAllignedWrite
+      execute: fs_mark -d /fs_mark_test -s 1000000 -w 113 -n 1 -v -S 0
+
+    - name: fs_mark_bigFile_bigWrite
+      execute: fs_mark -d /fs_mark_test -s 1000000 -w 1024 -n 1 -v -S 0
+
+    # s=256 w=32
+    - name: fs_mark_smallFiles_alignedWrite
+      execute: fs_mark -d /fs_mark_test -s 256 -w 32 -n 100 -v -S 0 -L 30
+
+    - name: fs_mark_smallFiles_alignedWrite_5_dirs
+      execute: fs_mark -d /fs_mark_test -D 5 -N 20 -s 256 -w 32 -n 100 -v -S 0 -L 30
+
+    - name: fs_mark_smallFiles_alignedWrite_100_dirs
+      execute: fs_mark -d /fs_mark_test -D 100 -N 1 -s 256 -w 32 -n 100 -v -S 0 -L 30
+
+    - name: fs_mark_smallFiles_alignedWrite_5_threads
+      execute: fs_mark -d /fs_mark_test -t 5 -D 5 -N 20 -s 256 -w 32 -n 100 -v -S 0 -L 30
+
+    - name: fs_mark_smallFiles_alignedWrite_64_threads
+      execute: fs_mark -d /fs_mark_test -t 64 -D 64 -N 1 -s 256 -w 32 -n 64 -v -S 0
+
+    # s=4096 w=32
+    - name: fs_mark_pageSizeFiles_alignedWrite
+      execute: fs_mark -d /fs_mark_test -s 4096 -w 32 -n 10 -v -S 0 -L 20
+
+    - name: fs_mark_pageSizeFiles_alignedWrite_5_dirs
+      execute: fs_mark -d /fs_mark_test -D 5 -N 2 -s 4096 -w 32 -n 10 -v -S 0 -L 20
+
+    - name: fs_mark_pageSizeFiles_alignedWrite_25_dirs
+      execute: fs_mark -d /fs_mark_test -D 25 -N 1 -s 4096 -w 32 -n 25 -v -S 0 -L 20
+
+    - name: fs_mark_pageSizeFiles_alignedWrite_5_threads
+      execute: fs_mark -d /fs_mark_test -t 5 -D 5 -N 2 -s 4096 -w 32 -n 10 -v -S 0 -L 10
+
+    - name: fs_mark_pageSizeFiles_alignedWrite_20_threads
+      execute: fs_mark -d /fs_mark_test -t 20 -D 20 -N 1 -s 4096 -w 32 -n 20 -v -S 0
+
+    # s=10000 w=32
+    - name: fs_mark_bigFiles_alignedWrite
+      execute: fs_mark -d /fs_mark_test -s 10000 -w 32 -n 10 -v -S 0 -L 20
+
+    - name: fs_mark_bigFiles_alignedWrite_5_dirs
+      execute: fs_mark -d /fs_mark_test -D 5 -N 2 -s 10000 -w 32 -n 10 -v -S 0 -L 20
+
+    - name: fs_mark_bigFiles_alignedWrite_25_dirs
+      execute: fs_mark -d /fs_mark_test -D 25 -N 1 -s 10000 -w 32 -n 25 -v -S 0 -L 10
+
+    - name: fs_mark_bigFiles_alignedWrite_5_threads
+      execute: fs_mark -d /fs_mark_test -t 5 -D 5 -N 2 -s 10000 -w 32 -n 10 -v -S 0 -L 5
+
+    - name: fs_mark_bigFiles_alignedWrite_10_threads
+      execute: fs_mark -d /fs_mark_test -t 10 -D 10 -N 1 -s 10000 -w 32 -n 10 -v -S 0
+
+    # s=256 w=113
+    - name: fs_mark_smallFiles_notAlignedWrite
+      execute: fs_mark -d /fs_mark_test -s 256 -w 113 -n 100 -v -S 0 -L 30
+
+    - name: fs_mark_smallFiles_notAlignedWrite_5_dirs
+      execute: fs_mark -d /fs_mark_test -D 5 -N 20 -s 256 -w 113 -n 100 -v -S 0 -L 30
+
+    - name: fs_mark_smallFiles_notAlignedWrite_100_dirs
+      execute: fs_mark -d /fs_mark_test -D 100 -N 1 -s 256 -w 113 -n 100 -v -S 0 -L 30
+
+    - name: fs_mark_smallFiles_notAlignedWrite_5_threads
+      execute: fs_mark -d /fs_mark_test -t 5 -D 5 -N 20 -s 256 -w 113 -n 100 -v -S 0 -L 30
+
+    - name: fs_mark_smallFiles_notAlignedWrite_64_threads
+      execute: fs_mark -d /fs_mark_test -t 64 -D 64 -N 1 -s 256 -w 113 -n 64 -v -S 0
+
+    # # s=4096 w=113
+    - name: fs_mark_pageSizeFiles_notAlignedWrite
+      execute: fs_mark -d /fs_mark_test -s 4096 -w 113 -n 10 -v -S 0 -L 20
+
+    - name: fs_mark_pageSizeFiles_notAlignedWrite_5_dirs
+      execute: fs_mark -d /fs_mark_test -D 5 -N 2 -s 4096 -w 113 -n 10 -v -S 0 -L 20
+
+    - name: fs_mark_pageSizeFiles_notAlignedWrite_25_dirs
+      execute: fs_mark -d /fs_mark_test -D 25 -N 1 -s 4096 -w 113 -n 25 -v -S 0 -L 20
+
+    - name: fs_mark_pageSizeFiles_notAlignedWrite_5_threads
+      execute: fs_mark -d /fs_mark_test -t 5 -D 5 -N 2 -s 4096 -w 113 -n 10 -v -S 0 -L 10
+
+    - name: fs_mark_pageSizeFiles_notAlignedWrite_20_threads
+      execute: fs_mark -d /fs_mark_test -t 20 -D 20 -N 1 -s 4096 -w 113 -n 20 -v -S 0
+
+    # # s=10000 w=113
+    - name: fs_mark_bigFiles_notAlignedWrite
+      execute: fs_mark -d /fs_mark_test -s 10000 -w 113 -n 10 -v -S 0 -L 20
+
+    - name: fs_mark_bigFiles_notAlignedWrite_5_dirs
+      execute: fs_mark -d /fs_mark_test -D 5 -N 2 -s 10000 -w 113 -n 10 -v -S 0 -L 20
+
+    - name: fs_mark_bigFiles_notAlignedWrite_25_dirs
+      execute: fs_mark -d /fs_mark_test -D 25 -N 1 -s 10000 -w 113 -n 25 -v -S 0 -L 10
+
+    - name: fs_mark_bigFiles_notAlignedWrite_5_threads
+      execute: fs_mark -d /fs_mark_test -t 5 -D 5 -N 2 -s 10000 -w 113 -n 10 -v -S 0 -L 5
+
+    - name: fs_mark_bigFiles_notAlignedWrite_10_threads
+      execute: fs_mark -d /fs_mark_test -t 10 -D 10 -N 1 -s 10000 -w 113 -n 10 -v -S 0
