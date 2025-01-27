@@ -3,6 +3,7 @@ from typing import Optional, List
 
 import pexpect
 
+import psh.tools.psh as psh
 from trunner.dut import Dut
 from trunner.text import bold
 from trunner.types import TestResult, TestStage, Status
@@ -67,6 +68,7 @@ class ShellHarness(IntermediateHarness):
         self.prompt_timeout = prompt_timeout
         self.suppress_dmesg = suppress_dmesg
 
+
     def assert_prompt(self):
         try:
             self.dut.expect_exact(self.prompt, timeout=self.prompt_timeout)
@@ -76,6 +78,18 @@ class ShellHarness(IntermediateHarness):
                 expected=self.prompt,
                 output=self.dut.before,
             ) from e
+
+
+    def assert_test_succeded(self):
+        try:
+            self.assert_prompt()
+        except ShellError:
+            # If the prompt was lost, check the system's responsiveness
+            self.dut.send("\n")
+            self.assert_prompt()
+
+        psh.assert_cmd_succeded(self.dut)
+
 
     def __call__(self, result: TestResult) -> TestResult:
         self.assert_prompt()
@@ -100,7 +114,7 @@ class ShellHarness(IntermediateHarness):
         test_result = self.next_harness(result)
 
         if test_result.status is not Status.FAIL:
-            self.assert_prompt()
+            self.assert_test_succeded()
 
             # re-enable log output to release collected output
             if self.suppress_dmesg:
