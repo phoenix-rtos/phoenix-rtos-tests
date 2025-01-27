@@ -45,7 +45,7 @@ def _check_result(pexpect_proc, result):
     if result == "dont-check":
         return
     elif result == "success":
-        assert_cmd_successed(pexpect_proc)
+        assert_cmd_succeded(pexpect_proc)
     elif result == "fail":
         assert_cmd_failed(pexpect_proc)
     else:
@@ -140,7 +140,7 @@ def assert_cmd_failed(pexpect_proc):
     assert get_exit_code(pexpect_proc) != 0, "The exit status of last passed command equals 0!"
 
 
-def assert_cmd_successed(pexpect_proc):
+def assert_cmd_succeded(pexpect_proc):
     assert get_exit_code(pexpect_proc) == 0, "The exit status of last passed command does not equal 0!"
 
 
