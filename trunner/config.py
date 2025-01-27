@@ -1,7 +1,7 @@
 import importlib.util
 import shlex
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Set
 
@@ -152,6 +152,7 @@ class ConfigParser:
 
             execute_binary = False
 
+        self.ctx = replace(self.ctx, cmd=cmd)
         cmd = shlex.split(cmd)
         if not cmd:
             raise ParserError("execute/run attribute cannot be empty")
