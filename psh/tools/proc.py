@@ -51,7 +51,7 @@ def create_psh_processes(p, count):
     old_pids = get_psh_pids(p)
 
     for _ in range(count):
-        psh.assert_exec(p, "psh", msg="Failed to create new psh process")
+        psh.assert_cmd(p, "psh", msg="Failed to create new psh process", exec_prefix=True)
 
     new_pids = get_psh_pids(p)
     new_pids = [pid for pid in new_pids if pid not in old_pids]

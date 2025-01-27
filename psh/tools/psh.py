@@ -55,11 +55,24 @@ def _check_result(pexpect_proc, result):
         )
 
 
-def assert_cmd(pexpect_proc, cmd, *, expected="", result="success", msg="", is_regex=False, timeout=-1):
-    """Sends specified command and asserts that it's displayed correctly
+def assert_cmd(
+    pexpect_proc,
+    cmd,
+    *,
+    expected="",
+    result="success",
+    msg="",
+    is_regex=False,
+    exec_prefix=False,
+    timeout=-1
+):
+    """Sends command and asserts that it's displayed correctly
     with optional expected output and next prompt. Exit status is asserted depending on `result`"""
-    pexpect_proc.sendline(cmd)
-    cmd = re.escape(cmd)
+
+    exec_cmd = _get_exec_cmd(cmd) if exec_prefix else cmd
+
+    pexpect_proc.sendline(exec_cmd)
+    exec_cmd = re.escape(exec_cmd)
     exp_regex = ""
     if is_regex:
         exp_regex = expected
@@ -70,7 +83,7 @@ def assert_cmd(pexpect_proc, cmd, *, expected="", result="success", msg="", is_r
             line = re.escape(line)
             exp_regex += line + EOL
 
-    exp_regex = cmd + EOL + exp_regex + PROMPT
+    exp_regex = exec_cmd + EOL + exp_regex + PROMPT
     exp_readable = _readable(exp_regex)
     msg = f"Expected output regex was: \n---\n{exp_readable}\n---\n" + msg
 
@@ -115,14 +128,6 @@ def _get_exec_cmd(prog):
         return f"/bin/{prog}"
     else:
         return f"sysexec {prog}"
-
-
-def assert_exec(pexpect_proc, prog, expected="", msg=""):
-    """Executes specified program and asserts that it's displayed correctly
-    with optional expected output and next prompt"""
-    exec_cmd = _get_exec_cmd(prog)
-
-    assert_cmd(pexpect_proc, exec_cmd, expected=expected, result="success", msg=msg)
 
 
 def get_exit_code(pexpect_proc):
