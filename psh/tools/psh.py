@@ -55,6 +55,17 @@ def _check_result(pexpect_proc, result):
         )
 
 
+def send_cmd(pexpect_proc, cmd, *, exec_prefix=False, timeout=-1):
+    """Send command and only check it was sent correctly"""
+
+    cmd = _get_exec_cmd(cmd) if exec_prefix else cmd
+
+    pexpect_proc.sendline(cmd)
+    cmd_re = rf"{re.escape(cmd)}" + EOL
+
+    assert pexpect_proc.expect([cmd_re, pexpect.TIMEOUT, pexpect.EOF], timeout=timeout) == 0
+
+
 def assert_cmd(pexpect_proc, cmd, *, expected="", result="success", msg="", is_regex=False, exec_prefix=False, timeout=-1):
     """Sends command and asserts that it's displayed correctly
     with optional expected output and next prompt. Exit status is asserted depending on `result`"""
