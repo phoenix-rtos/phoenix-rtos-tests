@@ -24,10 +24,11 @@ def _count_sleep_pshs(p):
 
 
 def assert_one_proc(p, already_spawned, args=False):
-    psh.assert_exec(
+    psh.assert_cmd(
         p,
         "psh",
         msg="Prompt hasn't been seen when creating new psh process using runfile",
+        exec_prefix=True
     )
     assert (
         _count_sleep_pshs(p) == already_spawned + 1

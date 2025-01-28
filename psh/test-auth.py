@@ -89,4 +89,4 @@ def harness(p):
         p.send(BACKSPACE)
     p.send(cred_ok.passwd + '\n')
     psh.assert_prompt(p, msg='Login should pass but failed', timeout=1)
-    psh.assert_cmd_successed(p)
+    psh.assert_cmd_succeded(p)
