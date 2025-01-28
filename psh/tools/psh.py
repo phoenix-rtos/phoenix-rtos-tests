@@ -55,6 +55,18 @@ def _check_result(pexpect_proc, result):
         )
 
 
+def send_cmd(pexpect_proc, cmd, *, exec_prefix=False, timeout=-1):
+    """Sends command without any checks"""
+
+    exec_cmd = _get_exec_cmd(cmd) if exec_prefix else cmd
+
+    pexpect_proc.sendline(exec_cmd)
+    exec_cmd = re.escape(exec_cmd)
+    exp_regex = exec_cmd + EOL
+
+    assert pexpect_proc.expect([exp_regex, pexpect.TIMEOUT, pexpect.EOF], timeout=timeout) == 0
+
+
 def assert_cmd(
     pexpect_proc,
     cmd,
