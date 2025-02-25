@@ -342,10 +342,38 @@ class TestSubResult(TestResult):
         self.set_stage(TestStage.RUN)
 
     def __str__(self) -> str:
-        out = f"\t{bold(self.subname)}: {self.status}"
+        tab = " " * 6
+        out = f"{tab}{bold(self.subname)}: {self.status}"
 
         if self.msg and self.status != Status.OK:
-            out += ": " + self.msg
+            shift_len = len(f"{self.subname}: {self.status.name}: ")
+            msg_lines = self.msg.splitlines()
+            first_line, *remaining_lines = msg_lines
+
+            if shift_len + max(len(line) for line in msg_lines) + len(tab) > 120:
+                if remaining_lines:
+                    remaining_lines = "\n" + "\n".join(
+                                f"{tab}{tab}{line}"
+                                for line in remaining_lines
+                            )
+                else:
+                    remaining_lines = ""
+
+                if shift_len + len(first_line) + len(tab) > 120:
+                    out += "\n" + f"{tab}{tab}{first_line}"
+                else:
+                    out += ": " + first_line + remaining_lines
+            else:
+                # Make msg with newlines aligned
+                if remaining_lines:
+                    remaining_lines = "\n" + "\n".join(
+                        f'{tab}{" " * shift_len}{line}'
+                        for line in remaining_lines
+                    )
+                else:
+                    remaining_lines = ""
+
+                out += ": " + first_line + remaining_lines
 
         return out
 
