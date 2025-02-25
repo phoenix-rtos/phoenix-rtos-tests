@@ -1,0 +1,7 @@
+test:
+    type: unity
+    tests:
+        - name: unit
+          execute: test-strncat
+          targets:
+            include: [host-generic-pc]
