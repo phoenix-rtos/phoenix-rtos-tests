@@ -30,7 +30,7 @@ static struct {
 	completion_t scomp; /* Test setup completion */
 
 	/* Thread stacks */
-	char stack[3][256] __attribute__((aligned(8)));
+	char stack[3][1024] __attribute__((aligned(8)));
 } priority_common;
 
 
@@ -146,7 +146,7 @@ static void test_priority_inversion(void *arg)
 
 int main(void)
 {
-	char stack[256] __attribute__((aligned(8)));
+	static char stack[1024] __attribute__((aligned(8)));
 
 	/* Run priority inversion test thread */
 	beginthread(test_priority_inversion, 4, stack, sizeof(stack), NULL);
