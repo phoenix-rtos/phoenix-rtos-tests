@@ -358,6 +358,7 @@ TEST(test_unix_socket, close)
 	unsigned int i;
 	int fd[2];
 	ssize_t n;
+	const char *socket_name = "/tmp/test_close";
 
 	for (i = 0; i < CLOSE_LOOP_CNT; ++i) {
 		if (socketpair(AF_UNIX, SOCK_STREAM, 0, fd) < 0)
@@ -371,7 +372,7 @@ TEST(test_unix_socket, close)
 	// TODO: check memory leak
 
 	for (i = 0; i < CLOSE_LOOP_CNT; ++i) {
-		if ((fd[0] = unix_named_socket(SOCK_DGRAM, "/tmp/test_close")) < 0)
+		if ((fd[0] = unix_named_socket(SOCK_DGRAM, socket_name)) < 0)
 			FAIL("unix_named_socket");
 
 		n = close(fd[0]);
@@ -383,7 +384,7 @@ TEST(test_unix_socket, close)
 		int sfd, rfd;
 		size_t rfdcnt;
 
-		if ((sfd = unix_named_socket(SOCK_DGRAM, "/tmp/test_close")) < 0)
+		if ((sfd = unix_named_socket(SOCK_DGRAM, socket_name)) < 0)
 			FAIL("unix_named_socket");
 
 		if (socketpair(AF_UNIX, SOCK_STREAM, 0, fd) < 0)
@@ -406,6 +407,7 @@ TEST(test_unix_socket, close)
 		TEST_ASSERT(n == 0);
 	}
 	// TODO: check memory leak
+	unlink(socket_name);
 }
 
 
@@ -820,21 +822,23 @@ static void unix_connect_after_close(int type)
 {
 	int fd[3];
 	int rv;
+	const char *socket_name = "/tmp/test_connect_after_close";
 
 	if (socketpair(AF_UNIX, type, 0, fd) < 0)
 		FAIL("socketpair");
 
 	close(fd[1]);
 
-	if ((fd[2] = unix_named_socket(SOCK_DGRAM, "/tmp/test_connect_after_close")) < 0)
+	if ((fd[2] = unix_named_socket(SOCK_DGRAM, socket_name)) < 0)
 		FAIL("unix_named_socket(SOCK_DGRAM, ");
 
-	rv = connect_to_named(fd[0], "/tmp/test_connect_after_close");
+	rv = connect_to_named(fd[0], socket_name);
 	TEST_ASSERT(rv == -1);
 	/* EPROTOTYPE??? */
 	// TEST_ASSERT(errno == EISCONN);
 
 	close(fd[0]);
+	unlink(socket_name);
 }
 
 
