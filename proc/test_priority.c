@@ -110,29 +110,30 @@ static void test_priority_hthr(void *arg)
 
 static void test_priority_inversion(void *arg)
 {
+	int tid[3];
 	/* Init completions */
 	completion_init(&priority_common.comp);
 	completion_init(&priority_common.lcomp);
 	completion_init(&priority_common.scomp);
 
 	/* Run low priority thread */
-	beginthread(test_priority_lthr, 6, priority_common.stack[0], sizeof(priority_common.stack[0]), NULL);
+	beginthreadex(test_priority_lthr, 6, priority_common.stack[0], sizeof(priority_common.stack[0]), NULL, &tid[0]);
 	completion_wait(&priority_common.lcomp);
 
 	/* Run middle priority thread (starves the low priority thread) */
-	beginthread(test_priority_mthr, 5, priority_common.stack[1], sizeof(priority_common.stack[1]), NULL);
+	beginthreadex(test_priority_mthr, 5, priority_common.stack[1], sizeof(priority_common.stack[1]), NULL, &tid[1]);
 
 	/* Finished test setup (signal low priority thread) */
 	completion_finish(&priority_common.scomp);
 
 	/* Run high priority thread */
-	beginthread(test_priority_hthr, 0, priority_common.stack[2], sizeof(priority_common.stack[2]), NULL);
+	beginthreadex(test_priority_hthr, 0, priority_common.stack[2], sizeof(priority_common.stack[2]), NULL, &tid[2]);
 	completion_wait(&priority_common.comp);
 
 	/* Join the threads */
-	threadJoin(-1, 0);
-	threadJoin(-1, 0);
-	threadJoin(-1, 0);
+	threadJoin(tid[0], 0);
+	threadJoin(tid[1], 0);
+	threadJoin(tid[2], 0);
 
 	/* Clean up completions */
 	completion_done(&priority_common.comp);
