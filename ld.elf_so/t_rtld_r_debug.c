@@ -118,7 +118,11 @@ check_r_debug_return_link_map(const char *name, struct link_map **rmap)
 				*rmap = map;
 			found = true;
 		} else if (strstr(map->l_name, "ld.elf_so") != NULL) {
+#ifdef __FDPIC__
+			loader = (void *)map->l_addr.got_value;
+#else
 			loader = (void *)map->l_addr;
+#endif
 		}
 	}
 	TEST_ASSERT(found);

@@ -69,7 +69,7 @@ TEST(t_dlerror_false, rtld_dlerror_false)
 	 * include libm.so.
 	 */
 
-	handle = dlopen("libm.so", RTLD_LAZY);
+	handle = dlopen("libphoenix.so.3", RTLD_LAZY);
 	error = dlerror();
 	TEST_ASSERT(error == NULL);
 	TEST_ASSERT(handle != NULL);
