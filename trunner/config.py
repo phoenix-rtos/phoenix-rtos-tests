@@ -1,7 +1,7 @@
 import importlib.util
 import shlex
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Set
 
@@ -42,6 +42,7 @@ class ConfigParser:
     @dataclass
     class MainConfig:
         targets: Optional[Set] = None
+        apps: Optional[List] = None
         type: Optional[str] = None
         ignore: bool = False
         nightly: bool = False
@@ -103,7 +104,7 @@ class ConfigParser:
         apps = config.get("load", [])
         apps_to_boot = []
 
-        for app in apps:
+        for app in apps + self.main.apps:
             file = app.get("app", None)
             if not file:
                 raise ParserError("generic error")
@@ -152,6 +153,7 @@ class ConfigParser:
 
             execute_binary = False
 
+        self.ctx = replace(self.ctx, cmd=cmd)
         cmd = shlex.split(cmd)
         if not cmd:
             raise ParserError("execute/run attribute cannot be empty")
@@ -296,6 +298,7 @@ class ConfigParser:
         if "targets" in config:
             self.main.targets = self._build_targets(config["targets"])
 
+        self.main.apps = config.get("load", [])
         self.main.ignore = config.get("ignore", False)
         self.main.nightly = config.get("nightly", False)
 
