@@ -54,7 +54,11 @@ class ARMv7A9TargetRebooter(Rebooter):
         self.dut.clear_buffer()
 
     def _reboot_soft(self):
-        self._reboot_hard()
+        self.host.set_reset(0)
+        time.sleep(0.5)
+        self.dut.clear_buffer()
+        self.host.set_reset(1)
+        time.sleep(0.25)
 
     def _reboot_hard(self):
 
