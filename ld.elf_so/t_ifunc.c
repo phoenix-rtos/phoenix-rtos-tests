@@ -48,12 +48,12 @@
 /* Phoenix doesn't have util.h header. */
 #define easprintf(str, fmt, ...) TEST_ASSERT(asprintf(str, fmt, __VA_ARGS__) != -1)
 
-#if defined(__aarch64__) || \
+#if (defined(__aarch64__) || \
 	defined(__arm__) || \
 	defined(__i386__) || \
 	defined(__powerpc__) || \
 	defined(__sparc__) || \
-	defined(__x86_64__)
+	defined(__x86_64__)) && !defined(NOMMU)
 #define LINKER_SUPPORT 1
 #else
 #define LINKER_SUPPORT 0

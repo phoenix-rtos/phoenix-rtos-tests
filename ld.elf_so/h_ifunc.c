@@ -42,7 +42,7 @@ main(int argc, char **argv)
 /*
  * Not supported on hppa
  */
-#if defined(__hppa__)
+#if defined(__hppa__) || defined(NOMMU)
 	return 1;
 #else
 	return ifunc() != atoll(argv[1]);

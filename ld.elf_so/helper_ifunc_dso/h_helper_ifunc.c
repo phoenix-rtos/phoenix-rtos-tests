@@ -36,7 +36,8 @@
 /*
  * Not supported on hppa
  */
-#if !defined(__hppa__)
+/* TODO: investigate Error: symbol type "gnu_indirect_function" is supported only by GNU and FreeBSD targets on NOMMU */
+#if !defined(__hppa__) && !defined(NOMMU)
 
 static long long
 ifunc1(void)

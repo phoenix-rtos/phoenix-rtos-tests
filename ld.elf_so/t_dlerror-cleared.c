@@ -67,7 +67,7 @@ TEST(t_dlerror_cleared, rtld_dlerror_cleared)
 	 */
 	handle = dlopen("libnonexistent.so", RTLD_LAZY);
 	TEST_ASSERT(handle == NULL);
-	handle = dlopen("libm.so", RTLD_NOW);
+	handle = dlopen("libphoenix.so.3", RTLD_NOW);
 	TEST_ASSERT(handle);
 	error = dlerror();
 	TEST_ASSERT(error);
