@@ -59,7 +59,6 @@ include $(binary-dyn.mk)
 NAME := t_dlerror-cleared
 LOCAL_SRCS := t_dlerror-cleared.c
 DEP_LIBS := unity
-LIBS_SHARED := librtld_stubs
 include $(binary-dyn.mk)
 
 # t_dlerror-false
@@ -67,7 +66,6 @@ NAME := t_dlerror-false
 LOCAL_SRCS := t_dlerror-false.c
 LOCAL_LDFLAGS := $(LDFLAGS_PREFIX)-rpath,/var/nonexistent/lib
 DEP_LIBS := unity
-LIBS_SHARED := librtld_stubs
 include $(binary-dyn.mk)
 
 # t_dlinfo
@@ -159,7 +157,7 @@ NAME := t_tls_extern
 LOCAL_SRCS := t_tls_extern.c
 LOCAL_LDFLAGS := $(LDFLAGS_PREFIX)-rpath,$(SHARED_LIBS_DIR)
 DEP_LIBS := unity
-DEPS := libh_def_dynamic libh_use_dynamic libh_onlyuse_static libh_onlyuse_dynamic libh_onlydef libh_def_static libh_use_static libh_abuse_static libh_abuse_dynamic
+DEPS := libh_def_dynamic libh_use_dynamic libh_onlyuse_static libh_onlyuse_dynamic libh_onlydef libh_def_static libh_use_static libh_abuse_static libh_abuse_dynamic libh_onlyctor_dynamic
 LIBS_SHARED := librtld_stubs
 include $(binary-dyn.mk)
 
