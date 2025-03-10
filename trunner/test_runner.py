@@ -244,6 +244,10 @@ class TestRunner:
         # Ensure first test will start with reboot
         last_test_failed = True
 
+        # Unload data before starting tests
+        if self.ctx.should_flash is not False and self.ctx.target.experimental is False:
+            self.target.dut.expect(r".+")
+
         for test in tests:
             # By default we don't want to reboot the entire device to speed up the test execution)
             # if not explicitly required by the test.
