@@ -71,7 +71,9 @@ class ARMv7A7Target(TargetBase, PloInterface, Rebooter):
         if test.should_reboot:
             builder.add(RebooterHarness(self.rebooter))
 
-        if test.shell is not None:
+        if test.type == "pytest":
+            builder.add(TestStartRunningHarness())
+        elif test.shell is not None:
             builder.add(ShellHarness(self.dut, self.shell_prompt, test.shell.cmd))
         else:
             builder.add(TestStartRunningHarness())
