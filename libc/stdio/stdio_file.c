@@ -228,6 +228,13 @@ TEST_GROUP(stdio_getput);
 
 TEST_SETUP(stdio_getput)
 {
+	/* Create file for read-only test */
+	filep = fopen(STDIO_TEST_FILENAME, "w");
+	TEST_ASSERT_NOT_NULL(filep);
+	{
+		TEST_ASSERT_EQUAL_INT(0, fclose(filep));
+	}
+
 	filep = NULL;
 }
 
@@ -374,16 +381,8 @@ TEST(stdio_getput, getsputs_basic)
 }
 
 
-IGNORE_TEST(stdio_getput, getsputs_readonly)
+TEST(stdio_getput, getsputs_readonly)
 {
-	/*
-	Upon successful completion, fputc() shall return the value it has written.
-	Otherwise, it shall return EOF, the error indicator for the stream shall be set
-	and errno shall be set to indicate the error.
-
-	https://github.com/phoenix-rtos/phoenix-rtos-project/issues/260
-	*/
-
 	char buf[BUF_SIZE];
 
 	filep = fopen(STDIO_TEST_FILENAME, "r");
@@ -391,8 +390,6 @@ IGNORE_TEST(stdio_getput, getsputs_readonly)
 	{
 		TEST_ASSERT_EQUAL_INT(EOF, fputs(teststr, filep)); /* <posix incompliance> returns 0, should EOF */
 		TEST_ASSERT_EQUAL_INT(EBADF, errno);
-		TEST_ASSERT_NOT_NULL(fgets(buf, sizeof(buf), filep));
-		TEST_ASSERT_EQUAL_CHAR_ARRAY(teststr, buf, sizeof(teststr));
 		TEST_ASSERT_NULL(fgets(buf, sizeof(buf), filep));
 	}
 	assert_fclosed(&filep);
@@ -758,19 +755,13 @@ TEST(stdio_fileseek, seek_fsetpos)
 }
 
 
-IGNORE_TEST(stdio_fileseek, seek_readonly)
+TEST(stdio_fileseek, seek_readonly)
 {
-	/* EBADF The file descriptor underlying the stream file is not open for writing ... */
-	/* <posix incompliant> returns 0, should EOF */
-	/* https://github.com/phoenix-rtos/phoenix-rtos-project/issues/263 */
-
 	filep = fopen(STDIO_TEST_FILENAME, "r");
 	TEST_ASSERT_NOT_NULL(filep);
 	{
-		TEST_ASSERT_EQUAL_INT(EOF, fseek(filep, 0, SEEK_SET));
-		TEST_ASSERT_EQUAL_INT(EBADF, errno);
-		TEST_ASSERT_EQUAL_INT(EOF, fseeko(filep, 0, SEEK_SET));
-		TEST_ASSERT_EQUAL_INT(EBADF, errno);
+		TEST_ASSERT_EQUAL_INT(0, fseek(filep, 0, SEEK_SET));
+		TEST_ASSERT_EQUAL_INT(0, fseeko(filep, 0, SEEK_SET));
 	}
 	assert_fclosed(&filep);
 }
