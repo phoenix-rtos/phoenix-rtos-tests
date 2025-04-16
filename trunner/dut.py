@@ -154,6 +154,10 @@ class ProcessDut(Dut):
     def close(self):
         """Forcefully close the child process"""
         if self.pexpect_proc:
+            # when a child process needs to be forcefully terminated, pexpect sends SIGHUP, SIGINT and SIGKILL signals
+            # this value defines how long pexpect waits before checking if the child process is still alive
+            # by default, it's 0.1s, but it's increased here because the child sometimes appeared to still be running
+            self.pexpect_proc.ptyproc.delayafterterminate = 0.5
             self.pexpect_proc.close()
 
     def open(self):
