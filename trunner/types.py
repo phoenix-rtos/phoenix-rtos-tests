@@ -34,9 +34,9 @@ class Status(Enum):
 
     @classmethod
     def from_str(cls, s):
-        if s in ("FAIL", "FAILED", "BAD"):
+        if s in ("FAIL", "FAILED", "BAD", "ERROR"):
             return Status.FAIL
-        if s in ("OK", "PASS", "PASSED"):
+        if s in ("OK", "PASS", "PASSED", "XFAIL", "XPASS"):
             return Status.OK
         if s in ("SKIP", "SKIPPED", "IGNORE", "IGNORED", "UNTESTED"):
             return Status.SKIP
