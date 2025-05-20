@@ -51,6 +51,11 @@ test:
       targets:
         include: [host-generic-pc]
 
+    - name: signal
+      execute: test-libc-signal
+      targets:
+        include: [host-generic-pc]
+
     - name: math
       execute: test-libc-math
       targets:
