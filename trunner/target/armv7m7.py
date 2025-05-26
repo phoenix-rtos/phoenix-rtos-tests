@@ -27,6 +27,8 @@ class ARMv7M7TargetRebooter(Rebooter):
         # FIXME due to problems with relay use only soft reboot
         self._reboot_soft()
 
+    def _reboot_soft(self):
+        pass
 
 class ARMv7M7Target(TargetBase):
     image = PloImageProperty(file="phoenix.disk", source="usb0", memory_bank="flash0")
