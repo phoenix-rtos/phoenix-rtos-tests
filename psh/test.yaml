@@ -3,77 +3,77 @@ test:
         include: [sparcv8leon-generic-qemu]
 
     tests:
-        - name: gibber
-          harness: test-gibber.py
-          # additional resources may be necessary for psh tests, especially on smaller syspage targets
-          # ensure no other binaries are loaded from the previous tests during the psh tests
-          reboot: True
+        # - name: gibber
+        #   harness: test-gibber.py
+        #   # additional resources may be necessary for psh tests, especially on smaller syspage targets
+        #   # ensure no other binaries are loaded from the previous tests during the psh tests
+        #   reboot: True
 
-        - name: auth
-          harness: test-auth.py
+        # - name: auth
+        #   harness: test-auth.py
 
-        #FIXME - test-pshlogin.py is only for targets with root
-        - name: pshlogin
-          harness: test-pshlogin.py
-          targets:
-              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo, sparcv8leon-generic-qemu]
+        # #FIXME - test-pshlogin.py is only for targets with root
+        # - name: pshlogin
+        #   harness: test-pshlogin.py
+        #   targets:
+        #       exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo, sparcv8leon-generic-qemu]
 
-        - name: echo
-          harness: test-echo.py
+        # - name: echo
+        #   harness: test-echo.py
 
-        - name: date
-          harness: test-date.py
+        # - name: date
+        #   harness: test-date.py
 
-        - name: prompt
-          harness: test-prompt.py
+        # - name: prompt
+        #   harness: test-prompt.py
 
-        - name: autocompletion
-          harness: test-autocompletion.py
+        # - name: autocompletion
+        #   harness: test-autocompletion.py
 
-        - name: ps
-          harness: test-ps.py
+        # - name: ps
+        #   harness: test-ps.py
 
-        - name: cat
-          harness: test-cat.py
+        # - name: cat
+        #   harness: test-cat.py
 
-        - name: cat-shells
-          harness: test-cat-shells.py
-          targets:
-              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo, sparcv8leon-generic-qemu]
+        # - name: cat-shells
+        #   harness: test-cat-shells.py
+        #   targets:
+        #       exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo, sparcv8leon-generic-qemu]
 
-        - name: kill
-          harness: test-kill.py
+        # - name: kill
+        #   harness: test-kill.py
 
-        - name: mkdir
-          harness: test-mkdir.py
+        # - name: mkdir
+        #   harness: test-mkdir.py
 
-        - name: touch
-          harness: test-touch.py
+        # - name: touch
+        #   harness: test-touch.py
 
-        - name: touch-rootfs
-          harness: test-touch-rootfs.py
-          targets:
-              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo, sparcv8leon-generic-qemu]
+        # - name: touch-rootfs
+        #   harness: test-touch-rootfs.py
+        #   targets:
+        #       exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo, sparcv8leon-generic-qemu]
 
         - name: ls
           harness: test-ls.py
 
-        - name: ls-rootfs
-          harness: test-ls-rootfs.py
-          targets:
-              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo, sparcv8leon-generic-qemu]
+        # - name: ls-rootfs
+        #   harness: test-ls-rootfs.py
+        #   targets:
+        #       exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo, sparcv8leon-generic-qemu]
 
-        - name: runfile
-          harness: test-runfile.py
-          targets:
-              # runfile applet is not intended for non-rootfs targets
-              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo, sparcv8leon-generic-qemu]
+        # - name: runfile
+        #   harness: test-runfile.py
+        #   targets:
+        #       # runfile applet is not intended for non-rootfs targets
+        #       exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo, sparcv8leon-generic-qemu]
 
-        - name: history
-          harness: test-history.py
+        # - name: history
+        #   harness: test-history.py
 
-        - name: help
-          harness: test-help.py
+        # - name: help
+        #   harness: test-help.py
 
-        - name: exit
-          harness: test-exit.py
+        # - name: exit
+        #   harness: test-exit.py

@@ -1,6 +1,7 @@
 import shlex
 from typing import Optional, List
 
+import time
 import pexpect
 
 from trunner.dut import Dut
@@ -78,6 +79,10 @@ class ShellHarness(IntermediateHarness):
             ) from e
 
     def __call__(self, result: TestResult) -> TestResult:
+        self.dut.sendline("")
+        self.assert_prompt()
+        self.dut.sendline("reboot")
+        time.sleep(2)
         self.assert_prompt()
 
         # suppress klog output to console while test is running to avoid problems with parsing
