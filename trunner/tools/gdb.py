@@ -1,8 +1,9 @@
 import io
 import signal
+import socket
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Optional, Union, List
+from typing import Optional, Union, List, TextIO
 
 import pexpect
 
@@ -100,14 +101,21 @@ class OpenocdProcess:
         target: Optional[str] = None,
         board: Optional[str] = None,
         extra_args: Optional[List[str]] = None,
+        host_log: Optional[TextIO] = None,
+        cwd: Optional[Path] = None,
     ):
         self.proc = None
         self.target = target
+        self._shutdown_done = False
         self.interface = interface
+        self.target = target
         self.board = board
         self.output = ""
         self.logfile = io.StringIO()
         self.extra_args = extra_args
+        self.host_log = host_log if host_log is not None else io.StringIO()
+        self.cwd = cwd
+        self.output = ""
 
         if board:
             if target or interface:
@@ -126,22 +134,43 @@ class OpenocdProcess:
         if self.extra_args:
             args.extend(self.extra_args)
 
-        self.proc = pexpect.spawn("openocd", args, encoding="ascii", logfile=self.logfile)
+        self.proc = pexpect.spawn("openocd", args, encoding="ascii", logfile=self.logfile, cwd=self.cwd)
 
         try:
             self.proc.expect_exact("Info : Listening on port")
         except (pexpect.TIMEOUT, pexpect.EOF) as e:
-            raise OpenocdError("Failed to connect to target", self.logfile.getvalue()) from e
+            self.output = self.logfile.getvalue()
+            raise OpenocdError("Failed to connect to target", output=self.output) from e
 
     def _close(self):
         if not self.proc:
             return
 
-        clear_pexpect_buffer(self.proc)
-        self.proc.close(force=True)
-        self.proc.wait()
-        self.output = self.logfile.getvalue()
-        self.logfile.close()
+        try:
+            self.proc.expect(pexpect.EOF, timeout=15)
+            self.proc.close()
+            self.output = self.logfile.getvalue()
+        except pexpect.TIMEOUT:
+            clear_pexpect_buffer(self.proc)
+            self.proc.close(force=True)
+            self.output = self.logfile.getvalue()
+            raise OpenocdError(f"Timeout: OpenOCD exited with signal {self.proc.signalstatus}", output=self.output)
+
+        if self.proc.exitstatus != 0:
+            raise OpenocdError(f"OpenOCD exited with status {self.proc.exitstatus}", output=self.output)
+
+    def shutdown(self):
+        if self._shutdown_done:
+            return
+
+        try:
+            with socket.create_connection(("localhost", 4444), timeout=2.0) as sock:
+                sock.sendall(b"shutdown\n")
+        except (socket.timeout, ConnectionRefusedError) as e:
+            self.output = self.logfile.getvalue()
+            raise OpenocdError("Failed to send shutdown to OpenOCD", output=self.output) from e
+
+        self._shutdown_done = True
 
     def run(self):
         try:
@@ -158,9 +187,13 @@ class OpenocdGdbServer(OpenocdProcess):
     def run(self):
         try:
             self._start()
-            yield
+            yield self
         finally:
             self._close()
+
+    def _close(self):
+        self.shutdown()
+        super()._close()
 
 
 class JLinkGdbServer:
