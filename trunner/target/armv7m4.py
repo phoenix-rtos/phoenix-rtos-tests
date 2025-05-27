@@ -1,4 +1,3 @@
-import subprocess
 import time
 from pathlib import Path
 from typing import Callable, Optional, Sequence, TextIO
@@ -18,7 +17,7 @@ from trunner.harness import (
     HarnessBuilder,
     FlashError,
 )
-from trunner.tools import GdbInteractive, OpenocdGdbServer, OpenocdProcess
+from trunner.tools import GdbInteractive, OpenocdGdbServer, OpenocdProcess, OpenocdError
 from trunner.types import AppOptions, TestOptions, TestResult
 from .base import TargetBase, find_port
 
@@ -143,14 +142,18 @@ class STM32L4x6Target(TargetBase):
                 f"program {self.image_file} {self.image_addr:#x} verify reset exit",
             ]
 
-            OpenocdProcess(host_log=host_log, interface="stlink", target="stm32l4x", extra_args=extra_args).run()
+            OpenocdProcess(
+                interface="stlink",
+                target="stm32l4x",
+                extra_args=extra_args,
+                host_log=host_log,
+                cwd=Path(self.boot_dir()),
+            ).run()
 
         except FileNotFoundError as e:
             raise FlashError(msg=str(e)) from e
-        except subprocess.CalledProcessError as e:
-            raise FlashError(msg=str(e), output=e.stdout) from e
-        except subprocess.TimeoutExpired as e:
-            raise FlashError(msg=str(e), output=e.stdout.decode("ascii") if e.stdout else None) from e
+        except OpenocdError as e:
+            raise FlashError(msg=str(e)) from e
 
     def build_test(self, test: TestOptions):
         builder = HarnessBuilder()
