@@ -96,17 +96,17 @@ class OpenocdProcess:
 
     def __init__(
         self,
+        host_log=None,
         interface: Optional[str] = None,
         target: Optional[str] = None,
         board: Optional[str] = None,
         extra_args: Optional[List[str]] = None,
     ):
         self.proc = None
+        self.host_log = host_log
         self.target = target
         self.interface = interface
         self.board = board
-        self.output = ""
-        self.logfile = io.StringIO()
         self.extra_args = extra_args
 
         if board:
@@ -126,12 +126,12 @@ class OpenocdProcess:
         if self.extra_args:
             args.extend(self.extra_args)
 
-        self.proc = pexpect.spawn("openocd", args, encoding="ascii", logfile=self.logfile)
+        self.proc = pexpect.spawn("openocd", args, encoding="ascii", logfile=self.host_log)
 
         try:
             self.proc.expect_exact("Info : Listening on port")
         except (pexpect.TIMEOUT, pexpect.EOF) as e:
-            raise OpenocdError("Failed to connect to target", self.logfile.getvalue()) from e
+            raise OpenocdError("Failed to connect to target", self.host_log.getvalue()) from e
 
     def _close(self):
         if not self.proc:
@@ -140,8 +140,6 @@ class OpenocdProcess:
         clear_pexpect_buffer(self.proc)
         self.proc.close(force=True)
         self.proc.wait()
-        self.output = self.logfile.getvalue()
-        self.logfile.close()
 
     def run(self):
         try:

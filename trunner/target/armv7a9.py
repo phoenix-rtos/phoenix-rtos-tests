@@ -1,7 +1,7 @@
 from abc import abstractmethod
 import subprocess
 import time
-from typing import Callable, Optional
+from typing import Callable, Optional, TextIO
 
 from trunner.ctx import TestContext
 from trunner.dut import Dut, SerialDut
@@ -165,7 +165,8 @@ class Zynq7000ZedboardTarget(ARMv7A9Target):
 
         super().__init__(host, port, baudrate)
 
-    def flash_dut(self):
+    # Note: host_log is currently unused for this target
+    def flash_dut(self, host_log: TextIO):
         plo_loader = ZynqZedboardGdbPloLoader(
             dut=self.dut,
             script=f"{self._project_dir()}/phoenix-rtos-build/scripts/upload-zynq7000-smt2.gdb",

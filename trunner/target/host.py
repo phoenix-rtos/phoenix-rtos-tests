@@ -1,5 +1,5 @@
 import shlex
-from typing import Callable, List
+from typing import Callable, List, TextIO
 
 from trunner.ctx import TestContext
 from trunner.dut import HostDut
@@ -45,7 +45,7 @@ class HostPCGenericTarget(TargetBase):
     def from_context(cls, _: TestContext):
         return cls()
 
-    def flash_dut(self):
+    def flash_dut(self, host_log: TextIO):
         pass
 
     def build_test(self, test: TestOptions) -> Callable[[TestResult], TestResult]:
