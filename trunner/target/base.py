@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Callable
+from typing import Callable, TextIO
 
 from serial.tools import list_ports
 
@@ -91,8 +91,13 @@ class TargetBase(ABC):
         return f"{self.project_dir}/_boot/{self.name}"
 
     @abstractmethod
-    def flash_dut(self):
-        """Flashes the system image into target device."""
+    def flash_dut(self, host_log: TextIO):
+        """Flashes the system image into target device.
+
+        Args:
+            host_log:  A writable text stream used to capture logs from
+            host-side tools involved in the flashing process (e.g., OpenOCD).
+        """
 
     @abstractmethod
     def build_test(self, test: TestOptions) -> Callable[[TestResult], TestResult]:

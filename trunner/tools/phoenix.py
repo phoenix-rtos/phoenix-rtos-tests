@@ -40,10 +40,11 @@ class PsuError(ProcessError):
 
 
 class Psu:
-    def __init__(self, script, cwd=None):
+    def __init__(self, script, cwd=None, host_log=None):
         self.script = script
         self.cwd = cwd
         self.proc = None
+        self.host_log = host_log
 
     def read_output(self):
         if not self.proc:
@@ -61,6 +62,7 @@ class Psu:
             [self.script],
             cwd=self.cwd,
             encoding="ascii",
+            logfile=self.host_log
         )
 
         try:

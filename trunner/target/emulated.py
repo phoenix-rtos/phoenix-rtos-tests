@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Callable
+from typing import Callable, TextIO
 
 from trunner.ctx import TestContext
 from trunner.dut import QemuDut
@@ -30,7 +30,7 @@ class QemuTarget(TargetBase):
     def from_context(cls, _: TestContext):
         pass
 
-    def flash_dut(self):
+    def flash_dut(self, host_log: TextIO):
         pass
 
     def build_test(self, test: TestOptions) -> Callable[[TestResult], TestResult]:
