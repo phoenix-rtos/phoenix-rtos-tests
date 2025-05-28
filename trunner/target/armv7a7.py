@@ -1,5 +1,5 @@
 import time
-from typing import Callable, Optional
+from typing import Callable, Optional, TextIO
 
 from trunner.dut import SerialDut
 from trunner.harness import (
@@ -48,10 +48,10 @@ class ARMv7A7Target(TargetBase, PloInterface, Rebooter):
     def from_context(cls, ctx):
         return cls(ctx.host, ctx.port, ctx.baudrate)
 
-    def flash_dut(self):
+    def flash_dut(self, host_log: TextIO):
         plo_loader = PsuPloLoader(
             dut=self.dut,
-            psu=Psu(self.plo_psu_script, self.boot_dir()),
+            psu=Psu(self.plo_psu_script, self.boot_dir(), host_log=host_log),
         )
 
         loader = PloImageLoader(
