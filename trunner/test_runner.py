@@ -5,7 +5,7 @@ import junitparser
 from io import StringIO
 from pathlib import Path
 from collections import Counter
-from typing import List, Sequence, TextIO
+from typing import List, Sequence, TextIO, Optional
 
 from trunner.config import ConfigParser
 from trunner.ctx import TestContext
@@ -74,22 +74,28 @@ def set_logfiles(dut: Dut, ctx: TestContext):
     dut.set_logfiles(logfile_r, logfile_w, logfile_a)
 
 
-def save_logfiles(dut: Dut, dirname: str, logdir: str):
-    """Save logfiles to log directory if needed."""
+def save_logfiles(dut: Dut, dirname: str, logdir: Optional[str], **kwargs: TextIO):
+    """Save DUT logfiles to log directory if needed.
+    Custom logs can be passed as kwargs in format `log_filename=data:TextIO`
+    """
+    if not logdir:
+        return
+
+    logs_to_save = list(zip(("out", "in", "inout"), dut.get_logfiles())) + list(kwargs.items())
 
     # we want to dump logs in the given directory
-    if logdir:
-        for logfile_name, log in zip(("out", "in", "inout"), dut.get_logfiles()):
-            logs = log.getvalue()
-            # empty string -> do not dump logs
-            if not logs:
-                return
-            if not os.path.isdir(f"{logdir}/{dirname}"):
-                os.mkdir(f"{logdir}/{dirname}")
-            with open(f"{logdir}/{dirname}/{logfile_name}.log", "w", encoding="utf-8") as logfile:
-                logfile.write(logs)
-            with open(f"{logdir}/test_campaign/{logfile_name}.log", "a", encoding="utf-8") as logfile:
-                logfile.write(logs)
+    for logfile_name, log in logs_to_save:
+        logs = log.getvalue()
+        # empty string -> do not dump this log
+        if not logs:
+            continue
+
+        if not os.path.isdir(f"{logdir}/{dirname}"):
+            os.mkdir(f"{logdir}/{dirname}")
+        with open(f"{logdir}/{dirname}/{logfile_name}.log", "w", encoding="utf-8") as logfile:
+            logfile.write(logs)
+        with open(f"{logdir}/test_campaign/{logfile_name}.log", "a", encoding="utf-8") as logfile:
+            logfile.write(logs)
 
 
 class TestRunner:
@@ -140,7 +146,7 @@ class TestRunner:
 
         return tests
 
-    def flash(self) -> TestResult:
+    def flash(self, host_tools_log: TextIO) -> TestResult:
         """Flashes the device under test."""
 
         # report flashing as a test result to include in export (especially useful when failed)
@@ -150,7 +156,7 @@ class TestRunner:
 
         try:
             result.set_stage(TestStage.RUN)
-            self.target.flash_dut()
+            self.target.flash_dut(host_log=host_tools_log)
             result.set_stage(TestStage.DONE)
         except (FlashError, HarnessError) as exc:
             result.fail(str(exc))
@@ -310,8 +316,10 @@ class TestRunner:
 
         if self.ctx.should_flash:
             set_logfiles(self.target.dut, self.ctx)
-            flash_result = self.flash()
-            save_logfiles(self.target.dut, "flash", self.ctx.logdir)
+            host_tools_log = LogWrapper(sys.stdout) if self.ctx.stream_output else StringIO()
+            flash_result = self.flash(host_tools_log=host_tools_log)
+
+            save_logfiles(self.target.dut, "flash", self.ctx.logdir, host_tools=host_tools_log)
             results.append(flash_result)
 
             if not flash_result.is_ok():

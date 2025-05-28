@@ -1,7 +1,7 @@
 import subprocess
 import time
 from pathlib import Path
-from typing import Callable, Optional, Sequence
+from typing import Callable, Optional, Sequence, TextIO
 
 from trunner.ctx import TestContext
 from trunner.dut import Dut, SerialDut
@@ -134,7 +134,7 @@ class STM32L4x6Target(TargetBase):
     def from_context(cls, ctx: TestContext):
         return cls(ctx.host, ctx.port, ctx.baudrate)
 
-    def flash_dut(self):
+    def flash_dut(self, host_log: TextIO):
         try:
             extra_args = [
                 "-c",
@@ -143,7 +143,7 @@ class STM32L4x6Target(TargetBase):
                 f"program {self.image_file} {self.image_addr:#x} verify reset exit",
             ]
 
-            OpenocdProcess(interface="stlink", target="stm32l4x", extra_args=extra_args).run()
+            OpenocdProcess(host_log=host_log, interface="stlink", target="stm32l4x", extra_args=extra_args).run()
 
         except FileNotFoundError as e:
             raise FlashError(msg=str(e)) from e
