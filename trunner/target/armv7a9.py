@@ -46,7 +46,7 @@ class ARMv7A9TargetRebooter(Rebooter):
                 "-c adapter srst pulse_width 250",
                 "-c adapter srst delay 250",
                 "-c adapter speed 10000",
-                "-c init; reset; continue",
+                "-c init; reset; exit",
             ],
         ).run()
 
