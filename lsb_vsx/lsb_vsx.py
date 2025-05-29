@@ -52,5 +52,5 @@ def harness(dut: Dut, ctx: TestContext, result: TestResult) -> Optional[TestResu
         elif idx == 4 and get_msg:
             msg += ("" if not msg else "\n") + parsed["msg_line"]
 
-    status = Status.FAIL if stats["FAIL"] != 0 else Status.OK
+    status = Status.FAIL if stats["FAIL"] != 0 or all(n == 0 for n in stats.values()) else Status.OK
     return TestResult(status=status)
