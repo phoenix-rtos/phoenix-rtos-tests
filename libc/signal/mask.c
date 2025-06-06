@@ -17,6 +17,7 @@
 
 #include <signal.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include <unity_fixture.h>
 
@@ -35,6 +36,9 @@ TEST_TEAR_DOWN(mask)
 	sigset_t set;
 	sigemptyset(&set);
 	sigprocmask(SIG_SETMASK, &set, NULL);
+
+	/* disable any active alarm timer */
+	alarm(0);
 }
 
 
@@ -131,9 +135,64 @@ TEST(mask, procmask_set)
 }
 
 
+static volatile sig_atomic_t got_signal = 0;
+static volatile sig_atomic_t timeout = 0;
+
+static void usr1_handler(int sig)
+{
+	got_signal = sig;
+}
+
+static void alarm_handler(int sig)
+{
+	timeout = 1;
+}
+
+
+TEST(mask, unblock_pending_signal)
+{
+	sigset_t set, oldset;
+
+	TEST_ASSERT_EQUAL_INT(0, sigemptyset(&set));
+	TEST_ASSERT_EQUAL_INT(0, sigaddset(&set, SIGUSR1));
+	TEST_ASSERT_EQUAL_INT(0, sigprocmask(SIG_SETMASK, &set, &oldset));
+
+	signal(SIGUSR1, usr1_handler);
+	signal(SIGALRM, alarm_handler);
+
+	/* send signal and wait 3s to be sure it won't arrive */
+	TEST_ASSERT_EQUAL_UINT(0, alarm(3));
+	TEST_ASSERT_EQUAL_INT(0, raise(SIGUSR1));
+
+	while (!got_signal && !timeout) {
+		TEST_ASSERT_EQUAL_INT(-1, sigsuspend(&set));
+		TEST_ASSERT_EQUAL_INT(EINTR, errno);
+	}
+
+	/* check we timeouted as expected and reset the timeout flag */
+	TEST_ASSERT_EQUAL_INT(0, got_signal);
+	TEST_ASSERT_EQUAL_INT(1, timeout);
+	timeout = 0;
+
+	/* set timeout and unblock pending SIGUSR1 */
+	TEST_ASSERT_EQUAL_UINT(0, alarm(3));
+	TEST_ASSERT_EQUAL_INT(0, sigprocmask(SIG_UNBLOCK, &set, NULL));
+
+	while (!got_signal && !timeout) {
+		TEST_ASSERT_EQUAL_INT(-1, sigsuspend(&oldset));
+		TEST_ASSERT_EQUAL_INT(EINTR, errno);
+	}
+
+	/* check we received SIGUSR1 not timeouted */
+	TEST_ASSERT_EQUAL_INT(0, timeout);
+	TEST_ASSERT_EQUAL_INT(SIGUSR1, got_signal);
+}
+
+
 TEST_GROUP_RUNNER(mask)
 {
 	RUN_TEST_CASE(mask, sigset_full);
 	RUN_TEST_CASE(mask, sigset_single);
 	RUN_TEST_CASE(mask, procmask_set);
+	RUN_TEST_CASE(mask, unblock_pending_signal);
 }
