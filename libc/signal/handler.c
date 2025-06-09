@@ -37,6 +37,9 @@ TEST_TEAR_DOWN(handler)
 	sigemptyset(&set);
 	sigprocmask(SIG_SETMASK, &set, NULL);
 
+	/* disable any active alarm timer */
+	alarm(0);
+
 	/* set default signal disposition for all signals */
 	for (int signo = 1; signo < USERSPACE_NSIG; ++signo) {
 		signal(signo, SIG_DFL);
@@ -146,6 +149,48 @@ TEST(handler, sighandler_signal_in_signal)
 	TEST_ASSERT_EQUAL_INT(1, sigismember(&oldset, SIGUSR2));
 }
 
+
+TEST(handler, unblock_pending_signal)
+{
+	sigset_t set;
+	handler_haveSignal = 0;
+
+	TEST_ASSERT_EQUAL_INT(0, sigprocmask(0, NULL, &set));
+	TEST_ASSERT_EQUAL_INT(0, sigaddset(&set, SIGUSR1));
+	TEST_ASSERT_EQUAL_INT(0, sigdelset(&set, SIGALRM));
+	TEST_ASSERT_EQUAL_INT(0, sigprocmask(SIG_SETMASK, &set, NULL));
+
+	signal(SIGALRM, sighandler);
+	signal(SIGUSR1, sighandler);
+
+	/* send signal and wait 1s to be sure it won't arrive */
+	TEST_ASSERT_EQUAL_INT(0, alarm(1));
+	TEST_ASSERT_EQUAL_INT(0, raise(SIGUSR1));
+
+	if (handler_haveSignal == 0) {
+		errno = 0;
+		TEST_ASSERT_EQUAL_INT(-1, pause());
+		TEST_ASSERT_EQUAL_INT(EINTR, errno);
+	}
+
+	/* check we timeouted as expected */
+	TEST_ASSERT_EQUAL_HEX32((1u << SIGALRM), handler_haveSignal);
+	handler_haveSignal = 0;
+
+	/* set timeout and unblock pending SIGUSR1 */
+	TEST_ASSERT_EQUAL_INT(0, alarm(1));
+	TEST_ASSERT_EQUAL_INT(0, sigprocmask(SIG_UNBLOCK, &set, NULL));
+
+	if (handler_haveSignal == 0) {
+		errno = 0;
+		TEST_ASSERT_EQUAL_INT(-1, pause());
+		TEST_ASSERT_EQUAL_INT(EINTR, errno);
+	}
+
+	/* check we received SIGUSR1 not timeouted */
+	TEST_ASSERT_EQUAL_HEX32((1u << SIGUSR1), handler_haveSignal);
+}
+
 /* TODO: test sa_flags - especially SA_NODEFER */
 
 
@@ -153,6 +198,7 @@ TEST_GROUP_RUNNER(handler)
 {
 	RUN_TEST_CASE(handler, sighandler_sa_mask);
 	RUN_TEST_CASE(handler, sighandler_signal_in_signal);
+	RUN_TEST_CASE(handler, unblock_pending_signal);
 }
 
 
