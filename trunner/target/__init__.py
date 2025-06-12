@@ -8,6 +8,7 @@ from .emulated import (
     RISCV64GenericQemuTarget,
     ARMv7A9Zynq7000QemuTarget,
     SPARCV8LeonGenericQemuTarget,
+    AARCH64a53ZynqmpQemuTarget
 )
 from .host import HostPCGenericTarget
 
@@ -25,4 +26,5 @@ __all__ = [
     "TargetBase",
     "find_port",
     "IMX6ULLEvkTarget",
+    "AARCH64a53ZynqmpQemuTarget"
 ]

@@ -1,6 +1,6 @@
 test:
     targets:
-        include: [sparcv8leon-generic-qemu]
+        include: [sparcv8leon-generic-qemu, aarch64a53-zynqmp-qemu]
 
     tests:
         - name: gibber
