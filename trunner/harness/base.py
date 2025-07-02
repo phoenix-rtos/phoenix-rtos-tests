@@ -127,13 +127,13 @@ class Rebooter:
     def __call__(self, flash=False, hard=False):
         """Sets flash mode and perform hard or soft reboot based on `hard` flag."""
 
-        self._set_flash_mode(flash)
+        # self._set_flash_mode(flash)
 
         if self.host.has_gpio():
             self._reboot_dut_gpio(hard=hard)
-        else:
-            # Perform rebooting with user interaction
-            self._reboot_dut_text(hard=hard)
+        # else:
+        #     # Perform rebooting with user interaction
+        #     self._reboot_dut_text(hard=hard)
 
 
 class HarnessBase(ABC):
