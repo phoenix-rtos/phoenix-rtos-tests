@@ -1,5 +1,13 @@
 from .phoenix import Phoenixd, PhoenixdError, Psu, PsuError, wait_for_vid_pid
-from .gdb import GdbInteractive, OpenocdGdbServer, OpenocdProcess, JLinkGdbServer, OpenocdError
+from .gdb import (
+    GdbInteractive,
+    OpenocdGdbServer,
+    OpenocdProcess,
+    JLinkGdbServer,
+    OpenocdError,
+    PyocdProcess,
+    PyocdError,
+)
 
 __all__ = [
     "JLinkGdbServer",
@@ -12,4 +20,6 @@ __all__ = [
     "Psu",
     "PsuError",
     "wait_for_vid_pid",
+    "PyocdProcess",
+    "PyocdError",
 ]
