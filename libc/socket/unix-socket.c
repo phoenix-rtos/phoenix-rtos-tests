@@ -59,9 +59,11 @@
 
 static char data[DATA_SIZE];
 static char buf[DATA_SIZE];
+#if defined(__CPU_ZYNQMP)
+static int pollTimeoutDelay = 150;
+#else
 static int pollTimeoutDelay = 30;
-
-
+#endif
 static ssize_t unix_named_socket(int type, const char *name)
 {
 	int fd;

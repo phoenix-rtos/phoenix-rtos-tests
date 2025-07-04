@@ -19,7 +19,11 @@
 #define MAX_FD_CNT         16
 #define CLOSE_LOOP_CNT     50
 #define SENDMSG_LOOP_CNT   50
+#if defined(__CPU_ZYNQMP)
+#define FORK_LOOP_CNT      10
+#else
 #define FORK_LOOP_CNT      50
+#endif
 #define MAX_TRANSFER_CNT   (1024 * 16)
 #define TRANSFER_LOOP_CNT  50
 #define CONNECTED_LOOP_CNT 10
