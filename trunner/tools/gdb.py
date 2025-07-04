@@ -222,3 +222,75 @@ class JLinkGdbServer:
             yield
         finally:
             self._close()
+
+
+class PyocdError(ProcessError):
+    name = "PYOCD"
+
+
+class PyocdProcess:
+    """Handler for Pyocd process"""
+
+    def __init__(
+        self,
+        target: str = None,
+        extra_args: Optional[List[str]] = None,
+        host_log: Optional[TextIO] = None,
+        cwd: Optional[Path] = None,
+    ):
+        self.target = target
+        self.extra_args = extra_args
+        self.host_log = host_log if host_log is not None else io.StringIO()
+        self.cwd = cwd
+        self.proc = None
+        self.output = ""
+
+    def _spawn(self, args, end_message: str):
+        try:
+            if self.extra_args:
+                args.extend(self.extra_args)
+
+            self.proc = pexpect.spawn("pyocd", args, encoding="ascii", logfile=self.host_log, cwd=self.cwd)
+            self.proc.expect_exact(f"Target type is {self.target}")
+            self.proc.expect_exact(end_message, timeout=60)
+            self.proc.expect(pexpect.EOF)
+
+        except pexpect.TIMEOUT as e:
+            self.output = self.host_log.getvalue()
+            raise PyocdError("Failed to connect to target", output=self.output) from e
+
+        finally:
+            self._close()
+
+    def _close(self):
+        if not self.proc:
+            return
+        self.proc.close(force=True)
+        self.output = self.host_log.getvalue()
+        self.host_log.close()
+
+        if self.proc.exitstatus != 0:
+            status = self.proc.exitstatus
+            if self.proc.exitstatus is None:
+                status = "[terminated by signal]"
+
+            raise PyocdError(f"pyocd returned {status} after closing!", output=self.output)
+
+    def load(
+        self,
+        load_file: str,
+        load_offset: int = 0,
+    ):
+        self.load_file = load_file
+        self.load_offset = load_offset
+        args = ["load", "--target", self.target, "-v"]
+
+        if self.load_offset != 0:
+            args.extend([f"{self.load_file}@{hex(self.load_offset)}"])
+        else:
+            args.extend([f"{self.load_file}"])
+
+        self._spawn(args=args, end_message="[loader]")
+
+    def reset(self):
+        self._spawn(args=["reset", "--target", self.target, "-v"], end_message="Done.")
