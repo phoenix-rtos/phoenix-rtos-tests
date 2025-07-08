@@ -12,7 +12,12 @@ on:
       - master
       - 'feature/*'
 
+env:
+  LONG_TEST: "y"
+
 jobs:
   call-ci:
-    uses: phoenix-rtos/phoenix-rtos-project/.github/workflows/ci-submodule.yml@master
+    uses: phoenix-rtos/phoenix-rtos-project/.github/workflows/ci-submodule.yml@wmlynik/coremark_pro_tests
+    with:
+      build_params: all test project image
     secrets: inherit
