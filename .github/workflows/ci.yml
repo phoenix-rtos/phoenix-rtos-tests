@@ -17,7 +17,7 @@ env:
 
 jobs:
   call-ci:
-    uses: phoenix-rtos/phoenix-rtos-project/.github/workflows/ci-submodule.yml@wmlynik/coremark_pro_tests
+    uses: phoenix-rtos/phoenix-rtos-project/.github/workflows/ci-submodule.yml@wmlynik/coremark_pro_tests_tmp
     with:
       build_params: all test project image
     secrets: inherit
