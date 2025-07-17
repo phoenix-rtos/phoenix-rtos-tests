@@ -42,9 +42,9 @@ double test_checkResult(double f, double g);
 
 void test_setup(void);
 
-void test_check_digLost(char *fun, double x, double digLost, double acceptLoss);
+void test_check_digLost(char *fun, double x, int digLost, int acceptLoss);
 
-void test_check_digLost2(char *fun, double x, double y, double digLost, double acceptLoss);
+void test_check_digLost2(char *fun, double x, double y, int digLost, int acceptLoss);
 
 void test_log_vector_check(double arg, double expected, double actual, double epsilon);
 

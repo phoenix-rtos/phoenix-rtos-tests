@@ -162,10 +162,10 @@ TEST_TEAR_DOWN(math_frac)
 TEST(math_frac, modf_basic)
 {
 	int i, iters = 50 * ITER_FACTOR;
-	double acceptLoss = 1.0;
+	int digLost, acceptLoss = 1;
 	double max = DBL_MAX;
 	double min = DBL_MIN;
-	double x, f, g, ipart, digLost;
+	double x, f, g, ipart;
 
 	for (i = 0; i < iters; i++) {
 		x = test_getRandomLog(min, max);
@@ -231,10 +231,10 @@ TEST(math_frac, modf_special_cond)
 TEST(math_frac, fmod_basic)
 {
 	int i, iters = 20 * ITER_FACTOR;
-	double acceptLoss = 60.0;
+	int digLost, acceptLoss = 60;
 	double xmax = DBL_MAX / 2.0;
 	double xmin = DBL_MIN * 2.0;
-	double x, y, ymin, ymax, f, g, digLost;
+	double x, y, ymin, ymax, f, g;
 
 	for (i = 0; i < iters; i++) {
 		x = test_getRandomLog(xmin, xmax);
@@ -292,10 +292,10 @@ TEST(math_frac, fmod_special_cond)
 TEST(math_frac, ceil_basic)
 {
 	int i, iters = 10 * ITER_FACTOR;
-	double acceptLoss = 1.0;
+	int digLost, acceptLoss = 1;
 	double max = pow(2.0, (double)test_common.maxPowTwo + 2.0);
 	double min = 1.0e-10;
-	double x, f, g, digLost;
+	double x, f, g;
 
 	for (i = 0; i < iters; i++) {
 		x = test_getRandomLog(min, max);
@@ -327,10 +327,10 @@ TEST(math_frac, ceil_special_cond)
 TEST(math_frac, floor_basic)
 {
 	int i, iters = 10 * ITER_FACTOR;
-	double acceptLoss = 1.0;
+	int digLost, acceptLoss = 1;
 	double max = DBL_MAX;
 	double min = DBL_MIN;
-	double x, f, g, digLost;
+	double x, f, g;
 
 	for (i = 0; i < iters; i++) {
 		x = test_getRandomLog(min, max);

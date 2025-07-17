@@ -42,10 +42,10 @@ TEST_TEAR_DOWN(math_pow)
 TEST(math_pow, sqrt_basic)
 {
 	int i, iters = 100 * ITER_FACTOR;
-	double acceptLoss = 52.0;
+	int digLost, acceptLoss = 55;
 	double max = DBL_MAX;
 	double min = 0.0;
-	double x, y, f, g, digLost;
+	double x, y, f, g;
 
 	for (i = 0; i < iters; i++) {
 		x = test_getRandomLog(min, max);
@@ -96,10 +96,10 @@ TEST(math_pow, sqrt_special_cond)
 TEST(math_pow, pow_basic)
 {
 	int i, iters = 100 * ITER_FACTOR;
-	double acceptLoss = 50.0;
+	int digLost, acceptLoss = 50;
 	double ymax = log(DBL_MAX / 2.0);
 	double ymin = 1.0e-15;
-	double x, xmin, xmax, y, f, t, g, digLost;
+	double x, xmin, xmax, y, f, t, g;
 
 	for (i = 0; i < iters; i++) {
 		y = test_getRandomLog(ymin, ymax);
