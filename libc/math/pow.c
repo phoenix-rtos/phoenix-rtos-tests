@@ -57,20 +57,19 @@ TEST(math_pow, sqrt_basic)
 		test_check_digLost("sqrt", x, digLost, acceptLoss);
 	}
 
-	// TODO: Rework sqrt() to handle subnormals
-	/* Subnormals */
-	// iters = 20 * ITER_FACTOR;
-	// acceptLoss = 60.0;
+	// Dedicated subnormals loop
+	iters = 20 * ITER_FACTOR;
+	acceptLoss = 60;
 
-	// for (i = 0; i < iters; i++) {
-	// 	x = test_getRandomLogSubnrm();
-	// 	y = sqrt(x);
-	// 	f = y * y;
-	// 	g = x;
+	for (i = 0; i < iters; i++) {
+		x = test_getRandomLogSubnrm();
+		y = sqrt(x);
+		f = y * y;
+		g = x;
 
-	// 	digLost = test_checkResult(f, g);
-	// 	test_check_digLost("sqrt", x, digLost, acceptLoss);
-	// }
+		digLost = test_checkResult(f, g);
+		test_check_digLost("sqrt", x, digLost, acceptLoss);
+	}
 }
 
 
