@@ -80,21 +80,11 @@ double test_checkResult(double f, double g)
 {
 	double digSignif, digLost, diff;
 
-	if (g - f != g) {
-		if (g != 0.0) {
-			diff = fabs((f - g) / g);
-		}
-		else {
-			diff = f;
-		}
+	if (g != 0.0) {
+		diff = fabs((f - g) / g);
 	}
 	else {
-		if (f != 0.0) {
-			diff = fabs((f - g) / f);
-		}
-		else {
-			diff = g;
-		}
+		diff = fabs(f);
 	}
 
 	if (diff > 0.0) {
@@ -114,29 +104,29 @@ double test_checkResult(double f, double g)
 	return digLost;
 }
 
-void test_check_digLost(char *fun, double x, double digLost, double acceptLoss)
+void test_check_digLost(char *fun, double x, int digLost, int acceptLoss)
 {
-	char errStr[150];
+	char errStr[256];
 
 	if (digLost > acceptLoss) {
 		sprintf(errStr, "%s"
-						" (%g) gave lost of %.f significant digits of base 2 where "
-						"maximal acceptable loss is %.f signicant digits of base 2",
-			fun, x, digLost, acceptLoss);
+						" (%g) gave lost of %d significant digits of base 2 where "
+						"maximal acceptable loss is %d significant digits of base 2",
+				fun, x, digLost, acceptLoss);
 		TEST_FAIL_MESSAGE(errStr);
 	}
 }
 
 
-void test_check_digLost2(char *fun, double x, double y, double digLost, double acceptLoss)
+void test_check_digLost2(char *fun, double x, double y, int digLost, int acceptLoss)
 {
-	char errStr[150];
+	char errStr[256];
 
 	if (digLost > acceptLoss) {
 		sprintf(errStr, "%s"
-						" (%g, %g) gave lost of %.f significant digits of base 2 where "
-						"maximal acceptable loss is %.f signicant digits of base 2",
-			fun, x, y, digLost, acceptLoss);
+						" (%g, %g) gave lost of %d significant digits of base 2 where "
+						"maximal acceptable loss is %d signicant digits of base 2",
+				fun, x, y, digLost, acceptLoss);
 		TEST_FAIL_MESSAGE(errStr);
 	}
 }
@@ -144,7 +134,7 @@ void test_check_digLost2(char *fun, double x, double y, double digLost, double a
 
 void test_log_vector_check(double arg, double expected, double actual, double epsilon)
 {
-	char errStr[100];
+	char errStr[128];
 	double diff = expected - actual;
 
 	if (diff < 0.0) {
@@ -157,7 +147,7 @@ void test_log_vector_check(double arg, double expected, double actual, double ep
 
 	if (diff > epsilon) {
 		sprintf(errStr, "Log(%g): expected value: %g actual value: %g epsilon: %g",
-			arg, expected, actual, epsilon);
+				arg, expected, actual, epsilon);
 		TEST_FAIL_MESSAGE(errStr);
 	}
 }
@@ -165,7 +155,7 @@ void test_log_vector_check(double arg, double expected, double actual, double ep
 
 void test_exp_vector_check(double arg, double expected, double actual, double epsilon)
 {
-	char errStr[100];
+	char errStr[128];
 	double diff = expected - actual;
 
 	if (diff < 0.0) {
@@ -178,7 +168,7 @@ void test_exp_vector_check(double arg, double expected, double actual, double ep
 
 	if (diff > epsilon) {
 		sprintf(errStr, "Exp(%g): expected value: %g actual value: %g epsilon: %g",
-			arg, expected, actual, epsilon);
+				arg, expected, actual, epsilon);
 		TEST_FAIL_MESSAGE(errStr);
 	}
 }

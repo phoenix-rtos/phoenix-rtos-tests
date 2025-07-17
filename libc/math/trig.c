@@ -47,12 +47,12 @@ TEST_TEAR_DOWN(math_trig)
 TEST(math_trig, sin_basic)
 {
 	int i, iters = 50 * ITER_FACTOR;
-	double acceptLoss = 35.0;
+	int digLost, acceptLoss = 35;
 	double max = M_PI_2;
 	double min = -max;
 	double step = max / iters - min / iters;
 	double xstart = min;
-	double u, x, y, f, g, digLost;
+	double u, x, y, f, g;
 
 	for (i = 0; i < iters; i++) {
 		u = (double)rand() / (double)RAND_MAX;
@@ -90,8 +90,8 @@ TEST(math_trig, sin_basic)
 
 TEST(math_trig, sin_normalize_special_case)
 {
-	double acceptLoss = 60.0;
-	double digLost, x, f, g;
+	int digLost, acceptLoss = 60;
+	double x, f, g;
 
 	x = M_PI * test_common.maxPowTwoPi;
 	f = 2.0 * sin(x) * cos(x);
@@ -126,12 +126,12 @@ TEST(math_trig, sin_special_cond)
 TEST(math_trig, cos_basic)
 {
 	int i, iters = 50 * ITER_FACTOR;
-	double acceptLoss = 35.0;
+	int digLost, acceptLoss = 35;
 	double max = M_PI;
 	double min = 0.0;
 	double step = max / iters - min / iters;
 	double xstart = min;
-	double u, x, y, f, g, digLost;
+	double u, x, y, f, g;
 
 	for (i = 0; i < iters; i++) {
 		u = (double)rand() / (double)RAND_MAX;
@@ -169,8 +169,8 @@ TEST(math_trig, cos_basic)
 
 TEST(math_trig, cos_normalize_special_case)
 {
-	double acceptLoss = 60.0;
-	double digLost, x, y, f, g;
+	int digLost, acceptLoss = 60;
+	double x, y, f, g;
 
 	x = M_PI * pow(2.0, test_common.maxPowTwoPi);
 	y = cos(x / 2.0);
@@ -206,12 +206,12 @@ TEST(math_trig, cos_special_cond)
 TEST(math_trig, tan_basic)
 {
 	int i, ferr, gerr, iters = 50 * ITER_FACTOR;
-	double acceptLoss = 35.0;
+	int digLost, acceptLoss = 35;
 	double max = M_PI_2 - 0.01;
 	double min = -max;
 	double step = max / iters - min / iters;
 	double xstart = min;
-	double u, x, y, f, g, digLost;
+	double u, x, y, f, g;
 
 	for (i = 0; i < iters; i++) {
 		u = (double)rand() / (double)RAND_MAX;
@@ -255,8 +255,8 @@ TEST(math_trig, tan_basic)
 
 TEST(math_trig, tan_normalize_special_case)
 {
-	double acceptLoss = 60.0;
-	double digLost, x, y, f, g;
+	int digLost, acceptLoss = 60;
+	double x, y, f, g;
 
 	x = M_PI * pow(2.0, test_common.maxPowTwoPi);
 	y = tan(x / 2.0);
@@ -292,12 +292,12 @@ TEST(math_trig, tan_special_cond)
 TEST(math_trig, asin_basic)
 {
 	int i, iters = 50 * ITER_FACTOR;
-	double acceptLoss = 35.0;
+	int digLost, acceptLoss = 35;
 	double max = 1.0;
 	double min = -max;
 	double step = max / iters - min / iters;
 	double xstart = min;
-	double u, x, f, g, digLost;
+	double u, x, f, g;
 
 	for (i = 0; i < iters; i++) {
 		u = (double)rand() / (double)RAND_MAX;
@@ -342,12 +342,12 @@ TEST(math_trig, asin_special_cond)
 TEST(math_trig, acos_basic)
 {
 	int i, iters = 50 * ITER_FACTOR;
-	double acceptLoss = 35.0;
+	int digLost, acceptLoss = 35;
 	double max = 1.0;
 	double min = -max;
 	double step = max / iters - min / iters;
 	double xstart = min;
-	double u, x, f, g, digLost;
+	double u, x, f, g;
 
 	for (i = 0; i < iters; i++) {
 		u = (double)rand() / (double)RAND_MAX;
@@ -391,10 +391,10 @@ TEST(math_trig, acos_special_cond)
 TEST(math_trig, atan_basic)
 {
 	int i, iters = 50 * ITER_FACTOR;
-	double acceptLoss = 35.0;
+	int digLost, acceptLoss = 35;
 	double max = 25.0;
 	double min = 0.0;
-	double x, f, g, digLost;
+	double x, f, g;
 
 	for (i = 0; i < iters; i++) {
 		x = test_getRandomLog(min, max);
@@ -427,10 +427,10 @@ TEST(math_trig, atan_special_cond)
 TEST(math_trig, atan2_basic)
 {
 	int i, iters = 50 * ITER_FACTOR;
-	double acceptLoss = 35.0;
+	int digLost, acceptLoss = 35;
 	double max = 25.0;
 	double min = 0.01;
-	double at, x, y, f, g, digLost;
+	double at, x, y, f, g;
 
 	for (i = 0; i < iters; i++) {
 		x = test_getRandomLog(min, max);
@@ -540,10 +540,10 @@ TEST_TEAR_DOWN(math_hyper)
 TEST(math_hyper, sinh_basic)
 {
 	int i, iters = 50 * ITER_FACTOR;
-	double acceptLoss = 50.0;
+	int digLost, acceptLoss = 50;
 	double max = log(DBL_MAX);
 	double min = 1.0e-10;
-	double x, y, f, g, digLost;
+	double x, y, f, g;
 
 	for (i = 0; i < iters; i++) {
 		x = test_getRandomLog(min, max);
@@ -581,10 +581,10 @@ TEST(math_hyper, sinh_special_cond)
 TEST(math_hyper, cosh_basic)
 {
 	int i, iters = 50 * ITER_FACTOR;
-	double acceptLoss = 50.0;
+	int digLost, acceptLoss = 50;
 	double max = log(DBL_MAX);
 	double min = 1.0e-10;
-	double x, y, f, g, digLost;
+	double x, y, f, g;
 
 	for (i = 0; i < iters; i++) {
 		x = test_getRandomLog(min, max);
@@ -618,10 +618,10 @@ TEST(math_hyper, cosh_special_cond)
 TEST(math_hyper, tanh_basic)
 {
 	int i, iters = 50 * ITER_FACTOR;
-	double acceptLoss = 50.0;
+	int digLost, acceptLoss = 50;
 	double max = log(DBL_MAX);
 	double min = 1.0e-10;
-	double x, y, f, g, digLost;
+	double x, y, f, g;
 
 	for (i = 0; i < iters; i++) {
 		x = test_getRandomLog(min, max);

@@ -43,10 +43,10 @@ TEST_TEAR_DOWN(math_exp)
 TEST(math_exp, exp_basic)
 {
 	int i, iters = 100 * ITER_FACTOR;
-	double acceptLoss = 50.0;
+	int digLost, acceptLoss = 50;
 	double xmax = log(DBL_MAX);
 	double xmin = 1.0;
-	double x, y, ymin, ymax, f, g, digLost;
+	double x, y, ymin, ymax, f, g;
 
 	for (i = 0; i < iters; i++) {
 		x = test_getRandomLog(xmin, xmax);
@@ -80,10 +80,10 @@ TEST(math_exp, exp_special_cond)
 TEST(math_exp, frexp_basic)
 {
 	int i, e, iters = 10 * ITER_FACTOR;
-	double acceptLoss = 1.0;
+	int digLost, acceptLoss = 1;
 	double max = DBL_MAX / 2.0;
 	double min = DBL_MIN;
-	double x, f, g, y, digLost;
+	double x, f, g, y;
 
 	for (i = 0; i < iters; i++) {
 		x = test_getRandomLog(min, max);
@@ -133,10 +133,10 @@ TEST(math_exp, frexp_special_cond)
 TEST(math_exp, ldexp_basic)
 {
 	int i, e, iters = 10 * ITER_FACTOR;
-	double acceptLoss = 1.0;
+	int digLost, acceptLoss = 1;
 	double max = DBL_MAX / 2.0;
 	double min = DBL_MIN;
-	double x, f, g, y, digLost;
+	double x, f, g, y;
 
 	for (i = 0; i < iters; i++) {
 		x = test_getRandomLog(min, max);
@@ -177,10 +177,10 @@ TEST(math_exp, ldexp_special_cond)
 TEST(math_exp, log_basic)
 {
 	int i, iters = 20 * ITER_FACTOR;
-	double acceptLoss = 50.0;
+	int digLost, acceptLoss = 50;
 	double xmax = log(DBL_MAX);
 	double xmin = 1.0e-20;
-	double x, y, ymin, ymax, f, g, digLost;
+	double x, y, ymin, ymax, f, g;
 
 	for (i = 0; i < iters; i++) {
 		x = test_getRandomLog(xmin, xmax);
@@ -224,10 +224,10 @@ TEST(math_exp, log_special_cond)
 TEST(math_exp, log2_basic)
 {
 	int i, iters = 20 * ITER_FACTOR;
-	double acceptLoss = 50.0;
+	int digLost, acceptLoss = 50;
 	double xmax = log(DBL_MAX);
 	double xmin = 1.0e-10;
-	double x, y, ymin, ymax, f, g, digLost;
+	double x, y, ymin, ymax, f, g;
 
 	for (i = 0; i < iters; i++) {
 		x = test_getRandomLog(xmin, xmax);
@@ -270,10 +270,10 @@ TEST(math_exp, log2_special_cond)
 TEST(math_exp, log10_basic)
 {
 	int i, iters = 20 * ITER_FACTOR;
-	double acceptLoss = 50.0;
+	int digLost, acceptLoss = 50;
 	double xmax = log(DBL_MAX);
 	double xmin = 1.0e-10;
-	double x, y, ymin, ymax, f, g, digLost;
+	double x, y, ymin, ymax, f, g;
 
 	for (i = 0; i < iters; i++) {
 		x = test_getRandomLog(xmin, xmax);
