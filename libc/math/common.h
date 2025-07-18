@@ -34,6 +34,11 @@ struct test_common_s {
 
 extern struct test_common_s test_common;
 
+/* Unity does not provide a macro for checking the sign of zero */
+#define TEST_ASSERT_DOUBLE_IS_NEG_ZERO(x) TEST_ASSERT_TRUE_MESSAGE((x == 0.0) && signbit(x) != 0, "Expected -0.0")
+
+#define TEST_ASSERT_DOUBLE_IS_ZERO(x) TEST_ASSERT_TRUE_MESSAGE((x == 0.0) && signbit(x) == 0, "Expected 0.0")
+
 double test_getRandomLog(double min, double max);
 
 double test_getRandomLogSubnrm(void);
