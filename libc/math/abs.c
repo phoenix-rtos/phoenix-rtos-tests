@@ -64,16 +64,15 @@ TEST(math_abs, fabs_max_min)
 }
 
 
-TEST(math_abs, fabs_special_cond)
+TEST(math_abs, fabs_special_val)
 {
 	TEST_ASSERT_DOUBLE_IS_NAN(fabs(NAN));
-	TEST_ASSERT_DOUBLE_IS_NAN(fabs(-NAN));
 
-	TEST_ASSERT_EQUAL_DOUBLE(0.0, fabs(0.0));
-	TEST_ASSERT_EQUAL_DOUBLE(0.0, fabs(-0.0));
+	TEST_ASSERT_DOUBLE_IS_ZERO(fabs(0.0));
+	TEST_ASSERT_DOUBLE_IS_ZERO(fabs(-0.0));
 
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, fabs(INFINITY));
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, fabs(-INFINITY));
+	TEST_ASSERT_DOUBLE_IS_INF(fabs(INFINITY));
+	TEST_ASSERT_DOUBLE_IS_INF(fabs(-INFINITY));
 }
 
 TEST_GROUP_RUNNER(math_abs)
@@ -82,5 +81,5 @@ TEST_GROUP_RUNNER(math_abs)
 
 	RUN_TEST_CASE(math_abs, fabs_basic);
 	RUN_TEST_CASE(math_abs, fabs_max_min);
-	RUN_TEST_CASE(math_abs, fabs_special_cond);
+	RUN_TEST_CASE(math_abs, fabs_special_val);
 }

@@ -64,16 +64,15 @@ TEST(math_exp, exp_basic)
 }
 
 
-TEST(math_exp, exp_special_cond)
+TEST(math_exp, exp_special_val)
 {
-	// TEST_ASSERT_DOUBLE_IS_NAN(exp(NAN));
-	// TEST_ASSERT_DOUBLE_IS_NAN(exp(-NAN));
+	TEST_ASSERT_DOUBLE_IS_NAN(exp(NAN));
 
 	TEST_ASSERT_EQUAL_DOUBLE(1.0, exp(0.0));
 	TEST_ASSERT_EQUAL_DOUBLE(1.0, exp(-0.0));
 
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, exp(INFINITY));
-	TEST_ASSERT_EQUAL_DOUBLE(0.0, exp(-INFINITY));
+	TEST_ASSERT_DOUBLE_IS_INF(exp(INFINITY));
+	TEST_ASSERT_DOUBLE_IS_ZERO(exp(-INFINITY));
 }
 
 
@@ -115,18 +114,17 @@ TEST(math_exp, frexp_basic)
 }
 
 
-TEST(math_exp, frexp_special_cond)
+TEST(math_exp, frexp_special_val)
 {
 	int exp;
 
-	// TEST_ASSERT_DOUBLE_IS_NAN(frexp(NAN, &exp));
-	// TEST_ASSERT_DOUBLE_IS_NAN(frexp(-NAN, &exp));
+	TEST_ASSERT_DOUBLE_IS_NAN(frexp(NAN, &exp));
 
-	TEST_ASSERT_EQUAL_DOUBLE(0.0, frexp(0.0, &exp));
-	TEST_ASSERT_EQUAL_DOUBLE(-0.0, frexp(-0.0, &exp));
+	TEST_ASSERT_DOUBLE_IS_ZERO(frexp(0.0, &exp));
+	TEST_ASSERT_DOUBLE_IS_NEG_ZERO(frexp(-0.0, &exp));
 
-	// TEST_ASSERT_EQUAL_DOUBLE(INFINITY, frexp(INFINITY, &exp));
-	// TEST_ASSERT_EQUAL_DOUBLE(-INFINITY, frexp(-INFINITY, &exp));
+	TEST_ASSERT_DOUBLE_IS_INF(frexp(INFINITY, &exp));
+	TEST_ASSERT_DOUBLE_IS_NEG_INF(frexp(-INFINITY, &exp));
 }
 
 
@@ -155,20 +153,19 @@ TEST(math_exp, ldexp_basic)
 }
 
 
-TEST(math_exp, ldexp_special_cond)
+TEST(math_exp, ldexp_special_val)
 {
 	/* Initialize x and exp to random finite value other than 0.0 */
 	double x = 1.2;
 	int exp = 2;
 
-	// TEST_ASSERT_DOUBLE_IS_NAN(ldexp(NAN, exp));
-	// TEST_ASSERT_DOUBLE_IS_NAN(ldexp(-NAN, exp));
+	TEST_ASSERT_DOUBLE_IS_NAN(ldexp(NAN, exp));
 
-	TEST_ASSERT_EQUAL_DOUBLE(0.0, ldexp(0.0, exp));
-	TEST_ASSERT_EQUAL_DOUBLE(-0.0, ldexp(-0.0, exp));
+	TEST_ASSERT_DOUBLE_IS_ZERO(ldexp(0.0, exp));
+	TEST_ASSERT_DOUBLE_IS_NEG_ZERO(ldexp(-0.0, exp));
 
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, ldexp(INFINITY, exp));
-	TEST_ASSERT_EQUAL_DOUBLE(-INFINITY, ldexp(-INFINITY, exp));
+	TEST_ASSERT_DOUBLE_IS_INF(ldexp(INFINITY, exp));
+	TEST_ASSERT_DOUBLE_IS_NEG_INF(ldexp(-INFINITY, exp));
 
 	TEST_ASSERT_EQUAL_DOUBLE(x, ldexp(x, 0));
 }
@@ -198,10 +195,9 @@ TEST(math_exp, log_basic)
 }
 
 
-TEST(math_exp, log_special_cond)
+TEST(math_exp, log_special_val)
 {
-	// TEST_ASSERT_DOUBLE_IS_NAN(log(NAN));
-	// TEST_ASSERT_DOUBLE_IS_NAN(log(-NAN));
+	TEST_ASSERT_DOUBLE_IS_NAN(log(NAN));
 
 	errno = 0;
 	TEST_ASSERT_EQUAL_DOUBLE(-HUGE_VAL, log(0.0));
@@ -211,9 +207,9 @@ TEST(math_exp, log_special_cond)
 	TEST_ASSERT_EQUAL_DOUBLE(-HUGE_VAL, log(-0.0));
 	TEST_ASSERT_EQUAL_INT(ERANGE, errno);
 
-	// TEST_ASSERT_EQUAL_DOUBLE(INFINITY, log(INFINITY));
+	TEST_ASSERT_DOUBLE_IS_INF(log(INFINITY));
 
-	TEST_ASSERT_EQUAL_DOUBLE(0.0, log(1.0));
+	TEST_ASSERT_DOUBLE_IS_ZERO(log(1.0));
 
 	errno = 0;
 	TEST_ASSERT_DOUBLE_IS_NAN(log(-1.0));
@@ -244,10 +240,9 @@ TEST(math_exp, log2_basic)
 }
 
 
-TEST(math_exp, log2_special_cond)
+TEST(math_exp, log2_special_val)
 {
-	// TEST_ASSERT_DOUBLE_IS_NAN(log2(NAN));
-	// TEST_ASSERT_DOUBLE_IS_NAN(log2(-NAN));
+	TEST_ASSERT_DOUBLE_IS_NAN(log2(NAN));
 
 	errno = 0;
 	TEST_ASSERT_EQUAL_DOUBLE(-HUGE_VAL, log2(0.0));
@@ -257,9 +252,9 @@ TEST(math_exp, log2_special_cond)
 	TEST_ASSERT_EQUAL_DOUBLE(-HUGE_VAL, log2(-0.0));
 	TEST_ASSERT_EQUAL_INT(ERANGE, errno);
 
-	// TEST_ASSERT_EQUAL_DOUBLE(INFINITY, log2(INFINITY));
+	TEST_ASSERT_DOUBLE_IS_INF(log2(INFINITY));
 
-	TEST_ASSERT_EQUAL_DOUBLE(0.0, log2(1.0));
+	TEST_ASSERT_DOUBLE_IS_ZERO(log2(1.0));
 
 	errno = 0;
 	TEST_ASSERT_DOUBLE_IS_NAN(log2(-1.0));
@@ -290,10 +285,9 @@ TEST(math_exp, log10_basic)
 }
 
 
-TEST(math_exp, log10_special_cond)
+TEST(math_exp, log10_special_val)
 {
-	// TEST_ASSERT_DOUBLE_IS_NAN(log10(NAN));
-	// TEST_ASSERT_DOUBLE_IS_NAN(log10(-NAN));
+	TEST_ASSERT_DOUBLE_IS_NAN(log10(NAN));
 
 	errno = 0;
 	TEST_ASSERT_EQUAL_DOUBLE(-HUGE_VAL, log10(0.0));
@@ -303,9 +297,9 @@ TEST(math_exp, log10_special_cond)
 	TEST_ASSERT_EQUAL_DOUBLE(-HUGE_VAL, log10(-0.0));
 	TEST_ASSERT_EQUAL_INT(ERANGE, errno);
 
-	// TEST_ASSERT_EQUAL_DOUBLE(INFINITY, log10(INFINITY));
+	TEST_ASSERT_DOUBLE_IS_INF(log10(INFINITY));
 
-	TEST_ASSERT_EQUAL_DOUBLE(0.0, log10(1.0));
+	TEST_ASSERT_DOUBLE_IS_ZERO(log10(1.0));
 
 	errno = 0;
 	TEST_ASSERT_DOUBLE_IS_NAN(log10(-1.0));
@@ -318,20 +312,20 @@ TEST_GROUP_RUNNER(math_exp)
 	test_setup();
 
 	RUN_TEST_CASE(math_exp, exp_basic);
-	RUN_TEST_CASE(math_exp, exp_special_cond);
+	RUN_TEST_CASE(math_exp, exp_special_val);
 
 	RUN_TEST_CASE(math_exp, frexp_basic);
-	RUN_TEST_CASE(math_exp, frexp_special_cond);
+	RUN_TEST_CASE(math_exp, frexp_special_val);
 
 	RUN_TEST_CASE(math_exp, ldexp_basic);
-	RUN_TEST_CASE(math_exp, ldexp_special_cond);
+	RUN_TEST_CASE(math_exp, ldexp_special_val);
 
 	RUN_TEST_CASE(math_exp, log_basic);
-	RUN_TEST_CASE(math_exp, log_special_cond);
+	RUN_TEST_CASE(math_exp, log_special_val);
 
 	RUN_TEST_CASE(math_exp, log2_basic);
-	RUN_TEST_CASE(math_exp, log2_special_cond);
+	RUN_TEST_CASE(math_exp, log2_special_val);
 
 	RUN_TEST_CASE(math_exp, log10_basic);
-	RUN_TEST_CASE(math_exp, log10_special_cond);
+	RUN_TEST_CASE(math_exp, log10_special_val);
 }
