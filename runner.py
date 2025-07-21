@@ -21,6 +21,7 @@ from trunner.target import (
     SPARCV8LeonGenericQemuTarget,
     ARMv7A9Zynq7000QemuTarget,
     STM32L4x6Target,
+    MCXN94xTarget,
     Zynq7000ZedboardTarget,
     IMX6ULLEvkTarget,
 )
@@ -238,6 +239,7 @@ def resolve_targets_and_hosts() -> Tuple[Dict[str, Type[TargetBase]], Dict[str, 
         Zynq7000ZedboardTarget,
         IMX6ULLEvkTarget,
         SPARCV8LeonGenericQemuTarget,
+        MCXN94xTarget,
     ]
 
     hosts: List[Type[Host]] = [EmulatorHost, RpiHost]

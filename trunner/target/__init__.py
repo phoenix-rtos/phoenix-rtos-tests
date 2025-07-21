@@ -1,6 +1,11 @@
 from .base import TargetBase, find_port
-from .armv7m7 import IMXRT106xEvkTarget, IMXRT117xEvkTarget, ARMv7M7Target
+from .armv7m7 import (
+    IMXRT106xEvkTarget,
+    IMXRT117xEvkTarget,
+    ARMv7M7Target,
+)
 from .armv7m4 import STM32L4x6Target
+from .armv8m33 import MCXN94xTarget
 from .armv7a7 import IMX6ULLEvkTarget
 from .armv7a9 import Zynq7000ZedboardTarget
 from .emulated import (
@@ -25,4 +30,5 @@ __all__ = [
     "TargetBase",
     "find_port",
     "IMX6ULLEvkTarget",
+    "MCXN94xTarget",
 ]
