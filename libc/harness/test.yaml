@@ -3,4 +3,4 @@ test:
         - name: exec
           harness: test-exec.py
           targets:
-              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo]
+              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo, armv8m33-mcxn94x-frdm]

@@ -4,6 +4,7 @@ test:
     - name: hello-cpp
       harness: test-hello-cpp.py
       execute: /usr/bin/hellocpp
-        # targets excluded because of insufficient space in RAM
+        # targets excluded because of insufficient space in RAM or issues with execution applications on RAM
+        # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1339
       targets:
-        exclude: [armv7m4-stm32l4x6-nucleo]
+        exclude: [armv7m4-stm32l4x6-nucleo, armv8m33-mcxn94x-frdm]

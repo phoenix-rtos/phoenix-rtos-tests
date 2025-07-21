@@ -10,7 +10,7 @@ test:
       ignore: True #issue #1010 https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1010
       targets:
         # mprotect: is noop on NOMMU architecture
-        exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo]
+        exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo, armv8m33-mcxn94x-frdm]
 
     - name: mprotect
       type: unity
@@ -20,4 +20,4 @@ test:
       reboot: True
       targets:
         # mprotect: is noop on NOMMU architecture
-        exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo]
+        exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo, armv8m33-mcxn94x-frdm]
