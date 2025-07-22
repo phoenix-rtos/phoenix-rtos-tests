@@ -77,3 +77,9 @@ test:
 
         - name: exit
           harness: test-exit.py
+
+        - name: perf
+          harness: test-perf.py
+          targets:
+              # only for rootfs targets compiled with buffer-mem support
+              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo, sparcv8leon-generic-qemu]
