@@ -6,3 +6,6 @@ test:
 
     - name: cond
       execute: test-sys-cond
+
+    - name: perf
+      execute: test-sys-perf
