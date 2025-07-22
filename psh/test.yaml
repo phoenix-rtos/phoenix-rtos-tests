@@ -117,3 +117,22 @@ test:
 
         - name: exit
           harness: test-exit.py
+
+        - name: perf
+          harness: test-perf.py
+          targets:
+              # only for targets with: 1) rootfs 2) tracing buffer-mem support
+              # aarch64a53-zynqmp-qemu: excluded due to https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1386
+              value: [
+                ia32-generic-qemu,
+                riscv64-generic-qemu,
+                armv7a9-zynq7000-zedboard,
+                armv7a9-zynq7000-qemu,
+                armv7a7-imx6ull-evk
+              ]
+
+        - name: trace-to-file
+          harness: test-trace-to-file.py
+          targets:
+              # only for QEMU targets with MBR
+              value: [ia32-generic-qemu, riscv64-generic-qemu]
