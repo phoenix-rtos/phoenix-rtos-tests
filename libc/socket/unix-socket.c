@@ -60,6 +60,7 @@
 static char data[DATA_SIZE];
 static char buf[DATA_SIZE];
 static int pollTimeoutDelay = 30;
+static int transferLoopCnt = TRANSFER_LOOP_CNT;
 
 
 static ssize_t unix_named_socket(int type, const char *name)
@@ -692,7 +693,7 @@ TEST(test_unix_socket, transfer)
 {
 	unsigned int i;
 
-	for (i = 0; i < TRANSFER_LOOP_CNT; ++i) {
+	for (i = 0; i < transferLoopCnt; ++i) {
 		unix_transfer(SOCK_STREAM);
 		unix_transfer(SOCK_DGRAM);
 	}
@@ -1520,7 +1521,13 @@ int main(int argc, char *argv[])
 				fprintf(stderr, "--extra-poll-delay-ms argument is not positive integer\n");
 				exit(EXIT_FAILURE);
 			}
-			break;
+		}
+		if (strcmp(argv[i], "--transfer-loop-cnt") == 0) {
+			transferLoopCnt = atoi(argv[i + 1]);
+			if (transferLoopCnt < 0 || transferLoopCnt > 50) {
+				fprintf(stderr, "--transfer-loop-cnt shall be between 0 and 50\n");
+				exit(EXIT_FAILURE);
+			}
 		}
 	}
 
