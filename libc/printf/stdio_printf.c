@@ -2036,7 +2036,9 @@ TEST(stdio_printf_cspn, S)
 
 TEST(stdio_printf_cspn, p)
 {
-#ifdef __phoenix__
+#if defined(__phoenix__) && (INTPTR_MAX == INT64_MAX)
+	char *expect = "00000000deadbeef            (nil) 7fffffffffffffff 8000000000000000";
+#elif defined(__phoenix__)
 	char *expect = "deadbeef    (nil) 7fffffff 80000000";
 #else
 	char *expect = "0xdeadbeef (nil) 0x7fffffffffffffff 0x8000000000000000";
