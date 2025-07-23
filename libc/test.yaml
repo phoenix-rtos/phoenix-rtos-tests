@@ -76,13 +76,18 @@ test:
     - name: unix-socket
       execute: test-libc-unix-socket
       targets:
-        exclude: [armv7a9-zynq7000-qemu]
+        exclude: [armv7a9-zynq7000-qemu, aarch64a53-zynqmp-qemu]
         include: [host-generic-pc]
 
     - name: unix-socket
       execute: test-libc-unix-socket --extra-poll-delay-ms 150
       targets:
         value: [armv7a9-zynq7000-qemu]
+    
+    - name: unix-socket # Issue: 1342 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1342
+      execute: test-libc-unix-socket --extra-poll-delay-ms 150 --transfer-loop-cnt 30
+      targets:
+        value: [aarch64a53-zynqmp-qemu]
 
     - name: inet-socket
       execute: test-libc-inet-socket
