@@ -17,4 +17,4 @@ import psh.tools.psh as psh
 
 @psh.run
 def harness(p):
-    psh.assert_exec(p, 'test_priority', msg='Prompt not seen after test_priority execution')
+    psh.assert_cmd(p, "test_priority", msg="Prompt not seen after test_priority execution", exec_prefix=True)

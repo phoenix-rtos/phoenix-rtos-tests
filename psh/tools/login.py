@@ -33,7 +33,7 @@ def log_in(p, login, passwd):
 def assert_login(p, login, passwd):
     log_in(p, login, passwd)
     psh.assert_prompt(p, msg='Login should pass but failed (or hasn\'t been completed in 2s)', timeout=2)
-    psh.assert_cmd_successed(p)
+    psh.assert_cmd_succeded(p)
 
 
 def assert_pshlogin_fail(p, login, passwd):
