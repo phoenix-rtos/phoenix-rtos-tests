@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Callable, Dict, List, Optional
 from pathlib import Path
-from trunner.text import bold, green, red, remove_ansi_sequences, yellow
+from trunner.text import bold, escape_invalid_xml_characters, green, red, remove_ansi_sequences, yellow
 
 
 def is_github_actions() -> bool:
@@ -147,6 +147,9 @@ class TestResult:
             # remove ANSI codes (not valid within XML)
             msg = remove_ansi_sequences(self.msg)
             summary = remove_ansi_sequences(self.summary)
+            # escape characters not valid within XML
+            msg = escape_invalid_xml_characters(msg)
+            summary = escape_invalid_xml_characters(summary)
             if not summary:
                 # put first line as a failure reason
                 summary = msg.splitlines()[0] if msg else ""
