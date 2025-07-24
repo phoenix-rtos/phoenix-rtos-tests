@@ -1,17 +1,18 @@
 from __future__ import annotations
-from datetime import datetime
-from functools import total_ordering
 
 import os
 import re
 import sys
 import time
 import traceback
-import junitparser
 from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum, auto
-from typing import Callable, Dict, List, Optional
+from functools import total_ordering
 from pathlib import Path
+from typing import Callable, Dict, List, Optional
+
+import junitparser
 from trunner.text import bold, escape_invalid_xml_characters, green, red, remove_ansi_sequences, yellow
 
 
@@ -21,8 +22,10 @@ def is_github_actions() -> bool:
 
 def get_ci_url() -> str:
     if is_github_actions():
-        return (f"{os.environ['GITHUB_SERVER_URL']}/{os.environ['GITHUB_REPOSITORY']}"
-                f"/actions/runs/{os.environ['GITHUB_RUN_ID']}")
+        return (
+            f"{os.environ['GITHUB_SERVER_URL']}/{os.environ['GITHUB_REPOSITORY']}"
+            f"/actions/runs/{os.environ['GITHUB_RUN_ID']}"
+        )
 
     return ""
 
@@ -64,12 +67,13 @@ class Status(Enum):
 
     def should_print(self, verbosity: int):
         status_for_verbosity = (Status.FAIL, Status.SKIP, Status.OK)
-        return self in status_for_verbosity[:verbosity + 1]
+        return self in status_for_verbosity[: verbosity + 1]
 
 
 @total_ordering
 class TestStage(Enum):
     """Testing stage to timed"""
+
     INIT = auto()
     REBOOT = auto()
     FLASH = auto()
