@@ -99,10 +99,6 @@ class MCXN94xTarget(TargetBase):
         except PyocdError as e:
             raise FlashError(msg=str(e)) from e
 
-        # TODO: Use this approach for all targets to complete the
-        # flashing step once the initial system prompt is printed
-        self.dut.expect_exact(self.shell_prompt)
-
     def build_test(self, test: TestOptions):
         builder = HarnessBuilder()
 
