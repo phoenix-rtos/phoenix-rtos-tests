@@ -1,9 +1,9 @@
 import itertools
 import re
-from colorama import Style, Fore
 
+from colorama import Fore, Style
 
-ANSI_ESCAPE = re.compile(r'(?:\x1B[@-_]|[\x80-\x9F])[0-?]*[ -/]*[@-~]')
+ANSI_ESCAPE = re.compile(r"(?:\x1B[@-_]|[\x80-\x9F])[0-?]*[ -/]*[@-~]")
 
 
 def bold(s: str) -> str:
@@ -31,7 +31,7 @@ def magenta(s: str) -> str:
 
 
 def remove_ansi_sequences(line: str) -> str:
-    return ANSI_ESCAPE.sub('', line)
+    return ANSI_ESCAPE.sub("", line)
 
 
 def escape_invalid_xml_characters(s: str) -> str:
