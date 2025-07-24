@@ -162,10 +162,10 @@ TEST_TEAR_DOWN(math_frac)
 TEST(math_frac, modf_basic)
 {
 	int i, iters = 50 * ITER_FACTOR;
-	double acceptLoss = 1.0;
+	int digLost, acceptLoss = 1;
 	double max = DBL_MAX;
 	double min = DBL_MIN;
-	double x, f, g, ipart, digLost;
+	double x, f, g, ipart;
 
 	for (i = 0; i < iters; i++) {
 		x = test_getRandomLog(min, max);
@@ -206,35 +206,35 @@ TEST(math_frac, modf_basic)
 }
 
 
-TEST(math_frac, modf_special_cond)
+TEST(math_frac, modf_special_val)
 {
 	double iprt;
 
 	iprt = 0.0;
-	// TEST_ASSERT_DOUBLE_IS_NAN(modf(NAN, &iprt));
-	// TEST_ASSERT_DOUBLE_IS_NAN(iprt);
+	TEST_ASSERT_DOUBLE_IS_NAN(modf(NAN, &iprt));
+	TEST_ASSERT_DOUBLE_IS_NAN(iprt);
 
 	iprt = 0.0;
-	// TEST_ASSERT_DOUBLE_IS_NAN(modf(NAN, &iprt));
-	// TEST_ASSERT_DOUBLE_IS_NAN(iprt);
+	TEST_ASSERT_DOUBLE_IS_NAN(modf(-NAN, &iprt));
+	TEST_ASSERT_DOUBLE_IS_NAN(iprt);
 
 	iprt = 0.0;
-	TEST_ASSERT_EQUAL_DOUBLE(0.0, modf(INFINITY, &iprt));
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, iprt);
+	TEST_ASSERT_DOUBLE_IS_ZERO(modf(INFINITY, &iprt));
+	TEST_ASSERT_DOUBLE_IS_INF(iprt);
 
 	iprt = 0.0;
-	TEST_ASSERT_EQUAL_DOUBLE(-0.0, modf(-INFINITY, &iprt));
-	TEST_ASSERT_EQUAL_DOUBLE(-INFINITY, iprt);
+	TEST_ASSERT_DOUBLE_IS_NEG_ZERO(modf(-INFINITY, &iprt));
+	TEST_ASSERT_DOUBLE_IS_NEG_INF(iprt);
 }
 
 
 TEST(math_frac, fmod_basic)
 {
 	int i, iters = 20 * ITER_FACTOR;
-	double acceptLoss = 60.0;
+	int digLost, acceptLoss = 60;
 	double xmax = DBL_MAX / 2.0;
 	double xmin = DBL_MIN * 2.0;
-	double x, y, ymin, ymax, f, g, digLost;
+	double x, y, ymin, ymax, f, g;
 
 	for (i = 0; i < iters; i++) {
 		x = test_getRandomLog(xmin, xmax);
@@ -258,7 +258,7 @@ TEST(math_frac, fmod_basic)
 }
 
 
-TEST(math_frac, fmod_special_cond)
+TEST(math_frac, fmod_special_val)
 {
 	/* Initialize x and y to random finite value other than 0.0 */
 	double x = 1.2;
@@ -275,14 +275,18 @@ TEST(math_frac, fmod_special_cond)
 
 	errno = 0;
 	TEST_ASSERT_DOUBLE_IS_NAN(fmod(x, 0.0));
-	// TEST_ASSERT_EQUAL_INT(EDOM, errno);
+	TEST_ASSERT_EQUAL_INT(EDOM, errno);
 
 	errno = 0;
 	TEST_ASSERT_DOUBLE_IS_NAN(fmod(INFINITY, y));
-	// TEST_ASSERT_EQUAL_INT(EDOM, errno);
+	TEST_ASSERT_EQUAL_INT(EDOM, errno);
 
-	TEST_ASSERT_EQUAL_DOUBLE(0.0, fmod(0.0, y));
-	TEST_ASSERT_EQUAL_DOUBLE(-0.0, fmod(-0.0, y));
+	errno = 0;
+	TEST_ASSERT_DOUBLE_IS_NAN(fmod(-INFINITY, y));
+	TEST_ASSERT_EQUAL_INT(EDOM, errno);
+
+	TEST_ASSERT_DOUBLE_IS_ZERO(fmod(0.0, y));
+	TEST_ASSERT_DOUBLE_IS_NEG_ZERO(fmod(-0.0, y));
 
 	TEST_ASSERT_EQUAL_DOUBLE(x, fmod(x, INFINITY));
 	TEST_ASSERT_EQUAL_DOUBLE(x, fmod(x, -INFINITY));
@@ -292,10 +296,10 @@ TEST(math_frac, fmod_special_cond)
 TEST(math_frac, ceil_basic)
 {
 	int i, iters = 10 * ITER_FACTOR;
-	double acceptLoss = 1.0;
+	int digLost, acceptLoss = 1;
 	double max = pow(2.0, (double)test_common.maxPowTwo + 2.0);
 	double min = 1.0e-10;
-	double x, f, g, digLost;
+	double x, f, g;
 
 	for (i = 0; i < iters; i++) {
 		x = test_getRandomLog(min, max);
@@ -311,26 +315,26 @@ TEST(math_frac, ceil_basic)
 }
 
 
-TEST(math_frac, ceil_special_cond)
+TEST(math_frac, ceil_special_val)
 {
 	TEST_ASSERT_DOUBLE_IS_NAN(ceil(NAN));
 	TEST_ASSERT_DOUBLE_IS_NAN(ceil(-NAN));
 
-	TEST_ASSERT_EQUAL_DOUBLE(0.0, ceil(0.0));
-	TEST_ASSERT_EQUAL_DOUBLE(-0.0, ceil(-0.0));
+	TEST_ASSERT_DOUBLE_IS_ZERO(ceil(0.0));
+	TEST_ASSERT_DOUBLE_IS_NEG_ZERO(ceil(-0.0));
 
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, ceil(INFINITY));
-	TEST_ASSERT_EQUAL_DOUBLE(-INFINITY, ceil(-INFINITY));
+	TEST_ASSERT_DOUBLE_IS_INF(ceil(INFINITY));
+	TEST_ASSERT_DOUBLE_IS_NEG_INF(ceil(-INFINITY));
 }
 
 
 TEST(math_frac, floor_basic)
 {
 	int i, iters = 10 * ITER_FACTOR;
-	double acceptLoss = 1.0;
+	int digLost, acceptLoss = 1;
 	double max = DBL_MAX;
 	double min = DBL_MIN;
-	double x, f, g, digLost;
+	double x, f, g;
 
 	for (i = 0; i < iters; i++) {
 		x = test_getRandomLog(min, max);
@@ -346,16 +350,16 @@ TEST(math_frac, floor_basic)
 }
 
 
-TEST(math_frac, floor_special_cond)
+TEST(math_frac, floor_special_val)
 {
 	TEST_ASSERT_DOUBLE_IS_NAN(floor(NAN));
 	TEST_ASSERT_DOUBLE_IS_NAN(floor(-NAN));
 
-	TEST_ASSERT_EQUAL_DOUBLE(0.0, floor(0.0));
-	TEST_ASSERT_EQUAL_DOUBLE(-0.0, floor(-0.0));
+	TEST_ASSERT_DOUBLE_IS_ZERO(floor(0.0));
+	TEST_ASSERT_DOUBLE_IS_NEG_ZERO(floor(-0.0));
 
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, floor(INFINITY));
-	TEST_ASSERT_EQUAL_DOUBLE(-INFINITY, floor(-INFINITY));
+	TEST_ASSERT_DOUBLE_IS_INF(floor(INFINITY));
+	TEST_ASSERT_DOUBLE_IS_NEG_INF(floor(-INFINITY));
 }
 
 TEST_GROUP_RUNNER(math_frac)
@@ -363,15 +367,15 @@ TEST_GROUP_RUNNER(math_frac)
 	test_setup();
 
 	RUN_TEST_CASE(math_frac, modf_basic);
-	RUN_TEST_CASE(math_frac, modf_special_cond);
+	RUN_TEST_CASE(math_frac, modf_special_val);
 
-	/* fmod fix needed */
+	/* Disabled due to https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1229 */
 	// RUN_TEST_CASE(math_frac, fmod_basic);
-	RUN_TEST_CASE(math_frac, fmod_special_cond);
+	RUN_TEST_CASE(math_frac, fmod_special_val);
 
 	RUN_TEST_CASE(math_frac, ceil_basic);
-	RUN_TEST_CASE(math_frac, ceil_special_cond);
+	RUN_TEST_CASE(math_frac, ceil_special_val);
 
 	RUN_TEST_CASE(math_frac, floor_basic);
-	RUN_TEST_CASE(math_frac, floor_special_cond);
+	RUN_TEST_CASE(math_frac, floor_special_val);
 }

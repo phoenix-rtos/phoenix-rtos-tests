@@ -47,12 +47,12 @@ TEST_TEAR_DOWN(math_trig)
 TEST(math_trig, sin_basic)
 {
 	int i, iters = 50 * ITER_FACTOR;
-	double acceptLoss = 35.0;
+	int digLost, acceptLoss = 35;
 	double max = M_PI_2;
 	double min = -max;
 	double step = max / iters - min / iters;
 	double xstart = min;
-	double u, x, y, f, g, digLost;
+	double u, x, y, f, g;
 
 	for (i = 0; i < iters; i++) {
 		u = (double)rand() / (double)RAND_MAX;
@@ -90,8 +90,8 @@ TEST(math_trig, sin_basic)
 
 TEST(math_trig, sin_normalize_special_case)
 {
-	double acceptLoss = 60.0;
-	double digLost, x, f, g;
+	int digLost, acceptLoss = 60;
+	double x, f, g;
 
 	x = M_PI * test_common.maxPowTwoPi;
 	f = 2.0 * sin(x) * cos(x);
@@ -105,33 +105,33 @@ TEST(math_trig, sin_normalize_special_case)
 }
 
 
-TEST(math_trig, sin_special_cond)
+TEST(math_trig, sin_special_val)
 {
 	TEST_ASSERT_DOUBLE_IS_NAN(sin(NAN));
 	TEST_ASSERT_DOUBLE_IS_NAN(sin(-NAN));
 
-	TEST_ASSERT_EQUAL_DOUBLE(0.0, sin(0.0));
-	TEST_ASSERT_EQUAL_DOUBLE(-0.0, sin(-0.0));
+	TEST_ASSERT_DOUBLE_IS_ZERO(sin(0.0));
+	TEST_ASSERT_DOUBLE_IS_NEG_ZERO(sin(-0.0));
 
 	errno = 0;
 	TEST_ASSERT_DOUBLE_IS_NAN(sin(INFINITY));
-	// TEST_ASSERT_EQUAL_INT(EDOM, errno);
+	TEST_ASSERT_EQUAL_INT(EDOM, errno);
 
 	errno = 0;
 	TEST_ASSERT_DOUBLE_IS_NAN(sin(-INFINITY));
-	// TEST_ASSERT_EQUAL_INT(EDOM, errno);
+	TEST_ASSERT_EQUAL_INT(EDOM, errno);
 }
 
 
 TEST(math_trig, cos_basic)
 {
 	int i, iters = 50 * ITER_FACTOR;
-	double acceptLoss = 35.0;
+	int digLost, acceptLoss = 35;
 	double max = M_PI;
 	double min = 0.0;
 	double step = max / iters - min / iters;
 	double xstart = min;
-	double u, x, y, f, g, digLost;
+	double u, x, y, f, g;
 
 	for (i = 0; i < iters; i++) {
 		u = (double)rand() / (double)RAND_MAX;
@@ -169,8 +169,8 @@ TEST(math_trig, cos_basic)
 
 TEST(math_trig, cos_normalize_special_case)
 {
-	double acceptLoss = 60.0;
-	double digLost, x, y, f, g;
+	int digLost, acceptLoss = 60;
+	double x, y, f, g;
 
 	x = M_PI * pow(2.0, test_common.maxPowTwoPi);
 	y = cos(x / 2.0);
@@ -185,7 +185,7 @@ TEST(math_trig, cos_normalize_special_case)
 }
 
 
-TEST(math_trig, cos_special_cond)
+TEST(math_trig, cos_special_val)
 {
 	TEST_ASSERT_DOUBLE_IS_NAN(cos(NAN));
 	TEST_ASSERT_DOUBLE_IS_NAN(cos(-NAN));
@@ -195,23 +195,23 @@ TEST(math_trig, cos_special_cond)
 
 	errno = 0;
 	TEST_ASSERT_DOUBLE_IS_NAN(cos(INFINITY));
-	// TEST_ASSERT_EQUAL_INT(EDOM, errno);
+	TEST_ASSERT_EQUAL_INT(EDOM, errno);
 
 	errno = 0;
 	TEST_ASSERT_DOUBLE_IS_NAN(cos(-INFINITY));
-	// TEST_ASSERT_EQUAL_INT(EDOM, errno);
+	TEST_ASSERT_EQUAL_INT(EDOM, errno);
 }
 
 
 TEST(math_trig, tan_basic)
 {
 	int i, ferr, gerr, iters = 50 * ITER_FACTOR;
-	double acceptLoss = 35.0;
+	int digLost, acceptLoss = 35;
 	double max = M_PI_2 - 0.01;
 	double min = -max;
 	double step = max / iters - min / iters;
 	double xstart = min;
-	double u, x, y, f, g, digLost;
+	double u, x, y, f, g;
 
 	for (i = 0; i < iters; i++) {
 		u = (double)rand() / (double)RAND_MAX;
@@ -255,8 +255,8 @@ TEST(math_trig, tan_basic)
 
 TEST(math_trig, tan_normalize_special_case)
 {
-	double acceptLoss = 60.0;
-	double digLost, x, y, f, g;
+	int digLost, acceptLoss = 60;
+	double x, y, f, g;
 
 	x = M_PI * pow(2.0, test_common.maxPowTwoPi);
 	y = tan(x / 2.0);
@@ -271,13 +271,13 @@ TEST(math_trig, tan_normalize_special_case)
 }
 
 
-TEST(math_trig, tan_special_cond)
+TEST(math_trig, tan_special_val)
 {
 	TEST_ASSERT_DOUBLE_IS_NAN(tan(NAN));
 	TEST_ASSERT_DOUBLE_IS_NAN(tan(-NAN));
 
-	TEST_ASSERT_EQUAL_DOUBLE(0.0, tan(0.0));
-	TEST_ASSERT_EQUAL_DOUBLE(-0.0, tan(-0.0));
+	TEST_ASSERT_DOUBLE_IS_ZERO(tan(0.0));
+	TEST_ASSERT_DOUBLE_IS_NEG_ZERO(tan(-0.0));
 
 	errno = 0;
 	TEST_ASSERT_DOUBLE_IS_NAN(tan(INFINITY));
@@ -292,12 +292,12 @@ TEST(math_trig, tan_special_cond)
 TEST(math_trig, asin_basic)
 {
 	int i, iters = 50 * ITER_FACTOR;
-	double acceptLoss = 35.0;
+	int digLost, acceptLoss = 35;
 	double max = 1.0;
 	double min = -max;
 	double step = max / iters - min / iters;
 	double xstart = min;
-	double u, x, f, g, digLost;
+	double u, x, f, g;
 
 	for (i = 0; i < iters; i++) {
 		u = (double)rand() / (double)RAND_MAX;
@@ -313,7 +313,7 @@ TEST(math_trig, asin_basic)
 }
 
 
-TEST(math_trig, asin_special_cond)
+TEST(math_trig, asin_special_val)
 {
 	TEST_ASSERT_DOUBLE_IS_NAN(asin(NAN));
 	TEST_ASSERT_DOUBLE_IS_NAN(asin(-NAN));
@@ -326,8 +326,8 @@ TEST(math_trig, asin_special_cond)
 	TEST_ASSERT_DOUBLE_IS_NAN(asin(-1.03));
 	TEST_ASSERT_EQUAL_INT(EDOM, errno);
 
-	// TEST_ASSERT_EQUAL_DOUBLE(0.0, asin(0.0));
-	// TEST_ASSERT_EQUAL_DOUBLE(-0.0, asin(-0.0));
+	TEST_ASSERT_DOUBLE_IS_ZERO(asin(0.0));
+	TEST_ASSERT_DOUBLE_IS_NEG_ZERO(asin(-0.0));
 
 	errno = 0;
 	TEST_ASSERT_DOUBLE_IS_NAN(asin(INFINITY));
@@ -342,12 +342,12 @@ TEST(math_trig, asin_special_cond)
 TEST(math_trig, acos_basic)
 {
 	int i, iters = 50 * ITER_FACTOR;
-	double acceptLoss = 35.0;
+	int digLost, acceptLoss = 35;
 	double max = 1.0;
 	double min = -max;
 	double step = max / iters - min / iters;
 	double xstart = min;
-	double u, x, f, g, digLost;
+	double u, x, f, g;
 
 	for (i = 0; i < iters; i++) {
 		u = (double)rand() / (double)RAND_MAX;
@@ -363,7 +363,7 @@ TEST(math_trig, acos_basic)
 }
 
 
-TEST(math_trig, acos_special_cond)
+TEST(math_trig, acos_special_val)
 {
 	TEST_ASSERT_DOUBLE_IS_NAN(acos(NAN));
 	TEST_ASSERT_DOUBLE_IS_NAN(acos(-NAN));
@@ -376,7 +376,7 @@ TEST(math_trig, acos_special_cond)
 	TEST_ASSERT_DOUBLE_IS_NAN(acos(-1.03));
 	TEST_ASSERT_EQUAL_INT(EDOM, errno);
 
-	TEST_ASSERT_EQUAL_DOUBLE(0.0, acos(1.0));
+	TEST_ASSERT_DOUBLE_IS_ZERO(acos(1.0));
 
 	errno = 0;
 	TEST_ASSERT_DOUBLE_IS_NAN(acos(INFINITY));
@@ -391,10 +391,10 @@ TEST(math_trig, acos_special_cond)
 TEST(math_trig, atan_basic)
 {
 	int i, iters = 50 * ITER_FACTOR;
-	double acceptLoss = 35.0;
+	int digLost, acceptLoss = 35;
 	double max = 25.0;
 	double min = 0.0;
-	double x, f, g, digLost;
+	double x, f, g;
 
 	for (i = 0; i < iters; i++) {
 		x = test_getRandomLog(min, max);
@@ -411,13 +411,13 @@ TEST(math_trig, atan_basic)
 }
 
 
-TEST(math_trig, atan_special_cond)
+TEST(math_trig, atan_special_val)
 {
 	TEST_ASSERT_DOUBLE_IS_NAN(atan(NAN));
 	TEST_ASSERT_DOUBLE_IS_NAN(atan(-NAN));
 
-	TEST_ASSERT_EQUAL_DOUBLE(0.0, atan(0.0));
-	TEST_ASSERT_EQUAL_DOUBLE(-0.0, atan(-0.0));
+	TEST_ASSERT_DOUBLE_IS_ZERO(atan(0.0));
+	TEST_ASSERT_DOUBLE_IS_NEG_ZERO(atan(-0.0));
 
 	TEST_ASSERT_EQUAL_DOUBLE(M_PI_2, atan(INFINITY));
 	TEST_ASSERT_EQUAL_DOUBLE(-M_PI_2, atan(-INFINITY));
@@ -427,10 +427,10 @@ TEST(math_trig, atan_special_cond)
 TEST(math_trig, atan2_basic)
 {
 	int i, iters = 50 * ITER_FACTOR;
-	double acceptLoss = 35.0;
+	int digLost, acceptLoss = 35;
 	double max = 25.0;
 	double min = 0.01;
-	double at, x, y, f, g, digLost;
+	double at, x, y, f, g;
 
 	for (i = 0; i < iters; i++) {
 		x = test_getRandomLog(min, max);
@@ -458,7 +458,7 @@ TEST(math_trig, atan2_basic)
 }
 
 
-TEST(math_trig, atan2_special_cond)
+TEST(math_trig, atan2_special_val)
 {
 	/* Initialize x and y to random finite value other than 0.0 */
 	double x = 1.2;
@@ -467,64 +467,57 @@ TEST(math_trig, atan2_special_cond)
 	TEST_ASSERT_DOUBLE_IS_NAN(atan2(NAN, x));
 	TEST_ASSERT_DOUBLE_IS_NAN(atan2(-NAN, x));
 
-	// TEST_ASSERT_DOUBLE_IS_NAN(atan2(y, NAN));
-	// TEST_ASSERT_DOUBLE_IS_NAN(atan2(y, -NAN));
+	TEST_ASSERT_DOUBLE_IS_NAN(atan2(y, NAN));
+	TEST_ASSERT_DOUBLE_IS_NAN(atan2(y, -NAN));
 
 	TEST_ASSERT_DOUBLE_IS_NAN(atan2(NAN, NAN));
 	TEST_ASSERT_DOUBLE_IS_NAN(atan2(-NAN, -NAN));
 
-	// TEST_ASSERT_EQUAL_DOUBLE(M_PI, atan2(0.0, -x));
-	// TEST_ASSERT_EQUAL_DOUBLE(-M_PI, atan2(-0.0, -x));
+	TEST_ASSERT_EQUAL_DOUBLE(M_PI, atan2(0.0, -x));
+	TEST_ASSERT_EQUAL_DOUBLE(-M_PI, atan2(-0.0, -x));
 
-	TEST_ASSERT_EQUAL_DOUBLE(0.0, atan2(0.0, x));
-	TEST_ASSERT_EQUAL_DOUBLE(-0.0, atan2(-0.0, x));
+	TEST_ASSERT_DOUBLE_IS_ZERO(atan2(0.0, x));
+	TEST_ASSERT_DOUBLE_IS_NEG_ZERO(atan2(-0.0, x));
 
-	// TEST_ASSERT_EQUAL_DOUBLE(-M_PI_2, atan2(-y, 0.0));
-	// TEST_ASSERT_EQUAL_DOUBLE(-M_PI_2, atan2(-y, -0.0));
+	TEST_ASSERT_EQUAL_DOUBLE(-M_PI_2, atan2(-y, 0.0));
+	TEST_ASSERT_EQUAL_DOUBLE(-M_PI_2, atan2(-y, -0.0));
 
-	// TEST_ASSERT_EQUAL_DOUBLE(M_PI_2, atan2(y, 0.0));
-	// TEST_ASSERT_EQUAL_DOUBLE(M_PI_2, atan2(y, -0.0));
+	TEST_ASSERT_EQUAL_DOUBLE(M_PI_2, atan2(y, 0.0));
+	TEST_ASSERT_EQUAL_DOUBLE(M_PI_2, atan2(y, -0.0));
 
-	// errno = 0;
-	// TEST_ASSERT_NOT_EQUAL_DOUBLE(INFINITY, atan2(y, 0.0));
-	// TEST_ASSERT_NOT_EQUAL_INT(ERANGE, errno);
+	errno = 0;
+	TEST_ASSERT_EQUAL_DOUBLE(M_PI, atan2(0.0, -0.0));
+	TEST_ASSERT_NOT_EQUAL_INT(EDOM, errno);
 
-	// errno = 0;
-	// TEST_ASSERT_EQUAL_DOUBLE(M_PI, atan2(0.0, -0.0));
-	// TEST_ASSERT_NOT_EQUAL_INT(EDOM, errno);
+	errno = 0;
+	TEST_ASSERT_EQUAL_DOUBLE(-M_PI, atan2(-0.0, -0.0));
+	TEST_ASSERT_NOT_EQUAL_INT(EDOM, errno);
 
-	// errno = 0;
-	// TEST_ASSERT_EQUAL_DOUBLE(-M_PI, atan2(-0.0, -0.0));
-	// TEST_ASSERT_NOT_EQUAL_INT(EDOM, errno);
+	errno = 0;
+	TEST_ASSERT_DOUBLE_IS_ZERO(atan2(0.0, 0.0));
+	TEST_ASSERT_NOT_EQUAL_INT(EDOM, errno);
 
-	// errno = 0;
-	// TEST_ASSERT_EQUAL_DOUBLE(0.0, atan2(0.0, 0.0));
-	// TEST_ASSERT_NOT_EQUAL_INT(EDOM, errno);
+	errno = 0;
+	TEST_ASSERT_DOUBLE_IS_NEG_ZERO(atan2(-0.0, 0.0));
+	TEST_ASSERT_NOT_EQUAL_INT(EDOM, errno);
 
-	// errno = 0;
-	// TEST_ASSERT_EQUAL_DOUBLE(-0.0, atan2(-0.0, 0.0));
-	// TEST_ASSERT_NOT_EQUAL_INT(EDOM, errno);
-
-	TEST_ASSERT_EQUAL_DOUBLE(0.0, atan2(0.0, x));
-	TEST_ASSERT_EQUAL_DOUBLE(-0.0, atan2(-0.0, x));
-
-	TEST_ASSERT_EQUAL_DOUBLE(0.0, atan2(0.0, x));
-	TEST_ASSERT_EQUAL_DOUBLE(-0.0, atan2(-0.0, x));
+	TEST_ASSERT_DOUBLE_IS_ZERO(atan2(0.0, x));
+	TEST_ASSERT_DOUBLE_IS_NEG_ZERO(atan2(-0.0, x));
 
 	TEST_ASSERT_EQUAL_DOUBLE(M_PI, atan2(y, -INFINITY));
 	TEST_ASSERT_EQUAL_DOUBLE(-M_PI, atan2(-y, -INFINITY));
 
-	TEST_ASSERT_EQUAL_DOUBLE(0.0, atan2(y, INFINITY));
-	TEST_ASSERT_EQUAL_DOUBLE(-0.0, atan2(-y, INFINITY));
+	TEST_ASSERT_DOUBLE_IS_ZERO(atan2(y, INFINITY));
+	TEST_ASSERT_DOUBLE_IS_NEG_ZERO(atan2(-y, INFINITY));
 
 	TEST_ASSERT_EQUAL_DOUBLE(M_PI_2, atan2(INFINITY, x));
 	TEST_ASSERT_EQUAL_DOUBLE(-M_PI_2, atan2(-INFINITY, x));
 
-	// TEST_ASSERT_EQUAL_DOUBLE(M_PI_4 * 3, atan2(INFINITY, -INFINITY));
-	// TEST_ASSERT_EQUAL_DOUBLE(-M_PI_4 * 3, atan2(-INFINITY, -INFINITY));
+	TEST_ASSERT_EQUAL_DOUBLE(M_PI_4 * 3, atan2(INFINITY, -INFINITY));
+	TEST_ASSERT_EQUAL_DOUBLE(-M_PI_4 * 3, atan2(-INFINITY, -INFINITY));
 
-	// TEST_ASSERT_EQUAL_DOUBLE(M_PI_4, atan2(INFINITY, INFINITY));
-	// TEST_ASSERT_EQUAL_DOUBLE(-M_PI_4, atan2(-INFINITY, INFINITY));
+	TEST_ASSERT_EQUAL_DOUBLE(M_PI_4, atan2(INFINITY, INFINITY));
+	TEST_ASSERT_EQUAL_DOUBLE(-M_PI_4, atan2(-INFINITY, INFINITY));
 }
 
 
@@ -540,10 +533,10 @@ TEST_TEAR_DOWN(math_hyper)
 TEST(math_hyper, sinh_basic)
 {
 	int i, iters = 50 * ITER_FACTOR;
-	double acceptLoss = 50.0;
+	int digLost, acceptLoss = 50;
 	double max = log(DBL_MAX);
 	double min = 1.0e-10;
-	double x, y, f, g, digLost;
+	double x, y, f, g;
 
 	for (i = 0; i < iters; i++) {
 		x = test_getRandomLog(min, max);
@@ -561,30 +554,34 @@ TEST(math_hyper, sinh_basic)
 }
 
 
-TEST(math_hyper, sinh_special_cond)
+TEST(math_hyper, sinh_special_val)
 {
-	// TEST_ASSERT_DOUBLE_IS_NAN(sinh(NAN));
-	// TEST_ASSERT_DOUBLE_IS_NAN(sinh(-NAN));
+	TEST_ASSERT_DOUBLE_IS_NAN(sinh(NAN));
+	TEST_ASSERT_DOUBLE_IS_NAN(sinh(-NAN));
 
-	TEST_ASSERT_EQUAL_DOUBLE(0.0, sinh(0.0));
-	TEST_ASSERT_EQUAL_DOUBLE(-0.0, sinh(-0.0));
+	TEST_ASSERT_DOUBLE_IS_ZERO(sinh(0.0));
+	TEST_ASSERT_DOUBLE_IS_NEG_ZERO(sinh(-0.0));
 
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, sinh(INFINITY));
-	TEST_ASSERT_EQUAL_DOUBLE(-INFINITY, sinh(-INFINITY));
+	TEST_ASSERT_DOUBLE_IS_INF(sinh(INFINITY));
+	TEST_ASSERT_DOUBLE_IS_NEG_INF(sinh(-INFINITY));
 
 	errno = 0;
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, sinh(log(DBL_MAX) * 1.1));
-	// TEST_ASSERT_EQUAL_INT(ERANGE, errno);
+	TEST_ASSERT_EQUAL_DOUBLE(HUGE_VAL, sinh(log(DBL_MAX) * 1.1));
+	TEST_ASSERT_EQUAL_INT(ERANGE, errno);
+
+	errno = 0;
+	TEST_ASSERT_EQUAL_DOUBLE(-HUGE_VAL, sinh(-log(DBL_MAX) * 1.1));
+	TEST_ASSERT_EQUAL_INT(ERANGE, errno);
 }
 
 
 TEST(math_hyper, cosh_basic)
 {
 	int i, iters = 50 * ITER_FACTOR;
-	double acceptLoss = 50.0;
+	int digLost, acceptLoss = 50;
 	double max = log(DBL_MAX);
 	double min = 1.0e-10;
-	double x, y, f, g, digLost;
+	double x, y, f, g;
 
 	for (i = 0; i < iters; i++) {
 		x = test_getRandomLog(min, max);
@@ -602,26 +599,26 @@ TEST(math_hyper, cosh_basic)
 }
 
 
-TEST(math_hyper, cosh_special_cond)
+TEST(math_hyper, cosh_special_val)
 {
-	// TEST_ASSERT_DOUBLE_IS_NAN(cosh(NAN));
-	// TEST_ASSERT_DOUBLE_IS_NAN(cosh(-NAN));
+	TEST_ASSERT_DOUBLE_IS_NAN(cosh(NAN));
+	TEST_ASSERT_DOUBLE_IS_NAN(cosh(-NAN));
 
 	TEST_ASSERT_EQUAL_DOUBLE(1.0, cosh(0.0));
 	TEST_ASSERT_EQUAL_DOUBLE(1.0, cosh(-0.0));
 
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, cosh(INFINITY));
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, cosh(-INFINITY));
+	TEST_ASSERT_DOUBLE_IS_INF(cosh(INFINITY));
+	TEST_ASSERT_DOUBLE_IS_INF(cosh(-INFINITY));
 }
 
 
 TEST(math_hyper, tanh_basic)
 {
 	int i, iters = 50 * ITER_FACTOR;
-	double acceptLoss = 50.0;
+	int digLost, acceptLoss = 50;
 	double max = log(DBL_MAX);
 	double min = 1.0e-10;
-	double x, y, f, g, digLost;
+	double x, y, f, g;
 
 	for (i = 0; i < iters; i++) {
 		x = test_getRandomLog(min, max);
@@ -639,16 +636,16 @@ TEST(math_hyper, tanh_basic)
 }
 
 
-TEST(math_hyper, tanh_special_cond)
+TEST(math_hyper, tanh_special_val)
 {
-	// TEST_ASSERT_DOUBLE_IS_NAN(tanh(NAN));
-	// TEST_ASSERT_DOUBLE_IS_NAN(tanh(-NAN));
+	TEST_ASSERT_DOUBLE_IS_NAN(tanh(NAN));
+	TEST_ASSERT_DOUBLE_IS_NAN(tanh(-NAN));
 
-	TEST_ASSERT_EQUAL_DOUBLE(0.0, tanh(0.0));
-	TEST_ASSERT_EQUAL_DOUBLE(-0.0, tanh(-0.0));
+	TEST_ASSERT_DOUBLE_IS_ZERO(tanh(0.0));
+	TEST_ASSERT_DOUBLE_IS_NEG_ZERO(tanh(-0.0));
 
-	// TEST_ASSERT_EQUAL_DOUBLE(1.0, tanh(INFINITY));
-	// TEST_ASSERT_EQUAL_DOUBLE(-1.0, tanh(-INFINITY));
+	TEST_ASSERT_EQUAL_DOUBLE(1.0, tanh(INFINITY));
+	TEST_ASSERT_EQUAL_DOUBLE(-1.0, tanh(-INFINITY));
 }
 
 
@@ -658,27 +655,27 @@ TEST_GROUP_RUNNER(math_trig)
 
 	RUN_TEST_CASE(math_trig, sin_basic);
 	RUN_TEST_CASE(math_trig, sin_normalize_special_case);
-	RUN_TEST_CASE(math_trig, sin_special_cond);
+	RUN_TEST_CASE(math_trig, sin_special_val);
 
 	RUN_TEST_CASE(math_trig, cos_basic);
 	RUN_TEST_CASE(math_trig, cos_normalize_special_case);
-	RUN_TEST_CASE(math_trig, cos_special_cond);
+	RUN_TEST_CASE(math_trig, cos_special_val);
 
 	RUN_TEST_CASE(math_trig, tan_basic);
 	RUN_TEST_CASE(math_trig, tan_normalize_special_case);
-	RUN_TEST_CASE(math_trig, tan_special_cond);
+	RUN_TEST_CASE(math_trig, tan_special_val);
 
 	RUN_TEST_CASE(math_trig, asin_basic);
-	RUN_TEST_CASE(math_trig, asin_special_cond);
+	RUN_TEST_CASE(math_trig, asin_special_val);
 
 	RUN_TEST_CASE(math_trig, acos_basic);
-	RUN_TEST_CASE(math_trig, acos_special_cond);
+	RUN_TEST_CASE(math_trig, acos_special_val);
 
 	RUN_TEST_CASE(math_trig, atan_basic);
-	RUN_TEST_CASE(math_trig, atan_special_cond);
+	RUN_TEST_CASE(math_trig, atan_special_val);
 
 	RUN_TEST_CASE(math_trig, atan2_basic);
-	RUN_TEST_CASE(math_trig, atan2_special_cond);
+	RUN_TEST_CASE(math_trig, atan2_special_val);
 }
 
 
@@ -687,11 +684,11 @@ TEST_GROUP_RUNNER(math_hyper)
 	test_setup();
 
 	RUN_TEST_CASE(math_hyper, sinh_basic);
-	RUN_TEST_CASE(math_hyper, sinh_special_cond);
+	RUN_TEST_CASE(math_hyper, sinh_special_val);
 
 	RUN_TEST_CASE(math_hyper, cosh_basic);
-	RUN_TEST_CASE(math_hyper, cosh_special_cond);
+	RUN_TEST_CASE(math_hyper, cosh_special_val);
 
 	RUN_TEST_CASE(math_hyper, tanh_basic);
-	RUN_TEST_CASE(math_hyper, tanh_special_cond);
+	RUN_TEST_CASE(math_hyper, tanh_special_val);
 }
