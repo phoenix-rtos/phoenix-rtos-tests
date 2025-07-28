@@ -1480,6 +1480,199 @@ TEST(test_unix_socket, flags)
 }
 
 
+static void unix_wrong_family(int type)
+{
+	int fd[2], err;
+	struct sockaddr_un addr = { 0 };
+	const char *socket_name = "/tmp/wrong_family";
+
+	fd[0] = unix_named_socket(type, socket_name);
+	if (fd[0] < 0) {
+		FAIL("unix_named_socket");
+	}
+
+	fd[1] = socket(AF_UNIX, type, 0);
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fd[1]);
+
+	addr.sun_family = AF_INET;
+	snprintf(addr.sun_path, sizeof(addr.sun_path), "%s", socket_name);
+
+	errno = 0;
+	err = bind(fd[1], (struct sockaddr *)&addr, SUN_LEN(&addr));
+	TEST_ASSERT_EQUAL_INT(-1, err);
+	TEST_ASSERT_EQUAL_INT(EINVAL, errno);
+
+	errno = 0;
+	err = connect(fd[1], (struct sockaddr *)&addr, SUN_LEN(&addr));
+	TEST_ASSERT_EQUAL_INT(-1, err);
+	TEST_ASSERT_EQUAL_INT(EINVAL, errno);
+
+	if (type == SOCK_DGRAM) {
+		errno = 0;
+		err = sendto(fd[1], "data", 4, 0, (struct sockaddr *)&addr, SUN_LEN(&addr));
+		TEST_ASSERT_EQUAL_INT(-1, err);
+		TEST_ASSERT_EQUAL_INT(EINVAL, errno);
+	}
+
+	close(fd[0]);
+	close(fd[1]);
+	unlink(socket_name);
+}
+
+
+TEST(test_unix_socket, wrong_family)
+{
+	unix_wrong_family(SOCK_STREAM);
+	unix_wrong_family(SOCK_SEQPACKET);
+	unix_wrong_family(SOCK_DGRAM);
+}
+
+
+static void unix_wrong_port(int type)
+{
+	int fd[2], err;
+	struct sockaddr_un addr = { 0 };
+	const char *socket_name = "/tmp/wrong_port";
+
+
+	fd[0] = open(socket_name, O_CREAT | O_WRONLY | O_TRUNC, 0666);
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fd[0]);
+
+	fd[1] = socket(AF_UNIX, type, 0);
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fd[1]);
+
+	addr.sun_family = AF_UNIX;
+	snprintf(addr.sun_path, sizeof(addr.sun_path), "%s", socket_name);
+
+	errno = 0;
+	err = connect(fd[1], (struct sockaddr *)&addr, SUN_LEN(&addr));
+	TEST_ASSERT_EQUAL_INT(-1, err);
+	TEST_ASSERT_EQUAL_INT(ECONNREFUSED, errno);
+
+	if (type == SOCK_DGRAM) {
+		errno = 0;
+		err = sendto(fd[1], "data", 4, 0, (struct sockaddr *)&addr, SUN_LEN(&addr));
+		TEST_ASSERT_EQUAL_INT(-1, err);
+		TEST_ASSERT_EQUAL_INT(ECONNREFUSED, errno);
+	}
+
+	close(fd[0]);
+	close(fd[1]);
+	unlink(socket_name);
+}
+
+
+TEST(test_unix_socket, wrong_port)
+{
+	unix_wrong_port(SOCK_STREAM);
+	unix_wrong_port(SOCK_SEQPACKET);
+	unix_wrong_port(SOCK_DGRAM);
+}
+
+
+static void unix_wrong_type(int type)
+{
+	int fd[2], err, wrong_type;
+	struct sockaddr_un addr = { 0 };
+	const char *socket_name = "/tmp/wrong_type";
+
+	switch (type) {
+		case SOCK_STREAM:
+			wrong_type = SOCK_SEQPACKET;
+			break;
+		case SOCK_SEQPACKET:
+			wrong_type = SOCK_DGRAM;
+			break;
+		case SOCK_DGRAM:
+			wrong_type = SOCK_STREAM;
+			break;
+		default:
+			FAIL("invalid_type");
+	}
+
+	fd[0] = unix_named_socket(wrong_type, socket_name);
+	if (fd[0] < 0) {
+		FAIL("unix_named_socket");
+	}
+
+	fd[1] = socket(AF_UNIX, type, 0);
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fd[1]);
+
+	addr.sun_family = AF_UNIX;
+	snprintf(addr.sun_path, sizeof(addr.sun_path), "%s", socket_name);
+
+	errno = 0;
+	err = connect(fd[1], (struct sockaddr *)&addr, SUN_LEN(&addr));
+	TEST_ASSERT_EQUAL_INT(-1, err);
+	TEST_ASSERT_EQUAL_INT(EPROTOTYPE, errno);
+
+	if (type == SOCK_DGRAM) {
+		errno = 0;
+		err = sendto(fd[1], "data", 4, 0, (struct sockaddr *)&addr, SUN_LEN(&addr));
+		TEST_ASSERT_EQUAL_INT(-1, err);
+		TEST_ASSERT_EQUAL_INT(EPROTOTYPE, errno);
+	}
+
+	close(fd[0]);
+	close(fd[1]);
+	unlink(socket_name);
+}
+
+
+TEST(test_unix_socket, wrong_type)
+{
+	unix_wrong_type(SOCK_STREAM);
+	unix_wrong_type(SOCK_SEQPACKET);
+	unix_wrong_type(SOCK_DGRAM);
+}
+
+
+TEST(test_unix_socket, send_clear_peer_closed)
+{
+	int fd[2], err;
+	struct sockaddr_un addr = { 0 };
+	const char *socket_name = "/tmp/send_clear_peer_closed";
+
+	fd[0] = unix_named_socket(SOCK_DGRAM, socket_name);
+	if (fd[0] < 0) {
+		FAIL("unix_named_socket");
+	}
+
+	fd[1] = socket(AF_UNIX, SOCK_DGRAM, 0);
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fd[1]);
+
+	addr.sun_family = AF_UNIX;
+	snprintf(addr.sun_path, sizeof(addr.sun_path), "%s", socket_name);
+
+	errno = 0;
+	err = connect(fd[1], (struct sockaddr *)&addr, SUN_LEN(&addr));
+	TEST_ASSERT_EQUAL_INT(0, err);
+	TEST_ASSERT_EQUAL_INT(0, errno);
+
+	errno = 0;
+	err = close(fd[0]);
+	TEST_ASSERT_EQUAL_INT(0, err);
+	TEST_ASSERT_EQUAL_INT(0, errno);
+
+	errno = 0;
+	err = unlink(socket_name);
+	TEST_ASSERT_EQUAL_INT(0, err);
+	TEST_ASSERT_EQUAL_INT(0, errno);
+
+	errno = 0;
+	err = send(fd[1], "data", 4, 0);
+	TEST_ASSERT_EQUAL_INT(-1, err);
+	TEST_ASSERT_EQUAL_INT(ECONNREFUSED, errno);
+
+	errno = 0;
+	err = send(fd[1], "data", 4, 0);
+	TEST_ASSERT_EQUAL_INT(-1, err);
+	TEST_ASSERT_EQUAL_INT(ENOTCONN, errno);
+
+	close(fd[1]);
+}
+
+
 TEST_GROUP_RUNNER(test_unix_socket)
 {
 	RUN_TEST_CASE(test_unix_socket, zero_len_send);
@@ -1501,6 +1694,10 @@ TEST_GROUP_RUNNER(test_unix_socket)
 	RUN_TEST_CASE(test_unix_socket, accept_connect_async);
 	RUN_TEST_CASE(test_unix_socket, accept_connect_liveness);
 	RUN_TEST_CASE(test_unix_socket, flags);
+	RUN_TEST_CASE(test_unix_socket, wrong_family);
+	RUN_TEST_CASE(test_unix_socket, wrong_port);
+	RUN_TEST_CASE(test_unix_socket, wrong_type);
+	RUN_TEST_CASE(test_unix_socket, send_clear_peer_closed);
 }
 
 void runner(void)
