@@ -10,6 +10,7 @@
  * %LICENSE%
  */
 
+#include <errno.h>
 #include <stdlib.h>
 
 #include "common.h"
@@ -123,11 +124,36 @@ TEST(meterfs_miscellaneous, multi_lookup)
 }
 
 
+/* Test case of operating on invalid file id == 0 */
+TEST(meterfs_miscellaneous, id_invalid)
+{
+	/* Create and lookup file for being sure that first new file will not get id 0 */
+	TEST_ASSERT_EQUAL(0, file_allocate("file0", 2, fsInfo.sectorsz / 100u, fsInfo.sectorsz / 100u));
+	TEST_ASSERT_GREATER_THAN(0, file_lookup("/file0"));
+
+	/* All operations on id = 0 should always return -ENOENT */
+	const int fileId = 0;
+	file_info_t info;
+
+	TEST_ASSERT_EQUAL(-ENOENT, file_getInfo(fileId, &info.sectors, &info.filesz, &info.recordsz, &info.recordcnt));
+	TEST_ASSERT_EQUAL(-ENOENT, file_close(fileId));
+
+	uint8_t buff[16] = { 0 };
+	TEST_ASSERT_LESS_THAN_MESSAGE(fsInfo.sectorsz, sizeof(buff), "TEST ERROR: buffer too big to fit into sectorsz");
+
+	TEST_ASSERT_EQUAL(-ENOENT, file_write(fileId, buff, sizeof(buff)));
+	TEST_ASSERT_EQUAL(-ENOENT, file_read(fileId, 0, buff, sizeof(buff)));
+
+	TEST_ASSERT_EQUAL(-ENOENT, file_resize(fileId, fsInfo.sectorsz / 100u, fsInfo.sectorsz / 100u));
+}
+
+
 TEST_GROUP_RUNNER(meterfs_miscellaneous)
 {
 	RUN_TEST_CASE(meterfs_miscellaneous, resize_getinfo);
 	RUN_TEST_CASE(meterfs_miscellaneous, resize_bigger);
 	RUN_TEST_CASE(meterfs_miscellaneous, multi_lookup);
+	RUN_TEST_CASE(meterfs_miscellaneous, id_invalid);
 }
 
 
