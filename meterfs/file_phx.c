@@ -14,10 +14,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <meterfs.h>
-#include <errno.h>
+#include <unity.h>
 
 #include "file.h"
-#include "unity_fixture.h"
 
 static oid_t meterfs;
 static const char *pathPrefix;
@@ -32,38 +31,51 @@ static inline void file_prepareDevCtl(msg_t *msg)
 }
 
 
-static int lookup_rel(const char *name, oid_t *file, oid_t *dev)
+/*
+ * Function with msg pass, to not allocate two messages in case of open
+ * FIXME: reconsider abstraction API
+ */
+static int lookupMsg(msg_t *msg, const char *name)
 {
-	char buffer[64];
-	if (snprintf(buffer, sizeof(buffer), "%s/%s", pathPrefix, name) >= sizeof(buffer)) {
-		return -ENAMETOOLONG;
+	msg->type = mtLookup;
+	msg->oid = (oid_t) { .port = meterfs.port, .id = -1 };
+	msg->i.data = name;
+	msg->i.size = strlen(name) + 1;
+	msg->o.data = NULL;
+	msg->o.size = 0;
+
+	TEST_ASSERT_EQUAL(0, msgSend(meterfs.port, msg));
+
+	if (msg->o.err < 0) {
+		return msg->o.err;
 	}
-	return lookup(buffer, file, dev);
+
+	TEST_ASSERT_LESS_OR_EQUAL_INT_MESSAGE(INT_MAX, msg->o.lookup.fil.id, "TEST ERROR: file ID too big");
+
+	return msg->o.lookup.fil.id;
 }
 
 
 int file_lookup(const char *name)
 {
-	oid_t oid;
-
-	return lookup_rel(name, &oid, NULL);
+	msg_t msg;
+	return lookupMsg(&msg, name);
 }
 
 
 int file_open(const char *name)
 {
 	msg_t msg;
-	int err;
-	id_t id;
+	int id;
 
-	err = lookup_rel(name, &msg.oid, NULL);
-	if (err < 0) {
-		return err;
+
+	id = lookupMsg(&msg, name);
+	if (id < 0) {
+		return id;
 	}
 
-	id = msg.oid.id;
-
 	msg.type = mtOpen;
+	msg.oid = (oid_t) { .port = meterfs.port, .id = (id_t)id };
 	msg.i.data = NULL;
 	msg.i.size = 0;
 	msg.o.data = NULL;
