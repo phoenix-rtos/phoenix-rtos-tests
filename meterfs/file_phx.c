@@ -191,7 +191,7 @@ int file_getInfo(id_t fid, size_t *sectors, size_t *filesz, size_t *recordsz, si
 
 	TEST_ASSERT_EQUAL(0, msgSend(meterfs.port, &msg));
 
-	if (msg.o.err; < 0) {
+	if (msg.o.err < 0) {
 		return msg.o.err;
 	}
 
@@ -234,6 +234,7 @@ int file_devInfo(file_fsInfo_t *fsInfo)
 {
 	msg_t msg;
 	meterfs_i_devctl_t *iptr = (meterfs_i_devctl_t *)msg.i.raw;
+	meterfs_o_devctl_t *optr = (meterfs_o_devctl_t *)msg.o.raw;
 
 	file_prepareDevCtl(&msg);
 
