@@ -104,8 +104,7 @@ int file_write(id_t fid, const void *buff, size_t bufflen)
 	msg.i.io.offs = 0;
 	msg.i.io.len = bufflen;
 	msg.i.io.mode = 0;
-	/* FIXME: should be const in kernel msg.h, casting should not be needed. Fixed in posix_rev */
-	msg.i.data = (void *)buff;
+	msg.i.data = buff;
 	msg.i.size = bufflen;
 	msg.o.data = NULL;
 	msg.o.size = 0;
