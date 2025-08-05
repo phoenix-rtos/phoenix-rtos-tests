@@ -107,6 +107,29 @@ static void *test_threadCleanup4(void *arg)
 }
 
 
+static void *test_threadCleanupCancel(void *arg)
+{
+	int *val = (int *)arg;
+
+	pthread_cleanup_push(test_cleanupHandler1, val);
+	pthread_cleanup_push(test_cleanupHandler2, val);
+
+	pthread_mutex_lock(&thread_args.count_lock);
+	thread_args.count = 1;
+	pthread_cond_signal(&thread_args.count_nonzero); /* Signal that the thread is ready */
+	pthread_mutex_unlock(&thread_args.count_lock);
+
+	for (;;) {
+		sleep(1); /* Cancellation point */
+	}
+
+	pthread_cleanup_pop(0);
+	pthread_cleanup_pop(0);
+
+	return NULL;
+}
+
+
 TEST_GROUP(test_pthread_cond);
 TEST_GROUP(test_pthread_cleanup);
 
@@ -379,6 +402,31 @@ TEST(test_pthread_cleanup, pthread_cleanup_push_pop_exec_pthread_exit)
 }
 
 
+TEST(test_pthread_cleanup, pthread_cleanup_push_pthread_cancel)
+{
+	pthread_t thread;
+	int val = 42;
+
+	TEST_ASSERT_EQUAL(0, pthread_mutex_init(&thread_args.count_lock, NULL));
+	TEST_ASSERT_EQUAL(0, pthread_cond_init(&thread_args.count_nonzero, NULL));
+	thread_args.count = 0;
+
+	TEST_ASSERT_EQUAL_INT(0, pthread_create(&thread, NULL, test_threadCleanupCancel, &val));
+
+	pthread_mutex_lock(&thread_args.count_lock);
+	while (thread_args.count == 0) {
+		/* Wait for thread to enter the loop */
+		pthread_cond_wait(&thread_args.count_nonzero, &thread_args.count_lock);
+	}
+	pthread_mutex_unlock(&thread_args.count_lock);
+
+	TEST_ASSERT_EQUAL_INT(0, pthread_cancel(thread));
+	TEST_ASSERT_EQUAL_INT(0, pthread_join(thread, NULL));
+
+	TEST_ASSERT_EQUAL(42 * 3 * 2, val);
+}
+
+
 TEST_GROUP_RUNNER(test_pthread_cond)
 {
 	RUN_TEST_CASE(test_pthread_cond, pthread_cond_init);
@@ -399,4 +447,5 @@ TEST_GROUP_RUNNER(test_pthread_cleanup)
 	RUN_TEST_CASE(test_pthread_cleanup, pthread_cleanup_push_pop_no_exec);
 	RUN_TEST_CASE(test_pthread_cleanup, pthread_cleanup_push_pop_exec);
 	RUN_TEST_CASE(test_pthread_cleanup, pthread_cleanup_push_pop_exec_pthread_exit);
+	RUN_TEST_CASE(test_pthread_cleanup, pthread_cleanup_push_pthread_cancel);
 }
