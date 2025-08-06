@@ -586,6 +586,117 @@ TEST(sigaction, unmask_changed_action_handler_to_default)
 }
 
 
+/* check if masked signal is not delivered when action is modified */
+TEST(sigaction, masked_sigaction)
+{
+	sigset_t empty;
+	sigemptyset(&empty);
+	sigset_t set;
+	sigemptyset(&set);
+	sigaddset(&set, SIGUSR1);
+
+	sigprocmask(SIG_SETMASK, &set, NULL);
+	raise(SIGUSR1);
+
+	struct sigaction act = {
+		.sa_handler = 0,
+		.sa_flags = 0,
+		.sa_mask = empty,
+	};
+
+	/* verify that changing masked signal doesn't cause any delivery */
+
+	signal(SIGUSR1, sighandler);
+	TEST_ASSERT_EQUAL_HEX32(0, handler_haveSignal);
+	act.sa_handler = sighandler;
+	sigaction(SIGUSR1, &act, NULL);
+	TEST_ASSERT_EQUAL_HEX32(0, handler_haveSignal);
+
+	signal(SIGUSR1, SIG_DFL);
+	TEST_ASSERT_EQUAL_HEX32(0, handler_haveSignal);
+	act.sa_handler = SIG_DFL;
+	sigaction(SIGUSR1, &act, NULL);
+	TEST_ASSERT_EQUAL_HEX32(0, handler_haveSignal);
+
+
+	signal(SIGUSR1, sighandler);
+	TEST_ASSERT_EQUAL_HEX32(0, handler_haveSignal);
+	act.sa_handler = sighandler;
+	sigaction(SIGUSR1, &act, NULL);
+	TEST_ASSERT_EQUAL_HEX32(0, handler_haveSignal);
+
+	signal(SIGUSR1, SIG_IGN);
+	TEST_ASSERT_EQUAL_HEX32(0, handler_haveSignal);
+	act.sa_handler = SIG_IGN;
+	sigaction(SIGUSR1, &act, NULL);
+	TEST_ASSERT_EQUAL_HEX32(0, handler_haveSignal);
+
+
+	signal(SIGUSR1, sighandler);
+	TEST_ASSERT_EQUAL_HEX32(0, handler_haveSignal);
+	act.sa_handler = sighandler;
+	sigaction(SIGUSR1, &act, NULL);
+	TEST_ASSERT_EQUAL_HEX32(0, handler_haveSignal);
+
+	raise(SIGUSR1); /* POSIX: setting to SIG_IGN can release pending signal */
+
+	/* verify that changing other masked signal doesn't cause masked delivery */
+
+	sigaddset(&set, SIGUSR2);
+	sigprocmask(SIG_SETMASK, &set, NULL);
+
+	signal(SIGUSR2, SIG_IGN);
+	TEST_ASSERT_EQUAL_HEX32(0, handler_haveSignal);
+	act.sa_handler = SIG_IGN;
+	sigaction(SIGUSR2, &act, NULL);
+
+	signal(SIGUSR2, SIG_DFL);
+	TEST_ASSERT_EQUAL_HEX32(0, handler_haveSignal);
+	act.sa_handler = SIG_DFL;
+	sigaction(SIGUSR2, &act, NULL);
+
+	signal(SIGUSR2, sighandler);
+	TEST_ASSERT_EQUAL_HEX32(0, handler_haveSignal);
+	act.sa_handler = sighandler;
+	sigaction(SIGUSR2, &act, NULL);
+
+	raise(SIGUSR2);
+	TEST_ASSERT_EQUAL_HEX32(0, handler_haveSignal);
+
+	sigdelset(&set, SIGUSR2);
+	sigprocmask(SIG_SETMASK, &set, NULL);
+	TEST_ASSERT_EQUAL_HEX32((1u << SIGUSR2), handler_haveSignal);
+
+	/* verify that changing other unmasked signal doesn't cause masked delivery */
+	handler_haveSignal = 0u;
+
+	signal(SIGUSR2, SIG_IGN);
+	TEST_ASSERT_EQUAL_HEX32(0, handler_haveSignal);
+	act.sa_handler = SIG_IGN;
+	sigaction(SIGUSR2, &act, NULL);
+
+	signal(SIGUSR2, SIG_DFL);
+	TEST_ASSERT_EQUAL_HEX32(0, handler_haveSignal);
+	act.sa_handler = SIG_DFL;
+	sigaction(SIGUSR2, &act, NULL);
+
+	signal(SIGUSR2, sighandler);
+	TEST_ASSERT_EQUAL_HEX32(0, handler_haveSignal);
+	act.sa_handler = sighandler;
+	sigaction(SIGUSR2, &act, NULL);
+
+	raise(SIGUSR2);
+	TEST_ASSERT_EQUAL_HEX32((1u << SIGUSR2), handler_haveSignal);
+
+	/* verify that signal is still pending and will be delivered */
+
+	sigemptyset(&set);
+	sigprocmask(SIG_SETMASK, &set, NULL);
+
+	TEST_ASSERT_EQUAL_HEX32((1u << SIGUSR1) | (1u << SIGUSR2), handler_haveSignal);
+}
+
+
 TEST(sigaction, handler_recursion_direct)
 {
 	sigset_t empty;
@@ -770,6 +881,8 @@ TEST_GROUP_RUNNER(sigaction)
 	RUN_TEST_CASE(sigaction, handler_recursion_direct);
 	RUN_TEST_CASE(sigaction, handler_recursion_raise);
 	RUN_TEST_CASE(sigaction, handler_recursion_raise_nodefer);
+
+	RUN_TEST_CASE(sigaction, masked_sigaction);
 
 	RUN_TEST_CASE(sigaction, sigaction_in_handler_handle);
 	RUN_TEST_CASE(sigaction, sigaction_in_handler_handle_reraise);
