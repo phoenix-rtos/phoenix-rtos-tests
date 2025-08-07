@@ -465,6 +465,10 @@ def main():
     args: Args = process_args(parse_args())
 
     only_old_targets, only_new_targets = remove_non_common(args.file_old, args.file_new)
+    only_old_targets = [target for target in only_old_targets if not args.targets or target in args.targets]
+    only_new_targets = [target for target in only_new_targets if not args.targets or target in args.targets]
+    only_old_locations, only_new_locations = [], []
+    only_old_suites, only_new_suites = [], []
 
     output = {
         "time_old": 0,
@@ -477,7 +481,13 @@ def main():
         if not filter_target(target, args):
             continue
         new_locations = args.file_new[target]
-        only_old_locations, only_new_locations = remove_non_common(locations, new_locations)
+        new_only_old_locations, new_only_new_locations = remove_non_common(locations, new_locations)
+        only_old_locations.extend(
+            f"{target}:{location}" for location in new_only_old_locations if filter_location(location, args)
+        )
+        only_new_locations.extend(
+            f"{target}:{location}" for location in new_only_new_locations if filter_location(location, args)
+        )
         target_output = {
             "name": target,
             "time_old": 0,
@@ -490,7 +500,17 @@ def main():
             if not filter_location(location, args):
                 continue
             new_suites = args.file_new[target][location]
-            only_old_suites, only_new_suites = remove_non_common(suites, new_suites)
+            new_only_old_suites, new_only_new_suites = remove_non_common(suites, new_suites)
+            only_old_suites.extend(
+                f"{target}:{location}{suite}"
+                for suite in new_only_old_suites
+                if filter_suite(location, suite, args)
+            )
+            only_new_suites.extend(
+                f"{target}:{location}{suite}"
+                for suite in new_only_new_suites
+                if filter_suite(location, suite, args)
+            )
             location_output = {
                 "name": location,
                 "time_old": 0,
@@ -557,11 +577,11 @@ def main():
         if args.verbose >= 2:
             if only_old_suites:
                 print("Suites misssing in new file:")
-                for suite in only_old_locations:
+                for suite in only_old_suites:
                     print(f"  {suite}")
             if only_new_suites:
                 print("Suites misssing in old file:")
-                for suite in only_new_locations:
+                for suite in only_new_suites:
                     print(f"  {suite}")
     rows = []
     status_rows = []
