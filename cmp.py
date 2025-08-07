@@ -525,11 +525,11 @@ def main():
                 suite_output = {"name": name, "time_old": 0, "time_new": 0, "cases": [], "single_case": False}
                 new_suite = new_suites[name]
                 cases = compare_cases(suite["cases"], new_suite["cases"])
-                suite_output["single_case"] = len(suite["cases"]) == 1 and next(iter(suite["cases"])) in [
+                cases = [case for case in cases if filter_case(suite["location"], suite["name"], case, args)]
+                suite_output["single_case"] = len(cases) == 1 and cases[0]["name"] in [
                     "",
                     suite["name"],
-                ]
-                cases = [case for case in cases if filter_case(suite["location"], suite["name"], case, args)]
+                ] and cases[0]["status_old"] == OK and cases[0]["status_new"] == OK
                 suite_output["time_old"] = sum(
                     case["time_old"]
                     for case in cases
@@ -621,7 +621,7 @@ def main():
                 for case in suite["cases"]:
                     if case["status_old"] != case["status_new"]:
                         status_rows.append(make_case_status_row(case))
-                    if not filter_case_display(case, args):
+                    if not filter_case_display(case, args) or case["status_old"] != OK or case["status_new"] != OK:
                         continue
                     rows.append(make_case_row(case, args))
                 if rows[-1].name.startswith(" -"):
