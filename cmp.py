@@ -17,9 +17,11 @@ ESCAPE_ITALIC = "\033[3m"
 ESCAPE_UNDERLINE = "\033[4m"
 ESCAPE_RESET = "\033[0m"
 INF = float("inf")
-OK = f"{ESCAPE_GREEN}  OK  {ESCAPE_RESET}"
-SKIP = f"{ESCAPE_GRAY} SKIP {ESCAPE_RESET}"
-FAIL = f"{ESCAPE_RED} FAIL {ESCAPE_RESET}"
+OK = f"{ESCAPE_GREEN}{"OK":^9}{ESCAPE_RESET}"
+SKIP = f"{ESCAPE_GRAY}{"SKIP":^9}{ESCAPE_RESET}"
+FAIL = f"{ESCAPE_RED}{"FAIL":^9}{ESCAPE_RESET}"
+PRESENT = f"{ESCAPE_GREEN}{"PRESENT":^9}{ESCAPE_RESET}"
+MISSING = f"{ESCAPE_GRAY}{"MISSING":^9}{ESCAPE_RESET}"
 
 
 def remove_non_common(old, new):
@@ -267,35 +269,34 @@ CHANGE_COLORS = {
 }
 
 
-def filter_target(target, args):
-    return len(args.targets) == 0 or target in args.targets
-
-
-def filter_location(location, args):
-    if len(args.benchmarks) > 0:
-        for benchmark in args.benchmarks.values():
-            if location == benchmark["location"]:
-                return True
+def filter(path, args):
+    if len(path) == 0:
+        return True
+    if args.targets and path[0] not in args.targets:
         return False
-    return len(args.locations) == 0 or location in args.locations
-
-
-def filter_suite(location, suite, args):
-    if len(args.benchmarks) > 0:
-        for benchmark in args.benchmarks.values():
-            return location == benchmark["location"] and suite in benchmark["suites"]
-    return len(args.suites) == 0 or suite in args.suites
-
-
-def filter_case(location, suite, case, args):
-    if len(args.benchmarks) > 0:
-        for benchmark in args.benchmarks.values():
-            return (
-                location == benchmark["location"]
-                and suite in benchmark["suites"]
-                and case["name"] in benchmark["suites"][suite]["cases"]
-            )
-    return len(args.cases) == 0 or case["name"] in args.cases
+    if len(path) == 1:
+        return True
+    if args.benchmarks:
+        for benchmark in args.benchmarks:
+            if path[0] == benchmark["location"]:
+                break
+        else:
+            return False
+    if args.locations and path[1] not in args.locations:
+        return False
+    if len(path) == 2:
+        return True
+    if args.benchmarks and path[2] not in benchmark["suites"]:
+        return False
+    if args.suites and path[2] not in args.suites:
+        return False
+    if len(path) == 3:
+        return True
+    if args.benchmarks and path[3] not in benchmark["suites"][path[2]]["cases"]:
+        return False
+    if args.cases and path[3] not in args.cases:
+        return False
+    return True
 
 
 def filter_display(data, args: Args):
@@ -448,206 +449,170 @@ def print_status_rows(rows):
             print()
             continue
         if row.name == "H":
-            print(f"{ESCAPE_BOLD}{"":>{max_name_len}}║{"OLD":^6}║{"NEW":^6}║{ESCAPE_RESET}")
+            print(f"{ESCAPE_BOLD}{"":>{max_name_len}}║{"OLD":^9}║{"NEW":^9}║{ESCAPE_RESET}")
             print(
                 f"{ESCAPE_BOLD}{ESCAPE_UNDERLINE}{"NAME":^{max_name_len}}║"
-                f"{"STATUS":^6}║{"STATUS":^6}║{ESCAPE_RESET}"
+                f"{"STATUS":^9}║{"STATUS":^9}║{ESCAPE_RESET}"
             )
             continue
         print(
             f"{row.style}{row.name:<{max_name_len}}{ESCAPE_RESET}{row.separator}"
-            f"{row.style}{row.status_old:^6}{ESCAPE_RESET}{row.separator}"
-            f"{row.style}{row.status_new:^6}{ESCAPE_RESET}{row.separator}"
+            f"{row.style}{row.status_old:^9}{ESCAPE_RESET}{row.separator}"
+            f"{row.style}{row.status_new:^9}{ESCAPE_RESET}{row.separator}"
         )
+
+
+def compare_level(data_old, data_new, args, depth=0, path=None):
+    only_old, only_new = remove_non_common(data_old, data_new)
+    only_old = [item for item in only_old if filter((path or []) + [item], args)]
+    only_new = [item for item in only_new if filter((path or []) + [item], args)]
+    output = {
+        "time_old": 0,
+        "time_new": 0,
+        "children": [],
+        "only_old": only_old,
+        "only_new": only_new,
+    }
+    if depth == 3:
+        cases = compare_cases(data_old["cases"], data_new["cases"])
+        cases = [case for case in cases if filter(path + [case["name"]], args)]
+        output["children"] = cases
+        output["time_old"] = sum(
+            case["time_old"] for case in cases if case["status_old"] == OK and case["status_new"] == OK
+        )
+        output["time_new"] = sum(
+            case["time_new"] for case in cases if case["status_old"] == OK and case["status_new"] == OK
+        )
+        output["single_case"] = (
+            len(cases) == 1
+            and cases[0]["name"]
+            in [
+                "",
+                path[-1],
+            ]
+            and cases[0]["status_old"] == OK
+            and cases[0]["status_new"] == OK
+        )
+
+        return output
+    for child, child_data in data_old.items():
+        new_path = (path or []) + [child]
+        if not filter(new_path, args):
+            continue
+        child_data_new = data_new[child]
+        child_output = compare_level(
+            child_data,
+            child_data_new,
+            args,
+            depth + 1,
+            new_path,
+        )
+        child_output["name"] = child
+        output["children"].append(child_output)
+        output["time_old"] += child_output["time_old"]
+        output["time_new"] += child_output["time_new"]
+    return output
+
+
+def find_missing(results, level=0):
+    if level == 3:
+        return [
+            {"name": case["name"], "status_old": case["status_old"], "status_new": case["status_new"]}
+            for case in results["children"]
+            if case["status_old"] != case["status_new"]
+        ]
+    only_old = [
+        {"name": result, "status_old": PRESENT, "status_new": MISSING, "children": []}
+        for result in results["only_old"]
+    ]
+    only_new = [
+        {"name": result, "status_old": MISSING, "status_new": PRESENT, "children": []}
+        for result in results["only_new"]
+    ]
+    with_children = [
+        {"name": result["name"], "status_old": PRESENT, "status_new": PRESENT, "children": children}
+        for result, children in ((result, find_missing(result, level + 1)) for result in results["children"])
+        if children
+    ]
+    return only_old + only_new + with_children
+
+
+def generate_status_rows(statuses, args, level=0):
+    styles = [ESCAPE_BOLD + ESCAPE_ITALIC, ESCAPE_BOLD, ESCAPE_BOLD, ""]
+    separators = ["║", "║", "┃", "┆"]
+    prefixes = ["Target: ", "-", " -", "  -"]
+    rows = []
+    for node in statuses:
+        if args.verbose == level and node["status_old"] == node["status_new"]:
+            continue
+        current_row = StatusRow(
+            styles[level],
+            separators[level],
+            f"{prefixes[level]}{node["name"]}",
+            node["status_old"],
+            node["status_new"],
+        )
+        children_rows = None
+        if args.verbose > level:
+            children_rows = generate_status_rows(node["children"], args, level + 1)
+        if node["status_old"] != node["status_new"] or children_rows:
+            if level == 0 and (args.verbose > 0 or not rows):
+                if args.verbose > 0:
+                    rows.append(StatusRow("", "", "", "", ""))
+                rows.append(StatusRow("", "", "H", "", ""))
+            rows.append(current_row)
+            if args.verbose > level:
+                rows.extend(children_rows)
+    return rows
 
 
 def main():
     args: Args = process_args(parse_args())
 
-    only_old_targets, only_new_targets = remove_non_common(args.file_old, args.file_new)
-    only_old_targets = [target for target in only_old_targets if not args.targets or target in args.targets]
-    only_new_targets = [target for target in only_new_targets if not args.targets or target in args.targets]
-    only_old_locations, only_new_locations = [], []
-    only_old_suites, only_new_suites = [], []
-
-    output = {
-        "time_old": 0,
-        "time_new": 0,
-        "targets": [],
-        "only_old_targets": only_old_targets,
-        "only_new_targets": only_new_targets,
-    }
-    for target, locations in args.file_old.items():
-        if not filter_target(target, args):
-            continue
-        new_locations = args.file_new[target]
-        new_only_old_locations, new_only_new_locations = remove_non_common(locations, new_locations)
-        only_old_locations.extend(
-            f"{target}:{location}" for location in new_only_old_locations if filter_location(location, args)
-        )
-        only_new_locations.extend(
-            f"{target}:{location}" for location in new_only_new_locations if filter_location(location, args)
-        )
-        target_output = {
-            "name": target,
-            "time_old": 0,
-            "time_new": 0,
-            "locations": [],
-            "only_old_locations": only_old_locations,
-            "only_new_locations": only_new_locations,
-        }
-        for location, suites in locations.items():
-            if not filter_location(location, args):
-                continue
-            new_suites = args.file_new[target][location]
-            new_only_old_suites, new_only_new_suites = remove_non_common(suites, new_suites)
-            only_old_suites.extend(
-                f"{target}:{location}{suite}"
-                for suite in new_only_old_suites
-                if filter_suite(location, suite, args)
-            )
-            only_new_suites.extend(
-                f"{target}:{location}{suite}"
-                for suite in new_only_new_suites
-                if filter_suite(location, suite, args)
-            )
-            location_output = {
-                "name": location,
-                "time_old": 0,
-                "time_new": 0,
-                "suites": [],
-                "only_old_suites": only_old_suites,
-                "only_new_suites": only_new_suites,
-            }
-            for name, suite in suites.items():
-                if not filter_suite(suite["location"], suite["name"], args):
-                    continue
-                suite_output = {"name": name, "time_old": 0, "time_new": 0, "cases": [], "single_case": False}
-                new_suite = new_suites[name]
-                cases = compare_cases(suite["cases"], new_suite["cases"])
-                cases = [case for case in cases if filter_case(suite["location"], suite["name"], case, args)]
-                suite_output["single_case"] = len(cases) == 1 and cases[0]["name"] in [
-                    "",
-                    suite["name"],
-                ] and cases[0]["status_old"] == OK and cases[0]["status_new"] == OK
-                suite_output["time_old"] = sum(
-                    case["time_old"]
-                    for case in cases
-                    if case["time_old"] is not None
-                    and case["time_new"] is not None
-                    and case["status_old"] == OK
-                    and case["status_new"] == OK
-                )
-                suite_output["time_new"] = sum(
-                    case["time_new"]
-                    for case in cases
-                    if case["time_old"] is not None
-                    and case["time_new"] is not None
-                    and case["status_old"] == OK
-                    and case["status_new"] == OK
-                )
-                suite_output["cases"] = cases
-                location_output["suites"].append(suite_output)
-                location_output["time_old"] += suite_output["time_old"]
-                location_output["time_new"] += suite_output["time_new"]
-            target_output["locations"].append(location_output)
-            target_output["time_old"] += location_output["time_old"]
-            target_output["time_new"] += location_output["time_new"]
-        output["targets"].append(target_output)
-        output["time_old"] += target_output["time_old"]
-        output["time_new"] += target_output["time_new"]
+    output = compare_level(args.file_old, args.file_new, args)
     if args.show_missing:
-        if only_old_targets:
-            print("Targets misssing in new file:")
-            for target in only_old_targets:
-                print(f"  {target}")
-        if only_new_targets:
-            print("Targets misssing in old file:")
-            for target in only_new_targets:
-                print(f"  {target}")
-        if args.verbose >= 1:
-            if only_old_locations:
-                print("Directories misssing in new file:")
-                for location in only_old_locations:
-                    print(f"  {location}")
-            if only_new_locations:
-                print("Directories misssing in old file:")
-                for location in only_new_locations:
-                    print(f"  {location}")
-        if args.verbose >= 2:
-            if only_old_suites:
-                print("Suites misssing in new file:")
-                for suite in only_old_suites:
-                    print(f"  {suite}")
-            if only_new_suites:
-                print("Suites misssing in old file:")
-                for suite in only_new_suites:
-                    print(f"  {suite}")
+        status_diff = find_missing(output)
+        if status_diff:
+            print_status_rows(generate_status_rows(status_diff, args))
     rows = []
-    status_rows = []
-    for target in output["targets"]:
+    for target in output["children"]:
         if args.verbose >= 1 or len(rows) == 0:
             rows.append(Row("", "", "H", "", "", "", "", ""))
-            status_rows.append(StatusRow("", "", "H", "", ""))
         if filter_display(target, args) or args.verbose >= 1:
             rows.append(make_row(target, ESCAPE_BOLD + ESCAPE_ITALIC, "║", "Target: ", args))
-            status_rows.append(StatusRow(ESCAPE_BOLD + ESCAPE_ITALIC, "║", f"Target: {target["name"]}", "", ""))
         if args.verbose < 1:
             continue
-        for location in target["locations"]:
+        for location in target["children"]:
             if filter_display(location, args) or args.verbose >= 2:
                 rows.append(make_row(location, ESCAPE_BOLD, "║", "-", args))
-                status_rows.append(StatusRow(ESCAPE_BOLD, "║", f"-{location["name"]}", "", ""))
             if args.verbose < 2:
                 continue
-            for suite in location["suites"]:
+            for suite in location["children"]:
                 if filter_display(suite, args) or args.verbose >= 3:
                     rows.append(make_row(suite, ESCAPE_BOLD, "┃", " -", args))
-                    status_rows.append(StatusRow(ESCAPE_BOLD, "┃", f" -{suite["name"]}", "", ""))
                 if args.verbose < 3:
                     continue
                 if suite["single_case"]:
-                    case = suite["cases"][0]
+                    case = suite["children"][0]
                     if not filter_display(case, args):
                         del rows[-1]
-                    if case["status_old"] != case["status_new"]:
-                        status_rows.append(make_case_status_row(case))
-                        status_rows[-1].style = ESCAPE_BOLD
-                        status_rows[-1].separator = "┃"
-                        status_rows[-1].name = " " + status_rows[-1].name
-                    else:
-                        del status_rows[-1]
                     continue
-                for case in suite["cases"]:
-                    if case["status_old"] != case["status_new"]:
-                        status_rows.append(make_case_status_row(case))
+                for case in suite["children"]:
                     if not filter_case_display(case, args) or case["status_old"] != OK or case["status_new"] != OK:
                         continue
                     rows.append(make_case_row(case, args))
                 if rows[-1].name.startswith(" -"):
                     del rows[-1]
-                if status_rows[-1].name.startswith(" -"):
-                    del status_rows[-1]
             if rows[-1].name.startswith("-"):
                 del rows[-1]
-            if status_rows[-1].name.startswith("-"):
-                del status_rows[-1]
         if rows[-1].name.startswith("Target: "):
             del rows[-1]
-        if status_rows[-1].name.startswith("Target: "):
-            del status_rows[-1]
         while len(rows) > 0 and rows[-1].name in ("", "H"):
             del rows[-1]
-        while len(status_rows) > 0 and status_rows[-1].name in ("", "H"):
-            del status_rows[-1]
         if len(rows) > 0:
             rows.append(Row("", "", "", "", "", "", "", ""))
-        if len(status_rows) > 0:
-            status_rows.append(Row("", "", "", "", "", "", "", ""))
-    if not args.show_missing:
+    if not args.show_missing and rows:
         print_rows(rows)
-    elif args.verbose == 3:
-        print_status_rows(status_rows)
 
 
 if __name__ == "__main__":
