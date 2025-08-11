@@ -146,7 +146,7 @@ def parse_args():
     parser.add_argument(
         "--show-fails",
         action="store_true",
-        help="Show missing elements and differences in status.",
+        help="Show failings tests",
     )
 
     args = parser.parse_args()
@@ -167,7 +167,7 @@ def process_args(args):
                 data = yaml.safe_load(file)
                 benchmarks.update(data)
         except FileNotFoundError:
-            print("Error: The file 'config.yaml' was not found.")
+            print(f"Error: The file '{benchmark}' was not found.")
         except yaml.YAMLError as e:
             print(f"Error parsing YAML file: {e}")
     return Args(
@@ -437,6 +437,8 @@ class StatusRow:
 
 
 def print_rows(rows):
+    if not rows:
+        return
     max_name_len = max(len(row.name) for row in rows)
     max_name_len = max(max_name_len, 4)
     for row in rows:
@@ -460,6 +462,8 @@ def print_rows(rows):
 
 
 def print_status_rows(rows):
+    if not rows:
+        return
     max_name_len = max(len(row.name) for row in rows)
     max_name_len = max(max_name_len, 4)
     for row in rows:
@@ -665,12 +669,10 @@ def main():
     output = compare_level(args.file_old, args.file_new, args)
     if args.status_diff:
         status_diff = find_missing(output)
-        if status_diff:
-            print_status_rows(generate_status_rows(status_diff, args))
+        print_status_rows(generate_status_rows(status_diff, args))
     elif not args.show_fails:
         rows = generate_time_rows(output["children"], args)
-        if rows:
-            print_rows(rows)
+        print_rows(rows)
 
 
 if __name__ == "__main__":
