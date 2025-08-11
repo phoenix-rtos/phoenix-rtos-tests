@@ -154,10 +154,6 @@ def parse_args():
 def process_args(args):
     benchmarks = {}
 
-    if args.file_new is None:
-        print("Usage:\n\tcmp.py OLD_FILE NEW_FILE")
-        sys.exit()
-
     for benchmark in args.benchmark_files:
         try:
             with open(benchmark, "r", encoding="utf8") as file:
@@ -277,7 +273,7 @@ def filter(path, args):
     if len(path) == 1:
         return True
     if args.benchmarks:
-        for benchmark in args.benchmarks:
+        for benchmark in args.benchmarks.values():
             if path[0] == benchmark["location"]:
                 break
         else:
@@ -299,7 +295,9 @@ def filter(path, args):
     return True
 
 
-def filter_display(data, args: Args):
+def filter_display(data, level, args: Args):
+    if level == 3:
+        return filter_case_display(data, args)
     if args.threshold_filter:
         difference, percentage = difference_and_percentage(data["time_old"], data["time_new"])
         return change_dir(difference, percentage, args) in (ChangeDirection.INCREASE, ChangeDirection.DECREASE)
@@ -307,7 +305,7 @@ def filter_display(data, args: Args):
 
 
 def filter_case_display(case, args):
-    if case["time_old"] is None or case["time_new"] is None:
+    if case["status_old"] != OK or case["status_new"] != OK:
         return False
     if args.threshold_filter:
         difference, percentage = difference_and_percentage(case["time_old"], case["time_new"])
@@ -507,10 +505,11 @@ def compare_level(data_old, data_new, args, depth=0, path=None):
             depth + 1,
             new_path,
         )
-        child_output["name"] = child
-        output["children"].append(child_output)
-        output["time_old"] += child_output["time_old"]
-        output["time_new"] += child_output["time_new"]
+        if child_output["children"]:
+            child_output["name"] = child
+            output["children"].append(child_output)
+            output["time_old"] += child_output["time_old"]
+            output["time_new"] += child_output["time_new"]
     return output
 
 
@@ -522,12 +521,10 @@ def find_missing(results, level=0):
             if case["status_old"] != case["status_new"]
         ]
     only_old = [
-        {"name": result, "status_old": PRESENT, "status_new": MISSING, "children": []}
-        for result in results["only_old"]
+        {"name": result, "status_old": PRESENT, "status_new": MISSING, "children": []} for result in results["only_old"]
     ]
     only_new = [
-        {"name": result, "status_old": MISSING, "status_new": PRESENT, "children": []}
-        for result in results["only_new"]
+        {"name": result, "status_old": MISSING, "status_new": PRESENT, "children": []} for result in results["only_new"]
     ]
     with_children = [
         {"name": result["name"], "status_old": PRESENT, "status_new": PRESENT, "children": children}
@@ -557,11 +554,35 @@ def generate_status_rows(statuses, args, level=0):
             children_rows = generate_status_rows(node["children"], args, level + 1)
         if node["status_old"] != node["status_new"] or children_rows:
             if level == 0 and (args.verbose > 0 or not rows):
-                if args.verbose > 0:
+                if rows:
                     rows.append(StatusRow("", "", "", "", ""))
                 rows.append(StatusRow("", "", "H", "", ""))
             rows.append(current_row)
             if args.verbose > level:
+                rows.extend(children_rows)
+    return rows
+
+
+def generate_time_rows(times, args, level=0):
+    styles = [ESCAPE_BOLD + ESCAPE_ITALIC, ESCAPE_BOLD, ESCAPE_BOLD, ""]
+    separators = ["║", "║", "┃", "┆"]
+    prefixes = ["Target: ", "-", " -", "  -"]
+    rows = []
+    for node in times:
+        go_deeper = args.verbose > level and (level != 2 or not node["single_case"])
+        if not go_deeper and not filter_display(node, level, args):
+            continue
+        current_row = make_row(node, styles[level], separators[level], prefixes[level], args)
+        children_rows = None
+        if go_deeper:
+            children_rows = generate_time_rows(node["children"], args, level + 1)
+        if not go_deeper or children_rows:
+            if level == 0 and (args.verbose > 0 or not rows):
+                if rows:
+                    rows.append(StatusRow("", "", "", "", ""))
+                rows.append(StatusRow("", "", "H", "", ""))
+            rows.append(current_row)
+            if go_deeper:
                 rows.extend(children_rows)
     return rows
 
@@ -574,45 +595,10 @@ def main():
         status_diff = find_missing(output)
         if status_diff:
             print_status_rows(generate_status_rows(status_diff, args))
-    rows = []
-    for target in output["children"]:
-        if args.verbose >= 1 or len(rows) == 0:
-            rows.append(Row("", "", "H", "", "", "", "", ""))
-        if filter_display(target, args) or args.verbose >= 1:
-            rows.append(make_row(target, ESCAPE_BOLD + ESCAPE_ITALIC, "║", "Target: ", args))
-        if args.verbose < 1:
-            continue
-        for location in target["children"]:
-            if filter_display(location, args) or args.verbose >= 2:
-                rows.append(make_row(location, ESCAPE_BOLD, "║", "-", args))
-            if args.verbose < 2:
-                continue
-            for suite in location["children"]:
-                if filter_display(suite, args) or args.verbose >= 3:
-                    rows.append(make_row(suite, ESCAPE_BOLD, "┃", " -", args))
-                if args.verbose < 3:
-                    continue
-                if suite["single_case"]:
-                    case = suite["children"][0]
-                    if not filter_display(case, args):
-                        del rows[-1]
-                    continue
-                for case in suite["children"]:
-                    if not filter_case_display(case, args) or case["status_old"] != OK or case["status_new"] != OK:
-                        continue
-                    rows.append(make_case_row(case, args))
-                if rows[-1].name.startswith(" -"):
-                    del rows[-1]
-            if rows[-1].name.startswith("-"):
-                del rows[-1]
-        if rows[-1].name.startswith("Target: "):
-            del rows[-1]
-        while len(rows) > 0 and rows[-1].name in ("", "H"):
-            del rows[-1]
-        if len(rows) > 0:
-            rows.append(Row("", "", "", "", "", "", "", ""))
-    if not args.show_missing and rows:
-        print_rows(rows)
+    else:
+        rows = generate_time_rows(output["children"], args)
+        if rows:
+            print_rows(rows)
 
 
 if __name__ == "__main__":
