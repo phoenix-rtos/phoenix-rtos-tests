@@ -17,11 +17,11 @@ ESCAPE_ITALIC = "\033[3m"
 ESCAPE_UNDERLINE = "\033[4m"
 ESCAPE_RESET = "\033[0m"
 INF = float("inf")
-OK = f"{ESCAPE_GREEN}{"OK":^9}{ESCAPE_RESET}"
-SKIP = f"{ESCAPE_GRAY}{"SKIP":^9}{ESCAPE_RESET}"
-FAIL = f"{ESCAPE_RED}{"FAIL":^9}{ESCAPE_RESET}"
-PRESENT = f"{ESCAPE_GREEN}{"PRESENT":^9}{ESCAPE_RESET}"
-MISSING = f"{ESCAPE_GRAY}{"MISSING":^9}{ESCAPE_RESET}"
+OK = f"{ESCAPE_GREEN}{'OK':^9}{ESCAPE_RESET}"
+SKIP = f"{ESCAPE_GRAY}{'SKIP':^9}{ESCAPE_RESET}"
+FAIL = f"{ESCAPE_RED}{'FAIL':^9}{ESCAPE_RESET}"
+PRESENT = f"{ESCAPE_GREEN}{'PRESENT':^9}{ESCAPE_RESET}"
+MISSING = f"{ESCAPE_GRAY}{'MISSING':^9}{ESCAPE_RESET}"
 
 
 def remove_non_common(old, new):
@@ -190,7 +190,7 @@ def process_args(args):
 def split_path(s):
     index = s.find("/")
     index = max(index, s.find("/", index + 1))
-    return s[: index + 1], s[index + 1 :]
+    return s[: index + 1], s[index + 1:]
 
 
 def parse_xml(filename):
@@ -225,9 +225,9 @@ def parse_xml(filename):
         }
         for case in suite:
             name = case.name
-            name = name[name.find(":") + 1 :] if ":" in name else name
+            name = name[name.find(":") + 1:] if ":" in name else name
             classname = case.classname if case.classname else ""
-            basename = name[len(classname) + 1 :] if name.startswith(classname) else name
+            basename = name[len(classname) + 1:] if name.startswith(classname) else name
 
             status = OK
             if case.result:
@@ -369,9 +369,9 @@ def make_row(data, style, separator, prefix, args):
     return Row(
         style,
         separator,
-        f"{prefix}{data["name"]}",
-        f"{data["time_old"]:.3f}",
-        f"{data["time_new"]:.3f}",
+        f"{prefix}{data['name']}",
+        f"{data['time_old']:.3f}",
+        f"{data['time_new']:.3f}",
         color,
         f"{difference:+.3f}",
         f"{percentage:+.2f}" if percentage < 10000 else "-.--",
@@ -382,7 +382,7 @@ def make_case_status_row(case):
     return StatusRow(
         "",
         "┆",
-        f"  -{case["name"]}",
+        f"  -{case['name']}",
         case["status_old"],
         case["status_new"],
     )
@@ -394,9 +394,9 @@ def make_case_row(case, args):
     return Row(
         "",
         "┆",
-        f"  -{case["name"]}",
-        f"{case["time_old"]:.3f}",
-        f"{case["time_new"]:.3f}",
+        f"  -{case['name']}",
+        f"{case['time_old']:.3f}",
+        f"{case['time_new']:.3f}",
         color,
         f"{difference:+.3f}",
         f"{percentage:+.2f}" if percentage < 10000 else "-.--",
@@ -432,10 +432,10 @@ def print_rows(rows):
             print()
             continue
         if row.name == "H":
-            print(f"{ESCAPE_BOLD}{"":>{max_name_len}}║{"OLD":^9}║{"NEW":^9}║{"DIFFERENCE":^20}{ESCAPE_RESET}")
+            print(f"{ESCAPE_BOLD}{'':>{max_name_len}}║{'OLD':^9}║{'NEW':^9}║{'DIFFERENCE':^20}{ESCAPE_RESET}")
             print(
-                f"{ESCAPE_BOLD}{ESCAPE_UNDERLINE}{"NAME":^{max_name_len}}║"
-                f"{"TIME":^9}║{"TIME":^9}║{"TIME":^10}║{"PERCENTAGE":^9}{ESCAPE_RESET}"
+                f"{ESCAPE_BOLD}{ESCAPE_UNDERLINE}{'NAME':^{max_name_len}}║"
+                f"{'TIME':^9}║{'TIME':^9}║{'TIME':^10}║{'PERCENTAGE':^9}{ESCAPE_RESET}"
             )
             continue
         print(
@@ -455,10 +455,10 @@ def print_status_rows(rows):
             print()
             continue
         if row.name == "H":
-            print(f"{ESCAPE_BOLD}{"":>{max_name_len}}║{"OLD":^9}║{"NEW":^9}║{ESCAPE_RESET}")
+            print(f"{ESCAPE_BOLD}{'':>{max_name_len}}║{'OLD':^9}║{'NEW':^9}║{ESCAPE_RESET}")
             print(
-                f"{ESCAPE_BOLD}{ESCAPE_UNDERLINE}{"NAME":^{max_name_len}}║"
-                f"{"STATUS":^9}║{"STATUS":^9}║{ESCAPE_RESET}"
+                f"{ESCAPE_BOLD}{ESCAPE_UNDERLINE}{'NAME':^{max_name_len}}║"
+                f"{'STATUS':^9}║{'STATUS':^9}║{ESCAPE_RESET}"
             )
             continue
         print(
@@ -592,7 +592,7 @@ def generate_status_rows(statuses, args, level=0):
         current_row = StatusRow(
             styles[level],
             separators[level],
-            f"{prefixes[level]}{node["name"]}",
+            f"{prefixes[level]}{node['name']}",
             node["status_old"],
             node["status_new"],
         )
