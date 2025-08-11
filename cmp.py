@@ -282,7 +282,7 @@ def filter(path, args):
         return True
     if args.benchmarks:
         for benchmark in args.benchmarks.values():
-            if path[0] == benchmark["location"]:
+            if path[1] == benchmark["location"]:
                 break
         else:
             return False
@@ -290,14 +290,26 @@ def filter(path, args):
         return False
     if len(path) == 2:
         return True
-    if args.benchmarks and path[2] not in benchmark["suites"]:
-        return False
+    if args.benchmarks:
+        for benchmark in args.benchmarks.values():
+            if path[1] == benchmark["location"] and path[2] in benchmark["suites"]:
+                break
+        else:
+            return False
     if args.suites and path[2] not in args.suites:
         return False
     if len(path) == 3:
         return True
-    if args.benchmarks and path[3] not in benchmark["suites"][path[2]]["cases"]:
-        return False
+    if args.benchmarks:
+        for benchmark in args.benchmarks.values():
+            if (
+                path[1] == benchmark["location"]
+                and path[2] in benchmark["suites"]
+                and path[3] in benchmark["suites"][path[2]]["cases"]
+            ):
+                break
+        else:
+            return False
     if args.cases and path[3] not in args.cases:
         return False
     return True
