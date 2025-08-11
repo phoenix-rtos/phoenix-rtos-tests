@@ -54,7 +54,8 @@ class Args:
     threshold_absolute: float
     threshold_relative: float
     threshold_filter: bool
-    show_missing: bool
+    status_diff: bool
+    show_fails: bool
 
 
 def parse_args():
@@ -137,9 +138,15 @@ def parse_args():
     )
 
     parser.add_argument(
-        "--show-missing",
+        "--status-diff",
         action="store_true",
-        help="Show which elements are pressent in one file but missig in the other.",
+        help="Show missing elements and differences in status.",
+    )
+
+    parser.add_argument(
+        "--show-fails",
+        action="store_true",
+        help="Show missing elements and differences in status.",
     )
 
     args = parser.parse_args()
@@ -175,7 +182,8 @@ def process_args(args):
         args.threshold_absolute,
         args.threshold_relative,
         args.threshold_filter,
-        args.show_missing,
+        args.status_diff,
+        args.show_fails,
     )
 
 
@@ -534,6 +542,45 @@ def find_missing(results, level=0):
     return only_old + only_new + with_children
 
 
+def find_fails(results, args, unfiltered=False, level=0, path=None):
+    if level == 3:
+        return [
+            case["name"]
+            for case in results["cases"].values()
+            if case["status"] == FAIL and (unfiltered or filter((path or []) + [case["name"]], args))
+        ]
+    return {
+        child_name: children
+        for child_name, children in (
+            (child_name, find_fails(child, args, unfiltered, level + 1, (path or []) + [child_name]))
+            for child_name, child in results.items()
+        )
+        if children and (unfiltered or filter((path or []) + [child_name], args))
+    }
+
+
+def count_fails(fails, level=0):
+    if level == 3:
+        return len(fails)
+    return sum(count_fails(child, level + 1) for child in fails.values())
+
+
+def print_fails(fails, args, level=0, parent=None):
+    styles = [ESCAPE_BOLD + ESCAPE_ITALIC, ESCAPE_BOLD, ESCAPE_BOLD, ""]
+    prefixes = ["Target: ", "-", " -", "  -"]
+    if level == 3:
+        if len(fails) > 1 or fails[0] != "" and fails[0] != parent:
+            for name in fails:
+                print(f"{styles[level]}{prefixes[level]}{name}{ESCAPE_RESET}")
+        return
+    for name, element in fails.items():
+        print(f"{styles[level]}{prefixes[level]}{name}{ESCAPE_RESET}")
+        if args.verbose > level:
+            print_fails(element, args, level + 1, parent)
+            if level == 0:
+                print()
+
+
 def generate_status_rows(statuses, args, level=0):
     styles = [ESCAPE_BOLD + ESCAPE_ITALIC, ESCAPE_BOLD, ESCAPE_BOLD, ""]
     separators = ["║", "║", "┃", "┆"]
@@ -589,13 +636,26 @@ def generate_time_rows(times, args, level=0):
 
 def main():
     args: Args = process_args(parse_args())
-
+    for file, name in [(args.file_old, "old"), (args.file_new, "new")]:
+        fails = find_fails(file, args, unfiltered=True)
+        if fails:
+            fails_filtered = find_fails(file, args)
+            if args.show_fails:
+                print(f"Failed tests in {name} file:")
+                print_fails(fails_filtered, args)
+            else:
+                print(
+                    f"{ESCAPE_BOLD}{ESCAPE_YELLOW}Warning:{ESCAPE_RESET} "
+                    f"{count_fails(fails)} tests failed in the {name} file "
+                    f"({count_fails(fails_filtered)} matching filters)"
+                )
+                print("Use --show-fails to list the failing tests")
     output = compare_level(args.file_old, args.file_new, args)
-    if args.show_missing:
+    if args.status_diff:
         status_diff = find_missing(output)
         if status_diff:
             print_status_rows(generate_status_rows(status_diff, args))
-    else:
+    elif not args.show_fails:
         rows = generate_time_rows(output["children"], args)
         if rows:
             print_rows(rows)
