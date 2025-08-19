@@ -70,9 +70,63 @@ TEST(test_waitpid, waitpid_wnohang)
 	}
 }
 
+TEST(test_waitpid, waitpid_other_zombie)
+{
+	int pid[2] = { 0, 0 };
+	int res, i;
+	char *const arg[][2] = { { "exec_sum_process", NULL }, { "exec_sleep", NULL } };
+
+	for (i = 0; i < 2; i++) {
+		pid[i] = vfork();
+		if (pid[i] < 0) {
+			fprintf(stderr, "vfork function failed: %s\n", strerror(errno));
+			return;
+		}
+		/* child process i */
+		else if (pid[i] == 0) {
+			execv("/bin/test-waitpid", arg[i]);
+			fprintf(stderr, "exec function failed: %s\n", strerror(errno));
+			_exit(EXIT_FAILURE);
+		}
+	}
+	res = waitpid(pid[1], NULL, 0);
+	TEST_ASSERT_EQUAL_INT(pid[1], res);
+	res = waitpid(pid[0], NULL, 0);
+	TEST_ASSERT_EQUAL_INT(pid[0], res);
+}
+
+TEST(test_waitpid, waitpid_other_zombie_before)
+{
+	int pid[2] = { 0, 0 };
+	int res, i;
+	char *const arg[][2] = { { "exec_sleep", NULL }, { "exec_sum_process", NULL } };
+
+	for (i = 0; i < 2; i++) {
+		pid[i] = vfork();
+		if (pid[i] < 0) {
+			fprintf(stderr, "vfork function failed: %s\n", strerror(errno));
+			return;
+		}
+		/* child process i */
+		else if (pid[i] == 0) {
+			execv("/bin/test-waitpid", arg[i]);
+			fprintf(stderr, "exec function failed: %s\n", strerror(errno));
+			_exit(EXIT_FAILURE);
+		}
+	}
+	/* wait for process 1 to become a zombie process */
+	usleep(10000000 * 10);
+	res = waitpid(pid[0], NULL, 0);
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(1, res);
+	res = waitpid(pid[1], NULL, 0);
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(1, res);
+}
+
 TEST_GROUP_RUNNER(test_waitpid)
 {
 	RUN_TEST_CASE(test_waitpid, waitpid_wnohang);
+	RUN_TEST_CASE(test_waitpid, waitpid_other_zombie);
+	RUN_TEST_CASE(test_waitpid, waitpid_other_zombie_before);
 }
 
 void runner(void)
@@ -94,6 +148,9 @@ int main(int argc, char *argv[])
 		if (sum == 3) {
 			usleep(100000);
 		}
+	}
+	else if (!strcmp(basename(argv[0]), "exec_sleep")) {
+		usleep(100000 * 20);
 	}
 	else {
 		failures = UnityMain(argc, (const char **)argv, runner);
