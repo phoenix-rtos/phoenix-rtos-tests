@@ -265,6 +265,8 @@ def resolve_targets_and_hosts() -> Tuple[Dict[str, Type[TargetBase]], Dict[str, 
 def main():
     targets, hosts = resolve_targets_and_hosts()
 
+    print("passed args: %r" % sys.argv)
+
     args = parse_args(targets, hosts)
 
     ctx = TestContext(
