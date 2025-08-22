@@ -50,14 +50,12 @@ def harness(dut: Dut, ctx: TestContext, result: TestResult):
             continue
 
         if idx == 3:
-            # "\n\t\t" used to create more readable multiline message when printed
-            line_msg = "\n\t\t" + parsed["line"]
             # append extra message to the last test (if available)
             if subresult and subresult.status == Status.FAIL:
-                subresult.msg += line_msg
+                subresult.msg += parsed["line"]
             else:
                 # message may also appear during the test
-                msg.append(line_msg)
+                msg.append(parsed["line"])
 
         if idx == 1:
             status = Status.from_str(parsed["status"])
