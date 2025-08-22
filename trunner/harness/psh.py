@@ -1,3 +1,4 @@
+import re
 import shlex
 from typing import Optional, List
 
@@ -86,13 +87,13 @@ class ShellHarness(IntermediateHarness):
             self.assert_prompt()
 
         if self.cmd is not None:
-            self.dut.send(self.cmd + "\n")
+            self.dut.sendline(self.cmd)
             try:
-                self.dut.expect(f"{self.cmd}(\r+)\n")
+                self.dut.expect(f"{re.escape(self.cmd)}(\r+)\n")
             except (pexpect.TIMEOUT, pexpect.EOF) as e:
                 raise ShellError(
                     msg="Couldn't find the echoed command!",
-                    expected=self.prompt,
+                    expected=self.cmd,
                     output=self.dut.before,
                 ) from e
 
