@@ -402,6 +402,7 @@ def void_harness_fn(result: TestResult) -> TestResult:
 @dataclass
 class TestOptions:
     name: Optional[str] = None
+    cmd: Optional[str] = None
     harness: Callable[[TestResult], TestResult] = void_harness_fn
     target: Optional[str] = None
     bootloader: Optional[BootloaderOptions] = None
