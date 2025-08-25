@@ -1,0 +1,80 @@
+# Preparation and benchmark timeouts (in seconds)
+#
+# Since performacne is significantly different between different targets, timeouts need to be specified for each
+# benchmark on each target. Some targets don't run all the benchmarks due too limited memory oor performance.
+# The timeouts are specified only for the benchmarks that are run on the target.
+#
+# When new target is added, first run the benchmarks a few times with large timeout values to ensure they finish
+# executing. Set the timeout to 150% of the highest preparation/execution time.
+
+armv7a7-imx6ull-evk:
+  # preparation timeout (to 'starting run' message), execution timeout
+  cjpeg-rose7-preset: [2, 3]
+  loops-all-mid-10k-sp: [2, 200]
+  radix2-big-64k: [3, 100]
+  core: [2, 10]
+  nnet_test: [2, 40]
+  sha-test: [2, 3]
+  linear_alg-mid-100x100-sp: [2, 9]
+  parser-125k: [3, 3]
+  zip-test: [60, 3]
+
+armv7a9-zynq7000-qemu:
+  cjpeg-rose7-preset: [3, 3]
+  loops-all-mid-10k-sp: [2, 1800]
+  radix2-big-64k: [10, 600]
+  core: [2, 1500]
+  nnet_test: [2, 40]
+  sha-test: [2, 3]
+  linear_alg-mid-100x100-sp: [2, 7200]
+  parser-125k: [3, 3]
+  zip-test: [30, 3]
+
+armv7a9-zynq7000-zedboard:
+  cjpeg-rose7-preset: [2, 3]
+  loops-all-mid-10k-sp: [2, 180]
+  radix2-big-64k: [3, 50]
+  core: [2, 10]
+  nnet_test: [2, 40]
+  sha-test: [2, 3]
+  linear_alg-mid-100x100-sp: [2, 10]
+  parser-125k: [2, 3]
+  zip-test: [60, 3]
+
+armv7m4-stm32l4x6-nucleo:
+  core: [2, 800]
+  linear_alg-mid-100x100-sp: [10, 5000]
+
+armv7m7-imxrt106x-evk:
+  cjpeg-rose7-preset: [2, 3]
+  core: [2, 10]
+  nnet_test: [2, 75]
+  linear_alg-mid-100x100-sp: [2, 10]
+
+armv7m7-imxrt117x-evk:
+  cjpeg-rose7-preset: [2, 3]
+  core: [2, 8]
+  nnet_test: [2, 50]
+  linear_alg-mid-100x100-sp: [2, 8]
+
+ia32-generic-qemu:
+  cjpeg-rose7-preset: [2, 5]
+  loops-all-mid-10k-sp: [2, 1200]
+  radix2-big-64k: [3, 400]
+  core: [3, 10]
+  nnet_test: [2, 300]
+  sha-test: [2, 5]
+  linear_alg-mid-100x100-sp: [2, 80]
+  parser-125k: [2, 5]
+  zip-test: [30, 5]
+
+riscv64-generic-qemu:
+  cjpeg-rose7-preset: [2, 3]
+  loops-all-mid-10k-sp: [2, 140]
+  radix2-big-64k: [3, 40]
+  core: [2, 7]
+  nnet_test: [2, 40]
+  sha-test: [2, 3]
+  linear_alg-mid-100x100-sp: [2, 7]
+  parser-125k: [2, 3]
+  zip-test: [30, 3]
