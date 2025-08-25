@@ -152,6 +152,7 @@ class ConfigParser:
 
             execute_binary = False
 
+        self.test.cmd = cmd
         cmd = shlex.split(cmd)
         if not cmd:
             raise ParserError("execute/run attribute cannot be empty")
@@ -243,6 +244,10 @@ class ConfigParser:
         kwargs = config.get("kwargs", dict())
         if not isinstance(kwargs, dict):
             raise ParserError('"kwargs" must be a dictionary!')
+
+        kwargs["name"] = self.test.name
+        if self.test.cmd:
+            kwargs["cmd"] = self.test.cmd
 
         self.test.kwargs = kwargs
 
