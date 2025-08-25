@@ -15,7 +15,7 @@ def unity_harness(dut: Dut, ctx: TestContext, result: TestResult) -> Optional[Te
     last_assertion = {}
     stats = {"FAIL": 0, "IGNORE": 0, "PASS": 0}
     results = []
-    timeout_val = 30
+    timeout_val = 30 if ctx.target.name != "aarch64a53-zynqmp-qemu" else 60
     if ctx.nightly:
         timeout_val = 60
 

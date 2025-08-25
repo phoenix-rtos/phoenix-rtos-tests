@@ -115,6 +115,7 @@ class AARCH64A53ZynqmpQemuTarget(QemuTarget):
 
     def __init__(self):
         super().__init__("aarch64a53-zynqmp-qemu.sh")
+        self.prompt_timeout = 60
 
     @classmethod
     def from_context(cls, _: TestContext):
