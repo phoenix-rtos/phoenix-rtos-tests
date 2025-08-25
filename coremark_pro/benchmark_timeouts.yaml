@@ -1,0 +1,76 @@
+# Benchmark timeouts (in seconds)
+#
+# Since performacne is significantly different between different targets, timeouts need to be specified for each
+# benchmark on each target. Some targets don't run all the benchmarks due too limited memory oor performance.
+# The timeouts are specified only for the benchmarks that are run on the target.
+
+armv7a7-imx6ull-evk:
+  cjpeg-rose7-preset: 3
+  loops-all-mid-10k-sp: 200
+  radix2-big-64k: 100
+  core: 10
+  nnet_test: 40
+  sha-test: 3
+  linear_alg-mid-100x100-sp: 9
+  parser-125k: 3
+  zip-test: 3
+
+armv7a9-zynq7000-qemu:
+  cjpeg-rose7-preset: 3
+  loops-all-mid-10k-sp: 1800
+  radix2-big-64k: 600
+  core: 1500
+  nnet_test: 40
+  sha-test: 3
+  linear_alg-mid-100x100-sp: 7200
+  parser-125k: 3
+  zip-test: 3
+
+armv7a9-zynq7000-zedboard:
+  cjpeg-rose7-preset: 3
+  loops-all-mid-10k-sp: 180
+  radix2-big-64k: 50
+  core: 10
+  nnet_test: 40
+  sha-test: 3
+  linear_alg-mid-100x100-sp: 10
+  parser-125k: 3
+  zip-test: 3
+
+armv7m4-stm32l4x6-nucleo:
+  core: 800
+  linear_alg-mid-100x100-sp: 5000
+
+armv7m7-imxrt106x-evk:
+  cjpeg-rose7-preset: 3
+  core: 10
+  nnet_test: 75
+  linear_alg-mid-100x100-sp: 10
+
+armv7m7-imxrt117x-evk:
+  cjpeg-rose7-preset: 3
+  core: 8
+  nnet_test: 50
+  linear_alg-mid-100x100-sp: 8
+
+ia32-generic-qemu:
+  cjpeg-rose7-preset: 5
+  loops-all-mid-10k-sp: 1200
+  radix2-big-64k: 400
+  core: 10
+  nnet_test: 300
+  sha-test: 5
+  linear_alg-mid-100x100-sp: 80
+  parser-125k: 5
+  zip-test: 5
+
+riscv64-generic-qemu:
+  cjpeg-rose7-preset: 3
+  loops-all-mid-10k-sp: 140
+  radix2-big-64k: 40
+  core: 7
+  nnet_test: 40
+  sha-test: 3
+  linear_alg-mid-100x100-sp: 7
+  parser-125k: 3
+  zip-test: 3

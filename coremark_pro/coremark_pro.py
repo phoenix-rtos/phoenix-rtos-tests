@@ -7,6 +7,9 @@
 # Authors: Władysław Młynik
 #
 
+import os
+
+import yaml
 from pexpect.exceptions import EOF, TIMEOUT
 from trunner.ctx import TestContext
 from trunner.dut import Dut
@@ -29,153 +32,13 @@ def harness(dut: Dut, ctx: TestContext, result: TestResult, **kwargs):
     subresult = None
     msg = []
 
-    prepare_timeouts = {
-        "armv7a7-imx6ull-evk": {
-            "cjpeg-rose7-preset": 2,
-            "loops-all-mid-10k-sp": 2,
-            "radix2-big-64k": 3,
-            "core": 2,
-            "nnet_test": 2,
-            "sha-test": 2,
-            "linear_alg-mid-100x100-sp": 2,
-            "parser-125k": 3,
-            "zip-test": 60,
-        },
-        "armv7a9-zynq7000-qemu": {
-            "cjpeg-rose7-preset": 3,
-            "loops-all-mid-10k-sp": 2,
-            "radix2-big-64k": 10,
-            "core": 2,
-            "nnet_test": 2,
-            "sha-test": 2,
-            "linear_alg-mid-100x100-sp": 2,
-            "parser-125k": 3,
-            "zip-test": 30,
-        },
-        "armv7a9-zynq7000-zedboard": {
-            "cjpeg-rose7-preset": 2,
-            "loops-all-mid-10k-sp": 2,
-            "radix2-big-64k": 3,
-            "core": 2,
-            "nnet_test": 2,
-            "sha-test": 2,
-            "linear_alg-mid-100x100-sp": 2,
-            "parser-125k": 2,
-            "zip-test": 60,
-        },
-        "armv7m4-stm32l4x6-nucleo": {
-            "core": 2,
-            "linear_alg-mid-100x100-sp": 10,
-        },
-        "armv7m7-imxrt106x-evk": {
-            "cjpeg-rose7-preset": 2,
-            "core": 2,
-            "nnet_test": 2,
-            "linear_alg-mid-100x100-sp": 2,
-        },
-        "armv7m7-imxrt117x-evk": {
-            "cjpeg-rose7-preset": 2,
-            "core": 2,
-            "nnet_test": 2,
-            "linear_alg-mid-100x100-sp": 2,
-        },
-        "ia32-generic-qemu": {
-            "cjpeg-rose7-preset": 2,
-            "loops-all-mid-10k-sp": 2,
-            "radix2-big-64k": 3,
-            "core": 3,
-            "nnet_test": 2,
-            "sha-test": 2,
-            "linear_alg-mid-100x100-sp": 2,
-            "parser-125k": 2,
-            "zip-test": 30,
-        },
-        "riscv64-generic-qemu": {
-            "cjpeg-rose7-preset": 2,
-            "loops-all-mid-10k-sp": 2,
-            "radix2-big-64k": 3,
-            "core": 2,
-            "nnet_test": 2,
-            "sha-test": 2,
-            "linear_alg-mid-100x100-sp": 2,
-            "parser-125k": 2,
-            "zip-test": 30,
-        },
-    }
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    with open(os.path.join(script_dir, "prepare_timeouts.yaml"), "r", encoding="utf-8") as f:
+        prepare_timeouts = yaml.safe_load(f)
 
-    benchmark_timeouts = {
-        "armv7a7-imx6ull-evk": {
-            "cjpeg-rose7-preset": 3,
-            "loops-all-mid-10k-sp": 200,
-            "radix2-big-64k": 100,
-            "core": 10,
-            "nnet_test": 40,
-            "sha-test": 3,
-            "linear_alg-mid-100x100-sp": 9,
-            "parser-125k": 3,
-            "zip-test": 3,
-        },
-        "armv7a9-zynq7000-qemu": {
-            "cjpeg-rose7-preset": 3,
-            "loops-all-mid-10k-sp": 1800,
-            "radix2-big-64k": 600,
-            "core": 1500,
-            "nnet_test": 40,
-            "sha-test": 3,
-            "linear_alg-mid-100x100-sp": 7200,
-            "parser-125k": 3,
-            "zip-test": 3,
-        },
-        "armv7a9-zynq7000-zedboard": {
-            "cjpeg-rose7-preset": 3,
-            "loops-all-mid-10k-sp": 180,
-            "radix2-big-64k": 50,
-            "core": 10,
-            "nnet_test": 40,
-            "sha-test": 3,
-            "linear_alg-mid-100x100-sp": 10,
-            "parser-125k": 3,
-            "zip-test": 3,
-        },
-        "armv7m4-stm32l4x6-nucleo": {
-            "core": 800,
-            "linear_alg-mid-100x100-sp": 5000,
-        },
-        "armv7m7-imxrt106x-evk": {
-            "cjpeg-rose7-preset": 3,
-            "core": 10,
-            "nnet_test": 75,
-            "linear_alg-mid-100x100-sp": 10,
-        },
-        "armv7m7-imxrt117x-evk": {
-            "cjpeg-rose7-preset": 3,
-            "core": 8,
-            "nnet_test": 50,
-            "linear_alg-mid-100x100-sp": 8,
-        },
-        "ia32-generic-qemu": {
-            "cjpeg-rose7-preset": 5,
-            "loops-all-mid-10k-sp": 1200,
-            "radix2-big-64k": 300,
-            "core": 10,
-            "nnet_test": 300,
-            "sha-test": 5,
-            "linear_alg-mid-100x100-sp": 80,
-            "parser-125k": 5,
-            "zip-test": 5,
-        },
-        "riscv64-generic-qemu": {
-            "cjpeg-rose7-preset": 3,
-            "loops-all-mid-10k-sp": 140,
-            "radix2-big-64k": 40,
-            "core": 7,
-            "nnet_test": 40,
-            "sha-test": 3,
-            "linear_alg-mid-100x100-sp": 7,
-            "parser-125k": 3,
-            "zip-test": 3,
-        },
-    }
+    with open(os.path.join(script_dir, "benchmark_timeouts.yaml"), "r", encoding="utf-8") as f:
+        benchmark_timeouts = yaml.safe_load(f)
+
     target = ctx.target.name
     name = kwargs["name"].split("/")[-1]
 
