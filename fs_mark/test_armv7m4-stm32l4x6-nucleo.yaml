@@ -1,0 +1,75 @@
+test:
+  harness: fs_mark.py
+  nightly: true
+  targets:
+    value: [atmv7m4-stm32l4x6-nucleo]
+  load:
+    - app: fs_mark_clean
+      exec: False
+
+  tests:
+    # empty files
+    - name: empty_files (s=0 n=200)
+      execute: fs_mark -d /fs_mark_test -s 0 -n 200 -v
+
+    - name: empty_files (s=0 D=4 N=50 n=200)
+      execute: fs_mark -d /fs_mark_test -s 0 -D 4 -N 50 -n 200 -v
+
+    - name: empty_files (s=0 D=10 N=20 n=200)
+      execute: fs_mark -d /fs_mark_test -s 0 -D 10 -N 20 -n 200 -v
+
+    - name: empty_files (s=0 D=50 N=4 n=200)
+      execute: fs_mark -d /fs_mark_test -s 0 -D 50 -N 4 -n 200 -v
+
+    - name: empty_files (s=0 D=100 N=2 n=200)
+      execute: fs_mark -d /fs_mark_test -s 0 -D 100 -N 2 -n 200 -v
+
+    # big file
+    - name: big_file (s=150000 w=1 n=1)
+      execute: fs_mark -d /fs_mark_test -s 150000 -w 1 -n 1 -v
+
+    - name: big_file (s=150000 w=32 n=1)
+      execute: fs_mark -d /fs_mark_test -s 150000 -w 32 -n 1 -v
+
+    - name: big_file (s=150000 w=113 n=1)
+      execute: fs_mark -d /fs_mark_test -s 150000 -w 113 -n 1 -v
+
+    - name: big_file (s=150000 w=512 n=1)
+      execute: fs_mark -d /fs_mark_test -s 150000 -w 512 -n 1 -v
+
+    - name: big_file (s=150000 w=513 n=1)
+      execute: fs_mark -d /fs_mark_test -s 150000 -w 513 -n 1 -v
+
+    - name: big_file (s=150000 w=4096 n=1)
+      execute: fs_mark -d /fs_mark_test -s 150000 -w 4096 -n 1 -v
+
+      # medium size
+    - name: medium_size (s=32 w=32 n=1 L=200)
+      execute: fs_mark -d /fs_mark_test -s 32 -w 32 -n 1 -L 200 -v
+
+    - name: medium_size (s=70 w=64 D=4 N=4 n=1 L=50)
+      execute: fs_mark -d /fs_mark_test -s 70 -w 64 -D 4 -N 4 -n 1 -L 50 -v
+
+    - name: medium_size (s=256 w=65 D=10 N=10 n=1 L=20)
+      execute: fs_mark -d /fs_mark_test -s 256 -w 65 -D 10 -N 10 -n 1 -L 20 -v
+
+    - name: medium_size (s=352 w=128 D=50 N=50 n=1 L=4)
+      execute: fs_mark -d /fs_mark_test -s 352 -w 128 -D 50 -N 50 -n 1 -L 4 -v
+
+    - name: medium_size (s=512 w=150 D=100 N=100 n=1 L=2)
+      execute: fs_mark -d /fs_mark_test -s 512 -w 150 -D 100 -N 100 -n 1 -L 2 -v
+
+    - name: medium_size (s=513 w=32 n=1 L=100)
+      execute: fs_mark -d /fs_mark_test -s 513 -w 32 -n 1 -L 100 -v
+
+    - name: medium_size (s=631 w=124 D=4 N=4 n=1 L=25)
+      execute: fs_mark -d /fs_mark_test -s 631 -w 124 -D 4 -N 4 -n 1 -L 25 -v
+
+    - name: medium_size (s=783 w=367 D=10 N=10 n=1 L=10)
+      execute: fs_mark -d /fs_mark_test -s 783 -w 367 -D 10 -N 10 -n 1 -L 10 -v
+
+    - name: medium_size (s=913 w=512 D=50 N=50 n=1 L=2)
+      execute: fs_mark -d /fs_mark_test -s 913 -w 512 -D 50 -N 50 -n 1 -L 2 -v
+
+    - name: medium_size (s=1024 w=127 D=100 N=100 n=1)
+      execute: fs_mark -d /fs_mark_test -s 1024 -w 127 -D 100 -N 100 -n 1 -v

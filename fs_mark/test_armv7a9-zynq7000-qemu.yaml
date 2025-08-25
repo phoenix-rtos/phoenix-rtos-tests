@@ -1,0 +1,9 @@
+test:
+  harness: fs_mark.py
+  nightly: true
+  targets:
+    value: [armv7a9-zynq7000-qemu]
+
+  tests:
+    - name: dummy (s=1000 n=1)
+      execute: fs_mark -d /fs_mark_test -s 1000 -n 1 -v
