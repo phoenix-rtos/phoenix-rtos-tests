@@ -2,7 +2,7 @@ from abc import abstractmethod
 from typing import Callable, TextIO
 
 from trunner.ctx import TestContext
-from trunner.dut import QemuDut
+from trunner.dut import QemuDut, ARMv8R52MPS3AN536_Dut
 from trunner.harness import HarnessBuilder, RebooterHarness, ShellHarness, TestStartRunningHarness
 from trunner.types import TestOptions, TestResult
 from .base import TargetBase
@@ -115,6 +115,17 @@ class AARCH64A53ZynqmpQemuTarget(QemuTarget):
 
     def __init__(self):
         super().__init__("aarch64a53-zynqmp-qemu.sh")
+
+
+class ARMv8R52MPS3AN536QemuTarget(QemuTarget):
+    name = "armv8r52-mps3an536-qemu"
+    rootfs = False
+    experimental = True
+
+    def __init__(self):
+        super().__init__("armv8r52-mps3an536-qemu.sh")
+        self.dut = ARMv8R52MPS3AN536_Dut(f"{self.project_dir}/scripts/{self.script}", encoding="utf-8")
+        self.rebooter = QemuDutRebooter(self.dut)
 
     @classmethod
     def from_context(cls, _: TestContext):
