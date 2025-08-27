@@ -342,10 +342,29 @@ class TestSubResult(TestResult):
         self.set_stage(TestStage.RUN)
 
     def __str__(self) -> str:
-        out = f"\t{bold(self.subname)}: {self.status}"
+        tab = " " * 6
+        out = f"{tab}{bold(self.subname)}: {self.status}"
 
         if self.msg and self.status != Status.OK:
-            out += ": " + self.msg
+            shift_len = len(tab) + len(f"{self.subname}: {self.status.name}: ")
+            msg_lines = self.msg.splitlines()
+            first_line, *remaining_lines = msg_lines
+
+            # multi-line message that break width limit, mainly for subtests with long name
+            if remaining_lines and shift_len + max(len(line) for line in msg_lines) > 120:
+                out += ":\n" + "\n".join(
+                    f"{tab}{tab}{line}"
+                    for line in msg_lines
+                )
+            # multi-line message that does not exceed width limit
+            elif remaining_lines:
+                out += ": " + first_line + "\n" + "\n".join(
+                    f'{" " * shift_len}{line}'
+                    for line in remaining_lines
+                )
+            # single-line message
+            else:
+                out += ": " + first_line
 
         return out
 
