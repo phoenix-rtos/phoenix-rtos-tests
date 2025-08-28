@@ -99,7 +99,7 @@ class ARMv7A9Zynq7000QemuTarget(QemuTarget):
     shell_prompt = "root@?:~ # "
 
     def __init__(self):
-        super().__init__("armv7a9-zynq7000-qemu.sh")
+        super().__init__("armv7a9-zynq7000-qemu-test.sh")
         # Start of the zynq target take around 45 seconds due to the slow filesystem initialization.
         # Iterate over harness chain to find a ShellHarness to increase prompt_timeout value.
         self.prompt_timeout = 60
