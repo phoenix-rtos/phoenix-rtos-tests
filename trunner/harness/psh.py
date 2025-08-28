@@ -78,6 +78,40 @@ class ShellHarness(IntermediateHarness):
                 output=self.dut.before,
             ) from e
 
+    def assert_cmd_succeded(self):
+        self.dut.sendline("echo $?")
+
+        EOL = r"(?:\r+)\n"
+        expected = rf"(\d+?){EOL}"
+
+        try:
+            self.dut.expect(expected, timeout=5)
+            exit_code = int(self.dut.match.group(1))
+        except (pexpect.TIMEOUT, pexpect.EOF) as e:
+            raise ShellError(
+                msg="Couldn't get exit status!",
+                expected=self.prompt,
+                output=self.dut.before,
+            ) from e
+
+        if exit_code != 0:
+            raise ShellError(
+                msg="Command returned a non-zero status"
+            )
+
+        self.assert_prompt()
+
+    def assert_test_succeded(self):
+        try:
+            self.assert_prompt()
+        except ShellError:
+            # If the prompt was lost, check the system's responsiveness
+            self.dut.send("\n")
+            self.assert_prompt()
+
+        if self.cmd:
+            self.assert_cmd_succeded()
+
     def __call__(self, result: TestResult) -> TestResult:
         self.assert_prompt()
 
@@ -101,7 +135,7 @@ class ShellHarness(IntermediateHarness):
         test_result = self.next_harness(result)
 
         if test_result.status is not Status.FAIL:
-            self.assert_prompt()
+            self.assert_test_succeded()
 
             # re-enable log output to release collected output
             if self.suppress_dmesg:

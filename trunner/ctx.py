@@ -38,5 +38,6 @@ class TestContext:
     stream_output: bool
     output: Optional[str]
     kwargs: dict = field(default_factory=dict)
+    cmd: Optional[str] = None
     target: Optional[TargetBase] = None
     host: Optional[Host] = None

@@ -45,7 +45,7 @@ def _check_result(pexpect_proc, result):
     if result == "dont-check":
         return
     elif result == "success":
-        assert_cmd_successed(pexpect_proc)
+        assert_cmd_succeded(pexpect_proc)
     elif result == "fail":
         assert_cmd_failed(pexpect_proc)
     else:
@@ -55,11 +55,36 @@ def _check_result(pexpect_proc, result):
         )
 
 
-def assert_cmd(pexpect_proc, cmd, *, expected="", result="success", msg="", is_regex=False, timeout=-1):
-    """Sends specified command and asserts that it's displayed correctly
+def send_cmd(pexpect_proc, cmd, *, exec_prefix=False, timeout=-1):
+    """Sends command without any checks"""
+
+    exec_cmd = _get_exec_cmd(cmd) if exec_prefix else cmd
+
+    pexpect_proc.sendline(exec_cmd)
+    exec_cmd = re.escape(exec_cmd)
+    exp_regex = exec_cmd + EOL
+
+    assert pexpect_proc.expect([exp_regex, pexpect.TIMEOUT, pexpect.EOF], timeout=timeout) == 0
+
+
+def assert_cmd(
+    pexpect_proc,
+    cmd,
+    *,
+    expected="",
+    result="success",
+    msg="",
+    is_regex=False,
+    exec_prefix=False,
+    timeout=-1
+):
+    """Sends command and asserts that it's displayed correctly
     with optional expected output and next prompt. Exit status is asserted depending on `result`"""
-    pexpect_proc.sendline(cmd)
-    cmd = re.escape(cmd)
+
+    exec_cmd = _get_exec_cmd(cmd) if exec_prefix else cmd
+
+    pexpect_proc.sendline(exec_cmd)
+    exec_cmd = re.escape(exec_cmd)
     exp_regex = ""
     if is_regex:
         exp_regex = expected
@@ -70,7 +95,7 @@ def assert_cmd(pexpect_proc, cmd, *, expected="", result="success", msg="", is_r
             line = re.escape(line)
             exp_regex += line + EOL
 
-    exp_regex = cmd + EOL + exp_regex + PROMPT
+    exp_regex = exec_cmd + EOL + exp_regex + PROMPT
     exp_readable = _readable(exp_regex)
     msg = f"Expected output regex was: \n---\n{exp_readable}\n---\n" + msg
 
@@ -117,14 +142,6 @@ def _get_exec_cmd(prog):
         return f"sysexec {prog}"
 
 
-def assert_exec(pexpect_proc, prog, expected="", msg=""):
-    """Executes specified program and asserts that it's displayed correctly
-    with optional expected output and next prompt"""
-    exec_cmd = _get_exec_cmd(prog)
-
-    assert_cmd(pexpect_proc, exec_cmd, expected=expected, result="success", msg=msg)
-
-
 def get_exit_code(pexpect_proc):
     pexpect_proc.sendline("echo $?")
     msg = "Checking passed command return code failed, one or more digits not found"
@@ -140,7 +157,7 @@ def assert_cmd_failed(pexpect_proc):
     assert get_exit_code(pexpect_proc) != 0, "The exit status of last passed command equals 0!"
 
 
-def assert_cmd_successed(pexpect_proc):
+def assert_cmd_succeded(pexpect_proc):
     assert get_exit_code(pexpect_proc) == 0, "The exit status of last passed command does not equal 0!"
 
 
