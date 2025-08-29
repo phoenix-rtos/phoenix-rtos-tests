@@ -1,7 +1,19 @@
 test:
-  type: unity
-  tests:
-    - name: unit
-      execute: test-ioctl
-      targets:
-        exclude: [host-generic-pc]
+    # type: unity
+    tests:
+        - name: test-ioctl
+          type: unity
+          execute: test-ioctl
+          targets:
+            exclude: [host-generic-pc]
+
+        - name: test-ioctl-special
+          type: unity
+          execute: test-ioctl-special
+          targets:
+            exclude: [host-generic-pc]
+
+        - name: test-route
+          harness: test-route.py
+          targets:
+            exclude: [host-generic-pc]
