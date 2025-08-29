@@ -1,0 +1,70 @@
+armv7a7-imx6ull-evk:
+  cjpeg-rose7-preset: 2
+  loops-all-mid-10k-sp: 2
+  radix2-big-64k: 3
+  core: 2
+  nnet_test: 2
+  sha-test: 2
+  linear_alg-mid-100x100-sp: 2
+  parser-125k: 3
+  zip-test: 60
+
+armv7a9-zynq7000-qemu:
+  cjpeg-rose7-preset: 3
+  loops-all-mid-10k-sp: 2
+  radix2-big-64k: 10
+  core: 2
+  nnet_test: 2
+  sha-test: 2
+  linear_alg-mid-100x100-sp: 2
+  parser-125k: 3
+  zip-test: 30
+
+armv7a9-zynq7000-zedboard:
+  cjpeg-rose7-preset: 2
+  loops-all-mid-10k-sp: 2
+  radix2-big-64k: 3
+  core: 2
+  nnet_test: 2
+  sha-test: 2
+  linear_alg-mid-100x100-sp: 2
+  parser-125k: 2
+  zip-test: 60
+
+armv7m4-stm32l4x6-nucleo:
+  core: 2
+  linear_alg-mid-100x100-sp: 10
+
+armv7m7-imxrt106x-evk:
+  cjpeg-rose7-preset: 2
+  core: 2
+  nnet_test: 2
+  linear_alg-mid-100x100-sp: 2
+
+armv7m7-imxrt117x-evk:
+  cjpeg-rose7-preset: 2
+  core: 2
+  nnet_test: 2
+  linear_alg-mid-100x100-sp: 2
+
+ia32-generic-qemu:
+  cjpeg-rose7-preset: 2
+  loops-all-mid-10k-sp: 2
+  radix2-big-64k: 3
+  core: 3
+  nnet_test: 2
+  sha-test: 2
+  linear_alg-mid-100x100-sp: 2
+  parser-125k: 2
+  zip-test: 30
+
+riscv64-generic-qemu:
+  cjpeg-rose7-preset: 2
+  loops-all-mid-10k-sp: 2
+  radix2-big-64k: 3
+  core: 2
+  nnet_test: 2
+  sha-test: 2
+  linear_alg-mid-100x100-sp: 2
+  parser-125k: 2
+  zip-test: 30
