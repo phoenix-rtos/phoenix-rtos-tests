@@ -36,6 +36,7 @@ void runner(void)
 	RUN_TEST_GROUP(stat_mode);
 	RUN_TEST_GROUP(stat_nlink_size_blk_tim);
 	RUN_TEST_GROUP(stat_errno);
+	RUN_TEST_GROUP(unistd_pread);
 }
 
 
