@@ -6,7 +6,7 @@
  * Testing unistd.h file related functions
  *
  * Copyright 2022 Phoenix Systems
- * Author: Mateusz Niewiadomski, Damian Loewnau
+ * Author: Mateusz Niewiadomski, Damian Loewnau, Jakub Rak
  *
  * This file is part of Phoenix-RTOS.
  *
@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <pthread.h>
 
 #include <unity_fixture.h>
 
@@ -30,14 +31,23 @@
 
 #define FNAME "unistd_file_testfile"
 
+#define LOREM               "Lorem ipsum dolor sit amet, consectetur adipiscing elit."
+#define LOREM_LEN           56
+#define LOREM_PATH          "/tmp/lorem"
+#define NEWLOREM_PATH       "/tmp/newlorem"
+#define IPSUM_PATH          "/tmp/ipsum"
+#define OVERLAPPING_REPEATS 500
+
 
 static int fd;
-static char buf[50];
+static char buf[60];
 
 #ifdef __phoenix__
 /* libphoenix internal functions */
 extern ssize_t __safe_write(int fd, const void *buff, size_t size);
 extern ssize_t __safe_read(int fd, void *buf, size_t size);
+extern ssize_t __safe_pread(int fd, void *buf, size_t size, off_t offset);
+extern ssize_t __safe_pwrite(int fd, const void *buf, size_t size, off_t offset);
 extern int __safe_open(const char *path, int oflag, mode_t mode);
 extern int __safe_close(int fd);
 #endif
@@ -56,7 +66,32 @@ static void assert_write(const int fildes, const char *str)
 	/* Assuming that strlen attempts would be sufficient */
 	while (written < toWrite && cnt++ <= toWrite) {
 		temp = write(fildes, &str[written], toWrite - written);
-		if (((temp) == -1) && (errno == EINTR)) {
+		if ((temp == -1) && (errno == EINTR)) {
+			continue;
+		}
+		TEST_ASSERT_GREATER_OR_EQUAL(0, temp);
+		written += temp;
+	}
+
+	TEST_ASSERT_EQUAL(toWrite, written);
+}
+
+
+/* Assert that string pointed to by str, excluding its null terminator,
+   has been correctly written to a specified file at a given offset. */
+static void assert_write_pos(const int fildes, const char *str, off_t offset)
+{
+	int toWrite;
+	int temp;
+	int cnt = 0;
+	int written = 0;
+
+	/* do not include NULL termination character */
+	toWrite = strlen(str);
+	/* Assuming that strlen attempts would be sufficient */
+	while (written < toWrite && cnt++ <= toWrite) {
+		temp = pwrite(fildes, &str[written], toWrite - written, offset + written);
+		if ((temp == -1) && (errno == EINTR)) {
 			continue;
 		}
 		TEST_ASSERT_GREATER_OR_EQUAL(0, temp);
@@ -76,8 +111,29 @@ static void assert_read(const int fildes, char *dest, const int n)
 
 	/* Assuming that n attempts would be sufficient */
 	while (nread < n && cnt++ < n) {
-		temp = read(fildes, dest, n - nread);
-		if (((temp) == -1) && (errno == EINTR)) {
+		temp = read(fildes, dest + nread, n - nread);
+		if ((temp == -1) && (errno == EINTR)) {
+			continue;
+		}
+		TEST_ASSERT_GREATER_OR_EQUAL(0, temp);
+		nread += temp;
+	}
+
+	TEST_ASSERT_EQUAL(n, nread);
+}
+
+
+/* Assert that n characters have been read to dest from the specified file at given offset */
+static void assert_read_pos(const int fildes, char *dest, const int n, off_t offset)
+{
+	int temp;
+	int cnt = 0;
+	int nread = 0;
+
+	/* Assuming that n attempts would be sufficient */
+	while (nread < n && cnt++ < n) {
+		temp = pread(fildes, dest + nread, n - nread, offset + nread);
+		if ((temp == -1) && (errno == EINTR)) {
 			continue;
 		}
 		TEST_ASSERT_GREATER_OR_EQUAL(0, temp);
@@ -100,7 +156,7 @@ static void assert_read_more(const int fildes, const char *dest, const int n)
 	while (nread < n && cnt++ < n) {
 		/* Always try to read 2 times more than it's possible */
 		temp = read(fildes, buf, 2 * n);
-		if (((temp) == -1) && (errno == EINTR)) {
+		if ((temp == -1) && (errno == EINTR)) {
 			continue;
 		}
 		TEST_ASSERT_GREATER_OR_EQUAL(0, temp);
@@ -115,7 +171,7 @@ static int assert_free_fd(int fildes)
 {
 	int attempts = 0;
 
-	while ((fcntl(fildes, F_GETFL) != -1 ) && attempts++ < 20) {
+	while ((fcntl(fildes, F_GETFL) != -1) && attempts++ < 20) {
 		fildes++;
 	}
 
@@ -952,3 +1008,427 @@ TEST_GROUP_RUNNER(unistd_file)
 	RUN_TEST_CASE(unistd_file, file_dup2_opened);
 	RUN_TEST_CASE(unistd_file, file_dup2_closed);
 }
+
+
+TEST_GROUP(unistd_file_pread);
+
+
+TEST_SETUP(unistd_file_pread)
+{
+	fd = open(LOREM_PATH, O_RDWR | O_CREAT | O_TRUNC, 0777);
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fd);
+	assert_write(fd, LOREM);
+}
+
+
+TEST_TEAR_DOWN(unistd_file_pread)
+{
+	TEST_ASSERT_EQUAL_INT(0, close(fd));
+	unlink(LOREM_PATH);
+}
+
+
+/* Test basic reading on different offset */
+TEST(unistd_file_pread, pread_offset)
+{
+	TEST_ASSERT_EQUAL(14, pread(fd, buf, 14, 12));
+	buf[14] = '\0';
+	TEST_ASSERT_EQUAL_STRING("dolor sit amet", buf);
+	TEST_ASSERT_EQUAL(11, pread(fd, buf, 11, 6));
+	buf[11] = '\0';
+	TEST_ASSERT_EQUAL_STRING("ipsum dolor", buf);
+}
+
+
+/* Test basic writing on different offset */
+TEST(unistd_file_pread, pwrite_offset)
+{
+	assert_write_pos(fd, "OVERWRITE", 12);
+	assert_read_pos(fd, buf, 26, 0);
+	buf[26] = '\0';
+	TEST_ASSERT_EQUAL_STRING("Lorem ipsum OVERWRITE amet", buf);
+	assert_write_pos(fd, "ipsum dolor sit", 6);
+	assert_read_pos(fd, buf, LOREM_LEN, 0);
+	buf[LOREM_LEN] = '\0';
+	TEST_ASSERT_EQUAL_STRING(LOREM, buf);
+}
+
+
+/* Test closed fd, incompatible open mode and nonexistent fd */
+TEST(unistd_file_pread, pread_ebadf)
+{
+	int bad_fd = open(LOREM_PATH, O_RDONLY, 0777);
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, bad_fd);
+	TEST_ASSERT_EQUAL_INT(0, close(bad_fd));
+	TEST_ASSERT_EQUAL_INT(-1, pread(bad_fd, buf, 2, 1));
+	TEST_ASSERT_EQUAL_INT(EBADF, errno);
+
+	bad_fd = open(LOREM_PATH, O_WRONLY, 0777);
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, bad_fd);
+	TEST_ASSERT_EQUAL_INT(-1, pread(bad_fd, buf, 2, 1));
+	TEST_ASSERT_EQUAL_INT(EBADF, errno);
+
+	TEST_ASSERT_EQUAL_INT(0, close(bad_fd));
+	bad_fd = assert_free_fd(7);
+	TEST_ASSERT_EQUAL_INT(-1, pread(bad_fd, buf, 2, 1));
+	TEST_ASSERT_EQUAL_INT(EBADF, errno);
+}
+
+
+/* Test closed fd, incompatible open mode and nonexistent fd */
+TEST(unistd_file_pread, pwrite_ebadf)
+{
+	int bad_fd = open(LOREM_PATH, O_WRONLY, 0777);
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, bad_fd);
+	TEST_ASSERT_EQUAL_INT(0, close(bad_fd));
+	TEST_ASSERT_EQUAL_INT(-1, pwrite(bad_fd, buf, 2, 1));
+	TEST_ASSERT_EQUAL_INT(EBADF, errno);
+
+	bad_fd = open(LOREM_PATH, O_RDONLY, 0777);
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, bad_fd);
+	TEST_ASSERT_EQUAL_INT(-1, pwrite(bad_fd, buf, 2, 1));
+	TEST_ASSERT_EQUAL_INT(EBADF, errno);
+
+	TEST_ASSERT_EQUAL_INT(0, close(bad_fd));
+	bad_fd = assert_free_fd(7);
+	TEST_ASSERT_EQUAL_INT(-1, pwrite(bad_fd, buf, 2, 1));
+	TEST_ASSERT_EQUAL_INT(EBADF, errno);
+}
+
+
+/* Test negative offset */
+TEST(unistd_file_pread, pread_einval)
+{
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fd);
+	TEST_ASSERT_EQUAL_INT(-1, pread(fd, buf, 2, -1));
+	TEST_ASSERT_EQUAL_INT(EINVAL, errno);
+}
+
+
+/* Test negative offset */
+TEST(unistd_file_pread, pwrite_einval)
+{
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fd);
+	TEST_ASSERT_EQUAL_INT(-1, pwrite(fd, buf, 2, -1));
+	TEST_ASSERT_EQUAL_INT(EINVAL, errno);
+}
+
+
+/* Test trying to read on non-seekable file */
+TEST(unistd_file_pread, pread_espipe)
+{
+	int pipe_fds[2];
+	if (pipe(pipe_fds) != 0) {
+		/* ignore test if not pipe() not supported (errno == ENOSYS) */
+		TEST_ASSERT_EQUAL_INT(ENOSYS, errno);
+		TEST_IGNORE();
+	}
+	TEST_ASSERT_EQUAL_INT(-1, pread(pipe_fds[0], buf, 2, 1));
+	TEST_ASSERT_EQUAL_INT(ESPIPE, errno);
+	TEST_ASSERT_EQUAL_INT(0, close(pipe_fds[0]));
+	TEST_ASSERT_EQUAL_INT(0, close(pipe_fds[1]));
+}
+
+
+/* Test trying to read on non-seekable file */
+TEST(unistd_file_pread, pwrite_espipe)
+{
+	int pipe_fds[2];
+	if (pipe(pipe_fds) != 0) {
+		/* ignore test if not pipe() not supported (errno == ENOSYS) */
+		TEST_ASSERT_EQUAL_INT(ENOSYS, errno);
+		TEST_IGNORE();
+	}
+	TEST_ASSERT_EQUAL_INT(-1, pwrite(pipe_fds[1], buf, 2, 1));
+	TEST_ASSERT_EQUAL_INT(ESPIPE, errno);
+	TEST_ASSERT_EQUAL_INT(0, close(pipe_fds[0]));
+	TEST_ASSERT_EQUAL_INT(0, close(pipe_fds[1]));
+}
+
+
+typedef struct {
+	int ret;
+	int fd;
+	void *buf;
+	size_t nbytes;
+	off_t offset;
+} args_t;
+
+
+static void *pread_thread(void *arg)
+{
+	args_t *args = (args_t *)arg;
+	int temp;
+	int cnt = 0;
+	int nread = 0;
+
+	/* Assuming that nbytes attempts would be sufficient */
+	while (nread < args->nbytes && cnt++ < args->nbytes) {
+		temp = pread(args->fd, (char *)(args->buf) + nread, args->nbytes - nread, args->offset);
+		if (((temp) == -1) && (errno == EINTR)) {
+			continue;
+		}
+		if (temp < 0) {
+			nread = temp;
+			break;
+		}
+		nread += temp;
+	}
+
+	args->ret = nread;
+	return NULL;
+}
+
+
+static void *pwrite_thread(void *arg)
+{
+	args_t *args = (args_t *)arg;
+	int toWrite = args->nbytes;
+	int temp;
+	int cnt = 0;
+	int written = 0;
+
+	/* Assuming that nbytes attempts would be sufficient */
+	while (written < toWrite && cnt++ <= toWrite) {
+		temp = pwrite(args->fd, (char *)args->buf + written, toWrite - written, args->offset);
+		if (((temp) == -1) && (errno == EINTR)) {
+			continue;
+		}
+		if (temp < 0) {
+			written = temp;
+			break;
+		}
+		written += temp;
+	}
+	args->ret = written;
+	return NULL;
+}
+
+
+/* Test concurrent reading on multiple threads from the same fd */
+TEST(unistd_file_pread, pread_multithread)
+{
+	const int chunk = LOREM_LEN / 4;
+	const int remainder = LOREM_LEN % 4;
+	int i;
+	char buffer[LOREM_LEN + 1];
+	args_t args[4];
+	pthread_t threads[4];
+	for (i = 0; i < 4; i++) {
+		args[i].fd = fd;
+		args[i].offset = chunk * i;
+		args[i].buf = buffer + args[i].offset;
+		args[i].nbytes = args[i].offset + chunk <= LOREM_LEN ? chunk : remainder;
+	}
+	for (i = 3; i >= 0; i--)
+		TEST_ASSERT_EQUAL_INT(0, pthread_create(&threads[i], NULL, pread_thread, &args[i]));
+	for (i = 0; i < 4; i++) {
+		TEST_ASSERT_EQUAL_INT(0, pthread_join(threads[i], NULL));
+		TEST_ASSERT_EQUAL(chunk * (i + 1) <= LOREM_LEN ? chunk : remainder, args[i].ret);
+	}
+	buffer[LOREM_LEN] = '\0';
+	TEST_ASSERT_EQUAL_STRING(LOREM, buffer);
+}
+
+
+/* Test concurrent writing on multiple threads from the same fd */
+TEST(unistd_file_pread, pwrite_multithread)
+{
+	const int chunk = LOREM_LEN / 4;
+	const int remainder = LOREM_LEN % 4;
+	int new_fd, i;
+	char buffer[LOREM_LEN + 1] = LOREM;
+	char read_buffer[LOREM_LEN + 1];
+	args_t args[4];
+	pthread_t threads[4];
+	new_fd = open(NEWLOREM_PATH, O_RDWR | O_CREAT, 0777);
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fd);
+	for (i = 0; i < 4; i++) {
+		args[i].fd = new_fd;
+		args[i].offset = chunk * i;
+		args[i].buf = buffer + args[i].offset;
+		args[i].nbytes = args[i].offset + chunk <= LOREM_LEN ? chunk : remainder;
+	}
+	for (i = 3; i >= 0; i--)
+		TEST_ASSERT_EQUAL_INT(0, pthread_create(&threads[i], NULL, pwrite_thread, &args[i]));
+	for (i = 0; i < 4; i++) {
+		TEST_ASSERT_EQUAL_INT(0, pthread_join(threads[i], NULL));
+		TEST_ASSERT_EQUAL(chunk * (i + 1) <= LOREM_LEN ? chunk : remainder, args[i].ret);
+	}
+	assert_read_pos(new_fd, read_buffer, LOREM_LEN, 0);
+	read_buffer[LOREM_LEN] = '\0';
+	TEST_ASSERT_EQUAL_STRING(LOREM, read_buffer);
+	TEST_ASSERT_EQUAL_INT(0, close(new_fd));
+	TEST_ASSERT_EQUAL_INT(0, unlink(NEWLOREM_PATH));
+}
+
+
+static void *pread_overlapping_thread(void *arg)
+{
+	args_t *args = (args_t *)arg;
+	for (int i = 0; i < OVERLAPPING_REPEATS; i++) {
+		(void)pread_thread(arg);
+		if (args->ret != args->nbytes) {
+			break;
+		}
+	}
+	return NULL;
+}
+
+
+/* Test concurrent reading overlapping fragments from the same fd */
+TEST(unistd_file_pread, pread_multithread_overlapping)
+{
+	int i;
+	char buffer[4][6];
+	args_t args[4];
+	pthread_t threads[4];
+	for (i = 0; i < 4; i++) {
+		args[i].fd = fd;
+		args[i].offset = 6 + i;
+		args[i].buf = buffer[i];
+		args[i].nbytes = 5;
+	}
+	for (i = 3; i >= 0; i--)
+		TEST_ASSERT_EQUAL_INT(0, pthread_create(&threads[i], NULL, pread_overlapping_thread, &args[i]));
+	for (i = 0; i < 4; i++) {
+		TEST_ASSERT_EQUAL_INT(0, pthread_join(threads[i], NULL));
+		TEST_ASSERT_EQUAL(5, args[i].ret);
+		buffer[i][5] = '\0';
+	}
+	TEST_ASSERT_EQUAL_STRING("ipsum", buffer[0]);
+	TEST_ASSERT_EQUAL_STRING("psum ", buffer[1]);
+	TEST_ASSERT_EQUAL_STRING("sum d", buffer[2]);
+	TEST_ASSERT_EQUAL_STRING("um do", buffer[3]);
+}
+
+
+static void *pwrite_overlapping_thread(void *arg)
+{
+	args_t *args = (args_t *)arg;
+	for (int i = 0; i < OVERLAPPING_REPEATS; i++) {
+		(void)pwrite_thread(arg);
+		if (args->ret != args->nbytes) {
+			break;
+		}
+	}
+	return NULL;
+}
+
+
+/* Test concurrent writing overlapping fragments from the same fd */
+TEST(unistd_file_pread, pwrite_multithread_overlapping)
+{
+	int ipsum_fd, i;
+	char buffer[4][6] = { "ipsum", "psum ", "sum d", "um do" };
+	char read_buffer[9];
+	args_t args[4];
+	pthread_t threads[4];
+	ipsum_fd = open(IPSUM_PATH, O_RDWR | O_CREAT, 0777);
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, ipsum_fd);
+	for (i = 0; i < 4; i++) {
+		args[i].fd = ipsum_fd;
+		args[i].offset = i;
+		args[i].buf = buffer[i];
+		args[i].nbytes = 5;
+	}
+	for (i = 3; i >= 0; i--)
+		TEST_ASSERT_EQUAL_INT(0, pthread_create(&threads[i], NULL, pwrite_overlapping_thread, &args[i]));
+	for (i = 0; i < 4; i++) {
+		TEST_ASSERT_EQUAL_INT(0, pthread_join(threads[i], NULL));
+		TEST_ASSERT_EQUAL(5, args[i].ret);
+		buffer[i][5] = '\0';
+	}
+	assert_read_pos(ipsum_fd, read_buffer, 8, 0);
+	read_buffer[8] = '\0';
+	TEST_ASSERT_EQUAL_STRING("ipsum do", read_buffer);
+	TEST_ASSERT_EQUAL_INT(0, close(ipsum_fd));
+	TEST_ASSERT_EQUAL_INT(0, unlink(IPSUM_PATH));
+}
+
+/* TODO: write more demanding tests for overalpping pread and pwrite */
+
+TEST_GROUP_RUNNER(unistd_file_pread)
+{
+	RUN_TEST_CASE(unistd_file_pread, pread_offset);
+	RUN_TEST_CASE(unistd_file_pread, pwrite_offset);
+	RUN_TEST_CASE(unistd_file_pread, pread_ebadf);
+	RUN_TEST_CASE(unistd_file_pread, pwrite_ebadf);
+	RUN_TEST_CASE(unistd_file_pread, pread_einval);
+	RUN_TEST_CASE(unistd_file_pread, pwrite_einval);
+	RUN_TEST_CASE(unistd_file_pread, pread_espipe);
+	RUN_TEST_CASE(unistd_file_pread, pwrite_espipe);
+	RUN_TEST_CASE(unistd_file_pread, pread_multithread);
+	RUN_TEST_CASE(unistd_file_pread, pread_multithread_overlapping);
+	RUN_TEST_CASE(unistd_file_pread, pwrite_multithread);
+	RUN_TEST_CASE(unistd_file_pread, pwrite_multithread_overlapping);
+}
+
+
+#ifdef __phoenix__
+TEST_GROUP(unistd_file_safe_pread);
+
+
+TEST_SETUP(unistd_file_safe_pread)
+{
+	fd = __safe_open(LOREM_PATH, O_RDWR | O_CREAT | O_TRUNC, 0777);
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fd);
+	assert_write(fd, LOREM);
+}
+
+
+TEST_TEAR_DOWN(unistd_file_safe_pread)
+{
+	TEST_ASSERT_EQUAL_INT(0, __safe_close(fd));
+	unlink(LOREM_PATH);
+}
+
+
+/* Test simple reading from file at given offset */
+TEST(unistd_file_safe_pread, safe_pread)
+{
+	char buf[LOREM_LEN];
+	TEST_ASSERT_EQUAL_INT(14, __safe_pread(fd, buf, 14, 12));
+	buf[14] = '\0';
+	TEST_ASSERT_EQUAL_STRING("dolor sit amet", buf);
+}
+
+
+/* Test simple writing to file at given offset */
+TEST(unistd_file_safe_pread, safe_pwrite)
+{
+	TEST_ASSERT_EQUAL_INT(9, __safe_pwrite(fd, "OVERWRITE", 9, 12));
+	assert_read_pos(fd, buf, 26, 0);
+	buf[26] = '\0';
+	TEST_ASSERT_EQUAL_STRING("Lorem ipsum OVERWRITE amet", buf);
+	TEST_ASSERT_EQUAL_INT(15, __safe_pwrite(fd, "ipsum dolor sit", 15, 6));
+	assert_read_pos(fd, buf, LOREM_LEN, 0);
+	buf[LOREM_LEN] = '\0';
+	TEST_ASSERT_EQUAL_STRING(LOREM, buf);
+}
+
+
+/* Test EINVAL errno code when passing negative offset */
+TEST(unistd_file_safe_pread, safe_pread_negative_offset)
+{
+	TEST_ASSERT_EQUAL_INT(-1, __safe_pread(fd, buf, 2, -1));
+	TEST_ASSERT_EQUAL_INT(EINVAL, errno);
+}
+
+
+/* Test EINVAL errno code when passing negative offset */
+TEST(unistd_file_safe_pread, safe_pwrite_negative_offset)
+{
+	TEST_ASSERT_EQUAL_INT(-1, __safe_pwrite(fd, buf, 2, -1));
+	TEST_ASSERT_EQUAL_INT(EINVAL, errno);
+}
+
+
+TEST_GROUP_RUNNER(unistd_file_safe_pread)
+{
+	RUN_TEST_CASE(unistd_file_safe_pread, safe_pread);
+	RUN_TEST_CASE(unistd_file_safe_pread, safe_pwrite);
+	RUN_TEST_CASE(unistd_file_safe_pread, safe_pread_negative_offset);
+	RUN_TEST_CASE(unistd_file_safe_pread, safe_pwrite_negative_offset);
+}
+#endif

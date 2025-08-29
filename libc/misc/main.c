@@ -26,16 +26,18 @@ void runner(void)
 	RUN_TEST_GROUP(unistd_getopt);
 	RUN_TEST_GROUP(unistd_uids);
 	RUN_TEST_GROUP(unistd_fsdir);
-#ifdef __phoenix__
-	/* tests libphoenix internal functions */
-	RUN_TEST_GROUP(unistd_file_safe);
-#endif
 	RUN_TEST_GROUP(unistd_file);
+	RUN_TEST_GROUP(unistd_file_pread);
 	RUN_TEST_GROUP(wchar_wcscmp);
 	RUN_TEST_GROUP(ctype);
 	RUN_TEST_GROUP(stat_mode);
 	RUN_TEST_GROUP(stat_nlink_size_blk_tim);
 	RUN_TEST_GROUP(stat_errno);
+#ifdef __phoenix__
+	/* tests libphoenix internal functions */
+	RUN_TEST_GROUP(unistd_file_safe);
+	RUN_TEST_GROUP(unistd_file_safe_pread);
+#endif
 }
 
 
