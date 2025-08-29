@@ -1,7 +1,21 @@
 test:
-  type: unity
-  tests:
-    - name: unit
-      execute: test-ioctl
-      targets:
-        exclude: [host-generic-pc]
+    # type: unity
+    tests:
+        - name: test-ioctl
+          type: unity
+          execute: test-ioctl
+          targets:
+            exclude: [host-generic-pc]
+
+        # nested ioctls are all socket-related (at least for now), so enable only on targets with lwIP
+
+        - name: test-ioctl-nested
+          type: unity
+          execute: test-ioctl-nested
+          targets:
+            value: [ia32-generic-qemu, armv7a7-imx6ull-evk, armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, sparcv8leon-gr740-mini, riscv64-gr765-vcu118, riscv64-grfpga-artya7]
+
+        - name: test-route
+          harness: test-route.py
+          targets:
+            value: [ia32-generic-qemu, armv7a7-imx6ull-evk, armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, sparcv8leon-gr740-mini, riscv64-gr765-vcu118, riscv64-grfpga-artya7]
