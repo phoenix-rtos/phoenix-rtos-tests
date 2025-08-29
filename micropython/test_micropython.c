@@ -110,8 +110,8 @@ int upyth_optionsGet(const char *path, char **options)
 
 int main(int argc, char **argv)
 {
-	char *cmd, *options, *tmp;
-	int upythProgRes;
+	char *cmd, *options, *testfile, *tmp;
+	int res;
 
 	PROG_NAME = argv[0];
 
@@ -120,12 +120,36 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	if (chdir(PATH_TO_TESTS) != 0) {
+	testfile = strrchr(argv[1], '/');
+	if ((strncmp(argv[1], DIR_WITH_OPT_TESTS, strlen(DIR_WITH_OPT_TESTS)) == 0) || (testfile == NULL)) {
+		/* cmdline tests are run from different location */
+		testfile = argv[1];
+		tmp = strdup(PATH_TO_TESTS);
+		if (tmp == NULL) {
+			upyth_errMsg("strdup error");
+			return 1;
+		}
+	}
+	else {
+		*testfile = '\0';
+		tmp = malloc(strlen(PATH_TO_TESTS) + strlen(argv[1]) + 1);
+		if (tmp == NULL) {
+			upyth_errMsg("malloc error");
+			return 1;
+		}
+		sprintf(tmp, "%s%s", PATH_TO_TESTS, argv[1]);
+		testfile[0] = '/';
+		testfile++;
+	}
+
+	res = chdir(tmp);
+	free(tmp);
+	if (res != 0) {
 		upyth_errMsg("There is no such a micropython test to run, build project with \"LONG_TEST=y\"");
 		return 1;
 	}
 
-	if (access(argv[1], F_OK) != 0) {
+	if (access(testfile, F_OK) != 0) {
 		upyth_errMsg("There is no such a micropython test to run, build project with \"LONG_TEST=y\"");
 		return 1;
 	}
@@ -141,7 +165,7 @@ int main(int argc, char **argv)
 	/* Some tests needs additional options to run. */
 	/* In these tests first line in file contains "# cmdline: " and after needed options. */
 	/* All of them are stored in DIR_WITH_OPT_TESTS */
-	if (upyth_optionsGet(argv[1], &options) != 0) {
+	if (upyth_optionsGet(testfile, &options) != 0) {
 		free(cmd);
 		return EXIT_FAILURE;
 	}
@@ -157,7 +181,7 @@ int main(int argc, char **argv)
 		cmd = tmp;
 	}
 
-	tmp = upyth_concat(cmd, argv[1]);
+	tmp = upyth_concat(cmd, testfile);
 	if (tmp == NULL) {
 		free(cmd);
 		upyth_errMsg("Realloc error");
@@ -165,13 +189,13 @@ int main(int argc, char **argv)
 	}
 	cmd = tmp;
 
-	upythProgRes = system(cmd);
+	res = system(cmd);
 	free(cmd);
-	if (upythProgRes == 1) {
+	if (res == 1) {
 		upyth_errMsg("There was an error during execution micropython test. It is possible that there is no BusyBox on system.");
 		return EXIT_FAILURE;
 	}
-	else if (upythProgRes != 0) {
+	else if (res != 0) {
 		upyth_errMsg("There was an error caused by function system() (not micropython test)");
 		return EXIT_FAILURE;
 	}

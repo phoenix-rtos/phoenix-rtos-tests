@@ -18,6 +18,8 @@ TESTS_WITH_REGEX_OUTPUT = {
     "cmdline/cmd_parsetree.py",
     "cmdline/cmd_showbc.py",
     "cmdline/cmd_verbose.py",
+    "cmdline/cmd_showbc_const.py",
+    "cmdline/cmd_showbc_opt.py",
 }
 
 
