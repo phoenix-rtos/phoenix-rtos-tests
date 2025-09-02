@@ -95,6 +95,14 @@ def assert_execvp_path_searched(p):
     psh.assert_cmd(p, cmd, expected=expected, result='success', msg=msg)
 
 
+def assert_execvp_multithreaded(p):
+    cmd = '/bin/test-exec 9'
+    expected = ''
+    msg = "Wrong output of execvp function in multithreaded environment"
+
+    psh.assert_cmd(p, cmd, expected=expected, result='success', msg=msg)
+
+
 def harness(p):
     psh.init(p)
 
@@ -106,5 +114,6 @@ def harness(p):
     assert_execvpe_path_searched(p)
     assert_execvp_env_unchanged(p)
     assert_execvp_path_searched(p)
+    assert_execvp_multithreaded(p)
 
     p.sendline("exit")
