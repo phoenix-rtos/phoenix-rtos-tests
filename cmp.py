@@ -417,23 +417,23 @@ def make_case_row(case, args):
 
 @dataclass
 class Row:
-    style: str
-    separator: str
-    name: str
-    time_old: str
-    time_new: str
-    color: str
-    difference: str
-    percentage: str
+    style: str = ""
+    separator: str = ""
+    name: str = ""
+    time_old: str = ""
+    time_new: str = ""
+    color: str = ""
+    difference: str = ""
+    percentage: str = ""
 
 
 @dataclass
 class StatusRow:
-    style: str
-    separator: str
-    name: str
-    status_old: str
-    status_new: str
+    style: str = ""
+    separator: str = ""
+    name: str = ""
+    status_old: str = ""
+    status_new: str = ""
 
 
 def print_rows(rows):
@@ -618,8 +618,8 @@ def generate_status_rows(statuses, args, level=0):
         if node["status_old"] != node["status_new"] or children_rows:
             if level == 0 and (args.verbose > 0 or not rows):
                 if rows:
-                    rows.append(StatusRow("", "", "", "", ""))
-                rows.append(StatusRow("", "", "H", "", ""))
+                    rows.append(StatusRow())
+                rows.append(StatusRow("", "", "H"))
             rows.append(current_row)
             if args.verbose > level:
                 rows.extend(children_rows)
@@ -642,8 +642,8 @@ def generate_time_rows(times, args, level=0):
         if not go_deeper or children_rows:
             if level == 0 and (args.verbose > 0 or not rows):
                 if rows:
-                    rows.append(StatusRow("", "", "", "", ""))
-                rows.append(StatusRow("", "", "H", "", ""))
+                    rows.append(Row())
+                rows.append(Row("", "", "H"))
             rows.append(current_row)
             if go_deeper:
                 rows.extend(children_rows)
