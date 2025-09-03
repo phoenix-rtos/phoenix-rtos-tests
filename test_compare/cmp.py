@@ -151,7 +151,7 @@ def parse_args():
 
     args = parser.parse_args()
 
-    args.threshold_filter = "--threshold" in sys.argv
+    args.threshold_filter = "--threshold" in sys.argv or any(arg.startswith("--threshold=") for arg in sys.argv)
 
     args.verbose = min(args.verbose, 3)
 
