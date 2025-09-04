@@ -21,8 +21,11 @@
 #include <string.h>
 #include <libgen.h>
 #include <errno.h>
+#include <sys/threads.h>
+#include <signal.h>
 
 extern char **environ;
+static unsigned char stack[_PAGE_SIZE] __attribute__((aligned(8)));
 
 
 static void test_exec_execveEnv(bool changeEnv)
@@ -133,6 +136,37 @@ static void test_exec_execvpPath(void)
 }
 
 
+static void anotherThread(void *arg)
+{
+	for (;;) {
+		sleep(1);
+	}
+}
+
+
+static void test_exec_execvpPath_multithreaded(void)
+{
+	int tid;
+	char tidstr[10];
+	char *arg[] = { "to_exec_multithr", tidstr, NULL };
+
+	setenv("PATH", "/bin:/sbin:/usr/bin:/usr/sbin", 1);
+	if (beginthreadex(anotherThread, 4, stack, sizeof(stack), NULL, &tid) != 0) {
+		fprintf(stderr, "beginthreadex failed: %s\n", strerror(errno));
+
+		exit(EXIT_FAILURE);
+	}
+
+	snprintf(tidstr, sizeof(tidstr), "%d", tid);
+
+	if (execvp("test-exec", arg) == -1) {
+		fprintf(stderr, "execvp function failed: %s\n", strerror(errno));
+
+		exit(EXIT_FAILURE);
+	}
+}
+
+
 int main(int argc, char *argv[])
 {
 	bool changeEnv;
@@ -147,6 +181,17 @@ int main(int argc, char *argv[])
 
 		for (i = 0; environ[i] != NULL; i++) {
 			printf("environ[%d] = %s\n", i, environ[i]);
+		}
+	}
+	else if (!strcmp(basename(argv[0]), "to_exec_multithr")) {
+		if (argc != 2) {
+			fprintf(stderr, "Please specify thread ID\n");
+			return 1;
+		}
+
+		if (signalPost(getpid(), atoi(argv[1]), SIGUSR1) != -EINVAL) {
+			fprintf(stderr, "signalPost didn't return EINVAL, thread still running in exec'd process!\n");
+			return 1;
 		}
 	}
 	else {
@@ -193,6 +238,10 @@ int main(int argc, char *argv[])
 
 			case 8:
 				test_exec_execvpPath();
+				break;
+
+			case 9:
+				test_exec_execvpPath_multithreaded();
 				break;
 
 			default:
