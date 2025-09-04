@@ -67,10 +67,14 @@ test:
           harness: test-runfile.py
           targets:
               # runfile applet is not intended for non-rootfs targets
-              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo, sparcv8leon-generic-qemu, armv8m33-mcxn94x-frdm]
+              # aarch64a53-zynqmp-qemu: excluded due to https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1386
+              exclude: [aarch64a53-zynqmp-qemu, armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo, sparcv8leon-generic-qemu, armv8m33-mcxn94x-frdm]
 
         - name: history
           harness: test-history.py
+          targets:
+              # aarch64a53-zynqmp-qemu: excluded due to https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1386
+              exclude: [aarch64a53-zynqmp-qemu]
 
         - name: help
           harness: test-help.py
