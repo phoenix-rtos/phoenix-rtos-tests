@@ -1,0 +1,12 @@
+test:
+    type: unity
+    tests:
+        - name: unit
+          execute: test-enet en1
+          targets:
+            value: [armv7a7-imx6ull-evk, armv7m7-imxrt106x-evk, ia32-generic-qemu]
+
+        - name: unit
+          execute: test-enet en2
+          targets:
+            value: [armv7a7-imx6ull-evk]
