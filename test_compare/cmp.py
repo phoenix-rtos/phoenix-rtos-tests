@@ -203,10 +203,10 @@ def parse_xml(filename):
         xml = JUnitXml.fromfile(filename)
     except FileNotFoundError:
         print(f"{ESCAPE_BOLD}{ESCAPE_RED}Error:{ESCAPE_RESET} {filename} not found.")
-        sys.exit()
+        sys.exit(1)
     except Exception as e:
         print(f"{ESCAPE_BOLD}{ESCAPE_RED}Error:{ESCAPE_RESET} Failed to parse XML file: {e}")
-        sys.exit()
+        sys.exit(1)
 
     testsuites = {}
     for suite in xml:
