@@ -216,6 +216,8 @@ def parse_xml(filename):
             testsuites[target] = {}
 
         location, suite_name = split_path(path)
+        if not location:
+            location = suite_name
 
         testsuite = {
             "target": target,
