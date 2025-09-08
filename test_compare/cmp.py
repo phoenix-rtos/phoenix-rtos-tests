@@ -119,14 +119,14 @@ def parse_args():
         type=float,
         default=10.0,
         metavar="PERCENT",
-        help="Set relative difference threshold (default: %(default)s%%).",
+        help="Set relative difference threshold (default: %(default)s%%). When set explicitly, enables filtering.",
     )
     parser.add_argument(
         "--threshold-absolute",
         type=float,
         default=0.1,
         metavar="VALUE",
-        help="Set absolute difference threshold (default: %(default)s).",
+        help="Set absolute difference threshold (default: %(default)s). When set explicitly, enables filtering.",
     )
 
     parser.add_argument(
@@ -151,7 +151,12 @@ def parse_args():
 
     args = parser.parse_args()
 
-    args.threshold_filter = "--threshold" in sys.argv or any(arg.startswith("--threshold=") for arg in sys.argv)
+    args.threshold_filter = (
+        "--threshold" in sys.argv
+        or any(arg.startswith("--threshold=") for arg in sys.argv)
+        or "--threshold-absolute" in sys.argv
+        or any(arg.startswith("--threshold-absolute=") for arg in sys.argv)
+    )
 
     args.verbose = min(args.verbose, 3)
 
