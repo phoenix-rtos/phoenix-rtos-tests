@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import argparse
 import enum
@@ -61,7 +61,7 @@ class Args:
 def parse_args():
     parser = argparse.ArgumentParser(
         description="Compares two test result xml files",
-        epilog="Example: python cmp.py old_results.xml new_results.xml -v --threshold 5.0 -t ia32-generic-qemu",
+        epilog="Example: python3 cmp.py old_results.xml new_results.xml -v --threshold 5.0 -t ia32-generic-qemu",
     )
 
     parser.add_argument("file_old", metavar="FILE_OLD", help="Path to the old test results file.")
