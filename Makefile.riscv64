@@ -1,0 +1,3 @@
+ifeq ($(TARGET), riscv64-gr765-vcu118)
+DEFAULT_COMPONENTS += test-grspw2
+endif

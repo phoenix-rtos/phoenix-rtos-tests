@@ -1,0 +1,7 @@
+test:
+  targets:
+    value: [riscv64-gr765-vcu118]
+  type: unity
+  tests:
+    - name: unit
+      execute: test-grspw2

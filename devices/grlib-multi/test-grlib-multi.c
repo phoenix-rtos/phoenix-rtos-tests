@@ -31,6 +31,7 @@
 #endif
 
 #include <grlib-multi.h>
+#include <spacewire.h>
 
 #include <unity_fixture.h>
 
