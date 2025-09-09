@@ -262,6 +262,16 @@ class ChangeDirection(enum.Enum):
     MISSING = 2
 
 
+class Level(enum.IntEnum):
+    TARGET = 0
+    LOCATION = 1
+    SUITE = 2
+    CASE = 3
+
+    def __add__(self, other):
+        return Level(self.value + other)
+
+
 def change_dir(difference, percentage, args):
     if difference is None:
         return ChangeDirection.MISSING
@@ -323,7 +333,7 @@ def filter(path, args):
 
 
 def filter_display(data, level, args: Args):
-    if level == 3:
+    if level == Level.CASE:
         return filter_case_display(data, args)
     if args.threshold_filter:
         difference, percentage = difference_and_percentage(data["time_old"], data["time_new"])
@@ -502,7 +512,7 @@ def compare_level(data_old, data_new, args, depth=0, path=None):
         "only_old": only_old,
         "only_new": only_new,
     }
-    if depth == 3:
+    if depth == Level.CASE:
         cases = compare_cases(data_old["cases"], data_new["cases"])
         cases = [case for case in cases if filter(path + [case["name"]], args)]
         output["children"] = cases
@@ -544,8 +554,8 @@ def compare_level(data_old, data_new, args, depth=0, path=None):
     return output
 
 
-def find_missing(results, level=0):
-    if level == 3:
+def find_missing(results, level=Level.TARGET):
+    if level == Level.CASE:
         return [
             {"name": case["name"], "status_old": case["status_old"], "status_new": case["status_new"]}
             for case in results["children"]
@@ -565,8 +575,8 @@ def find_missing(results, level=0):
     return only_old + only_new + with_children
 
 
-def find_fails(results, args, unfiltered=False, level=0, path=None):
-    if level == 3:
+def find_fails(results, args, unfiltered=False, level=Level.TARGET, path=None):
+    if level == Level.CASE:
         return [
             case["name"]
             for case in results["cases"].values()
@@ -582,16 +592,16 @@ def find_fails(results, args, unfiltered=False, level=0, path=None):
     }
 
 
-def count_fails(fails, level=0):
-    if level == 3:
+def count_fails(fails, level=Level.TARGET):
+    if level == Level.CASE:
         return len(fails)
     return sum(count_fails(child, level + 1) for child in fails.values())
 
 
-def print_fails(fails, args, level=0, parent=None):
+def print_fails(fails, args, level=Level.TARGET, parent=None):
     styles = [ESCAPE_BOLD + ESCAPE_ITALIC, ESCAPE_BOLD, ESCAPE_BOLD, ""]
     prefixes = ["Target: ", "-", " -", "  -"]
-    if level == 3:
+    if level == Level.CASE:
         if len(fails) > 1 or fails[0] != "" and fails[0] != parent:
             for name in fails:
                 print(f"{styles[level]}{prefixes[level]}{name}{ESCAPE_RESET}")
@@ -604,7 +614,7 @@ def print_fails(fails, args, level=0, parent=None):
                 print()
 
 
-def generate_status_rows(statuses, args, level=0):
+def generate_status_rows(statuses, args, level=Level.TARGET):
     styles = [ESCAPE_BOLD + ESCAPE_ITALIC, ESCAPE_BOLD, ESCAPE_BOLD, ""]
     separators = ["║", "║", "┃", "┆"]
     prefixes = ["Target: ", "-", " -", "  -"]
@@ -633,7 +643,7 @@ def generate_status_rows(statuses, args, level=0):
     return rows
 
 
-def generate_time_rows(times, args, level=0):
+def generate_time_rows(times, args, level=Level.TARGET):
     styles = [ESCAPE_BOLD + ESCAPE_ITALIC, ESCAPE_BOLD, ESCAPE_BOLD, ""]
     separators = ["║", "║", "┃", "┆"]
     prefixes = ["Target: ", "-", " -", "  -"]
