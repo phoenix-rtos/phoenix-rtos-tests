@@ -395,7 +395,7 @@ def difference_and_percentage(old, new):
 def make_row(data, style, separator, prefix, args):
     difference, percentage = difference_and_percentage(data["time_old"], data["time_new"])
     color = CHANGE_COLORS[change_dir(difference, percentage, args)]
-    return Row(
+    return TimeRow(
         style,
         separator,
         f"{prefix}{data['name']}",
@@ -420,7 +420,7 @@ def make_case_status_row(case):
 def make_case_row(case, args):
     difference, percentage = difference_and_percentage(case["time_old"], case["time_new"])
     color = CHANGE_COLORS[change_dir(difference, percentage, args)]
-    return Row(
+    return TimeRow(
         "",
         "┆",
         f"  -{case['name']}",
@@ -433,7 +433,7 @@ def make_case_row(case, args):
 
 
 @dataclass
-class Row:
+class TimeRow:
     style: str = ""
     separator: str = ""
     name: str = ""
@@ -442,6 +442,18 @@ class Row:
     color: str = ""
     difference: str = ""
     percentage: str = ""
+
+    def name_width(self):
+        return len(self.name)
+
+    def print(self, max_name_len):
+        print(
+            f"{self.style}{self.name:<{max_name_len}}{ESCAPE_RESET}{self.separator}"
+            f"{self.style}{self.time_old:>8}s{ESCAPE_RESET}{self.separator}"
+            f"{self.style}{self.time_new:>8}s{ESCAPE_RESET}{self.separator}"
+            f"{self.style}{self.color}{self.difference:>9}s{ESCAPE_RESET}{self.separator}"
+            f"{self.style}{self.color}{self.percentage:>8}%{ESCAPE_RESET}"
+        )
 
 
 @dataclass
@@ -452,53 +464,59 @@ class StatusRow:
     status_old: str = ""
     status_new: str = ""
 
+    def name_width(self):
+        return len(self.name)
+
+    def print(self, max_name_len):
+        print(
+            f"{self.style}{self.name:<{max_name_len}}{ESCAPE_RESET}{self.separator}"
+            f"{self.style}{self.status_old:^9}{ESCAPE_RESET}{self.separator}"
+            f"{self.style}{self.status_new:^9}{ESCAPE_RESET}{self.separator}"
+        )
+
+
+class StatusRowHeader:
+    @staticmethod
+    def name_width():
+        return len("NAME")
+
+    @staticmethod
+    def print(max_name_len):
+        print(f"{ESCAPE_BOLD}{'':>{max_name_len}}║{'OLD':^9}║{'NEW':^9}║{ESCAPE_RESET}")
+        print(f"{ESCAPE_BOLD}{ESCAPE_UNDERLINE}{'NAME':^{max_name_len}}║{'STATUS':^9}║{'STATUS':^9}║{ESCAPE_RESET}")
+
+
+class TimeRowHeader:
+    @staticmethod
+    def name_width():
+        return len("NAME")
+
+    @staticmethod
+    def print(max_name_len):
+        print(f"{ESCAPE_BOLD}{'':>{max_name_len}}║{'OLD':^9}║{'NEW':^9}║{'DIFFERENCE':^20}{ESCAPE_RESET}")
+        print(
+            f"{ESCAPE_BOLD}{ESCAPE_UNDERLINE}{'NAME':^{max_name_len}}║"
+            f"{'TIME':^9}║{'TIME':^9}║{'TIME':^10}║{'PERCENTAGE':^9}{ESCAPE_RESET}"
+        )
+
+
+class EmptyRow:
+    @staticmethod
+    def name_width():
+        return 0
+
+    @staticmethod
+    def print(_):
+        print()
+
 
 def print_rows(rows):
     if not rows:
         return
-    max_name_len = max(len(row.name) for row in rows)
+    max_name_len = max(row.name_width() for row in rows)
     max_name_len = max(max_name_len, 4)
     for row in rows:
-        if row.name == "":
-            print()
-            continue
-        if row.name == "H":
-            print(f"{ESCAPE_BOLD}{'':>{max_name_len}}║{'OLD':^9}║{'NEW':^9}║{'DIFFERENCE':^20}{ESCAPE_RESET}")
-            print(
-                f"{ESCAPE_BOLD}{ESCAPE_UNDERLINE}{'NAME':^{max_name_len}}║"
-                f"{'TIME':^9}║{'TIME':^9}║{'TIME':^10}║{'PERCENTAGE':^9}{ESCAPE_RESET}"
-            )
-            continue
-        print(
-            f"{row.style}{row.name:<{max_name_len}}{ESCAPE_RESET}{row.separator}"
-            f"{row.style}{row.time_old:>8}s{ESCAPE_RESET}{row.separator}"
-            f"{row.style}{row.time_new:>8}s{ESCAPE_RESET}{row.separator}"
-            f"{row.style}{row.color}{row.difference:>9}s{ESCAPE_RESET}{row.separator}"
-            f"{row.style}{row.color}{row.percentage:>8}%{ESCAPE_RESET}"
-        )
-
-
-def print_status_rows(rows):
-    if not rows:
-        return
-    max_name_len = max(len(row.name) for row in rows)
-    max_name_len = max(max_name_len, 4)
-    for row in rows:
-        if row.name == "":
-            print()
-            continue
-        if row.name == "H":
-            print(f"{ESCAPE_BOLD}{'':>{max_name_len}}║{'OLD':^9}║{'NEW':^9}║{ESCAPE_RESET}")
-            print(
-                f"{ESCAPE_BOLD}{ESCAPE_UNDERLINE}{'NAME':^{max_name_len}}║"
-                f"{'STATUS':^9}║{'STATUS':^9}║{ESCAPE_RESET}"
-            )
-            continue
-        print(
-            f"{row.style}{row.name:<{max_name_len}}{ESCAPE_RESET}{row.separator}"
-            f"{row.style}{row.status_old:^9}{ESCAPE_RESET}{row.separator}"
-            f"{row.style}{row.status_new:^9}{ESCAPE_RESET}{row.separator}"
-        )
+        row.print(max_name_len)
 
 
 def compare_level(data_old, data_new, args, depth=0, path=None):
@@ -635,8 +653,8 @@ def generate_status_rows(statuses, args, level=Level.TARGET):
         if node["status_old"] != node["status_new"] or children_rows:
             if level == 0 and (args.verbose > 0 or not rows):
                 if rows:
-                    rows.append(StatusRow())
-                rows.append(StatusRow("", "", "H"))
+                    rows.append(EmptyRow())
+                rows.append(StatusRowHeader())
             rows.append(current_row)
             if args.verbose > level:
                 rows.extend(children_rows)
@@ -659,8 +677,8 @@ def generate_time_rows(times, args, level=Level.TARGET):
         if not go_deeper or children_rows:
             if level == 0 and (args.verbose > 0 or not rows):
                 if rows:
-                    rows.append(Row())
-                rows.append(Row("", "", "H"))
+                    rows.append(EmptyRow())
+                rows.append(TimeRowHeader())
             rows.append(current_row)
             if go_deeper:
                 rows.extend(children_rows)
@@ -686,7 +704,7 @@ def main():
     output = compare_level(args.file_old, args.file_new, args)
     if args.status_diff:
         status_diff = find_missing(output)
-        print_status_rows(generate_status_rows(status_diff, args))
+        print_rows(generate_status_rows(status_diff, args))
     elif not args.show_fails:
         rows = generate_time_rows(output["children"], args)
         print_rows(rows)

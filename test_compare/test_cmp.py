@@ -846,7 +846,7 @@ def test_calculation_with_zero_time_start(mock_xml_edge_cases):
     compared_data = cmp.compare_level(args.file_old, args.file_new, args)
     rows = cmp.generate_time_rows(compared_data["children"], args)
 
-    zero_time_row = next((r for r in rows if "zero_time_start" in r.name), None)
+    zero_time_row = next((r for r in rows if hasattr(r, "name") and "zero_time_start" in r.name), None)
     assert zero_time_row is not None, "Row for zero_time_start test case not found."
     assert zero_time_row.percentage == "-.--", "Percentage for 0 -> 0.1 should be a placeholder, not inf."
 
@@ -859,7 +859,7 @@ def test_calculation_on_threshold_boundary(mock_xml_edge_cases):
     compared_data = cmp.compare_level(args.file_old, args.file_new, args)
     rows = cmp.generate_time_rows(compared_data["children"], args)
 
-    boundary_row = next((r for r in rows if "boundary_threshold" in r.name), None)
+    boundary_row = next((r for r in rows if hasattr(r, "name") and "boundary_threshold" in r.name), None)
     assert boundary_row is not None, "Row for boundary_threshold test case not found."
     assert boundary_row.color == "", "Change on threshold boundary should not be colored red."
 
@@ -872,7 +872,7 @@ def test_calculation_with_opposing_thresholds(mock_xml_edge_cases):
     compared_data = cmp.compare_level(args.file_old, args.file_new, args)
     rows = cmp.generate_time_rows(compared_data["children"], args)
 
-    opposing_row = next((r for r in rows if "opposing_threshold" in r.name), None)
+    opposing_row = next((r for r in rows if hasattr(r, "name") and "opposing_threshold" in r.name), None)
     assert opposing_row is not None, "Row for opposing_threshold test case not found."
     assert opposing_row.color == "", "Change below absolute threshold should be uncolored."
 
