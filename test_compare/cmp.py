@@ -290,46 +290,30 @@ CHANGE_COLORS = {
 }
 
 
+def filter_benchmark(path, args):
+    if not args.benchmarks:
+        return True
+    for benchmark in args.benchmarks.values():
+        if len(path) > Level.LOCATION and path[Level.LOCATION] != benchmark["location"]:
+            continue
+        if len(path) > Level.SUITE and path[Level.SUITE] not in benchmark["suites"]:
+            continue
+        if len(path) > Level.CASE and path[Level.CASE] not in benchmark["suites"][path[Level.SUITE]]["cases"]:
+            continue
+        return True
+    return False
+
+
 def filter(path, args):
-    if len(path) == 0:
-        return True
-    if args.targets and path[0] not in args.targets:
+    if len(path) > Level.TARGET and args.targets and path[Level.TARGET] not in args.targets:
         return False
-    if len(path) == 1:
-        return True
-    if args.benchmarks:
-        for benchmark in args.benchmarks.values():
-            if path[1] == benchmark["location"]:
-                break
-        else:
-            return False
-    if args.locations and path[1] not in args.locations:
+    if len(path) > Level.LOCATION and args.locations and path[Level.LOCATION] not in args.locations:
         return False
-    if len(path) == 2:
-        return True
-    if args.benchmarks:
-        for benchmark in args.benchmarks.values():
-            if path[1] == benchmark["location"] and path[2] in benchmark["suites"]:
-                break
-        else:
-            return False
-    if args.suites and path[2] not in args.suites:
+    if len(path) > Level.SUITE and args.suites and path[Level.SUITE] not in args.suites:
         return False
-    if len(path) == 3:
-        return True
-    if args.benchmarks:
-        for benchmark in args.benchmarks.values():
-            if (
-                path[1] == benchmark["location"]
-                and path[2] in benchmark["suites"]
-                and path[3] in benchmark["suites"][path[2]]["cases"]
-            ):
-                break
-        else:
-            return False
-    if args.cases and path[3] not in args.cases:
+    if len(path) > Level.CASE and args.cases and path[Level.CASE] not in args.cases:
         return False
-    return True
+    return filter_benchmark(path, args)
 
 
 def filter_display(data, level, args: Args):
