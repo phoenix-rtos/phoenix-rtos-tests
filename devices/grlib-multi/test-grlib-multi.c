@@ -31,7 +31,7 @@
 #endif
 
 #include <grlib-multi.h>
-#include <spacewire.h>
+#include <libgrspw.h>
 
 #include <unity_fixture.h>
 
@@ -578,7 +578,7 @@ static void test_spwRxRead(const oid_t rxOid, const unsigned int firstDesc, uint
 	TEST_ASSERT_EQUAL_INT(nPackets, msg.o.err);
 
 	for (size_t i = 0; i < nPackets; i++) {
-		rxBuf += multi_spwDeserializeRxMsg(rxBuf, &packets[i]);
+		rxBuf += spw_deserializeRxMsg(rxBuf, &packets[i]);
 	}
 }
 
@@ -597,7 +597,7 @@ static void test_spwRxTx(const size_t nPackets, bool async)
 
 	size_t size = 0;
 	for (size_t i = 0; i < nPackets; i++) {
-		size_t ret = multi_spwSerializeTxMsg(SPW_TX_FLG_HDR_LEN(hdrSz), dataSz, hdr, data, txBuf + size, txBufsz - size);
+		size_t ret = spw_serializeTxMsg(SPW_TX_FLG_HDR_LEN(hdrSz), dataSz, hdr, data, txBuf + size, txBufsz - size);
 		TEST_ASSERT_NOT_EQUAL(0, ret);
 		size += ret;
 	}
