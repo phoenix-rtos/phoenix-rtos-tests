@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
 import argparse
-import enum
 import sys
 from dataclasses import dataclass
+from enum import Enum, IntEnum
 
 import yaml
 from junitparser import Error, Failure, JUnitXml, Skipped
@@ -236,12 +236,12 @@ def parse_xml(filename):
             classname = case.classname if case.classname else ""
             basename = name[len(classname) + 1:] if name.startswith(classname) else name
 
-            status = OK
+            status = Status.OK
             if case.result:
                 if isinstance(case.result[0], Skipped):
-                    status = SKIP
+                    status = Status.SKIP
                 elif isinstance(case.result[0], (Failure, Error)):
-                    status = FAIL
+                    status = Status.FAIL
 
             testcase = {
                 "name": basename,
@@ -255,14 +255,14 @@ def parse_xml(filename):
     return testsuites
 
 
-class ChangeDirection(enum.Enum):
+class ChangeDirection(Enum):
     INCREASE = 1
     DECREASE = -1
     UNCHANGED = 0
     MISSING = 2
 
 
-class Level(enum.IntEnum):
+class Level(IntEnum):
     TARGET = 0
     LOCATION = 1
     SUITE = 2
@@ -270,6 +270,22 @@ class Level(enum.IntEnum):
 
     def __add__(self, other):
         return Level(self.value + other)
+
+
+class Status(Enum):
+    OK = (ESCAPE_GREEN, "OK")
+    FAIL = (ESCAPE_RED, "FAIL")
+    SKIP = (ESCAPE_GRAY, "SKIP")
+    PRESENT = (ESCAPE_GREEN, "PRESENT")
+    MISSING = (ESCAPE_GRAY, "MISSING")
+    NONE = ("", "--")
+
+    def __init__(self, color, label):
+        self._color = color
+        self._label = label
+
+    def format(self):
+        return f"{self._color}{self._label:^9}{ESCAPE_RESET}"
 
 
 def change_dir(difference, percentage, args):
@@ -326,7 +342,7 @@ def filter_display(data, level, args: Args):
 
 
 def filter_case_display(case, args):
-    if case["status_old"] != OK or case["status_new"] != OK:
+    if case["status_old"] != Status.OK or case["status_new"] != Status.OK:
         return False
     if args.threshold_filter:
         difference, percentage = difference_and_percentage(case["time_old"], case["time_new"])
@@ -352,7 +368,7 @@ def compare_cases(cases_old, cases_new):
             )
         else:
             case_cmp["time_new"] = None
-            case_cmp["status_new"] = "--"
+            case_cmp["status_new"] = Status.NONE
             case_cmp["difference"] = None
             case_cmp["percentage"] = None
         cases.append(case_cmp)
@@ -361,7 +377,7 @@ def compare_cases(cases_old, cases_new):
             case_cmp = {}
             case_cmp["name"] = name
             case_cmp["time_old"] = None
-            case_cmp["status_old"] = "--"
+            case_cmp["status_old"] = Status.NONE
             case_cmp["time_new"] = case["time"]
             case_cmp["status_new"] = case["status"]
             case_cmp["difference"] = None
@@ -454,8 +470,8 @@ class StatusRow:
     def print(self, max_name_len):
         print(
             f"{self.style}{self.name:<{max_name_len}}{ESCAPE_RESET}{self.separator}"
-            f"{self.style}{self.status_old:^9}{ESCAPE_RESET}{self.separator}"
-            f"{self.style}{self.status_new:^9}{ESCAPE_RESET}{self.separator}"
+            f"{self.style}{self.status_old.format()}{self.separator}"
+            f"{self.style}{self.status_new.format()}{self.separator}"
         )
 
 
@@ -519,10 +535,10 @@ def compare_level(data_old, data_new, args, depth=0, path=None):
         cases = [case for case in cases if filter(path + [case["name"]], args)]
         output["children"] = cases
         output["time_old"] = sum(
-            case["time_old"] for case in cases if case["status_old"] == OK and case["status_new"] == OK
+            case["time_old"] for case in cases if case["status_old"] == Status.OK and case["status_new"] == Status.OK
         )
         output["time_new"] = sum(
-            case["time_new"] for case in cases if case["status_old"] == OK and case["status_new"] == OK
+            case["time_new"] for case in cases if case["status_old"] == Status.OK and case["status_new"] == Status.OK
         )
         output["single_case"] = (
             len(cases) == 1
@@ -531,8 +547,8 @@ def compare_level(data_old, data_new, args, depth=0, path=None):
                 "",
                 path[-1],
             ]
-            and cases[0]["status_old"] == OK
-            and cases[0]["status_new"] == OK
+            and cases[0]["status_old"] == Status.OK
+            and cases[0]["status_new"] == Status.OK
         )
 
         return output
@@ -564,13 +580,15 @@ def find_missing(results, level=Level.TARGET):
             if case["status_old"] != case["status_new"]
         ]
     only_old = [
-        {"name": result, "status_old": PRESENT, "status_new": MISSING, "children": []} for result in results["only_old"]
+        {"name": result, "status_old": Status.PRESENT, "status_new": Status.MISSING, "children": []}
+        for result in results["only_old"]
     ]
     only_new = [
-        {"name": result, "status_old": MISSING, "status_new": PRESENT, "children": []} for result in results["only_new"]
+        {"name": result, "status_old": Status.MISSING, "status_new": Status.PRESENT, "children": []}
+        for result in results["only_new"]
     ]
     with_children = [
-        {"name": result["name"], "status_old": PRESENT, "status_new": PRESENT, "children": children}
+        {"name": result["name"], "status_old": Status.PRESENT, "status_new": Status.PRESENT, "children": children}
         for result, children in ((result, find_missing(result, level + 1)) for result in results["children"])
         if children
     ]
@@ -582,7 +600,7 @@ def find_fails(results, args, unfiltered=False, level=Level.TARGET, path=None):
         return [
             case["name"]
             for case in results["cases"].values()
-            if case["status"] == FAIL and (unfiltered or filter((path or []) + [case["name"]], args))
+            if case["status"] == Status.FAIL and (unfiltered or filter((path or []) + [case["name"]], args))
         ]
     return {
         child_name: children

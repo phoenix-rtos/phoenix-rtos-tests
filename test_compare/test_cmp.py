@@ -474,32 +474,32 @@ def test_find_missing_and_status_changes(compared_data):
     ok_to_fail_node = find_node_by_path(
         results, ["ia32-generic-pc", "phoenix-rtos-tests/micropython/", "core", "test_ok_to_fail"]
     )
-    assert ok_to_fail_node["status_old"] == cmp.OK and ok_to_fail_node["status_new"] == cmp.FAIL
+    assert ok_to_fail_node["status_old"] == cmp.Status.OK and ok_to_fail_node["status_new"] == cmp.Status.FAIL
 
     fail_to_ok_node = find_node_by_path(
         results, ["ia32-generic-pc", "phoenix-rtos-tests/micropython/", "core", "test_fail_to_ok"]
     )
-    assert fail_to_ok_node["status_old"] == cmp.FAIL and fail_to_ok_node["status_new"] == cmp.OK
+    assert fail_to_ok_node["status_old"] == cmp.Status.FAIL and fail_to_ok_node["status_new"] == cmp.Status.OK
 
     fail_to_skip_node = find_node_by_path(
         results, ["ia32-generic-pc", "phoenix-rtos-tests/micropython/", "core", "test_fail_to_skip"]
     )
-    assert fail_to_skip_node["status_old"] == cmp.FAIL and fail_to_skip_node["status_new"] == cmp.SKIP
+    assert fail_to_skip_node["status_old"] == cmp.Status.FAIL and fail_to_skip_node["status_new"] == cmp.Status.SKIP
 
     skip_to_fail_node = find_node_by_path(
         results, ["ia32-generic-pc", "phoenix-rtos-tests/micropython/", "core", "test_skip_to_fail"]
     )
-    assert skip_to_fail_node["status_old"] == cmp.SKIP and skip_to_fail_node["status_new"] == cmp.FAIL
+    assert skip_to_fail_node["status_old"] == cmp.Status.SKIP and skip_to_fail_node["status_new"] == cmp.Status.FAIL
 
     ok_to_skip_node = find_node_by_path(
         results, ["ia32-generic-pc", "phoenix-rtos-tests/micropython/", "core", "test_ok_to_skip"]
     )
-    assert ok_to_skip_node["status_old"] == cmp.OK and ok_to_skip_node["status_new"] == cmp.SKIP
+    assert ok_to_skip_node["status_old"] == cmp.Status.OK and ok_to_skip_node["status_new"] == cmp.Status.SKIP
 
     skip_to_ok_node = find_node_by_path(
         results, ["ia32-generic-pc", "phoenix-rtos-tests/micropython/", "core", "test_skip_to_ok"]
     )
-    assert skip_to_ok_node["status_old"] == cmp.SKIP and skip_to_ok_node["status_new"] == cmp.OK
+    assert skip_to_ok_node["status_old"] == cmp.Status.SKIP and skip_to_ok_node["status_new"] == cmp.Status.OK
 
     assert (
         find_node_by_path(results, ["ia32-generic-pc", "phoenix-rtos-tests/micropython/", "core", "test_skip_to_skip"])
@@ -528,13 +528,13 @@ def test_generate_status_rows_output(base_args, compared_data):
 
     row1 = find_row_by_name(rows, "test_status_change")
     assert row1 is not None
-    assert "OK" in row1.status_old
-    assert "SKIP" in row1.status_new
+    assert row1.status_old == cmp.Status.OK
+    assert row1.status_new == cmp.Status.SKIP
 
     row2 = find_row_by_name(rows, "test_C_removed")
     assert row2 is not None
-    assert "OK" in row2.status_old
-    assert "--" in row2.status_new
+    assert row2.status_old == cmp.Status.OK
+    assert row2.status_new == cmp.Status.NONE
 
     args.verbose = 0
     rows_v0 = cmp.generate_status_rows(status_diff, args)
