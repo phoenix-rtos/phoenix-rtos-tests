@@ -24,21 +24,37 @@ PRESENT = f"{ESCAPE_GREEN}{'PRESENT':^9}{ESCAPE_RESET}"
 MISSING = f"{ESCAPE_GRAY}{'MISSING':^9}{ESCAPE_RESET}"
 
 
-def remove_non_common(old, new):
-    only_old = []
-    for element in old.keys():
-        if element not in new:
-            only_old.append(element)
-    for element in only_old:
-        del old[element]
+class ChangeDirection(Enum):
+    INCREASE = 1
+    DECREASE = -1
+    UNCHANGED = 0
+    MISSING = 2
 
-    only_new = []
-    for element in new.keys():
-        if element not in old:
-            only_new.append(element)
-    for element in only_new:
-        del new[element]
-    return only_old, only_new
+
+class Level(IntEnum):
+    TARGET = 0
+    LOCATION = 1
+    SUITE = 2
+    CASE = 3
+
+    def __add__(self, other):
+        return Level(self.value + other)
+
+
+class Status(Enum):
+    OK = (ESCAPE_GREEN, "OK")
+    FAIL = (ESCAPE_RED, "FAIL")
+    SKIP = (ESCAPE_GRAY, "SKIP")
+    PRESENT = (ESCAPE_GREEN, "PRESENT")
+    MISSING = (ESCAPE_GRAY, "MISSING")
+    NONE = ("", "--")
+
+    def __init__(self, color, label):
+        self._color = color
+        self._label = label
+
+    def format(self):
+        return f"{self._color}{self._label:^9}{ESCAPE_RESET}"
 
 
 @dataclass
@@ -56,6 +72,84 @@ class Args:
     threshold_filter: bool
     status_diff: bool
     show_fails: bool
+
+
+@dataclass
+class TimeRow:
+    style: str = ""
+    separator: str = ""
+    name: str = ""
+    time_old: str = ""
+    time_new: str = ""
+    color: str = ""
+    difference: str = ""
+    percentage: str = ""
+
+    def name_width(self):
+        return len(self.name)
+
+    def print(self, max_name_len):
+        print(
+            f"{self.style}{self.name:<{max_name_len}}{ESCAPE_RESET}{self.separator}"
+            f"{self.style}{self.time_old:>8}s{ESCAPE_RESET}{self.separator}"
+            f"{self.style}{self.time_new:>8}s{ESCAPE_RESET}{self.separator}"
+            f"{self.style}{self.color}{self.difference:>9}s{ESCAPE_RESET}{self.separator}"
+            f"{self.style}{self.color}{self.percentage:>8}%{ESCAPE_RESET}"
+        )
+
+
+@dataclass
+class StatusRow:
+    style: str = ""
+    separator: str = ""
+    name: str = ""
+    status_old: str = ""
+    status_new: str = ""
+
+    def name_width(self):
+        return len(self.name)
+
+    def print(self, max_name_len):
+        print(
+            f"{self.style}{self.name:<{max_name_len}}{ESCAPE_RESET}{self.separator}"
+            f"{self.style}{self.status_old.format()}{self.separator}"
+            f"{self.style}{self.status_new.format()}{self.separator}"
+        )
+
+
+class StatusRowHeader:
+    @staticmethod
+    def name_width():
+        return len("NAME")
+
+    @staticmethod
+    def print(max_name_len):
+        print(f"{ESCAPE_BOLD}{'':>{max_name_len}}║{'OLD':^9}║{'NEW':^9}║{ESCAPE_RESET}")
+        print(f"{ESCAPE_BOLD}{ESCAPE_UNDERLINE}{'NAME':^{max_name_len}}║{'STATUS':^9}║{'STATUS':^9}║{ESCAPE_RESET}")
+
+
+class TimeRowHeader:
+    @staticmethod
+    def name_width():
+        return len("NAME")
+
+    @staticmethod
+    def print(max_name_len):
+        print(f"{ESCAPE_BOLD}{'':>{max_name_len}}║{'OLD':^9}║{'NEW':^9}║{'DIFFERENCE':^20}{ESCAPE_RESET}")
+        print(
+            f"{ESCAPE_BOLD}{ESCAPE_UNDERLINE}{'NAME':^{max_name_len}}║"
+            f"{'TIME':^9}║{'TIME':^9}║{'TIME':^10}║{'PERCENTAGE':^9}{ESCAPE_RESET}"
+        )
+
+
+class EmptyRow:
+    @staticmethod
+    def name_width():
+        return 0
+
+    @staticmethod
+    def print(_):
+        print()
 
 
 def parse_args():
@@ -255,37 +349,27 @@ def parse_xml(filename):
     return testsuites
 
 
-class ChangeDirection(Enum):
-    INCREASE = 1
-    DECREASE = -1
-    UNCHANGED = 0
-    MISSING = 2
+def remove_non_common(old, new):
+    only_old = []
+    for element in old.keys():
+        if element not in new:
+            only_old.append(element)
+    for element in only_old:
+        del old[element]
+
+    only_new = []
+    for element in new.keys():
+        if element not in old:
+            only_new.append(element)
+    for element in only_new:
+        del new[element]
+    return only_old, only_new
 
 
-class Level(IntEnum):
-    TARGET = 0
-    LOCATION = 1
-    SUITE = 2
-    CASE = 3
-
-    def __add__(self, other):
-        return Level(self.value + other)
-
-
-class Status(Enum):
-    OK = (ESCAPE_GREEN, "OK")
-    FAIL = (ESCAPE_RED, "FAIL")
-    SKIP = (ESCAPE_GRAY, "SKIP")
-    PRESENT = (ESCAPE_GREEN, "PRESENT")
-    MISSING = (ESCAPE_GRAY, "MISSING")
-    NONE = ("", "--")
-
-    def __init__(self, color, label):
-        self._color = color
-        self._label = label
-
-    def format(self):
-        return f"{self._color}{self._label:^9}{ESCAPE_RESET}"
+def difference_and_percentage(old, new):
+    difference = new - old
+    percentage = 100 * difference / old if old > 0 else 0 if difference == 0 else INF
+    return difference, percentage
 
 
 def change_dir(difference, percentage, args):
@@ -304,50 +388,6 @@ CHANGE_COLORS = {
     ChangeDirection.UNCHANGED: "",
     ChangeDirection.MISSING: "",
 }
-
-
-def filter_benchmark(path, args):
-    if not args.benchmarks:
-        return True
-    for benchmark in args.benchmarks.values():
-        if len(path) > Level.LOCATION and path[Level.LOCATION] != benchmark["location"]:
-            continue
-        if len(path) > Level.SUITE and path[Level.SUITE] not in benchmark["suites"]:
-            continue
-        if len(path) > Level.CASE and path[Level.CASE] not in benchmark["suites"][path[Level.SUITE]]["cases"]:
-            continue
-        return True
-    return False
-
-
-def filter(path, args):
-    if len(path) > Level.TARGET and args.targets and path[Level.TARGET] not in args.targets:
-        return False
-    if len(path) > Level.LOCATION and args.locations and path[Level.LOCATION] not in args.locations:
-        return False
-    if len(path) > Level.SUITE and args.suites and path[Level.SUITE] not in args.suites:
-        return False
-    if len(path) > Level.CASE and args.cases and path[Level.CASE] not in args.cases:
-        return False
-    return filter_benchmark(path, args)
-
-
-def filter_display(data, level, args: Args):
-    if level == Level.CASE:
-        return filter_case_display(data, args)
-    if args.threshold_filter:
-        difference, percentage = difference_and_percentage(data["time_old"], data["time_new"])
-        return change_dir(difference, percentage, args) in (ChangeDirection.INCREASE, ChangeDirection.DECREASE)
-    return True
-
-
-def filter_case_display(case, args):
-    if case["status_old"] != Status.OK or case["status_new"] != Status.OK:
-        return False
-    if args.threshold_filter:
-        difference, percentage = difference_and_percentage(case["time_old"], case["time_new"])
-        return change_dir(difference, percentage, args) in (ChangeDirection.INCREASE, ChangeDirection.DECREASE)
-    return True
 
 
 def compare_cases(cases_old, cases_new):
@@ -384,139 +424,6 @@ def compare_cases(cases_old, cases_new):
             case_cmp["percentage"] = None
             cases.append(case_cmp)
     return cases
-
-
-def difference_and_percentage(old, new):
-    difference = new - old
-    percentage = 100 * difference / old if old > 0 else 0 if difference == 0 else INF
-    return difference, percentage
-
-
-def make_row(data, style, separator, prefix, args):
-    difference, percentage = difference_and_percentage(data["time_old"], data["time_new"])
-    color = CHANGE_COLORS[change_dir(difference, percentage, args)]
-    return TimeRow(
-        style,
-        separator,
-        f"{prefix}{data['name']}",
-        f"{data['time_old']:.3f}",
-        f"{data['time_new']:.3f}",
-        color,
-        f"{difference:+.3f}",
-        f"{percentage:+.2f}" if percentage < 10000 else "-.--",
-    )
-
-
-def make_case_status_row(case):
-    return StatusRow(
-        "",
-        "┆",
-        f"  -{case['name']}",
-        case["status_old"],
-        case["status_new"],
-    )
-
-
-def make_case_row(case, args):
-    difference, percentage = difference_and_percentage(case["time_old"], case["time_new"])
-    color = CHANGE_COLORS[change_dir(difference, percentage, args)]
-    return TimeRow(
-        "",
-        "┆",
-        f"  -{case['name']}",
-        f"{case['time_old']:.3f}",
-        f"{case['time_new']:.3f}",
-        color,
-        f"{difference:+.3f}",
-        f"{percentage:+.2f}" if percentage < 10000 else "-.--",
-    )
-
-
-@dataclass
-class TimeRow:
-    style: str = ""
-    separator: str = ""
-    name: str = ""
-    time_old: str = ""
-    time_new: str = ""
-    color: str = ""
-    difference: str = ""
-    percentage: str = ""
-
-    def name_width(self):
-        return len(self.name)
-
-    def print(self, max_name_len):
-        print(
-            f"{self.style}{self.name:<{max_name_len}}{ESCAPE_RESET}{self.separator}"
-            f"{self.style}{self.time_old:>8}s{ESCAPE_RESET}{self.separator}"
-            f"{self.style}{self.time_new:>8}s{ESCAPE_RESET}{self.separator}"
-            f"{self.style}{self.color}{self.difference:>9}s{ESCAPE_RESET}{self.separator}"
-            f"{self.style}{self.color}{self.percentage:>8}%{ESCAPE_RESET}"
-        )
-
-
-@dataclass
-class StatusRow:
-    style: str = ""
-    separator: str = ""
-    name: str = ""
-    status_old: str = ""
-    status_new: str = ""
-
-    def name_width(self):
-        return len(self.name)
-
-    def print(self, max_name_len):
-        print(
-            f"{self.style}{self.name:<{max_name_len}}{ESCAPE_RESET}{self.separator}"
-            f"{self.style}{self.status_old.format()}{self.separator}"
-            f"{self.style}{self.status_new.format()}{self.separator}"
-        )
-
-
-class StatusRowHeader:
-    @staticmethod
-    def name_width():
-        return len("NAME")
-
-    @staticmethod
-    def print(max_name_len):
-        print(f"{ESCAPE_BOLD}{'':>{max_name_len}}║{'OLD':^9}║{'NEW':^9}║{ESCAPE_RESET}")
-        print(f"{ESCAPE_BOLD}{ESCAPE_UNDERLINE}{'NAME':^{max_name_len}}║{'STATUS':^9}║{'STATUS':^9}║{ESCAPE_RESET}")
-
-
-class TimeRowHeader:
-    @staticmethod
-    def name_width():
-        return len("NAME")
-
-    @staticmethod
-    def print(max_name_len):
-        print(f"{ESCAPE_BOLD}{'':>{max_name_len}}║{'OLD':^9}║{'NEW':^9}║{'DIFFERENCE':^20}{ESCAPE_RESET}")
-        print(
-            f"{ESCAPE_BOLD}{ESCAPE_UNDERLINE}{'NAME':^{max_name_len}}║"
-            f"{'TIME':^9}║{'TIME':^9}║{'TIME':^10}║{'PERCENTAGE':^9}{ESCAPE_RESET}"
-        )
-
-
-class EmptyRow:
-    @staticmethod
-    def name_width():
-        return 0
-
-    @staticmethod
-    def print(_):
-        print()
-
-
-def print_rows(rows):
-    if not rows:
-        return
-    max_name_len = max(row.name_width() for row in rows)
-    max_name_len = max(max_name_len, 4)
-    for row in rows:
-        row.print(max_name_len)
 
 
 def compare_level(data_old, data_new, args, depth=0, path=None):
@@ -572,50 +479,97 @@ def compare_level(data_old, data_new, args, depth=0, path=None):
     return output
 
 
-def find_missing(results, level=Level.TARGET):
+def filter_benchmark(path, args):
+    if not args.benchmarks:
+        return True
+    for benchmark in args.benchmarks.values():
+        if len(path) > Level.LOCATION and path[Level.LOCATION] != benchmark["location"]:
+            continue
+        if len(path) > Level.SUITE and path[Level.SUITE] not in benchmark["suites"]:
+            continue
+        if len(path) > Level.CASE and path[Level.CASE] not in benchmark["suites"][path[Level.SUITE]]["cases"]:
+            continue
+        return True
+    return False
+
+
+def filter(path, args):
+    if len(path) > Level.TARGET and args.targets and path[Level.TARGET] not in args.targets:
+        return False
+    if len(path) > Level.LOCATION and args.locations and path[Level.LOCATION] not in args.locations:
+        return False
+    if len(path) > Level.SUITE and args.suites and path[Level.SUITE] not in args.suites:
+        return False
+    if len(path) > Level.CASE and args.cases and path[Level.CASE] not in args.cases:
+        return False
+    return filter_benchmark(path, args)
+
+
+def filter_display(data, level, args: Args):
     if level == Level.CASE:
-        return [
-            {"name": case["name"], "status_old": case["status_old"], "status_new": case["status_new"]}
-            for case in results["children"]
-            if case["status_old"] != case["status_new"]
-        ]
-    only_old = [
-        {"name": result, "status_old": Status.PRESENT, "status_new": Status.MISSING, "children": []}
-        for result in results["only_old"]
-    ]
-    only_new = [
-        {"name": result, "status_old": Status.MISSING, "status_new": Status.PRESENT, "children": []}
-        for result in results["only_new"]
-    ]
-    with_children = [
-        {"name": result["name"], "status_old": Status.PRESENT, "status_new": Status.PRESENT, "children": children}
-        for result, children in ((result, find_missing(result, level + 1)) for result in results["children"])
-        if children
-    ]
-    return only_old + only_new + with_children
+        return filter_case_display(data, args)
+    if args.threshold_filter:
+        difference, percentage = difference_and_percentage(data["time_old"], data["time_new"])
+        return change_dir(difference, percentage, args) in (ChangeDirection.INCREASE, ChangeDirection.DECREASE)
+    return True
 
 
-def find_fails(results, args, unfiltered=False, level=Level.TARGET, path=None):
-    if level == Level.CASE:
-        return [
-            case["name"]
-            for case in results["cases"].values()
-            if case["status"] == Status.FAIL and (unfiltered or filter((path or []) + [case["name"]], args))
-        ]
-    return {
-        child_name: children
-        for child_name, children in (
-            (child_name, find_fails(child, args, unfiltered, level + 1, (path or []) + [child_name]))
-            for child_name, child in results.items()
-        )
-        if children and (unfiltered or filter((path or []) + [child_name], args))
-    }
+def filter_case_display(case, args):
+    if case["status_old"] != Status.OK or case["status_new"] != Status.OK:
+        return False
+    if args.threshold_filter:
+        difference, percentage = difference_and_percentage(case["time_old"], case["time_new"])
+        return change_dir(difference, percentage, args) in (ChangeDirection.INCREASE, ChangeDirection.DECREASE)
+    return True
 
 
-def count_fails(fails, level=Level.TARGET):
-    if level == Level.CASE:
-        return len(fails)
-    return sum(count_fails(child, level + 1) for child in fails.values())
+def make_row(data, style, separator, prefix, args):
+    difference, percentage = difference_and_percentage(data["time_old"], data["time_new"])
+    color = CHANGE_COLORS[change_dir(difference, percentage, args)]
+    return TimeRow(
+        style,
+        separator,
+        f"{prefix}{data['name']}",
+        f"{data['time_old']:.3f}",
+        f"{data['time_new']:.3f}",
+        color,
+        f"{difference:+.3f}",
+        f"{percentage:+.2f}" if percentage < 10000 else "-.--",
+    )
+
+
+def make_case_row(case, args):
+    difference, percentage = difference_and_percentage(case["time_old"], case["time_new"])
+    color = CHANGE_COLORS[change_dir(difference, percentage, args)]
+    return TimeRow(
+        "",
+        "┆",
+        f"  -{case['name']}",
+        f"{case['time_old']:.3f}",
+        f"{case['time_new']:.3f}",
+        color,
+        f"{difference:+.3f}",
+        f"{percentage:+.2f}" if percentage < 10000 else "-.--",
+    )
+
+
+def make_case_status_row(case):
+    return StatusRow(
+        "",
+        "┆",
+        f"  -{case['name']}",
+        case["status_old"],
+        case["status_new"],
+    )
+
+
+def print_rows(rows):
+    if not rows:
+        return
+    max_name_len = max(row.name_width() for row in rows)
+    max_name_len = max(max_name_len, 4)
+    for row in rows:
+        row.print(max_name_len)
 
 
 def print_fails(fails, args, level=Level.TARGET, parent=None):
@@ -685,6 +639,52 @@ def generate_time_rows(times, args, level=Level.TARGET):
             if go_deeper:
                 rows.extend(children_rows)
     return rows
+
+
+def find_missing(results, level=Level.TARGET):
+    if level == Level.CASE:
+        return [
+            {"name": case["name"], "status_old": case["status_old"], "status_new": case["status_new"]}
+            for case in results["children"]
+            if case["status_old"] != case["status_new"]
+        ]
+    only_old = [
+        {"name": result, "status_old": Status.PRESENT, "status_new": Status.MISSING, "children": []}
+        for result in results["only_old"]
+    ]
+    only_new = [
+        {"name": result, "status_old": Status.MISSING, "status_new": Status.PRESENT, "children": []}
+        for result in results["only_new"]
+    ]
+    with_children = [
+        {"name": result["name"], "status_old": Status.PRESENT, "status_new": Status.PRESENT, "children": children}
+        for result, children in ((result, find_missing(result, level + 1)) for result in results["children"])
+        if children
+    ]
+    return only_old + only_new + with_children
+
+
+def find_fails(results, args, unfiltered=False, level=Level.TARGET, path=None):
+    if level == Level.CASE:
+        return [
+            case["name"]
+            for case in results["cases"].values()
+            if case["status"] == Status.FAIL and (unfiltered or filter((path or []) + [case["name"]], args))
+        ]
+    return {
+        child_name: children
+        for child_name, children in (
+            (child_name, find_fails(child, args, unfiltered, level + 1, (path or []) + [child_name]))
+            for child_name, child in results.items()
+        )
+        if children and (unfiltered or filter((path or []) + [child_name], args))
+    }
+
+
+def count_fails(fails, level=Level.TARGET):
+    if level == Level.CASE:
+        return len(fails)
+    return sum(count_fails(child, level + 1) for child in fails.values())
 
 
 def main():
