@@ -209,5 +209,35 @@ class QemuDut(ProcessDut):
         self._set_logfiles()
 
 
+class fdspawncustom(pexpect.spawn):
+    """
+    The current UART implementation on the ARMv8R52MPS3AN536 breaks when bytes are sent too fast.
+    To alleviate this problem, we override the pexpect class and introduce a delay in the send function.
+    """
+
+    def send(self, s):
+        # time.sleep(0.1)
+        chunk_size = 1
+        total_sent = 0
+
+        for i in range(0, len(s), chunk_size):
+            chunk = s[i:i+chunk_size]
+            sent = super().send(chunk)
+            total_sent += sent
+
+        return total_sent
+
+
+class ARMv8R52MPS3AN536_Dut(QemuDut):
+    def open(self):
+        # qemu when using stdio serial enforces ONLCR termios flag (converting `\n` to `\r\n`)
+        # on proper guest OSes this results in `\r\r\n` which might be incorrectly interpreted by CI log viewers
+        # use custom preexec_fn to setup termios of child PTY
+        self.pexpect_proc = fdspawncustom(
+            *self.args, preexec_fn=self._set_termios_raw, **self.kwargs
+        )
+        self._set_logfiles()
+
+
 class HostDut(ProcessDut):
     pass
