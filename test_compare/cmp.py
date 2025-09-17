@@ -88,6 +88,7 @@ class Testcase:
     time: float
     status: Status
 
+
 @dataclass
 class TimeRow:
     style: str = ""
@@ -395,38 +396,28 @@ CHANGE_COLORS = {
 }
 
 
+def compare_case(case1: Testcase, case2: Testcase):
+    case_cmp = {
+        "name": case1.name if case1 else case2.name,
+        "time_old": case1.time if case1 else None,
+        "status_old": case1.status if case1 else Status.NONE,
+        "time_new": case2.time if case2 else None,
+        "status_new": case2.status if case2 else Status.NONE,
+    }
+    case_cmp["difference"], case_cmp["percentage"] = (
+        difference_and_percentage(case_cmp["time_old"], case_cmp["time_new"]) if case1 and case2 else (None, None)
+    )
+    return case_cmp
+
+
 def compare_cases(cases_old, cases_new):
     cases = []
     for name, case in cases_old.items():
-        case_cmp = {}
-        case_cmp["name"] = name
-        case_cmp["time_old"] = case.time
-        case_cmp["status_old"] = case.status
-        if name in cases_new:
-            case_cmp["time_new"] = cases_new[name].time
-            case_cmp["status_new"] = cases_new[name].status
-            case_cmp["difference"] = case_cmp["time_new"] - case_cmp["time_old"]
-            case_cmp["percentage"] = (
-                case_cmp["difference"] / case_cmp["time_old"] * 100
-                if case_cmp["time_old"]
-                else 0 if case_cmp["difference"] == 0 else INF
-            )
-        else:
-            case_cmp["time_new"] = None
-            case_cmp["status_new"] = Status.NONE
-            case_cmp["difference"] = None
-            case_cmp["percentage"] = None
+        case_cmp = compare_case(case, cases_new.get(name, None))
         cases.append(case_cmp)
     for name, case in cases_new.items():
         if name not in cases_old:
-            case_cmp = {}
-            case_cmp["name"] = name
-            case_cmp["time_old"] = None
-            case_cmp["status_old"] = Status.NONE
-            case_cmp["time_new"] = case.time
-            case_cmp["status_new"] = case.status
-            case_cmp["difference"] = None
-            case_cmp["percentage"] = None
+            case_cmp = compare_case(None, case)
             cases.append(case_cmp)
     return cases
 
