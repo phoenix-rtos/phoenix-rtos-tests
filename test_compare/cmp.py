@@ -2,7 +2,7 @@
 
 import argparse
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum, IntEnum
 
 import yaml
@@ -73,6 +73,20 @@ class Args:
     status_diff: bool
     show_fails: bool
 
+
+@dataclass
+class Testsuite:
+    target: str
+    location: str
+    name: str
+    cases: {} = field(default_factory=dict)
+
+
+@dataclass
+class Testcase:
+    name: str
+    time: float
+    status: Status
 
 @dataclass
 class TimeRow:
@@ -318,15 +332,10 @@ def parse_xml(filename):
         if not location:
             location = suite_name
 
-        testsuite = {
-            "target": target,
-            "location": location,
-            "name": suite_name,
-            "cases": {},
-        }
+        testsuite = Testsuite(target, location, suite_name)
+
         for case in suite:
-            name = case.name
-            name = name[name.find(":") + 1:] if ":" in name else name
+            name = case.name.split(":", 1)[-1]
             classname = case.classname if case.classname else ""
             basename = name[len(classname) + 1:] if name.startswith(classname) else name
 
@@ -337,12 +346,8 @@ def parse_xml(filename):
                 elif isinstance(case.result[0], (Failure, Error)):
                     status = Status.FAIL
 
-            testcase = {
-                "name": basename,
-                "time": float(case.time) if case.time is not None else 0.0,
-                "status": status,
-            }
-            testsuite["cases"][basename] = testcase
+            testcase = Testcase(basename, float(case.time), status)
+            testsuite.cases[basename] = testcase
         if location not in testsuites[target]:
             testsuites[target][location] = {}
         testsuites[target][location][suite_name] = testsuite
@@ -395,11 +400,11 @@ def compare_cases(cases_old, cases_new):
     for name, case in cases_old.items():
         case_cmp = {}
         case_cmp["name"] = name
-        case_cmp["time_old"] = case["time"]
-        case_cmp["status_old"] = case["status"]
+        case_cmp["time_old"] = case.time
+        case_cmp["status_old"] = case.status
         if name in cases_new:
-            case_cmp["time_new"] = cases_new[name]["time"]
-            case_cmp["status_new"] = cases_new[name]["status"]
+            case_cmp["time_new"] = cases_new[name].time
+            case_cmp["status_new"] = cases_new[name].status
             case_cmp["difference"] = case_cmp["time_new"] - case_cmp["time_old"]
             case_cmp["percentage"] = (
                 case_cmp["difference"] / case_cmp["time_old"] * 100
@@ -418,8 +423,8 @@ def compare_cases(cases_old, cases_new):
             case_cmp["name"] = name
             case_cmp["time_old"] = None
             case_cmp["status_old"] = Status.NONE
-            case_cmp["time_new"] = case["time"]
-            case_cmp["status_new"] = case["status"]
+            case_cmp["time_new"] = case.time
+            case_cmp["status_new"] = case.status
             case_cmp["difference"] = None
             case_cmp["percentage"] = None
             cases.append(case_cmp)
@@ -427,18 +432,9 @@ def compare_cases(cases_old, cases_new):
 
 
 def compare_level(data_old, data_new, args, depth=0, path=None):
-    only_old, only_new = remove_non_common(data_old, data_new)
-    only_old = [item for item in only_old if filter((path or []) + [item], args)]
-    only_new = [item for item in only_new if filter((path or []) + [item], args)]
-    output = {
-        "time_old": 0,
-        "time_new": 0,
-        "children": [],
-        "only_old": only_old,
-        "only_new": only_new,
-    }
     if depth == Level.CASE:
-        cases = compare_cases(data_old["cases"], data_new["cases"])
+        output = {}
+        cases = compare_cases(data_old.cases, data_new.cases)
         cases = [case for case in cases if filter(path + [case["name"]], args)]
         output["children"] = cases
         output["time_old"] = sum(
@@ -459,6 +455,16 @@ def compare_level(data_old, data_new, args, depth=0, path=None):
         )
 
         return output
+    only_old, only_new = remove_non_common(data_old, data_new)
+    only_old = [item for item in only_old if filter((path or []) + [item], args)]
+    only_new = [item for item in only_new if filter((path or []) + [item], args)]
+    output = {
+        "time_old": 0,
+        "time_new": 0,
+        "children": [],
+        "only_old": only_old,
+        "only_new": only_new,
+    }
     for child, child_data in data_old.items():
         new_path = (path or []) + [child]
         if not filter(new_path, args):
@@ -667,9 +673,9 @@ def find_missing(results, level=Level.TARGET):
 def find_fails(results, args, unfiltered=False, level=Level.TARGET, path=None):
     if level == Level.CASE:
         return [
-            case["name"]
-            for case in results["cases"].values()
-            if case["status"] == Status.FAIL and (unfiltered or filter((path or []) + [case["name"]], args))
+            case.name
+            for case in results.cases.values()
+            if case.status == Status.FAIL and (unfiltered or filter((path or []) + [case.name], args))
         ]
     return {
         child_name: children
