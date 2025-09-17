@@ -6,4 +6,4 @@ pyserial==3.5
 pytest==7.4.1
 PyYAML==6.0.1
 pyusb==1.2.1
-RPi.GPIO==0.7.1; platform_machine == 'armv7l' or platform_machine == 'aarch64'
+rpi-lgpio==0.6; platform_machine == 'armv7l' or platform_machine == 'aarch64'
