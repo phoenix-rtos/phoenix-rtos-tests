@@ -13,6 +13,7 @@
 #include <limits.h>
 #include <host-flashsrv.h>
 #include <meterfs.h>
+#include <unity.h>
 
 #include "file.h"
 
@@ -22,28 +23,34 @@
 int file_lookup(const char *name)
 {
 	id_t id;
-
-	return hostflashsrv_lookup(name, &id);
-}
-
-
-int file_open(const char *name)
-{
 	int err;
-	id_t id;
 
 	err = hostflashsrv_lookup(name, &id);
 	if (err < 0) {
 		return err;
 	}
 
-	if (id > INT_MAX) {
-		return -1;
+	TEST_ASSERT_LESS_OR_EQUAL_INT_MESSAGE(INT_MAX, id, "TEST ERROR: file ID too big");
+
+	return (int)id;
+}
+
+
+int file_open(const char *name)
+{
+	id_t id;
+	int ret;
+
+	ret = file_lookup(name);
+	if (ret < 0) {
+		return ret;
 	}
 
-	err = hostflashsrv_open(&id);
-	if (err < 0) {
-		return err;
+	id = ret;
+
+	ret = hostflashsrv_open(&id);
+	if (ret < 0) {
+		return ret;
 	}
 
 	return (int)id;
