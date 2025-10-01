@@ -1,0 +1,51 @@
+test:
+    type: harness
+    harness: coremark_pro.py
+    nightly: true
+
+    targets:
+      exclude: [host-generic-pc, sparcv8leon-generic-qemu]
+
+    tests:
+      - name: cjpeg-rose7-preset
+        targets:
+          exclude: [armv7m4-stm32l4x6-nucleo]
+        #  Using "-v0" to run the performance measurement (turn off default validation mode)
+        execute: /usr/bin/coremark-pro/cjpeg-rose7-preset -v0
+
+      - name: core
+        execute: /usr/bin/coremark-pro/core -v0
+
+      - name: linear_alg-mid-100x100-sp
+        execute: /usr/bin/coremark-pro/linear_alg-mid-100x100-sp -v0
+
+      - name: loops-all-mid-10k-sp
+        targets:
+          exclude: [armv7m4-stm32l4x6-nucleo, armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk]
+        execute: /usr/bin/coremark-pro/loops-all-mid-10k-sp -v0
+
+      - name: nnet_test
+        targets:
+          exclude: [armv7m4-stm32l4x6-nucleo] # takes too long on this target
+        execute: /usr/bin/coremark-pro/nnet_test -v0
+
+      - name: radix2-big-64k
+        targets:
+          exclude: [armv7m4-stm32l4x6-nucleo, armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk]
+        execute: /usr/bin/coremark-pro/radix2-big-64k -v0
+
+      - name: parser-125k
+        targets:
+          exclude: [armv7m4-stm32l4x6-nucleo, armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk]
+        execute: /usr/bin/coremark-pro/parser-125k -v0
+
+      - name: sha-test
+        targets:
+          exclude: [armv7m4-stm32l4x6-nucleo, armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk]
+        execute: /usr/bin/coremark-pro/sha-test -v0
+
+      - name: zip-test
+        targets:
+          exclude: [armv7m4-stm32l4x6-nucleo, armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk]
+        execute: /usr/bin/coremark-pro/zip-test -v0
+
