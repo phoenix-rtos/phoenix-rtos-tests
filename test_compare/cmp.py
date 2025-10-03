@@ -90,6 +90,59 @@ class Testcase:
 
 
 @dataclass
+class ComparedNode:
+    name: str
+    time_old: float
+    time_new: float
+
+
+@dataclass
+class ComparedCaseNode(ComparedNode):
+    status_old: Status
+    status_new: Status
+    difference: float = None
+    percentage: float = None
+
+    @classmethod
+    def from_cases(cls, case1, case2):
+        case_cmp = cls(
+            name=case1.name if case1 else case2.name,
+            time_old=case1.time if case1 else None,
+            status_old=case1.status if case1 else Status.NONE,
+            time_new=case2.time if case2 else None,
+            status_new=case2.status if case2 else Status.NONE,
+        )
+        case_cmp.difference, case_cmp.percentage = (
+            difference_and_percentage(case_cmp.time_old, case_cmp.time_new) if case1 and case2 else (None, None)
+        )
+        return case_cmp
+
+
+@dataclass
+class ComparedAgregateNode(ComparedNode):
+    children: [] = field(default_factory=list)
+
+
+@dataclass
+class ComparedContainerNode(ComparedAgregateNode):
+    only_old: [] = field(default_factory=list)
+    only_new: [] = field(default_factory=list)
+
+
+@dataclass
+class ComparedStatusNode:
+    name: str
+    status_old: Status
+    status_new: Status
+    children: [] = field(default_factory=list)
+
+
+@dataclass
+class ComparedSuiteNode(ComparedAgregateNode):
+    single_case: bool = False
+
+
+@dataclass
 class TimeRow:
     style: str = ""
     separator: str = ""
@@ -396,66 +449,54 @@ CHANGE_COLORS = {
 }
 
 
-def compare_case(case1: Testcase, case2: Testcase):
-    case_cmp = {
-        "name": case1.name if case1 else case2.name,
-        "time_old": case1.time if case1 else None,
-        "status_old": case1.status if case1 else Status.NONE,
-        "time_new": case2.time if case2 else None,
-        "status_new": case2.status if case2 else Status.NONE,
-    }
-    case_cmp["difference"], case_cmp["percentage"] = (
-        difference_and_percentage(case_cmp["time_old"], case_cmp["time_new"]) if case1 and case2 else (None, None)
-    )
-    return case_cmp
-
-
 def compare_cases(cases_old, cases_new):
     cases = []
     for name, case in cases_old.items():
-        case_cmp = compare_case(case, cases_new.get(name, None))
-        cases.append(case_cmp)
+        cases.append(ComparedCaseNode.from_cases(case, cases_new.get(name, None)))
     for name, case in cases_new.items():
         if name not in cases_old:
-            case_cmp = compare_case(None, case)
+            case_cmp = ComparedCaseNode.from_cases(None, case)
             cases.append(case_cmp)
     return cases
 
 
 def compare_level(data_old, data_new, args, depth=0, path=None):
     if depth == Level.CASE:
-        output = {}
         cases = compare_cases(data_old.cases, data_new.cases)
-        cases = [case for case in cases if filter(path + [case["name"]], args)]
-        output["children"] = cases
-        output["time_old"] = sum(
-            case["time_old"] for case in cases if case["status_old"] == Status.OK and case["status_new"] == Status.OK
-        )
-        output["time_new"] = sum(
-            case["time_new"] for case in cases if case["status_old"] == Status.OK and case["status_new"] == Status.OK
-        )
-        output["single_case"] = (
-            len(cases) == 1
-            and cases[0]["name"]
-            in [
-                "",
-                path[-1],
-            ]
-            and cases[0]["status_old"] == Status.OK
-            and cases[0]["status_new"] == Status.OK
+        cases = [case for case in cases if filter(path + [case.name], args)]
+        output = ComparedSuiteNode(
+            name=path[-1],
+            children=cases,
+            time_old=sum(
+                case.time_old for case in cases if case.status_old == Status.OK and case.status_new == Status.OK
+            ),
+            time_new=sum(
+                case.time_new for case in cases if case.status_old == Status.OK and case.status_new == Status.OK
+            ),
+            single_case=(
+                len(cases) == 1
+                and cases[0].name
+                in [
+                    "",
+                    path[-1],
+                ]
+                and cases[0].status_old == Status.OK
+                and cases[0].status_new == Status.OK
+            ),
         )
 
         return output
     only_old, only_new = remove_non_common(data_old, data_new)
     only_old = [item for item in only_old if filter((path or []) + [item], args)]
     only_new = [item for item in only_new if filter((path or []) + [item], args)]
-    output = {
-        "time_old": 0,
-        "time_new": 0,
-        "children": [],
-        "only_old": only_old,
-        "only_new": only_new,
-    }
+    output = ComparedContainerNode(
+        name=path[-1] if path else None,
+        time_old=0,
+        time_new=0,
+        children=[],
+        only_old=only_old,
+        only_new=only_new,
+    )
     for child, child_data in data_old.items():
         new_path = (path or []) + [child]
         if not filter(new_path, args):
@@ -468,11 +509,10 @@ def compare_level(data_old, data_new, args, depth=0, path=None):
             depth + 1,
             new_path,
         )
-        if child_output["children"]:
-            child_output["name"] = child
-            output["children"].append(child_output)
-            output["time_old"] += child_output["time_old"]
-            output["time_new"] += child_output["time_new"]
+        if child_output.children:
+            output.children.append(child_output)
+            output.time_old += child_output.time_old
+            output.time_new += child_output.time_new
     return output
 
 
@@ -506,29 +546,29 @@ def filter_display(data, level, args: Args):
     if level == Level.CASE:
         return filter_case_display(data, args)
     if args.threshold_filter:
-        difference, percentage = difference_and_percentage(data["time_old"], data["time_new"])
+        difference, percentage = difference_and_percentage(data.time_old, data.time_new)
         return change_dir(difference, percentage, args) in (ChangeDirection.INCREASE, ChangeDirection.DECREASE)
     return True
 
 
 def filter_case_display(case, args):
-    if case["status_old"] != Status.OK or case["status_new"] != Status.OK:
+    if case.status_old != Status.OK or case.status_new != Status.OK:
         return False
     if args.threshold_filter:
-        difference, percentage = difference_and_percentage(case["time_old"], case["time_new"])
+        difference, percentage = difference_and_percentage(case.time_old, case.time_new)
         return change_dir(difference, percentage, args) in (ChangeDirection.INCREASE, ChangeDirection.DECREASE)
     return True
 
 
 def make_row(data, style, separator, prefix, args):
-    difference, percentage = difference_and_percentage(data["time_old"], data["time_new"])
+    difference, percentage = difference_and_percentage(data.time_old, data.time_new)
     color = CHANGE_COLORS[change_dir(difference, percentage, args)]
     return TimeRow(
         style,
         separator,
-        f"{prefix}{data['name']}",
-        f"{data['time_old']:.3f}",
-        f"{data['time_new']:.3f}",
+        f"{prefix}{data.name}",
+        f"{data.time_old:.3f}",
+        f"{data.time_new:.3f}",
         color,
         f"{difference:+.3f}",
         f"{percentage:+.2f}" if percentage < 10000 else "-.--",
@@ -536,14 +576,14 @@ def make_row(data, style, separator, prefix, args):
 
 
 def make_case_row(case, args):
-    difference, percentage = difference_and_percentage(case["time_old"], case["time_new"])
+    difference, percentage = difference_and_percentage(case.time_old, case.time_new)
     color = CHANGE_COLORS[change_dir(difference, percentage, args)]
     return TimeRow(
         "",
         "┆",
-        f"  -{case['name']}",
-        f"{case['time_old']:.3f}",
-        f"{case['time_new']:.3f}",
+        f"  -{case.name}",
+        f"{case.time_old:.3f}",
+        f"{case.time_new:.3f}",
         color,
         f"{difference:+.3f}",
         f"{percentage:+.2f}" if percentage < 10000 else "-.--",
@@ -554,9 +594,9 @@ def make_case_status_row(case):
     return StatusRow(
         "",
         "┆",
-        f"  -{case['name']}",
-        case["status_old"],
-        case["status_new"],
+        f"  -{case.name}",
+        case.status_old,
+        case.status_new,
     )
 
 
@@ -591,19 +631,19 @@ def generate_status_rows(statuses, args, level=Level.TARGET):
     prefixes = ["Target: ", "-", " -", "  -"]
     rows = []
     for node in statuses:
-        if args.verbose == level and node["status_old"] == node["status_new"]:
+        if args.verbose == level and node.status_old == node.status_new:
             continue
         current_row = StatusRow(
             styles[level],
             separators[level],
-            f"{prefixes[level]}{node['name']}",
-            node["status_old"],
-            node["status_new"],
+            f"{prefixes[level]}{node.name}",
+            node.status_old,
+            node.status_new,
         )
         children_rows = None
         if args.verbose > level:
-            children_rows = generate_status_rows(node["children"], args, level + 1)
-        if node["status_old"] != node["status_new"] or children_rows:
+            children_rows = generate_status_rows(node.children, args, level + 1)
+        if node.status_old != node.status_new or children_rows:
             if level == 0 and (args.verbose > 0 or not rows):
                 if rows:
                     rows.append(EmptyRow())
@@ -620,13 +660,13 @@ def generate_time_rows(times, args, level=Level.TARGET):
     prefixes = ["Target: ", "-", " -", "  -"]
     rows = []
     for node in times:
-        go_deeper = args.verbose > level and (level != 2 or not node["single_case"])
+        go_deeper = args.verbose > level and (level < Level.SUITE or not node.single_case)
         if not go_deeper and not filter_display(node, level, args):
             continue
         current_row = make_row(node, styles[level], separators[level], prefixes[level], args)
         children_rows = None
         if go_deeper:
-            children_rows = generate_time_rows(node["children"], args, level + 1)
+            children_rows = generate_time_rows(node.children, args, level + 1)
         if not go_deeper or children_rows:
             if level == 0 and (args.verbose > 0 or not rows):
                 if rows:
@@ -641,21 +681,21 @@ def generate_time_rows(times, args, level=Level.TARGET):
 def find_missing(results, level=Level.TARGET):
     if level == Level.CASE:
         return [
-            {"name": case["name"], "status_old": case["status_old"], "status_new": case["status_new"]}
-            for case in results["children"]
-            if case["status_old"] != case["status_new"]
+            ComparedStatusNode(name=case.name, status_old=case.status_old, status_new=case.status_new)
+            for case in results.children
+            if case.status_old != case.status_new
         ]
     only_old = [
-        {"name": result, "status_old": Status.PRESENT, "status_new": Status.MISSING, "children": []}
-        for result in results["only_old"]
+        ComparedStatusNode(name=result, status_old=Status.PRESENT, status_new=Status.MISSING, children=[])
+        for result in results.only_old
     ]
     only_new = [
-        {"name": result, "status_old": Status.MISSING, "status_new": Status.PRESENT, "children": []}
-        for result in results["only_new"]
+        ComparedStatusNode(name=result, status_old=Status.MISSING, status_new=Status.PRESENT, children=[])
+        for result in results.only_new
     ]
     with_children = [
-        {"name": result["name"], "status_old": Status.PRESENT, "status_new": Status.PRESENT, "children": children}
-        for result, children in ((result, find_missing(result, level + 1)) for result in results["children"])
+        ComparedStatusNode(name=result.name, status_old=Status.PRESENT, status_new=Status.PRESENT, children=children)
+        for result, children in ((result, find_missing(result, level + 1)) for result in results.children)
         if children
     ]
     return only_old + only_new + with_children
@@ -705,7 +745,7 @@ def main():
         status_diff = find_missing(output)
         print_rows(generate_status_rows(status_diff, args))
     elif not args.show_fails:
-        rows = generate_time_rows(output["children"], args)
+        rows = generate_time_rows(output.children, args)
         print_rows(rows)
 
 
