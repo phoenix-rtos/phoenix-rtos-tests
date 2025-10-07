@@ -6,18 +6,32 @@ test:
 
   tests:
     - name: cmdline.repl_basic.py
-      execute: echo usr/test/micropython/cmdline/repl_basic.py
+      kwargs:
+        path: usr/test/micropython/cmdline/repl_basic.py
+
     - name: cmdline.repl_emacs_keys.py
-      execute: echo usr/test/micropython/cmdline/repl_emacs_keys.py
+      kwargs:
+        path: usr/test/micropython/cmdline/repl_emacs_keys.py
+
     - name: cmdline.repl_cont.py
-      execute: echo usr/test/micropython/cmdline/repl_cont.py
+      kwargs:
+        path: usr/test/micropython/cmdline/repl_cont.py
+
     - name: cmdline.repl_micropyinspect.py
-      execute: echo usr/test/micropython/cmdline/repl_micropyinspect.py
+      kwargs:
+        path: usr/test/micropython/cmdline/repl_micropyinspect.py
+
     - name: cmdline.repl_words_move.py
-      execute: echo usr/test/micropython/cmdline/repl_words_move.py
       # Problem with Control Codes ?
       ignore: True
+      kwargs:
+        path: usr/test/micropython/cmdline/repl_words_move.py
+
     - name: cmdline.repl_inspect.py
-      execute: echo usr/test/micropython/cmdline/repl_inspect.py
+      kwargs:
+        path: usr/test/micropython/cmdline/repl_inspect.py
+        args: -i -c print("test")
+
     - name: cmdline.repl_autocomplete.py
-      execute: echo usr/test/micropython/cmdline/repl_autocomplete.py
+      kwargs:
+        path: usr/test/micropython/cmdline/repl_autocomplete.py
