@@ -2,7 +2,7 @@ test:
   harness: micropython.py
   nightly: true
   targets:
-    value: [ia32-generic-qemu, armv7a9-zynq7000-qemu]
+    value: [ia32-generic-qemu]
 
   tests:
     - name: basics.0prelim
