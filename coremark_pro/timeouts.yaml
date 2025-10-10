@@ -78,3 +78,14 @@ riscv64-generic-qemu:
   linear_alg-mid-100x100-sp: [2, 7]
   parser-125k: [2, 3]
   zip-test: [30, 3]
+
+aarch64a53-zynqmp-qemu:
+  cjpeg-rose7-preset: [3, 100]
+  loops-all-mid-10k-sp: [2, 3600]
+  radix2-big-64k: [10, 1800]
+  core: [2, 3600]
+  nnet_test: [2, 200]
+  sha-test: [2, 100]
+  linear_alg-mid-100x100-sp: [2, 15000]
+  parser-125k: [3, 100]
+  zip-test: [30, 100]
