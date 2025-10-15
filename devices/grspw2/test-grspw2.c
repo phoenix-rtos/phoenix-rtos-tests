@@ -15,11 +15,13 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <sys/time.h>
 #include <unistd.h>
 #include <sys/msg.h>
 #include <sys/types.h>
 #include <sys/platform.h>
 #include <arpa/inet.h>
+#include <errno.h>
 
 #include <libgrspw.h>
 #include <unity_fixture.h>
@@ -38,6 +40,13 @@
 #define TEST_SPW_ADDR1 0x4
 #endif
 
+/* defined in us */
+#define TEST_RX_TIMEOUT           100000
+#define TEST_RX_TIMEOUT_THRESHOLD 100000
+
+#ifndef TEST_SPW_LOOPBACK
+#define TEST_SPW_LOOPBACK 0
+#endif
 
 /* helper functions */
 
@@ -108,13 +117,15 @@ static void test_spwRxRead(const oid_t rxOid, const unsigned int firstDesc, uint
 		.oid.port = rxOid.port,
 	};
 	spw_t *idevctl = (spw_t *)msg.i.raw;
+	spw_o_t *odevctl = (spw_o_t *)msg.o.raw;
 
 	idevctl->type = spw_rx;
 	idevctl->task.rx.nPackets = nPackets;
 	idevctl->task.rx.firstDesc = firstDesc;
 
 	TEST_ASSERT_EQUAL_INT(0, msgSend(rxOid.port, &msg));
-	TEST_ASSERT_EQUAL_INT(nPackets, msg.o.err);
+	TEST_ASSERT_EQUAL_INT(0, msg.o.err);
+	TEST_ASSERT_EQUAL_INT(nPackets, odevctl->val);
 
 	for (size_t i = 0; i < nPackets; i++) {
 		rxBuf += spw_deserializeRxMsg(rxBuf, &packets[i]);
@@ -158,6 +169,131 @@ static void test_spwRxTx(const size_t nPackets, bool async)
 	}
 #else
 	for (size_t i = 0; i < nPackets; i++) {
+		/* first byte of header (phy address) consumed by router */
+		TEST_ASSERT_EQUAL((hdrSz + dataSz - 1), packets[i].flags & SPW_RX_LEN_MSK);
+		TEST_ASSERT_EQUAL(hdr[1], packets[i].buf[0]);
+		TEST_ASSERT_EQUAL_HEX8_ARRAY(data, packets[i].buf + hdrSz - 1, dataSz);
+	}
+#endif
+
+	free(txBuf);
+	free(rxBuf);
+}
+
+
+static void test_spwRxTimeout(uint32_t timeout)
+{
+	oid_t rxOid = test_getOid(TEST_SPW_PATH0);
+
+	size_t nPackets = 1;
+	unsigned int firstDesc = test_spwConfigureRx(rxOid, nPackets);
+
+	const size_t rxBufsz = (SPW_RX_MIN_BUFSZ)*nPackets;
+	uint8_t *rxBuf = malloc(rxBufsz);
+	TEST_ASSERT_NOT_NULL(rxBuf);
+
+	msg_t msg = {
+		.type = mtDevCtl,
+		.i = { .data = NULL, .size = 0 },
+		.o = { .data = rxBuf, .size = rxBufsz },
+		.oid.id = TEST_SPW_ID0,
+		.oid.port = rxOid.port,
+	};
+	spw_t *idevctl = (spw_t *)msg.i.raw;
+	spw_o_t *odevctl = (spw_o_t *)msg.o.raw;
+
+	idevctl->type = spw_rx;
+	idevctl->task.rx.nPackets = nPackets;
+	idevctl->task.rx.firstDesc = firstDesc;
+	idevctl->task.rx.timeoutUs = timeout;
+
+	struct timeval start, end;
+	gettimeofday(&start, NULL);
+
+	int err = msgSend(rxOid.port, &msg);
+	gettimeofday(&end, NULL);
+
+	uint32_t diff = ((end.tv_sec - start.tv_sec) * 1e6) + (end.tv_usec - start.tv_usec);
+
+	TEST_ASSERT_EQUAL_INT(0, err);
+
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(timeout, diff);
+	TEST_ASSERT_LESS_OR_EQUAL_INT(timeout + TEST_RX_TIMEOUT_THRESHOLD, diff);
+
+	TEST_ASSERT_EQUAL_INT(-ETIME, msg.o.err);
+	TEST_ASSERT_EQUAL_INT(0, odevctl->val);
+
+	free(rxBuf);
+}
+
+
+static size_t test_spwRxReadTimeout(const oid_t rxOid, const unsigned int firstDesc, uint8_t *rxBuf, size_t rxBufsz, spw_rxPacket_t *packets, const size_t nPackets, uint32_t timeout)
+{
+	msg_t msg = {
+		.type = mtDevCtl,
+		.i = { .data = NULL, .size = 0 },
+		.o = { .data = rxBuf, .size = rxBufsz },
+		.oid.id = TEST_SPW_ID0,
+		.oid.port = rxOid.port,
+	};
+	spw_t *idevctl = (spw_t *)msg.i.raw;
+	spw_o_t *odevctl = (spw_o_t *)msg.o.raw;
+
+	idevctl->type = spw_rx;
+	idevctl->task.rx.nPackets = nPackets;
+	idevctl->task.rx.firstDesc = firstDesc;
+	idevctl->task.rx.timeoutUs = timeout;
+
+	TEST_ASSERT_EQUAL_INT(0, msgSend(rxOid.port, &msg));
+	TEST_ASSERT_EQUAL_INT(-ETIME, msg.o.err);
+
+	for (size_t i = 0; i < odevctl->val; i++) {
+		rxBuf += spw_deserializeRxMsg(rxBuf, &packets[i]);
+	}
+
+	return odevctl->val;
+}
+
+
+static void test_spwRxTxTimeout(size_t nPackets, size_t nLost, uint32_t timeoutUs)
+{
+	oid_t rxOid = test_getOid(TEST_SPW_PATH0);
+	unsigned int firstDesc = test_spwConfigureRx(rxOid, nPackets);
+	size_t nSent = (nPackets - nLost);
+
+	oid_t txOid = test_getOid(TEST_SPW_PATH1);
+	static const uint8_t hdr[] = { TEST_SPW_ADDR0, /* protocol ID */ 0x5 }, data[] = { 0x1, 0x2, 0x3, 0x4 };
+	static const size_t hdrSz = sizeof(hdr), dataSz = sizeof(data);
+	const size_t txBufsz = (SPW_TX_MIN_BUFSZ + hdrSz + dataSz) * nSent;
+	uint8_t *txBuf = malloc(txBufsz);
+	TEST_ASSERT_NOT_NULL(txBuf);
+
+	size_t size = 0;
+	for (size_t i = 0; i < nSent; i++) {
+		size_t ret = spw_serializeTxMsg(SPW_TX_FLG_HDR_LEN(hdrSz), dataSz, hdr, data, txBuf + size, txBufsz - size);
+		TEST_ASSERT_NOT_EQUAL(0, ret);
+		size += ret;
+	}
+	test_spwTx(txOid, txBuf, size, nSent, true);
+
+	/* Receive packet */
+	const size_t rxBufsz = (SPW_RX_MIN_BUFSZ + hdrSz + dataSz) * nPackets;
+	uint8_t *rxBuf = malloc(rxBufsz);
+	TEST_ASSERT_NOT_NULL(rxBuf);
+
+	spw_rxPacket_t packets[nPackets];
+	size_t rPackets = test_spwRxReadTimeout(rxOid, firstDesc, rxBuf, rxBufsz, packets, nPackets, timeoutUs);
+
+	TEST_ASSERT_EQUAL_INT(nSent, rPackets);
+
+#if TEST_SPW_LOOPBACK
+	for (size_t i = 0; i < nSent; i++) {
+		TEST_ASSERT_EQUAL(hdrSz + dataSz, packets[i].flags & SPW_RX_LEN_MSK);
+		TEST_ASSERT_EQUAL_HEX8_ARRAY(hdr, packets[i].buf, hdrSz);
+		TEST_ASSERT_EQUAL_HEX8_ARRAY(data, packets[i].buf + hdrSz, dataSz);
+	}
+#else
+	for (size_t i = 0; i < nSent; i++) {
 		/* first byte of header (phy address) consumed by router */
 		TEST_ASSERT_EQUAL((hdrSz + dataSz - 1), packets[i].flags & SPW_RX_LEN_MSK);
 		TEST_ASSERT_EQUAL(hdr[1], packets[i].buf[0]);
@@ -217,6 +353,12 @@ TEST(test_spw, spwSetAddress)
 }
 
 
+TEST(test_spw, spwRxTimeout)
+{
+	test_spwRxTimeout(TEST_RX_TIMEOUT);
+}
+
+
 TEST(test_spw, spwTxRxSinglePacketSync)
 {
 	test_spwRxTx(1, false);
@@ -254,15 +396,24 @@ TEST(test_spw, spwTxRxBigNumberOfPacketsAsync)
 }
 
 
+TEST(test_spw, spwTxRxTimeoutMultiplePackets)
+{
+	/* Lost number of packets must be smaller then TX number of packets */
+	test_spwRxTxTimeout(128, 20, TEST_RX_TIMEOUT);
+}
+
+
 TEST_GROUP_RUNNER(test_spw)
 {
 	RUN_TEST_CASE(test_spw, spwSetAddress);
+	RUN_TEST_CASE(test_spw, spwRxTimeout);
 	RUN_TEST_CASE(test_spw, spwTxRxSinglePacketSync);
 	RUN_TEST_CASE(test_spw, spwTxRxSinglePacketAsync);
 	RUN_TEST_CASE(test_spw, spwTxRxMultiplePacketsSync);
 	RUN_TEST_CASE(test_spw, spwTxRxMultiplePacketsAsync);
 	RUN_TEST_CASE(test_spw, spwTxRxBigNumberOfPacketsSync);
 	RUN_TEST_CASE(test_spw, spwTxRxBigNumberOfPacketsAsync);
+	RUN_TEST_CASE(test_spw, spwTxRxTimeoutMultiplePackets);
 }
 
 
