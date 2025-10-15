@@ -10,51 +10,51 @@
 armv7a7-imx6ull-evk:
   # preparation timeout (to 'starting run' message), execution timeout
   cjpeg-rose7-preset: [2, 3]
-  loops-all-mid-10k-sp: [2, 200]
-  radix2-big-64k: [3, 100]
+  loops-all-mid-10k-sp: [2, 280]
+  radix2-big-64k: [3, 120]
   core: [2, 10]
-  nnet_test: [2, 40]
+  nnet_test: [2, 45]
   sha-test: [2, 3]
   linear_alg-mid-100x100-sp: [2, 9]
   parser-125k: [3, 3]
-  zip-test: [60, 3]
+  zip-test: [70, 3]
 
 armv7a9-zynq7000-qemu:
   cjpeg-rose7-preset: [3, 3]
-  loops-all-mid-10k-sp: [2, 1800]
-  radix2-big-64k: [10, 600]
-  core: [2, 1500]
-  nnet_test: [2, 40]
+  loops-all-mid-10k-sp: [2, 220]
+  radix2-big-64k: [10, 55]
+  core: [2, 12]
+  nnet_test: [2, 55]
   sha-test: [2, 3]
-  linear_alg-mid-100x100-sp: [2, 7200]
+  linear_alg-mid-100x100-sp: [2, 8]
   parser-125k: [3, 3]
   zip-test: [30, 3]
 
 armv7a9-zynq7000-zedboard:
   cjpeg-rose7-preset: [2, 3]
-  loops-all-mid-10k-sp: [2, 180]
-  radix2-big-64k: [3, 50]
-  core: [2, 10]
-  nnet_test: [2, 40]
+  loops-all-mid-10k-sp: [2, 240]
+  radix2-big-64k: [3, 60]
+  core: [2, 12]
+  nnet_test: [2, 45]
   sha-test: [2, 3]
-  linear_alg-mid-100x100-sp: [2, 10]
+  linear_alg-mid-100x100-sp: [2, 12]
   parser-125k: [2, 3]
   zip-test: [60, 3]
 
 armv7m4-stm32l4x6-nucleo:
-  core: [2, 800]
-  linear_alg-mid-100x100-sp: [10, 5000]
+  core: [2, 900]
+  linear_alg-mid-100x100-sp: [10, 7000]
 
 armv7m7-imxrt106x-evk:
   cjpeg-rose7-preset: [2, 3]
-  core: [2, 10]
-  nnet_test: [2, 75]
-  linear_alg-mid-100x100-sp: [2, 10]
+  core: [2, 12]
+  nnet_test: [2, 90]
+  linear_alg-mid-100x100-sp: [2, 12]
 
 armv7m7-imxrt117x-evk:
   cjpeg-rose7-preset: [2, 3]
   core: [2, 8]
-  nnet_test: [2, 50]
+  nnet_test: [2, 60]
   linear_alg-mid-100x100-sp: [2, 8]
 
 ia32-generic-qemu:
@@ -70,19 +70,19 @@ ia32-generic-qemu:
 
 riscv64-generic-qemu:
   cjpeg-rose7-preset: [2, 3]
-  loops-all-mid-10k-sp: [2, 140]
-  radix2-big-64k: [3, 40]
+  loops-all-mid-10k-sp: [2, 180]
+  radix2-big-64k: [3, 45]
   core: [2, 7]
   nnet_test: [2, 40]
   sha-test: [2, 3]
   linear_alg-mid-100x100-sp: [2, 7]
   parser-125k: [2, 3]
-  zip-test: [30, 3]
+  zip-test: [40, 3]
 
 aarch64a53-zynqmp-qemu:
   cjpeg-rose7-preset: [3, 100]
   loops-all-mid-10k-sp: [2, 3600]
-  radix2-big-64k: [10, 1800]
+  radix2-big-64k: [100, 1800]
   core: [2, 3600]
   nnet_test: [2, 200]
   sha-test: [2, 100]
