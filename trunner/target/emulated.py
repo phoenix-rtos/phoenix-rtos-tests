@@ -121,3 +121,16 @@ class AARCH64A53ZynqmpQemuTarget(QemuTarget):
     @classmethod
     def from_context(cls, _: TestContext):
         return cls()
+
+
+class ARMV7R5FZynqmpQemuTarget(QemuTarget):
+    name = "armv7r5f-zynqmp-qemu"
+    rootfs = False
+    experimental = True
+
+    def __init__(self):
+        super().__init__("armv7r5f-zynqmp-qemu.sh")
+
+    @classmethod
+    def from_context(cls, _: TestContext):
+        return cls()
