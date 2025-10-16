@@ -16,7 +16,14 @@ test:
         - name: pshlogin
           harness: test-pshlogin.py
           targets:
-              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo, sparcv8leon-generic-qemu, armv7r5f-zynqmp-qemu, armv8m33-mcxn94x-frdm]
+              exclude: [
+                armv7m7-imxrt106x-evk,
+                armv7m7-imxrt117x-evk,
+                armv7m4-stm32l4x6-nucleo,
+                sparcv8leon-generic-qemu,
+                armv7r5f-zynqmp-qemu,
+                armv8m33-mcxn94x-frdm
+                ]
 
         - name: echo
           harness: test-echo.py
@@ -39,7 +46,14 @@ test:
         - name: cat-shells
           harness: test-cat-shells.py
           targets:
-              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo, sparcv8leon-generic-qemu, armv7r5f-zynqmp-qemu, armv8m33-mcxn94x-frdm]
+              exclude: [
+                armv7m7-imxrt106x-evk,
+                armv7m7-imxrt117x-evk,
+                armv7m4-stm32l4x6-nucleo,
+                sparcv8leon-generic-qemu,
+                armv7r5f-zynqmp-qemu,
+                armv8m33-mcxn94x-frdm
+                ]
 
         - name: kill
           harness: test-kill.py
@@ -53,7 +67,14 @@ test:
         - name: touch-rootfs
           harness: test-touch-rootfs.py
           targets:
-              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo, sparcv8leon-generic-qemu, armv7r5f-zynqmp-qemu, armv8m33-mcxn94x-frdm]
+              exclude: [
+                armv7m7-imxrt106x-evk,
+                armv7m7-imxrt117x-evk,
+                armv7m4-starmv7m4-stm32l4x6-nucleo,
+                sparcv8leon-generic-qemu,
+                armv7r5f-zynqmp-qemu,
+                armv8m33-mcxn94x-frdm
+                ]
 
         - name: ls
           harness: test-ls.py
@@ -61,14 +82,29 @@ test:
         - name: ls-rootfs
           harness: test-ls-rootfs.py
           targets:
-              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo, sparcv8leon-generic-qemu, armv7r5f-zynqmp-qemu, armv8m33-mcxn94x-frdm]
+              exclude: [
+                armv7m7-imxrt106x-evk,
+                armv7m7-imxrt117x-evk,
+                armv7m4-stm32l4x6-nucleo,
+                sparcv8leon-generic-qemu,
+                armv7r5f-zynqmp-qemu,
+                armv8m33-mcxn94x-frdm
+                ]
 
         - name: runfile
           harness: test-runfile.py
           targets:
               # runfile applet is not intended for non-rootfs targets
               # aarch64a53-zynqmp-qemu: excluded due to https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1386
-              exclude: [aarch64a53-zynqmp-qemu, armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo, sparcv8leon-generic-qemu, armv7r5f-zynqmp-qemu, armv8m33-mcxn94x-frdm]
+              exclude: [
+                aarch64a53-zynqmp-qemu,
+                armv7m7-imxrt106x-evk,
+                armv7m7-imxrt117x-evk,
+                armv7m4-stm32l4x6-nucleo,
+                sparcv8leon-generic-qemu,
+                armv7r5f-zynqmp-qemu,
+                armv8m33-mcxn94x-frdm
+                ]
 
         - name: history
           harness: test-history.py
