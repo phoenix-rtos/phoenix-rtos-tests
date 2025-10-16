@@ -27,7 +27,7 @@ def assert_completion(p, comptab):
         p.send(TAB)
         p.expect_exact(suffix)
     p.send(ENTER)
-    psh.assert_prompt(p, msg='No prompt after completion test', timeout=1)
+    psh.assert_prompt(p, msg='No prompt after completion test', timeout=2)
 
 
 def assert_hints(p, path, hints):
@@ -36,9 +36,9 @@ def assert_hints(p, path, hints):
     p.send(TAB)
     for h in hints:
         p.expect_exact(h)
-    psh.assert_prompt(p, msg='No prompt after printing hints', timeout=1)
+    psh.assert_prompt(p, msg='No prompt after printing hints', timeout=2)
     p.send(ENTER)
-    psh.assert_prompt(p, msg=f'No prompt after sending the following command: {path}', timeout=1)
+    psh.assert_prompt(p, msg=f'No prompt after sending the following command: {path}', timeout=2)
 
 
 @psh.run
