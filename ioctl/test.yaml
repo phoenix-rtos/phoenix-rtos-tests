@@ -1,7 +1,21 @@
 test:
-  type: unity
-  tests:
-    - name: unit
-      execute: test-ioctl
-      targets:
-        exclude: [host-generic-pc]
+    # type: unity
+    tests:
+        - name: test-ioctl
+          type: unity
+          execute: test-ioctl
+          targets:
+            exclude: [host-generic-pc]
+
+        # special ioctls include only those from sockios for now, 
+        # so test only on targets with lwIP enabled
+        - name: test-ioctl-special
+          type: unity
+          execute: test-ioctl-special
+          targets:
+            value: [ia32-generic-qemu, armv7a7-imx6ull-evk, armv7m7-imxrt106x-evk]
+
+        - name: test-route
+          harness: test-route.py
+          targets:
+            value: [ia32-generic-qemu, armv7a7-imx6ull-evk, armv7m7-imxrt106x-evk]
