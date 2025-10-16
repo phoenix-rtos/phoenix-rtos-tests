@@ -14,5 +14,17 @@ on:
 
 jobs:
   call-ci:
-    uses: phoenix-rtos/phoenix-rtos-project/.github/workflows/ci-submodule.yml@master
+    uses: phoenix-rtos/phoenix-rtos-project/.github/workflows/ci-submodule.yml@wmlynik/coremark_pro_tests_tmp
+    secrets: inherit
+  call-ci2:
+    uses: phoenix-rtos/phoenix-rtos-project/.github/workflows/ci-submodule.yml@wmlynik/coremark_pro_tests_tmp
+    secrets: inherit
+  call-ci3:
+    uses: phoenix-rtos/phoenix-rtos-project/.github/workflows/ci-submodule.yml@wmlynik/coremark_pro_tests_tmp
+    secrets: inherit
+  call-ci4:
+    uses: phoenix-rtos/phoenix-rtos-project/.github/workflows/ci-submodule.yml@wmlynik/coremark_pro_tests_tmp
+    secrets: inherit
+  call-ci5:
+    uses: phoenix-rtos/phoenix-rtos-project/.github/workflows/ci-submodule.yml@wmlynik/coremark_pro_tests_tmp
     secrets: inherit
