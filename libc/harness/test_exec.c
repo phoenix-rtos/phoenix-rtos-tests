@@ -189,8 +189,8 @@ int main(int argc, char *argv[])
 			return 1;
 		}
 
-		if (signalPost(getpid(), atoi(argv[1]), SIGUSR1) != -EINVAL) {
-			fprintf(stderr, "signalPost didn't return EINVAL, thread still running in exec'd process!\n");
+		if (sys_tkill(getpid(), atoi(argv[1]), SIGUSR1) != -EINVAL) {
+			fprintf(stderr, "sys_tkill didn't return EINVAL, thread still running in exec'd process!\n");
 			return 1;
 		}
 	}
