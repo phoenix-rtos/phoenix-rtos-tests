@@ -5,81 +5,81 @@ test:
       value: [ia32-generic-qemu]
 
     tests:
-          # test1: pseudo languages
+          # 1: pseudo languages
         - name: T.isalnum
           execute: run-test /tset/ANSI.os/charhandle/isalnum/T.isalnum{2}
           kwargs:
             testcase_count: 2
 
-          # test1: pseudo languages
+          # 1: pseudo languages
         - name: T.isalpha
           execute: run-test /tset/ANSI.os/charhandle/isalpha/T.isalpha{2}
           kwargs:
             testcase_count: 2
 
-          # test1: pseudo languages
+          # 1: pseudo languages
         - name: T.iscntrl
           execute: run-test /tset/ANSI.os/charhandle/iscntrl/T.iscntrl{2}
           kwargs:
             testcase_count: 2
 
-          # test1: pseudo languages
+          # 1: pseudo languages
         - name: T.isdigit
           execute: run-test /tset/ANSI.os/charhandle/isdigit/T.isdigit
           kwargs:
             testcase_count: 1
           ignore: True
 
-          # test1: pseudo languages
+          # 1: pseudo languages
         - name: T.isgraph
           execute: run-test /tset/ANSI.os/charhandle/isgraph/T.isgraph{2}
           kwargs:
             testcase_count: 2
 
-          # test1: pseudo languages
+          # 1: pseudo languages
         - name: T.islower
           execute: run-test /tset/ANSI.os/charhandle/islower/T.islower{2}
           kwargs:
             testcase_count: 2
 
-          # test1: pseudo languages
+          # 1: pseudo languages
         - name: T.isprint
           execute: run-test /tset/ANSI.os/charhandle/isprint/T.isprint{2}
           kwargs:
             testcase_count: 2
 
-          # test1: pseudo languages
+          # 1: pseudo languages
         - name: T.ispunct
           execute: run-test /tset/ANSI.os/charhandle/ispunct/T.ispunct{2}
           kwargs:
             testcase_count: 2
 
-          # test1: pseudo languages
+          # 1: pseudo languages
         - name: T.isspace
           execute: run-test /tset/ANSI.os/charhandle/isspace/T.isspace{2}
           kwargs:
             testcase_count: 2
 
-          # test1: pseudo languages
+          # 1: pseudo languages
         - name: T.isupper
           execute: run-test /tset/ANSI.os/charhandle/isupper/T.isupper{2}
           kwargs:
             testcase_count: 2
 
-          # test1: pseudo languages
+          # 1: pseudo languages
         - name: T.isxdigit
           execute: run-test /tset/ANSI.os/charhandle/isxdigit/T.isxdigit
           kwargs:
             testcase_count: 1
           ignore: True
 
-          # test1,2: pseudo languages
+          # 1, 2: pseudo languages
         - name: T.tolower
           execute: run-test /tset/ANSI.os/charhandle/tolower/T.tolower{3}
           kwargs:
             testcase_count: 3
 
-          # test1,2: pseudo languages
+          # 1, 2: pseudo languages
         - name: T.toupper
           execute: run-test /tset/ANSI.os/charhandle/toupper/T.toupper{3}
           kwargs:
@@ -90,20 +90,19 @@ test:
           kwargs:
             testcase_count: 2
 
-          # test2: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1235
-          # test6,7,8,9: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
+          # 2: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1235
+          # 6, 7, 8, 9: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
         - name: T.abort
           execute: run-test /tset/ANSI.os/genuts/abort/T.abort{1,3-5,10-12}
           kwargs:
             testcase_count: 12
-          ignore: True
 
         - name: T.abs
           execute: run-test /tset/ANSI.os/genuts/abs/T.abs
           kwargs:
             testcase_count: 1
 
-          # test2,3: pseudo languages
+          # 2, 3: pseudo languages
         - name: T.atof
           execute: run-test /tset/ANSI.os/genuts/atof/T.atof{1}
           kwargs:
@@ -219,12 +218,11 @@ test:
           kwargs:
             testcase_count: 2
 
-          # Issue: 1229 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1229
+          # 1: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1229
         - name: T.fmod
-          execute: run-test /tset/ANSI.os/maths/fmod/T.fmod
+          execute: run-test /tset/ANSI.os/maths/fmod/T.fmod{2-4}
           kwargs:
             testcase_count: 4
-          ignore: True
 
         - name: T.frexp
           execute: run-test /tset/ANSI.os/maths/frexp/T.frexp
@@ -296,76 +294,109 @@ test:
           kwargs:
             testcase_count: 2
 
+          # 6: POSIX no longer strictly requires fclose() on open STREAMS when abort() is called
+          # 7: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1230
+          # 13: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1401
+          # 14: ulimit() is POSIX XSI extension
+          # 15, 16: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/733
+          # 17: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
         - name: T.fclose
-          execute: run-test /tset/ANSI.os/streamio/fclose/T.fclose
+          execute: run-test /tset/ANSI.os/streamio/fclose/T.fclose{1-5,8-12,18-21}
           kwargs:
             testcase_count: 21
-          ignore: True
 
+          # 2, 33: geteuid() is a stab
+          # 4, 5, 7, 8, 10, 11, 13, 14: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1408
+          # 19, 20, 21: no permission verification in the system
+          # 23: system does not have a read-only filesystem – VSX_ROFS is empty
+          # 26: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1412
+          # 27: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1401 (same problem with EINTR)
+          # 28: detection of EMFILE is not supported, while FOPEN_MAX is defined but unused
         - name: T.fopen
-          execute: run-test /tset/ANSI.os/streamio/fopen/T.fopen
+          execute: run-test /tset/ANSI.os/streamio/fopen/T.fopen{1,3,6,9,12,15-18,22,24-25,29-32,34-44}
           kwargs:
             testcase_count: 44
-          ignore: True
 
+          # 2, 37: geteuid() is a stab
+          # 5, 6, 8, 9, 13, 14, 16, 17: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1408
+          # 21, 22, 23: no permission verification in the system
+          # 25: system does not have a read-only filesystem – VSX_ROFS is empty
+          # 27: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1412
+          # 28: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1401 (same problem with EINTR)
+          # 35: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1230
         - name: T.freopen
-          execute: run-test /tset/ANSI.os/streamio/freopen/T.freopen
+          execute: run-test /tset/ANSI.os/streamio/freopen/T.freopen{1,3-4,7,10-12,15,18-20,24,26,29-34,36,38-49}
           kwargs:
             testcase_count: 49
-          ignore: True
 
+          # 8: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1401
+          # 9: ulimit() is POSIX XSI extension
+          # 10, 11: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/733
+          # 12: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
         - name: T.fflush
-          execute: run-test /tset/ANSI.os/streamio/fflush/T.fflush
+          execute: run-test /tset/ANSI.os/streamio/fflush/T.fflush{1-7,13-15}
           kwargs:
             testcase_count: 15
-          ignore: True
 
+          # 9: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1401
+          # 10, 11: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
+          # 12: system does not have a read-only filesystem – VSX_ROFS is empty
         - name: T.fgets
-          execute: run-test /tset/ANSI.os/streamio/fgets/T.fgets
+          execute: run-test /tset/ANSI.os/streamio/fgets/T.fgets{1-8,13-14}
           kwargs:
             testcase_count: 14
-          ignore: True
-        
+
+          # 6: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1401
+          # 7: ulimit() is POSIX XSI extension
+          # 8, 9: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/733
+          # 10: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
         - name: T.fputs
-          execute: run-test /tset/ANSI.os/streamio/fputs/T.fputs
+          execute: run-test /tset/ANSI.os/streamio/fputs/T.fputs{1-5,11-13}
           kwargs:
             testcase_count: 13
-          ignore: True
 
+          # 11: ulimit() is POSIX XSI extension
         - name: T.fseek
-          execute: run-test /tset/ANSI.os/streamio/fseek/T.fseek
+          execute: run-test /tset/ANSI.os/streamio/fseek/T.fseek{1-10,12-17}
           kwargs:
             testcase_count: 17
-          ignore: True
 
         - name: T.ftell
           execute: run-test /tset/ANSI.os/streamio/ftell/T.ftell
           kwargs:
             testcase_count: 4
 
+          # 11: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1401
+          # 12, 13: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
+          # 14: system does not have a read-only filesystem – VSX_ROFS is empty
         - name: T.fread
-          execute: run-test /tset/ANSI.os/streamio/fread/T.fread
+          execute: run-test /tset/ANSI.os/streamio/fread/T.fread{1-10,15-16}
           kwargs:
             testcase_count: 16
-          ignore: True
 
+          # 2, 14: ulimit() is POSIX XSI extension
+          # 13: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1401
+          # 15, 16: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/733
+          # 17: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
         - name: T.fwrite
-          execute: run-test /tset/ANSI.os/streamio/fwrite/T.fwrite
+          execute: run-test /tset/ANSI.os/streamio/fwrite/T.fwrite{1,3-4,6-11,17-19}
           kwargs:
             testcase_count: 19
-          ignore: True
 
+          # 8: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1401
+          # 9, 10: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
+          # 11: system does not have a read-only filesystem – VSX_ROFS is empty
         - name: T.getc
-          execute: run-test /tset/ANSI.os/streamio/getc/T.getc
+          execute: run-test /tset/ANSI.os/streamio/getc/T.getc{1-7,12-13}
           kwargs:
             testcase_count: 13
-          ignore: True
 
         - name: T.ungetc
           execute: run-test /tset/ANSI.os/streamio/ungetc/T.ungetc
           kwargs:
             testcase_count: 7
 
+          # gets() is a stub
         - name: T.gets
           execute: run-test /tset/ANSI.os/streamio/gets/T.gets
           kwargs:
@@ -378,53 +409,77 @@ test:
           kwargs:
             testcase_count: 3
 
+          # 23, 25, 26: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/277 (%n specifier)
+          # 33, 35, 36: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/277 (dynamic negative width)
+          # 57, 58: pseudo languages
+          # 60, 61, 62, 65, 66: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1416
+          # 63: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1401
+          # 64: ulimit() is POSIX XSI extension
+          # 65, 66: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/733
         - name: T.printf
-          execute: run-test /tset/ANSI.os/streamio/printf/T.printf
+          execute: run-test /tset/ANSI.os/streamio/printf/T.printf{1-22,24,27-32,34,37-56,59,67-70}
           kwargs:
             testcase_count: 70
-          ignore: True
 
+          # 23, 25, 26: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/277 (%n specifier)
+          # 33, 35, 36: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/277 (dynamic negative width)
+          # 57, 58: pseudo languages
+          # 60, 61, 62, 65, 66: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1416
+          # 63: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1401
+          # 64: ulimit() is POSIX XSI extension
+          # 65, 66: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/733
         - name: T.vprintf
-          execute: run-test /tset/ANSI.os/streamio/vprintf/T.vprintf
+          execute: run-test /tset/ANSI.os/streamio/vprintf/T.vprintf{1-22,24,27-32,34,37-56,59,67-70}
           kwargs:
             testcase_count: 70
-          ignore: True
 
+          # 6: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1401
+          # 7: ulimit() is POSIX XSI extension
+          # 8, 9: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/733
+          # 10: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
         - name: T.putc
-          execute: run-test /tset/ANSI.os/streamio/putc/T.putc
+          execute: run-test /tset/ANSI.os/streamio/putc/T.putc{1-5,11-13}
           kwargs:
             testcase_count: 13
-          ignore: True
 
+          # 6: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1401
+          # 7: ulimit() is POSIX XSI extension
+          # 8, 9: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/733
+          # 10: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
         - name: T.puts
-          execute: run-test /tset/ANSI.os/streamio/puts/T.puts
+          execute: run-test /tset/ANSI.os/streamio/puts/T.puts{1-5,11-13}
           kwargs:
             testcase_count: 13
-          ignore: True
 
         - name: T.rewind
           execute: run-test /tset/ANSI.os/streamio/rewind/T.rewind
           kwargs:
             testcase_count: 4
 
+          # 6, 20, 39: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/679
+          # 45: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1419
+          # 47, 48: pseudo languages
+          # 53: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1401 (same problem with EINTR)
+          # 56: system does not have a read-only filesystem – VSX_ROFS is empty
         - name: T.scanf
-          execute: run-test /tset/ANSI.os/streamio/scanf/T.scanf
+          execute: run-test /tset/ANSI.os/streamio/scanf/T.scanf{1-5,7-19,21-38,40-44,46,49-52,54-55,57-58}
           kwargs:
             testcase_count: 58
-          ignore: True
 
+          # 2: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1418
         - name: T.setbuf
-          execute: run-test /tset/ANSI.os/streamio/setbuf/T.setbuf
+          execute: run-test /tset/ANSI.os/streamio/setbuf/T.setbuf{1,3-5}
           kwargs:
             testcase_count: 5
-          ignore: True
 
+          # 2: system does not support users or groups; only root exists
+          # 3, 6: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1417
         - name: T.tmpfile
-          execute: run-test /tset/ANSI.os/streamio/tmpfile/T.tmpfile
+          execute: run-test /tset/ANSI.os/streamio/tmpfile/T.tmpfile{1,4-5,7-8}
           kwargs:
             testcase_count: 8
-          ignore: True
 
+          # tmpnam() is a stub
         - name: T.tmpnam
           execute: run-test /tset/ANSI.os/streamio/tmpnam/T.tmpnam
           kwargs:
@@ -506,42 +561,45 @@ test:
           kwargs:
             testcase_count: 1
 
+          # 11: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1243
         - name: T.ctime
-          execute: run-test /tset/ANSI.os/time/ctime/T.ctime
+          execute: run-test /tset/ANSI.os/time/ctime/T.ctime{1-10,12-13}
           kwargs:
             testcase_count: 13
-          ignore: True
 
         - name: T.gmtime
           execute: run-test /tset/ANSI.os/time/gmtime/T.gmtime
           kwargs:
             testcase_count: 2
 
+          # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1243
         - name: T.localtime
           execute: run-test /tset/ANSI.os/time/localtime/T.localtime
           kwargs:
             testcase_count: 13
           ignore: True
 
-          # Issue: 1243 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1243
+          # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1243
         - name: T.mktime
           execute: run-test /tset/ANSI.os/time/mktime/T.mktime
           kwargs:
             testcase_count: 20
           ignore: True
 
-        # Issue: 1243 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1243
+          # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1243
         - name: T.tzset
           execute: run-test /tset/POSIX.os/Csupport/tzset/T.tzset
           kwargs:
             testcase_count: 1
           ignore: True
 
+          # 1, 4, 5, 9, 10: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1243
+          # 2: pseudo languages
+          # 3: some formats specifiers are unsupported
         - name: T.strftime
-          execute: run-test /tset/ANSI.os/time/strftime/T.strftime
+          execute: run-test /tset/ANSI.os/time/strftime/T.strftime{6-8}
           kwargs:
             testcase_count: 10
-          ignore: True
 
         - name: T.fdopen
           execute: run-test /tset/POSIX.os/Csupport/fdopen/T.fdopen
@@ -563,12 +621,14 @@ test:
           kwargs:
             testcase_count: 4
 
+          # no cpio program on the system
         - name: T.cpio
           execute: run-test /tset/POSIX.os/dataform/cpio/T.cpio
           kwargs:
             testcase_count: 32
           ignore: True
 
+          # no tar program on the system
         - name: T.tar
           execute: run-test /tset/POSIX.os/dataform/tar/T.tar
           kwargs:
@@ -579,20 +639,21 @@ test:
           execute: run-test /tset/POSIX.os/devclass/c_cc/T.c_cc
           kwargs:
             testcase_count: 1
-          ignore: True
 
+          # 1, 2, 3, 8, 10, 11: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1437
         - name: T.c_cflag
-          execute: run-test /tset/POSIX.os/devclass/c_cflag/T.c_cflag
+          execute: run-test /tset/POSIX.os/devclass/c_cflag/T.c_cflag{4-7,9}
           kwargs:
             testcase_count: 11
-          ignore: True
 
+          # 1, 2, 5, 7, 8: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1424
+          # 6: can't be tested using pseudo ttys
         - name: T.c_lflag
-          execute: run-test /tset/POSIX.os/devclass/c_lflag/T.c_lflag
+          execute: run-test /tset/POSIX.os/devclass/c_lflag/T.c_lflag{3-4,9-14}
           kwargs:
-            testcase_count: 11
-          ignore: True
+            testcase_count: 14
 
+          # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/647
         - name: T.c_iflag
           execute: run-test /tset/POSIX.os/devclass/c_iflag/T.c_iflag
           kwargs:
@@ -603,291 +664,350 @@ test:
           execute: run-test /tset/POSIX.os/devclass/c_oflag/T.c_oflag
           kwargs:
             testcase_count: 1
-          ignore: True
 
         - name: T.cfgetispee
           execute: run-test /tset/POSIX.os/devclass/cfgetispee/T.cfgetispee
           kwargs:
             testcase_count: 1
-          ignore: True
 
         - name: T.cfgetospee
           execute: run-test /tset/POSIX.os/devclass/cfgetospee/T.cfgetospee
           kwargs:
             testcase_count: 1
-          ignore: True
 
+          # 3: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1424 (same or similar problem)
         - name: T.cfsetispee
-          execute: run-test /tset/POSIX.os/devclass/cfsetispee/T.cfsetispee
+          execute: run-test /tset/POSIX.os/devclass/cfsetispee/T.cfsetispee{1-2}
           kwargs:
             testcase_count: 3
-          ignore: True
 
+          # 2: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1424 (same or similar problem)
+          # 3: can't be tested using pseudo ttys
         - name: T.cfsetospee
-          execute: run-test /tset/POSIX.os/devclass/cfsetospee/T.cfsetospee
+          execute: run-test /tset/POSIX.os/devclass/cfsetospee/T.cfsetospee{1}
           kwargs:
             testcase_count: 3
-          ignore: True
 
         - name: T.i_access
           execute: run-test /tset/POSIX.os/devclass/i_access/T.i_access
           kwargs:
             testcase_count: 9
-          ignore: True
 
+          # 1: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1424
         - name: T.i_canon
-          execute: run-test /tset/POSIX.os/devclass/i_canon/T.i_canon
+          execute: run-test /tset/POSIX.os/devclass/i_canon/T.i_canon{2-6}
           kwargs:
             testcase_count: 6
-          ignore: True
 
+          # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/647
         - name: T.i_close
           execute: run-test /tset/POSIX.os/devclass/i_close/T.i_close
           kwargs:
             testcase_count: 6
           ignore: True
 
+          # 2, 7: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1432
+          # 3: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
         - name: T.i_ctty
-          execute: run-test /tset/POSIX.os/devclass/i_ctty/T.i_ctty
+          execute: run-test /tset/POSIX.os/devclass/i_ctty/T.i_ctty{1,4-6,8-10}
           kwargs:
             testcase_count: 10
-          ignore: True
 
+          # 1: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1401
         - name: T.i_inproc
-          execute: run-test /tset/POSIX.os/devclass/i_inproc/T.i_inproc
+          execute: run-test /tset/POSIX.os/devclass/i_inproc/T.i_inproc{2-4}
           kwargs:
             testcase_count: 4
-          ignore: True
 
+          # can't be tested using pseudo ttys
         - name: T.i_modem
           execute: run-test /tset/POSIX.os/devclass/i_modem/T.i_modem
           kwargs:
             testcase_count: 11
           ignore: True
 
+          # 3, 4, 6: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1429
+          # 7, 8: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1401
+          # 9: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1433
         - name: T.i_noncanon
-          execute: run-test /tset/POSIX.os/devclass/i_noncanon/T.i_noncanon
+          execute: run-test /tset/POSIX.os/devclass/i_noncanon/T.i_noncanon{1-2,5,10-15}
           kwargs:
             testcase_count: 15
-          ignore: True
 
+          # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/647
         - name: T.i_spchars
           execute: run-test /tset/POSIX.os/devclass/i_spchars/T.i_spchars
           kwargs:
             testcase_count: 15
           ignore: True
 
+          # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/647
         - name: T.tcdrain
           execute: run-test /tset/POSIX.os/devclass/tcdrain/T.tcdrain
           kwargs:
             testcase_count: 12
           ignore: True
 
+          # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/647
         - name: T.tcflow
           execute: run-test /tset/POSIX.os/devclass/tcflow/T.tcflow
           kwargs:
             testcase_count: 16
           ignore: True
 
+          # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/647
         - name: T.tcflush
           execute: run-test /tset/POSIX.os/devclass/tcflush/T.tcflush
           kwargs:
             testcase_count: 14
           ignore: True
 
+          # 1, 2: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1437
+          # 5: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1435
         - name: T.tcgetattr
-          execute: run-test /tset/POSIX.os/devclass/tcgetattr/T.tcgetattr
+          execute: run-test /tset/POSIX.os/devclass/tcgetattr/T.tcgetattr{3-4}
           kwargs:
             testcase_count: 5
-          ignore: True
 
+          # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/647
         - name: T.tcsetattr
           execute: run-test /tset/POSIX.os/devclass/tcsetattr/T.tcsetattr
           kwargs:
             testcase_count: 19
           ignore: True
 
+          # 3: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1436
+          # 5: this testcase assumes that tcgetpgrp() is not supported
+          # 6, 7: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
         - name: T.tcgetpgrp
-          execute: run-test /tset/POSIX.os/devclass/tcgetpgrp/T.tcgetpgrp
+          execute: run-test /tset/POSIX.os/devclass/tcgetpgrp/T.tcgetpgrp{1-2,4}
           kwargs:
             testcase_count: 7
-          ignore: True
 
+          # 6, 8, 10: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
+          # 7: this testcase assumes that tcsetpgrp() is not supported
+          # 9: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1435
         - name: T.tcsetpgrp
-          execute: run-test /tset/POSIX.os/devclass/tcsetpgrp/T.tcsetpgrp
+          execute: run-test /tset/POSIX.os/devclass/tcsetpgrp/T.tcsetpgrp{1-5}
           kwargs:
             testcase_count: 10
-          ignore: True
 
+          # 1, 2, 3, 4, 5, 6, 9, 10, 11, 12, 13: can't be tested using pseudo ttys
+          # 13: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
         - name: T.tcsendbrea
-          execute: run-test /tset/POSIX.os/devclass/tcsendbrea/T.tcsendbrea
+          execute: run-test /tset/POSIX.os/devclass/tcsendbrea/T.tcsendbrea{7}
           kwargs:
             testcase_count: 13
-          ignore: True
 
+          # no permission verification in the system
         - name: T.access
           execute: run-test /tset/POSIX.os/files/access/T.access
           kwargs:
             testcase_count: 78
           ignore: True
 
+          # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/647
         - name: T.creat
           execute: run-test /tset/POSIX.os/files/creat/T.creat
           kwargs:
             testcase_count: 39
           ignore: True
 
+          # 3: umask() is a stub
+          # 4, 5, 8: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1403
+          # 7: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1408
+          # 9, 10: no permission verification in the system
+          # 13:
+          # 14: 
+          # 18: system does not have a read-only filesystem – VSX_ROFS is empty
         - name: T.mkdir
-          execute: run-test /tset/POSIX.os/files/mkdir/T.mkdir
+          execute: run-test /tset/POSIX.os/files/mkdir/T.mkdir{1-2,6,11-12,15-17,19-27}
           kwargs:
             testcase_count: 27
-          ignore: True
 
+          # 4: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1403
+          # 5: no permission verification in the system
         - name: T.chdir
-          execute: run-test /tset/POSIX.os/files/chdir/T.chdir
+          execute: run-test /tset/POSIX.os/files/chdir/T.chdir{1-3,8-15}
           kwargs:
             testcase_count: 15
-          ignore: True
 
+          # 2: DIR is not implemented using a file descriptor
+          # 3: closedir() doesn't detect EBADF
         - name: T.closedir
-          execute: run-test /tset/POSIX.os/files/closedir/T.closedir
+          execute: run-test /tset/POSIX.os/files/closedir/T.closedir{1}
           kwargs:
             testcase_count: 3
-          ignore: True
 
+          # 3, 10, 17: setuid() is a stub
+          # 4: system doesn't support users, so privileged chown doesn't make sense
+          # 5, 6, 7: system doesn't support special mode bits like S_ISUID and S_ISGID
+          # 18: system does not have a read-only filesystem – VSX_ROFS is empty
         - name: T.chmod
-          execute: run-test /tset/POSIX.os/files/chmod/T.chmod
+          execute: run-test /tset/POSIX.os/files/chmod/T.chmod{1-2,8,9,11-16,19-23}
           kwargs:
             testcase_count: 23
-          ignore: True
 
+          # chown() is a stub
         - name: T.chown
           execute: run-test /tset/POSIX.os/files/chown/T.chown
           kwargs:
             testcase_count: 25
           ignore: True
 
+          # 19: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1403
+          # 20: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1412
         - name: T.pathconf
-          execute: run-test /tset/POSIX.os/files/pathconf/T.pathconf
+          execute: run-test /tset/POSIX.os/files/pathconf/T.pathconf{1-18,21-43}
           kwargs:
             testcase_count: 43
-          ignore: True
 
         - name: T.fpathconf
           execute: run-test /tset/POSIX.os/files/fpathconf/T.fpathconf
           kwargs:
             testcase_count: 30
-          ignore: True
 
+          # 1: system doesn't support users group 
         - name: T.fstat
-          execute: run-test /tset/POSIX.os/files/fstat/T.fstat
+          execute: run-test /tset/POSIX.os/files/fstat/T.fstat{2-4}
           kwargs:
             testcase_count: 4
-          ignore: True
 
         - name: T.getcwd
           execute: run-test /tset/POSIX.os/files/getcwd/T.getcwd
           kwargs:
             testcase_count: 5
 
+          # 6, 12, 13: setuid() is a stub
+          # 7, 22: links to directory not supported
+          # 8: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1443
+          # 9:
+          # 23: system does not have a read-only filesystem – VSX_ROFS is empty
+          # 24:
         - name: T.link
-          execute: run-test /tset/POSIX.os/files/link/T.link
+          execute: run-test /tset/POSIX.os/files/link/T.link{1-5,9-11,14-21,24-31}
           kwargs:
             testcase_count: 31
-          ignore: True
         
+          # 3: umask() is a stub
+          # 4, 5, 7: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1403
+          # 6: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1408
+          # 8, 9: no permission verification in the system
+          # 16: system does not have a read-only filesystem – VSX_ROFS is empty
         - name: T.mkfifo
-          execute: run-test /tset/POSIX.os/files/mkfifo/T.mkfifo
+          execute: run-test /tset/POSIX.os/files/mkfifo/T.mkfifo{1-2,10,13-15,17}
           kwargs:
             testcase_count: 17
-          ignore: True
 
+          # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/647
         - name: T.open
           execute: run-test /tset/POSIX.os/files/open/T.open
           kwargs:
             testcase_count: 56
           ignore: True
 
+          # 5: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1403
+          # 7, 8: no permission verification in the system
+          # 13: opendir() doesn't detect EMFILE and ENFILE
         - name: T.opendir
-          execute: run-test /tset/POSIX.os/files/opendir/T.opendir
+          execute: run-test /tset/POSIX.os/files/opendir/T.opendir{1-4,6,11-12,14-18}
           kwargs:
             testcase_count: 18
-          ignore: True
 
+          # 10: readdir() doesn't detect EBADF
         - name: T.readdir
-          execute: run-test /tset/POSIX.os/files/readdir/T.readdir
+          execute: run-test /tset/POSIX.os/files/readdir/T.readdir{1-9,11-12}
           kwargs:
             testcase_count: 12
-          ignore: True
 
+          # 1, 3, 10, 12, 35: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1273
+          # 5, 6, 7, 8, 11, 22, 25, 32: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/409
+          # 13:
+          # 14: link() can't be used across file systems
+          # 15, 16: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1403
+          # 18, 19, 20: no permission verification in the system
+          # 21: rename() doesn't detect EBUSY
+          # 33: system does not have a read-only filesystem – VSX_ROFS is empty
         - name: T.rename
-          execute: run-test /tset/POSIX.os/files/rename/T.rename
+          execute: run-test /tset/POSIX.os/files/rename/T.rename{2,4,9,13,17,23-24,26-31,34,36-39}
           kwargs:
             testcase_count: 39
-          ignore: True
 
         - name: T.rewinddir
           execute: run-test /tset/POSIX.os/files/rewinddir/T.rewinddir
           kwargs:
             testcase_count: 2
 
+          # 8: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1403
+          # 10, 11: no permission verification in the system
+          # 12: rmdir() doesn't detect EBUSY
+          # 20: system does not have a read-only filesystem – VSX_ROFS is empty
         - name: T.rmdir
-          execute: run-test /tset/POSIX.os/files/rmdir/T.rmdir
+          execute: run-test /tset/POSIX.os/files/rmdir/T.rmdir{1-7,9,13-19,21-24}
           kwargs:
             testcase_count: 24
-          ignore: True
 
+          # 3: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1444
+          # 6: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1443
+          # 8: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1403
+          # 9, 10: no permission verification in the system
+          # 11: remove() doesn't detect EBUSY
+          # 19: system does not have a read-only filesystem – VSX_ROFS is empty
         - name: T.remove
-          execute: run-test /tset/ANSI.os/streamio/remove/T.remove
+          execute: run-test /tset/ANSI.os/streamio/remove/T.remove{1-2,4-5,7,12-18,20-25}
           kwargs:
             testcase_count: 25
-          ignore: True
 
+          # 7: no permission verification in the system
         - name: T.stat
-          execute: run-test /tset/POSIX.os/files/stat/T.stat
+          execute: run-test /tset/POSIX.os/files/stat/T.stat{1-6,8-17}
           kwargs:
             testcase_count: 17
-          ignore: True
 
-          # stub
+          # umask() is a stub
         - name: T.umask
           execute: run-test /tset/POSIX.os/files/umask/T.umask
           kwargs:
             testcase_count: 3
           ignore: True
 
+          # 6: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1443
+          # 10, 11, 17: setuid() is a stub
+          # 19: no permission verification in the system
+          # 20: system does not have a read-only filesystem – VSX_ROFS is empty
         - name: T.unlink
-          execute: run-test /tset/POSIX.os/files/unlink/T.unlink
+          execute: run-test /tset/POSIX.os/files/unlink/T.unlink{1-5,7-9,12-16,18,21-26}
           kwargs:
             testcase_count: 26
-          ignore: True
 
+          # 3, 4, 5, 10, 11, 18: setuid() is a stub
+          # 6, 7: no permission verification in the system
+          # 12, 13, 14, 15, 16, 17: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1447
+          # 19: system does not have a read-only filesystem – VSX_ROFS is empty
         - name: T.utime
-          execute: run-test /tset/POSIX.os/files/utime/T.utime
+          execute: run-test /tset/POSIX.os/files/utime/T.utime{1-2,8-9,20-29}
           kwargs:
             testcase_count: 29
-          ignore: True
 
-          # Issue: 1230 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1230
+          # 3: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1230
         - name: T.close
-          execute: run-test /tset/POSIX.os/ioprim/close/T.close
+          execute: run-test /tset/POSIX.os/ioprim/close/T.close{1-2,4-6}
           kwargs:
             testcase_count: 6
-          ignore: True
 
-          # Issue: 1235 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1235
+          # 2: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1235
         - name: T.dup
-          execute: run-test /tset/POSIX.os/ioprim/dup/T.dup
+          execute: run-test /tset/POSIX.os/ioprim/dup/T.dup{1,3-5}
           kwargs:
             testcase_count: 5
-          ignore: True
 
+          # 3: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1235
         - name: T.dup2
-          execute: run-test /tset/POSIX.os/ioprim/dup2/T.dup2
+          execute: run-test /tset/POSIX.os/ioprim/dup2/T.dup2{1-2,4-6}
           kwargs:
             testcase_count: 7
-          ignore: True
 
+          # O_ACCMODE, O_RSYNC, O_DSYNC not defined: https://github.com/phoenix-rtos/phoenix-rtos-kernel/pull/698
         - name: T.fcntl
           execute: run-test /tset/POSIX.os/ioprim/fcntl/T.fcntl
           kwargs:
@@ -899,18 +1019,18 @@ test:
           kwargs:
             testcase_count: 9
 
+          # 7: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1245
         - name: T.pipe
-          execute: run-test /tset/POSIX.os/ioprim/pipe/T.pipe
+          execute: run-test /tset/POSIX.os/ioprim/pipe/T.pipe{1-6,8-10}
           kwargs:
             testcase_count: 10
-          ignore: True
 
         - name: T.read
           execute: run-test /tset/POSIX.os/ioprim/read/T.read
           kwargs:
             testcase_count: 23
-          ignore: True
 
+          # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/647
         - name: T.write
           execute: run-test /tset/POSIX.os/ioprim/write/T.write
           kwargs:
@@ -922,42 +1042,42 @@ test:
           kwargs:
             testcase_count: 4
 
-          # stub
+          # getegid() is a stub
         - name: T.getegid
           execute: run-test /tset/POSIX.os/procenv/getegid/T.getegid
           kwargs:
             testcase_count: 1
           ignore: True
 
-          # stub
+          # geteuid() is a stub
         - name: T.geteuid
           execute: run-test /tset/POSIX.os/procenv/geteuid/T.geteuid
           kwargs:
             testcase_count: 1
           ignore: True
 
-          # stub
+          # getuid() is a stub
         - name: T.getuid
           execute: run-test /tset/POSIX.os/procenv/getuid/T.getuid
           kwargs:
             testcase_count: 1
           ignore: True
 
-          # stub
+          # getgid() is a stub
         - name: T.getgid
           execute: run-test /tset/POSIX.os/procenv/getgid/T.getgid
           kwargs:
             testcase_count: 1
           ignore: True
 
-          # stub
+          # getgroups() is a stub
         - name: T.getgroups
           execute: run-test /tset/POSIX.os/procenv/getgroups/T.getgroups
           kwargs:
             testcase_count: 4
           ignore: True
 
-          # stub
+          # getlogin() is a stub
         - name: T.getlogin
           execute: run-test /tset/POSIX.os/procenv/getlogin/T.getlogin
           kwargs:
@@ -984,103 +1104,101 @@ test:
           kwargs:
             testcase_count: 2
 
-          # stub
+          # setgid() is a stub
         - name: T.setgid
           execute: run-test /tset/POSIX.os/procenv/setgid/T.setgid
           kwargs:
             testcase_count: 6
           ignore: True
 
-          # Issue: 1236 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1236
         - name: setpgid
           execute: run-test /tset/POSIX.os/procenv/setpgid/T.setpgid
           kwargs:
             testcase_count: 13
-          ignore: True
 
+          # 3: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1432
         - name: T.setsid
-          execute: run-test /tset/POSIX.os/procenv/setsid/T.setsid
+          execute: run-test /tset/POSIX.os/procenv/setsid/T.setsid{1-2,4-6}
           kwargs:
             testcase_count: 6
-          ignore: True
 
-          # stub
+          # setuid() is a stub
         - name: T.setuid
           execute: run-test /tset/POSIX.os/procenv/setuid/T.setuid
           kwargs:
             testcase_count: 6
           ignore: True
 
-          # Issue: 1236 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1236
         - name: T.sysconf
           execute: run-test /tset/POSIX.os/procenv/sysconf/T.sysconf
           kwargs:
             testcase_count: 13
-          ignore: True
 
+          # system clock is not synchronized at startup and is initialized to zero
         - name: T.time
           execute: run-test /tset/POSIX.os/procenv/time/T.time
           kwargs:
             testcase_count: 2
           ignore: True
 
-          # stub
+          # times() is a stub
         - name: T.times
           execute: run-test /tset/POSIX.os/procenv/times/T.times
           kwargs:
             testcase_count: 7
           ignore: True
 
+          # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/650
         - name: T.ctermid
           execute: run-test /tset/POSIX.os/procenv/ctermid/T.ctermid
           kwargs:
             testcase_count: 3
           ignore: True
+          
 
-          # stub
+          # ttyname() is a stub
         - name: T.ttyname
           execute: run-test /tset/POSIX.os/procenv/ttyname/T.ttyname
           kwargs:
             testcase_count: 2
           ignore: True
 
-          # almost stub
+          # 1: TODO: investigate extra TET result codes from VSX tet_code file
         - name: T.uname
-          execute: run-test /tset/POSIX.os/procenv/uname/T.uname
+          execute: run-test /tset/POSIX.os/procenv/uname/T.uname{2}
           kwargs:
             testcase_count: 2
-          ignore: True
 
+          # 2: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1235
+          # 3: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1448
+          # 7, 8, 9, 10: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
         - name: T.exit
-          execute: run-test /tset/ANSI.os/genuts/exit/T.exit
+          execute: run-test /tset/ANSI.os/genuts/exit/T.exit{1,4-6,11-12}
           kwargs:
             testcase_count: 12
-          ignore: True
 
+          # 2: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1235
+          # 3: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1448
+          # 7, 8, 9, 10: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
         - name: T._exit
-          ignore: True
-          execute: run-test /tset/POSIX.os/procprim/_exit/T._exit
+          execute: run-test /tset/POSIX.os/procprim/_exit/T._exit{1,4-6,11-12}
           kwargs:
             testcase_count: 12
-          ignore: True
 
         - name: T.alarm
           execute: run-test /tset/POSIX.os/procprim/alarm/T.alarm
           kwargs:
             testcase_count: 5
-          ignore: True
 
         - name: T.exec
           execute: run-test /tset/POSIX.os/procprim/exec/T.exec
           kwargs:
             testcase_count: 50
-          ignore: True
 
         - name: T.fork
           execute: run-test /tset/POSIX.os/procprim/fork/T.fork
           kwargs:
             testcase_count: 21
-          ignore: True
 
           # Issue: 1233 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1233
           # Issue: 1232 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1232
@@ -1088,20 +1206,19 @@ test:
           execute: run-test /tset/POSIX.os/procprim/kill/T.kill
           kwargs:
             testcase_count: 18
-          ignore: True
 
         - name: T.pause
           execute: run-test /tset/POSIX.os/procprim/pause/T.pause
           kwargs:
             testcase_count: 4
 
-          # Issue: 1234 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1234
-          # Issue: 1232 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1232
+          # 1, 3: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/844
+          # 6, 16: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1233
+          # 9, 10, 14, 17: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
         - name: T.sigaction
-          execute: run-test /tset/POSIX.os/procprim/sigaction/T.sigaction
+          execute: run-test /tset/POSIX.os/procprim/sigaction/T.sigaction{2,4-5,7-8,11-13,15}
           kwargs:
             testcase_count: 17
-          ignore: True
 
         - name: T.sigaddset
           execute: run-test /tset/POSIX.os/procprim/sigaddset/T.sigaddset
@@ -1128,60 +1245,66 @@ test:
           kwargs:
             testcase_count: 2
 
+          # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/648
+          # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/647
         - name: T.sigconcept
           execute: run-test /tset/POSIX.os/procprim/sigconcept/T.sigconcept
           kwargs:
             testcase_count: 42
           ignore: True
         
+          # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/648
         - name: T.sigpending
           execute: run-test /tset/POSIX.os/procprim/sigpending/T.sigpending
           kwargs:
             testcase_count: 1
           ignore: True
 
-          # Issue: 1233 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1233
-          # Issue: 1232 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1232
+          # 7: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1233
+          # 8: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
         - name: T.sigprocmas
-          execute: run-test /tset/POSIX.os/procprim/sigprocmas/T.sigprocmas
+          execute: run-test /tset/POSIX.os/procprim/sigprocmas/T.sigprocmas{1-6,9-10}
           kwargs:
             testcase_count: 10
-          ignore: True
 
-          # Issue: 1233 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1233
-          # Issue: 1232 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1232
+          # 4: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1233
+          # 5: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
         - name: T.sigsuspend
-          execute: run-test /tset/POSIX.os/procprim/sigsuspend/T.sigsuspend
+          execute: run-test /tset/POSIX.os/procprim/sigsuspend/T.sigsuspend{1-3,6}
           kwargs:
             testcase_count: 6
-          ignore: True
 
         - name: T.sleep
           execute: run-test /tset/POSIX.os/procprim/sleep/T.sleep
           kwargs:
             testcase_count: 1
 
-          # Issue: 1233 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1233
+          # 7: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1448
+          # 8, 9: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1233
+          # 10: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
         - name: T.wait
-          execute: run-test /tset/POSIX.os/procprim/wait/T.wait
+          execute: run-test /tset/POSIX.os/procprim/wait/T.wait{1-6,11-12}
           kwargs:
             testcase_count: 12
-          ignore: True
 
+          # 8, 15, 16, 17: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
+          # 12: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1448
+          # 13, 14: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1233
+          # 18, 19, 23, 24: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1436
+          # 21: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1449
         - name: T.waitpid
-          execute: run-test /tset/POSIX.os/procprim/waitpid/T.waitpid
+          execute: run-test /tset/POSIX.os/procprim/waitpid/T.waitpid{1-7,9-11,20,22}
           kwargs:
             testcase_count: 24
-          ignore: True
 
-          # stub
+          # getgrgid() is a stub
         - name: T.getgrgid
           execute: run-test /tset/POSIX.os/sysdb/getgrgid/T.getgrgid
           kwargs:
             testcase_count: 2
           ignore: True
 
-          # stub
+          # getgrnam() is a stub
         - name: T.getgrnam
           execute: run-test /tset/POSIX.os/sysdb/getgrnam/T.getgrnam
           kwargs:
