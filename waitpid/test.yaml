@@ -5,4 +5,11 @@ test:
           execute: test-waitpid
           targets:
             # Excluded due to lack of fork() related functionality
-              exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo, armv8m33-mcxn94x-frdm]
+            # zynqmp-qemu: excluded because of #1450 issue
+            exclude: [
+              armv7m7-imxrt106x-evk,
+              armv7m7-imxrt117x-evk,
+              armv7m4-stm32l4x6-nucleo,
+              armv8m33-mcxn94x-frdm,
+              aarch64a53-zynqmp-qemu
+              ]
