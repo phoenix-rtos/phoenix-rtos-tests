@@ -45,7 +45,7 @@ TEST(test_waitpid, waitpid_wnohang)
 {
 	int pid[2];
 	int res, i;
-	char *const arg[2][2] = { { "exec_while_process", NULL }, { "exec_sum_process", NULL } };
+	char *const arg[2][2] = { { "exec_infinite_process", NULL }, { "exec_sum_process", NULL } };
 
 	for (i = 0; i < 2; i++) {
 		pid[i] = vfork();
@@ -143,9 +143,9 @@ int main(int argc, char *argv[])
 	cmd_name = argv[0];
 	int failures = 0;
 	int sum;
-	if (!strcmp(basename(argv[0]), "exec_while_process")) {
+	if (!strcmp(basename(argv[0]), "exec_infinite_process")) {
 		for (;;) {
-			;
+			usleep(10000);
 		}
 	}
 	else if (!strcmp(basename(argv[0]), "exec_sum_process")) {
