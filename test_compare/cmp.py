@@ -232,7 +232,7 @@ class EmptyRow:
         print()
 
 
-def parse_args():
+def parse_args() -> Args:
     parser = argparse.ArgumentParser(
         description="Compares two test result xml files",
         epilog="Example: python3 cmp.py old_results.xml new_results.xml -v --threshold 5.0 -t ia32-generic-qemu",
@@ -337,7 +337,7 @@ def parse_args():
     return args
 
 
-def process_args(args):
+def process_args(args: argparse.Namespace) -> Args:
     benchmarks = {}
 
     for benchmark in args.benchmark_files:
@@ -366,13 +366,13 @@ def process_args(args):
     )
 
 
-def split_path(s):
+def split_path(s: str) -> tuple[str, str]:
     index = s.find("/")
     index = max(index, s.find("/", index + 1))
     return s[: index + 1], s[index + 1:]
 
 
-def parse_xml(filename):
+def parse_xml(filename: str) -> dict[str, dict[str, dict[str, Testsuite]]]:
     try:
         xml = JUnitXml.fromfile(filename)
     except FileNotFoundError:
@@ -420,7 +420,7 @@ def parse_xml(filename):
     return testsuites
 
 
-def remove_non_common(old, new):
+def remove_non_common(old: dict, new: dict) -> tuple[list, list]:
     only_old = []
     for element in old.keys():
         if element not in new:
@@ -437,13 +437,13 @@ def remove_non_common(old, new):
     return only_old, only_new
 
 
-def difference_and_percentage(old, new):
+def difference_and_percentage(old: float | None, new: float | None) -> tuple[float | None, float | None]:
     difference = new - old
     percentage = 100 * difference / old if old > 0 else 0 if difference == 0 else INF
     return difference, percentage
 
 
-def change_dir(difference, percentage, args):
+def change_dir(difference: float | None, percentage: float | None, args: Args) -> ChangeDirection:
     if difference is None:
         return ChangeDirection.MISSING
     if percentage < -args.threshold_relative and difference < -args.threshold_absolute:
@@ -461,7 +461,7 @@ CHANGE_COLORS = {
 }
 
 
-def compare_cases(cases_old, cases_new):
+def compare_cases(cases_old: dict[str, Testcase], cases_new: dict[str, Testcase]) -> list[ComparedCaseNode]:
     cases = []
     for name, case in cases_old.items():
         cases.append(ComparedCaseNode.from_cases(case, cases_new.get(name, None)))
@@ -472,7 +472,13 @@ def compare_cases(cases_old, cases_new):
     return cases
 
 
-def compare_level(data_old, data_new, args, depth=0, path=None):
+def compare_level(
+    data_old: dict | Testsuite,
+    data_new: dict | Testsuite,
+    args: Args,
+    depth: int = 0,
+    path: list[str] | None = None,
+) -> ComparedContainerNode | ComparedSuiteNode:
     if depth == Level.CASE:
         cases = compare_cases(data_old.cases, data_new.cases)
         cases = [case for case in cases if filter(path + [case.name], args)]
@@ -528,7 +534,7 @@ def compare_level(data_old, data_new, args, depth=0, path=None):
     return output
 
 
-def filter_benchmark(path, args):
+def filter_benchmark(path: list[str], args: Args) -> bool:
     if not args.benchmarks:
         return True
     for benchmark in args.benchmarks.values():
@@ -542,7 +548,7 @@ def filter_benchmark(path, args):
     return False
 
 
-def filter(path, args):
+def filter(path: list[str], args: Args) -> bool:
     if len(path) > Level.TARGET and args.targets and path[Level.TARGET] not in args.targets:
         return False
     if len(path) > Level.LOCATION and args.locations and path[Level.LOCATION] not in args.locations:
@@ -554,7 +560,7 @@ def filter(path, args):
     return filter_benchmark(path, args)
 
 
-def filter_display(data, level, args: Args):
+def filter_display(data: ComparedNode, level: Level, args: Args) -> bool:
     if level == Level.CASE:
         return filter_case_display(data, args)
     if args.threshold_filter:
@@ -563,7 +569,7 @@ def filter_display(data, level, args: Args):
     return True
 
 
-def filter_case_display(case, args):
+def filter_case_display(case: ComparedCaseNode, args: Args) -> bool:
     if case.status_old != Status.OK or case.status_new != Status.OK:
         return False
     if args.threshold_filter:
@@ -572,7 +578,7 @@ def filter_case_display(case, args):
     return True
 
 
-def print_rows(rows):
+def print_rows(rows: list[TimeRow | StatusRow | EmptyRow | StatusRowHeader | TimeRowHeader]) -> None:
     if not rows:
         return
     max_name_len = max(row.name_width() for row in rows)
@@ -581,7 +587,9 @@ def print_rows(rows):
         row.print(max_name_len)
 
 
-def print_fails(fails, args, level=Level.TARGET, parent=None):
+def print_fails(
+    fails: dict[str, dict | list[str]], args: Args, level: Level = Level.TARGET, parent: str | None = None
+) -> None:
     styles = [ESCAPE_BOLD + ESCAPE_ITALIC, ESCAPE_BOLD, ESCAPE_BOLD, ""]
     prefixes = ["Target: ", "-", " -", "  -"]
     if level == Level.CASE:
@@ -597,7 +605,9 @@ def print_fails(fails, args, level=Level.TARGET, parent=None):
                 print()
 
 
-def generate_status_rows(statuses, args, level=Level.TARGET):
+def generate_status_rows(
+    statuses: list[ComparedStatusNode], args: Args, level: Level = Level.TARGET
+) -> list[StatusRow | EmptyRow | StatusRowHeader]:
     styles = [ESCAPE_BOLD + ESCAPE_ITALIC, ESCAPE_BOLD, ESCAPE_BOLD, ""]
     separators = ["║", "║", "┃", "┆"]
     prefixes = ["Target: ", "-", " -", "  -"]
@@ -626,7 +636,9 @@ def generate_status_rows(statuses, args, level=Level.TARGET):
     return rows
 
 
-def generate_time_rows(times, args, level=Level.TARGET):
+def generate_time_rows(
+    times: list[ComparedNode], args: Args, level: Level = Level.TARGET
+) -> list[TimeRow | EmptyRow | TimeRowHeader]:
     styles = [ESCAPE_BOLD + ESCAPE_ITALIC, ESCAPE_BOLD, ESCAPE_BOLD, ""]
     separators = ["║", "║", "┃", "┆"]
     prefixes = ["Target: ", "-", " -", "  -"]
@@ -650,7 +662,9 @@ def generate_time_rows(times, args, level=Level.TARGET):
     return rows
 
 
-def find_missing(results, level=Level.TARGET):
+def find_missing(
+    results: ComparedContainerNode | ComparedSuiteNode, level: Level = Level.TARGET
+) -> list[ComparedStatusNode]:
     if level == Level.CASE:
         return [
             ComparedStatusNode(name=case.name, status_old=case.status_old, status_new=case.status_new)
@@ -673,7 +687,13 @@ def find_missing(results, level=Level.TARGET):
     return only_old + only_new + with_children
 
 
-def find_fails(results, args, unfiltered=False, level=Level.TARGET, path=None):
+def find_fails(
+    results: dict[str, dict] | Testsuite,
+    args: Args,
+    unfiltered: bool = False,
+    level: Level = Level.TARGET,
+    path: list[str] | None = None,
+) -> dict[str, dict | list[str]] | list[str]:
     if level == Level.CASE:
         return [
             case.name
@@ -690,13 +710,13 @@ def find_fails(results, args, unfiltered=False, level=Level.TARGET, path=None):
     }
 
 
-def count_fails(fails, level=Level.TARGET):
+def count_fails(fails: dict[str, dict | list[str]] | list[str], level: Level = Level.TARGET) -> int:
     if level == Level.CASE:
         return len(fails)
     return sum(count_fails(child, level + 1) for child in fails.values())
 
 
-def main():
+def main() -> None:
     args: Args = process_args(parse_args())
     for file, name in [(args.file_old, "old"), (args.file_new, "new")]:
         fails = find_fails(file, args, unfiltered=True)
