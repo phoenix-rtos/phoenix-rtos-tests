@@ -21,10 +21,11 @@ from trunner.target import (
     SPARCV8LeonGenericQemuTarget,
     ARMv7A9Zynq7000QemuTarget,
     STM32L4x6Target,
-    MCXN94xTarget,
+    MCXN94xCPU0Target,
+    MCXN94xCPU1Target,
     Zynq7000ZedboardTarget,
     IMX6ULLEvkTarget,
-    AARCH64A53ZynqmpQemuTarget
+    AARCH64A53ZynqmpQemuTarget,
 )
 from trunner.ctx import TestContext
 from trunner.target.base import TargetBase
@@ -240,8 +241,9 @@ def resolve_targets_and_hosts() -> Tuple[Dict[str, Type[TargetBase]], Dict[str, 
         Zynq7000ZedboardTarget,
         IMX6ULLEvkTarget,
         SPARCV8LeonGenericQemuTarget,
-        MCXN94xTarget,
-        AARCH64A53ZynqmpQemuTarget
+        MCXN94xCPU0Target,
+        MCXN94xCPU1Target,
+        AARCH64A53ZynqmpQemuTarget,
     ]
 
     hosts: List[Type[Host]] = [EmulatorHost, RpiHost]
