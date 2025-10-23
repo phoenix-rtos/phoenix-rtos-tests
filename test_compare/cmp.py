@@ -153,6 +153,18 @@ class TimeRow:
     difference: str = ""
     percentage: str = ""
 
+    def __init__(self, data, style, separator, prefix, args):
+        difference, percentage = difference_and_percentage(data.time_old, data.time_new)
+        color = CHANGE_COLORS[change_dir(difference, percentage, args)]
+        self.style = style
+        self.separator = separator
+        self.name = f"{prefix}{data.name}"
+        self.time_old = f"{data.time_old:.3f}"
+        self.time_new = f"{data.time_new:.3f}"
+        self.color = color
+        self.difference = f"{difference:+.3f}"
+        self.percentage = f"{percentage:+.2f}" if percentage < 10000 else "-.--"
+
     def name_width(self):
         return len(self.name)
 
@@ -560,46 +572,6 @@ def filter_case_display(case, args):
     return True
 
 
-def make_row(data, style, separator, prefix, args):
-    difference, percentage = difference_and_percentage(data.time_old, data.time_new)
-    color = CHANGE_COLORS[change_dir(difference, percentage, args)]
-    return TimeRow(
-        style,
-        separator,
-        f"{prefix}{data.name}",
-        f"{data.time_old:.3f}",
-        f"{data.time_new:.3f}",
-        color,
-        f"{difference:+.3f}",
-        f"{percentage:+.2f}" if percentage < 10000 else "-.--",
-    )
-
-
-def make_case_row(case, args):
-    difference, percentage = difference_and_percentage(case.time_old, case.time_new)
-    color = CHANGE_COLORS[change_dir(difference, percentage, args)]
-    return TimeRow(
-        "",
-        "┆",
-        f"  -{case.name}",
-        f"{case.time_old:.3f}",
-        f"{case.time_new:.3f}",
-        color,
-        f"{difference:+.3f}",
-        f"{percentage:+.2f}" if percentage < 10000 else "-.--",
-    )
-
-
-def make_case_status_row(case):
-    return StatusRow(
-        "",
-        "┆",
-        f"  -{case.name}",
-        case.status_old,
-        case.status_new,
-    )
-
-
 def print_rows(rows):
     if not rows:
         return
@@ -663,7 +635,7 @@ def generate_time_rows(times, args, level=Level.TARGET):
         go_deeper = args.verbose > level and (level < Level.SUITE or not node.single_case)
         if not go_deeper and not filter_display(node, level, args):
             continue
-        current_row = make_row(node, styles[level], separators[level], prefixes[level], args)
+        current_row = TimeRow(node, styles[level], separators[level], prefixes[level], args)
         children_rows = None
         if go_deeper:
             children_rows = generate_time_rows(node.children, args, level + 1)
