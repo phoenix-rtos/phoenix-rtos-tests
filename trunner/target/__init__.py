@@ -5,7 +5,10 @@ from .armv7m7 import (
     ARMv7M7Target,
 )
 from .armv7m4 import STM32L4x6Target
-from .armv8m33 import MCXN94xTarget
+from .armv8m33 import (
+    MCXN94xCPU0Target,
+    MCXN94xCPU1Target,
+)
 from .armv7a7 import IMX6ULLEvkTarget
 from .armv8m55 import STM32N6Target
 from .armv7a9 import Zynq7000ZedboardTarget
@@ -33,7 +36,8 @@ __all__ = [
     "TargetBase",
     "find_port",
     "IMX6ULLEvkTarget",
-    "MCXN94xTarget",
+    "MCXN94xCPU0Target",
+    "MCXN94xCPU1Target",
     "AARCH64A53ZynqmpQemuTarget",
     "ARMV7R5FZynqmpQemuTarget",
     "STM32N6Target",
