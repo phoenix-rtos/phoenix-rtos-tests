@@ -367,6 +367,12 @@ def process_args(args: argparse.Namespace) -> Args:
 
 
 def split_path(s: str) -> tuple[str, str]:
+    """
+    Split path into directory and test suite.
+
+    Directory is typically up to the second '/' but there might be less than 2 '/' characters in the path,
+    in that case the directory name is shorter.
+    """
     index = s.find("/")
     index = max(index, s.find("/", index + 1))
     return s[: index + 1], s[index + 1:]
@@ -384,6 +390,8 @@ def parse_xml(filename: str) -> dict[str, dict[str, dict[str, Testsuite]]]:
 
     testsuites = {}
     for suite in xml:
+        # suite.name format is 'target:path', where target is the target name
+        # and path is equal to case.classname for each case
         if not suite.name or ":" not in suite.name:
             print(
                 f"{ESCAPE_BOLD}{ESCAPE_YELLOW}Warning:{ESCAPE_RESET} Skipping suite with malformed name: '{suite.name}'"
@@ -401,6 +409,8 @@ def parse_xml(filename: str) -> dict[str, dict[str, dict[str, Testsuite]]]:
         testsuite = Testsuite(target, location, suite_name)
 
         for case in suite:
+            # case.name is 'target:path.testcase', where target and path are the same as in suite
+            # and testscase it the name of the test case
             if not case.name or ":" not in case.name:
                 print(
                     f"{ESCAPE_BOLD}{ESCAPE_YELLOW}Warning:{ESCAPE_RESET} "
@@ -421,7 +431,7 @@ def parse_xml(filename: str) -> dict[str, dict[str, dict[str, Testsuite]]]:
                     f"Skipping case with malformed name: '{case.name}'"
                 )
                 continue
-            basename = name[len(case.classname) + 1 :]
+            basename = name[len(case.classname) + 1:]
 
             status = Status.OK
             if case.result:
@@ -439,6 +449,11 @@ def parse_xml(filename: str) -> dict[str, dict[str, dict[str, Testsuite]]]:
 
 
 def remove_non_common(old: dict, new: dict) -> tuple[list, list]:
+    """
+    Remove elements occurring in only one dict, return the removed elements.
+
+    If element (directory, suite, case) is present in only one of the dicts, there is nothing to compare it to.
+    """
     only_old = []
     for element in old.keys():
         if element not in new:
@@ -457,7 +472,7 @@ def remove_non_common(old: dict, new: dict) -> tuple[list, list]:
 
 def difference_and_percentage(old: float | None, new: float | None) -> tuple[float | None, float | None]:
     difference = new - old
-    percentage = 100 * difference / old if old > 0 else 0 if difference == 0 else INF
+    percentage = (100 * difference / old) if old > 0 else (0 if difference == 0 else INF)
     return difference, percentage
 
 
@@ -553,6 +568,12 @@ def compare_level(
 
 
 def filter_benchmark(path: list[str], args: Args) -> bool:
+    """
+    Check whether a benchmark path matches user-specified benchmark filters.
+
+    This helper function is used by `filter()` to determine if a given benchmark
+    should be included based on the filters defined in `args.benchmarks`.
+    """
     if not args.benchmarks:
         return True
     for benchmark in args.benchmarks.values():
@@ -567,6 +588,22 @@ def filter_benchmark(path: list[str], args: Args) -> bool:
 
 
 def filter(path: list[str], args: Args) -> bool:
+    """
+    Determine whether a node should be considered for comparison.
+
+    This function applies general command-line filters (targets, locations, suites, cases)
+    and benchmark filters to decide whether a node should be included in comparison.
+
+    The `path` identifies a node in the benchmark hierarchy and contains all
+    elements from the target down to the node’s level (target, location, suite, case).
+
+    Args:
+        path (list[str]): Hierarchical path identifying the node.
+        args (Args): Parsed command-line arguments with filter settings.
+
+    Returns:
+        bool: True if the node should be compared, False otherwise.
+    """
     if len(path) > Level.TARGET and args.targets and path[Level.TARGET] not in args.targets:
         return False
     if len(path) > Level.LOCATION and args.locations and path[Level.LOCATION] not in args.locations:
@@ -579,6 +616,20 @@ def filter(path: list[str], args: Args) -> bool:
 
 
 def filter_display(data: ComparedNode, level: Level, args: Args) -> bool:
+    """
+    Determine whether a comparison result should be shown in the output.
+
+    This function is used after comparisons are made to decide whether a node
+    should appear in the displayed results, based on thresholds or case-level status.
+
+    Args:
+        data (ComparedNode): Node containing comparison data.
+        level (Level): Hierarchy level of the node (e.g., suite, case).
+        args (Args): Parsed command-line arguments controlling display behavior.
+
+    Returns:
+        bool: True if the node should be displayed, False otherwise.
+    """
     if level == Level.CASE:
         return filter_case_display(data, args)
     if args.threshold_filter:
@@ -588,6 +639,12 @@ def filter_display(data: ComparedNode, level: Level, args: Args) -> bool:
 
 
 def filter_case_display(case: ComparedCaseNode, args: Args) -> bool:
+    """
+    Check whether a single benchmark case should be shown in the results.
+
+    This helper function is used by `filter_display()` to exclude failed cases or
+    those that do not meet performance change thresholds.
+    """
     if case.status_old != Status.OK or case.status_new != Status.OK:
         return False
     if args.threshold_filter:
