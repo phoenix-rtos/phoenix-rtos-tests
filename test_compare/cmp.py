@@ -657,7 +657,6 @@ def print_rows(rows: list[TimeRow | StatusRow | EmptyRow | StatusRowHeader | Tim
     if not rows:
         return
     max_name_len = max(row.name_width() for row in rows)
-    max_name_len = max(max_name_len, 4)
     for row in rows:
         row.print(max_name_len)
 
