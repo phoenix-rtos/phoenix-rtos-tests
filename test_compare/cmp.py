@@ -401,9 +401,27 @@ def parse_xml(filename: str) -> dict[str, dict[str, dict[str, Testsuite]]]:
         testsuite = Testsuite(target, location, suite_name)
 
         for case in suite:
+            if not case.name or ":" not in case.name:
+                print(
+                    f"{ESCAPE_BOLD}{ESCAPE_YELLOW}Warning:{ESCAPE_RESET} "
+                    f"Skipping case with malformed name: '{case.name}'"
+                )
+                continue
             name = case.name.split(":", 1)[-1]
-            classname = case.classname if case.classname else ""
-            basename = name[len(classname) + 1:] if name.startswith(classname) else name
+            if not case.classname:
+                print(
+                    f"{ESCAPE_BOLD}{ESCAPE_YELLOW}Warning:{ESCAPE_RESET} "
+                    f"Skipping case with malformed classname: '{case.classname}'"
+                )
+                continue
+
+            if not name.startswith(case.classname):
+                print(
+                    f"{ESCAPE_BOLD}{ESCAPE_YELLOW}Warning:{ESCAPE_RESET} "
+                    f"Skipping case with malformed name: '{case.name}'"
+                )
+                continue
+            basename = name[len(case.classname) + 1 :]
 
             status = Status.OK
             if case.result:
