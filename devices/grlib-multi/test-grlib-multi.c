@@ -569,13 +569,15 @@ static void test_spwRxRead(const oid_t rxOid, const unsigned int firstDesc, uint
 		.oid.port = rxOid.port,
 	};
 	multi_i_t *idevctl = (multi_i_t *)msg.i.raw;
+	multi_o_t *odevctl = (multi_o_t *)msg.o.raw;
 
 	idevctl->spw.type = spw_rx;
 	idevctl->spw.task.rx.nPackets = nPackets;
 	idevctl->spw.task.rx.firstDesc = firstDesc;
 
 	TEST_ASSERT_EQUAL_INT(0, msgSend(rxOid.port, &msg));
-	TEST_ASSERT_EQUAL_INT(nPackets, msg.o.err);
+	TEST_ASSERT_EQUAL_INT(0, msg.o.err);
+	TEST_ASSERT_EQUAL_INT(nPackets, odevctl->val);
 
 	for (size_t i = 0; i < nPackets; i++) {
 		rxBuf += spw_deserializeRxMsg(rxBuf, &packets[i]);
