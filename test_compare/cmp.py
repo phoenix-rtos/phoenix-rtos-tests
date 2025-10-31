@@ -2,6 +2,7 @@
 
 import argparse
 import sys
+from abc import ABC
 from dataclasses import dataclass, field
 from enum import Enum, IntEnum
 
@@ -32,6 +33,7 @@ class ChangeDirection(Enum):
 
 
 class Level(IntEnum):
+    ROOT = -1
     TARGET = 0
     LOCATION = 1
     SUITE = 2
@@ -75,16 +77,88 @@ class Args:
 
 
 @dataclass
-class Testsuite:
-    target: str
-    location: str
-    name: str
-    cases: {} = field(default_factory=dict)
+class Path:
+    level: Level
+    target: str | None = None
+    location: str | None = None
+    suite: str | None = None
+    case: str | None = None
 
 
 @dataclass
-class Testcase:
-    name: str
+class ResultNode(ABC):
+    path: Path
+
+    def should_process(self, args: Args):
+        """
+        Determine whether a node should be considered for comparison.
+
+        This function applies general command-line filters (targets, locations, suites, cases)
+        and benchmark filters to decide whether a node should be included in comparison.
+        """
+        if self.path.level >= Level.TARGET and args.targets and self.path.target not in args.targets:
+            return False
+        if self.path.level >= Level.LOCATION and args.locations and self.path.location not in args.locations:
+            return False
+        if self.path.level >= Level.SUITE and args.suites and self.path.suite not in args.suites:
+            return False
+        if self.path.level >= Level.CASE and args.cases and self.path.case not in args.cases:
+            return False
+
+        if not args.benchmarks:
+            return True
+        for benchmark in args.benchmarks.values():
+            if self.path.level >= Level.LOCATION and self.path.location != benchmark["location"]:
+                continue
+            if self.path.level >= Level.SUITE and self.path.suite not in benchmark["suites"]:
+                continue
+            if self.path.level >= Level.CASE and self.path.case not in benchmark["suites"][self.path.suite]["cases"]:
+                continue
+            return True
+        return False
+
+
+@dataclass
+class ContainerResultNode(ResultNode, ABC):
+    children: dict[str, ResultNode] = field(default_factory=dict)
+
+    def failures(self, args: Args, filtered: bool = False):
+        return {
+            child_name: children
+            for child_name, children in (
+                (child_name, child.failures(args, filtered)) for child_name, child in self.children.items()
+            )
+            if children and (not filtered or self.should_process(args))
+        }
+
+
+@dataclass
+class RootResultNode(ContainerResultNode):
+    pass
+
+
+@dataclass
+class Target(ContainerResultNode):
+    pass
+
+
+@dataclass
+class Location(ContainerResultNode):
+    pass
+
+
+@dataclass
+class Testsuite(ContainerResultNode):
+    def failures(self, args: Args, filtered: bool = False):
+        return [
+            case.path.case
+            for case in self.children.values()
+            if case.status == Status.FAIL and (not filtered or self.should_process(args))
+        ]
+
+
+@dataclass
+class Testcase(ResultNode):
     time: float
     status: Status
 
@@ -106,7 +180,7 @@ class ComparedCaseNode(ComparedNode):
     @classmethod
     def from_cases(cls, case1, case2):
         case_cmp = cls(
-            name=case1.name if case1 else case2.name,
+            name=case1.path.case if case1 else case2.path.case,
             time_old=case1.time if case1 else None,
             status_old=case1.status if case1 else Status.NONE,
             time_new=case2.time if case2 else None,
@@ -388,7 +462,7 @@ def parse_xml(filename: str) -> dict[str, dict[str, dict[str, Testsuite]]]:
         print(f"{ESCAPE_BOLD}{ESCAPE_RED}Error:{ESCAPE_RESET} Failed to parse XML file: {e}")
         sys.exit(1)
 
-    testsuites = {}
+    root = RootResultNode(Path(Level.ROOT))
     for suite in xml:
         # suite.name format is 'target:path', where target is the target name
         # and path is equal to case.classname for each case
@@ -398,15 +472,21 @@ def parse_xml(filename: str) -> dict[str, dict[str, dict[str, Testsuite]]]:
             )
             continue
 
-        target, path = suite.name.split(":", 1)
-        if target not in testsuites:
-            testsuites[target] = {}
+        target_name, path = suite.name.split(":", 1)
+        if target_name not in root.children:
+            root.children[target_name] = Target(Path(Level.TARGET, target_name))
+        target = root.children[target_name]
 
-        location, suite_name = split_path(path)
-        if not location:
-            location = suite_name
+        location_name, suite_name = split_path(path)
+        if not location_name:
+            location_name = suite_name
+        if location_name not in target.children:
+            target.children[location_name] = Location(Path(Level.LOCATION, target_name, location_name))
+        location = target.children[location_name]
 
-        testsuite = Testsuite(target, location, suite_name)
+        if suite_name not in location.children:
+            location.children[suite_name] = Testsuite(Path(Level.SUITE, target_name, location_name, suite_name))
+        testsuite = location.children[suite_name]
 
         for case in suite:
             # case.name is 'target:path.testcase', where target and path are the same as in suite
@@ -440,12 +520,11 @@ def parse_xml(filename: str) -> dict[str, dict[str, dict[str, Testsuite]]]:
                 elif isinstance(case.result[0], (Failure, Error)):
                     status = Status.FAIL
 
-            testcase = Testcase(basename, float(case.time), status)
-            testsuite.cases[basename] = testcase
-        if location not in testsuites[target]:
-            testsuites[target][location] = {}
-        testsuites[target][location][suite_name] = testsuite
-    return testsuites
+            testcase = Testcase(
+                Path(Level.CASE, target_name, location_name, suite_name, basename), float(case.time), status
+            )
+            testsuite.children[basename] = testcase
+    return root
 
 
 def remove_non_common(old: dict, new: dict) -> tuple[list, list]:
@@ -506,14 +585,14 @@ def compare_cases(cases_old: dict[str, Testcase], cases_new: dict[str, Testcase]
 
 
 def compare_level(
-    data_old: dict | Testsuite,
-    data_new: dict | Testsuite,
+    data_old: ContainerResultNode,
+    data_new: ContainerResultNode,
     args: Args,
-    depth: int = 0,
+    depth: int = Level.TARGET,
     path: list[str] | None = None,
 ) -> ComparedContainerNode | ComparedSuiteNode:
     if depth == Level.CASE:
-        cases = compare_cases(data_old.cases, data_new.cases)
+        cases = compare_cases(data_old.children, data_new.children)
         cases = [case for case in cases if filter(path + [case.name], args)]
         output = ComparedSuiteNode(
             name=path[-1],
@@ -537,7 +616,7 @@ def compare_level(
         )
 
         return output
-    only_old, only_new = remove_non_common(data_old, data_new)
+    only_old, only_new = remove_non_common(data_old.children, data_new.children)
     only_old = [item for item in only_old if filter((path or []) + [item], args)]
     only_new = [item for item in only_new if filter((path or []) + [item], args)]
     output = ComparedContainerNode(
@@ -548,11 +627,11 @@ def compare_level(
         only_old=only_old,
         only_new=only_new,
     )
-    for child, child_data in data_old.items():
+    for child, child_data in data_old.children.items():
         new_path = (path or []) + [child]
         if not filter(new_path, args):
             continue
-        child_data_new = data_new[child]
+        child_data_new = data_new.children[child]
         child_output = compare_level(
             child_data,
             child_data_new,
@@ -762,26 +841,13 @@ def find_missing(
 
 
 def find_fails(
-    results: dict[str, dict] | Testsuite,
+    results: ContainerResultNode,
     args: Args,
     unfiltered: bool = False,
     level: Level = Level.TARGET,
     path: list[str] | None = None,
 ) -> dict[str, dict | list[str]] | list[str]:
-    if level == Level.CASE:
-        return [
-            case.name
-            for case in results.cases.values()
-            if case.status == Status.FAIL and (unfiltered or filter((path or []) + [case.name], args))
-        ]
-    return {
-        child_name: children
-        for child_name, children in (
-            (child_name, find_fails(child, args, unfiltered, level + 1, (path or []) + [child_name]))
-            for child_name, child in results.items()
-        )
-        if children and (unfiltered or filter((path or []) + [child_name], args))
-    }
+    return results.failures(args, not unfiltered)
 
 
 def count_fails(fails: dict[str, dict | list[str]] | list[str], level: Level = Level.TARGET) -> int:
