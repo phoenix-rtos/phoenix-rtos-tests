@@ -117,3 +117,6 @@ test:
 
         - name: exit
           harness: test-exit.py
+        
+        - name: control-codes
+          harness: test-control.py
