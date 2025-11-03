@@ -939,3 +939,112 @@ def test_interaction_of_benchmark_and_cli_filters(unprocessed_args, mock_benchma
         results.children, ["armv7a7-imx6ull-evk", "phoenix-rtos-tests/kernel/", "common", "test_A_improvement"]
     )
     assert node_not_found is None, "Node should NOT be found when CLI filter excludes it from benchmark scope."
+
+
+@pytest.fixture(scope="module")
+def mock_xml_location_empty_string(tmp_path_factory):
+    """Creates mock XML files for testing handling of location being an empty string"""
+    tmp_dir = tmp_path_factory.mktemp("data_edge")
+    old_xml_path = tmp_dir / "old_edge.xml"
+    new_xml_path = tmp_dir / "new_edge.xml"
+
+    # Old file: baseline times for edge cases
+    old_xml_content = """<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+    <testsuite
+        name="ia32-generic-qemu:32q4uib253"
+        tests="4"
+        time="10.020">
+        <testcase
+            name="ia32-generic-qemu:32q4uib253.a"
+            classname="32q4uib253"
+            time="0.0"
+        />
+        <testcase
+            name="ia32-generic-qemu:32q4uib253.b"
+            classname="32q4uib253"
+            time="10.0"
+        />
+        <testcase
+            name="ia32-generic-qemu:32q4uib253.c"
+            classname="32q4uib253"
+            time="0.02"
+        />
+    </testsuite>
+    <testsuite
+        name="ia32-generic-qemu:flash"
+        tests="1"
+        time="0.02"
+    >
+        <testcase
+            name="ia32-generic-qemu:flash"
+            classname="flash"
+            time="0.02"
+        />
+    </testsuite>
+</testsuites>
+"""
+    # New file: changed times to trigger edge case logic
+    new_xml_content = """<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+    <testsuite
+        name="ia32-generic-qemu:32q4uib253"
+        tests="4"
+        time="11.130"
+    >
+        <testcase
+            name="ia32-generic-qemu:32q4uib253.a"
+            classname="32q4uib253"
+            time="0.1"
+        />
+        <testcase
+            name="ia32-generic-qemu:32q4uib253.b"
+            classname="32q4uib253"
+            time="11.0"
+        />
+        <testcase
+            name="ia32-generic-qemu:32q4uib253.c"
+            classname="32q4uib253"
+            time="0.03"
+        />
+    </testsuite>
+    <testsuite
+        name="ia32-generic-qemu:flash"
+        tests="1"
+        time="0.03"
+    >
+        <testcase
+            name="ia32-generic-qemu:flash"
+            classname="flash"
+            time="0.03"
+        />
+    </testsuite>
+</testsuites>
+"""
+    old_xml_path.write_text(old_xml_content)
+    new_xml_path.write_text(new_xml_content)
+
+    return str(old_xml_path), str(new_xml_path)
+
+
+def test_location_empty_string(unprocessed_args, mock_xml_location_empty_string):
+    """Tests handling of location being an empty string."""
+    raw_args = copy.deepcopy(unprocessed_args)
+    raw_args.file_old, raw_args.file_new = mock_xml_location_empty_string
+    args = cmp.process_args(raw_args)
+    args.verbose = 1
+
+    compared_data = cmp.compare_level(args.file_old, args.file_new, args)
+    rows = cmp.generate_time_rows(compared_data.children, args)
+
+    def find_location_row_by_name(rows, name):
+        for row in rows:
+            if hasattr(row, "name") and row.name == ("-" + name):
+                return row
+        return None
+
+    row1 = find_location_row_by_name(rows, "32q4uib253")
+    assert row1 is not None, "When location is an empty string, it should be replaced with the suite name"
+
+    row2 = find_location_row_by_name(rows, "flash")
+    assert row2 is not None, "When location is an empty string, it should be replaced with the suite name"
