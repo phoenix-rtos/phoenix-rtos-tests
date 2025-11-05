@@ -70,7 +70,7 @@ test:
               exclude: [
                 armv7m7-imxrt106x-evk,
                 armv7m7-imxrt117x-evk,
-                armv7m4-starmv7m4-stm32l4x6-nucleo,
+                armv7m4-stm32l4x6-nucleo,
                 sparcv8leon-generic-qemu,
                 armv7r5f-zynqmp-qemu,
                 armv8m33-mcxn94x-frdm
