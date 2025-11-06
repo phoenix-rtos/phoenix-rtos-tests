@@ -114,7 +114,7 @@ class AARCH64A53ZynqmpQemuTarget(QemuTarget):
     rootfs = True
 
     def __init__(self):
-        super().__init__("aarch64a53-zynqmp-qemu.sh")
+        super().__init__("aarch64a53-zynqmp-qemu-test.sh")
         # System initialization may take 30+ seconds on this target due to emulation limitations
         self.prompt_timeout = 60
 
