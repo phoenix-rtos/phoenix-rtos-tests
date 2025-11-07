@@ -16,3 +16,14 @@ jobs:
   call-ci:
     uses: phoenix-rtos/phoenix-rtos-project/.github/workflows/ci-submodule.yml@master
     secrets: inherit
+    with:
+      build_params: all tests
+      nightly: true
+
+  debug:
+    if: ${{ failure() }}
+    runs-on: ubuntu-latest
+    needs: call-ci
+    steps:
+      - name: Start tmate SSH session
+        uses: mxschmitt/action-tmate@v3
