@@ -38,7 +38,7 @@ TEST_TEAR_DOWN(meterfs_allocate)
  */
 TEST(meterfs_allocate, big_file)
 {
-	file_info_t info = { ((fsInfo.sz + fsInfo.sectorsz) / fsInfo.sectorsz) + 1u, fsInfo.sz + fsInfo.sectorsz, fsInfo.sectorsz / 100u, 0 };
+	file_info_t info = { ((fsInfo.sz + fsInfo.sectorsz) / fsInfo.sectorsz) + 1U, fsInfo.sz + fsInfo.sectorsz, fsInfo.sectorsz / 100U, 0 };
 
 	TEST_ASSERT_EQUAL(-EINVAL, file_allocate("file0", info.sectors, info.filesz, info.recordsz));
 }
@@ -50,17 +50,17 @@ TEST(meterfs_allocate, many_files)
 	size_t i, availableSectors;
 	char fileName[32];
 
-	availableSectors = (fsInfo.sz / fsInfo.sectorsz) - 1u;
+	availableSectors = (fsInfo.sz / fsInfo.sectorsz) - 1U;
 
-	for (i = 0; i < (fsInfo.fileLimit + 10u); ++i) {
+	for (i = 0; i < (fsInfo.fileLimit + 10U); ++i) {
 		(void)memset(fileName, 0, sizeof(fileName));
 		(void)snprintf(fileName, sizeof(fileName), "file%zu", i);
-		if ((i < fsInfo.fileLimit) && (availableSectors >= 2u)) {
-			TEST_ASSERT_EQUAL_MESSAGE(0, file_allocate(fileName, 2, fsInfo.sectorsz / 2u, fsInfo.sectorsz / 200u), fileName);
-			availableSectors -= 2u;
+		if ((i < fsInfo.fileLimit) && (availableSectors >= 2U)) {
+			TEST_ASSERT_EQUAL_MESSAGE(0, file_allocate(fileName, 2, fsInfo.sectorsz / 2U, fsInfo.sectorsz / 200U), fileName);
+			availableSectors -= 2U;
 		}
 		else {
-			TEST_ASSERT_EQUAL_MESSAGE(-ENOMEM, file_allocate(fileName, 2, fsInfo.sectorsz / 2u, fsInfo.sectorsz / 200u), fileName);
+			TEST_ASSERT_EQUAL_MESSAGE(-ENOMEM, file_allocate(fileName, 2, fsInfo.sectorsz / 2U, fsInfo.sectorsz / 200U), fileName);
 		}
 	}
 }
@@ -69,16 +69,16 @@ TEST(meterfs_allocate, many_files)
 /* Test case of allocating files with not allowed name length. */
 TEST(meterfs_allocate, file_name_len)
 {
-	TEST_ASSERT_EQUAL(-EINVAL, file_allocate("file01234", 2, fsInfo.sectorsz / 2u, fsInfo.sectorsz / 100u));
-	TEST_ASSERT_EQUAL(0, file_allocate("file0123", 2, fsInfo.sectorsz / 2u, fsInfo.sectorsz / 100u));
-	TEST_ASSERT_EQUAL(-EINVAL, file_allocate("", 2, fsInfo.sectorsz / 2u, fsInfo.sectorsz / 100u));
+	TEST_ASSERT_EQUAL(-EINVAL, file_allocate("file01234", 2, fsInfo.sectorsz / 2U, fsInfo.sectorsz / 100U));
+	TEST_ASSERT_EQUAL(0, file_allocate("file0123", 2, fsInfo.sectorsz / 2U, fsInfo.sectorsz / 100U));
+	TEST_ASSERT_EQUAL(-EINVAL, file_allocate("", 2, fsInfo.sectorsz / 2U, fsInfo.sectorsz / 100U));
 }
 
 
 /* Test case of allocating file with records bigger than flash sector size. */
 TEST(meterfs_allocate, big_record)
 {
-	TEST_ASSERT_EQUAL(0, file_allocate("file0", 6, fsInfo.sectorsz * 5u, fsInfo.sectorsz + 1u));
+	TEST_ASSERT_EQUAL(0, file_allocate("file0", 6, fsInfo.sectorsz * 5U, fsInfo.sectorsz + 1U));
 }
 
 
@@ -86,18 +86,18 @@ TEST(meterfs_allocate, big_record)
 TEST(meterfs_allocate, var_init_args)
 {
 	TEST_ASSERT_EQUAL(-EINVAL, file_allocate("file0", 0, 0, 0));
-	TEST_ASSERT_EQUAL(-EINVAL, file_allocate("file1", 0, fsInfo.sectorsz / 2u, fsInfo.sectorsz / 100u));
-	TEST_ASSERT_EQUAL(-EINVAL, file_allocate("file2", 1, fsInfo.sectorsz / 2u, fsInfo.sectorsz / 100u));
-	TEST_ASSERT_EQUAL(-EINVAL, file_allocate("file3", 2, fsInfo.sectorsz / 100u, fsInfo.sectorsz / 2u));
-	TEST_ASSERT_EQUAL(-EINVAL, file_allocate("file4", 3, fsInfo.sectorsz * 100u, fsInfo.sectorsz / 100u));
-	TEST_ASSERT_EQUAL(-EINVAL, file_allocate("file5", 7, fsInfo.sectorsz / 2u, 0));
+	TEST_ASSERT_EQUAL(-EINVAL, file_allocate("file1", 0, fsInfo.sectorsz / 2U, fsInfo.sectorsz / 100U));
+	TEST_ASSERT_EQUAL(-EINVAL, file_allocate("file2", 1, fsInfo.sectorsz / 2U, fsInfo.sectorsz / 100U));
+	TEST_ASSERT_EQUAL(-EINVAL, file_allocate("file3", 2, fsInfo.sectorsz / 100U, fsInfo.sectorsz / 2U));
+	TEST_ASSERT_EQUAL(-EINVAL, file_allocate("file4", 3, fsInfo.sectorsz * 100U, fsInfo.sectorsz / 100U));
+	TEST_ASSERT_EQUAL(-EINVAL, file_allocate("file5", 7, fsInfo.sectorsz / 2U, 0));
 
-	TEST_ASSERT_EQUAL(0, file_allocate("file6", 4, fsInfo.sectorsz / 100u, fsInfo.sectorsz / 100u));
-	TEST_ASSERT_EQUAL(0, file_allocate("file7", 6, fsInfo.sectorsz / 2u, fsInfo.sectorsz / 10u));
-	TEST_ASSERT_EQUAL(0, file_allocate("file8", 8, fsInfo.sectorsz / 100u, fsInfo.sectorsz / 200u));
-	TEST_ASSERT_EQUAL(0, file_allocate("file9", 12, fsInfo.sectorsz / 200u, fsInfo.sectorsz / 400u));
-	TEST_ASSERT_EQUAL(0, file_allocate("file10", 10, fsInfo.sectorsz / 2u, fsInfo.sectorsz / 100u));
-	TEST_ASSERT_EQUAL(0, file_allocate("file11", 9, fsInfo.sectorsz / 2u, fsInfo.sectorsz / 100u));
+	TEST_ASSERT_EQUAL(0, file_allocate("file6", 4, fsInfo.sectorsz / 100U, fsInfo.sectorsz / 100U));
+	TEST_ASSERT_EQUAL(0, file_allocate("file7", 6, fsInfo.sectorsz / 2U, fsInfo.sectorsz / 10U));
+	TEST_ASSERT_EQUAL(0, file_allocate("file8", 8, fsInfo.sectorsz / 100U, fsInfo.sectorsz / 200U));
+	TEST_ASSERT_EQUAL(0, file_allocate("file9", 12, fsInfo.sectorsz / 200U, fsInfo.sectorsz / 400U));
+	TEST_ASSERT_EQUAL(0, file_allocate("file10", 10, fsInfo.sectorsz / 2U, fsInfo.sectorsz / 100U));
+	TEST_ASSERT_EQUAL(0, file_allocate("file11", 9, fsInfo.sectorsz / 2U, fsInfo.sectorsz / 100U));
 }
 
 

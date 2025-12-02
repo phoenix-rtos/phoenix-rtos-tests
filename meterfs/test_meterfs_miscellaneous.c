@@ -63,7 +63,7 @@ TEST_TEAR_DOWN(meterfs_miscellaneous)
 TEST(meterfs_miscellaneous, resize_getinfo)
 {
 	file_info_t info;
-	file_info_t pattern = { 4, fsInfo.sectorsz / 2u, fsInfo.sectorsz / 200u, 0 };
+	file_info_t pattern = { 4, fsInfo.sectorsz / 2U, fsInfo.sectorsz / 200U, 0 };
 
 	common.fd = common_preallocOpenFile("file0", pattern.sectors, pattern.filesz, pattern.recordsz);
 	TEST_ASSERT_EQUAL(0, file_getInfo(common.fd, &info.sectors, &info.filesz, &info.recordsz, &info.recordcnt));
@@ -92,10 +92,10 @@ TEST(meterfs_miscellaneous, resize_getinfo)
 /* Test case of resizing file to size bigger than allowed by sectors num. */
 TEST(meterfs_miscellaneous, resize_bigger)
 {
-	file_info_t pattern = { 2, fsInfo.sectorsz / 2u, fsInfo.sectorsz / 200u, 0 };
+	file_info_t pattern = { 2, fsInfo.sectorsz / 2U, fsInfo.sectorsz / 200U, 0 };
 
 	common.fd = common_preallocOpenFile("file0", pattern.sectors, pattern.filesz, pattern.recordsz);
-	pattern.filesz = 2u * fsInfo.sectorsz;
+	pattern.filesz = 2U * fsInfo.sectorsz;
 	pattern.recordsz *= 2;
 	TEST_ASSERT_EQUAL(-EINVAL, file_resize(common.fd, pattern.filesz, pattern.recordsz));
 
@@ -106,7 +106,7 @@ TEST(meterfs_miscellaneous, resize_bigger)
 /* Test case of using lookup multiple times in a row. */
 TEST(meterfs_miscellaneous, multi_lookup)
 {
-	file_info_t info = { 2, fsInfo.sectorsz / 2u, fsInfo.sectorsz / 200u, 0 };
+	file_info_t info = { 2, fsInfo.sectorsz / 2U, fsInfo.sectorsz / 200U, 0 };
 	const char *name = "file0";
 	int i;
 
