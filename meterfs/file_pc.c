@@ -109,6 +109,18 @@ int file_resize(id_t fid, size_t filesz, size_t recordsz)
 }
 
 
+int file_reset(id_t fid)
+{
+	meterfs_i_devctl_t iptr;
+	meterfs_o_devctl_t optr;
+
+	iptr.type = meterfs_reset;
+	iptr.id = fid;
+
+	return hostflashsrv_devctl(&iptr, &optr);
+}
+
+
 int file_getInfo(id_t fid, size_t *sectors, size_t *filesz, size_t *recordsz, size_t *recordcnt)
 {
 	meterfs_i_devctl_t iptr;

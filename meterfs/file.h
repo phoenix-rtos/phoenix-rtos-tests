@@ -43,6 +43,9 @@ int file_allocate(const char *name, size_t sectors, size_t filesz, size_t record
 int file_resize(id_t fid, size_t filesz, size_t recordsz);
 
 
+int file_reset(id_t fid);
+
+
 int file_getInfo(id_t fid, size_t *sectors, size_t *filesz, size_t *recordsz, size_t *recordcnt);
 
 
