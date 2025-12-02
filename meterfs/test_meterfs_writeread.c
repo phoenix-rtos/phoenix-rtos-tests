@@ -250,6 +250,78 @@ TEST(meterfs_writeread, file_turn_small)
 }
 
 
+/* Tests basic reset correctness - record count set to 0 and file size untouched. */
+TEST(meterfs_writeread, reset_file_simple)
+{
+	size_t maxRecordcnt = 20U;
+	file_info_t info = {
+		.sectors = (fsInfo.sz / fsInfo.sectorsz) / 2U,
+		.filesz = sizeof(common.buffMsg) * maxRecordcnt,
+		.recordsz = sizeof(common.buffMsg),
+		.recordcnt = 0
+	};
+	common.fd = common_preallocOpenFile("file0", info.sectors, info.filesz, info.recordsz);
+	size_t i;
+
+	for (i = 0; i < maxRecordcnt / 2U; i++) {
+		(void)memset(common.buffMsg, 'x', sizeof(common.buffMsg));
+		TEST_ASSERT_EQUAL_MESSAGE(info.recordsz, file_write(common.fd, common.buffMsg, info.recordsz), common.buffMsg);
+	}
+
+	TEST_ASSERT_EQUAL(0, file_getInfo(common.fd, &info.sectors, &info.filesz, &info.recordsz, &info.recordcnt));
+	TEST_ASSERT_EQUAL(maxRecordcnt / 2U, info.recordcnt);
+
+	TEST_ASSERT_EQUAL(0, file_reset(common.fd));
+	TEST_ASSERT_EQUAL(0, file_getInfo(common.fd, &info.sectors, &info.filesz, &info.recordsz, &info.recordcnt));
+	TEST_ASSERT_EQUAL(0, info.recordcnt);
+	TEST_ASSERT_EQUAL(sizeof(common.buffMsg) * maxRecordcnt, info.filesz);
+
+	TEST_ASSERT_EQUAL(0, file_close(common.fd));
+}
+
+
+/* Tests reset correctness when interleaved with possibly overlapping writes. */
+TEST(meterfs_writeread, reset_file)
+{
+	size_t maxRecordcnt = 20U;
+	file_info_t info = {
+		.sectors = (fsInfo.sz / fsInfo.sectorsz) / 2U,
+		.filesz = sizeof(common.buffMsg) * maxRecordcnt,
+		.recordsz = sizeof(common.buffMsg),
+		.recordcnt = 0
+	};
+	size_t maxWrites = 10U * maxRecordcnt;
+	size_t recordcnt;
+	const char *format = "a00000%06zu";
+	size_t i, j;
+
+	common.fd = common_preallocOpenFile("file0", info.sectors, info.filesz, info.recordsz);
+
+	for (j = 1; j < maxWrites; j++) {
+		for (i = 0; i < j; i++) {
+			(void)snprintf(common.buffMsg, sizeof(common.buffMsg), format, i);
+			TEST_ASSERT_EQUAL_MESSAGE(info.recordsz, file_write(common.fd, common.buffMsg, info.recordsz), common.buffMsg);
+		}
+
+		TEST_ASSERT_EQUAL(0, file_getInfo(common.fd, &info.sectors, &info.filesz, &info.recordsz, &info.recordcnt));
+		recordcnt = j <= maxRecordcnt ? j : maxRecordcnt;
+		TEST_ASSERT_EQUAL(recordcnt, info.recordcnt);
+
+		for (i = 0; i < j && i < maxRecordcnt; i++) {
+			(void)snprintf(common.buffMsg, sizeof(common.buffMsg), format, i + j - recordcnt);
+			common_readContent(common.fd, i * sizeof(common.buffMsg), common.buffRec, info.recordsz, common.buffMsg, info.recordsz, common.buffMsg);
+		}
+
+		TEST_ASSERT_EQUAL(0, file_reset(common.fd));
+		TEST_ASSERT_EQUAL(0, file_getInfo(common.fd, &info.sectors, &info.filesz, &info.recordsz, &info.recordcnt));
+		TEST_ASSERT_EQUAL(0, info.recordcnt);
+		TEST_ASSERT_EQUAL(sizeof(common.buffMsg) * maxRecordcnt, info.filesz);
+	}
+
+	TEST_ASSERT_EQUAL(0, file_close(common.fd));
+}
+
+
 TEST_GROUP_RUNNER(meterfs_writeread)
 {
 	RUN_TEST_CASE(meterfs_writeread, small_records);
@@ -259,6 +331,8 @@ TEST_GROUP_RUNNER(meterfs_writeread)
 	RUN_TEST_CASE(meterfs_writeread, many_records);
 	RUN_TEST_CASE(meterfs_writeread, file_turn_big);
 	RUN_TEST_CASE(meterfs_writeread, file_turn_small);
+	RUN_TEST_CASE(meterfs_writeread, reset_file_simple);
+	RUN_TEST_CASE(meterfs_writeread, reset_file);
 }
 
 
