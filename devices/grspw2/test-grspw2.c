@@ -137,7 +137,14 @@ static void test_spwRxTx(const size_t nPackets, bool async)
 	unsigned int firstDesc = test_spwConfigureRx(rxOid, nPackets);
 
 	oid_t txOid = test_getOid(TEST_SPW_PATH1);
+
+#if TEST_SPW_LOOPBACK
+	/* Loopback between 1st and 2nd port. Routering will be: AMBA -> 1 -> (loopback) -> 2 -> AMBA */
+	static const uint8_t hdr[] = { 0x1, TEST_SPW_ADDR0, /* protocol ID */ 0x5 }, data[] = { 0x1, 0x2, 0x3, 0x4 };
+#else
 	static const uint8_t hdr[] = { TEST_SPW_ADDR0, /* protocol ID */ 0x5 }, data[] = { 0x1, 0x2, 0x3, 0x4 };
+#endif
+
 	static const size_t hdrSz = sizeof(hdr), dataSz = sizeof(data);
 	const size_t txBufsz = (SPW_TX_MIN_BUFSZ + hdrSz + dataSz) * nPackets;
 	uint8_t *txBuf = malloc(txBufsz);
@@ -161,14 +168,15 @@ static void test_spwRxTx(const size_t nPackets, bool async)
 
 #if TEST_SPW_LOOPBACK
 	for (size_t i = 0; i < nPackets; i++) {
-		TEST_ASSERT_EQUAL(hdrSz + dataSz, packets[i].flags & SPW_RX_LEN_MSK);
-		TEST_ASSERT_EQUAL_HEX8_ARRAY(hdr, packets[i].buf, hdrSz);
-		TEST_ASSERT_EQUAL_HEX8_ARRAY(data, packets[i].buf + hdrSz, dataSz);
+		/* two bytes of header (phy addresses) consumed by router */
+		TEST_ASSERT_EQUAL(hdrSz - 2 + dataSz, packets[i].flags & SPW_RX_LEN_MSK);
+		TEST_ASSERT_EQUAL(hdr[2], packets[i].buf[0]);
+		TEST_ASSERT_EQUAL_HEX8_ARRAY(data, packets[i].buf + hdrSz - 2, dataSz);
 	}
 #else
 	for (size_t i = 0; i < nPackets; i++) {
 		/* first byte of header (phy address) consumed by router */
-		TEST_ASSERT_EQUAL((hdrSz + dataSz - 1), packets[i].flags & SPW_RX_LEN_MSK);
+		TEST_ASSERT_EQUAL((hdrSz - 1 + dataSz), packets[i].flags & SPW_RX_LEN_MSK);
 		TEST_ASSERT_EQUAL(hdr[1], packets[i].buf[0]);
 		TEST_ASSERT_EQUAL_HEX8_ARRAY(data, packets[i].buf + hdrSz - 1, dataSz);
 	}
@@ -260,7 +268,14 @@ static void test_spwRxTxTimeout(size_t nPackets, size_t nLost, uint32_t timeoutU
 	size_t nSent = (nPackets - nLost);
 
 	oid_t txOid = test_getOid(TEST_SPW_PATH1);
+
+#if TEST_SPW_LOOPBACK
+	/* Loopback between 1st and 2nd port. Routering will be: AMBA -> 1 -> (loopback) -> 2 -> AMBA */
+	static const uint8_t hdr[] = { 0x1, TEST_SPW_ADDR0, /* protocol ID */ 0x5 }, data[] = { 0x1, 0x2, 0x3, 0x4 };
+#else
 	static const uint8_t hdr[] = { TEST_SPW_ADDR0, /* protocol ID */ 0x5 }, data[] = { 0x1, 0x2, 0x3, 0x4 };
+#endif
+
 	static const size_t hdrSz = sizeof(hdr), dataSz = sizeof(data);
 	const size_t txBufsz = (SPW_TX_MIN_BUFSZ + hdrSz + dataSz) * nSent;
 	uint8_t *txBuf = malloc(txBufsz);
@@ -286,14 +301,15 @@ static void test_spwRxTxTimeout(size_t nPackets, size_t nLost, uint32_t timeoutU
 
 #if TEST_SPW_LOOPBACK
 	for (size_t i = 0; i < nSent; i++) {
-		TEST_ASSERT_EQUAL(hdrSz + dataSz, packets[i].flags & SPW_RX_LEN_MSK);
-		TEST_ASSERT_EQUAL_HEX8_ARRAY(hdr, packets[i].buf, hdrSz);
-		TEST_ASSERT_EQUAL_HEX8_ARRAY(data, packets[i].buf + hdrSz, dataSz);
+		/* two bytes of header (phy addresses) consumed by router */
+		TEST_ASSERT_EQUAL(hdrSz - 2 + dataSz, packets[i].flags & SPW_RX_LEN_MSK);
+		TEST_ASSERT_EQUAL(hdr[2], packets[i].buf[0]);
+		TEST_ASSERT_EQUAL_HEX8_ARRAY(data, packets[i].buf + hdrSz - 2, dataSz);
 	}
 #else
 	for (size_t i = 0; i < nSent; i++) {
 		/* first byte of header (phy address) consumed by router */
-		TEST_ASSERT_EQUAL((hdrSz + dataSz - 1), packets[i].flags & SPW_RX_LEN_MSK);
+		TEST_ASSERT_EQUAL((hdrSz - 1 + dataSz), packets[i].flags & SPW_RX_LEN_MSK);
 		TEST_ASSERT_EQUAL(hdr[1], packets[i].buf[0]);
 		TEST_ASSERT_EQUAL_HEX8_ARRAY(data, packets[i].buf + hdrSz - 1, dataSz);
 	}
