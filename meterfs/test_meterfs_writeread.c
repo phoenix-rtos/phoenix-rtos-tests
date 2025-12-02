@@ -39,7 +39,7 @@ static void turnCheck(int fd, file_info_t *info, char *bufftx, char *buffrx, uns
 {
 	unsigned int i;
 
-	if ((iterNum >= 10000u) || (info->recordsz < 5u)) {
+	if ((iterNum >= 10000U) || (info->recordsz < 5U)) {
 		return;
 	}
 
@@ -51,9 +51,9 @@ static void turnCheck(int fd, file_info_t *info, char *bufftx, char *buffrx, uns
 
 		TEST_ASSERT_EQUAL_HEX8_ARRAY(bufftx, buffrx, info->recordsz);
 
-		if (info->recordsz > 2u) {
-			(void)memset(buffrx + 1, 'x', info->recordsz - 2u);
-			TEST_ASSERT_EQUAL(info->recordsz - 2u, file_read(fd, 1, buffrx + 1, info->recordsz - 2u));
+		if (info->recordsz > 2U) {
+			(void)memset(buffrx + 1, 'x', info->recordsz - 2U);
+			TEST_ASSERT_EQUAL(info->recordsz - 2U, file_read(fd, 1, buffrx + 1, info->recordsz - 2U));
 			TEST_ASSERT_EQUAL_HEX8_ARRAY(bufftx, buffrx, info->recordsz);
 		}
 	}
@@ -81,16 +81,16 @@ TEST_TEAR_DOWN(meterfs_writeread)
 TEST(meterfs_writeread, small_records)
 {
 	size_t i, writeLen;
-	file_info_t info = { ((5u * 255u) / fsInfo.sectorsz) + 2u, 5 * 255, 5, 0 };
+	file_info_t info = { ((5U * 255U) / fsInfo.sectorsz) + 2U, 5 * 255, 5, 0 };
 
 	common.fd = common_preallocOpenFile("file0", info.sectors, info.filesz, info.recordsz);
 
-	for (i = 0; i < 255u; ++i) {
+	for (i = 0; i < 255U; ++i) {
 		(void)snprintf(common.buffMsg, sizeof(common.buffMsg), "iter=%zu", i);
-		writeLen = i % (info.recordsz + 1u);
-		(i % 2u) ? (void)snprintf(common.pattern, sizeof(common.pattern), "aaaaa") : (void)snprintf(common.pattern, sizeof(common.pattern), "zzzzz");
+		writeLen = i % (info.recordsz + 1U);
+		(i % 2U) ? (void)snprintf(common.pattern, sizeof(common.pattern), "aaaaa") : (void)snprintf(common.pattern, sizeof(common.pattern), "zzzzz");
 
-		if (writeLen != 0u) {
+		if (writeLen != 0U) {
 			TEST_ASSERT_EQUAL_MESSAGE(info.recordsz, file_write(common.fd, common.pattern, writeLen), common.buffMsg);
 			common_readContent(common.fd, info.recordcnt * info.recordsz, common.buffRec, info.recordsz, common.pattern, writeLen, common.buffMsg);
 			info.recordcnt++;
@@ -115,9 +115,9 @@ TEST(meterfs_writeread, file_overflow)
 
 	common.fd = common_preallocOpenFile("file0", info.sectors, info.filesz, info.recordsz);
 
-	for (i = 0; i < 255u; ++i) {
+	for (i = 0; i < 255U; ++i) {
 		(void)snprintf(common.buffMsg, sizeof(common.buffMsg), "iter=%zu", i);
-		(i % 2u) ? (void)snprintf(common.pattern, sizeof(common.pattern), "aaaaa") : (void)snprintf(common.pattern, sizeof(common.pattern), "zzzzz");
+		(i % 2U) ? (void)snprintf(common.pattern, sizeof(common.pattern), "aaaaa") : (void)snprintf(common.pattern, sizeof(common.pattern), "zzzzz");
 
 		TEST_ASSERT_EQUAL_MESSAGE(info.recordsz, file_write(common.fd, common.pattern, info.recordsz), common.buffMsg);
 
@@ -126,7 +126,7 @@ TEST(meterfs_writeread, file_overflow)
 			common_readContent(common.fd, 0, common.buffRec, info.recordsz, common.pattern, info.recordsz, common.buffMsg);
 		}
 		else {
-			(i % 2u) ? (void)snprintf(common.pattern, sizeof(common.pattern), "zzzzz") : (void)snprintf(common.pattern, sizeof(common.pattern), "aaaaa");
+			(i % 2U) ? (void)snprintf(common.pattern, sizeof(common.pattern), "zzzzz") : (void)snprintf(common.pattern, sizeof(common.pattern), "aaaaa");
 			common_readContent(common.fd, 0, common.buffRec, info.recordsz, common.pattern, info.recordsz, common.buffMsg);
 		}
 
@@ -141,21 +141,21 @@ TEST(meterfs_writeread, file_overflow)
 TEST(meterfs_writeread, big_records)
 {
 	size_t i, writeLen;
-	file_info_t info = { ((5u * 255u) / fsInfo.sectorsz) + 2u, 2 * 255, 2, 0 };
+	file_info_t info = { ((5U * 255U) / fsInfo.sectorsz) + 2U, 2 * 255, 2, 0 };
 
 	common.fd = common_preallocOpenFile("file0", info.sectors, info.filesz, info.recordsz);
 
-	for (i = 0; i < 255u; ++i) {
+	for (i = 0; i < 255U; ++i) {
 		(void)snprintf(common.buffMsg, sizeof(common.buffMsg), "iter=%zu", i);
-		writeLen = i % 6u;
-		(i % 2u) ? (void)snprintf(common.pattern, sizeof(common.pattern), "aaaaa") : (void)snprintf(common.pattern, sizeof(common.pattern), "zzzzz");
+		writeLen = i % 6U;
+		(i % 2U) ? (void)snprintf(common.pattern, sizeof(common.pattern), "aaaaa") : (void)snprintf(common.pattern, sizeof(common.pattern), "zzzzz");
 
 		if (writeLen > info.recordsz) {
 			TEST_ASSERT_EQUAL_MESSAGE(info.recordsz, file_write(common.fd, common.pattern, writeLen), common.buffMsg);
 			common_readContent(common.fd, info.recordcnt * info.recordsz, common.buffRec, info.recordsz, common.pattern, info.recordsz, common.buffMsg);
 			info.recordcnt++;
 		}
-		else if (writeLen == 0u) {
+		else if (writeLen == 0U) {
 			/* Resolving case of writing zero length record. */
 			TEST_ASSERT_EQUAL_MESSAGE(-EINVAL, file_write(common.fd, common.pattern, writeLen), common.buffMsg);
 		}
@@ -197,7 +197,7 @@ TEST(meterfs_writeread, file_end)
 TEST(meterfs_writeread, many_records)
 {
 	int i;
-	const size_t headerSectorcnt = 6u;
+	const size_t headerSectorcnt = 6U;
 	file_info_t info = { (fsInfo.sz / fsInfo.sectorsz) - headerSectorcnt, 36000, 12, 0 };
 
 	common.fd = common_preallocOpenFile("file0", info.sectors, info.filesz, info.recordsz);
@@ -227,7 +227,7 @@ TEST(meterfs_writeread, many_records)
 /* Test case of fulfilling all sectors and turning big file to the beginning. */
 TEST(meterfs_writeread, file_turn_big)
 {
-	file_info_t info = { (fsInfo.sz / fsInfo.sectorsz) / 2u, fsInfo.sectorsz / 4u, fsInfo.sectorsz / 4u, 0 };
+	file_info_t info = { (fsInfo.sz / fsInfo.sectorsz) / 2U, fsInfo.sectorsz / 4U, fsInfo.sectorsz / 4U, 0 };
 
 	common.fd = common_preallocOpenFile("file0", info.sectors, info.filesz, info.recordsz);
 
@@ -240,7 +240,7 @@ TEST(meterfs_writeread, file_turn_big)
 /* Test case of fulfilling all sectors and turning small file to the beginning. */
 TEST(meterfs_writeread, file_turn_small)
 {
-	file_info_t info = { 2, fsInfo.sectorsz / 10u, fsInfo.sectorsz / 10u };
+	file_info_t info = { 2, fsInfo.sectorsz / 10U, fsInfo.sectorsz / 10U };
 
 	common.fd = common_preallocOpenFile("file0", info.sectors, info.filesz, info.recordsz);
 
