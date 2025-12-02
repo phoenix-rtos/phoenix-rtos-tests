@@ -189,6 +189,22 @@ int file_resize(id_t fid, size_t filesz, size_t recordsz)
 }
 
 
+int file_reset(id_t fid)
+{
+	msg_t msg;
+	meterfs_i_devctl_t *iptr = (meterfs_i_devctl_t *)msg.i.raw;
+
+	file_prepareDevCtl(&msg);
+
+	iptr->type = meterfs_reset;
+	iptr->id = fid;
+
+	TEST_ASSERT_EQUAL(0, msgSend(meterfs.port, &msg));
+
+	return msg.o.err;
+}
+
+
 int file_getInfo(id_t fid, size_t *sectors, size_t *filesz, size_t *recordsz, size_t *recordcnt)
 {
 	msg_t msg;
