@@ -1,0 +1,5 @@
+test:
+  tests:
+    - name: hello-world
+      harness: hello_harness.py
+      execute: hello_test
