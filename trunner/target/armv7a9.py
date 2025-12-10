@@ -11,6 +11,8 @@ from trunner.harness import (
     PloJffsImageProperty,
     PloImageLoader,
     ShellHarness,
+    Shell,
+    TestHarness,
     TestStartRunningHarness,
     Rebooter,
     RebooterHarness,
@@ -125,12 +127,14 @@ class ARMv7A9Target(TargetBase):
 
     def build_test(self, test: TestOptions) -> Callable[[TestResult], TestResult]:
         builder = HarnessBuilder()
+        shell = Shell(self.dut, self.shell_prompt)
 
         if test.should_reboot:
             builder.add(RebooterHarness(self.rebooter))
+            builder.add(ShellHarness(shell))
 
-        if test.shell is not None:
-            builder.add(ShellHarness(self.dut, self.shell_prompt, test.shell.cmd))
+        if test.shell.cmd is not None:
+            builder.add(TestHarness(shell, test.shell.cmd))
         else:
             builder.add(TestStartRunningHarness())
 
