@@ -12,6 +12,7 @@ from trunner.harness import (
     PloImageLoader,
     ShellHarness,
     Shell,
+    NetworkSetupHarness,
     TestHarness,
     TestStartRunningHarness,
     Rebooter,
@@ -132,6 +133,9 @@ class ARMv7A9Target(TargetBase):
         if test.should_reboot:
             builder.add(RebooterHarness(self.rebooter))
             builder.add(ShellHarness(shell))
+
+        if test.iface_config is not None:
+            builder.add(NetworkSetupHarness(shell, test.iface_config))
 
         if test.shell.cmd is not None:
             builder.add(TestHarness(shell, test.shell.cmd))

@@ -10,6 +10,7 @@ from trunner.harness import (
     RebooterHarness,
     ShellHarness,
     Shell,
+    NetworkSetupHarness,
     TestHarness,
     TestStartRunningHarness,
 )
@@ -81,6 +82,9 @@ class ARMv7M7Target(TargetBase):
 
         if test.should_reboot:
             builder.add(ShellHarness(shell))
+
+        if test.iface_config is not None:
+            builder.add(NetworkSetupHarness(shell, test.iface_config))
 
         if test.shell.cmd is not None:
             builder.add(TestHarness(shell, test.shell.cmd))

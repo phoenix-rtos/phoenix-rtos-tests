@@ -10,6 +10,7 @@ from trunner.harness import (
     PloHarness,
     ShellHarness,
     Shell,
+    NetworkSetupHarness,
     TestHarness,
     TestStartRunningHarness,
     Rebooter,
@@ -122,6 +123,9 @@ class MCXN94xTarget(TargetBase):
 
         if test.should_reboot:
             builder.add(ShellHarness(shell))
+
+        if test.iface_config is not None:
+            builder.add(NetworkSetupHarness(shell, test.iface_config))
 
         if test.shell.cmd is not None:
             builder.add(
