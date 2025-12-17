@@ -432,82 +432,116 @@ def base_args(unprocessed_args):
 def compared_data(base_args):
     """Runs the main comparison logic with base arguments and returns the resulting data structure."""
 
-    return cmp.compare_level(base_args.file_old, base_args.file_new, base_args)
+    return base_args.file_old.compare(base_args.file_new, base_args)
 
 
-def find_node_by_path(nodes, path_parts):
+def find_node_by_path(nodes, path: cmp.Path, level=cmp.Level.TARGET):
     """Finds and returns a node in compared tests structure."""
-    if not path_parts:
+    field_map = {
+        cmp.Level.TARGET: "target",
+        cmp.Level.LOCATION: "location",
+        cmp.Level.SUITE: "suite",
+        cmp.Level.CASE: "case",
+    }
+    if not path:
         return None
-    current_name = path_parts[0]
-    remaining_path = path_parts[1:]
     for node in nodes:
-        if node.name == current_name:
-            if not remaining_path:
+        if getattr(node.path, field_map[level]) == getattr(path, field_map[level]):
+            if node.path.level == path.level:
                 return node
-            if isinstance(node, (cmp.ComparedAgregateNode, cmp.ComparedStatusNode)):
-                return find_node_by_path(node.children, remaining_path)
+            if isinstance(node, (cmp.ComparedAgregateNode, cmp.ComparedStatusNode, cmp.FailuresNode)):
+                return find_node_by_path(node.children, path, level + 1)
     return None
 
 
 def test_find_fails(base_args):
     """Tests that find_fails correctly identifies all failing tests."""
     args = copy.deepcopy(base_args)
-    fails_new = cmp.find_fails(args.file_new, args)
-    assert cmp.count_fails(fails_new) == 4
-    assert "ia32-generic-pc" in fails_new
-    assert "phoenix-rtos-tests/micropython/" in fails_new["ia32-generic-pc"]
-    assert "core" in fails_new["ia32-generic-pc"]["phoenix-rtos-tests/micropython/"]
-    assert "test_ok_to_fail" in fails_new["ia32-generic-pc"]["phoenix-rtos-tests/micropython/"]["core"]
-    assert "test_skip_to_fail" in fails_new["ia32-generic-pc"]["phoenix-rtos-tests/micropython/"]["core"]
-    assert "test_fail_to_fail" in fails_new["ia32-generic-pc"]["phoenix-rtos-tests/micropython/"]["core"]
-    assert "ia32-generic-pc" in fails_new
-    assert "phoenix-rtos-tests/libc/" in fails_new["ia32-generic-pc"]
-    assert "stdlib" in fails_new["ia32-generic-pc"]["phoenix-rtos-tests/libc/"]
-    assert "test_rand_fail" in fails_new["ia32-generic-pc"]["phoenix-rtos-tests/libc/"]["stdlib"]
+    fails_new = args.file_new.failures(args)
+    assert fails_new.count_failures() == 4
+    assert (
+        find_node_by_path(
+            fails_new.children,
+            cmp.Path(cmp.Level.CASE, "ia32-generic-pc", "phoenix-rtos-tests/micropython/", "core", "test_ok_to_fail"),
+        )
+        is not None
+    )
+    assert (
+        find_node_by_path(
+            fails_new.children,
+            cmp.Path(cmp.Level.CASE, "ia32-generic-pc", "phoenix-rtos-tests/micropython/", "core", "test_skip_to_fail"),
+        )
+        is not None
+    )
+    assert (
+        find_node_by_path(
+            fails_new.children,
+            cmp.Path(cmp.Level.CASE, "ia32-generic-pc", "phoenix-rtos-tests/micropython/", "core", "test_fail_to_fail"),
+        )
+        is not None
+    )
+    assert (
+        find_node_by_path(
+            fails_new.children,
+            cmp.Path(cmp.Level.CASE, "ia32-generic-pc", "phoenix-rtos-tests/libc/", "stdlib", "test_rand_fail"),
+        )
+        is not None
+    )
 
 
 def test_find_missing_and_status_changes(compared_data):
     """Tests all status and structural changes."""
-    results = cmp.find_missing(compared_data)
+    results = compared_data.find_missing()
 
     ok_to_fail_node = find_node_by_path(
-        results, ["ia32-generic-pc", "phoenix-rtos-tests/micropython/", "core", "test_ok_to_fail"]
+        results.children,
+        cmp.Path(cmp.Level.CASE, "ia32-generic-pc", "phoenix-rtos-tests/micropython/", "core", "test_ok_to_fail"),
     )
     assert ok_to_fail_node.status_old == cmp.Status.OK and ok_to_fail_node.status_new == cmp.Status.FAIL
 
     fail_to_ok_node = find_node_by_path(
-        results, ["ia32-generic-pc", "phoenix-rtos-tests/micropython/", "core", "test_fail_to_ok"]
+        results.children,
+        cmp.Path(cmp.Level.CASE, "ia32-generic-pc", "phoenix-rtos-tests/micropython/", "core", "test_fail_to_ok"),
     )
     assert fail_to_ok_node.status_old == cmp.Status.FAIL and fail_to_ok_node.status_new == cmp.Status.OK
 
     fail_to_skip_node = find_node_by_path(
-        results, ["ia32-generic-pc", "phoenix-rtos-tests/micropython/", "core", "test_fail_to_skip"]
+        results.children,
+        cmp.Path(cmp.Level.CASE, "ia32-generic-pc", "phoenix-rtos-tests/micropython/", "core", "test_fail_to_skip"),
     )
     assert fail_to_skip_node.status_old == cmp.Status.FAIL and fail_to_skip_node.status_new == cmp.Status.SKIP
 
     skip_to_fail_node = find_node_by_path(
-        results, ["ia32-generic-pc", "phoenix-rtos-tests/micropython/", "core", "test_skip_to_fail"]
+        results.children,
+        cmp.Path(cmp.Level.CASE, "ia32-generic-pc", "phoenix-rtos-tests/micropython/", "core", "test_skip_to_fail"),
     )
     assert skip_to_fail_node.status_old == cmp.Status.SKIP and skip_to_fail_node.status_new == cmp.Status.FAIL
 
     ok_to_skip_node = find_node_by_path(
-        results, ["ia32-generic-pc", "phoenix-rtos-tests/micropython/", "core", "test_ok_to_skip"]
+        results.children,
+        cmp.Path(cmp.Level.CASE, "ia32-generic-pc", "phoenix-rtos-tests/micropython/", "core", "test_ok_to_skip"),
     )
     assert ok_to_skip_node.status_old == cmp.Status.OK and ok_to_skip_node.status_new == cmp.Status.SKIP
 
     skip_to_ok_node = find_node_by_path(
-        results, ["ia32-generic-pc", "phoenix-rtos-tests/micropython/", "core", "test_skip_to_ok"]
+        results.children,
+        cmp.Path(cmp.Level.CASE, "ia32-generic-pc", "phoenix-rtos-tests/micropython/", "core", "test_skip_to_ok"),
     )
     assert skip_to_ok_node.status_old == cmp.Status.SKIP and skip_to_ok_node.status_new == cmp.Status.OK
 
     assert (
-        find_node_by_path(results, ["ia32-generic-pc", "phoenix-rtos-tests/micropython/", "core", "test_skip_to_skip"])
+        find_node_by_path(
+            results.children,
+            cmp.Path(cmp.Level.CASE, "ia32-generic-pc", "phoenix-rtos-tests/micropython/", "core", "test_skip_to_skip"),
+        )
         is None
     )
 
     assert (
-        find_node_by_path(results, ["ia32-generic-pc", "phoenix-rtos-tests/micropython/", "core", "test_fail_to_fail"])
+        find_node_by_path(
+            results.children,
+            cmp.Path(cmp.Level.CASE, "ia32-generic-pc", "phoenix-rtos-tests/micropython/", "core", "test_fail_to_fail"),
+        )
         is None
     )
 
@@ -517,8 +551,8 @@ def test_generate_status_rows_output(base_args, compared_data):
     args = copy.deepcopy(base_args)
     args.status_diff = True
     args.verbose = 3
-    status_diff = cmp.find_missing(compared_data)
-    rows = cmp.generate_status_rows(status_diff, args)
+    status_diff = compared_data.find_missing()
+    rows = status_diff.generate_status_rows(args)
 
     def find_row_by_name(rows, name_substring):
         for row in rows:
@@ -537,7 +571,7 @@ def test_generate_status_rows_output(base_args, compared_data):
     assert row2.status_new == cmp.Status.NONE
 
     args.verbose = 0
-    rows_v0 = cmp.generate_status_rows(status_diff, args)
+    rows_v0 = status_diff.generate_status_rows(args)
 
     assert len(rows_v0) < len(rows)
     assert find_row_by_name(rows_v0, "test_status_change") is None
@@ -551,7 +585,7 @@ def test_generate_time_rows_output(base_args, compared_data):
 
     args.verbose = 3
     args.threshold_filter = False
-    rows = cmp.generate_time_rows(compared_data.children, args)
+    rows = compared_data.generate_time_rows(args)
 
     def find_row_by_name(rows, name_substring):
         for row in rows:
@@ -586,7 +620,7 @@ def test_generate_time_rows_output(base_args, compared_data):
     args.threshold_relative = 40.0
     args.threshold_absolute = 4.0
 
-    rows_filtered = cmp.generate_time_rows(compared_data.children, args)
+    rows_filtered = compared_data.generate_time_rows(args)
 
     assert find_row_by_name(rows_filtered, "test_A_regression") is not None
 
@@ -596,11 +630,11 @@ def test_generate_time_rows_output(base_args, compared_data):
 
     args.verbose = 0
     args.threshold_relative = 60.0
-    rows_filtered_v0 = cmp.generate_time_rows(compared_data.children, args)
+    rows_filtered_v0 = compared_data.generate_time_rows(args)
     assert find_row_by_name(rows_filtered_v0, "armv7a7-imx6ull-evk") is None
 
     args.threshold_relative = 20.0
-    rows_filtered_v0_low = cmp.generate_time_rows(compared_data.children, args)
+    rows_filtered_v0_low = compared_data.generate_time_rows(args)
     assert find_row_by_name(rows_filtered_v0_low, "armv7a7-imx6ull-evk") is None
 
 
@@ -611,17 +645,21 @@ def test_benchmark_filtering(unprocessed_args, mock_benchmark_file):
     args.benchmark_files = [mock_benchmark_file]
     processed_args = cmp.process_args(args)
 
-    filtered_data = cmp.compare_level(processed_args.file_old, processed_args.file_new, processed_args)
+    filtered_data = processed_args.file_old.compare(processed_args.file_new, processed_args)
 
-    included_path = ["armv7a7-imx6ull-evk", "phoenix-rtos-tests/kernel/", "common", "test_A_regression"]
+    included_path = cmp.Path(
+        cmp.Level.CASE, "armv7a7-imx6ull-evk", "phoenix-rtos-tests/kernel/", "common", "test_A_regression"
+    )
     included_node = find_node_by_path(filtered_data.children, included_path)
     assert included_node is not None, "Node specified in benchmark.yml should be present"
 
-    excluded_sibling_path = ["armv7a7-imx6ull-evk", "phoenix-rtos-tests/kernel/", "common", "test_B_improvement"]
+    excluded_sibling_path = cmp.Path(
+        cmp.Level.CASE, "armv7a7-imx6ull-evk", "phoenix-rtos-tests/kernel/", "common", "test_B_improvement"
+    )
     excluded_sibling_node = find_node_by_path(filtered_data.children, excluded_sibling_path)
     assert excluded_sibling_node is None, "Node not in benchmark.yml should be absent"
 
-    excluded_target_node = find_node_by_path(filtered_data.children, ["ia32-generic-pc"])
+    excluded_target_node = find_node_by_path(filtered_data.children, cmp.Path(cmp.Level.TARGET, "ia32-generic-pc"))
     assert excluded_target_node is None, "Target not in benchmark.yml should be absent"
 
 
@@ -631,7 +669,7 @@ def test_threshold_zero_filters_all(base_args, compared_data):
     args.threshold_relative = 1000
     args.threshold_absolute = 0
     args.threshold_filter = True
-    rows = cmp.generate_time_rows(compared_data.children, args)
+    rows = compared_data.generate_time_rows(args)
     assert rows == []
 
 
@@ -640,7 +678,7 @@ def test_only_new_file_present(mock_xml_file_no_tests, unprocessed_args):
     raw_args = copy.deepcopy(unprocessed_args)
     raw_args.file_old = mock_xml_file_no_tests
     args = cmp.process_args(raw_args)
-    results = cmp.compare_level(args.file_old, args.file_new, args)
+    results = args.file_old.compare(args.file_new, args)
     assert results.only_new == ["armv7a7-imx6ull-evk", "ia32-generic-pc", "riscv64-generic-qemu"]
     assert results.only_old == []
     assert results.children == []
@@ -651,7 +689,7 @@ def test_benchmark_file_with_no_matches(unprocessed_args, mock_nonexistent_bench
     raw_args = copy.deepcopy(unprocessed_args)
     raw_args.benchmark_files = [mock_nonexistent_benchmark_file]
     args = cmp.process_args(raw_args)
-    results = cmp.compare_level(args.file_old, args.file_new, args)
+    results = args.file_old.compare(args.file_new, args)
     assert results.children == []
 
 
@@ -672,9 +710,10 @@ def test_filtering_by_individual_args(base_args, filter_attr, filter_value, shou
     """Tests that each filtering arg includes/excludes nodes correctly."""
     args = copy.deepcopy(base_args)
     setattr(args, filter_attr, filter_value)
-    results = cmp.compare_level(args.file_old, args.file_new, args)
+    results = args.file_old.compare(args.file_new, args)
     found_node = find_node_by_path(
-        results.children, ["ia32-generic-pc", "phoenix-rtos-tests/micropython/", "core", "test_ok_to_fail"]
+        results.children,
+        cmp.Path(cmp.Level.CASE, "ia32-generic-pc", "phoenix-rtos-tests/micropython/", "core", "test_ok_to_fail"),
     )
     assert (found_node is not None) == should_find
 
@@ -687,12 +726,12 @@ def test_single_case_suite_is_not_expanded(base_args, compared_data):
     args = copy.deepcopy(base_args)
     args.verbose = 3
 
-    path = ["ia32-generic-pc", "phoenix-rtos-tests/libc/", "single_case_suite"]
+    path = cmp.Path(cmp.Level.SUITE, "ia32-generic-pc", "phoenix-rtos-tests/libc/", "single_case_suite")
     node = find_node_by_path(compared_data.children, path)
     assert node is not None, "The 'single_case_suite' node was not found."
     assert node.single_case is True, "The suite should be flagged as 'single_case'."
 
-    rows = cmp.generate_time_rows(compared_data.children, args)
+    rows = compared_data.generate_time_rows(args)
 
     suite_name_to_find = " -single_case_suite"
     suite_row_found = any(hasattr(row, "name") and row.name == suite_name_to_find for row in rows)
@@ -713,15 +752,15 @@ def test_suite_filtered_to_one_case_is_expanded(unprocessed_args):
     args.verbose = 3
     processed_args = cmp.process_args(args)
 
-    compared_data = cmp.compare_level(processed_args.file_old, processed_args.file_new, processed_args)
+    compared_data = processed_args.file_old.compare(processed_args.file_new, processed_args)
 
-    path = ["armv7a7-imx6ull-evk", "phoenix-rtos-tests/kernel/", "common"]
+    path = cmp.Path(cmp.Level.SUITE, "armv7a7-imx6ull-evk", "phoenix-rtos-tests/kernel/", "common")
     node = find_node_by_path(compared_data.children, path)
     assert node is not None, "The 'common' suite node was not found."
     assert len(node.children) == 1, "The 'common' suite should be filtered to one child case."
     assert node.single_case is False, "The suite should not be flagged as 'single_case' as the case name differs."
 
-    rows = cmp.generate_time_rows(compared_data.children, args)
+    rows = compared_data.generate_time_rows(args)
     suite_row_found = any(hasattr(row, "name") and row.name == " -common" for row in rows)
     case_row_found = any(hasattr(row, "name") and row.name == "  -test_A_regression" for row in rows)
     assert suite_row_found, "The suite row for 'common' should be displayed."
@@ -843,8 +882,8 @@ def test_calculation_with_zero_time_start(mock_xml_edge_cases):
     old_file, new_file = mock_xml_edge_cases
     sys.argv = ["cmp.py", old_file, new_file, "-vvv"]
     args = cmp.process_args(cmp.parse_args())
-    compared_data = cmp.compare_level(args.file_old, args.file_new, args)
-    rows = cmp.generate_time_rows(compared_data.children, args)
+    compared_data = args.file_old.compare(args.file_new, args)
+    rows = compared_data.generate_time_rows(args)
 
     zero_time_row = next((r for r in rows if hasattr(r, "name") and "zero_time_start" in r.name), None)
     assert zero_time_row is not None, "Row for zero_time_start test case not found."
@@ -856,8 +895,8 @@ def test_calculation_on_threshold_boundary(mock_xml_edge_cases):
     old_file, new_file = mock_xml_edge_cases
     sys.argv = ["cmp.py", old_file, new_file, "-vvv"]
     args = cmp.process_args(cmp.parse_args())
-    compared_data = cmp.compare_level(args.file_old, args.file_new, args)
-    rows = cmp.generate_time_rows(compared_data.children, args)
+    compared_data = args.file_old.compare(args.file_new, args)
+    rows = compared_data.generate_time_rows(args)
 
     boundary_row = next((r for r in rows if hasattr(r, "name") and "boundary_threshold" in r.name), None)
     assert boundary_row is not None, "Row for boundary_threshold test case not found."
@@ -869,8 +908,8 @@ def test_calculation_with_opposing_thresholds(mock_xml_edge_cases):
     old_file, new_file = mock_xml_edge_cases
     sys.argv = ["cmp.py", old_file, new_file, "-vvv"]
     args = cmp.process_args(cmp.parse_args())
-    compared_data = cmp.compare_level(args.file_old, args.file_new, args)
-    rows = cmp.generate_time_rows(compared_data.children, args)
+    compared_data = args.file_old.compare(args.file_new, args)
+    rows = compared_data.generate_time_rows(args)
 
     opposing_row = next((r for r in rows if hasattr(r, "name") and "opposing_threshold" in r.name), None)
     assert opposing_row is not None, "Row for opposing_threshold test case not found."
@@ -890,8 +929,8 @@ def test_parsing_empty_test_suite(mock_xml_edge_cases):
     old_file, new_file = mock_xml_edge_cases
     sys.argv = ["cmp.py", old_file, new_file]
     args = cmp.process_args(cmp.parse_args())
-    compared_data = cmp.compare_level(args.file_old, args.file_new, args)
-    assert find_node_by_path(compared_data.children, ["edge", "empty/", "suite"]) is None
+    compared_data = args.file_old.compare(args.file_new, args)
+    assert find_node_by_path(compared_data.children, cmp.Path(cmp.Level.SUITE, "edge", "empty/", "suite")) is None
 
 
 def test_handling_invalid_yaml_file(mock_invalid_yaml_file, unprocessed_args, capsys):
@@ -908,11 +947,15 @@ def test_combining_multiple_filters(base_args):
     args = copy.deepcopy(base_args)
     args.targets = ["ia32-generic-pc"]
     args.suites = ["core"]
-    results = cmp.compare_level(args.file_old, args.file_new, args)
+    results = args.file_old.compare(args.file_new, args)
 
-    found_node = find_node_by_path(results.children, ["ia32-generic-pc", "phoenix-rtos-tests/micropython/", "core"])
+    found_node = find_node_by_path(
+        results.children, cmp.Path(cmp.Level.SUITE, "ia32-generic-pc", "phoenix-rtos-tests/micropython/", "core")
+    )
     assert found_node is not None
-    not_found_node = find_node_by_path(results.children, ["ia32-generic-pc", "phoenix-rtos-tests/libc/", "stdlib"])
+    not_found_node = find_node_by_path(
+        results.children, cmp.Path(cmp.Level.SUITE, "ia32-generic-pc", "phoenix-rtos-tests/libc/", "stdlib")
+    )
     assert not_found_node is None
 
 
@@ -922,21 +965,24 @@ def test_interaction_of_benchmark_and_cli_filters(unprocessed_args, mock_benchma
     args.benchmark_files = [mock_benchmark_file]
     args.cases = ["test_A_regression"]
     processed_args = cmp.process_args(args)
-    results = cmp.compare_level(processed_args.file_old, processed_args.file_new, processed_args)
+    results = processed_args.file_old.compare(processed_args.file_new, processed_args)
     node_found = find_node_by_path(
-        results.children, ["armv7a7-imx6ull-evk", "phoenix-rtos-tests/kernel/", "common", "test_A_regression"]
+        results.children,
+        cmp.Path(cmp.Level.CASE, "armv7a7-imx6ull-evk", "phoenix-rtos-tests/kernel/", "common", "test_A_regression"),
     )
     assert node_found is not None, "Node should be found when CLI and benchmark filters overlap."
 
     args.cases = ["test_B_improvement"]
     processed_args = cmp.process_args(args)
-    results = cmp.compare_level(processed_args.file_old, processed_args.file_new, processed_args)
+    results = processed_args.file_old.compare(processed_args.file_new, processed_args)
     node_not_found = find_node_by_path(
-        results.children, ["armv7a7-imx6ull-evk", "phoenix-rtos-tests/kernel/", "common", "test_B_improvement"]
+        results.children,
+        cmp.Path(cmp.Level.CASE, "armv7a7-imx6ull-evk", "phoenix-rtos-tests/kernel/", "common", "test_B_improvement"),
     )
     assert node_not_found is None, "Node should NOT be found when it's not part of the benchmark."
     node_not_found = find_node_by_path(
-        results.children, ["armv7a7-imx6ull-evk", "phoenix-rtos-tests/kernel/", "common", "test_A_improvement"]
+        results.children,
+        cmp.Path(cmp.Level.CASE, "armv7a7-imx6ull-evk", "phoenix-rtos-tests/kernel/", "common", "test_A_improvement"),
     )
     assert node_not_found is None, "Node should NOT be found when CLI filter excludes it from benchmark scope."
 
@@ -1034,8 +1080,8 @@ def test_location_empty_string(unprocessed_args, mock_xml_location_empty_string)
     args = cmp.process_args(raw_args)
     args.verbose = 1
 
-    compared_data = cmp.compare_level(args.file_old, args.file_new, args)
-    rows = cmp.generate_time_rows(compared_data.children, args)
+    compared_data = args.file_old.compare(args.file_new, args)
+    rows = compared_data.generate_time_rows(args)
 
     def find_location_row_by_name(rows, name):
         for row in rows:

@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 
+from __future__ import annotations
+
 import argparse
 import sys
-from dataclasses import dataclass, field
+from abc import ABC, abstractmethod
+from dataclasses import dataclass, field, replace
 from enum import Enum, IntEnum
+from typing import ClassVar
 
 import yaml
 from junitparser import Error, Failure, JUnitXml, Skipped
@@ -32,6 +36,7 @@ class ChangeDirection(Enum):
 
 
 class Level(IntEnum):
+    ROOT = -1
     TARGET = 0
     LOCATION = 1
     SUITE = 2
@@ -39,6 +44,60 @@ class Level(IntEnum):
 
     def __add__(self, other):
         return Level(self.value + other)
+
+    @property
+    def prefix(self):
+        if self == self.ROOT:
+            raise ValueError("Root level does not have a prefix")
+        prefixes = ["Target: ", "-", " -", "  -"]
+        return prefixes[self]
+
+    @property
+    def style(self):
+        if self == self.ROOT:
+            raise ValueError("Root level does not have a style")
+        styles = [ESCAPE_BOLD + ESCAPE_ITALIC, ESCAPE_BOLD, ESCAPE_BOLD, ""]
+        return styles[self]
+
+    @property
+    def separator(self):
+        if self == self.ROOT:
+            raise ValueError("Root level does not have a separator")
+        separators = ["║", "║", "┃", "┆"]
+        return separators[self]
+
+    @property
+    def failure_class(self):
+        classes = [
+            FailuresRootNode,
+            FailuresTargetNode,
+            FailuresLocationNode,
+            FailuresSuiteNode,
+            FailuresCaseNode,
+        ]
+        return classes[self.value + 1]
+
+    @property
+    def compared_class(self):
+        classes = [
+            ComparedRootNode,
+            ComparedTargetNode,
+            ComparedLocationNode,
+            ComparedSuiteNode,
+            ComparedCaseNode,
+        ]
+        return classes[self.value + 1]
+
+    @property
+    def compared_status_class(self):
+        classes = [
+            ComparedRootStatusNode,
+            ComparedTargetStatusNode,
+            ComparedLocationStatusNode,
+            ComparedSuiteStatusNode,
+            ComparedCaseStatusNode,
+        ]
+        return classes[self.value + 1]
 
 
 class Status(Enum):
@@ -58,92 +117,75 @@ class Status(Enum):
 
 
 @dataclass
-class Args:
-    file_old: {}
-    file_new: {}
-    verbose: int
-    benchmarks: {}
-    targets: []
-    locations: []
-    suites: []
-    cases: []
-    threshold_absolute: float
-    threshold_relative: float
-    threshold_filter: bool
-    status_diff: bool
-    show_fails: bool
+class Path:
+    level: Level
+    target: str | None = None
+    location: str | None = None
+    suite: str | None = None
+    case: str | None = None
+
+    FIELD_MAP: ClassVar[dict] = {
+        Level.TARGET: "target",
+        Level.LOCATION: "location",
+        Level.SUITE: "suite",
+        Level.CASE: "case",
+    }
+
+    def __add__(self, next_name: str):
+        """Return a new Path advanced one level deeper with `next_name` set."""
+        next_level = self.level + 1
+        if next_level > Level.CASE:
+            raise ValueError("Cannot go deeper than CASE level")
+
+        # Figure out which field to set based on the next level
+        field_name = self.FIELD_MAP[next_level]
+
+        # Create a new Path with updated field and level
+        return replace(self, level=next_level, **{field_name: next_name})
+
+    @property
+    def name(self) -> str:
+        return getattr(self, self.FIELD_MAP[self.level])
+
+    def should_process(self, args: Args):
+        """
+        Determine whether a node should be considered for comparison.
+
+        This function applies general command-line filters (targets, locations, suites, cases)
+        and benchmark filters to decide whether a node should be included in comparison.
+        """
+        if self.level >= Level.TARGET and args.targets and self.target not in args.targets:
+            return False
+        if self.level >= Level.LOCATION and args.locations and self.location not in args.locations:
+            return False
+        if self.level >= Level.SUITE and args.suites and self.suite not in args.suites:
+            return False
+        if self.level >= Level.CASE and args.cases and self.case not in args.cases:
+            return False
+
+        if not args.benchmarks:
+            return True
+        for benchmark in args.benchmarks.values():
+            if self.level >= Level.LOCATION and self.location != benchmark["location"]:
+                continue
+            if self.level >= Level.SUITE and self.suite not in benchmark["suites"]:
+                continue
+            if self.level >= Level.CASE and self.case not in benchmark["suites"][self.suite]["cases"]:
+                continue
+            return True
+        return False
+
+
+class Row(ABC):
+    @abstractmethod
+    def name_width(self): ...
+
+    @abstractmethod
+    def print(self, max_name_len): ...
 
 
 @dataclass
-class Testsuite:
-    target: str
-    location: str
-    name: str
-    cases: {} = field(default_factory=dict)
-
-
-@dataclass
-class Testcase:
-    name: str
-    time: float
-    status: Status
-
-
-@dataclass
-class ComparedNode:
-    name: str
-    time_old: float
-    time_new: float
-
-
-@dataclass
-class ComparedCaseNode(ComparedNode):
-    status_old: Status
-    status_new: Status
-    difference: float = None
-    percentage: float = None
-
-    @classmethod
-    def from_cases(cls, case1, case2):
-        case_cmp = cls(
-            name=case1.name if case1 else case2.name,
-            time_old=case1.time if case1 else None,
-            status_old=case1.status if case1 else Status.NONE,
-            time_new=case2.time if case2 else None,
-            status_new=case2.status if case2 else Status.NONE,
-        )
-        case_cmp.difference, case_cmp.percentage = (
-            difference_and_percentage(case_cmp.time_old, case_cmp.time_new) if case1 and case2 else (None, None)
-        )
-        return case_cmp
-
-
-@dataclass
-class ComparedAgregateNode(ComparedNode):
-    children: [] = field(default_factory=list)
-
-
-@dataclass
-class ComparedContainerNode(ComparedAgregateNode):
-    only_old: [] = field(default_factory=list)
-    only_new: [] = field(default_factory=list)
-
-
-@dataclass
-class ComparedStatusNode:
-    name: str
-    status_old: Status
-    status_new: Status
-    children: [] = field(default_factory=list)
-
-
-@dataclass
-class ComparedSuiteNode(ComparedAgregateNode):
-    single_case: bool = False
-
-
-@dataclass
-class TimeRow:
+class TimeRow(Row):
     style: str = ""
     separator: str = ""
     name: str = ""
@@ -158,7 +200,7 @@ class TimeRow:
         color = CHANGE_COLORS[change_dir(difference, percentage, args)]
         self.style = style
         self.separator = separator
-        self.name = f"{prefix}{data.name}"
+        self.name = f"{prefix}{data.path.name}"
         self.time_old = f"{data.time_old:.3f}"
         self.time_new = f"{data.time_new:.3f}"
         self.color = color
@@ -179,7 +221,7 @@ class TimeRow:
 
 
 @dataclass
-class StatusRow:
+class StatusRow(Row):
     style: str = ""
     separator: str = ""
     name: str = ""
@@ -197,24 +239,20 @@ class StatusRow:
         )
 
 
-class StatusRowHeader:
-    @staticmethod
-    def name_width():
+class StatusRowHeader(Row):
+    def name_width(self):
         return len("NAME")
 
-    @staticmethod
-    def print(max_name_len):
+    def print(self, max_name_len):
         print(f"{ESCAPE_BOLD}{'':>{max_name_len}}║{'OLD':^9}║{'NEW':^9}║{ESCAPE_RESET}")
         print(f"{ESCAPE_BOLD}{ESCAPE_UNDERLINE}{'NAME':^{max_name_len}}║{'STATUS':^9}║{'STATUS':^9}║{ESCAPE_RESET}")
 
 
-class TimeRowHeader:
-    @staticmethod
-    def name_width():
+class TimeRowHeader(Row):
+    def name_width(self):
         return len("NAME")
 
-    @staticmethod
-    def print(max_name_len):
+    def print(self, max_name_len):
         print(f"{ESCAPE_BOLD}{'':>{max_name_len}}║{'OLD':^9}║{'NEW':^9}║{'DIFFERENCE':^20}{ESCAPE_RESET}")
         print(
             f"{ESCAPE_BOLD}{ESCAPE_UNDERLINE}{'NAME':^{max_name_len}}║"
@@ -222,17 +260,427 @@ class TimeRowHeader:
         )
 
 
-class EmptyRow:
-    @staticmethod
-    def name_width():
+class EmptyRow(Row):
+    def name_width(self):
         return 0
 
-    @staticmethod
-    def print(_):
+    def print(self, _):
         print()
 
 
-def parse_args() -> Args:
+@dataclass
+class ComparedStatusNode(ABC):
+    path: Path
+    status_old: Status
+    status_new: Status
+    children: [] = field(default_factory=list)
+
+    def generate_status_rows(self, args: Args) -> list[Row]:
+        rows = []
+        for node in self.children:
+            if args.verbose == node.path.level and node.status_old == node.status_new:
+                continue
+            current_row = StatusRow(
+                node.path.level.style,
+                node.path.level.separator,
+                f"{node.path.level.prefix}{node.path.name}",
+                node.status_old,
+                node.status_new,
+            )
+            children_rows = None
+            if args.verbose > node.path.level:
+                children_rows = node.generate_status_rows(args)
+            if node.status_old != node.status_new or children_rows:
+                if node.path.level == 0 and (args.verbose > 0 or not rows):
+                    if rows:
+                        rows.append(EmptyRow())
+                    rows.append(StatusRowHeader())
+                rows.append(current_row)
+                if args.verbose > node.path.level:
+                    rows.extend(children_rows)
+        return rows
+
+
+@dataclass
+class ComparedRootStatusNode(ComparedStatusNode):
+    pass
+
+
+@dataclass
+class ComparedTargetStatusNode(ComparedStatusNode):
+    pass
+
+
+@dataclass
+class ComparedLocationStatusNode(ComparedStatusNode):
+    pass
+
+
+@dataclass
+class ComparedSuiteStatusNode(ComparedStatusNode):
+    pass
+
+
+@dataclass
+class ComparedCaseStatusNode(ComparedStatusNode):
+    pass
+
+
+@dataclass
+class ComparedNode(ABC):
+    path: Path
+    time_old: float
+    time_new: float
+
+    def should_display(self, args: Args) -> bool:
+        """
+        Determine whether a comparison result should be shown in the output.
+
+        This function is used after comparisons are made to decide whether a node
+        should appear in the displayed results, based on thresholds or case-level status.
+
+        Args:
+            args (Args): Parsed command-line arguments controlling display behavior.
+
+        Returns:
+            bool: True if the node should be displayed, False otherwise.
+        """
+        if args.threshold_filter:
+            difference, percentage = difference_and_percentage(self.time_old, self.time_new)
+            return change_dir(difference, percentage, args) in (ChangeDirection.INCREASE, ChangeDirection.DECREASE)
+        return True
+
+    @abstractmethod
+    def generate_time_rows(self, args: Args) -> list[Row]: ...
+
+    @abstractmethod
+    def find_missing(self) -> list[ComparedStatusNode]: ...
+
+
+@dataclass
+class ComparedAgregateNode(ComparedNode, ABC):
+    children: [] = field(default_factory=list)
+
+    def generate_time_rows(self, args: Args) -> list[Row]:
+        rows = []
+        for node in self.children:
+            go_deeper = args.verbose > node.path.level and (node.path.level < Level.SUITE or not node.single_case)
+            if not go_deeper and not node.should_display(args):
+                continue
+            current_row = TimeRow(node, node.path.level.style, node.path.level.separator, node.path.level.prefix, args)
+            children_rows = None
+            if go_deeper:
+                children_rows = node.generate_time_rows(args)
+            if not go_deeper or children_rows:
+                if node.path.level == 0 and (args.verbose > 0 or not rows):
+                    if rows:
+                        rows.append(EmptyRow())
+                    rows.append(TimeRowHeader())
+                rows.append(current_row)
+                if go_deeper:
+                    rows.extend(children_rows)
+        return rows
+
+    def find_missing(self) -> list[ComparedStatusNode]:
+        children = [result for child in self.children if (result := child.find_missing())]
+        return (
+            self.path.level.compared_status_class(
+                path=self.path, status_old=Status.PRESENT, status_new=Status.PRESENT, children=children
+            )
+            if children
+            else None
+        )
+
+
+@dataclass
+class ComparedContainerNode(ComparedAgregateNode, ABC):
+    only_old: [] = field(default_factory=list)
+    only_new: [] = field(default_factory=list)
+
+    def find_missing(self) -> list[ComparedStatusNode]:
+        only_old = [
+            path.level.compared_status_class(
+                path=path, status_old=Status.PRESENT, status_new=Status.MISSING, children=[]
+            )
+            for path in (self.path + result for result in self.only_old)
+        ]
+        only_new = [
+            path.level.compared_status_class(
+                path=path, status_old=Status.MISSING, status_new=Status.PRESENT, children=[]
+            )
+            for path in (self.path + result for result in self.only_new)
+        ]
+        result = super().find_missing() or self.path.level.compared_status_class(
+            path=self.path, status_old=Status.PRESENT, status_new=Status.PRESENT
+        )
+        result.children = only_old + only_new + result.children
+        return result if result.children else None
+
+
+@dataclass
+class ComparedRootNode(ComparedContainerNode):
+    def find_missing(self) -> list[ComparedStatusNode]:
+        return super().find_missing() or self.path.level.compared_status_class(
+            path=self.path, status_old=Status.PRESENT, status_new=Status.PRESENT
+        )
+
+
+@dataclass
+class ComparedTargetNode(ComparedContainerNode):
+    pass
+
+
+@dataclass
+class ComparedLocationNode(ComparedContainerNode):
+    pass
+
+
+@dataclass
+class ComparedSuiteNode(ComparedAgregateNode):
+    single_case: bool = False
+
+
+@dataclass
+class ComparedCaseNode(ComparedNode):
+    status_old: Status
+    status_new: Status
+    difference: float = None
+    percentage: float = None
+
+    @classmethod
+    def from_cases(cls, case1, case2):
+        case_cmp = cls(
+            path=case1.path if case1 else case2.path,
+            time_old=case1.time if case1 else None,
+            status_old=case1.status if case1 else Status.NONE,
+            time_new=case2.time if case2 else None,
+            status_new=case2.status if case2 else Status.NONE,
+        )
+        case_cmp.difference, case_cmp.percentage = (
+            difference_and_percentage(case_cmp.time_old, case_cmp.time_new) if case1 and case2 else (None, None)
+        )
+        return case_cmp
+
+    def should_display(self, args: Args) -> bool:
+        if self.status_old != Status.OK or self.status_new != Status.OK:
+            return False
+        if args.threshold_filter:
+            difference, percentage = difference_and_percentage(self.time_old, self.time_new)
+            return change_dir(difference, percentage, args) in (ChangeDirection.INCREASE, ChangeDirection.DECREASE)
+        return True
+
+    def generate_time_rows(self, args: Args) -> list[Row]:
+        return []
+
+    def find_missing(self) -> ComparedStatusNode | None:
+        return (
+            ComparedCaseStatusNode(self.path, self.status_old, self.status_new)
+            if self.status_old != self.status_new
+            else None
+        )
+
+
+@dataclass
+class FailuresNode(ABC):
+    path: Path
+
+    @abstractmethod
+    def count_failures(self): ...
+
+    @abstractmethod
+    def print(self, args: Args): ...
+
+
+@dataclass
+class FailuresContainerNode(FailuresNode, ABC):
+    children: list[FailuresNode]
+
+    def count_failures(self):
+        return sum(child.count_failures() for child in self.children)
+
+    def print(self, args: Args):
+        style = self.path.level.style
+        prefix = self.path.level.prefix
+        if args.verbose >= self.path.level:
+            print(f"{style}{prefix}{self.path.name}{ESCAPE_RESET}")
+            for child in self.children:
+                child.print(args)
+
+
+@dataclass
+class FailuresRootNode(FailuresContainerNode):
+    def print(self, args: Args):
+        for child in self.children:
+            child.print(args)
+
+
+@dataclass
+class FailuresTargetNode(FailuresContainerNode):
+    pass
+
+
+@dataclass
+class FailuresLocationNode(FailuresContainerNode):
+    pass
+
+
+@dataclass
+class FailuresSuiteNode(FailuresContainerNode):
+    def print(self, args: Args):
+        styles = [ESCAPE_BOLD + ESCAPE_ITALIC, ESCAPE_BOLD, ESCAPE_BOLD, ""]
+        prefixes = ["Target: ", "-", " -", "  -"]
+        style = styles[self.path.level]
+        prefix = prefixes[self.path.level]
+        if args.verbose >= self.path.level:
+            print(f"{style}{prefix}{self.path.name}{ESCAPE_RESET}")
+            if not (len(self.children) == 1 and self.children[0].path.name in ("", self.path.name)):
+                for child in self.children:
+                    child.print(args)
+
+
+@dataclass
+class FailuresCaseNode(FailuresNode):
+    def count_failures(self):
+        return 1
+
+    def print(self, args):
+        styles = [ESCAPE_BOLD + ESCAPE_ITALIC, ESCAPE_BOLD, ESCAPE_BOLD, ""]
+        prefixes = ["Target: ", "-", " -", "  -"]
+        style = styles[self.path.level]
+        prefix = prefixes[self.path.level]
+
+        if args.verbose >= self.path.level:
+            print(f"{style}{prefix}{self.path.name}{ESCAPE_RESET}")
+
+
+@dataclass
+class ResultNode(ABC):
+    path: Path
+
+
+@dataclass
+class ContainerResultNode(ResultNode, ABC):
+    children: dict[str, ResultNode] = field(default_factory=dict)
+    COMPARED_CLASS: ClassVar[type[ComparedNode]]
+    FAILURE_CLASS: ClassVar[type[FailuresNode]]
+
+    def failures(self, args: Args, filtered: bool = False) -> FailuresNode:
+        if self.children and (not filtered or self.path.should_process(args)):
+            node = self.FAILURE_CLASS(
+                self.path, [fails for child in self.children.values() if (fails := child.failures(args, filtered))]
+            )
+            return node if node.children else None
+        return None
+
+    def compare(self, other, args):
+        only_old, only_new = remove_non_common(self.children, other.children)
+        only_old = [item for item in only_old if (self.path + item).should_process(args)]
+        only_new = [item for item in only_new if (self.path + item).should_process(args)]
+        output = self.COMPARED_CLASS(
+            path=self.path,
+            time_old=0,
+            time_new=0,
+            children=[],
+            only_old=only_old,
+            only_new=only_new,
+        )
+        for child, child_data in self.children.items():
+            if not child_data.path.should_process(args):
+                continue
+            child_data_new = other.children[child]
+            child_output = child_data.compare(child_data_new, args)
+            if child_output.children:
+                output.children.append(child_output)
+                output.time_old += child_output.time_old
+                output.time_new += child_output.time_new
+        return output
+
+
+@dataclass
+class RootResultNode(ContainerResultNode):
+    COMPARED_CLASS: ClassVar[type[ComparedNode]] = ComparedRootNode
+    FAILURE_CLASS: ClassVar[type[FailuresNode]] = FailuresRootNode
+
+
+@dataclass
+class Target(ContainerResultNode):
+    COMPARED_CLASS: ClassVar[type[ComparedNode]] = ComparedTargetNode
+    FAILURE_CLASS: ClassVar[type[FailuresNode]] = FailuresTargetNode
+
+
+@dataclass
+class Location(ContainerResultNode):
+    COMPARED_CLASS: ClassVar[type[ComparedNode]] = ComparedLocationNode
+    FAILURE_CLASS: ClassVar[type[FailuresNode]] = FailuresLocationNode
+
+
+@dataclass
+class Testsuite(ContainerResultNode):
+    COMPARED_CLASS: ClassVar[type[ComparedNode]] = ComparedSuiteNode
+    FAILURE_CLASS: ClassVar[type[FailuresNode]] = FailuresSuiteNode
+
+    def compare(self, other, args):
+        cases = []
+        for name, case in self.children.items():
+            cases.append(ComparedCaseNode.from_cases(case, other.children.get(name, None)))
+        for name, case in other.children.items():
+            if name not in self.children:
+                case_cmp = ComparedCaseNode.from_cases(None, case)
+                cases.append(case_cmp)
+        cases = [case for case in cases if case.path.should_process(args)]
+        output = self.COMPARED_CLASS(
+            path=self.path,
+            children=cases,
+            time_old=sum(
+                case.time_old for case in cases if case.status_old == Status.OK and case.status_new == Status.OK
+            ),
+            time_new=sum(
+                case.time_new for case in cases if case.status_old == Status.OK and case.status_new == Status.OK
+            ),
+            single_case=(
+                len(cases) == 1
+                and cases[0].path.case
+                in [
+                    "",
+                    self.path.suite,
+                ]
+                and cases[0].status_old == Status.OK
+                and cases[0].status_new == Status.OK
+            ),
+        )
+
+        return output
+
+
+@dataclass
+class Testcase(ResultNode):
+    time: float
+    status: Status
+
+    def failures(self, args: Args, filtered: bool = False):
+        if (not filtered or self.path.should_process(args)) and self.status == Status.FAIL:
+            return FailuresCaseNode(self.path)
+        return None
+
+
+@dataclass
+class Args:
+    file_old: RootResultNode
+    file_new: RootResultNode
+    verbose: int
+    benchmarks: {}
+    targets: []
+    locations: []
+    suites: []
+    cases: []
+    threshold_absolute: float
+    threshold_relative: float
+    threshold_filter: bool
+    status_diff: bool
+    show_fails: bool
+
+
+def parse_args():
     parser = argparse.ArgumentParser(
         description="Compares two test result xml files",
         epilog="Example: python3 cmp.py old_results.xml new_results.xml -v --threshold 5.0 -t ia32-generic-qemu",
@@ -378,7 +826,7 @@ def split_path(s: str) -> tuple[str, str]:
     return s[: index + 1], s[index + 1:]
 
 
-def parse_xml(filename: str) -> dict[str, dict[str, dict[str, Testsuite]]]:
+def parse_xml(filename: str) -> RootResultNode:
     try:
         xml = JUnitXml.fromfile(filename)
     except FileNotFoundError:
@@ -388,7 +836,7 @@ def parse_xml(filename: str) -> dict[str, dict[str, dict[str, Testsuite]]]:
         print(f"{ESCAPE_BOLD}{ESCAPE_RED}Error:{ESCAPE_RESET} Failed to parse XML file: {e}")
         sys.exit(1)
 
-    testsuites = {}
+    root = RootResultNode(Path(Level.ROOT))
     for suite in xml:
         # suite.name format is 'target:path', where target is the target name
         # and path is equal to case.classname for each case
@@ -398,15 +846,21 @@ def parse_xml(filename: str) -> dict[str, dict[str, dict[str, Testsuite]]]:
             )
             continue
 
-        target, path = suite.name.split(":", 1)
-        if target not in testsuites:
-            testsuites[target] = {}
+        target_name, path = suite.name.split(":", 1)
+        if target_name not in root.children:
+            root.children[target_name] = Target(Path(Level.TARGET, target_name))
+        target = root.children[target_name]
 
-        location, suite_name = split_path(path)
-        if not location:
-            location = suite_name
+        location_name, suite_name = split_path(path)
+        if not location_name:
+            location_name = suite_name
+        if location_name not in target.children:
+            target.children[location_name] = Location(Path(Level.LOCATION, target_name, location_name))
+        location = target.children[location_name]
 
-        testsuite = Testsuite(target, location, suite_name)
+        if suite_name not in location.children:
+            location.children[suite_name] = Testsuite(Path(Level.SUITE, target_name, location_name, suite_name))
+        testsuite = location.children[suite_name]
 
         for case in suite:
             # case.name is 'target:path.testcase', where target and path are the same as in suite
@@ -440,12 +894,11 @@ def parse_xml(filename: str) -> dict[str, dict[str, dict[str, Testsuite]]]:
                 elif isinstance(case.result[0], (Failure, Error)):
                     status = Status.FAIL
 
-            testcase = Testcase(basename, float(case.time), status)
-            testsuite.cases[basename] = testcase
-        if location not in testsuites[target]:
-            testsuites[target][location] = {}
-        testsuites[target][location][suite_name] = testsuite
-    return testsuites
+            testcase = Testcase(
+                Path(Level.CASE, target_name, location_name, suite_name, basename), float(case.time), status
+            )
+            testsuite.children[basename] = testcase
+    return root
 
 
 def remove_non_common(old: dict, new: dict) -> tuple[list, list]:
@@ -494,165 +947,6 @@ CHANGE_COLORS = {
 }
 
 
-def compare_cases(cases_old: dict[str, Testcase], cases_new: dict[str, Testcase]) -> list[ComparedCaseNode]:
-    cases = []
-    for name, case in cases_old.items():
-        cases.append(ComparedCaseNode.from_cases(case, cases_new.get(name, None)))
-    for name, case in cases_new.items():
-        if name not in cases_old:
-            case_cmp = ComparedCaseNode.from_cases(None, case)
-            cases.append(case_cmp)
-    return cases
-
-
-def compare_level(
-    data_old: dict | Testsuite,
-    data_new: dict | Testsuite,
-    args: Args,
-    depth: int = 0,
-    path: list[str] | None = None,
-) -> ComparedContainerNode | ComparedSuiteNode:
-    if depth == Level.CASE:
-        cases = compare_cases(data_old.cases, data_new.cases)
-        cases = [case for case in cases if filter(path + [case.name], args)]
-        output = ComparedSuiteNode(
-            name=path[-1],
-            children=cases,
-            time_old=sum(
-                case.time_old for case in cases if case.status_old == Status.OK and case.status_new == Status.OK
-            ),
-            time_new=sum(
-                case.time_new for case in cases if case.status_old == Status.OK and case.status_new == Status.OK
-            ),
-            single_case=(
-                len(cases) == 1
-                and cases[0].name
-                in [
-                    "",
-                    path[-1],
-                ]
-                and cases[0].status_old == Status.OK
-                and cases[0].status_new == Status.OK
-            ),
-        )
-
-        return output
-    only_old, only_new = remove_non_common(data_old, data_new)
-    only_old = [item for item in only_old if filter((path or []) + [item], args)]
-    only_new = [item for item in only_new if filter((path or []) + [item], args)]
-    output = ComparedContainerNode(
-        name=path[-1] if path else None,
-        time_old=0,
-        time_new=0,
-        children=[],
-        only_old=only_old,
-        only_new=only_new,
-    )
-    for child, child_data in data_old.items():
-        new_path = (path or []) + [child]
-        if not filter(new_path, args):
-            continue
-        child_data_new = data_new[child]
-        child_output = compare_level(
-            child_data,
-            child_data_new,
-            args,
-            depth + 1,
-            new_path,
-        )
-        if child_output.children:
-            output.children.append(child_output)
-            output.time_old += child_output.time_old
-            output.time_new += child_output.time_new
-    return output
-
-
-def filter_benchmark(path: list[str], args: Args) -> bool:
-    """
-    Check whether a benchmark path matches user-specified benchmark filters.
-
-    This helper function is used by `filter()` to determine if a given benchmark
-    should be included based on the filters defined in `args.benchmarks`.
-    """
-    if not args.benchmarks:
-        return True
-    for benchmark in args.benchmarks.values():
-        if len(path) > Level.LOCATION and path[Level.LOCATION] != benchmark["location"]:
-            continue
-        if len(path) > Level.SUITE and path[Level.SUITE] not in benchmark["suites"]:
-            continue
-        if len(path) > Level.CASE and path[Level.CASE] not in benchmark["suites"][path[Level.SUITE]]["cases"]:
-            continue
-        return True
-    return False
-
-
-def filter(path: list[str], args: Args) -> bool:
-    """
-    Determine whether a node should be considered for comparison.
-
-    This function applies general command-line filters (targets, locations, suites, cases)
-    and benchmark filters to decide whether a node should be included in comparison.
-
-    The `path` identifies a node in the benchmark hierarchy and contains all
-    elements from the target down to the node’s level (target, location, suite, case).
-
-    Args:
-        path (list[str]): Hierarchical path identifying the node.
-        args (Args): Parsed command-line arguments with filter settings.
-
-    Returns:
-        bool: True if the node should be compared, False otherwise.
-    """
-    if len(path) > Level.TARGET and args.targets and path[Level.TARGET] not in args.targets:
-        return False
-    if len(path) > Level.LOCATION and args.locations and path[Level.LOCATION] not in args.locations:
-        return False
-    if len(path) > Level.SUITE and args.suites and path[Level.SUITE] not in args.suites:
-        return False
-    if len(path) > Level.CASE and args.cases and path[Level.CASE] not in args.cases:
-        return False
-    return filter_benchmark(path, args)
-
-
-def filter_display(data: ComparedNode, level: Level, args: Args) -> bool:
-    """
-    Determine whether a comparison result should be shown in the output.
-
-    This function is used after comparisons are made to decide whether a node
-    should appear in the displayed results, based on thresholds or case-level status.
-
-    Args:
-        data (ComparedNode): Node containing comparison data.
-        level (Level): Hierarchy level of the node (e.g., suite, case).
-        args (Args): Parsed command-line arguments controlling display behavior.
-
-    Returns:
-        bool: True if the node should be displayed, False otherwise.
-    """
-    if level == Level.CASE:
-        return filter_case_display(data, args)
-    if args.threshold_filter:
-        difference, percentage = difference_and_percentage(data.time_old, data.time_new)
-        return change_dir(difference, percentage, args) in (ChangeDirection.INCREASE, ChangeDirection.DECREASE)
-    return True
-
-
-def filter_case_display(case: ComparedCaseNode, args: Args) -> bool:
-    """
-    Check whether a single benchmark case should be shown in the results.
-
-    This helper function is used by `filter_display()` to exclude failed cases or
-    those that do not meet performance change thresholds.
-    """
-    if case.status_old != Status.OK or case.status_new != Status.OK:
-        return False
-    if args.threshold_filter:
-        difference, percentage = difference_and_percentage(case.time_old, case.time_new)
-        return change_dir(difference, percentage, args) in (ChangeDirection.INCREASE, ChangeDirection.DECREASE)
-    return True
-
-
 def print_rows(rows: list[TimeRow | StatusRow | EmptyRow | StatusRowHeader | TimeRowHeader]) -> None:
     if not rows:
         return
@@ -661,157 +955,28 @@ def print_rows(rows: list[TimeRow | StatusRow | EmptyRow | StatusRowHeader | Tim
         row.print(max_name_len)
 
 
-def print_fails(
-    fails: dict[str, dict | list[str]], args: Args, level: Level = Level.TARGET, parent: str | None = None
-) -> None:
-    styles = [ESCAPE_BOLD + ESCAPE_ITALIC, ESCAPE_BOLD, ESCAPE_BOLD, ""]
-    prefixes = ["Target: ", "-", " -", "  -"]
-    if level == Level.CASE:
-        if len(fails) > 1 or fails[0] != "" and fails[0] != parent:
-            for name in fails:
-                print(f"{styles[level]}{prefixes[level]}{name}{ESCAPE_RESET}")
-        return
-    for name, element in fails.items():
-        print(f"{styles[level]}{prefixes[level]}{name}{ESCAPE_RESET}")
-        if args.verbose > level:
-            print_fails(element, args, level + 1, parent)
-            if level == 0:
-                print()
-
-
-def generate_status_rows(
-    statuses: list[ComparedStatusNode], args: Args, level: Level = Level.TARGET
-) -> list[StatusRow | EmptyRow | StatusRowHeader]:
-    styles = [ESCAPE_BOLD + ESCAPE_ITALIC, ESCAPE_BOLD, ESCAPE_BOLD, ""]
-    separators = ["║", "║", "┃", "┆"]
-    prefixes = ["Target: ", "-", " -", "  -"]
-    rows = []
-    for node in statuses:
-        if args.verbose == level and node.status_old == node.status_new:
-            continue
-        current_row = StatusRow(
-            styles[level],
-            separators[level],
-            f"{prefixes[level]}{node.name}",
-            node.status_old,
-            node.status_new,
-        )
-        children_rows = None
-        if args.verbose > level:
-            children_rows = generate_status_rows(node.children, args, level + 1)
-        if node.status_old != node.status_new or children_rows:
-            if level == 0 and (args.verbose > 0 or not rows):
-                if rows:
-                    rows.append(EmptyRow())
-                rows.append(StatusRowHeader())
-            rows.append(current_row)
-            if args.verbose > level:
-                rows.extend(children_rows)
-    return rows
-
-
-def generate_time_rows(
-    times: list[ComparedNode], args: Args, level: Level = Level.TARGET
-) -> list[TimeRow | EmptyRow | TimeRowHeader]:
-    styles = [ESCAPE_BOLD + ESCAPE_ITALIC, ESCAPE_BOLD, ESCAPE_BOLD, ""]
-    separators = ["║", "║", "┃", "┆"]
-    prefixes = ["Target: ", "-", " -", "  -"]
-    rows = []
-    for node in times:
-        go_deeper = args.verbose > level and (level < Level.SUITE or not node.single_case)
-        if not go_deeper and not filter_display(node, level, args):
-            continue
-        current_row = TimeRow(node, styles[level], separators[level], prefixes[level], args)
-        children_rows = None
-        if go_deeper:
-            children_rows = generate_time_rows(node.children, args, level + 1)
-        if not go_deeper or children_rows:
-            if level == 0 and (args.verbose > 0 or not rows):
-                if rows:
-                    rows.append(EmptyRow())
-                rows.append(TimeRowHeader())
-            rows.append(current_row)
-            if go_deeper:
-                rows.extend(children_rows)
-    return rows
-
-
-def find_missing(
-    results: ComparedContainerNode | ComparedSuiteNode, level: Level = Level.TARGET
-) -> list[ComparedStatusNode]:
-    if level == Level.CASE:
-        return [
-            ComparedStatusNode(name=case.name, status_old=case.status_old, status_new=case.status_new)
-            for case in results.children
-            if case.status_old != case.status_new
-        ]
-    only_old = [
-        ComparedStatusNode(name=result, status_old=Status.PRESENT, status_new=Status.MISSING, children=[])
-        for result in results.only_old
-    ]
-    only_new = [
-        ComparedStatusNode(name=result, status_old=Status.MISSING, status_new=Status.PRESENT, children=[])
-        for result in results.only_new
-    ]
-    with_children = [
-        ComparedStatusNode(name=result.name, status_old=Status.PRESENT, status_new=Status.PRESENT, children=children)
-        for result, children in ((result, find_missing(result, level + 1)) for result in results.children)
-        if children
-    ]
-    return only_old + only_new + with_children
-
-
-def find_fails(
-    results: dict[str, dict] | Testsuite,
-    args: Args,
-    unfiltered: bool = False,
-    level: Level = Level.TARGET,
-    path: list[str] | None = None,
-) -> dict[str, dict | list[str]] | list[str]:
-    if level == Level.CASE:
-        return [
-            case.name
-            for case in results.cases.values()
-            if case.status == Status.FAIL and (unfiltered or filter((path or []) + [case.name], args))
-        ]
-    return {
-        child_name: children
-        for child_name, children in (
-            (child_name, find_fails(child, args, unfiltered, level + 1, (path or []) + [child_name]))
-            for child_name, child in results.items()
-        )
-        if children and (unfiltered or filter((path or []) + [child_name], args))
-    }
-
-
-def count_fails(fails: dict[str, dict | list[str]] | list[str], level: Level = Level.TARGET) -> int:
-    if level == Level.CASE:
-        return len(fails)
-    return sum(count_fails(child, level + 1) for child in fails.values())
-
-
 def main() -> None:
     args: Args = process_args(parse_args())
     for file, name in [(args.file_old, "old"), (args.file_new, "new")]:
-        fails = find_fails(file, args, unfiltered=True)
+        fails = file.failures(args)
         if fails:
-            fails_filtered = find_fails(file, args)
+            fails_filtered = file.failures(args, filtered=True)
             if args.show_fails:
                 print(f"Failed tests in {name} file:")
-                print_fails(fails_filtered, args)
+                fails_filtered.print(args)
             else:
                 print(
                     f"{ESCAPE_BOLD}{ESCAPE_YELLOW}Warning:{ESCAPE_RESET} "
-                    f"{count_fails(fails)} tests failed in the {name} file "
-                    f"({count_fails(fails_filtered)} matching filters)"
+                    f"{fails.count_failures()} tests failed in the {name} file "
+                    f"({fails_filtered.count_failures()} matching filters)"
                 )
                 print("Use --show-fails to list the failing tests")
-    output = compare_level(args.file_old, args.file_new, args)
+    output = args.file_old.compare(args.file_new, args)
     if args.status_diff:
-        status_diff = find_missing(output)
-        print_rows(generate_status_rows(status_diff, args))
+        status_diff = output.find_missing()
+        print_rows(status_diff.generate_status_rows(args))
     elif not args.show_fails:
-        rows = generate_time_rows(output.children, args)
+        rows = output.generate_time_rows(args)
         print_rows(rows)
 
 
