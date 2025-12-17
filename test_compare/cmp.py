@@ -665,8 +665,8 @@ class Testcase(ResultNode):
 
 @dataclass
 class Args:
-    file_old: RootResultNode
-    file_new: RootResultNode
+    file1: RootResultNode
+    file2: RootResultNode
     verbose: int
     benchmarks: {}
     targets: []
@@ -686,8 +686,8 @@ def parse_args():
         epilog="Example: python3 cmp.py old_results.xml new_results.xml -v --threshold 5.0 -t ia32-generic-qemu",
     )
 
-    parser.add_argument("file_old", metavar="FILE_OLD", help="Path to the old test results file.")
-    parser.add_argument("file_new", metavar="FILE_NEW", help="Path to the new test results file.")
+    parser.add_argument("file1", metavar="FILE1", help="Path to the first test results file.")
+    parser.add_argument("file2", metavar="FILE2", help="Path to the second test results file.")
 
     parser.add_argument(
         "-b",
@@ -798,8 +798,8 @@ def process_args(args: argparse.Namespace) -> Args:
         except yaml.YAMLError as e:
             print(f"Error parsing YAML file: {e}")
     return Args(
-        parse_xml(args.file_old),
-        parse_xml(args.file_new),
+        parse_xml(args.file1),
+        parse_xml(args.file2),
         args.verbose,
         benchmarks,
         args.targets,
@@ -957,12 +957,12 @@ def print_rows(rows: list[TimeRow | StatusRow | EmptyRow | StatusRowHeader | Tim
 
 def main() -> None:
     args: Args = process_args(parse_args())
-    for file, name in [(args.file_old, "old"), (args.file_new, "new")]:
+    for file, name in [(args.file1, "file1"), (args.file2, "file2")]:
         fails = file.failures(args)
         if fails:
             fails_filtered = file.failures(args, filtered=True)
             if args.show_fails:
-                print(f"Failed tests in {name} file:")
+                print(f"Failed tests in {name}:")
                 fails_filtered.print(args)
             else:
                 print(
@@ -971,7 +971,7 @@ def main() -> None:
                     f"({fails_filtered.count_failures()} matching filters)"
                 )
                 print("Use --show-fails to list the failing tests")
-    output = args.file_old.compare(args.file_new, args)
+    output = args.file1.compare(args.file2, args)
     if args.status_diff:
         status_diff = output.find_missing()
         print_rows(status_diff.generate_status_rows(args))

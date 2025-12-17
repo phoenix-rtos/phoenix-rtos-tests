@@ -432,7 +432,7 @@ def base_args(unprocessed_args):
 def compared_data(base_args):
     """Runs the main comparison logic with base arguments and returns the resulting data structure."""
 
-    return base_args.file_old.compare(base_args.file_new, base_args)
+    return base_args.file1.compare(base_args.file2, base_args)
 
 
 def find_node_by_path(nodes, path: cmp.Path, level=cmp.Level.TARGET):
@@ -457,7 +457,7 @@ def find_node_by_path(nodes, path: cmp.Path, level=cmp.Level.TARGET):
 def test_find_fails(base_args):
     """Tests that find_fails correctly identifies all failing tests."""
     args = copy.deepcopy(base_args)
-    fails_new = args.file_new.failures(args)
+    fails_new = args.file2.failures(args)
     assert fails_new.count_failures() == 4
     assert (
         find_node_by_path(
@@ -645,7 +645,7 @@ def test_benchmark_filtering(unprocessed_args, mock_benchmark_file):
     args.benchmark_files = [mock_benchmark_file]
     processed_args = cmp.process_args(args)
 
-    filtered_data = processed_args.file_old.compare(processed_args.file_new, processed_args)
+    filtered_data = processed_args.file1.compare(processed_args.file2, processed_args)
 
     included_path = cmp.Path(
         cmp.Level.CASE, "armv7a7-imx6ull-evk", "phoenix-rtos-tests/kernel/", "common", "test_A_regression"
@@ -676,9 +676,9 @@ def test_threshold_zero_filters_all(base_args, compared_data):
 def test_only_new_file_present(mock_xml_file_no_tests, unprocessed_args):
     """Tests comparison when old file has no tests but new file does."""
     raw_args = copy.deepcopy(unprocessed_args)
-    raw_args.file_old = mock_xml_file_no_tests
+    raw_args.file1 = mock_xml_file_no_tests
     args = cmp.process_args(raw_args)
-    results = args.file_old.compare(args.file_new, args)
+    results = args.file1.compare(args.file2, args)
     assert results.only_new == ["armv7a7-imx6ull-evk", "ia32-generic-pc", "riscv64-generic-qemu"]
     assert results.only_old == []
     assert results.children == []
@@ -689,7 +689,7 @@ def test_benchmark_file_with_no_matches(unprocessed_args, mock_nonexistent_bench
     raw_args = copy.deepcopy(unprocessed_args)
     raw_args.benchmark_files = [mock_nonexistent_benchmark_file]
     args = cmp.process_args(raw_args)
-    results = args.file_old.compare(args.file_new, args)
+    results = args.file1.compare(args.file2, args)
     assert results.children == []
 
 
@@ -710,7 +710,7 @@ def test_filtering_by_individual_args(base_args, filter_attr, filter_value, shou
     """Tests that each filtering arg includes/excludes nodes correctly."""
     args = copy.deepcopy(base_args)
     setattr(args, filter_attr, filter_value)
-    results = args.file_old.compare(args.file_new, args)
+    results = args.file1.compare(args.file2, args)
     found_node = find_node_by_path(
         results.children,
         cmp.Path(cmp.Level.CASE, "ia32-generic-pc", "phoenix-rtos-tests/micropython/", "core", "test_ok_to_fail"),
@@ -752,7 +752,7 @@ def test_suite_filtered_to_one_case_is_expanded(unprocessed_args):
     args.verbose = 3
     processed_args = cmp.process_args(args)
 
-    compared_data = processed_args.file_old.compare(processed_args.file_new, processed_args)
+    compared_data = processed_args.file1.compare(processed_args.file2, processed_args)
 
     path = cmp.Path(cmp.Level.SUITE, "armv7a7-imx6ull-evk", "phoenix-rtos-tests/kernel/", "common")
     node = find_node_by_path(compared_data.children, path)
@@ -882,7 +882,7 @@ def test_calculation_with_zero_time_start(mock_xml_edge_cases):
     old_file, new_file = mock_xml_edge_cases
     sys.argv = ["cmp.py", old_file, new_file, "-vvv"]
     args = cmp.process_args(cmp.parse_args())
-    compared_data = args.file_old.compare(args.file_new, args)
+    compared_data = args.file1.compare(args.file2, args)
     rows = compared_data.generate_time_rows(args)
 
     zero_time_row = next((r for r in rows if hasattr(r, "name") and "zero_time_start" in r.name), None)
@@ -895,7 +895,7 @@ def test_calculation_on_threshold_boundary(mock_xml_edge_cases):
     old_file, new_file = mock_xml_edge_cases
     sys.argv = ["cmp.py", old_file, new_file, "-vvv"]
     args = cmp.process_args(cmp.parse_args())
-    compared_data = args.file_old.compare(args.file_new, args)
+    compared_data = args.file1.compare(args.file2, args)
     rows = compared_data.generate_time_rows(args)
 
     boundary_row = next((r for r in rows if hasattr(r, "name") and "boundary_threshold" in r.name), None)
@@ -908,7 +908,7 @@ def test_calculation_with_opposing_thresholds(mock_xml_edge_cases):
     old_file, new_file = mock_xml_edge_cases
     sys.argv = ["cmp.py", old_file, new_file, "-vvv"]
     args = cmp.process_args(cmp.parse_args())
-    compared_data = args.file_old.compare(args.file_new, args)
+    compared_data = args.file1.compare(args.file2, args)
     rows = compared_data.generate_time_rows(args)
 
     opposing_row = next((r for r in rows if hasattr(r, "name") and "opposing_threshold" in r.name), None)
@@ -929,7 +929,7 @@ def test_parsing_empty_test_suite(mock_xml_edge_cases):
     old_file, new_file = mock_xml_edge_cases
     sys.argv = ["cmp.py", old_file, new_file]
     args = cmp.process_args(cmp.parse_args())
-    compared_data = args.file_old.compare(args.file_new, args)
+    compared_data = args.file1.compare(args.file2, args)
     assert find_node_by_path(compared_data.children, cmp.Path(cmp.Level.SUITE, "edge", "empty/", "suite")) is None
 
 
@@ -947,7 +947,7 @@ def test_combining_multiple_filters(base_args):
     args = copy.deepcopy(base_args)
     args.targets = ["ia32-generic-pc"]
     args.suites = ["core"]
-    results = args.file_old.compare(args.file_new, args)
+    results = args.file1.compare(args.file2, args)
 
     found_node = find_node_by_path(
         results.children, cmp.Path(cmp.Level.SUITE, "ia32-generic-pc", "phoenix-rtos-tests/micropython/", "core")
@@ -965,7 +965,7 @@ def test_interaction_of_benchmark_and_cli_filters(unprocessed_args, mock_benchma
     args.benchmark_files = [mock_benchmark_file]
     args.cases = ["test_A_regression"]
     processed_args = cmp.process_args(args)
-    results = processed_args.file_old.compare(processed_args.file_new, processed_args)
+    results = processed_args.file1.compare(processed_args.file2, processed_args)
     node_found = find_node_by_path(
         results.children,
         cmp.Path(cmp.Level.CASE, "armv7a7-imx6ull-evk", "phoenix-rtos-tests/kernel/", "common", "test_A_regression"),
@@ -974,7 +974,7 @@ def test_interaction_of_benchmark_and_cli_filters(unprocessed_args, mock_benchma
 
     args.cases = ["test_B_improvement"]
     processed_args = cmp.process_args(args)
-    results = processed_args.file_old.compare(processed_args.file_new, processed_args)
+    results = processed_args.file1.compare(processed_args.file2, processed_args)
     node_not_found = find_node_by_path(
         results.children,
         cmp.Path(cmp.Level.CASE, "armv7a7-imx6ull-evk", "phoenix-rtos-tests/kernel/", "common", "test_B_improvement"),
@@ -1076,11 +1076,11 @@ def mock_xml_location_empty_string(tmp_path_factory):
 def test_location_empty_string(unprocessed_args, mock_xml_location_empty_string):
     """Tests handling of location being an empty string."""
     raw_args = copy.deepcopy(unprocessed_args)
-    raw_args.file_old, raw_args.file_new = mock_xml_location_empty_string
+    raw_args.file1, raw_args.file2 = mock_xml_location_empty_string
     args = cmp.process_args(raw_args)
     args.verbose = 1
 
-    compared_data = args.file_old.compare(args.file_new, args)
+    compared_data = args.file1.compare(args.file2, args)
     rows = compared_data.generate_time_rows(args)
 
     def find_location_row_by_name(rows, name):
