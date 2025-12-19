@@ -61,7 +61,6 @@ class TargetBase(ABC):
 
     def __init__(self):
         self.project_dir = self._project_dir()
-        self.prompt_timeout = -1
         self.dut: Dut
 
     @classmethod
