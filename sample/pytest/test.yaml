@@ -1,0 +1,8 @@
+test:
+    tests:
+        - name: pytest
+          type: pytest
+          kwargs:
+              path: phoenix-rtos-tests/sample/pytest/test-pytest.py
+          targets:
+              include: [host-generic-pc]
