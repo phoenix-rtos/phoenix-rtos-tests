@@ -1,0 +1,12 @@
+test:
+    tests:
+        - name: binary
+          type: pytest
+          execute: test-fake-comm
+          script: test.py
+          targets:
+              include: [host-generic-pc]
+
+        - name: psh
+          type: pytest
+          script: test-psh.py
