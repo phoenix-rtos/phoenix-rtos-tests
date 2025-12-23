@@ -1,4 +1,12 @@
 import pytest
+import time
+
+
+test_data = [
+    ("Hello World", 2.2, "OK"),
+    ("ping", 2.2, "OK"),
+    ("exit", 2.2, "OK"),
+]
 
 
 def test_always_passes():
@@ -43,6 +51,46 @@ def test_global_resource_already_modified(global_session_resource):
     assert global_session_resource.get("modified") is True
     assert global_session_resource["status"] == "ready"
 
+
 @pytest.mark.xfail(strict=True)
-def test_global_resource_not_busy(global_session_resource):
+def test_global_resource_not_busy_xfail(global_session_resource):
     assert global_session_resource["status"] == "busy"
+
+
+def test_subresult_time_by_delaying():
+    time.sleep(2)
+    assert True
+
+
+def test_fake_dut_send_time(fake_dut_session):
+    exp_sleep_time = 2
+    start = time.time()
+
+    fake_dut_session.send(f"Hello")
+
+    elapsed = time.time() - start
+
+    assert elapsed >= exp_sleep_time
+
+
+@pytest.mark.parametrize("cmd, max_wait_time, exp_resp", test_data)
+def test_dut_parameterized_commands(fake_dut_session, cmd, max_wait_time, exp_resp):
+    start = time.time()
+    response = fake_dut_session.send(cmd)
+    elapsed = time.time() - start
+    assert response == exp_resp
+    assert elapsed < max_wait_time
+
+
+@pytest.mark.usefixtures("fake_dut_class")
+class TestClassScopeFixture:
+    def test_no_ok_in_log(self, fake_dut_class):
+        assert "OK" not in fake_dut_class.get_log()
+
+    def test_send_hello(self, fake_dut_class):
+        fake_dut_class.send("hello")
+        assert "OK" in fake_dut_class.get_log()
+
+    def test_send_world_check_for_2_OKs(self, fake_dut_class):
+        fake_dut_class.send("hello")
+        assert fake_dut_class.get_log().count("OK") == 2
