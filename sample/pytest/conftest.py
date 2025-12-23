@@ -1,4 +1,35 @@
 import pytest
+import time
+
+class FakeDUT:
+    def __init__(self):
+        self._log = ""
+        self.__printout("Device Initialized")
+        self.connected = True
+
+    def send(self, command: str) -> str:
+        self.__printout(f"Sending {command}...")
+        self.go_sleep(2)
+        response = "OK"
+        self.__printout(response)
+        return response
+    
+    def go_sleep(self, seconds: int):
+        time.sleep(seconds)
+
+    def power_off(self):
+        self.__printout("Powering OFF...")
+        self.go_sleep(1)
+        self.connected = False
+
+    def get_log(self):
+        return self._log[:]
+
+    def __printout(self, text: str):
+        output = f"\n\t[FakeDUT] >> {text}"
+        self._log += output
+        print(output)
+
 
 @pytest.fixture(scope="session")
 def global_session_resource():
@@ -9,3 +40,21 @@ def global_session_resource():
 
     print("\n\t[SESSION] :::: TEARING DOWN\n")
     resource["status"] = "closed"
+
+
+@pytest.fixture(scope="session")
+def fake_dut_session():
+    dut = FakeDUT()
+    
+    yield dut
+
+    dut.power_off()    
+
+
+@pytest.fixture(scope="class")
+def fake_dut_class():
+    dut = FakeDUT()
+
+    yield dut
+
+    dut.power_off()
