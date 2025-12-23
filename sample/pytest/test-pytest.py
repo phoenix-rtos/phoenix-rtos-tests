@@ -2,6 +2,24 @@ import pytest
 import time
 
 
+@pytest.fixture(scope="session")
+def global_session_resource():
+    resource = {"status": "ready", "id": 999}
+    print("\n\t[SESSION] :::: STARTING\n")
+    
+    yield resource
+
+    print("\n\t[SESSION] :::: TEARING DOWN\n")
+    resource["status"] = "closed"
+
+
+@pytest.fixture(scope="function")
+def counter():
+    counter = {"count": 0}
+
+    yield counter
+
+
 test_data = [
     ("Hello World", 2.2, "OK"),
     ("ping", 2.2, "OK"),
@@ -38,6 +56,18 @@ def test_ctx(ctx):
 
 def test_dut(dut):
     assert dut is not None
+
+
+def test_func_scope_counter_1(counter):
+    assert counter.get("count") == 0
+    counter["count"] += 1
+    assert counter.get("count") == 1
+    counter["count"] += 1
+    assert counter.get("count") == 2
+
+
+def test_func_scope_counter_2(counter):
+    assert counter.get("count") == 0
 
 
 def test_global_resource_ready_id_999(global_session_resource):
