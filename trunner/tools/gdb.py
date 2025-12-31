@@ -46,12 +46,43 @@ class GdbInteractive:
         except (pexpect.TIMEOUT, pexpect.EOF) as e:
             raise GdbError(f"Failed to load {test_path} to addr {addr}", output=self.logfile.getvalue()) from e
 
+    def load_program(self, path: Union[Path, str]):
+        try:
+            self.proc.sendline(f"load {path}")
+            self.proc.expect_exact("Start address")
+            self.expect_prompt()
+        except (pexpect.TIMEOUT, pexpect.EOF) as e:
+            raise GdbError(f"Failed to load {path}", output=self.logfile.getvalue()) from e
+
     def cont(self):
         try:
             self.proc.sendline("c")
             self.proc.expect_exact("Continuing.")
         except (pexpect.TIMEOUT, pexpect.EOF) as e:
             raise GdbError("Failed to continue", output=self.logfile.getvalue()) from e
+
+    def reset(self):
+        try:
+            self.proc.sendline("monitor reset")
+            self.expect_prompt()
+        except (pexpect.TIMEOUT, pexpect.EOF) as e:
+            raise GdbError("Failed to reset", output=self.logfile.getvalue()) from e
+
+    def pause(self):
+        try:
+            self.proc.sendcontrol("c")
+            self.proc.expect_exact("Program received signal SIGINT, Interrupt.")
+            self.expect_prompt()
+        except (pexpect.TIMEOUT, pexpect.EOF) as e:
+            raise GdbError("Failed to pause", output=self.logfile.getvalue()) from e
+
+    def set_architecture(self, architecture: str):
+        try:
+            self.proc.sendline(f"set architecture {architecture}")
+            self.proc.expect_exact("The target architecture is set to")
+            self.expect_prompt()
+        except (pexpect.TIMEOUT, pexpect.EOF) as e:
+            raise GdbError("Failed to set architecture", output=self.logfile.getvalue()) from e
 
     def _close(self):
         if not self.proc:
