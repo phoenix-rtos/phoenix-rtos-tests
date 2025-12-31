@@ -21,7 +21,7 @@ test:
 
       - name: loops-all-mid-10k-sp
         targets:
-          exclude: [armv7m4-stm32l4x6-nucleo, armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk]
+          exclude: [armv7m4-stm32l4x6-nucleo, armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv8m55-stm32n6-nucleo]
         execute: /usr/bin/coremark-pro/loops-all-mid-10k-sp -v0
 
       - name: nnet_test
@@ -31,12 +31,12 @@ test:
 
       - name: radix2-big-64k
         targets:
-          exclude: [armv7m4-stm32l4x6-nucleo, armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk]
+          exclude: [armv7m4-stm32l4x6-nucleo, armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv8m55-stm32n6-nucleo]
         execute: /usr/bin/coremark-pro/radix2-big-64k -v0
 
       - name: parser-125k
         targets:
-          exclude: [armv7m4-stm32l4x6-nucleo, armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk]
+          exclude: [armv7m4-stm32l4x6-nucleo, armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv8m55-stm32n6-nucleo]
         execute: /usr/bin/coremark-pro/parser-125k -v0
 
       - name: sha-test
@@ -46,6 +46,6 @@ test:
 
       - name: zip-test
         targets:
-          exclude: [armv7m4-stm32l4x6-nucleo, armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk]
+          exclude: [armv7m4-stm32l4x6-nucleo, armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv8m55-stm32n6-nucleo]
         execute: /usr/bin/coremark-pro/zip-test -v0
 

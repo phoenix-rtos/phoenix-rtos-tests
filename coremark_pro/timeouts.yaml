@@ -106,3 +106,10 @@ armv7r5f-zynqmp-qemu:
   linear_alg-mid-100x100-sp: [2, 9]
   parser-125k: [2, 3]
   zip-test: [36, 2]
+
+armv8m55-stm32n6-nucleo:
+  cjpeg-rose7-preset: [2, 3]
+  core: [2, 14]
+  nnet_test: [2, 160]
+  sha-test: [2, 3]
+  linear_alg-mid-100x100-sp: [2, 8]
