@@ -4,6 +4,7 @@ import socket
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Optional, Union, List, TextIO
+import time
 
 import pexpect
 
@@ -84,6 +85,86 @@ class GdbInteractive:
             )
             self.proc.expect_exact("(gdb) ")
             yield
+        finally:
+            self._close()
+
+
+class STM32ProgrammerCLIError(ProcessError):
+    name = "STM32PROGRAMMER"
+
+
+class STM32ProgrammerCLIProcess:
+    """Handler for STM32_Programmer_CLI process"""
+
+    def __init__(
+        self,
+        port: Optional[str] = None,
+        mode: Optional[str] = None,
+        extra_args: Optional[List[str]] = None,
+        host_log: Optional[TextIO] = None,
+        cwd: Optional[Path] = None,
+    ):
+        self.proc = None
+        self._shutdown_done = False
+        self.port = port
+        self.mode = mode
+        self.extra_args = extra_args
+        self.host_log = host_log if host_log is not None else io.StringIO()
+        self.cwd = cwd
+        self.output = ""
+
+    def _start(self):
+        # Use max() to choose the latest version if mre than one is installed
+        extloader: Optional[Path] = max(
+            Path("/").glob(
+                "opt/st/stm32cubeide_*/plugins"
+                "/com.st.stm32cube.ide.mcu.externaltools.cubeprogrammer.linux64*"
+                "/tools/bin/ExternalLoader/MX25UM51245G_STM32N6570-NUCLEO.stldr"
+            ),
+            default=None,
+        )
+
+        if not extloader:
+            raise STM32ProgrammerCLIError("Could not find external loader for STM32N6")
+
+        # Use pexpect.spawn to run a process as PTY, so it will flush on a new line
+        args = ["-c", f"port={self.port}", f"mode={self.mode}", "-el", extloader.as_posix()]
+
+        if self.extra_args:
+            args.extend(self.extra_args)
+
+        self.proc = pexpect.spawn("STM32_Programmer_CLI", args, encoding="ascii", logfile=self.host_log, cwd=self.cwd)
+
+        try:
+            self.proc.expect_exact("Device name")
+        except (pexpect.TIMEOUT, pexpect.EOF) as e:
+            self.output = self.host_log.getvalue()
+            raise STM32ProgrammerCLIError("Failed to connect to target", output=self.output) from e
+
+    def _close(self):
+        if not self.proc:
+            return
+
+        try:
+            self.proc.expect(pexpect.EOF, timeout=15)
+            self.proc.close()
+            self.output = self.host_log.getvalue()
+        except pexpect.TIMEOUT:
+            clear_pexpect_buffer(self.proc)
+            self.proc.close(force=True)
+            self.output = self.host_log.getvalue()
+            raise STM32ProgrammerCLIError(
+                f"Timeout: STM32_Programmer_CLI exited with signal {self.proc.signalstatus}", output=self.output
+            )
+
+        if self.proc.exitstatus != 0:
+            raise STM32ProgrammerCLIError(
+                f"STM32_Programmer_CLI exited with status {self.proc.exitstatus}", output=self.output
+            )
+
+    def run(self):
+        try:
+            self._start()
         finally:
             self._close()
 
@@ -219,6 +300,68 @@ class JLinkGdbServer:
             )
             self.proc.expect_exact("Connected to target")
             self.proc.expect_exact("Waiting for GDB connection...")
+            yield
+        finally:
+            self._close()
+
+
+class STLinkGdbServer:
+    def __init__(self):
+        self.proc = None
+        self.logfile = io.StringIO()
+        self.output = ""
+
+    def _close(self):
+        if not self.proc:
+            return
+
+        self.proc.kill(signal.SIGINT)
+        self.proc.expect_exact("Shutting down...")
+        time.sleep(0.2)
+        self.proc.close(force=True)
+        self.output = self.logfile.getvalue()
+        self.logfile.close()
+
+    @contextmanager
+    @add_output_to_exception()
+    def run(self):
+        try:
+            # Use max() to choose the latest version if mre than one is installed
+            gdb_path: Optional[Path] = max(
+                Path("/").glob(
+                    "opt/st/stm32cubeide_*/plugins"
+                    "/com.st.stm32cube.ide.mcu.externaltools.stlink-gdb-server.linux64*"
+                    "/tools/bin/ST-LINK_gdbserver"
+                ),
+                default=None,
+            )
+
+            if not gdb_path:
+                raise STM32ProgrammerCLIError("Could not find ST-LINK_gdbserver")
+
+            prog_path: Optional[Path] = max(
+                Path("/").glob(
+                    "opt/st/stm32cubeide_*/plugins"
+                    "/com.st.stm32cube.ide.mcu.externaltools.cubeprogrammer.linux64*"
+                    "/tools/bin"
+                ),
+                default=None,
+            )
+
+            if not prog_path:
+                raise STM32ProgrammerCLIError("Could not find STM32CubeProgrammer path")
+
+            self.proc = pexpect.spawn(
+                "sh",
+                [
+                    "-c",
+                    f"trap exit INT; while '{gdb_path.as_posix()}' -p 3333"
+                    f" -cp '{prog_path.as_posix()}' --swd --apid 1 --attach; do :; done",
+                ],
+                encoding="ascii",
+                logfile=self.logfile,
+            )
+            self.proc.expect_exact("Waiting for debugger connection...")
             yield
         finally:
             self._close()
