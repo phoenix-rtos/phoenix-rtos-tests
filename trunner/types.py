@@ -89,6 +89,28 @@ class TestStage(Enum):
         if self.__class__ is other.__class__:
             return self.value < other.value
         return NotImplemented
+    
+
+class TestType(str, Enum):
+    def _generate_next_value_(name: str, start: int, count: int, last_values: list) -> str:
+        return name.lower()
+    
+    @classmethod
+    def _missing_(cls, value: object) -> Optional[Enum]:
+        if value is None or value == "":
+            return cls.EMPTY
+
+        if not isinstance(value, str):
+            return cls.UNSUPPORTED
+
+        lowercase_val = value.lower()
+        return next((member for member in cls if member.value == lowercase_val), cls.UNSUPPORTED)
+
+    HARNESS = auto()
+    PYTEST = auto()
+    UNITY = auto()
+    EMPTY = auto()
+    UNSUPPORTED = auto()
 
 
 class TestResult:
@@ -414,6 +436,7 @@ class TestOptions:
     target: Optional[str] = None
     bootloader: Optional[BootloaderOptions] = None
     shell: Optional[ShellOptions] = None
+    type: TestType = TestType.UNSUPPORTED
     should_reboot: bool = False
     ignore: bool = False
     nightly: bool = False
