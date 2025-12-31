@@ -12,6 +12,7 @@ from .base import (
     Rebooter,
 )
 from .plo import (
+    PloError,
     PloInterface,
     PloJffs2CleanmarkerSpec,
     PloPhoenixdSyspageLoader,
@@ -39,6 +40,7 @@ __all__ = [
     "Rebooter",
     "RebooterHarness",
     "TestStartRunningHarness",
+    "PloError",
     "PloImageLoader",
     "PloPhoenixdSyspageLoader",
     "PloRamSyspageLoader",
