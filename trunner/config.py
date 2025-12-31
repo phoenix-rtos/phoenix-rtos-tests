@@ -8,7 +8,7 @@ from typing import Dict, List, Optional, Tuple, Set
 import yaml
 
 from trunner.ctx import TestContext
-from trunner.harness import PyHarness, unity_harness, pytest_harness
+from trunner.harness import PyHarness
 from trunner.types import AppOptions, BootloaderOptions, TestOptions, ShellOptions, TestType
 
 
@@ -57,15 +57,13 @@ class ConfigParser:
         test_type = TestType(config.get("type", self.main.type))
         if test_type is TestType.EMPTY:
             test_type = TestType.HARNESS
+        elif test_type is TestType.UNSUPPORTED:
+            raise ParserError("unsupported test type!")
 
         if test_type == TestType.HARNESS:
             self._parse_pyharness(config)
-        elif test_type == TestType.UNITY:
-            self._parse_unity()
-        elif test_type == TestType.PYTEST:
-            self._parse_pytest()
         else:
-            raise ParserError("unknown key!")
+            self.test.harness = PyHarness.from_type(test_type, self.ctx.target.dut, self.ctx, self.test.kwargs)
         
         self.test.type = test_type
 
@@ -99,12 +97,6 @@ class ConfigParser:
             raise ParserError(f"harness function has not been found in {path}")
 
         self.test.harness = PyHarness(self.ctx.target.dut, self.ctx, harness_fn, self.test.kwargs)
-
-    def _parse_unity(self):
-        self.test.harness = PyHarness(self.ctx.target.dut, self.ctx, unity_harness, self.test.kwargs)
-
-    def _parse_pytest(self):
-        self.test.harness = PyHarness(self.ctx.target.dut, self.ctx, pytest_harness, self.test.kwargs)
 
     def _parse_load(self, config: dict):
         apps = config.get("load", [])

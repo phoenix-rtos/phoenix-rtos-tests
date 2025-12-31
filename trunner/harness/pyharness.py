@@ -7,8 +7,10 @@ from pexpect import TIMEOUT, EOF
 
 from trunner.ctx import TestContext
 from trunner.dut import Dut
-from trunner.types import Status, TestResult
+from trunner.types import Status, TestResult, TestType
 from .base import TerminalHarness, HarnessError
+from .unity import unity_harness
+from .pytest import pytest_harness
 
 
 class PyHarness(TerminalHarness):
@@ -34,6 +36,20 @@ class PyHarness(TerminalHarness):
         self.ctx: TestContext = ctx
         self.pyharness = pyharness_fn
         self.kwargs = kwargs
+
+    @classmethod
+    def from_type(cls, test_type: TestType, dut, ctx, kwargs):
+        strategies = {
+            TestType.UNITY: unity_harness,
+            TestType.PYTEST: pytest_harness,
+            }
+        
+        harness_fn = strategies.get(test_type)
+
+        if not harness_fn:
+            raise HarnessError(f"No harness function defined for {test_type}")
+
+        return cls(dut, ctx, harness_fn, kwargs)
 
     def resolve_pyharness_args(self, result: TestResult) -> Tuple[Tuple, Dict]:
         parameters = inspect.signature(self.pyharness).parameters
