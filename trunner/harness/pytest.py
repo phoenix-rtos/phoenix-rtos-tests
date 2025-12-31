@@ -1,88 +1,120 @@
 import io
-import re
-from typing import Optional
-from contextlib import redirect_stdout
-
-from trunner.ctx import TestContext
+import pytest
 from trunner.dut import Dut
+from trunner.ctx import TestContext
 from trunner.types import Status, TestResult
 
-import pytest
 
-RESULT_TYPES = ["failed", "passed", "skipped", "xfailed", "xpassed", "error", "warnings"]
+class PytestLogCapturePlugin:
+    """Plugin for intercepting and optionally suppressing PyTest output.
+
+    Diverts the PyTest's detailed report stream into an internal buffer 
+    and allows for complete suppression to keep the terminal clean.
+    """
+    def __init__(self, suppress):
+        self.buffer = io.StringIO()
+        self._suppress = suppress
+
+    @pytest.hookimpl(trylast=True)
+    def pytest_configure(self, config):
+        terminal = config.pluginmanager.get_plugin("terminalreporter")
+        if terminal and self._suppress:
+            terminal._tw._file = self.buffer
+
+    def get_logs(self) -> str:
+        """Get the full, unsuppressed pytest log
+        """
+        return self.buffer.getvalue()
 
 
-def pytest_harness(dut: Dut, ctx: TestContext, result: TestResult, **kwargs) -> Optional[TestResult]:
-    test_re = r"::(?P<name>[^\x1b]+?) (?P<status>PASSED|SKIPPED|FAILED|XFAIL|XPASS|ERROR)"
-    error_re = r"(FAILED|ERROR).*?::(?P<name>.*) - (?P<msg>.*)"
-    summary_re = r"=+ " + "".join([rf"(?:(?P<{rt}>\d+) {rt}.*?)?" for rt in RESULT_TYPES]) + " in"
+class PytestBridgePlugin:
+    """Plugin that bridges the TestRunner and PyTest frameworks.
 
+    Each unit test is run as a TestRunner's subtest, accurately
+    capturing each subresult's runtime and status.
+    """
+    def __init__(self, dut, ctx, result, kwargs):
+        self._dut = dut
+        self._ctx = ctx
+        self._kwargs = kwargs
+        self._result = result
+
+    @pytest.fixture
+    def dut(self):
+        return self._dut
+
+    @pytest.fixture
+    def ctx(self):
+        return self._ctx
+
+    @pytest.fixture
+    def kwargs(self):
+        return self._kwargs
+
+    @pytest.hookimpl(specname="pytest_runtest_logreport")
+    def pytest_trunner_hook(self, report):
+        """PyTest hook called after a test phase completion.
+
+        Adds a TestRunner subresult for each PyTest case report
+
+        :param report: PyTest's TestReport object
+        """
+
+        # We want to capture only the test call or setup failures (avoids a triple report)
+        is_call_stage = (report.when == "call")
+        is_setup_failure = (report.when == "setup" and report.failed)
+
+        if not (is_call_stage or is_setup_failure):
+            return
+        
+        status = Status.OK
+        if report.failed:
+            status = Status.FAIL
+        elif report.skipped:
+            status = Status.SKIP
+
+        msg = str(report.longrepr) if report.longrepr else "" #TODO Establish the error's verbosity
+
+        self._result.add_subresult(
+            subname=report.nodeid.split("::")[-1], 
+            status=status, 
+            msg=msg
+        )
+
+
+def pytest_harness(dut: Dut, ctx: TestContext, result: TestResult, **kwargs) -> TestResult:
     test_path = ctx.project_path / kwargs.get("path")
     options = kwargs.get("options", "").split()
-    status = Status.OK
-    subresults = []
-    tests = 0
+    
+    bridge_plugin = PytestBridgePlugin(dut, ctx, result, kwargs)
+    log_plugin = PytestLogCapturePlugin(suppress=True) # TODO Make it optional (streaming mode '-S'?)
 
-    class TestContextPlugin:
-        @pytest.fixture
-        def dut(self):
-            return dut
-
-        @pytest.fixture
-        def ctx(self):
-            return ctx
-
-        @pytest.fixture
-        def kwargs(self):
-            return kwargs
-
-    test_args = [
-        f"{test_path}",  # Path to test
+    cmd_args = [
+        str(test_path),
         *options,
-        "-v",  # Verbose output
+        "-v",
+        "-s",
         "--tb=no",
     ]
 
-    output_buffer = io.StringIO()
-    with redirect_stdout(output_buffer):
-        pytest.main(test_args, plugins=[TestContextPlugin()])
+    try:
+        exit_code = pytest.main(cmd_args, plugins=[bridge_plugin, log_plugin])
+    except Exception as e:
+        result.fail_harness_exception(e)
+        return result
 
-    output = output_buffer.getvalue()
+    if any(sub.status == Status.FAIL for sub in result.subresults):
+        result.status = Status.FAIL
+    elif all(sub.status == Status.SKIP for sub in result.subresults) and result.subresults:
+        result.status = Status.SKIP
+    elif not result.subresults and exit_code != 0:
+        result.status = Status.FAIL
+        result.msg = f"Pytest execution failed (Exit Code {exit_code})."
+    else:
+        result.status = Status.OK
 
-    if ctx.stream_output:
-        print(output)
+    if result.status == Status.FAIL:
+        captured_log = log_plugin.get_logs()
+        result.msg += "\n\n=== PYTEST OUTPUT (CAPTURED) ===\n" + captured_log
 
-    for line in output.splitlines():
-        match = re.search(test_re, line)
-        error = re.search(error_re, line)
-        final = re.search(summary_re, line)
-        if match:
-            parsed = match.groupdict()
-
-            sub_status = Status.from_str(parsed["status"])
-            if sub_status == Status.FAIL:
-                status = sub_status
-
-            subname = parsed["name"]
-            test = result.add_subresult(subname, sub_status)
-            subresults.append(test)
-            tests += 1
-
-        elif error:
-            parsed = error.groupdict()
-            for subresult in subresults:
-                if parsed["name"] in subresult.subname:
-                    subresult.msg = parsed["msg"]
-
-        elif final:
-            parsed = final.groupdict()
-            parsed_tests = sum(int(value) for value in parsed.values() if value is not None)
-            assert tests == parsed_tests, "".join(
-                (
-                    "There is a mismatch between the number of parsed tests and overall results!\n",
-                    f"Parsed results from the tests: {parsed_tests}",
-                    f"Found test in summary line: {tests}",
-                )
-            )
-
-    return TestResult(status=status, msg="")
+    return result
