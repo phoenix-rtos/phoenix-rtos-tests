@@ -9,7 +9,7 @@ import yaml
 
 from trunner.ctx import TestContext
 from trunner.harness import PyHarness, unity_harness, pytest_harness
-from trunner.types import AppOptions, BootloaderOptions, TestOptions, ShellOptions
+from trunner.types import AppOptions, BootloaderOptions, TestOptions, ShellOptions, TestType
 
 
 class ParserError(Exception):
@@ -54,16 +54,20 @@ class ConfigParser:
         self.test = TestOptions()
 
     def _parse_type(self, config: dict):
-        test_type = config.get("type", self.main.type)
-        if not test_type:
-            test_type = "harness"
+        test_type = TestType(config.get("type", self.main.type))
+        if test_type is TestType.EMPTY:
+            test_type = TestType.HARNESS
 
-        if test_type == "harness":
+        if test_type == TestType.HARNESS:
             self._parse_pyharness(config)
-        elif test_type == "unity":
+        elif test_type == TestType.UNITY:
             self._parse_unity()
+        elif test_type == TestType.PYTEST:
+            self._parse_pytest()
         else:
             raise ParserError("unknown key!")
+        
+        self.test.type = test_type
 
     def _parse_pyharness(self, config: dict):
         path = config.get("harness", self.raw_main.get("harness"))
