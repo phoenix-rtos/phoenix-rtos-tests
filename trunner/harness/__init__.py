@@ -23,6 +23,7 @@ from .plo import (
 from .psh import (
     Shell,
     ShellHarness,
+    NetworkSetupHarness,
     TestHarness,
 )
 from .pyharness import PyHarness
@@ -46,6 +47,7 @@ __all__ = [
     "PloHarness",
     "ShellHarness",
     "Shell",
+    "NetworkSetupHarness",
     "TestHarness",
     "PloInterface",
     "PloJffs2CleanmarkerSpec",

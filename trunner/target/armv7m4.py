@@ -12,6 +12,7 @@ from trunner.harness import (
     PloHarness,
     ShellHarness,
     Shell,
+    NetworkSetupHarness,
     TestHarness,
     TestStartRunningHarness,
     Rebooter,
@@ -187,6 +188,9 @@ class STM32L4x6Target(TargetBase):
 
         if test.should_reboot:
             builder.add(ShellHarness(shell))
+
+        if test.iface_config is not None:
+            builder.add(NetworkSetupHarness(shell, test.iface_config))
 
         if test.shell.cmd is not None:
             builder.add(

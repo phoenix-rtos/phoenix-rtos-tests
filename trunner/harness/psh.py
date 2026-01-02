@@ -2,6 +2,7 @@ import time
 import re
 import pexpect
 import shlex
+import ipaddress
 
 from typing import Optional
 
@@ -89,6 +90,39 @@ class ShellHarness(IntermediateHarness):
     def __call__(self, result: TestResult) -> TestResult:
         self.shell.assert_prompt(self.boot_timeout)
         return self.next_harness(result)
+
+
+class NetworkSetupHarness(IntermediateHarness):
+    """Harness to setup device before network test."""
+
+    def __init__(self, shell: Shell, iface_config: str):
+        super().__init__()
+        self.shell = shell
+        self.iface_config = iface_config
+
+    def __call__(self, result: TestResult) -> TestResult:
+        ifconfig_cmd = self.parse(self.iface_config)
+
+        result.set_stage(TestStage.SETUP)
+        self.shell.send_cmd(ifconfig_cmd)
+        self.shell.assert_prompt()
+
+        return self.next_harness(result)
+
+    def parse(self, iface_config: str) -> str:
+        if not iface_config:
+            raise HarnessError("Network tests require IFACE_CONFIG to be defined")
+
+        try:
+            iface, cidr_full = iface_config.split()
+            ip, _ = cidr_full.split("/")
+            netmask = str(ipaddress.IPv4Network(f"{cidr_full}", strict=False).netmask)
+        except ValueError:
+            raise HarnessError('Environment variable IFACE_CONFIG must be in the form "<interface> <ip/mask>"')
+
+        ifconfig_cmd = f"ifconfig {iface} {ip} netmask {netmask} up"
+
+        return ifconfig_cmd
 
 
 class TestHarness(IntermediateHarness):
