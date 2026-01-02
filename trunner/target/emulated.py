@@ -7,6 +7,7 @@ from trunner.harness import (
     HarnessBuilder,
     ShellHarness,
     Shell,
+    NetworkSetupHarness,
     RebooterHarness,
     TestHarness,
     TestStartRunningHarness
@@ -47,6 +48,9 @@ class QemuTarget(TargetBase):
         if test.should_reboot:
             builder.add(RebooterHarness(self.rebooter))
             builder.add(ShellHarness(shell, boot_timeout=60))
+
+        if test.iface_config is not None:
+            builder.add(NetworkSetupHarness(shell, test.iface_config))
 
         if test.shell.cmd is not None:
             builder.add(TestHarness(shell, test.shell.cmd))
