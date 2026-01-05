@@ -11,9 +11,9 @@ class PytestLogCapturePlugin:
     Diverts the PyTest's detailed report stream into an internal buffer 
     and allows for complete suppression to keep the terminal clean.
     """
-    def __init__(self, suppress):
+    def __init__(self, stream_output):
         self.buffer = io.StringIO()
-        self._suppress = suppress
+        self._suppress = not stream_output
 
     @pytest.hookimpl(trylast=True)
     def pytest_configure(self, config):
@@ -62,23 +62,22 @@ class PytestBridgePlugin:
 
         # We want to capture only the test call or setup failures (avoids a triple report)
         is_call_stage = (report.when == "call")
-        is_setup_failure = (report.when == "setup" and report.failed)
+        is_setup_failure = (report.when == "setup" and (report.failed or report.skipped))
 
         if not (is_call_stage or is_setup_failure):
             return
         
         status = Status.OK
+
         if report.failed:
             status = Status.FAIL
-        elif report.skipped:
+        elif report.skipped and not hasattr(report, "wasxfail"):
             status = Status.SKIP
-
-        msg = str(report.longrepr) if report.longrepr else "" #TODO Establish the error's verbosity
 
         self._result.add_subresult(
             subname=report.nodeid.split("::")[-1], 
             status=status, 
-            msg=msg
+            msg=""
         )
 
 
@@ -87,7 +86,7 @@ def pytest_harness(dut: Dut, ctx: TestContext, result: TestResult, **kwargs) -> 
     options = kwargs.get("options", "").split()
     
     bridge_plugin = PytestBridgePlugin(dut, ctx, result, kwargs)
-    log_plugin = PytestLogCapturePlugin(suppress=True) # TODO Make it optional (streaming mode '-S'?)
+    log_plugin = PytestLogCapturePlugin(ctx.stream_output)
 
     cmd_args = [
         str(test_path),
@@ -115,6 +114,6 @@ def pytest_harness(dut: Dut, ctx: TestContext, result: TestResult, **kwargs) -> 
 
     if result.status == Status.FAIL:
         captured_log = log_plugin.get_logs()
-        result.msg += "\n\n=== PYTEST OUTPUT (CAPTURED) ===\n" + captured_log
+        result.msg += captured_log
 
     return result
