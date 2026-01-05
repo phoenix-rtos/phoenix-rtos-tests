@@ -1,6 +1,13 @@
 import pytest
 import time
 
+HARDCODED_DELAY = 1
+HARDCODED_VERB = 0
+
+def _print(text: str):
+        if HARDCODED_VERB >= 2:
+            print(text)
+
 class FakeDUT:
     def __init__(self):
         self._log = ""
@@ -9,7 +16,7 @@ class FakeDUT:
 
     def send(self, command: str) -> str:
         self.__printout(f"Sending {command}...")
-        self.go_sleep(2)
+        self.go_sleep(HARDCODED_DELAY)
         response = "OK"
         self.__printout(response)
         return response
@@ -28,8 +35,16 @@ class FakeDUT:
     def __printout(self, text: str):
         output = f"\n\t[FakeDUT] >> {text}"
         self._log += output
-        print(output)
+        _print(output)
 
+
+@pytest.fixture(scope="session")
+def conftest_delay():
+    return HARDCODED_DELAY
+
+@pytest.fixture(scope="session")
+def conftest_print():
+    return _print
 
 @pytest.fixture(scope="session")
 def fake_dut_session():
