@@ -3,13 +3,13 @@ import time
 
 
 @pytest.fixture(scope="session")
-def global_session_resource():
+def global_session_resource(conftest_print):
     resource = {"status": "ready", "id": 999}
-    print("\n\t[SESSION] :::: STARTING\n")
+    conftest_print("\n\t[SESSION] :::: STARTING\n")
     
     yield resource
 
-    print("\n\t[SESSION] :::: TEARING DOWN\n")
+    conftest_print("\n\t[SESSION] :::: TEARING DOWN\n")
     resource["status"] = "closed"
 
 
