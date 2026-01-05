@@ -21,9 +21,9 @@ def counter():
 
 
 test_data = [
-    ("Hello World", 2.2, "OK"),
-    ("ping", 2.2, "OK"),
-    ("exit", 2.2, "OK"),
+    ("Hello World", "OK"),
+    ("ping", "OK"),
+    ("exit", "OK"),
 ]
 
 
@@ -92,8 +92,8 @@ def test_subresult_time_by_delaying():
     assert True
 
 
-def test_fake_dut_send_time(fake_dut_session):
-    exp_sleep_time = 2
+def test_fake_dut_send_time(fake_dut_session, conftest_delay):
+    exp_sleep_time = conftest_delay
     start = time.time()
 
     fake_dut_session.send(f"Hello")
@@ -103,13 +103,13 @@ def test_fake_dut_send_time(fake_dut_session):
     assert elapsed >= exp_sleep_time
 
 
-@pytest.mark.parametrize("cmd, max_wait_time, exp_resp", test_data)
-def test_dut_parameterized_commands(fake_dut_session, cmd, max_wait_time, exp_resp):
+@pytest.mark.parametrize("cmd, exp_resp", test_data)
+def test_dut_parameterized_commands(fake_dut_session, cmd, exp_resp, conftest_delay):
     start = time.time()
     response = fake_dut_session.send(cmd)
     elapsed = time.time() - start
     assert response == exp_resp
-    assert elapsed < max_wait_time
+    assert elapsed <= (conftest_delay * 1.1)
 
 
 @pytest.mark.usefixtures("fake_dut_class")
