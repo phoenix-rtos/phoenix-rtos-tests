@@ -20,7 +20,12 @@ from .plo import (
     PloImageProperty,
     PloJffsImageProperty,
 )
-from .psh import ShellHarness
+from .psh import (
+    Shell,
+    ShellHarness,
+    NetworkSetupHarness,
+    TestHarness,
+)
 from .pyharness import PyHarness
 from .unity import unity_harness
 
@@ -41,6 +46,9 @@ __all__ = [
     "PloPhoenixdAppLoader",
     "PloHarness",
     "ShellHarness",
+    "Shell",
+    "NetworkSetupHarness",
+    "TestHarness",
     "PloInterface",
     "PloJffs2CleanmarkerSpec",
     "PloImageProperty",

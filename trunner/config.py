@@ -1,11 +1,12 @@
 import importlib.util
 import shlex
 import sys
+import yaml
+import os
+
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Set
-
-import yaml
 
 from trunner.ctx import TestContext
 from trunner.harness import PyHarness, unity_harness
@@ -187,6 +188,15 @@ class ConfigParser:
 
         self.test.should_reboot = reboot
 
+    def _parse_network_setup(self, config: dict) -> None:
+        network_setup = config.get("network_setup", False)
+
+        if not isinstance(network_setup, bool):
+            raise ParserError(f"network_setup must be a boolean value (true/false) not {network_setup}")
+
+        if network_setup:
+            self.test.iface_config = os.environ.get("IFACE_CONFIG", "")
+
     def _parse_ignore(self, config: dict) -> None:
         ignore = config.get("ignore", self.main.ignore)
 
@@ -271,6 +281,7 @@ class ConfigParser:
             return
 
         self._parse_reboot(config)
+        self._parse_network_setup(config)
         self._parse_shell_command(config)
         self._parse_load(config)
         self._parse_kwargs(config)
