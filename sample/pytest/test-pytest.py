@@ -114,6 +114,14 @@ def test_dut_parameterized_commands(fake_dut_session, cmd, exp_resp, conftest_de
 
 @pytest.mark.usefixtures("fake_dut_class")
 class TestClassScopeFixture:
+    test_val = 0
+
+    def setup(self):
+        TestClassScopeFixture.test_val = 5
+
+    def teardown(self):
+        TestClassScopeFixture.test_val = 0
+
     def test_no_ok_in_log(self, fake_dut_class):
         assert "OK" not in fake_dut_class.get_log()
 
@@ -124,3 +132,10 @@ class TestClassScopeFixture:
     def test_send_world_check_for_2_OKs(self, fake_dut_class):
         fake_dut_class.send("hello")
         assert fake_dut_class.get_log().count("OK") == 2
+
+    def test_test_val_value(self):
+        assert TestClassScopeFixture.test_val == 5
+
+
+def test_class_static_val_is_zero():
+    assert TestClassScopeFixture.test_val == 0
