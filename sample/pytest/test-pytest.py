@@ -116,10 +116,10 @@ def test_dut_parameterized_commands(fake_dut_session, cmd, exp_resp, conftest_de
 class TestClassScopeFixture:
     test_val = 0
 
-    def setup(self):
+    def setup_method(self):
         TestClassScopeFixture.test_val = 5
 
-    def teardown(self):
+    def teardown_method(self):
         TestClassScopeFixture.test_val = 0
 
     def test_no_ok_in_log(self, fake_dut_class):
