@@ -3,8 +3,8 @@ from typing import Callable, List, TextIO
 
 from trunner.ctx import TestContext
 from trunner.dut import HostDut
-from trunner.harness import IntermediateHarness, HarnessBuilder
-from trunner.types import TestOptions, TestResult, TestStage
+from trunner.harness import IntermediateHarness, HarnessBuilder, TestStartRunningHarness
+from trunner.types import TestOptions, TestResult, TestStage, TestType
 from .base import TargetBase
 
 
@@ -52,16 +52,21 @@ class HostPCGenericTarget(TargetBase):
         builder = HarnessBuilder()
 
         if test.shell is None or test.shell.cmd is None:
-            # TODO we should detect it in parsing step, now force fail
             def fail(result: TestResult):
                 result.fail(msg="There is no command to execute")
                 return result
 
-            builder.add(fail)
-            return builder.get_harness()
-
-        test.shell.cmd[0] = f"{self.root_dir()}{test.shell.cmd[0]}"
-        builder.add(self.ExecHarness(self.dut, test.shell.cmd))
+            if test.type != "pytest":
+                # Specific case where we do not need the shell command
+                # TODO: In the future, we could support shell communication
+                
+                builder.add(fail)
+                return builder.get_harness()
+            builder.add(TestStartRunningHarness())
+        else:
+            test.shell.cmd[0] = f"{self.root_dir()}{test.shell.cmd[0]}"
+            builder.add(self.ExecHarness(self.dut, test.shell.cmd))
+            
         builder.add(test.harness)
 
         return builder.get_harness()
