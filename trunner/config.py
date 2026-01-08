@@ -103,6 +103,10 @@ class ConfigParser:
     def _parse_unity(self):
         self.test.harness = PyHarness(self.ctx.target.dut, self.ctx, unity_harness, self.test.kwargs)
 
+    def _parse_pytest(self):
+        self.test.shell = None
+        self.test.harness = PyHarness(self.ctx.target.dut, self.ctx, pytest_harness, self.test.kwargs)
+
     def _parse_load(self, config: dict):
         apps = config.get("load", [])
         apps_to_boot = []
