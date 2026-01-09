@@ -6,7 +6,7 @@ import sys
 import time
 import traceback
 from dataclasses import dataclass, field
-from datetime import datetime, UTC
+from datetime import datetime
 from enum import Enum, auto
 from functools import total_ordering
 from pathlib import Path
@@ -92,7 +92,7 @@ class TestStage(Enum):
     
 
 class TestType(str, Enum):
-    def _generate_next_value_(name:str, start:int, count:int, last_values: list) -> str:
+    def _generate_next_value_(name: str, start: int, count: int, last_values: list) -> str:
         return name.lower()
     
     @classmethod
@@ -218,7 +218,7 @@ class TestResult:
         self._timing_stage_start = time.time()
 
         if stage == TestStage.RUN:
-            self._start_time = datetime.now(UTC)
+            self._start_time = datetime.utcnow()
             self._init_subresult()
 
     def _init_subresult(self):
