@@ -28,11 +28,11 @@ class FakeDUT:
 
     def power_off(self):
         self.__printout("Powering OFF...")
-        self.go_sleep(1)
+        self.go_sleep(HARDCODED_DELAY)
         self.connected = False
 
     def get_log(self):
-        return self._log[:]
+        return self._log
 
     def __printout(self, text: str):
         output = f"\n\t[FakeDUT] >> {text}"
@@ -56,7 +56,7 @@ def fake_dut_session():
     
     yield dut
 
-    dut.power_off()    
+    dut.power_off()
 
 
 @pytest.fixture(scope="class")
