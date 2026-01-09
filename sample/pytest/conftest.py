@@ -22,7 +22,7 @@ class FakeDUT:
         response = "OK"
         self.__printout(response)
         return response
-    
+
     def go_sleep(self, seconds: int):
         time.sleep(seconds)
 
@@ -53,7 +53,7 @@ def conftest_print():
 @pytest.fixture(scope="session")
 def fake_dut_session():
     dut = FakeDUT()
-    
+
     yield dut
 
     dut.power_off()
