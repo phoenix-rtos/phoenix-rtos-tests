@@ -82,7 +82,11 @@ class PytestBridgePlugin:
 
 
 def pytest_harness(dut: Dut, ctx: TestContext, result: TestResult, **kwargs) -> TestResult:
-    test_path = ctx.project_path / kwargs.get("path")
+    if "path" not in kwargs:
+        result.fail(msg="missing `path` from test configuration!")
+        return result
+
+    test_path = ctx.project_path / kwargs["path"]
     options = kwargs.get("options", "").split()
     
     bridge_plugin = PytestBridgePlugin(dut, ctx, result, kwargs)
