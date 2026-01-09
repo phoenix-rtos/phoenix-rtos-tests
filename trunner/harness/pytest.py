@@ -51,8 +51,8 @@ class PytestBridgePlugin:
     def kwargs(self):
         return self._kwargs
 
-    @pytest.hookimpl(specname="pytest_runtest_logreport")
-    def pytest_trunner_hook(self, report):
+    @pytest.hookimpl()
+    def pytest_runtest_logreport(self, report):
         """PyTest hook called after a test phase completion.
 
         Adds a TestRunner subresult for each PyTest case report
