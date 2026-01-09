@@ -66,7 +66,7 @@ class ConfigParser:
             self._parse_pytest()
         else:
             raise ParserError("unknown key!")
-        
+
         self.test.type = test_type
 
     def _parse_pyharness(self, config: dict):

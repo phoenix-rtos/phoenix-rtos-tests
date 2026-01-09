@@ -8,7 +8,7 @@ from trunner.types import Status, TestResult
 class PytestLogCapturePlugin:
     """Plugin for intercepting and optionally suppressing PyTest output.
 
-    Diverts the PyTest's detailed report stream into an internal buffer 
+    Diverts the PyTest's detailed report stream into an internal buffer
     and allows for complete suppression to keep the terminal clean.
     """
     def __init__(self, stream_output):
@@ -66,7 +66,7 @@ class PytestBridgePlugin:
 
         if not (is_call_stage or is_setup_failure):
             return
-        
+
         status = Status.OK
 
         if report.failed:
@@ -75,8 +75,8 @@ class PytestBridgePlugin:
             status = Status.SKIP
 
         self._result.add_subresult(
-            subname=report.nodeid.split("::")[-1], 
-            status=status, 
+            subname=report.nodeid.split("::")[-1],
+            status=status,
             msg=""
         )
 
@@ -88,7 +88,7 @@ def pytest_harness(dut: Dut, ctx: TestContext, result: TestResult, **kwargs) -> 
 
     test_path = ctx.project_path / kwargs["path"]
     options = kwargs.get("options", "").split()
-    
+
     bridge_plugin = PytestBridgePlugin(dut, ctx, result, kwargs)
     log_plugin = PytestLogCapturePlugin(ctx.stream_output)
 
