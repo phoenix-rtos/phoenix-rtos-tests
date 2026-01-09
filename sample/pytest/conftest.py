@@ -4,9 +4,11 @@ import time
 HARDCODED_DELAY = 1
 HARDCODED_VERB = 0
 
+
 def _print(text: str):
-        if HARDCODED_VERB >= 2:
-            print(text)
+    if HARDCODED_VERB >= 2:
+        print(text)
+
 
 class FakeDUT:
     def __init__(self):
@@ -42,9 +44,11 @@ class FakeDUT:
 def conftest_delay():
     return HARDCODED_DELAY
 
+
 @pytest.fixture(scope="session")
 def conftest_print():
     return _print
+
 
 @pytest.fixture(scope="session")
 def fake_dut_session():
