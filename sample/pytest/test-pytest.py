@@ -6,7 +6,7 @@ import time
 def global_session_resource(conftest_print):
     resource = {"status": "ready", "id": 999}
     conftest_print("\n\t[SESSION] :::: STARTING\n")
-    
+
     yield resource
 
     conftest_print("\n\t[SESSION] :::: TEARING DOWN\n")
@@ -96,7 +96,7 @@ def test_fake_dut_send_time(fake_dut_session, conftest_delay):
     exp_sleep_time = conftest_delay
     start = time.time()
 
-    fake_dut_session.send(f"Hello")
+    fake_dut_session.send("Hello")
 
     elapsed = time.time() - start
 

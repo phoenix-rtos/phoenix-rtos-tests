@@ -8,7 +8,7 @@ from trunner.types import Status, TestResult
 class PytestLogCapturePlugin:
     """Plugin for intercepting and optionally suppressing PyTest output.
 
-    Diverts the PyTest's detailed report stream into an internal buffer 
+    Diverts the PyTest's detailed report stream into an internal buffer
     and allows for complete suppression to keep the terminal clean.
     """
     def __init__(self, stream_output):
@@ -51,8 +51,8 @@ class PytestBridgePlugin:
     def kwargs(self):
         return self._kwargs
 
-    @pytest.hookimpl(specname="pytest_runtest_logreport")
-    def pytest_trunner_hook(self, report):
+    @pytest.hookimpl()
+    def pytest_runtest_logreport(self, report):
         """PyTest hook called after a test phase completion.
 
         Adds a TestRunner subresult for each PyTest case report
@@ -66,7 +66,7 @@ class PytestBridgePlugin:
 
         if not (is_call_stage or is_setup_failure):
             return
-        
+
         status = Status.OK
 
         if report.failed:
@@ -75,16 +75,20 @@ class PytestBridgePlugin:
             status = Status.SKIP
 
         self._result.add_subresult(
-            subname=report.nodeid.split("::")[-1], 
-            status=status, 
+            subname=report.nodeid.split("::")[-1],
+            status=status,
             msg=""
         )
 
 
 def pytest_harness(dut: Dut, ctx: TestContext, result: TestResult, **kwargs) -> TestResult:
-    test_path = ctx.project_path / kwargs.get("path")
+    if "path" not in kwargs:
+        result.fail(msg="missing `path` from test configuration!")
+        return result
+
+    test_path = ctx.project_path / kwargs["path"]
     options = kwargs.get("options", "").split()
-    
+
     bridge_plugin = PytestBridgePlugin(dut, ctx, result, kwargs)
     log_plugin = PytestLogCapturePlugin(ctx.stream_output)
 

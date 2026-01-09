@@ -89,12 +89,13 @@ class TestStage(Enum):
         if self.__class__ is other.__class__:
             return self.value < other.value
         return NotImplemented
-    
+
 
 class TestType(str, Enum):
+    @staticmethod
     def _generate_next_value_(name: str, start: int, count: int, last_values: list) -> str:
         return name.lower()
-    
+
     @classmethod
     def _missing_(cls, value: object) -> Optional[Enum]:
         if value is None or value == "":

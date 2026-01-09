@@ -56,17 +56,17 @@ class HostPCGenericTarget(TargetBase):
                 result.fail(msg="There is no command to execute")
                 return result
 
-            if test.type != "pytest":
+            if test.type is not TestType.PYTEST:
                 # Specific case where we do not need the shell command
                 # TODO: In the future, we could support shell communication
-                
+
                 builder.add(fail)
                 return builder.get_harness()
             builder.add(TestStartRunningHarness())
         else:
             test.shell.cmd[0] = f"{self.root_dir()}{test.shell.cmd[0]}"
             builder.add(self.ExecHarness(self.dut, test.shell.cmd))
-            
+
         builder.add(test.harness)
 
         return builder.get_harness()
