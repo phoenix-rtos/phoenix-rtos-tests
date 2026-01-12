@@ -1,4 +1,5 @@
 import io
+import shlex
 import pytest
 from trunner.dut import Dut
 from trunner.ctx import TestContext
@@ -87,7 +88,7 @@ def pytest_harness(dut: Dut, ctx: TestContext, result: TestResult, **kwargs) -> 
         return result
 
     test_path = ctx.project_path / kwargs["path"]
-    options = kwargs.get("options", "").split()
+    options = shlex.split(kwargs.get("options", ""))
 
     bridge_plugin = PytestBridgePlugin(dut, ctx, result, kwargs)
     log_plugin = PytestLogCapturePlugin(ctx.stream_output)
