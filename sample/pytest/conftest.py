@@ -1,5 +1,5 @@
-import pytest
 import time
+import pytest
 
 HARDCODED_DELAY = 1
 HARDCODED_VERB = 0
@@ -50,19 +50,19 @@ def conftest_print():
     return _print
 
 
-@pytest.fixture(scope="session")
-def fake_dut_session():
-    dut = FakeDUT()
-
-    yield dut
-
-    dut.power_off()    
-
-
-@pytest.fixture(scope="class")
-def fake_dut_class():
+def _fake_dut_factory():
     dut = FakeDUT()
 
     yield dut
 
     dut.power_off()
+
+
+@pytest.fixture(scope="session")
+def fake_dut_session():
+    yield from _fake_dut_factory()
+
+
+@pytest.fixture(scope="class")
+def fake_dut_class():
+    yield from _fake_dut_factory()

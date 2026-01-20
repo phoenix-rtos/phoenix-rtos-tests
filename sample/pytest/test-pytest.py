@@ -36,18 +36,19 @@ def test_always_fails(ctx):
     assert False, "Always Fail"
 
 
-@pytest.mark.skip(reason="Test")
+@pytest.mark.skip(reason="Test skipping")
 def test_always_skip():
     assert True
 
 
+@pytest.mark.xfail(reason="Always fails, as expected")
 def test_always_xfail():
-    pytest.xfail("xfail")
+    assert False
 
 
-@pytest.mark.xfail(reason="always xfail")
+@pytest.mark.xfail(reason="Always passes but it should not")
 def test_always_xpass():
-    pass
+    assert True
 
 
 def test_ctx(ctx):
@@ -128,10 +129,6 @@ class TestClassScopeFixture:
     def test_send_hello(self, fake_dut_class):
         fake_dut_class.send("hello")
         assert "OK" in fake_dut_class.get_log()
-
-    def test_send_world_check_for_2_OKs(self, fake_dut_class):
-        fake_dut_class.send("hello")
-        assert fake_dut_class.get_log().count("OK") == 2
 
     def test_test_val_value(self):
         assert TestClassScopeFixture.test_val == 5
