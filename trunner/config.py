@@ -54,7 +54,8 @@ class ConfigParser:
         self.test = TestOptions()
 
     def _parse_type(self, config: dict):
-        test_type = TestType(config.get("type", self.main.type))
+        config_test_type = config.get("type", self.main.type)
+        test_type = TestType(config_test_type)
         if test_type is TestType.EMPTY:
             test_type = TestType.HARNESS
 
@@ -65,7 +66,7 @@ class ConfigParser:
         elif test_type == TestType.PYTEST:
             self._parse_pytest()
         else:
-            raise ParserError("unknown key!")
+            raise ParserError(f"unknown test type: {config_test_type}")
 
         self.test.type = test_type
 
