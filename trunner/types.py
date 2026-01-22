@@ -388,9 +388,9 @@ class TestSubResult(TestResult):
                 )
             # multi-line message that does not exceed width limit
             elif remaining_lines:
-                out += ": " + first_line + "\n" + "\n".join(
+                out += ":\n" + "\n".join(
                     f'{" " * shift_len}{line}'
-                    for line in remaining_lines
+                    for line in msg_lines
                 )
             # single-line message
             else:
