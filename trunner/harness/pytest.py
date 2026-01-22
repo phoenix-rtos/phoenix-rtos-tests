@@ -1,8 +1,10 @@
 import io
+import re
 import shlex
+
 import pytest
-from trunner.dut import Dut
 from trunner.ctx import TestContext
+from trunner.dut import Dut
 from trunner.types import Status, TestResult
 
 
@@ -19,7 +21,16 @@ class PytestLogCapturePlugin:
     @pytest.hookimpl(trylast=True)
     def pytest_configure(self, config):
         terminal = config.pluginmanager.get_plugin("terminalreporter")
-        if terminal and self._suppress:
+        if not terminal:
+            return
+
+        # Disabling PyTest's summary completely
+        # This information is handled by TRunner instead
+        config.option.disable_warnings = True
+        config.option.no_summary = True
+        terminal.summary_stats = lambda: None
+
+        if self._suppress:
             terminal._tw._file = self.buffer
 
     def get_logs(self) -> str:
@@ -39,6 +50,10 @@ class PytestBridgePlugin:
         self._ctx = ctx
         self._kwargs = kwargs
         self._result = result
+        self._test_outcomes = {}
+        self._broken_fixtures = set()
+        self._unknown_fixture_str = "[UNKNOWN FIXTURE]"
+        self._common_fast_fail_str = "Requires a previously failing fixture:"
 
     @pytest.fixture
     def dut(self):
@@ -52,6 +67,13 @@ class PytestBridgePlugin:
     def kwargs(self):
         return self._kwargs
 
+    @pytest.hookimpl(tryfirst=True)
+    def pytest_runtest_setup(self, item):
+        for fixture in item.fixturenames:
+            # If a fixture failed previously during setup, fail immediately
+            if fixture in self._broken_fixtures:
+                pytest.fail(f"{self._common_fast_fail_str} {fixture}", pytrace=False)
+
     @pytest.hookimpl()
     def pytest_runtest_logreport(self, report):
         """PyTest hook called after a test phase completion.
@@ -60,26 +82,84 @@ class PytestBridgePlugin:
 
         :param report: PyTest's TestReport object
         """
+        error_msg = getattr(report, "longreprtext", str(report.longrepr)) if report.longrepr else ""
 
-        # We want to capture only the test call or setup failures (avoids a triple report)
-        is_call_stage = (report.when == "call")
-        is_setup_failure = (report.when == "setup" and (report.failed or report.skipped))
+        if report.when == "setup":
+            self._record_setup_phase(report, error_msg)
 
-        if not (is_call_stage or is_setup_failure):
+        if report.when == "call":
+            self._record_call_phase(report, error_msg)
+
+        if report.when == "teardown":
+            self._finalize_and_report(report, error_msg)
+
+    def _record_setup_phase(self, report, error_msg):
+        if report.failed:
+            fixture_name = self._extract_broken_fixture(error_msg)
+            self._test_outcomes[report.nodeid] = {
+                "status": Status.FAIL,
+                "msg": f"{error_msg}",  # Newline for improved readability
+            }
+            if fixture_name != self._unknown_fixture_str:
+                # It is assumed that only a fixture that fails at startup will
+                # be marked as 'broken', thus disabling all test-cases using it
+                self._broken_fixtures.add(fixture_name)
+            return
+        if report.skipped:
+            skip_msg = self._extract_reason(report)
+            self._test_outcomes[report.nodeid] = {"status": Status.SKIP, "msg": skip_msg}
             return
 
+    def _record_call_phase(self, report, error_msg):
         status = Status.OK
-
+        msg = ""
         if report.failed:
             status = Status.FAIL
-        elif report.skipped and not hasattr(report, "wasxfail"):
+        elif report.skipped:
             status = Status.SKIP
+            reason = self._extract_reason(report)
+            # XFAIL is treated as SKIP to not confuse it with success but
+            # it is not a FAIL either. XPASS will still be treated as OK
+            if hasattr(report, "wasxfail"):
+                msg = f"XFAIL{': ' if len(reason) > 0 else ''}{reason}"
+            else:
+                msg = reason
 
-        self._result.add_subresult(
-            subname=report.nodeid.split("::")[-1],
-            status=status,
-            msg=""
-        )
+        self._test_outcomes[report.nodeid] = {"status": status, "msg": error_msg if report.failed else msg}
+        return
+
+    def _finalize_and_report(self, report, error_msg):
+        stored = self._test_outcomes.pop(report.nodeid, {"status": Status.OK, "msg": ""})
+        final_status = stored["status"]
+        final_msg = stored["msg"]
+        teardown_msg = error_msg
+
+        if report.failed:
+            final_status = Status.FAIL
+
+            if final_msg:
+                final_msg = f"{final_msg}\n{teardown_msg}"
+            else:
+                final_msg = f"{teardown_msg}"
+
+        self._result.add_subresult(subname=report.nodeid.split("::")[-1], status=final_status, msg=final_msg)
+
+    def _extract_reason(self, report):
+        reason = ""
+        if isinstance(report.longrepr, tuple):
+            reason = report.longrepr[2].replace("Skipped: ", "")
+        elif hasattr(report, "wasxfail"):
+            reason = report.wasxfail.replace("reason: ", "")
+        return reason.strip()
+
+    def _extract_broken_fixture(self, text):
+        fast_fail_match = re.search(rf"{re.escape(self._common_fast_fail_str)} (\w+)", text)
+        if fast_fail_match:
+            return fast_fail_match.group(1)
+        decorator_match = re.search(r"@pytest\.fixture.*?def\s+(\w+)", text, re.DOTALL)
+        if decorator_match:
+            return decorator_match.group(1)
+        return self._unknown_fixture_str
 
 
 def pytest_harness(dut: Dut, ctx: TestContext, result: TestResult, **kwargs) -> TestResult:
@@ -93,13 +173,7 @@ def pytest_harness(dut: Dut, ctx: TestContext, result: TestResult, **kwargs) -> 
     bridge_plugin = PytestBridgePlugin(dut, ctx, result, kwargs)
     log_plugin = PytestLogCapturePlugin(ctx.stream_output)
 
-    cmd_args = [
-        str(test_path),
-        *options,
-        "-v",
-        "-s",
-        "--tb=no",
-    ]
+    cmd_args = [str(test_path), *options, "-v", "-s"]
 
     try:
         exit_code = pytest.main(cmd_args, plugins=[bridge_plugin, log_plugin])
@@ -111,14 +185,10 @@ def pytest_harness(dut: Dut, ctx: TestContext, result: TestResult, **kwargs) -> 
         result.status = Status.FAIL
     elif all(sub.status == Status.SKIP for sub in result.subresults) and result.subresults:
         result.status = Status.SKIP
-    elif not result.subresults and exit_code != 0:
+    elif not result.subresults or exit_code != 0:
         result.status = Status.FAIL
         result.msg = f"Pytest execution failed (Exit Code {exit_code})."
     else:
         result.status = Status.OK
-
-    if result.status == Status.FAIL:
-        captured_log = log_plugin.get_logs()
-        result.msg += captured_log
 
     return result
