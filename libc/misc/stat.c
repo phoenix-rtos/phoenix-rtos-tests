@@ -471,7 +471,8 @@ TEST(stat_mode, symloop_max)
 TEST(stat_mode, fifo_type)
 {
 #ifdef __CPU_MCXN94X
-	/* Disabled on MCXN947 because of issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1338 */
+#elif defined(__CPU_ZYNQMP)
+	/* Disabled on MCXN947, ZYNQMP because of issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1338 */
 	TEST_IGNORE();
 #endif
 	int fifo_fd;

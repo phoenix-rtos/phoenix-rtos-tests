@@ -3,3 +3,7 @@ test:
         - name: main
           harness: test.py
           execute: test-helloworld
+          targets:
+            # too many binaries in plo to enable this test
+            exclude: [armv7r5f-zynqmp-qemu]
+

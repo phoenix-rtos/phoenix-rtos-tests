@@ -65,7 +65,7 @@ test:
       execute: test-libc-exit
       targets:
         # Excluded due to lack of fork() related functionality
-        exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo, armv8m33-mcxn94x-frdm]
+        exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo, armv8m33-mcxn94x-frdm, armv7r5f-zynqmp-qemu]
         include: [host-generic-pc]
 
     - name: time
@@ -76,7 +76,7 @@ test:
     - name: unix-socket
       execute: test-libc-unix-socket
       targets:
-        exclude: [armv7a9-zynq7000-qemu, aarch64a53-zynqmp-qemu]
+        exclude: [armv7a9-zynq7000-qemu, aarch64a53-zynqmp-qemu, armv7r5f-zynqmp-qemu]
         include: [host-generic-pc]
 
     - name: unix-socket
@@ -87,7 +87,7 @@ test:
     - name: unix-socket # Issue: 1342 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1342
       execute: test-libc-unix-socket --extra-poll-delay-ms 250 --transfer-loop-cnt 30
       targets:
-        value: [aarch64a53-zynqmp-qemu]
+        value: [aarch64a53-zynqmp-qemu, armv7r5f-zynqmp-qemu]
 
     - name: inet-socket
       execute: test-libc-inet-socket

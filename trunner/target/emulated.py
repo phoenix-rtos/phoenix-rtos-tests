@@ -126,7 +126,7 @@ class AARCH64A53ZynqmpQemuTarget(QemuTarget):
 class ARMV7R5FZynqmpQemuTarget(QemuTarget):
     name = "armv7r5f-zynqmp-qemu"
     rootfs = False
-    experimental = True
+    experimental = False
 
     def __init__(self):
         super().__init__("armv7r5f-zynqmp-qemu.sh")

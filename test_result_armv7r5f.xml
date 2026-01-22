@@ -1,0 +1,1157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites tests="920" failures="0" errors="0" skipped="69" time="171.29">
+	<testsuite name="armv7r5f-zynqmp-qemu:flash" timestamp="2026-01-22T12:10:25.227769" tests="1" errors="0" failures="0" skipped="0" time="0.0" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:flash" classname="flash" time="0.0"/>
+	</testsuite>
+	<testsuite name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/initfini/main" timestamp="2026-01-22T12:10:31.785185" tests="1" errors="0" failures="0" skipped="0" time="0.011" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/initfini/main" classname="phoenix-rtos-tests/initfini/main" time="0.011"/>
+	</testsuite>
+	<testsuite name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/ioctl/unit" timestamp="2026-01-22T12:10:38.779167" tests="11" errors="0" failures="0" skipped="0" time="0.33" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/ioctl/unit.ioctl.invalid_req" classname="phoenix-rtos-tests/ioctl/unit" time="0.293"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/ioctl/unit.ioctl.regular_file" classname="phoenix-rtos-tests/ioctl/unit" time="0.009"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/ioctl/unit.ioctl.not_valid_fd" classname="phoenix-rtos-tests/ioctl/unit" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/ioctl/unit.ioctl.no_data" classname="phoenix-rtos-tests/ioctl/unit" time="0.004"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/ioctl/unit.ioctl.in_val" classname="phoenix-rtos-tests/ioctl/unit" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/ioctl/unit.ioctl.data_in" classname="phoenix-rtos-tests/ioctl/unit" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/ioctl/unit.ioctl.data_in_big" classname="phoenix-rtos-tests/ioctl/unit" time="0.004"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/ioctl/unit.ioctl.data_out" classname="phoenix-rtos-tests/ioctl/unit" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/ioctl/unit.ioctl.data_out_big" classname="phoenix-rtos-tests/ioctl/unit" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/ioctl/unit.ioctl.data_inout" classname="phoenix-rtos-tests/ioctl/unit" time="0.004"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/ioctl/unit.ioctl.data_inout_big" classname="phoenix-rtos-tests/ioctl/unit" time="0.004"/>
+	</testsuite>
+	<testsuite name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libalgo/unit" timestamp="2026-01-22T12:10:45.916973" tests="7" errors="0" failures="0" skipped="0" time="0.047" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libalgo/unit.test_lf_fifo.push" classname="phoenix-rtos-tests/libalgo/unit" time="0.016"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libalgo/unit.test_lf_fifo.push_wrap" classname="phoenix-rtos-tests/libalgo/unit" time="0.008"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libalgo/unit.test_lf_fifo.push_many" classname="phoenix-rtos-tests/libalgo/unit" time="0.005"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libalgo/unit.test_lf_fifo.pop_many" classname="phoenix-rtos-tests/libalgo/unit" time="0.004"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libalgo/unit.test_lf_fifo.ow_push" classname="phoenix-rtos-tests/libalgo/unit" time="0.005"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libalgo/unit.test_lf_fifo.ow_push_many" classname="phoenix-rtos-tests/libalgo/unit" time="0.006"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libalgo/unit.test_lf_fifo.ow_pop_many" classname="phoenix-rtos-tests/libalgo/unit" time="0.003"/>
+	</testsuite>
+	<testsuite name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf" timestamp="2026-01-22T12:10:52.780460" tests="113" errors="0" failures="0" skipped="8" time="12.609" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_d.d" classname="phoenix-rtos-tests/libc/printf" time="0.046"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_d.hhd" classname="phoenix-rtos-tests/libc/printf" time="0.027"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_d.hd" classname="phoenix-rtos-tests/libc/printf" time="0.029"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_d.ld" classname="phoenix-rtos-tests/libc/printf" time="0.03"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_d.lld" classname="phoenix-rtos-tests/libc/printf" time="0.038"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_d.jd" classname="phoenix-rtos-tests/libc/printf" time="0.038"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_d.zd" classname="phoenix-rtos-tests/libc/printf" time="0.026"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_d.td" classname="phoenix-rtos-tests/libc/printf" time="0.029"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_d.out_of_bonds" classname="phoenix-rtos-tests/libc/printf" time="0.025"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_i.i" classname="phoenix-rtos-tests/libc/printf" time="0.03"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_i.hhi" classname="phoenix-rtos-tests/libc/printf" time="0.027"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_i.hi" classname="phoenix-rtos-tests/libc/printf" time="0.028"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_i.li" classname="phoenix-rtos-tests/libc/printf" time="0.029"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_i.lli" classname="phoenix-rtos-tests/libc/printf" time="0.036"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_i.ji" classname="phoenix-rtos-tests/libc/printf" time="0.037"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_i.zi" classname="phoenix-rtos-tests/libc/printf" time="0.026"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_i.ti" classname="phoenix-rtos-tests/libc/printf" time="0.031"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_i.out_of_bonds" classname="phoenix-rtos-tests/libc/printf" time="0.024"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_u.u" classname="phoenix-rtos-tests/libc/printf" time="0.027"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_u.hhu" classname="phoenix-rtos-tests/libc/printf" time="0.025"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_u.hu" classname="phoenix-rtos-tests/libc/printf" time="0.029"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_u.lu" classname="phoenix-rtos-tests/libc/printf" time="0.029"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_u.llu" classname="phoenix-rtos-tests/libc/printf" time="0.029"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_u.ju" classname="phoenix-rtos-tests/libc/printf" time="0.031"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_u.zu" classname="phoenix-rtos-tests/libc/printf" time="0.032"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_u.tu" classname="phoenix-rtos-tests/libc/printf" time="0.029"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_u.out_of_bonds" classname="phoenix-rtos-tests/libc/printf" time="0.026"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_o.o" classname="phoenix-rtos-tests/libc/printf" time="0.028"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_o.hho" classname="phoenix-rtos-tests/libc/printf" time="0.025"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_o.ho" classname="phoenix-rtos-tests/libc/printf" time="0.024"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_o.lo" classname="phoenix-rtos-tests/libc/printf" time="0.026"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_o.llo" classname="phoenix-rtos-tests/libc/printf" time="0.03"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_o.jo" classname="phoenix-rtos-tests/libc/printf" time="0.033"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_o.zo" classname="phoenix-rtos-tests/libc/printf" time="0.028"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_o.to" classname="phoenix-rtos-tests/libc/printf" time="0.026"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_o.out_of_bonds" classname="phoenix-rtos-tests/libc/printf" time="0.025"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_x.x" classname="phoenix-rtos-tests/libc/printf" time="0.027"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_x.hhx" classname="phoenix-rtos-tests/libc/printf" time="0.026"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_x.hx" classname="phoenix-rtos-tests/libc/printf" time="0.026"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_x.lx" classname="phoenix-rtos-tests/libc/printf" time="0.028"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_x.llx" classname="phoenix-rtos-tests/libc/printf" time="0.028"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_x.jx" classname="phoenix-rtos-tests/libc/printf" time="0.029"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_x.zx" classname="phoenix-rtos-tests/libc/printf" time="0.027"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_x.tx" classname="phoenix-rtos-tests/libc/printf" time="0.028"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_x.x_out_of_bonds" classname="phoenix-rtos-tests/libc/printf" time="0.025"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_x.X" classname="phoenix-rtos-tests/libc/printf" time="0.028"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_x.hhX" classname="phoenix-rtos-tests/libc/printf" time="0.027"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_x.hX" classname="phoenix-rtos-tests/libc/printf" time="0.027"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_x.lX" classname="phoenix-rtos-tests/libc/printf" time="0.026"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_x.llX" classname="phoenix-rtos-tests/libc/printf" time="0.029"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_x.jX" classname="phoenix-rtos-tests/libc/printf" time="0.029"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_x.zX" classname="phoenix-rtos-tests/libc/printf" time="0.025"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_x.tX" classname="phoenix-rtos-tests/libc/printf" time="0.027"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_x.X_out_of_bonds" classname="phoenix-rtos-tests/libc/printf" time="0.01">
+			<skipped/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_fega.f" classname="phoenix-rtos-tests/libc/printf" time="0.047"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_fega.lf" classname="phoenix-rtos-tests/libc/printf" time="0.157"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_fega.Lf" classname="phoenix-rtos-tests/libc/printf" time="0.159"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_fega.F" classname="phoenix-rtos-tests/libc/printf" time="0.047"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_fega.lF" classname="phoenix-rtos-tests/libc/printf" time="0.167"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_fega.LF" classname="phoenix-rtos-tests/libc/printf" time="0.158"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_fega.e" classname="phoenix-rtos-tests/libc/printf" time="0.043"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_fega.le" classname="phoenix-rtos-tests/libc/printf" time="0.118"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_fega.Le" classname="phoenix-rtos-tests/libc/printf" time="0.115"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_fega.E" classname="phoenix-rtos-tests/libc/printf" time="0.038"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_fega.lE" classname="phoenix-rtos-tests/libc/printf" time="0.119"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_fega.LE" classname="phoenix-rtos-tests/libc/printf" time="0.119"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_fega.g" classname="phoenix-rtos-tests/libc/printf" time="0.038"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_fega.lg" classname="phoenix-rtos-tests/libc/printf" time="0.115"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_fega.Lg" classname="phoenix-rtos-tests/libc/printf" time="0.119"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_fega.G" classname="phoenix-rtos-tests/libc/printf" time="0.037"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_fega.lG" classname="phoenix-rtos-tests/libc/printf" time="0.115"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_fega.LG" classname="phoenix-rtos-tests/libc/printf" time="0.123"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_fega.a" classname="phoenix-rtos-tests/libc/printf" time="0.035"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_fega.la" classname="phoenix-rtos-tests/libc/printf" time="0.042"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_fega.La" classname="phoenix-rtos-tests/libc/printf" time="0.01">
+			<skipped message="#739 issue"/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_fega.A" classname="phoenix-rtos-tests/libc/printf" time="0.038"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_fega.lA" classname="phoenix-rtos-tests/libc/printf" time="0.044"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_fega.LA" classname="phoenix-rtos-tests/libc/printf" time="0.009">
+			<skipped message="#739 issue"/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_fega.fega_inf_nan" classname="phoenix-rtos-tests/libc/printf" time="0.102"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_fega.lfega_inf_nan" classname="phoenix-rtos-tests/libc/printf" time="0.097"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_fega.Lfega_inf_nan" classname="phoenix-rtos-tests/libc/printf" time="0.101"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_fega.FEGA_inf_nan" classname="phoenix-rtos-tests/libc/printf" time="0.105"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_fega.lFEGA_inf_nan" classname="phoenix-rtos-tests/libc/printf" time="0.096"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_fega.LFEGA_inf_nan" classname="phoenix-rtos-tests/libc/printf" time="0.1"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_cspn.c" classname="phoenix-rtos-tests/libc/printf" time="0.05"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_cspn.c_ascii_printf" classname="phoenix-rtos-tests/libc/printf" time="1.216"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_cspn.c_ascii_vprintf" classname="phoenix-rtos-tests/libc/printf" time="1.191"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_cspn.c_non_ascii_printf" classname="phoenix-rtos-tests/libc/printf" time="1.191"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_cspn.c_non_ascii_vprintf" classname="phoenix-rtos-tests/libc/printf" time="1.195"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_cspn.lc" classname="phoenix-rtos-tests/libc/printf" time="0.024"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_cspn.C" classname="phoenix-rtos-tests/libc/printf" time="0.009">
+			<skipped message="#709 issue"/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_cspn.s" classname="phoenix-rtos-tests/libc/printf" time="0.032"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_cspn.s_specific" classname="phoenix-rtos-tests/libc/printf" time="0.084"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_cspn.s_ascii_printf" classname="phoenix-rtos-tests/libc/printf" time="0.89"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_cspn.s_ascii_vprintf" classname="phoenix-rtos-tests/libc/printf" time="0.895"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_cspn.s_huge_string" classname="phoenix-rtos-tests/libc/printf" time="0.067"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_cspn.ls" classname="phoenix-rtos-tests/libc/printf" time="0.008">
+			<skipped message="#698 issue"/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_cspn.S" classname="phoenix-rtos-tests/libc/printf" time="0.009">
+			<skipped message="#709 issue"/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_cspn.p" classname="phoenix-rtos-tests/libc/printf" time="0.028"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_cspn.n" classname="phoenix-rtos-tests/libc/printf" time="0.008">
+			<skipped message="#277 issue"/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_cspn.percent" classname="phoenix-rtos-tests/libc/printf" time="0.026"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_rest.mods_int" classname="phoenix-rtos-tests/libc/printf" time="0.163"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_rest.mods_float" classname="phoenix-rtos-tests/libc/printf" time="0.229"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_rest.mods_double" classname="phoenix-rtos-tests/libc/printf" time="0.358"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_rest.mods_string" classname="phoenix-rtos-tests/libc/printf" time="0.084"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_rest.mods_o_x" classname="phoenix-rtos-tests/libc/printf" time="0.102"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_rest.mods_sharp_fega" classname="phoenix-rtos-tests/libc/printf" time="0.155"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_rest.mods_sharp_FEGA" classname="phoenix-rtos-tests/libc/printf" time="0.158"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_rest.lmods_zero_int" classname="phoenix-rtos-tests/libc/printf" time="0.123"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_rest.lmods_zero_float" classname="phoenix-rtos-tests/libc/printf" time="0.149"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_rest.numbered_argument" classname="phoenix-rtos-tests/libc/printf" time="0.01">
+			<skipped message="#719 issue"/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_rest.snprintf_truncation" classname="phoenix-rtos-tests/libc/printf" time="0.006"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/printf.stdio_printf_rest.errnos" classname="phoenix-rtos-tests/libc/printf" time="0.006"/>
+	</testsuite>
+	<testsuite name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic" timestamp="2026-01-22T12:11:12.285192" tests="48" errors="0" failures="0" skipped="0" time="0.61" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_d.d" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.026"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_d.hhd" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.012"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_d.hd" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.011"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_d.ld" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.013"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_d.lld" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.016"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_d.jd" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.016"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_d.zd" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.012"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_d.td" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.012"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_i.i" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.014"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_i.hhi" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.01"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_i.hi" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.012"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_i.li" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.011"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_i.lli" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.016"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_i.ji" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.015"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_i.zi" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.01"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_i.ti" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.013"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_u.u" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.011"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_u.hhu" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.011"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_u.hu" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.01"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_u.lu" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.011"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_u.llu" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.012"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_u.ju" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.012"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_u.zu" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.011"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_u.tu" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.01"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_o.o" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.012"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_o.hho" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.01"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_o.ho" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.011"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_o.lo" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.015"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_o.llo" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.019"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_o.jo" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.011"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_o.zo" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.01"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_o.to" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.012"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_x.x" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.01"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_x.hhx" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.01"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_x.hx" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.012"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_x.lx" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.011"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_x.llx" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.017"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_x.jx" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.022"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_x.zx" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.01"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_x.tx" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.011"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_x.X" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.01"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_x.hhX" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.01"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_x.hX" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.012"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_x.lX" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.013"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_x.llX" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.013"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_x.jX" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.02"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_x.zX" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.01"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-basic.stdio_scanf_x.tX" classname="phoenix-rtos-tests/libc/scanf-basic" time="0.012"/>
+	</testsuite>
+	<testsuite name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-advanced" timestamp="2026-01-22T12:11:19.823223" tests="33" errors="0" failures="0" skipped="4" time="1.601" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-advanced.stdio_scanf_aefg.f" classname="phoenix-rtos-tests/libc/scanf-advanced" time="0.049"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-advanced.stdio_scanf_aefg.F" classname="phoenix-rtos-tests/libc/scanf-advanced" time="0.03"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-advanced.stdio_scanf_aefg.a" classname="phoenix-rtos-tests/libc/scanf-advanced" time="0.023"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-advanced.stdio_scanf_aefg.A" classname="phoenix-rtos-tests/libc/scanf-advanced" time="0.021"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-advanced.stdio_scanf_aefg.e" classname="phoenix-rtos-tests/libc/scanf-advanced" time="0.018"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-advanced.stdio_scanf_aefg.E" classname="phoenix-rtos-tests/libc/scanf-advanced" time="0.016"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-advanced.stdio_scanf_aefg.g" classname="phoenix-rtos-tests/libc/scanf-advanced" time="0.015"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-advanced.stdio_scanf_aefg.G" classname="phoenix-rtos-tests/libc/scanf-advanced" time="0.014"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-advanced.stdio_scanf_aefg.inf_nan_f" classname="phoenix-rtos-tests/libc/scanf-advanced" time="0.011"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-advanced.stdio_scanf_aefg.inf_nan_a" classname="phoenix-rtos-tests/libc/scanf-advanced" time="0.009"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-advanced.stdio_scanf_aefg.inf_nan_e" classname="phoenix-rtos-tests/libc/scanf-advanced" time="0.009"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-advanced.stdio_scanf_aefg.inf_nan_g" classname="phoenix-rtos-tests/libc/scanf-advanced" time="0.01"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-advanced.stdio_scanf_cspn.c" classname="phoenix-rtos-tests/libc/scanf-advanced" time="0.011"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-advanced.stdio_scanf_cspn.c_ascii" classname="phoenix-rtos-tests/libc/scanf-advanced" time="1.034"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-advanced.stdio_scanf_cspn.s_path" classname="phoenix-rtos-tests/libc/scanf-advanced" time="0.011"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-advanced.stdio_scanf_cspn.s_torn" classname="phoenix-rtos-tests/libc/scanf-advanced" time="0.011"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-advanced.stdio_scanf_cspn.s_ascii" classname="phoenix-rtos-tests/libc/scanf-advanced" time="0.015"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-advanced.stdio_scanf_cspn.s_pick" classname="phoenix-rtos-tests/libc/scanf-advanced" time="0.018"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-advanced.stdio_scanf_cspn.percent" classname="phoenix-rtos-tests/libc/scanf-advanced" time="0.011"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-advanced.stdio_scanf_cspn.n" classname="phoenix-rtos-tests/libc/scanf-advanced" time="0.027"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-advanced.stdio_scanf_cspn.ptr" classname="phoenix-rtos-tests/libc/scanf-advanced" time="0.012"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-advanced.stdio_scanf_squareBrackets.simple" classname="phoenix-rtos-tests/libc/scanf-advanced" time="0.032"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-advanced.stdio_scanf_squareBrackets.crircumflex" classname="phoenix-rtos-tests/libc/scanf-advanced" time="0.025"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-advanced.stdio_scanf_squareBrackets.pos" classname="phoenix-rtos-tests/libc/scanf-advanced" time="0.013"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-advanced.stdio_scanf_squareBrackets.white_spaces" classname="phoenix-rtos-tests/libc/scanf-advanced" time="0.017">
+			<skipped/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-advanced.stdio_scanf_squareBrackets.ascii" classname="phoenix-rtos-tests/libc/scanf-advanced" time="0.033"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-advanced.stdio_scanf_squareBrackets.ranges" classname="phoenix-rtos-tests/libc/scanf-advanced" time="0.022"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-advanced.stdio_scanf_rest.modifiers_mix" classname="phoenix-rtos-tests/libc/scanf-advanced" time="0.018"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-advanced.stdio_scanf_rest.m_s" classname="phoenix-rtos-tests/libc/scanf-advanced" time="0.009">
+			<skipped/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-advanced.stdio_scanf_rest.m_brackets" classname="phoenix-rtos-tests/libc/scanf-advanced" time="0.009">
+			<skipped/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-advanced.stdio_scanf_rest.m_c" classname="phoenix-rtos-tests/libc/scanf-advanced" time="0.009">
+			<skipped/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-advanced.stdio_scanf_rest.star" classname="phoenix-rtos-tests/libc/scanf-advanced" time="0.013"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/scanf-advanced.stdio_scanf_rest.field_width" classname="phoenix-rtos-tests/libc/scanf-advanced" time="0.026"/>
+	</testsuite>
+	<testsuite name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/pthread" timestamp="2026-01-22T12:11:28.342955" tests="13" errors="0" failures="0" skipped="0" time="0.188" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/pthread.test_pthread_cond.pthread_cond_init" classname="phoenix-rtos-tests/libc/pthread" time="0.012"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/pthread.test_pthread_cond.pthread_condattr_setclock" classname="phoenix-rtos-tests/libc/pthread" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/pthread.test_pthread_cond.pthread_condattr_setpshared" classname="phoenix-rtos-tests/libc/pthread" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/pthread.test_pthread_cond.pthread_cond_wait_signal" classname="phoenix-rtos-tests/libc/pthread" time="0.019"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/pthread.test_pthread_cond.pthread_cond_wait_broadcast" classname="phoenix-rtos-tests/libc/pthread" time="0.023"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/pthread.test_pthread_cond.pthread_cond_timedwait_pass_signal" classname="phoenix-rtos-tests/libc/pthread" time="0.02"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/pthread.test_pthread_cond.pthread_cond_timedwait_fail_signal_incorrect_timeout" classname="phoenix-rtos-tests/libc/pthread" time="0.014"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/pthread.test_pthread_cond.pthread_cond_timedwait_pass_broadcast" classname="phoenix-rtos-tests/libc/pthread" time="0.033"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/pthread.test_pthread_cond.pthread_cond_timedwait_fail_broadcast_incorrect_timeout" classname="phoenix-rtos-tests/libc/pthread" time="0.044"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/pthread.test_pthread_cleanup.pthread_cleanup_push_exit" classname="phoenix-rtos-tests/libc/pthread" time="0.005"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/pthread.test_pthread_cleanup.pthread_cleanup_push_pop_no_exec" classname="phoenix-rtos-tests/libc/pthread" time="0.005"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/pthread.test_pthread_cleanup.pthread_cleanup_push_pop_exec" classname="phoenix-rtos-tests/libc/pthread" time="0.004"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/pthread.test_pthread_cleanup.pthread_cleanup_push_pop_exec_pthread_exit" classname="phoenix-rtos-tests/libc/pthread" time="0.004"/>
+	</testsuite>
+	<testsuite name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc" timestamp="2026-01-22T12:11:35.441888" tests="160" errors="0" failures="0" skipped="17" time="3.382" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.getpwd.getpwnam_getroot" classname="phoenix-rtos-tests/libc/misc" time="0.032"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.getpwd.getpwuid_getroot" classname="phoenix-rtos-tests/libc/misc" time="0.007"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.getpwd.getpwnam_getnull" classname="phoenix-rtos-tests/libc/misc" time="0.006"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.getpwd.getpwuid_getnull" classname="phoenix-rtos-tests/libc/misc" time="0.011"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.getpwd.getpwnam_nopasswdfile" classname="phoenix-rtos-tests/libc/misc" time="0.013"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.getpwd.getpwuid_nopasswdfile" classname="phoenix-rtos-tests/libc/misc" time="0.012"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.resolve_path.canonicalize_abs_simple" classname="phoenix-rtos-tests/libc/misc" time="0.011"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.resolve_path.canonicalize_pwd_simple" classname="phoenix-rtos-tests/libc/misc" time="0.012"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.resolve_path.realpath_abs_noalloc" classname="phoenix-rtos-tests/libc/misc" time="0.011"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.resolve_path.realpath_pwd_noalloc" classname="phoenix-rtos-tests/libc/misc" time="0.011"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.resolve_path.realpath_errno" classname="phoenix-rtos-tests/libc/misc" time="0.005"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.resolve_path.realpath_max_path" classname="phoenix-rtos-tests/libc/misc" time="0.002">
+			<skipped/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.resolve_path.missing_leaf" classname="phoenix-rtos-tests/libc/misc" time="0.008"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.resolve_path.missing_branch" classname="phoenix-rtos-tests/libc/misc" time="0.006"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.resolve_path.symlink_abs" classname="phoenix-rtos-tests/libc/misc" time="0.032"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.resolve_path.symlink_relative" classname="phoenix-rtos-tests/libc/misc" time="0.033"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.resolve_path.symlink_create_file" classname="phoenix-rtos-tests/libc/misc" time="0.028"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.resolve_path.symlink_dir" classname="phoenix-rtos-tests/libc/misc" time="0.043"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.resolve_path.symlink_loop" classname="phoenix-rtos-tests/libc/misc" time="0.057"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.resolve_path.symlink_rename" classname="phoenix-rtos-tests/libc/misc" time="0.034"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.resolve_path.symlink_long_resolution" classname="phoenix-rtos-tests/libc/misc" time="0.009"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_getopt.getopt_zeroargs" classname="phoenix-rtos-tests/libc/misc" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_getopt.getopt_normal_flags" classname="phoenix-rtos-tests/libc/misc" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_getopt.getopt_joined_flags" classname="phoenix-rtos-tests/libc/misc" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_getopt.getopt_normal_parameter" classname="phoenix-rtos-tests/libc/misc" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_getopt.getopt_normal_optparameter" classname="phoenix-rtos-tests/libc/misc" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_getopt.getopt_joined_parameter" classname="phoenix-rtos-tests/libc/misc" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_getopt.getopt_nonopt" classname="phoenix-rtos-tests/libc/misc" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_getopt.getopt_parameter_nonopt" classname="phoenix-rtos-tests/libc/misc" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_getopt.getopt_endofargs_singledash" classname="phoenix-rtos-tests/libc/misc" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_getopt.getopt_endofargs_doubledash" classname="phoenix-rtos-tests/libc/misc" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_getopt.getopt_unknownopt_optreq" classname="phoenix-rtos-tests/libc/misc" time="0.007"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_getopt.getopt_unknownopt" classname="phoenix-rtos-tests/libc/misc" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_getopt.getopt_unknownopt_multiple" classname="phoenix-rtos-tests/libc/misc" time="0.007"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_getopt.getopt_noarg" classname="phoenix-rtos-tests/libc/misc" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_getopt.getopt_unknownopt_noarg" classname="phoenix-rtos-tests/libc/misc" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_getopt.getopt_doubledash_simple" classname="phoenix-rtos-tests/libc/misc" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_getopt.getopt_doubledash_one" classname="phoenix-rtos-tests/libc/misc" time="0.005"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_getopt.getopt_doubledash_multi" classname="phoenix-rtos-tests/libc/misc" time="0.019"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_getopt.getopt_tripledash" classname="phoenix-rtos-tests/libc/misc" time="0.004"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_uids.getuids_parent" classname="phoenix-rtos-tests/libc/misc" time="0.006">
+			<skipped/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_uids.setuids_parent" classname="phoenix-rtos-tests/libc/misc" time="0.005">
+			<skipped/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_uids.setpuids_setsid" classname="phoenix-rtos-tests/libc/misc" time="0.006"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_uids.setpuids_setpgid" classname="phoenix-rtos-tests/libc/misc" time="0.004">
+			<skipped/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_fsdir.getcwd" classname="phoenix-rtos-tests/libc/misc" time="0.008"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_fsdir.chdir_absroot" classname="phoenix-rtos-tests/libc/misc" time="0.007"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_fsdir.chdir_absdev" classname="phoenix-rtos-tests/libc/misc" time="0.01"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_fsdir.chdir_rel" classname="phoenix-rtos-tests/libc/misc" time="0.017"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_fsdir.chdir_toolongpath" classname="phoenix-rtos-tests/libc/misc" time="0.006"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_fsdir.chdir_nonexistent" classname="phoenix-rtos-tests/libc/misc" time="0.007"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_fsdir.chdir_emptystring" classname="phoenix-rtos-tests/libc/misc" time="0.007"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_fsdir.chdir_tofile" classname="phoenix-rtos-tests/libc/misc" time="0.009"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_fsdir.rmdir_empty" classname="phoenix-rtos-tests/libc/misc" time="0.012"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_fsdir.rmdir_nonexistent" classname="phoenix-rtos-tests/libc/misc" time="0.007"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_fsdir.rmdir_toolongpath" classname="phoenix-rtos-tests/libc/misc" time="0.006"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_fsdir.rmdir_emptystring" classname="phoenix-rtos-tests/libc/misc" time="0.006"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_fsdir.rmdir_file" classname="phoenix-rtos-tests/libc/misc" time="0.009"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_fsdir.rmdir_notempty" classname="phoenix-rtos-tests/libc/misc" time="0.028"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_fsdir.fchdir" classname="phoenix-rtos-tests/libc/misc" time="0.002">
+			<skipped/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_fsdir.fchown" classname="phoenix-rtos-tests/libc/misc" time="0.002">
+			<skipped/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file.file_close" classname="phoenix-rtos-tests/libc/misc" time="0.007"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file.file_readwrite_nbytes" classname="phoenix-rtos-tests/libc/misc" time="0.011"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file.file_write_zero" classname="phoenix-rtos-tests/libc/misc" time="0.007"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file.file_write_reopened" classname="phoenix-rtos-tests/libc/misc" time="0.014"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file.file_write_dup" classname="phoenix-rtos-tests/libc/misc" time="0.01"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file.file_readwrite_badfd" classname="phoenix-rtos-tests/libc/misc" time="0.007"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file.file_write_incrlength" classname="phoenix-rtos-tests/libc/misc" time="0.007"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file.file_write_readonly" classname="phoenix-rtos-tests/libc/misc" time="0.007"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file.file_readwrite_pipe" classname="phoenix-rtos-tests/libc/misc" time="0.008">
+			<skipped/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file.file_lseek" classname="phoenix-rtos-tests/libc/misc" time="0.009"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file.file_lseek_pastfile" classname="phoenix-rtos-tests/libc/misc" time="0.012"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file.file_lseek_negative" classname="phoenix-rtos-tests/libc/misc" time="0.008"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file.file_lseek_ebadf" classname="phoenix-rtos-tests/libc/misc" time="0.007"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file.file_lseek_espipe" classname="phoenix-rtos-tests/libc/misc" time="0.008">
+			<skipped/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file.file_truncate_down" classname="phoenix-rtos-tests/libc/misc" time="0.013"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file.file_truncate_up" classname="phoenix-rtos-tests/libc/misc" time="0.013"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file.file_truncate_opened" classname="phoenix-rtos-tests/libc/misc" time="0.009"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file.file_truncate_opened_eof" classname="phoenix-rtos-tests/libc/misc" time="0.009"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file.file_truncate_einval" classname="phoenix-rtos-tests/libc/misc" time="0.008"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file.file_truncate_eisdir" classname="phoenix-rtos-tests/libc/misc" time="0.009">
+			<skipped/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file.file_truncate_enoent" classname="phoenix-rtos-tests/libc/misc" time="0.007"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file.file_ftruncate_down" classname="phoenix-rtos-tests/libc/misc" time="0.011"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file.file_ftruncate_up" classname="phoenix-rtos-tests/libc/misc" time="0.011"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file.file_ftruncate_opened" classname="phoenix-rtos-tests/libc/misc" time="0.009"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file.file_ftruncate_opened_eof" classname="phoenix-rtos-tests/libc/misc" time="0.008"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file.file_ftruncate_einval" classname="phoenix-rtos-tests/libc/misc" time="0.006"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file.file_ftruncate_ebadf" classname="phoenix-rtos-tests/libc/misc" time="0.008"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file.file_dup" classname="phoenix-rtos-tests/libc/misc" time="0.006"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file.file_dup_closed" classname="phoenix-rtos-tests/libc/misc" time="0.006"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file.file_dup2" classname="phoenix-rtos-tests/libc/misc" time="0.007"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file.file_dup2_opened" classname="phoenix-rtos-tests/libc/misc" time="0.01"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file.file_dup2_closed" classname="phoenix-rtos-tests/libc/misc" time="0.006"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file_pread.pread_offset" classname="phoenix-rtos-tests/libc/misc" time="0.01"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file_pread.pwrite_offset" classname="phoenix-rtos-tests/libc/misc" time="0.01"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file_pread.pread_ebadf" classname="phoenix-rtos-tests/libc/misc" time="0.015"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file_pread.pwrite_ebadf" classname="phoenix-rtos-tests/libc/misc" time="0.015"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file_pread.pread_einval" classname="phoenix-rtos-tests/libc/misc" time="0.009"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file_pread.pwrite_einval" classname="phoenix-rtos-tests/libc/misc" time="0.008"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file_pread.pread_espipe" classname="phoenix-rtos-tests/libc/misc" time="0.009">
+			<skipped/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file_pread.pwrite_espipe" classname="phoenix-rtos-tests/libc/misc" time="0.01">
+			<skipped/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file_pread.pread_multithread" classname="phoenix-rtos-tests/libc/misc" time="0.014"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file_pread.pread_multithread_overlapping" classname="phoenix-rtos-tests/libc/misc" time="0.513"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file_pread.pwrite_multithread" classname="phoenix-rtos-tests/libc/misc" time="0.018"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file_pread.pwrite_multithread_overlapping" classname="phoenix-rtos-tests/libc/misc" time="0.488"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.wchar_wcscmp.basic" classname="phoenix-rtos-tests/libc/misc" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.wchar_wcscmp.empty" classname="phoenix-rtos-tests/libc/misc" time="0.001"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.wchar_wcscmp.edge" classname="phoenix-rtos-tests/libc/misc" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.ctype.isalnum" classname="phoenix-rtos-tests/libc/misc" time="0.001"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.ctype.isalpha" classname="phoenix-rtos-tests/libc/misc" time="0.001"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.ctype.isascii" classname="phoenix-rtos-tests/libc/misc" time="0.001"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.ctype.isblank" classname="phoenix-rtos-tests/libc/misc" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.ctype.iscntrl" classname="phoenix-rtos-tests/libc/misc" time="0.001"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.ctype.isdigit" classname="phoenix-rtos-tests/libc/misc" time="0.001"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.ctype.isgraph" classname="phoenix-rtos-tests/libc/misc" time="0.001"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.ctype.islower" classname="phoenix-rtos-tests/libc/misc" time="0.001"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.ctype.isprint" classname="phoenix-rtos-tests/libc/misc" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.ctype.ispunct" classname="phoenix-rtos-tests/libc/misc" time="0.001"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.ctype.isspace" classname="phoenix-rtos-tests/libc/misc" time="0.001"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.ctype.isupper" classname="phoenix-rtos-tests/libc/misc" time="0.001"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.ctype.isxdigit" classname="phoenix-rtos-tests/libc/misc" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.ctype.toascii" classname="phoenix-rtos-tests/libc/misc" time="0.004">
+			<skipped/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.ctype.tolower" classname="phoenix-rtos-tests/libc/misc" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.ctype.toupper" classname="phoenix-rtos-tests/libc/misc" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.ctype._tolower" classname="phoenix-rtos-tests/libc/misc" time="0.004">
+			<skipped/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.ctype._toupper" classname="phoenix-rtos-tests/libc/misc" time="0.003">
+			<skipped/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.stat_mode.none" classname="phoenix-rtos-tests/libc/misc" time="0.009"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.stat_mode.gid" classname="phoenix-rtos-tests/libc/misc" time="0.008"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.stat_mode.uid" classname="phoenix-rtos-tests/libc/misc" time="0.009"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.stat_mode.uid_gid" classname="phoenix-rtos-tests/libc/misc" time="0.009"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.stat_mode.vtx" classname="phoenix-rtos-tests/libc/misc" time="0.009"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.stat_mode.permissions_all" classname="phoenix-rtos-tests/libc/misc" time="0.008"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.stat_mode.reg_type" classname="phoenix-rtos-tests/libc/misc" time="0.014"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.stat_mode.dir_type" classname="phoenix-rtos-tests/libc/misc" time="0.016"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.stat_mode.symlink_type" classname="phoenix-rtos-tests/libc/misc" time="0.026"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.stat_mode.symlink_lstat" classname="phoenix-rtos-tests/libc/misc" time="0.017"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.stat_mode.symloop_max" classname="phoenix-rtos-tests/libc/misc" time="0.029"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.stat_mode.fifo_type" classname="phoenix-rtos-tests/libc/misc" time="0.005">
+			<skipped/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.stat_mode.sock_type" classname="phoenix-rtos-tests/libc/misc" time="0.008"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.stat_mode.chr_type" classname="phoenix-rtos-tests/libc/misc" time="0.321">
+			<skipped message="#764 issue"/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.stat_nlink_size_blk_tim.nlink" classname="phoenix-rtos-tests/libc/misc" time="0.024"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.stat_nlink_size_blk_tim.nlink_symloop_max" classname="phoenix-rtos-tests/libc/misc" time="0.025"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.stat_nlink_size_blk_tim.size_blk_blocks" classname="phoenix-rtos-tests/libc/misc" time="0.632"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.stat_nlink_size_blk_tim.size_blk_blocks_zero" classname="phoenix-rtos-tests/libc/misc" time="0.008"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.stat_nlink_size_blk_tim.size_blk_blocks_big" classname="phoenix-rtos-tests/libc/misc" time="0.01"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.stat_nlink_size_blk_tim.size_symlink_lstat" classname="phoenix-rtos-tests/libc/misc" time="0.009"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.stat_nlink_size_blk_tim.tim" classname="phoenix-rtos-tests/libc/misc" time="0.011"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.stat_nlink_size_blk_tim.a_m_tim_mod" classname="phoenix-rtos-tests/libc/misc" time="0.013"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.stat_nlink_size_blk_tim.st_dev_ino" classname="phoenix-rtos-tests/libc/misc" time="0.008"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.stat_errno.ebadf" classname="phoenix-rtos-tests/libc/misc" time="0.006"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.stat_errno.eloop" classname="phoenix-rtos-tests/libc/misc" time="0.017"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.stat_errno.enametoolong" classname="phoenix-rtos-tests/libc/misc" time="0.005"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.stat_errno.enoent" classname="phoenix-rtos-tests/libc/misc" time="0.006"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.stat_errno.enotdir" classname="phoenix-rtos-tests/libc/misc" time="0.007">
+			<skipped message="#682 issue"/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file_safe.file_safe_readwrite" classname="phoenix-rtos-tests/libc/misc" time="0.009"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file_safe.file_safe_readwrite_zero" classname="phoenix-rtos-tests/libc/misc" time="0.006"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file_safe.file_safe_readwrite_badfd" classname="phoenix-rtos-tests/libc/misc" time="0.006"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file_safe_pread.safe_pread" classname="phoenix-rtos-tests/libc/misc" time="0.011"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file_safe_pread.safe_pwrite" classname="phoenix-rtos-tests/libc/misc" time="0.01"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file_safe_pread.safe_pread_negative_offset" classname="phoenix-rtos-tests/libc/misc" time="0.009"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/misc.unistd_file_safe_pread.safe_pwrite_negative_offset" classname="phoenix-rtos-tests/libc/misc" time="0.008"/>
+	</testsuite>
+	<testsuite name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio" timestamp="2026-01-22T12:11:45.774605" tests="53" errors="0" failures="0" skipped="0" time="0.599" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.file.fclose_stdin" classname="phoenix-rtos-tests/libc/stdio" time="0.012"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.file.fclose_stdin_ebadf" classname="phoenix-rtos-tests/libc/stdio" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_fopenfclose.stdio_fopenfclose_file" classname="phoenix-rtos-tests/libc/stdio" time="0.032"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_fopenfclose.stdio_fopenfclose_opendir" classname="phoenix-rtos-tests/libc/stdio" time="0.007"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_fopenfclose.stdio_fopenfclose_zeropath" classname="phoenix-rtos-tests/libc/stdio" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_fopenfclose.stdio_fopenfclose_wrongflags" classname="phoenix-rtos-tests/libc/stdio" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_fopenfclose.stdio_fopenfclose_toolongname" classname="phoenix-rtos-tests/libc/stdio" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_fopenfclose.freopen_file" classname="phoenix-rtos-tests/libc/stdio" time="0.01"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_fopenfclose.fdopen_file" classname="phoenix-rtos-tests/libc/stdio" time="0.007"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_line.getline_basic" classname="phoenix-rtos-tests/libc/stdio" time="0.013"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_line.getline_wronly" classname="phoenix-rtos-tests/libc/stdio" time="0.012"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_line.getline_allocated" classname="phoenix-rtos-tests/libc/stdio" time="0.009"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_line.getline_longline" classname="phoenix-rtos-tests/libc/stdio" time="0.056"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_getput.fwritefread_basic" classname="phoenix-rtos-tests/libc/stdio" time="0.012"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_getput.getput_basic" classname="phoenix-rtos-tests/libc/stdio" time="0.023"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_getput.fgetc_eof" classname="phoenix-rtos-tests/libc/stdio" time="0.011"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_getput.getsputs_basic" classname="phoenix-rtos-tests/libc/stdio" time="0.016"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_getput.fgets_eof" classname="phoenix-rtos-tests/libc/stdio" time="0.011"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_getput.getsputs_readonly" classname="phoenix-rtos-tests/libc/stdio" time="0.009"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_getput.ungetc_basic" classname="phoenix-rtos-tests/libc/stdio" time="0.016"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_fileseek.seek_fseek" classname="phoenix-rtos-tests/libc/stdio" time="0.013"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_fileseek.seek_fseek_feof" classname="phoenix-rtos-tests/libc/stdio" time="0.009"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_fileseek.seek_fseek_ferror" classname="phoenix-rtos-tests/libc/stdio" time="0.01"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_fileseek.seek_fseeko" classname="phoenix-rtos-tests/libc/stdio" time="0.012"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_fileseek.seek_fsetpos" classname="phoenix-rtos-tests/libc/stdio" time="0.014"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_fileseek.seek_readonly" classname="phoenix-rtos-tests/libc/stdio" time="0.009"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_fileseek.seek_rewind" classname="phoenix-rtos-tests/libc/stdio" time="0.012"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_fileseek.seek_ftell" classname="phoenix-rtos-tests/libc/stdio" time="0.013"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_fileseek.seek_ftell_feof" classname="phoenix-rtos-tests/libc/stdio" time="0.011"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_fileseek.seek_ftell_read_buffer" classname="phoenix-rtos-tests/libc/stdio" time="0.01"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_fileseek.seek_ftell_write_buffer" classname="phoenix-rtos-tests/libc/stdio" time="0.011"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_fileop.fileop_fileno" classname="phoenix-rtos-tests/libc/stdio" time="0.006"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_fileop.fileop_feof" classname="phoenix-rtos-tests/libc/stdio" time="0.006"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_fileop.fileop_ferror" classname="phoenix-rtos-tests/libc/stdio" time="0.006"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_fileop.fileop_clearerr" classname="phoenix-rtos-tests/libc/stdio" time="0.01"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_bufs.setbuf_basic" classname="phoenix-rtos-tests/libc/stdio" time="0.009"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_bufs.setbuf_null" classname="phoenix-rtos-tests/libc/stdio" time="0.009"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_bufs.setvbuf_fullbuffer" classname="phoenix-rtos-tests/libc/stdio" time="0.011"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_bufs.setvbuf_fullbuffer_overflow" classname="phoenix-rtos-tests/libc/stdio" time="0.01"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_bufs.setvbuf_linebuffer" classname="phoenix-rtos-tests/libc/stdio" time="0.01"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_bufs.setvbuf_nobuffer" classname="phoenix-rtos-tests/libc/stdio" time="0.01"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_fread.stdio_fread_unbuffered_error" classname="phoenix-rtos-tests/libc/stdio" time="0.011"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_fread.stdio_fread_unbuffered_eof" classname="phoenix-rtos-tests/libc/stdio" time="0.018"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_fread.stdio_fread_unbuffered_eagain" classname="phoenix-rtos-tests/libc/stdio" time="0.012"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_fread.stdio_fread_buffered_error" classname="phoenix-rtos-tests/libc/stdio" time="0.012"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_fread.stdio_fread_buffered_eagain" classname="phoenix-rtos-tests/libc/stdio" time="0.009"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_fread.stdio_fread_buffered_eof" classname="phoenix-rtos-tests/libc/stdio" time="0.014"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_fread.stdio_fread_buffered_refill" classname="phoenix-rtos-tests/libc/stdio" time="0.009"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_fwrite.stdio_fwrite_unbuffered_error" classname="phoenix-rtos-tests/libc/stdio" time="0.012"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_fwrite.stdio_fwrite_buffered_error" classname="phoenix-rtos-tests/libc/stdio" time="0.011"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_fwrite.stdio_fwrite_espipe" classname="phoenix-rtos-tests/libc/stdio" time="0.008"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_fflush.stdio_fflush_socket" classname="phoenix-rtos-tests/libc/stdio" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdio.stdio_fflush.stdio_fflush_eagain" classname="phoenix-rtos-tests/libc/stdio" time="0.002"/>
+	</testsuite>
+	<testsuite name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib" timestamp="2026-01-22T12:11:53.356012" tests="88" errors="0" failures="0" skipped="0" time="0.924" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_alloc.malloc_basic" classname="phoenix-rtos-tests/libc/stdlib" time="0.011"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_alloc.malloc_one" classname="phoenix-rtos-tests/libc/stdlib" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_alloc.malloc_large" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_alloc.malloc_multiple" classname="phoenix-rtos-tests/libc/stdlib" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_alloc.malloc_zero" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_alloc.malloc_iterate" classname="phoenix-rtos-tests/libc/stdlib" time="0.226"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_alloc.malloc_overflow" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_alloc.calloc_basic" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_alloc.calloc_zero" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_alloc.calloc_one" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_alloc.calloc_large" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_alloc.calloc_iterate" classname="phoenix-rtos-tests/libc/stdlib" time="0.256"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_alloc.calloc_overflow" classname="phoenix-rtos-tests/libc/stdlib" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_alloc.realloc_null" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_alloc.realloc_zero_size" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_alloc.realloc_calloc_resize" classname="phoenix-rtos-tests/libc/stdlib" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_alloc.realloc_calloc_resize_smaller" classname="phoenix-rtos-tests/libc/stdlib" time="0.004"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_alloc.realloc_calloc_resize_larger" classname="phoenix-rtos-tests/libc/stdlib" time="0.004"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_alloc.realloc_malloc_resize" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_alloc.realloc_malloc_resize_smaller" classname="phoenix-rtos-tests/libc/stdlib" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_alloc.realloc_malloc_resize_larger" classname="phoenix-rtos-tests/libc/stdlib" time="0.004"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_alloc.realloc_multiple" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_alloc.realloc_overflow" classname="phoenix-rtos-tests/libc/stdlib" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_alloc.free_null" classname="phoenix-rtos-tests/libc/stdlib" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_env.clearenv" classname="phoenix-rtos-tests/libc/stdlib" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_env.basic" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_env.long_args" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_env.ascii" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_env.invalid" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_env.empty_name" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_env.overwrite" classname="phoenix-rtos-tests/libc/stdlib" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_env.empty_value" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_env.putenv_invalid" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_env.env_not_set" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_env.name_null" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_env.environ_len" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_env.random" classname="phoenix-rtos-tests/libc/stdlib" time="0.231"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_bsearch.zero_elements" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_bsearch.find_node_in" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_bsearch.find_node_not_in" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_bsearch.not_sorted" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_bsearch.same_members" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_bsearch.special_node" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_strto.strtod_basic" classname="phoenix-rtos-tests/libc/stdlib" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_strto.strtod_basic_hex" classname="phoenix-rtos-tests/libc/stdlib" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_strto.strtod_min_max" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_strto.strtof_basic" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_strto.strtof_basic_hex" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_strto.strtof_min_max" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_strto.strtold_basic" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_strto.strtold_basic_hex" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_strto.strtold_min_max" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_strto.flt_dec_notation" classname="phoenix-rtos-tests/libc/stdlib" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_strto.dbl_dec_notation" classname="phoenix-rtos-tests/libc/stdlib" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_strto.strtol_basic" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_strto.strtol_basic_binary" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_strto.strtol_basic_hex" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_strto.strtol_other_bases" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_strto.strtol_other_bases_neg_values" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_strto.strtol_min_max" classname="phoenix-rtos-tests/libc/stdlib" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_strto.strtoll_basic" classname="phoenix-rtos-tests/libc/stdlib" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_strto.strtoll_basic_binary" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_strto.strtoll_basic_hex" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_strto.strtoll_other_bases" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_strto.strtoll_other_bases_neg_values" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_strto.strtoll_min_max" classname="phoenix-rtos-tests/libc/stdlib" time="0.004"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_strto.strtoul_basic" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_strto.strtoul_basic_binary" classname="phoenix-rtos-tests/libc/stdlib" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_strto.strtoul_basic_hex" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_strto.strtoul_other_bases" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_strto.strtoul_min_max" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_strto.strtoull_basic" classname="phoenix-rtos-tests/libc/stdlib" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_strto.strtoull_basic_binary" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_strto.strtoull_basic_hex" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_strto.strtoull_other_bases" classname="phoenix-rtos-tests/libc/stdlib" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_strto.strtoull_min_max" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_strto.inf_nan" classname="phoenix-rtos-tests/libc/stdlib" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_strto.endptr" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_strto.empty" classname="phoenix-rtos-tests/libc/stdlib" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_strto.truncate" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_strto.truncate_whitespaces" classname="phoenix-rtos-tests/libc/stdlib" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_strto.too_long_numbers_float" classname="phoenix-rtos-tests/libc/stdlib" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_strto.too_long_numbers_int" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_strto.zero_x_int" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_strto.invalid" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_strto.invalid_base" classname="phoenix-rtos-tests/libc/stdlib" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_strto.float_remaining_string" classname="phoenix-rtos-tests/libc/stdlib" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/stdlib.stdlib_strto.int_remaining_string" classname="phoenix-rtos-tests/libc/stdlib" time="0.003"/>
+	</testsuite>
+	<testsuite name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string" timestamp="2026-01-22T12:12:01.186262" tests="189" errors="0" failures="0" skipped="28" time="0.687" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_len.ascii" classname="phoenix-rtos-tests/libc/string" time="0.012"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_len.not_ascii" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_len.big" classname="phoenix-rtos-tests/libc/string" time="0.001"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_chr.basic" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_chr.big" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_chr.memchr_size" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_chr.special" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_chr.whitespaces" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_chr.empty" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_chr.ascii" classname="phoenix-rtos-tests/libc/string" time="0.001"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_chr.not_ascii_chars" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_chr.int_to_char_cast" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_chr.torn" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_memset.byte_val" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_memset.basic" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_memset.zero" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_memset.big" classname="phoenix-rtos-tests/libc/string" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_memset.single_byte" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_memmove.no_overlap_end" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_memmove.no_overlap_between" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_memmove.no_overlap_adjacent" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_memmove.whole_overlap" classname="phoenix-rtos-tests/libc/string" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_memmove.right_overlap" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_memmove.left_overlap" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_memmove.move_nothing" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_memmove_big.no_overlap" classname="phoenix-rtos-tests/libc/string" time="0.063"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_memmove_big.whole_overlap" classname="phoenix-rtos-tests/libc/string" time="0.009"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_memmove_big.right_overlap" classname="phoenix-rtos-tests/libc/string" time="0.058"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_memmove_big.left_overlap" classname="phoenix-rtos-tests/libc/string" time="0.058"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_memcpy.basic" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_memcpy.data_types" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_memcpy.adjacent" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_memcpy.one_byte" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_memcpy.clearing_array" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_memcpy.various_sizes" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_memcpy.big" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_memccpy.basic" classname="phoenix-rtos-tests/libc/string" time="0.005">
+			<skipped/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_memccpy.stop_char_found" classname="phoenix-rtos-tests/libc/string" time="0.005">
+			<skipped/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_memccpy.stop_int_found" classname="phoenix-rtos-tests/libc/string" time="0.005">
+			<skipped/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_memccpy.data_types" classname="phoenix-rtos-tests/libc/string" time="0.006">
+			<skipped/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_memccpy.adjacent" classname="phoenix-rtos-tests/libc/string" time="0.004">
+			<skipped/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_memccpy.one_byte" classname="phoenix-rtos-tests/libc/string" time="0.005">
+			<skipped/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_memccpy.clearing_array" classname="phoenix-rtos-tests/libc/string" time="0.005">
+			<skipped/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_memccpy.various_sizes" classname="phoenix-rtos-tests/libc/string" time="0.005">
+			<skipped/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_memccpy.big" classname="phoenix-rtos-tests/libc/string" time="0.005">
+			<skipped/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_strncpy.basic" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_strncpy.ascii" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_strncpy.null_sens" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_strncpy.adjacent" classname="phoenix-rtos-tests/libc/string" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_strncpy.one_byte" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_strncpy.various_sizes" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_strncpy.big" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_strncpy.append_null" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_stpncpy.basic" classname="phoenix-rtos-tests/libc/string" time="0.004">
+			<skipped/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_stpncpy.ascii" classname="phoenix-rtos-tests/libc/string" time="0.005">
+			<skipped/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_stpncpy.null_sens" classname="phoenix-rtos-tests/libc/string" time="0.005">
+			<skipped/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_stpncpy.adjacent" classname="phoenix-rtos-tests/libc/string" time="0.005">
+			<skipped/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_stpncpy.one_byte" classname="phoenix-rtos-tests/libc/string" time="0.005">
+			<skipped/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_stpncpy.various_sizes" classname="phoenix-rtos-tests/libc/string" time="0.005">
+			<skipped/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_stpncpy.big" classname="phoenix-rtos-tests/libc/string" time="0.004">
+			<skipped/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_stpncpy.append_null" classname="phoenix-rtos-tests/libc/string" time="0.004">
+			<skipped/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_strcpy_stpcpy.basic" classname="phoenix-rtos-tests/libc/string" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_strcpy_stpcpy.ascii" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_strcpy_stpcpy.null_sens" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_strcpy_stpcpy.strcpy_adjacent" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_strcpy_stpcpy.stpcpy_adjacent" classname="phoenix-rtos-tests/libc/string" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_strcpy_stpcpy.one_byte" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_strcpy_stpcpy.big" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_strlcpy.strlcpy_fullcopy" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_strlcpy.strlcpy_shorter" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_strlcpy.strlcpy_longer" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_strlcpy.strlcpy_onelength" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_strlcpy.strlcpy_zerolength" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_strlcat.strlcat_fullconcat_empty" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_strlcat.strlcat_fullconcat_part" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_strlcat.strlcat_partconcat_overflow" classname="phoenix-rtos-tests/libc/string" time="0.004"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_strlcat.strlcat_onelength" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_strlcat.strlcat_zerolength" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_errsign.strerror_basic" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_errsign.strerror_zero" classname="phoenix-rtos-tests/libc/string" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_errsign.strerror_r_basic" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_errsign.strerror_r_zero" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_errsign.strerror_r_invaild" classname="phoenix-rtos-tests/libc/string" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_errsign.strerror_r_overflow" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_errsign.strsignal_basic" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_errsign.strsignal_real_time" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.signal_psignal.basic" classname="phoenix-rtos-tests/libc/string" time="0.012">
+			<skipped message="#695 issue"/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.signal_psignal.ascii_string" classname="phoenix-rtos-tests/libc/string" time="0.009">
+			<skipped message="#695 issue"/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.signal_psignal.psignal_strsignal" classname="phoenix-rtos-tests/libc/string" time="0.009">
+			<skipped message="#695 issue"/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.signal_psignal.psignal_strsignal_null" classname="phoenix-rtos-tests/libc/string" time="0.009">
+			<skipped message="#695 issue"/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_cat.strcat_basic" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_cat.strcat_empty_dest" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_cat.strcat_empty_src" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_cat.strcat_empty" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_cat.strcat_huge_string_dest" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_cat.strcat_huge_string_src" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_cat.strcat_huge_string_both" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_cat.strcat_specials_string" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_cat.strcat_ascii" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_cat.strcat_extended_ascii" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_cat.strcat_non_ascii" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_cat.strcat_overwrite" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_cat.strncat_basic" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_cat.strncat_zero_n" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_cat.strncat_exceed" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_cat.strncat_trimming" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_cat.strncat_empty_dest" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_cat.strncat_empty_src" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_cat.strncat_huge_string_dest" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_cat.strncat_huge_string_src" classname="phoenix-rtos-tests/libc/string" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_cat.strncat_huge_string_both" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_cat.strncat_huge_string_trimming" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_cat.strncat_specials_string" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_cat.strncat_ascii" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_cat.strncat_extended_ascii" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_cat.strncat_non_ascii" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_dup.strdup_basic" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_dup.strdup_empty" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_dup.strdup_huge_string" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_dup.strdup_specials_string" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_dup.strdup_ascii" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_dup.strdup_extended_ascii" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_dup.strdup_non_ascii" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_dup.strndup_part" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_dup.strndup_full_string" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_dup.strndup_zero_size" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_dup.strndup_exceed" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_dup.strndup_specials_string" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_dup.strndup_huge_string_part" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_dup.strndup_huge_string_full" classname="phoenix-rtos-tests/libc/string" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_dup.strndup_ascii" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_dup.strndup_extended_ascii" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_dup.strndup_non_ascii" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_spn.basic" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_spn.ascii" classname="phoenix-rtos-tests/libc/string" time="0.006"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_spn.not_ascii" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_spn.empty_args" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_spn.first_byte" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_spn.mixed_order" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_spn.big" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_memcmp.basic" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_memcmp.unsigned_char_cast" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_memcmp.emptyInput" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_memcmp.big" classname="phoenix-rtos-tests/libc/string" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_memcmp.various_sizes" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_memcmp.offsets" classname="phoenix-rtos-tests/libc/string" time="0.005"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_strncmp.basic" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_strncmp.unsigned_char_cast" classname="phoenix-rtos-tests/libc/string" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_strncmp.emptyInput" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_strncmp.big" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_strncmp.various_sizes" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_strncmp.offsets" classname="phoenix-rtos-tests/libc/string" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_strcmp.basic" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_strcmp.unsigned_char_cast" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_strcmp.emptyInput" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_strcmp.big" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_strcmp.offsets" classname="phoenix-rtos-tests/libc/string" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_strcoll.basic" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_strcoll.emptyInput" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_strcoll.big" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_strcoll.offsets" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_tok.basic" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_tok.torn" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_tok.empty_args" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_tok.multi_call" classname="phoenix-rtos-tests/libc/string" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_tok.out_of_ascii" classname="phoenix-rtos-tests/libc/string" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_tok.big_string" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_tok_r.basic" classname="phoenix-rtos-tests/libc/string" time="0.005">
+			<skipped/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_tok_r.torn" classname="phoenix-rtos-tests/libc/string" time="0.005">
+			<skipped/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_tok_r.empty_args" classname="phoenix-rtos-tests/libc/string" time="0.005">
+			<skipped/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_tok_r.multi_call" classname="phoenix-rtos-tests/libc/string" time="0.004">
+			<skipped/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_tok_r.out_of_ascii" classname="phoenix-rtos-tests/libc/string" time="0.004">
+			<skipped/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_tok_r.same_state" classname="phoenix-rtos-tests/libc/string" time="0.005">
+			<skipped/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_tok_r.big_string" classname="phoenix-rtos-tests/libc/string" time="0.005">
+			<skipped/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_str.basic" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_str.empty_args" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_str.out_of_ascii" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_str.strstr_order" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_str.part_of_str" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_str.big_string" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_pbrk.basic" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_pbrk.empty_args" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_pbrk.out_of_ascii" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_pbrk.strpbrk_order" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_pbrk.part_of_str" classname="phoenix-rtos-tests/libc/string" time="0.001"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_pbrk.additional_bytes" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_pbrk.not_present" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_pbrk.multiple" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/string.string_pbrk.big_string" classname="phoenix-rtos-tests/libc/string" time="0.002"/>
+	</testsuite>
+	<testsuite name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/signal" timestamp="2026-01-22T12:12:08.658214" tests="9" errors="0" failures="0" skipped="0" time="1.628" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/signal.mask.sigset_full" classname="phoenix-rtos-tests/libc/signal" time="0.011"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/signal.mask.sigset_single" classname="phoenix-rtos-tests/libc/signal" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/signal.mask.procmask_set" classname="phoenix-rtos-tests/libc/signal" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/signal.handler.sighandler_sa_mask" classname="phoenix-rtos-tests/libc/signal" time="0.007"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/signal.handler.sighandler_signal_in_signal" classname="phoenix-rtos-tests/libc/signal" time="0.004"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/signal.handler.unblock_pending_signal" classname="phoenix-rtos-tests/libc/signal" time="0.837"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/signal.sigsuspend.signal_after" classname="phoenix-rtos-tests/libc/signal" time="0.756"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/signal.sigsuspend.signal_before_handler" classname="phoenix-rtos-tests/libc/signal" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/signal.sigsuspend.signal_before_two_signals" classname="phoenix-rtos-tests/libc/signal" time="0.004"/>
+	</testsuite>
+	<testsuite name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math" timestamp="2026-01-22T12:12:17.222862" tests="51" errors="0" failures="0" skipped="0" time="1.334" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.static_vector.log" classname="phoenix-rtos-tests/libc/math" time="0.011"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.static_vector.exp" classname="phoenix-rtos-tests/libc/math" time="0.004"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_abs.fabs_basic" classname="phoenix-rtos-tests/libc/math" time="0.026"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_abs.fabs_max_min" classname="phoenix-rtos-tests/libc/math" time="0.001"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_abs.fabs_special_val" classname="phoenix-rtos-tests/libc/math" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_frac.modf_basic" classname="phoenix-rtos-tests/libc/math" time="0.045"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_frac.modf_special_val" classname="phoenix-rtos-tests/libc/math" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_frac.fmod_special_val" classname="phoenix-rtos-tests/libc/math" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_frac.ceil_basic" classname="phoenix-rtos-tests/libc/math" time="0.014"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_frac.ceil_special_val" classname="phoenix-rtos-tests/libc/math" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_frac.floor_basic" classname="phoenix-rtos-tests/libc/math" time="0.01"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_frac.floor_special_val" classname="phoenix-rtos-tests/libc/math" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_exp.exp_basic" classname="phoenix-rtos-tests/libc/math" time="0.091"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_exp.exp_special_val" classname="phoenix-rtos-tests/libc/math" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_exp.frexp_basic" classname="phoenix-rtos-tests/libc/math" time="0.007"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_exp.frexp_special_val" classname="phoenix-rtos-tests/libc/math" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_exp.ldexp_basic" classname="phoenix-rtos-tests/libc/math" time="0.006"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_exp.ldexp_special_val" classname="phoenix-rtos-tests/libc/math" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_exp.log_basic" classname="phoenix-rtos-tests/libc/math" time="0.014"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_exp.log_special_val" classname="phoenix-rtos-tests/libc/math" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_exp.log2_basic" classname="phoenix-rtos-tests/libc/math" time="0.015"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_exp.log2_special_val" classname="phoenix-rtos-tests/libc/math" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_exp.log10_basic" classname="phoenix-rtos-tests/libc/math" time="0.015"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_exp.log10_special_val" classname="phoenix-rtos-tests/libc/math" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_pow.sqrt_basic" classname="phoenix-rtos-tests/libc/math" time="0.058"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_pow.sqrt_special_val" classname="phoenix-rtos-tests/libc/math" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_pow.pow_basic" classname="phoenix-rtos-tests/libc/math" time="0.265"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_pow.pow_special_val" classname="phoenix-rtos-tests/libc/math" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_trig.sin_basic" classname="phoenix-rtos-tests/libc/math" time="0.05"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_trig.sin_normalize_special_case" classname="phoenix-rtos-tests/libc/math" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_trig.sin_special_val" classname="phoenix-rtos-tests/libc/math" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_trig.cos_basic" classname="phoenix-rtos-tests/libc/math" time="0.051"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_trig.cos_normalize_special_case" classname="phoenix-rtos-tests/libc/math" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_trig.cos_special_val" classname="phoenix-rtos-tests/libc/math" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_trig.tan_basic" classname="phoenix-rtos-tests/libc/math" time="0.089"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_trig.tan_normalize_special_case" classname="phoenix-rtos-tests/libc/math" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_trig.tan_special_val" classname="phoenix-rtos-tests/libc/math" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_trig.asin_basic" classname="phoenix-rtos-tests/libc/math" time="0.106"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_trig.asin_special_val" classname="phoenix-rtos-tests/libc/math" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_trig.acos_basic" classname="phoenix-rtos-tests/libc/math" time="0.102"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_trig.acos_special_val" classname="phoenix-rtos-tests/libc/math" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_trig.atan_basic" classname="phoenix-rtos-tests/libc/math" time="0.045"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_trig.atan_special_val" classname="phoenix-rtos-tests/libc/math" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_trig.atan2_basic" classname="phoenix-rtos-tests/libc/math" time="0.049"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_trig.atan2_special_val" classname="phoenix-rtos-tests/libc/math" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_hyper.sinh_basic" classname="phoenix-rtos-tests/libc/math" time="0.058"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_hyper.sinh_special_val" classname="phoenix-rtos-tests/libc/math" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_hyper.cosh_basic" classname="phoenix-rtos-tests/libc/math" time="0.055"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_hyper.cosh_special_val" classname="phoenix-rtos-tests/libc/math" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_hyper.tanh_basic" classname="phoenix-rtos-tests/libc/math" time="0.088"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/math.math_hyper.tanh_special_val" classname="phoenix-rtos-tests/libc/math" time="0.003"/>
+	</testsuite>
+	<testsuite name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/time" timestamp="2026-01-22T12:12:25.462225" tests="26" errors="0" failures="0" skipped="2" time="3.17" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/time.time_mktime.leap_year" classname="phoenix-rtos-tests/libc/time" time="0.013"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/time.time_mktime.multiple_values_overflow" classname="phoenix-rtos-tests/libc/time" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/time.time_mktime.random_dates_with_normalization" classname="phoenix-rtos-tests/libc/time" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/time.time_mktime.random_dates_without_normalization" classname="phoenix-rtos-tests/libc/time" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/time.time_gmtime.basic_test" classname="phoenix-rtos-tests/libc/time" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/time.time_strftime.basic_formatting" classname="phoenix-rtos-tests/libc/time" time="0.004"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/time.time_strftime.additional_format_chars" classname="phoenix-rtos-tests/libc/time" time="0.006">
+			<skipped message="#351 issue"/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/time.time_strftime.format_with_padding" classname="phoenix-rtos-tests/libc/time" time="0.005">
+			<skipped message="#351 issue"/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/time.test_utimes.set_null" classname="phoenix-rtos-tests/libc/time" time="0.447"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/time.test_utimes.set_now" classname="phoenix-rtos-tests/libc/time" time="0.502"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/time.test_utimes.set_past" classname="phoenix-rtos-tests/libc/time" time="0.033"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/time.test_utimes.one" classname="phoenix-rtos-tests/libc/time" time="0.008"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/time.test_utimes.high_value" classname="phoenix-rtos-tests/libc/time" time="0.008"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/time.test_utimes.errnos" classname="phoenix-rtos-tests/libc/time" time="0.024"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/time.test_futimes.set_null" classname="phoenix-rtos-tests/libc/time" time="0.463"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/time.test_futimes.set_now" classname="phoenix-rtos-tests/libc/time" time="0.477"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/time.test_futimes.set_past" classname="phoenix-rtos-tests/libc/time" time="0.032"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/time.test_futimes.one" classname="phoenix-rtos-tests/libc/time" time="0.008"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/time.test_futimes.high_value" classname="phoenix-rtos-tests/libc/time" time="0.009"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/time.test_futimes.errnos" classname="phoenix-rtos-tests/libc/time" time="0.005"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/time.test_lutimes.set_null" classname="phoenix-rtos-tests/libc/time" time="0.47"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/time.test_lutimes.set_now" classname="phoenix-rtos-tests/libc/time" time="0.592"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/time.test_lutimes.set_past" classname="phoenix-rtos-tests/libc/time" time="0.022"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/time.test_lutimes.one" classname="phoenix-rtos-tests/libc/time" time="0.009"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/time.test_lutimes.high_value" classname="phoenix-rtos-tests/libc/time" time="0.01"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/time.test_lutimes.errnos" classname="phoenix-rtos-tests/libc/time" time="0.013"/>
+	</testsuite>
+	<testsuite name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/unix-socket" timestamp="2026-01-22T12:12:35.647020" tests="23" errors="0" failures="0" skipped="4" time="6.202" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/unix-socket.test_unix_socket.zero_len_send" classname="phoenix-rtos-tests/libc/unix-socket" time="0.019"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/unix-socket.test_unix_socket.zero_len_recv" classname="phoenix-rtos-tests/libc/unix-socket" time="0.004"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/unix-socket.test_unix_socket.close" classname="phoenix-rtos-tests/libc/unix-socket" time="0.292"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/unix-socket.test_unix_socket.msg_data_only" classname="phoenix-rtos-tests/libc/unix-socket" time="0.013"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/unix-socket.test_unix_socket.stream_sock_data_and_fd" classname="phoenix-rtos-tests/libc/unix-socket" time="2.364"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/unix-socket.test_unix_socket.dgram_sock_data_and_fd" classname="phoenix-rtos-tests/libc/unix-socket" time="2.273"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/unix-socket.test_unix_socket.stream_sock_msg_fork" classname="phoenix-rtos-tests/libc/unix-socket" time="0.007">
+			<skipped message="fork syscall not supported"/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/unix-socket.test_unix_socket.dgram_sock_msg_fork" classname="phoenix-rtos-tests/libc/unix-socket" time="0.007">
+			<skipped message="fork syscall not supported"/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/unix-socket.test_unix_socket.transfer" classname="phoenix-rtos-tests/libc/unix-socket" time="0.006">
+			<skipped message="fork syscall not supported"/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/unix-socket.test_unix_socket.close_connected" classname="phoenix-rtos-tests/libc/unix-socket" time="0.008"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/unix-socket.test_unix_socket.send_after_close" classname="phoenix-rtos-tests/libc/unix-socket" time="0.02"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/unix-socket.test_unix_socket.recv_after_close" classname="phoenix-rtos-tests/libc/unix-socket" time="0.014"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/unix-socket.test_unix_socket.connect_after_close" classname="phoenix-rtos-tests/libc/unix-socket" time="0.091"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/unix-socket.test_unix_socket.poll" classname="phoenix-rtos-tests/libc/unix-socket" time="0.808"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/unix-socket.test_unix_socket.recv_msg_peek" classname="phoenix-rtos-tests/libc/unix-socket" time="0.004"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/unix-socket.test_unix_socket.accept_connect_errnos" classname="phoenix-rtos-tests/libc/unix-socket" time="0.103"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/unix-socket.test_unix_socket.accept_connect_async" classname="phoenix-rtos-tests/libc/unix-socket" time="0.104"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/unix-socket.test_unix_socket.accept_connect_liveness" classname="phoenix-rtos-tests/libc/unix-socket" time="0.006">
+			<skipped message="fork syscall not supported"/>
+		</testcase>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/unix-socket.test_unix_socket.flags" classname="phoenix-rtos-tests/libc/unix-socket" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/unix-socket.test_unix_socket.wrong_family" classname="phoenix-rtos-tests/libc/unix-socket" time="0.014"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/unix-socket.test_unix_socket.wrong_port" classname="phoenix-rtos-tests/libc/unix-socket" time="0.02"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/unix-socket.test_unix_socket.wrong_type" classname="phoenix-rtos-tests/libc/unix-socket" time="0.015"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libc/unix-socket.test_unix_socket.send_clear_peer_closed" classname="phoenix-rtos-tests/libc/unix-socket" time="0.007"/>
+	</testsuite>
+	<testsuite name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libcache/unit" timestamp="2026-01-22T12:12:48.878970" tests="1" errors="0" failures="0" skipped="0" time="0.018" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libcache/unit" classname="phoenix-rtos-tests/libcache/unit" time="0.018"/>
+	</testsuite>
+	<testsuite name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libtinyaes/test-libtinyaes" timestamp="2026-01-22T12:12:55.869281" tests="18" errors="0" failures="0" skipped="0" time="0.055" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libtinyaes/test-libtinyaes.aes_ccm_s.g3_plc_test_vector__short_frame" classname="phoenix-rtos-tests/libtinyaes/test-libtinyaes" time="0.013"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libtinyaes/test-libtinyaes.aes_ccm_s.g3_plc_test_vector__long_frame" classname="phoenix-rtos-tests/libtinyaes/test-libtinyaes" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libtinyaes/test-libtinyaes.aes_eax.aes_eax__encr_decr_w_damage_test_short" classname="phoenix-rtos-tests/libtinyaes/test-libtinyaes" time="0.004"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libtinyaes/test-libtinyaes.aes_eax.aes_eax__encr_decr_w_damage_test_long" classname="phoenix-rtos-tests/libtinyaes/test-libtinyaes" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libtinyaes/test-libtinyaes.aes_gcm.xcrypt" classname="phoenix-rtos-tests/libtinyaes/test-libtinyaes" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libtinyaes/test-libtinyaes.aes_gcm.tag" classname="phoenix-rtos-tests/libtinyaes/test-libtinyaes" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libtinyaes/test-libtinyaes.aes_kw.test_kw_raw_wrap" classname="phoenix-rtos-tests/libtinyaes/test-libtinyaes" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libtinyaes/test-libtinyaes.aes_kw.test_kw_raw_unwrap" classname="phoenix-rtos-tests/libtinyaes/test-libtinyaes" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libtinyaes/test-libtinyaes.aes_kw.test_kwp_ae" classname="phoenix-rtos-tests/libtinyaes/test-libtinyaes" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libtinyaes/test-libtinyaes.aes_kw.test_kwp_ad" classname="phoenix-rtos-tests/libtinyaes/test-libtinyaes" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libtinyaes/test-libtinyaes.aes_cmac.test_subkey_generation" classname="phoenix-rtos-tests/libtinyaes/test-libtinyaes" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libtinyaes/test-libtinyaes.aes_cmac.test_cmac_empty_string" classname="phoenix-rtos-tests/libtinyaes/test-libtinyaes" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libtinyaes/test-libtinyaes.aes_cmac.test_cmac_one_short_string" classname="phoenix-rtos-tests/libtinyaes/test-libtinyaes" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libtinyaes/test-libtinyaes.aes_cmac.test_cmac_two_short_strings" classname="phoenix-rtos-tests/libtinyaes/test-libtinyaes" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libtinyaes/test-libtinyaes.aes_cmac.test_cmac_one_full_block" classname="phoenix-rtos-tests/libtinyaes/test-libtinyaes" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libtinyaes/test-libtinyaes.aes_cmac.test_cmac_three_variable_strings" classname="phoenix-rtos-tests/libtinyaes/test-libtinyaes" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libtinyaes/test-libtinyaes.aes_cmac.test_cmac_four_full_blocks" classname="phoenix-rtos-tests/libtinyaes/test-libtinyaes" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libtinyaes/test-libtinyaes.aes_cmac.test_cmac_five_variable_strings" classname="phoenix-rtos-tests/libtinyaes/test-libtinyaes" time="0.002"/>
+	</testsuite>
+	<testsuite name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libuuid/unit" timestamp="2026-01-22T12:13:02.841438" tests="7" errors="0" failures="0" skipped="0" time="2.886" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libuuid/unit.generate.change" classname="phoenix-rtos-tests/libuuid/unit" time="2.873"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libuuid/unit.generate.unique" classname="phoenix-rtos-tests/libuuid/unit" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libuuid/unit.generate.version" classname="phoenix-rtos-tests/libuuid/unit" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libuuid/unit.clear.clear" classname="phoenix-rtos-tests/libuuid/unit" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libuuid/unit.parse.unparse" classname="phoenix-rtos-tests/libuuid/unit" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libuuid/unit.parse.parse_basic" classname="phoenix-rtos-tests/libuuid/unit" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/libuuid/unit.parse.parse_fail" classname="phoenix-rtos-tests/libuuid/unit" time="0.002"/>
+	</testsuite>
+	<testsuite name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/mem/mmap" timestamp="2026-01-22T12:13:12.610326" tests="3" errors="0" failures="0" skipped="0" time="0.025" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/mem/mmap.test_mmap.len__not_page_aligned" classname="phoenix-rtos-tests/mem/mmap" time="0.012"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/mem/mmap.test_mmap.len__not_page_aligned_file" classname="phoenix-rtos-tests/mem/mmap" time="0.011"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/mem/mmap.test_mmap.len__zero" classname="phoenix-rtos-tests/mem/mmap" time="0.002"/>
+	</testsuite>
+	<testsuite name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/proc/test_thread_rand" timestamp="2026-01-22T12:13:19.557984" tests="1" errors="0" failures="0" skipped="0" time="0.231" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/proc/test_thread_rand.threads_rand.test_1" classname="phoenix-rtos-tests/proc/test_thread_rand" time="0.231"/>
+	</testsuite>
+	<testsuite name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/proc/test_priority" timestamp="2026-01-22T12:13:26.681051" tests="1" errors="0" failures="0" skipped="0" time="1.03" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/proc/test_priority" classname="phoenix-rtos-tests/proc/test_priority" time="1.03"/>
+	</testsuite>
+	<testsuite name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/psh/gibber" timestamp="2026-01-22T12:13:34.522101" tests="1" errors="0" failures="0" skipped="0" time="1.484" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/psh/gibber" classname="phoenix-rtos-tests/psh/gibber" time="1.484"/>
+	</testsuite>
+	<testsuite name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/psh/auth" timestamp="2026-01-22T12:13:36.296287" tests="1" errors="0" failures="0" skipped="0" time="13.511" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/psh/auth" classname="phoenix-rtos-tests/psh/auth" time="13.511"/>
+	</testsuite>
+	<testsuite name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/psh/echo" timestamp="2026-01-22T12:13:50.094975" tests="1" errors="0" failures="0" skipped="0" time="2.677" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/psh/echo" classname="phoenix-rtos-tests/psh/echo" time="2.677"/>
+	</testsuite>
+	<testsuite name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/psh/date" timestamp="2026-01-22T12:13:53.057472" tests="1" errors="0" failures="0" skipped="0" time="7.264" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/psh/date" classname="phoenix-rtos-tests/psh/date" time="7.264"/>
+	</testsuite>
+	<testsuite name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/psh/prompt" timestamp="2026-01-22T12:14:00.613093" tests="1" errors="0" failures="0" skipped="0" time="0.883" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/psh/prompt" classname="phoenix-rtos-tests/psh/prompt" time="0.883"/>
+	</testsuite>
+	<testsuite name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/psh/autocompletion" timestamp="2026-01-22T12:14:01.788076" tests="1" errors="0" failures="0" skipped="0" time="7.847" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/psh/autocompletion" classname="phoenix-rtos-tests/psh/autocompletion" time="7.847"/>
+	</testsuite>
+	<testsuite name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/psh/ps" timestamp="2026-01-22T12:14:09.921068" tests="1" errors="0" failures="0" skipped="0" time="0.954" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/psh/ps" classname="phoenix-rtos-tests/psh/ps" time="0.954"/>
+	</testsuite>
+	<testsuite name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/psh/cat" timestamp="2026-01-22T12:14:11.163086" tests="1" errors="0" failures="0" skipped="0" time="5.382" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/psh/cat" classname="phoenix-rtos-tests/psh/cat" time="5.382"/>
+	</testsuite>
+	<testsuite name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/psh/kill" timestamp="2026-01-22T12:14:16.834900" tests="1" errors="0" failures="0" skipped="0" time="4.949" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/psh/kill" classname="phoenix-rtos-tests/psh/kill" time="4.949"/>
+	</testsuite>
+	<testsuite name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/psh/mkdir" timestamp="2026-01-22T12:14:22.069469" tests="1" errors="0" failures="0" skipped="0" time="15.554" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/psh/mkdir" classname="phoenix-rtos-tests/psh/mkdir" time="15.554"/>
+	</testsuite>
+	<testsuite name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/psh/touch" timestamp="2026-01-22T12:14:37.914255" tests="1" errors="0" failures="0" skipped="0" time="29.408" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/psh/touch" classname="phoenix-rtos-tests/psh/touch" time="29.408"/>
+	</testsuite>
+	<testsuite name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/psh/ls" timestamp="2026-01-22T12:15:07.616969" tests="1" errors="0" failures="0" skipped="0" time="4.36" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/psh/ls" classname="phoenix-rtos-tests/psh/ls" time="4.36"/>
+	</testsuite>
+	<testsuite name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/psh/history" timestamp="2026-01-22T12:15:12.267703" tests="1" errors="0" failures="0" skipped="0" time="21.715" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/psh/history" classname="phoenix-rtos-tests/psh/history" time="21.715"/>
+	</testsuite>
+	<testsuite name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/psh/help" timestamp="2026-01-22T12:15:34.268415" tests="1" errors="0" failures="0" skipped="0" time="1.347" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/psh/help" classname="phoenix-rtos-tests/psh/help" time="1.347"/>
+	</testsuite>
+	<testsuite name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/psh/exit" timestamp="2026-01-22T12:15:35.901896" tests="1" errors="0" failures="0" skipped="0" time="6.771" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/psh/exit" classname="phoenix-rtos-tests/psh/exit" time="6.771"/>
+	</testsuite>
+	<testsuite name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/sample/test/fails/fail-output-1" tests="1" errors="0" failures="0" skipped="1" time="0.0" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/sample/test/fails/fail-output-1" classname="phoenix-rtos-tests/sample/test/fails/fail-output-1" time="0">
+			<skipped/>
+		</testcase>
+	</testsuite>
+	<testsuite name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/sample/test/fails/fail-output-2" tests="1" errors="0" failures="0" skipped="1" time="0.0" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/sample/test/fails/fail-output-2" classname="phoenix-rtos-tests/sample/test/fails/fail-output-2" time="0">
+			<skipped/>
+		</testcase>
+	</testsuite>
+	<testsuite name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/sample/test/fails/fail-exception" tests="1" errors="0" failures="0" skipped="1" time="0.0" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/sample/test/fails/fail-exception" classname="phoenix-rtos-tests/sample/test/fails/fail-exception" time="0">
+			<skipped/>
+		</testcase>
+	</testsuite>
+	<testsuite name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/sample/test/fails/fail-unity" tests="1" errors="0" failures="0" skipped="1" time="0.0" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/sample/test/fails/fail-unity" classname="phoenix-rtos-tests/sample/test/fails/fail-unity" time="0">
+			<skipped/>
+		</testcase>
+	</testsuite>
+	<testsuite name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/sample/test/fails/fail-unity-exception" tests="1" errors="0" failures="0" skipped="1" time="0.0" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/sample/test/fails/fail-unity-exception" classname="phoenix-rtos-tests/sample/test/fails/fail-unity-exception" time="0">
+			<skipped/>
+		</testcase>
+	</testsuite>
+	<testsuite name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/sample/test/echo" timestamp="2026-01-22T12:15:49.957382" tests="1" errors="0" failures="0" skipped="0" time="0.319" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/sample/test/echo" classname="phoenix-rtos-tests/sample/test/echo" time="0.319"/>
+	</testsuite>
+	<testsuite name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/sample/test/unity" timestamp="2026-01-22T12:15:57.166431" tests="4" errors="0" failures="0" skipped="1" time="0.022" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/sample/test/unity.unity_example.example_1" classname="phoenix-rtos-tests/sample/test/unity" time="0.01"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/sample/test/unity.unity_example.example_2" classname="phoenix-rtos-tests/sample/test/unity" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/sample/test/unity.unity_example.example_3" classname="phoenix-rtos-tests/sample/test/unity" time="0.008"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/sample/test/unity.unity_example.example_4" classname="phoenix-rtos-tests/sample/test/unity" time="0.002">
+			<skipped/>
+		</testcase>
+	</testsuite>
+	<testsuite name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/setjmp/unit" timestamp="2026-01-22T12:16:04.095672" tests="8" errors="0" failures="0" skipped="0" time="0.025" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/setjmp/unit.test_setjmp.setjmp" classname="phoenix-rtos-tests/setjmp/unit" time="0.011"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/setjmp/unit.test_setjmp._setjmp" classname="phoenix-rtos-tests/setjmp/unit" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/setjmp/unit.test_setjmp.sigsetjmp" classname="phoenix-rtos-tests/setjmp/unit" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/setjmp/unit.test_setjmp.sigsetjmp_savesigs_0" classname="phoenix-rtos-tests/setjmp/unit" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/setjmp/unit.test_setjmp.sigsetjmp_savesigs_1" classname="phoenix-rtos-tests/setjmp/unit" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/setjmp/unit.test_setjmp.setjmp_out_of_frame" classname="phoenix-rtos-tests/setjmp/unit" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/setjmp/unit.test_setjmp._setjmp_out_of_frame" classname="phoenix-rtos-tests/setjmp/unit" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/setjmp/unit.test_setjmp.sigsetjmp_out_of_frame" classname="phoenix-rtos-tests/setjmp/unit" time="0.002"/>
+	</testsuite>
+	<testsuite name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/sys/mutex" timestamp="2026-01-22T12:16:10.998008" tests="10" errors="0" failures="0" skipped="0" time="6.454" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/sys/mutex.mutex_invalid_params.invalid_attr" classname="phoenix-rtos-tests/sys/mutex" time="0.01"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/sys/mutex.mutex_invalid_params.invalid_mutex" classname="phoenix-rtos-tests/sys/mutex" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/sys/mutex.mutex_single_thread.no_attr" classname="phoenix-rtos-tests/sys/mutex" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/sys/mutex.mutex_single_thread.type_default" classname="phoenix-rtos-tests/sys/mutex" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/sys/mutex.mutex_single_thread.type_errorcheck" classname="phoenix-rtos-tests/sys/mutex" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/sys/mutex.mutex_single_thread.type_recursive" classname="phoenix-rtos-tests/sys/mutex" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/sys/mutex.mutex_multithreaded.no_attr" classname="phoenix-rtos-tests/sys/mutex" time="1.901"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/sys/mutex.mutex_multithreaded.type_default" classname="phoenix-rtos-tests/sys/mutex" time="1.089"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/sys/mutex.mutex_multithreaded.type_errorcheck" classname="phoenix-rtos-tests/sys/mutex" time="1.986"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/sys/mutex.mutex_multithreaded.type_recursive" classname="phoenix-rtos-tests/sys/mutex" time="1.457"/>
+	</testsuite>
+	<testsuite name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/sys/cond" timestamp="2026-01-22T12:16:24.302134" tests="17" errors="0" failures="0" skipped="0" time="0.124" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/sys/cond.condvar_invalid_params.invalid_attr" classname="phoenix-rtos-tests/sys/cond" time="0.012"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/sys/cond.condvar_invalid_params.invalid_cond" classname="phoenix-rtos-tests/sys/cond" time="0.002"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/sys/cond.condvar_signal.default_no_timeout" classname="phoenix-rtos-tests/sys/cond" time="0.006"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/sys/cond.condvar_signal.relative_no_timeout" classname="phoenix-rtos-tests/sys/cond" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/sys/cond.condvar_signal.monotonic_no_timeout" classname="phoenix-rtos-tests/sys/cond" time="0.004"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/sys/cond.condvar_signal.realtime_no_timeout" classname="phoenix-rtos-tests/sys/cond" time="0.004"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/sys/cond.condvar_signal.monotonic_timeout" classname="phoenix-rtos-tests/sys/cond" time="0.016"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/sys/cond.condvar_signal.realtime_timeout" classname="phoenix-rtos-tests/sys/cond" time="0.009"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/sys/cond.condvar_signal.monotonic_past_time" classname="phoenix-rtos-tests/sys/cond" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/sys/cond.condvar_signal.realtime_past_time" classname="phoenix-rtos-tests/sys/cond" time="0.003"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/sys/cond.condvar_signal.multiple_threads" classname="phoenix-rtos-tests/sys/cond" time="0.006"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/sys/cond.condvar_broadcast.default_no_timeout" classname="phoenix-rtos-tests/sys/cond" time="0.005"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/sys/cond.condvar_broadcast.relative_no_timeout" classname="phoenix-rtos-tests/sys/cond" time="0.005"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/sys/cond.condvar_broadcast.monotonic_no_timeout" classname="phoenix-rtos-tests/sys/cond" time="0.004"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/sys/cond.condvar_broadcast.realtime_no_timeout" classname="phoenix-rtos-tests/sys/cond" time="0.005"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/sys/cond.condvar_broadcast.monotonic_timeout" classname="phoenix-rtos-tests/sys/cond" time="0.014"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/sys/cond.condvar_broadcast.realtime_timeout" classname="phoenix-rtos-tests/sys/cond" time="0.023"/>
+	</testsuite>
+	<testsuite name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/thread-local/unit" timestamp="2026-01-22T12:16:31.381795" tests="3" errors="0" failures="0" skipped="0" time="2.673" hostname="pc">
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/thread-local/unit.test_tls.test_tls_defaults" classname="phoenix-rtos-tests/thread-local/unit" time="0.054"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/thread-local/unit.test_tls.test_tls_set_tls_variables" classname="phoenix-rtos-tests/thread-local/unit" time="2.204"/>
+		<testcase name="armv7r5f-zynqmp-qemu:phoenix-rtos-tests/thread-local/unit.test_tls.test_tls_check_errno" classname="phoenix-rtos-tests/thread-local/unit" time="0.415"/>
+	</testsuite>
+</testsuites>
