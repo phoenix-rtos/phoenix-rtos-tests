@@ -158,7 +158,7 @@ TEST(ioctl, regular_file)
 	int fdReg = open(PATH_REG, O_RDWR | O_CREAT | O_TRUNC, S_IFREG);
 	TEST_ASSERT_NOT_EQUAL_INT(-1, fdReg);
 	errno = 0;
-	int ret = ioctl(fdReg, TEST_IOCTL_SIG, NULL);
+	int ret = ioctl(fdReg, TEST_IOCTL_SIG);
 	TEST_ASSERT_NOT_EQUAL_INT(0, ret);
 	close(fdReg);
 	remove(PATH_REG);
