@@ -21,9 +21,9 @@ def counter():
 
 
 test_data = [
-    ("Hello World", "OK"),
-    ("ping", "OK"),
-    ("exit", "OK"),
+    ("ping", "Ping Complete]"),
+    ("echo", "[OK]"),
+    ("abcd", "[OK]"),
 ]
 
 
@@ -32,13 +32,13 @@ def test_always_passes():
 
 
 @pytest.mark.skip(reason="CI CHECK")
-def test_always_fails(ctx):
+def test_always_fails():
     assert False, "Always Fail"
 
 
-@pytest.mark.skip(reason="Test skipping")
+@pytest.mark.skip(reason="Should not fail because it's skipped")
 def test_always_skip():
-    assert True
+    assert False
 
 
 @pytest.mark.xfail(reason="Always fails, as expected")
@@ -93,46 +93,34 @@ def test_subresult_time_by_delaying():
     assert True
 
 
-def test_fake_dut_send_time(fake_dut_session, conftest_delay):
-    exp_sleep_time = conftest_delay
-    start = time.time()
-
-    fake_dut_session.send("Hello")
-
-    elapsed = time.time() - start
-
-    assert elapsed >= exp_sleep_time
+def test_send_hello(pexpect):
+    pexpect.sendline("hello")
+    pexpect.expect_exact("hello [OK]")
 
 
-@pytest.mark.parametrize("cmd, exp_resp", test_data)
-def test_dut_parameterized_commands(fake_dut_session, cmd, exp_resp, conftest_delay):
-    start = time.time()
-    response = fake_dut_session.send(cmd)
-    elapsed = time.time() - start
-    assert response == exp_resp
-    assert elapsed <= (conftest_delay * 1.1)
+@pytest.mark.parametrize("msg, exp", test_data)
+def test_dut_parameterized_commands(pexpect, msg, exp):
+    pexpect.sendline(msg)
+    pexpect.expect_exact(exp)
 
 
-@pytest.mark.usefixtures("fake_dut_class")
-class TestClassScopeFixture:
+@pytest.mark.usefixtures("pexpect")
+class TestClass:
     test_val = 0
 
     def setup_method(self):
-        TestClassScopeFixture.test_val = 5
+        TestClass.test_val = 5
 
     def teardown_method(self):
-        TestClassScopeFixture.test_val = 0
+        TestClass.test_val = 0
 
-    def test_no_ok_in_log(self, fake_dut_class):
-        assert "OK" not in fake_dut_class.get_log()
-
-    def test_send_hello(self, fake_dut_class):
-        fake_dut_class.send("hello")
-        assert "OK" in fake_dut_class.get_log()
+    def test_send_hello_from_class(self, pexpect):
+        pexpect.sendline("hello from class")
+        pexpect.expect_exact("[OK]")
 
     def test_test_val_value(self):
-        assert TestClassScopeFixture.test_val == 5
+        assert TestClass.test_val == 5
 
 
 def test_class_static_val_is_zero():
-    assert TestClassScopeFixture.test_val == 0
+    assert TestClass.test_val == 0
