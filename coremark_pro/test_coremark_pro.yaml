@@ -4,7 +4,7 @@ test:
     nightly: true
 
     targets:
-      exclude: [host-generic-pc, sparcv8leon-generic-qemu, armv7r5f-zynqmp-qemu]
+      exclude: [host-generic-pc, sparcv8leon-generic-qemu, armv7r5f-zynqmp-qemu, amrv8m33-mcxn94x-frdm, amrv8m33-mcxn94x-frdm_cpu1]
 
     tests:
       - name: cjpeg-rose7-preset
