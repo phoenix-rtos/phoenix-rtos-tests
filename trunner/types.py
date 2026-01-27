@@ -91,6 +91,29 @@ class TestStage(Enum):
         return NotImplemented
 
 
+class TestType(str, Enum):
+    @staticmethod
+    def _generate_next_value_(name: str, start: int, count: int, last_values: list) -> str:
+        return name.lower()
+
+    @classmethod
+    def _missing_(cls, value: object) -> Optional[Enum]:
+        if value is None or value == "":
+            return cls.EMPTY
+
+        if not isinstance(value, str):
+            return cls.UNSUPPORTED
+
+        lowercase_val = value.lower()
+        return next((member for member in cls if member.value == lowercase_val), cls.UNSUPPORTED)
+
+    HARNESS = auto()
+    PYTEST = auto()
+    UNITY = auto()
+    EMPTY = auto()
+    UNSUPPORTED = auto()
+
+
 class TestResult:
     def __init__(self, name=None, msg: str = "", status: Optional[Status] = None):
         self.msg = msg
@@ -365,9 +388,9 @@ class TestSubResult(TestResult):
                 )
             # multi-line message that does not exceed width limit
             elif remaining_lines:
-                out += ": " + first_line + "\n" + "\n".join(
+                out += ":\n" + "\n".join(
                     f'{" " * shift_len}{line}'
-                    for line in remaining_lines
+                    for line in msg_lines
                 )
             # single-line message
             else:
@@ -414,6 +437,7 @@ class TestOptions:
     target: Optional[str] = None
     bootloader: Optional[BootloaderOptions] = None
     shell: Optional[ShellOptions] = None
+    type: TestType = TestType.UNSUPPORTED
     should_reboot: bool = False
     ignore: bool = False
     nightly: bool = False

@@ -3,8 +3,8 @@ from typing import Callable, List, TextIO
 
 from trunner.ctx import TestContext
 from trunner.dut import HostDut
-from trunner.harness import IntermediateHarness, HarnessBuilder
-from trunner.types import TestOptions, TestResult, TestStage
+from trunner.harness import IntermediateHarness, HarnessBuilder, TestStartRunningHarness
+from trunner.types import TestOptions, TestResult, TestStage, TestType
 from .base import TargetBase
 
 

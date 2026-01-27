@@ -1,0 +1,8 @@
+test:
+    tests:
+        - name: pytest
+          type: pytest
+          execute: test-fake-comm
+          script: test-pytest.py
+          targets:
+              include: [host-generic-pc]
