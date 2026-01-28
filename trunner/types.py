@@ -5,12 +5,13 @@ import re
 import sys
 import time
 import traceback
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum, auto
 from functools import total_ordering
 from pathlib import Path
-from typing import Callable, Dict, List, Optional
+from typing import Dict, List, Optional
 
 import junitparser
 from trunner.text import bold, escape_invalid_xml_characters, green, red, remove_ansi_sequences, yellow
@@ -91,8 +92,31 @@ class TestStage(Enum):
         return NotImplemented
 
 
+class TestType(str, Enum):
+    @staticmethod
+    def _generate_next_value_(name: str, start: int, count: int, last_values: list) -> str:
+        return name.lower()
+
+    @classmethod
+    def _missing_(cls, value: object) -> Enum | None:
+        if value is None or value == "":
+            return cls.EMPTY
+
+        if not isinstance(value, str):
+            return cls.UNSUPPORTED
+
+        lowercase_val = value.lower()
+        return next((member for member in cls if member.value == lowercase_val), cls.UNSUPPORTED)
+
+    HARNESS = auto()
+    PYTEST = auto()
+    UNITY = auto()
+    EMPTY = auto()
+    UNSUPPORTED = auto()
+
+
 class TestResult:
-    def __init__(self, name=None, msg: str = "", status: Optional[Status] = None):
+    def __init__(self, name=None, msg: str = "", status: Status | None = None):
         self.msg = msg
         self.summary = ""
         self.status = Status.OK if status is None else status
@@ -100,15 +124,15 @@ class TestResult:
         self.subname = ""
 
         # test execution tracking
-        self._timing_stage: Optional[TestStage] = None
+        self._timing_stage: TestStage | None = None
         self._timing_stage_start: float = 0
-        self._timing_data: Dict[TestStage, float] = {}
+        self._timing_data: dict[TestStage, float] = {}
         self._start_time = None
         self.set_stage(TestStage.INIT)
 
         # subresults
         self._curr_subresult: TestResult
-        self.subresults: List[TestResult] = []
+        self.subresults: list[TestResult] = []
 
     @property
     def name(self) -> str:
@@ -243,7 +267,7 @@ class TestResult:
         self.status = Status.SKIP
         self.set_stage(TestStage.DONE)
 
-    def _failed_traceback(self) -> List[str]:
+    def _failed_traceback(self) -> list[str]:
         _, _, exc_traceback = sys.exc_info()
         tb_info = traceback.format_tb(exc_traceback)[1:]  # Get rid off "self.harness()" call info
         return [bold("ASSERTION TRACEBACK (most recent call last):"), "".join(tb_info)]
@@ -343,7 +367,7 @@ class TestSubResult(TestResult):
     TestSubResult needs to be linked to parent TestResult by add_subresult or add_subresult_obj.
     """
 
-    def __init__(self, name=None, subname: str = "", msg: str = "", status: Optional[Status] = None):
+    def __init__(self, name=None, subname: str = "", msg: str = "", status: Status | None = None):
         super().__init__(name, msg, status)
         self.subname = subname
         self.set_stage(TestStage.RUN)
@@ -391,14 +415,14 @@ class AppOptions:
 
 @dataclass
 class BootloaderOptions:
-    apps: List[AppOptions] = field(default_factory=list)
+    apps: list[AppOptions] = field(default_factory=list)
 
 
 @dataclass
 class ShellOptions:
-    binary: Optional[str] = None
-    cmd: Optional[List[str]] = None
-    path: Optional[Path] = Path("bin")
+    binary: str | None = None
+    cmd: list[str] | None = None
+    path: Path | None = Path("bin")
 
 
 def void_harness_fn(result: TestResult) -> TestResult:
@@ -408,13 +432,14 @@ def void_harness_fn(result: TestResult) -> TestResult:
 
 @dataclass
 class TestOptions:
-    name: Optional[str] = None
-    cmd: Optional[str] = None
+    name: str | None = None
+    cmd: str | None = None
     harness: Callable[[TestResult], TestResult] = void_harness_fn
-    target: Optional[str] = None
-    bootloader: Optional[BootloaderOptions] = None
-    shell: Optional[ShellOptions] = None
+    target: str | None = None
+    bootloader: BootloaderOptions | None = None
+    shell: ShellOptions | None = None
     should_reboot: bool = False
     ignore: bool = False
     nightly: bool = False
-    kwargs: Dict = field(default_factory=dict)
+    test_type: TestType = TestType.UNSUPPORTED
+    kwargs: dict = field(default_factory=dict)
