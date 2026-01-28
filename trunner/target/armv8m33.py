@@ -71,14 +71,16 @@ class MCXN947PloAppLoader(TerminalHarness, PloInterface):
 
 
 class MCXN94xTarget(TargetBase):
-    name = "armv8m33-mcxn94x-frdm"
-    rootfs = False
     image_file = "phoenix.disk"
 
     def __init__(self, host: Host, port: Optional[str] = None, baudrate: int = 115200):
         if port is None:
-            # Try to find USB-Serial controller
-            port = find_port("MCU-LINK")
+            # NOTE: In this scenario, we use an external device to collect logs.
+            # When a hard reset occurs (power off/on), the USB device may change its
+            # TTY and silently disconnect. The serial library does not notice this,
+            # so the system keeps waiting for data from a device that no longer exists.
+            # To use with test campaign without external device please use MCU-Link as port
+            port = find_port("MCU-Link")
 
         self.dut = SerialDut(port, baudrate, encoding="utf-8", codec_errors="ignore")
         self.rebooter = ARMv8M33Rebooter(host, self.dut)
@@ -91,7 +93,19 @@ class MCXN94xTarget(TargetBase):
     def flash_dut(self, host_log: TextIO):
         try:
             PyocdProcess(
-                target="mcxn947", extra_args=["--format=bin", "--erase=chip"], host_log=host_log, cwd=self.boot_dir()
+                target="mcxn947",
+                extra_args=[
+                    "--format=bin",
+                    "--erase=chip",
+                    #  connect to a running target without halting cores.
+                    "-Oconnect_mode=attach",
+                    # The primary effect is to modify the default software reset type
+                    # for secondary cores to use VECTRESET, which will fall back to emulated
+                    # reset for secondary cores that are not v7-M architecture
+                    "-Oenable_multicore_debug=True",
+                ],
+                host_log=host_log,
+                cwd=self.boot_dir(),
             ).load(load_file=self.image_file)
 
         except FileNotFoundError as e:
@@ -134,3 +148,13 @@ class MCXN94xTarget(TargetBase):
         builder.add(test.harness)
 
         return builder.get_harness()
+
+
+class MCXN94xCPU0Target(MCXN94xTarget):
+    name = "armv8m33-mcxn94x-frdm"
+    rootfs = False
+
+
+class MCXN94xCPU1Target(MCXN94xTarget):
+    name = "armv8m33-mcxn94x-frdm_cpu1"
+    rootfs = False
