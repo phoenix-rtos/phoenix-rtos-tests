@@ -118,7 +118,7 @@ class TestResult:
     def __init__(self, name=None, msg: str = "", status: Optional[Status] = None):
         self.msg = msg
         self.summary = ""
-        self.status = Status.OK if status is None else status
+        self._status = status
         self._name = name
         self.subname = ""
 
@@ -165,6 +165,27 @@ class TestResult:
 
         out.append("")
         return "\n".join(out)
+
+    @property
+    def status(self) -> Status:
+        if self._status is not None:
+            return self._status
+        if self.subresults:
+            return self._compute_status()
+
+        return Status.OK
+
+    @status.setter
+    def status(self, value: Status):
+        self._status = value
+
+    def _compute_status(self) -> Status:
+        if any(sub.status == Status.FAIL for sub in self.subresults):
+            return Status.FAIL
+        elif all(sub.status == Status.SKIP for sub in self.subresults):
+            return Status.SKIP
+        else:
+            return Status.OK
 
     def to_junit_testcase(self, target: str):
         out = junitparser.TestCase(f"{target}:{self.full_name}")
