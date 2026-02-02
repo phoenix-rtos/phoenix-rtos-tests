@@ -27,13 +27,13 @@ def get_subtests_numbers(name: str) -> Iterator[int]:
 
 
 def harness(dut: Dut, ctx: TestContext, result: TestResult, **kwargs) -> TestResult:
-    start = r"(?m)^(.+?\|){2}TCM Start\r?\n$"
-    tc_start = r"(?m)^(.+?\|){2}TP Start\r?\n$"
-    status = r"(?m)^(.+?\|){2}(?P<status>PASS|FAIL|UNRESOLVED|UNSUPPORTED|NOTINUSE|UNTESTED|UNINITIATED|NORESULT|INVALID RESULT)\r?\n$"  # noqa: E501
-    tc_end = r"(?m)^(.+?\|){2}IC End\r?\n$"
-    final = r"(?m)^(.+?\|){2}TC End.+?\r?\n$"
-    msg_line = r"(?m)^(.*?\|){2}(?P<msg_line>.+?)\r?\n$"
-    vsx_error = r"(?m)^.*?(?P<vsx_error>error: .+?)\r?\n$"
+    start = r"(?m)^(.+?\|){2}TCM Start\r?$\n"
+    tc_start = r"(?m)^(.+?\|){2}TP Start\r?$\n"
+    status = r"(?m)^(.+?\|){2}(?P<status>PASS|FAIL|UNRESOLVED|UNSUPPORTED|NOTINUSE|UNTESTED|UNINITIATED|NORESULT|INVALID RESULT)\r?$\n"  # noqa: E501
+    tc_end = r"(?m)^(.+?\|){2}IC End\r?$\n"
+    final = r"(?m)^(.+?\|){2}TC End.+?\r?$\n"
+    msg_line = r"(?m)^(.*?\|){2}(?P<msg_line>.+?)\r?$\n"
+    vsx_error = r"(?m)^.*?(?P<vsx_error>error: .+?)\r?$\n"
 
     stats = {"OK": 0, "FAIL": 0, "SKIP": 0}
     vsx_error_msg = ""
