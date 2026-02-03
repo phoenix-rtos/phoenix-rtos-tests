@@ -91,6 +91,29 @@ class TestStage(Enum):
         return NotImplemented
 
 
+class TestType(str, Enum):
+    @staticmethod
+    def _generate_next_value_(name: str, start: int, count: int, last_values: list) -> str:
+        return name.lower()
+
+    @classmethod
+    def _missing_(cls, value: object) -> Enum | None:
+        if value is None or value == "":
+            return cls.EMPTY
+
+        if not isinstance(value, str):
+            return cls.UNSUPPORTED
+
+        lowercase_val = value.lower()
+        return next((member for member in cls if member.value == lowercase_val), cls.UNSUPPORTED)
+
+    HARNESS = auto()
+    PYTEST = auto()
+    UNITY = auto()
+    EMPTY = auto()
+    UNSUPPORTED = auto()
+
+
 class TestResult:
     def __init__(self, name=None, msg: str = "", status: Optional[Status] = None):
         self.msg = msg
