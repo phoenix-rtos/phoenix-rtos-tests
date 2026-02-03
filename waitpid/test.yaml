@@ -9,5 +9,6 @@ test:
               armv7m7-imxrt106x-evk,
               armv7m7-imxrt117x-evk,
               armv7m4-stm32l4x6-nucleo,
-              armv8m33-mcxn94x-frdm
+              armv8m33-mcxn94x-frdm,
+              armv8m55-stm32n6-nucleo
               ]
