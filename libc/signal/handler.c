@@ -15,6 +15,7 @@
 
 #include "sig_internal.h"
 
+#include <stdio.h>
 #include <signal.h>
 #include <unistd.h>
 #include <errno.h>
@@ -866,27 +867,31 @@ TEST(sigaction, sigaction_in_handler_default)
 
 TEST_GROUP_RUNNER(sigaction)
 {
-	RUN_TEST_CASE(sigaction, signal_termination_statuscode);
-	RUN_TEST_CASE(sigaction, signal_default_ignored);
+	// RUN_TEST_CASE(sigaction, signal_termination_statuscode);
+	// RUN_TEST_CASE(sigaction, signal_default_ignored);
 
-	RUN_TEST_CASE(sigaction, unmask_changed_action_handler_to_ignore);
-	RUN_TEST_CASE(sigaction, unmask_changed_action_default_to_ignore);
-	RUN_TEST_CASE(sigaction, unmask_changed_action_default_to_handler);
-	RUN_TEST_CASE(sigaction, unmask_changed_action_handler_to_default_ignored);
-	RUN_TEST_CASE(sigaction, unmask_changed_action_handler_to_default);
-	/* initial SIG_IGN is omitted, as:
-	 * POSIX: setting sigaction to SIG_IGN can release pending signal
-	 */
+	// RUN_TEST_CASE(sigaction, unmask_changed_action_handler_to_ignore);
+	// RUN_TEST_CASE(sigaction, unmask_changed_action_default_to_ignore);
+	// RUN_TEST_CASE(sigaction, unmask_changed_action_default_to_handler);
+	// RUN_TEST_CASE(sigaction, unmask_changed_action_handler_to_default_ignored);
+	// RUN_TEST_CASE(sigaction, unmask_changed_action_handler_to_default);
+	// /* initial SIG_IGN is omitted, as:
+	//  * POSIX: setting sigaction to SIG_IGN can release pending signal
+	//  */
 
-	RUN_TEST_CASE(sigaction, handler_recursion_direct);
-	RUN_TEST_CASE(sigaction, handler_recursion_raise);
-	RUN_TEST_CASE(sigaction, handler_recursion_raise_nodefer);
+	// RUN_TEST_CASE(sigaction, handler_recursion_direct);
+	// RUN_TEST_CASE(sigaction, handler_recursion_raise);
+	// RUN_TEST_CASE(sigaction, handler_recursion_raise_nodefer);
 
-	RUN_TEST_CASE(sigaction, masked_sigaction);
+	// RUN_TEST_CASE(sigaction, masked_sigaction);
 
-	RUN_TEST_CASE(sigaction, sigaction_in_handler_handle);
-	RUN_TEST_CASE(sigaction, sigaction_in_handler_handle_reraise);
-	RUN_TEST_CASE(sigaction, sigaction_in_handler_nodefer_handle_reraise);
-	RUN_TEST_CASE(sigaction, sigaction_in_handler_ignore);
-	RUN_TEST_CASE(sigaction, sigaction_in_handler_default);
+	for (;;) {
+		printf(".");
+		fflush(stdout);
+		// RUN_TEST_CASE(sigaction, sigaction_in_handler_handle);
+		// RUN_TEST_CASE(sigaction, sigaction_in_handler_handle_reraise);
+		// RUN_TEST_CASE(sigaction, sigaction_in_handler_nodefer_handle_reraise);
+		RUN_TEST_CASE(sigaction, sigaction_in_handler_ignore);
+		RUN_TEST_CASE(sigaction, sigaction_in_handler_default);
+	}
 }

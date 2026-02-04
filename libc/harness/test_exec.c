@@ -27,6 +27,7 @@
 extern char **environ;
 static unsigned char stack[_PAGE_SIZE] __attribute__((aligned(8)));
 
+extern int sys_tkill(int pid, int tid, int signal);
 
 static void test_exec_execveEnv(bool changeEnv)
 {
