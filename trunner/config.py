@@ -3,20 +3,18 @@ import shlex
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Set
 
 import yaml
-
 from trunner.ctx import TestContext
-from trunner.harness import PyHarness, unity_harness
-from trunner.types import AppOptions, BootloaderOptions, TestOptions, ShellOptions
+from trunner.harness import PyHarness, pytest_harness, unity_harness
+from trunner.types import AppOptions, BootloaderOptions, ShellOptions, TestOptions
 
 
 class ParserError(Exception):
     pass
 
 
-def array_value(array: Dict[str, List[str]]) -> List[str]:
+def array_value(array: dict[str, list[str]]) -> list[str]:
     """Logic for setting parameters if there are multiple to choose from.
 
     `value` keyword is hard set of parameter
@@ -41,8 +39,8 @@ def is_array(array: dict) -> bool:
 class ConfigParser:
     @dataclass
     class MainConfig:
-        targets: Optional[Set] = None
-        type: Optional[str] = None
+        targets: set | None = None
+        type: str | None = None
         ignore: bool = False
         nightly: bool = False
 
@@ -60,23 +58,19 @@ class ConfigParser:
 
         if test_type == "harness":
             self._parse_pyharness(config)
+        elif test_type == "pytest":
+            self._parse_pytest(config)
         elif test_type == "unity":
             self._parse_unity()
         else:
-            raise ParserError("unknown key!")
+            raise ParserError(f"unknown test type: {test_type}")
 
     def _parse_pyharness(self, config: dict):
         path = config.get("harness", self.raw_main.get("harness"))
         if path is None:
             raise ParserError("test is of type 'harness' but there is no \"harness\" keyword")
 
-        path = Path(path)
-
-        if not path.is_absolute():
-            # If path is not absolute then it must be relative to the directory of yaml
-            path = self.yaml_path.parent / path
-            if not path.is_absolute():
-                raise ParserError("yml path is not absolute!")
+        path = self._get_absolute_path(path)
 
         spec = importlib.util.spec_from_file_location("harness", path.absolute())
         if not spec:
@@ -95,6 +89,19 @@ class ConfigParser:
             raise ParserError(f"harness function has not been found in {path}")
 
         self.test.harness = PyHarness(self.ctx.target.dut, self.ctx, harness_fn, self.test.kwargs)
+
+    def _parse_pytest(self, config):
+        script = config.get("script", None)
+        if not script:
+            raise ParserError("pytest `script` name must be provided!")
+        script_path = self._get_absolute_path(script)
+        if script_path.suffix != ".py":
+            raise ParserError("provided `script` is not a python script!")
+        # Creating a new kwarg is better than expanding TestContext
+        # with a field required only for this specific case
+        # TODO Think of a better way of parsing special arguments
+        self.test.kwargs["script"] = script_path.absolute()
+        self.test.harness = PyHarness(self.ctx.target.dut, self.ctx, pytest_harness, self.test.kwargs)
 
     def _parse_unity(self):
         self.test.harness = PyHarness(self.ctx.target.dut, self.ctx, unity_harness, self.test.kwargs)
@@ -279,12 +286,12 @@ class ConfigParser:
     def _load_yaml(self) -> dict:
         assert self.yaml_path is not None
 
-        with open(self.yaml_path, "r", encoding="utf-8") as f_yaml:
+        with open(self.yaml_path, encoding="utf-8") as f_yaml:
             config = yaml.safe_load(f_yaml)
 
         return config
 
-    def _split_test_config(self, config: dict) -> Tuple[dict, List[dict]]:
+    def _split_test_config(self, config: dict) -> tuple[dict, list[dict]]:
         try:
             main = config.pop("test")
             tests = main.pop("tests")
@@ -304,7 +311,18 @@ class ConfigParser:
         self.main.ignore = config.get("ignore", False)
         self.main.nightly = config.get("nightly", False)
 
-    def parse(self, path: Path) -> List[TestOptions]:
+    def _get_absolute_path(self, path: str) -> Path:
+        p = Path(path)
+
+        if not p.is_absolute():
+            # If path is not absolute then it must be relative to the directory of yaml
+            absolute_path = self.yaml_path.parent / p
+            if not absolute_path.is_absolute():
+                raise ParserError("yml path is not absolute!")
+
+        return absolute_path
+
+    def parse(self, path: Path) -> list[TestOptions]:
         self.yaml_path = path
 
         res = []
