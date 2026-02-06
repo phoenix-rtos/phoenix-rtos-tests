@@ -1,0 +1,15 @@
+test:
+  type: unity
+  tests:
+    - name: test-libtrace
+      execute: test-libtrace
+      targets:
+          # only for targets with: 1) rootfs 2) tracing buffer-mem support
+          value: [
+            ia32-generic-qemu,
+            riscv64-generic-qemu,
+            armv7a9-zynq7000-zedboard,
+            armv7a9-zynq7000-qemu,
+            armv7a7-imx6ull-evk,
+            aarch64a53-zynqmp-qemu
+          ]
