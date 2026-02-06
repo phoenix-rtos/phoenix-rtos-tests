@@ -110,7 +110,22 @@ static void test_sigchldHandler(int signum)
 	sa.sa_handler = SIG_DFL;  // Set the handler to default action
 	sigemptyset(&sa.sa_mask);
 	sa.sa_flags = 0;
-	TEST_ASSERT_EQUAL_INT(0, sigaction(SIGCHLD, &sa, NULL));
+	sigaction(SIGCHLD, &sa, NULL);
+
+	/* Change value of variable to confirm that handler has been invoked */
+	test_common.test_handlerFlag = TEST_EXIT_DUMMY_VAL;
+}
+
+
+/* SIGPIPE signal handler */
+static void test_sigpipeHandler(int signum)
+{
+	struct sigaction sa;
+
+	sa.sa_handler = SIG_DFL;  // Set the handler to default action
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = 0;
+	sigaction(SIGPIPE, &sa, NULL);
 
 	/* Change value of variable to confirm that handler has been invoked */
 	test_common.test_handlerFlag = TEST_EXIT_DUMMY_VAL;
@@ -581,6 +596,15 @@ TEST(unistd_exit, close_streams)
 	/* parent */
 	else {
 		int status, ret;
+		struct sigaction sa;
+
+		sa.sa_handler = test_sigpipeHandler;
+		TEST_ASSERT_EQUAL_INT(0, sigemptyset(&sa.sa_mask));
+		sa.sa_flags = 0;
+		TEST_ASSERT_EQUAL_INT(0, sigaction(SIGPIPE, &sa, NULL));
+
+		/* Check handlerFlag has initial value */
+		TEST_ASSERT_EQUAL_INT(0, test_common.test_handlerFlag);
 
 		ret = wait(&status);
 		TEST_ASSERT_EQUAL_INT(pid, ret);
@@ -591,6 +615,10 @@ TEST(unistd_exit, close_streams)
 		ret = write(pipefd[1], TEST_EXIT_STR, sizeof(TEST_EXIT_STR));
 		TEST_ASSERT_EQUAL_INT(-1, ret);
 		TEST_ASSERT_EQUAL_INT(EPIPE, errno);
+#ifndef phoenix
+		// https://github.com/phoenix-rtos/phoenix-rtos-project/issues/733
+		TEST_ASSERT_EQUAL_INT(TEST_EXIT_DUMMY_VAL, test_common.test_handlerFlag);
+#endif
 		close(pipefd[1]); /* close write pipe end */
 	}
 }
