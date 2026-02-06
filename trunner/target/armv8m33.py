@@ -60,9 +60,13 @@ class MCXN947PloAppLoader(TerminalHarness, PloInterface):
         for app in self.apps:
             path = self.app_host_dir / Path(app.file)
 
-            PyocdProcess(target="mcxn947", extra_args=["--format=bin", "--no-reset"], cwd=self.app_host_dir).load(
-                load_file=app.file, load_offset=self.ram_addr + offset
-            )
+            # In this approach, pyocd remember last used configuration with connection after flashing sequence
+            PyocdProcess(
+                target="mcxn947",
+                extra_args=["--format=bin", "--no-reset", "-Oenable_multicore_debug=True"],
+                cwd=self.app_host_dir,
+            ).load(load_file=app.file, load_offset=self.ram_addr + offset)
+
 
             self.alias(app.file, offset=offset, size=path.stat().st_size)
             self.app("ramdev", app.file, "ram", "ram")
@@ -91,7 +95,16 @@ class MCXN94xTarget(TargetBase):
     def flash_dut(self, host_log: TextIO):
         try:
             PyocdProcess(
-                target="mcxn947", extra_args=["--format=bin", "--erase=chip"], host_log=host_log, cwd=self.boot_dir()
+                cwd=self.boot_dir(),
+                host_log=host_log,
+                # additional options needed to allow flashing without hard reboot and support cpu1 configuration
+                extra_args=[
+                    "-e=auto",
+                    "--format=bin",
+                    "-Oconnect_mode=halt",
+                    "-Oenable_multicore_debug=True",
+                ],
+                target="mcxn947",
             ).load(load_file=self.image_file)
 
         except FileNotFoundError as e:
