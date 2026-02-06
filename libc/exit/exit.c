@@ -19,6 +19,7 @@
  */
 
 #include <stdlib.h>
+#include <stdbool.h>
 #include <unistd.h>
 #include <sys/wait.h>
 #include <signal.h>
@@ -47,6 +48,8 @@
 #define TEST_EXIT_PATH      "exit_test_file"
 #define TEST_EXIT_STR       "test123"
 #define TEST_EXIT_DUMMY_VAL 12345678
+
+bool test_hasInitSystem = true;
 
 /* Disable warnings caused by no checking write() return value, since ASSERT cannot be used in child process */
 #pragma GCC diagnostic push
@@ -595,9 +598,10 @@ TEST(unistd_exit, close_streams)
 
 TEST(unistd_exit, orphaned_child)
 {
-#ifndef phoenix
-	TEST_IGNORE_MESSAGE("Lack of init system in docker container");
-#endif
+	if (!test_hasInitSystem) {
+		TEST_IGNORE_MESSAGE("Lack of init system in docker container");
+	}
+
 	/* Test if parent _exit affect child process */
 	pid_t pid;
 	int pipefd[2];
@@ -675,9 +679,10 @@ TEST(unistd_exit, orphaned_child)
 
 TEST(unistd_exit, new_parent_id)
 {
-#ifndef phoenix
-	TEST_IGNORE_MESSAGE("Lack of init system in docker container");
-#endif
+	if (!test_hasInitSystem) {
+		TEST_IGNORE_MESSAGE("Lack of init system in docker container");
+	}
+
 	/* Test that child acquire new parent ID */
 	pid_t pid;
 	int pipefd[2];
@@ -1214,6 +1219,23 @@ void runner(void)
 
 int main(int argc, char *argv[])
 {
+	char hostname[128];
+	gethostname(hostname, sizeof(hostname));
+
+	if (strstr(hostname, "docker") != NULL) {
+		if (getenv("USE_TINI") == NULL) {
+			if (access("/usr/bin/tini", X_OK) == 0) {
+				setenv("USE_TINI", "yes", 1);
+				execl("/usr/bin/tini", "tini", "-s", argv[0], NULL);
+				perror("execl tini");
+				exit(EXIT_FAILURE);
+			}
+			else {
+				test_hasInitSystem = false;
+			}
+		}
+	}
+
 	return (UnityMain(argc, (const char **)argv, runner) == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
