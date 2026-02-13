@@ -10,7 +10,7 @@ from datetime import datetime
 from enum import Enum, auto
 from functools import total_ordering
 from pathlib import Path
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, List, Optional, Union
 
 import junitparser
 from trunner.text import bold, escape_invalid_xml_characters, green, red, remove_ansi_sequences, yellow
@@ -92,12 +92,11 @@ class TestStage(Enum):
 
 
 class TestType(str, Enum):
-    @staticmethod
     def _generate_next_value_(name: str, start: int, count: int, last_values: list) -> str:
         return name.lower()
 
     @classmethod
-    def _missing_(cls, value: object) -> Enum | None:
+    def _missing_(cls, value: object) -> Union[Enum, None]:
         if value is None or value == "":
             return cls.EMPTY
 
