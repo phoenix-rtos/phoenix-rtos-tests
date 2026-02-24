@@ -27,6 +27,7 @@ def get_subtests_numbers(name: str) -> Iterator[int]:
 
 
 def harness(dut: Dut, ctx: TestContext, result: TestResult, **kwargs) -> TestResult:
+    timeout = kwargs.get("timeout", 90)
     start = r"(?m)^(.+?\|){2}TCM Start\r?$\n"
     tc_start = r"(?m)^(.+?\|){2}TP Start\r?$\n"
     status = r"(?m)^(.+?\|){2}(?P<status>PASS|FAIL|UNRESOLVED|UNSUPPORTED|NOTINUSE|UNTESTED|UNINITIATED|NORESULT|INVALID RESULT)\r?$\n"  # noqa: E501
@@ -47,7 +48,7 @@ def harness(dut: Dut, ctx: TestContext, result: TestResult, **kwargs) -> TestRes
     prev_subtest_idx = 0
 
     while True:
-        idx = dut.expect([start, tc_start, status, tc_end, final, msg_line, vsx_error], timeout=2000)
+        idx = dut.expect([start, tc_start, status, tc_end, final, msg_line, vsx_error], timeout=timeout)
         parsed = dut.match.groupdict()
 
         # start

@@ -105,6 +105,7 @@ test:
           execute: run-test /tset/ANSI.os/genuts/abort/T.abort{1,3-5,10-12}
           kwargs:
             testcase_count: 12
+            timeout: 600
 
         - name: T.abs
           execute: run-test /tset/ANSI.os/genuts/abs/T.abs
@@ -661,6 +662,7 @@ test:
           execute: run-test /tset/POSIX.os/devclass/c_cflag/T.c_cflag{4-7,9}
           kwargs:
             testcase_count: 11
+            timeout: 360
 
           # 1, 2, 5, 7, 8: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1424
           # 6: can't be tested using pseudo ttys
@@ -669,6 +671,7 @@ test:
           execute: run-test /tset/POSIX.os/devclass/c_lflag/T.c_lflag{3-4,9-10,12-13}
           kwargs:
             testcase_count: 14
+            timeout: 360
 
           # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/647
         - name: T.c_iflag
@@ -681,6 +684,7 @@ test:
           execute: run-test /tset/POSIX.os/devclass/c_oflag/T.c_oflag
           kwargs:
             testcase_count: 1
+            timeout: 360
 
         - name: T.cfgetispee
           execute: run-test /tset/POSIX.os/devclass/cfgetispee/T.cfgetispee
@@ -697,6 +701,7 @@ test:
           execute: run-test /tset/POSIX.os/devclass/cfsetispee/T.cfsetispee{1-2}
           kwargs:
             testcase_count: 3
+            timeout: 360
 
           # 2: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1424 (same or similar problem)
           # 3: can't be tested using pseudo ttys
@@ -704,6 +709,7 @@ test:
           execute: run-test /tset/POSIX.os/devclass/cfsetospee/T.cfsetospee{1}
           kwargs:
             testcase_count: 3
+            timeout: 360
 
           # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
         - name: T.i_access
@@ -717,6 +723,7 @@ test:
           execute: run-test /tset/POSIX.os/devclass/i_canon/T.i_canon{2-6}
           kwargs:
             testcase_count: 6
+            timeout: 360
 
           # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/647
         - name: T.i_close
@@ -731,12 +738,14 @@ test:
           execute: run-test /tset/POSIX.os/devclass/i_ctty/T.i_ctty{1,4-6,8-10}
           kwargs:
             testcase_count: 10
+            timeout: 360
 
           # 1: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1401
         - name: T.i_inproc
           execute: run-test /tset/POSIX.os/devclass/i_inproc/T.i_inproc{2-4}
           kwargs:
             testcase_count: 4
+            timeout: 360
 
           # can't be tested using pseudo ttys
         - name: T.i_modem
@@ -752,6 +761,7 @@ test:
           execute: run-test /tset/POSIX.os/devclass/i_noncanon/T.i_noncanon{1-2,5,10-15}
           kwargs:
             testcase_count: 15
+            timeout: 600
 
           # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/647
         - name: T.i_spchars
@@ -787,6 +797,7 @@ test:
           execute: run-test /tset/POSIX.os/devclass/tcgetattr/T.tcgetattr{3-4}
           kwargs:
             testcase_count: 5
+            timeout: 360
 
           # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/647
         - name: T.tcsetattr
@@ -802,6 +813,7 @@ test:
           execute: run-test /tset/POSIX.os/devclass/tcgetpgrp/T.tcgetpgrp{1-2,4}
           kwargs:
             testcase_count: 7
+            timeout: 360
 
           # 2, 3, 4: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
           # 6, 8, 10: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
@@ -811,6 +823,7 @@ test:
           execute: run-test /tset/POSIX.os/devclass/tcsetpgrp/T.tcsetpgrp{1,5}
           kwargs:
             testcase_count: 10
+            timeout: 360
 
           # 1, 2, 3, 4, 5, 6, 9, 10, 11, 12, 13: can't be tested using pseudo ttys
           # 13: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
@@ -818,6 +831,7 @@ test:
           execute: run-test /tset/POSIX.os/devclass/tcsendbrea/T.tcsendbrea{7}
           kwargs:
             testcase_count: 13
+            timeout: 360
 
           # no permission verification in the system
         - name: T.access
@@ -1176,6 +1190,7 @@ test:
           execute: run-test /tset/POSIX.os/procenv/setsid/T.setsid{1-2,4-5}
           kwargs:
             testcase_count: 6
+            timeout: 360
 
           # setuid() is a stub
         - name: T.setuid
@@ -1232,6 +1247,7 @@ test:
           execute: run-test /tset/ANSI.os/genuts/exit/T.exit{1,4-6,11-12}
           kwargs:
             testcase_count: 12
+            timeout: 360
 
           # 2: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1235
           # 3: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1448
@@ -1240,11 +1256,13 @@ test:
           execute: run-test /tset/POSIX.os/procprim/_exit/T._exit{1,4-6,11-12}
           kwargs:
             testcase_count: 12
+            timeout: 360
 
         - name: T.alarm
           execute: run-test /tset/POSIX.os/procprim/alarm/T.alarm
           kwargs:
             testcase_count: 5
+            timeout: 180
 
           # 15, 16, 29, 30, 34: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1458
           # 21: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1235
@@ -1366,6 +1384,7 @@ test:
           execute: run-test /tset/POSIX.os/procprim/pause/T.pause
           kwargs:
             testcase_count: 4
+            timeout: 900
 
           # 1, 3: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/844
           # 6, 16: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1233
@@ -1452,6 +1471,7 @@ test:
           execute: run-test /tset/POSIX.os/procprim/waitpid/T.waitpid{1-7,9-11,20,22}
           kwargs:
             testcase_count: 24
+            timeout: 150
 
           # getgrgid() is a stub
         - name: T.getgrgid
