@@ -36,6 +36,11 @@ test:
       targets:
         include: [host-generic-pc]
 
+    - name: fs
+      execute: test-libc-fs
+      targets:
+        include: [host-generic-pc]
+
     - name: stdio
       execute: test-libc-stdio
       targets:
