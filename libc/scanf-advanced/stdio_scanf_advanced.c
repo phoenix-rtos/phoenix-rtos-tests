@@ -708,15 +708,6 @@ TEST(stdio_scanf_cspn, c_ascii)
 		TEST_ASSERT_EQUAL_INT(1, fscanf(filep, "%c", &c));
 		TEST_ASSERT_EQUAL_CHAR(i, c);
 
-		/*
-		 * This fseek is used because of issue #639
-		 * https://github.com/phoenix-rtos/phoenix-rtos-project/issues/639
-		 */
-
-#ifdef __phoenix__
-		fseek(filep, i, SEEK_SET);
-#endif
-
 		c = 0;
 		TEST_ASSERT_EQUAL_INT(1, test_vsscanfWrapper(&buff[i - 1], "%c", &c));
 		TEST_ASSERT_EQUAL_CHAR(i, c);
