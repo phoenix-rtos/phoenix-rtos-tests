@@ -39,5 +39,45 @@ void runner(void)
 
 int main(int argc, char **argv)
 {
-	return (UnityMain(argc, (const char **)argv, runner) == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
+	char *mountPoint = NULL;
+
+	for (int i = 1; i < argc; i++) {
+		if (strcmp(argv[i], "--fs-under-test") == 0) {
+			mountPoint = argv[i + 1];
+		}
+	}
+
+	if (mountPoint == NULL) {
+		fprintf(stderr, "No filesystem mount point provided\n");
+		return EXIT_FAILURE;
+	}
+
+	char fsTestPath[PATH_MAX];
+	if (strcmp(mountPoint, "/") == 0) {
+		snprintf(fsTestPath, sizeof(fsTestPath), "/fs_test");
+	}
+	else {
+		snprintf(fsTestPath, sizeof(fsTestPath), "%s/fs_test", mountPoint);
+	}
+
+	if (mkdir(fsTestPath, S_IWUSR | S_IXUSR) != 0) {
+		if (errno != EEXIST) {
+			perror("mkdir");
+			return EXIT_FAILURE;
+		}
+	}
+
+	if (chdir(fsTestPath) != 0) {
+		perror("chdir");
+		return EXIT_FAILURE;
+	}
+
+	int ret = UnityMain(argc, (const char **)argv, runner);
+
+	if (rmdir(fsTestPath) != 0) {
+		perror("Failed to remove fs_test directory");
+		return EXIT_FAILURE;
+	}
+
+	return (ret == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
