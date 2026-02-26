@@ -27,7 +27,7 @@ def clear_pexpect_buffer(pexpect_obj):
 
     try:
         while True:
-            pexpect_obj.expect(r".+", timeout=0)
+            pexpect_obj.expect(r".+?", timeout=0)
     except (pexpect.TIMEOUT, pexpect.EOF):
         pass
 
