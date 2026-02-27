@@ -101,4 +101,4 @@ class TargetBase(ABC):
 
     @abstractmethod
     def build_test(self, test: TestOptions) -> Callable[[TestResult], TestResult]:
-        """Returns the complete harness to run the test secified in `test` argument"""
+        """Returns the complete harness to run the test specified in `test` argument"""
