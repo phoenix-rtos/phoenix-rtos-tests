@@ -901,7 +901,8 @@ test:
           kwargs:
             testcase_count: 30
 
-          # 1: system doesn't support users group 
+          # 1: system doesn't support users group
+          # additionally: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1245
         - name: T.fstat
           execute: run-test /tset/POSIX.os/files/fstat/T.fstat{2-4}
           kwargs:
