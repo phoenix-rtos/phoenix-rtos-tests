@@ -9,6 +9,9 @@ from trunner.harness import (
     PloInterface,
     PloHarness,
     ShellHarness,
+    Shell,
+    NetworkSetupHarness,
+    TestHarness,
     TestStartRunningHarness,
     Rebooter,
     RebooterHarness,
@@ -101,6 +104,7 @@ class MCXN94xTarget(TargetBase):
 
     def build_test(self, test: TestOptions):
         builder = HarnessBuilder()
+        shell = Shell(self.dut, self.shell_prompt)
 
         if test.should_reboot:
             builder.add(RebooterHarness(self.rebooter))
@@ -117,11 +121,16 @@ class MCXN94xTarget(TargetBase):
 
             builder.add(PloHarness(self.dut, app_loader=app_loader))
 
-        if test.shell is not None:
+        if test.should_reboot:
+            builder.add(ShellHarness(shell))
+
+        if test.iface_config is not None:
+            builder.add(NetworkSetupHarness(shell, test.iface_config))
+
+        if test.shell.cmd is not None:
             builder.add(
-                ShellHarness(
-                    self.dut,
-                    self.shell_prompt,
+                TestHarness(
+                    shell,
                     test.shell.cmd,
                     # /dev/klogctl support missing on this target.
                     # related to issue :https://github.com/phoenix-rtos/phoenix-rtos-project/issues/948

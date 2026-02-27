@@ -1,7 +1,9 @@
+import time
 import os
 import shutil
 import sys
 import junitparser
+
 from io import StringIO
 from pathlib import Path
 from collections import Counter
@@ -275,6 +277,7 @@ class TestRunner:
                 if not test.should_reboot:  # WARN: build_test may change TestOptions
                     # if not rebooting - force new prompt to appear
                     self.target.dut.send("\n")
+                    time.sleep(0.1)
 
                 test_result = None
                 assert harness is not None

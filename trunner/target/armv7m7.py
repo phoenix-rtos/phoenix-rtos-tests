@@ -9,6 +9,9 @@ from trunner.harness import (
     Rebooter,
     RebooterHarness,
     ShellHarness,
+    Shell,
+    NetworkSetupHarness,
+    TestHarness,
     TestStartRunningHarness,
 )
 from trunner.host import Host
@@ -60,6 +63,7 @@ class ARMv7M7Target(TargetBase):
 
     def build_test(self, test: TestOptions) -> Callable[[TestResult], TestResult]:
         builder = HarnessBuilder()
+        shell = Shell(self.dut, self.shell_prompt)
 
         if test.should_reboot:
             builder.add(RebooterHarness(self.rebooter, hard=False))
@@ -76,8 +80,14 @@ class ARMv7M7Target(TargetBase):
 
             builder.add(PloHarness(self.dut, app_loader=app_loader))
 
-        if test.shell is not None:
-            builder.add(ShellHarness(self.dut, self.shell_prompt, test.shell.cmd))
+        if test.should_reboot:
+            builder.add(ShellHarness(shell))
+
+        if test.iface_config is not None:
+            builder.add(NetworkSetupHarness(shell, test.iface_config))
+
+        if test.shell.cmd is not None:
+            builder.add(TestHarness(shell, test.shell.cmd))
         else:
             builder.add(TestStartRunningHarness())
 

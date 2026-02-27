@@ -3,7 +3,15 @@ from typing import Callable, TextIO
 
 from trunner.ctx import TestContext
 from trunner.dut import QemuDut
-from trunner.harness import HarnessBuilder, RebooterHarness, ShellHarness, TestStartRunningHarness
+from trunner.harness import (
+    HarnessBuilder,
+    ShellHarness,
+    Shell,
+    NetworkSetupHarness,
+    RebooterHarness,
+    TestHarness,
+    TestStartRunningHarness
+)
 from trunner.types import TestOptions, TestResult
 from .base import TargetBase
 
@@ -35,19 +43,17 @@ class QemuTarget(TargetBase):
 
     def build_test(self, test: TestOptions) -> Callable[[TestResult], TestResult]:
         builder = HarnessBuilder()
+        shell = Shell(self.dut, self.shell_prompt)
 
         if test.should_reboot:
             builder.add(RebooterHarness(self.rebooter))
+            builder.add(ShellHarness(shell, boot_timeout=60))
 
-        if test.shell is not None:
-            builder.add(
-                ShellHarness(
-                    self.dut,
-                    self.shell_prompt,
-                    test.shell.cmd,
-                    prompt_timeout=self.prompt_timeout,
-                )
-            )
+        if test.iface_config is not None:
+            builder.add(NetworkSetupHarness(shell, test.iface_config))
+
+        if test.shell.cmd is not None:
+            builder.add(TestHarness(shell, test.shell.cmd))
         else:
             builder.add(TestStartRunningHarness())
 
@@ -100,9 +106,6 @@ class ARMv7A9Zynq7000QemuTarget(QemuTarget):
 
     def __init__(self):
         super().__init__("armv7a9-zynq7000-qemu-test.sh")
-        # Start of the zynq target take around 45 seconds due to the slow filesystem initialization.
-        # Iterate over harness chain to find a ShellHarness to increase prompt_timeout value.
-        self.prompt_timeout = 60
 
     @classmethod
     def from_context(cls, _: TestContext):
@@ -115,8 +118,6 @@ class AARCH64A53ZynqmpQemuTarget(QemuTarget):
 
     def __init__(self):
         super().__init__("aarch64a53-zynqmp-qemu.sh")
-        # System initialization may take 30+ seconds on this target due to emulation limitations
-        self.prompt_timeout = 60
 
     @classmethod
     def from_context(cls, _: TestContext):
