@@ -14,7 +14,7 @@ on:
 
 jobs:
   call-ci:
-    uses: phoenix-rtos/phoenix-rtos-project/.github/workflows/submodule.yml@master
+    uses: phoenix-rtos/phoenix-rtos-project/.github/workflows/ci-submodule.yml@master
     with:
       build_params: all tests
       nightly: true
