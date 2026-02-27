@@ -19,6 +19,7 @@
  */
 
 #include <stdlib.h>
+#include <stdbool.h>
 #include <unistd.h>
 #include <sys/wait.h>
 #include <signal.h>
@@ -47,6 +48,8 @@
 #define TEST_EXIT_PATH      "exit_test_file"
 #define TEST_EXIT_STR       "test123"
 #define TEST_EXIT_DUMMY_VAL 12345678
+
+bool test_hasInitSystem = true;
 
 /* Disable warnings caused by no checking write() return value, since ASSERT cannot be used in child process */
 #pragma GCC diagnostic push
@@ -107,7 +110,22 @@ static void test_sigchldHandler(int signum)
 	sa.sa_handler = SIG_DFL;  // Set the handler to default action
 	sigemptyset(&sa.sa_mask);
 	sa.sa_flags = 0;
-	TEST_ASSERT_EQUAL_INT(0, sigaction(SIGCHLD, &sa, NULL));
+	sigaction(SIGCHLD, &sa, NULL);
+
+	/* Change value of variable to confirm that handler has been invoked */
+	test_common.test_handlerFlag = TEST_EXIT_DUMMY_VAL;
+}
+
+
+/* SIGPIPE signal handler */
+static void test_sigpipeHandler(int signum)
+{
+	struct sigaction sa;
+
+	sa.sa_handler = SIG_DFL;  // Set the handler to default action
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = 0;
+	sigaction(SIGPIPE, &sa, NULL);
 
 	/* Change value of variable to confirm that handler has been invoked */
 	test_common.test_handlerFlag = TEST_EXIT_DUMMY_VAL;
@@ -578,6 +596,15 @@ TEST(unistd_exit, close_streams)
 	/* parent */
 	else {
 		int status, ret;
+		struct sigaction sa;
+
+		sa.sa_handler = test_sigpipeHandler;
+		TEST_ASSERT_EQUAL_INT(0, sigemptyset(&sa.sa_mask));
+		sa.sa_flags = 0;
+		TEST_ASSERT_EQUAL_INT(0, sigaction(SIGPIPE, &sa, NULL));
+
+		/* Check handlerFlag has initial value */
+		TEST_ASSERT_EQUAL_INT(0, test_common.test_handlerFlag);
 
 		ret = wait(&status);
 		TEST_ASSERT_EQUAL_INT(pid, ret);
@@ -588,6 +615,10 @@ TEST(unistd_exit, close_streams)
 		ret = write(pipefd[1], TEST_EXIT_STR, sizeof(TEST_EXIT_STR));
 		TEST_ASSERT_EQUAL_INT(-1, ret);
 		TEST_ASSERT_EQUAL_INT(EPIPE, errno);
+#ifndef phoenix
+		// https://github.com/phoenix-rtos/phoenix-rtos-project/issues/733
+		TEST_ASSERT_EQUAL_INT(TEST_EXIT_DUMMY_VAL, test_common.test_handlerFlag);
+#endif
 		close(pipefd[1]); /* close write pipe end */
 	}
 }
@@ -595,9 +626,10 @@ TEST(unistd_exit, close_streams)
 
 TEST(unistd_exit, orphaned_child)
 {
-#ifndef phoenix
-	TEST_IGNORE_MESSAGE("Lack of init system in docker container");
-#endif
+	if (!test_hasInitSystem) {
+		TEST_IGNORE_MESSAGE("Lack of init system in docker container");
+	}
+
 	/* Test if parent _exit affect child process */
 	pid_t pid;
 	int pipefd[2];
@@ -675,9 +707,10 @@ TEST(unistd_exit, orphaned_child)
 
 TEST(unistd_exit, new_parent_id)
 {
-#ifndef phoenix
-	TEST_IGNORE_MESSAGE("Lack of init system in docker container");
-#endif
+	if (!test_hasInitSystem) {
+		TEST_IGNORE_MESSAGE("Lack of init system in docker container");
+	}
+
 	/* Test that child acquire new parent ID */
 	pid_t pid;
 	int pipefd[2];
@@ -1214,6 +1247,23 @@ void runner(void)
 
 int main(int argc, char *argv[])
 {
+	char hostname[128];
+	gethostname(hostname, sizeof(hostname));
+
+	if (strstr(hostname, "docker") != NULL) {
+		if (getenv("USE_TINI") == NULL) {
+			if (access("/usr/bin/tini", X_OK) == 0) {
+				setenv("USE_TINI", "yes", 1);
+				execl("/usr/bin/tini", "tini", "-s", argv[0], NULL);
+				perror("execl tini");
+				exit(EXIT_FAILURE);
+			}
+			else {
+				test_hasInitSystem = false;
+			}
+		}
+	}
+
 	return (UnityMain(argc, (const char **)argv, runner) == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
