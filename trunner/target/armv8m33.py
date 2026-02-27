@@ -71,7 +71,6 @@ class MCXN947PloAppLoader(TerminalHarness, PloInterface):
 
 
 class MCXN94xTarget(TargetBase):
-    name = "armv8m33-mcxn94x-frdm"
     rootfs = False
     image_file = "phoenix.disk"
 
@@ -134,3 +133,11 @@ class MCXN94xTarget(TargetBase):
         builder.add(test.harness)
 
         return builder.get_harness()
+
+
+class MCXN94xCPU0Target(MCXN94xTarget):
+    name = "armv8m33-mcxn94x-frdm"
+
+
+class MCXN94xCPU1Target(MCXN94xTarget):
+    name = "armv8m33-mcxn94x-frdm_cpu1"

@@ -22,7 +22,8 @@ test:
                 armv7m4-stm32l4x6-nucleo,
                 sparcv8leon-generic-qemu,
                 armv7r5f-zynqmp-qemu,
-                armv8m33-mcxn94x-frdm
+                armv8m33-mcxn94x-frdm,
+                armv8m33-mcxn94x-frdm_cpu1
                 ]
 
         - name: echo
@@ -52,7 +53,8 @@ test:
                 armv7m4-stm32l4x6-nucleo,
                 sparcv8leon-generic-qemu,
                 armv7r5f-zynqmp-qemu,
-                armv8m33-mcxn94x-frdm
+                armv8m33-mcxn94x-frdm,
+                armv8m33-mcxn94x-frdm_cpu1
                 ]
 
         - name: kill
@@ -73,7 +75,8 @@ test:
                 armv7m4-stm32l4x6-nucleo,
                 sparcv8leon-generic-qemu,
                 armv7r5f-zynqmp-qemu,
-                armv8m33-mcxn94x-frdm
+                armv8m33-mcxn94x-frdm,
+                armv8m33-mcxn94x-frdm_cpu1
                 ]
 
         - name: ls
@@ -88,7 +91,8 @@ test:
                 armv7m4-stm32l4x6-nucleo,
                 sparcv8leon-generic-qemu,
                 armv7r5f-zynqmp-qemu,
-                armv8m33-mcxn94x-frdm
+                armv8m33-mcxn94x-frdm,
+                armv8m33-mcxn94x-frdm_cpu1
                 ]
 
         - name: runfile
@@ -103,7 +107,8 @@ test:
                 armv7m4-stm32l4x6-nucleo,
                 sparcv8leon-generic-qemu,
                 armv7r5f-zynqmp-qemu,
-                armv8m33-mcxn94x-frdm
+                armv8m33-mcxn94x-frdm,
+                armv8m33-mcxn94x-frdm_cpu1
                 ]
 
         - name: history
