@@ -21,23 +21,13 @@
 /* no need for forward declarations, RUN_TEST_GROUP does it by itself */
 void runner(void)
 {
-	RUN_TEST_GROUP(getpwd);
 	RUN_TEST_GROUP(resolve_path);
-	RUN_TEST_GROUP(unistd_getopt);
-	RUN_TEST_GROUP(unistd_uids);
-	RUN_TEST_GROUP(unistd_fsdir);
-	RUN_TEST_GROUP(unistd_file);
-	RUN_TEST_GROUP(unistd_file_pread);
-	RUN_TEST_GROUP(wchar_wcscmp);
+	RUN_TEST_GROUP(getpwd);
+	RUN_TEST_GROUP(getopt);
+	RUN_TEST_GROUP(uids);
+	RUN_TEST_GROUP(procenv);
 	RUN_TEST_GROUP(ctype);
-	RUN_TEST_GROUP(stat_mode);
-	RUN_TEST_GROUP(stat_nlink_size_blk_tim);
-	RUN_TEST_GROUP(stat_errno);
-#ifdef __phoenix__
-	/* tests libphoenix internal functions */
-	RUN_TEST_GROUP(unistd_file_safe);
-	RUN_TEST_GROUP(unistd_file_safe_pread);
-#endif
+	RUN_TEST_GROUP(wchar_wcscmp);
 }
 
 
@@ -94,7 +84,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	/* the following files may not be present on dummyfd targets,
+	/* the following files may not be present on dummyfs targets,
 	create them to make libc tests common */
 	if (libc_createDirIfMissing("/tmp") < 0) {
 		unsetenv(var);
