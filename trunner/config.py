@@ -162,7 +162,10 @@ class ConfigParser:
 
             binary = binary_path.name
             path = binary_path.parent if binary_path.is_absolute() else self.ctx.target.exec_dir()
-            prefix = str(path) + "/" if self.ctx.target.rootfs else "sysexec "
+            if self.ctx.target.name == "host-generic-pc":
+                prefix = str(path) + "/"
+            else:
+                prefix = "" if self.ctx.target.rootfs else "sysexec "
             parsed_cmd = shlex.split(prefix + binary) + cmd[1:]
         else:
             binary = None
