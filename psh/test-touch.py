@@ -62,10 +62,9 @@ def assert_multi_arg(p, path, random_wrapper: TestRandom):
 
 
 def assert_file_slash(p):
-    """ in psh touch we do not expect error when touching file/ """
     file_path = f'{ROOT_TEST_DIR}/slash_file/'
     assert_file_created(p, file_path)
-    psh.assert_cmd(p, f'touch {file_path}', result='success')
+    psh.assert_cmd(p, f'touch {file_path}', result='fail', expected=f'psh: failed to touch {file_path}: ENOTDIR')
 
 
 def assert_created_dir(p):
