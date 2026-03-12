@@ -6,9 +6,8 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Set
 
 import yaml
-
 from trunner.ctx import TestContext
-from trunner.harness import PyHarness, unity_harness
+from trunner.harness import PyHarness, unity_harness, pytest_harness
 from trunner.types import AppOptions, BootloaderOptions, TestOptions, ShellOptions, TestType
 
 
@@ -59,6 +58,8 @@ class ConfigParser:
 
         if t_type in (TestType.EMPTY, TestType.HARNESS):
             self._parse_pyharness(config)
+        elif t_type is TestType.PYTEST:
+            self._parse_pytest(config)
         elif t_type is TestType.UNITY:
             self._parse_unity()
         else:
@@ -69,13 +70,7 @@ class ConfigParser:
         if path is None:
             raise ParserError("test is of type 'harness' but there is no \"harness\" keyword")
 
-        path = Path(path)
-
-        if not path.is_absolute():
-            # If path is not absolute then it must be relative to the directory of yaml
-            path = self.yaml_path.parent / path
-            if not path.is_absolute():
-                raise ParserError("yml path is not absolute!")
+        path = self._get_absolute_path(path)
 
         spec = importlib.util.spec_from_file_location("harness", path.absolute())
         if not spec:
@@ -94,6 +89,19 @@ class ConfigParser:
             raise ParserError(f"harness function has not been found in {path}")
 
         self.test.harness = PyHarness(self.ctx.target.dut, self.ctx, harness_fn, self.test.kwargs)
+
+    def _parse_pytest(self, config):
+        script = config.get("script", None)
+        if not script:
+            raise ParserError("pytest `script` name must be provided!")
+        script_path = self._get_absolute_path(script)
+        if script_path.suffix != ".py":
+            raise ParserError("provided `script` is not a python script!")
+        # Creating a new kwarg is better than expanding TestContext
+        # with a field required only for this specific case
+        # TODO Think of a better way of parsing special arguments
+        self.test.kwargs["script"] = script_path.absolute()
+        self.test.harness = PyHarness(self.ctx.target.dut, self.ctx, pytest_harness, self.test.kwargs)
 
     def _parse_unity(self):
         self.test.harness = PyHarness(self.ctx.target.dut, self.ctx, unity_harness, self.test.kwargs)
@@ -302,6 +310,17 @@ class ConfigParser:
 
         self.main.ignore = config.get("ignore", False)
         self.main.nightly = config.get("nightly", False)
+
+    def _get_absolute_path(self, path: str) -> Path:
+        p = Path(path)
+
+        if not p.is_absolute():
+            # If path is not absolute then it must be relative to the directory of yaml
+            absolute_path = self.yaml_path.parent / p
+            if not absolute_path.is_absolute():
+                raise ParserError("yml path is not absolute!")
+
+        return absolute_path
 
     def parse(self, path: Path) -> List[TestOptions]:
         self.yaml_path = path
