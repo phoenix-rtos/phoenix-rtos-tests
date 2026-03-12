@@ -5,8 +5,8 @@
  *
  * Testing POSIX file operations.
  *
- * Copyright 2023-2024 Phoenix Systems
- * Author: Arkadiusz Kozlowski
+ * Copyright 2023-2026 Phoenix Systems
+ * Authors: Arkadiusz Kozlowski, Lukasz Kruszynski
  *
  * This file is part of Phoenix-RTOS.
  *
@@ -164,11 +164,55 @@ TEST(stdio_feof, preserve_errno_huge_size)
 }
 
 
+TEST(stdio_feof, cleared_by_functions)
+{
+	char *data = testdata_createCharStr(ALL_ASCII);
+	const char *filename = "test_stdio_feof_clear";
+	FILE *f = fopen(filename, "w+");
+
+	TEST_ASSERT_NOT_NULL(data);
+	TEST_ASSERT_NOT_NULL(f);
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fputs(data, f));
+	fseek(f, 0, SEEK_END);
+	fgetc(f);
+	TEST_ASSERT_NOT_EQUAL_INT(0, feof(f));
+	rewind(f);
+	TEST_ASSERT_EQUAL_INT(0, feof(f));
+
+	fseek(f, 0, SEEK_END);
+	fgetc(f);
+	TEST_ASSERT_NOT_EQUAL_INT(0, feof(f));
+	fseek(f, 0, SEEK_SET);
+	TEST_ASSERT_EQUAL_INT(0, feof(f));
+
+	fclose(f);
+	remove(filename);
+	free(data);
+}
+
+
+TEST(stdio_feof, false_if_read_error)
+{
+	const char *filename = "test_stdio_ignore_errors";
+	FILE *f = fopen(filename, "w");
+
+	TEST_ASSERT_NOT_NULL(f);
+	TEST_ASSERT_EQUAL_INT(EOF, fgetc(f));
+	TEST_ASSERT_NOT_EQUAL_INT(0, ferror(f));
+	TEST_ASSERT_EQUAL_INT(0, feof(f));
+
+	fclose(f);
+	remove(filename);
+}
+
+
 TEST_GROUP_RUNNER(stdio_feof)
 {
 	RUN_TEST_CASE(stdio_feof, not_empty_all_modes);
 	RUN_TEST_CASE(stdio_feof, empty_all_modes);
 	RUN_TEST_CASE(stdio_feof, preserve_errno_huge_size)
+	RUN_TEST_CASE(stdio_feof, cleared_by_functions);
+	RUN_TEST_CASE(stdio_feof, false_if_read_error);
 }
 
 
@@ -214,16 +258,18 @@ TEST(stdio_ftell, correct_position_not_empty)
 		TEST_ASSERT_EQUAL_INT_MESSAGE(0, fseek(f, 0, SEEK_SET), tellMode(modes[i]));
 
 		{
-			int i = 1;
-			int errnoBefore;
-			char c;
-			while ((c = fgetc(f)) != -1) {
-				errnoBefore = ++errno;
-				TEST_ASSERT_EQUAL_INT32(i, (int32_t)ftell(f));
+			int char_count = 1;
+			int c;
+			int expected_errno = 100;
+			while ((c = fgetc(f)) != EOF) {
+				errno = expected_errno;
+
+				TEST_ASSERT_EQUAL_INT32(char_count, (int32_t)ftell(f));
 				TEST_ASSERT_EQUAL_INT32((int32_t)ftello(f), (int32_t)ftell(f));
-				TEST_ASSERT_EQUAL_INT(errnoBefore, errno);
-				i++;
+				TEST_ASSERT_EQUAL_INT(expected_errno, errno);
+				char_count++;
 			}
+			errno = 0;
 		}
 
 		if (STR_EQUAL("w+", modes[i]) || STR_EQUAL("wb+", modes[i])) {
@@ -233,7 +279,8 @@ TEST(stdio_ftell, correct_position_not_empty)
 		TEST_ASSERT_EQUAL_INT32_MESSAGE((int32_t)ftell(f), (int32_t)ftello(f), tellMode(modes[i]));
 		TEST_ASSERT_EQUAL_INT_MESSAGE(0, fseek(f, 2, SEEK_END), tellMode(modes[i]));
 		CHECK_MATCH(tmp, modes[i], "w+", "wb+");
-		TEST_ASSERT_EQUAL_MESSAGE(tmp ? 2 : ALL_ASCII + 1, ftell(f), tellMode(modes[i]));
+		size_t data_len = strlen(data);
+		TEST_ASSERT_EQUAL_MESSAGE(tmp ? 2 : data_len + 2, ftell(f), tellMode(modes[i]));
 		TEST_ASSERT_EQUAL_INT32_MESSAGE((int32_t)ftell(f), (int32_t)ftello(f), tellMode(modes[i]));
 
 		TEST_ASSERT_EQUAL_INT_MESSAGE(0, fclose(f), tellMode(modes[i]));
@@ -298,7 +345,7 @@ TEST(stdio_ftell, wrong_stream_type_socket)
 	TEST_ASSERT_EQUAL_INT32(-1, (int32_t)ftello(socket_stream));
 	TEST_ASSERT_EQUAL_INT(ESPIPE, errno);
 
-	TEST_ASSERT_EQUAL_INT(0, close(socketfd));
+	TEST_ASSERT_EQUAL_INT(0, fclose(socket_stream));
 }
 
 TEST(stdio_ftell, wrong_stream_type_pipe)
@@ -359,6 +406,69 @@ TEST(stdio_ftell, wrong_stream_type_fifo)
 }
 
 
+TEST(stdio_ftell, position_after_character_pushed_back)
+{
+
+	const char *filename = "test_stdio_ftell_ungetc";
+	char *data = testdata_createCharStr(ALL_ASCII);
+	char first;
+	FILE *f = fopen(filename, "w+");
+	TEST_ASSERT_NOT_NULL(data);
+	TEST_ASSERT_NOT_NULL(f);
+	first = data[0];
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fputs(data, f));
+	rewind(f);
+	TEST_ASSERT_EQUAL_INT32(0, (int32_t)ftell(f));
+	TEST_ASSERT_EQUAL_INT(first, fgetc(f));
+	TEST_ASSERT_EQUAL_INT32(1, (int32_t)ftell(f));
+	TEST_ASSERT_EQUAL_INT(first, ungetc(first, f));
+	TEST_ASSERT_EQUAL_INT32(0, (int32_t)ftell(f));
+	fclose(f);
+	free(data);
+	remove(filename);
+}
+
+
+TEST(stdio_ftell, position_after_append_after_rewind)
+{
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#1403 issue");
+#endif
+	const char *filename = "test_stdio_ftell_append";
+	char *data = testdata_createCharStr(ALL_ASCII);
+	TEST_ASSERT_NOT_NULL(data);
+	size_t len = strlen(data);
+
+	FILE *f = fopen(filename, "w");
+	TEST_ASSERT_NOT_NULL(f);
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fputs(data, f));
+	fclose(f);
+
+	f = fopen(filename, "a+");
+	TEST_ASSERT_NOT_NULL(f);
+	rewind(f);
+	TEST_ASSERT_EQUAL_INT32(0, (int32_t)ftell(f));
+	TEST_ASSERT_NOT_EQUAL_INT(EOF, fputc('A', f));
+	TEST_ASSERT_EQUAL_INT32(len + 1, (int32_t)ftell(f));
+	fclose(f);
+	free(data);
+	remove(filename);
+}
+
+
+TEST(stdio_ftell, ftello_support_for_large_files)
+{
+	const char *filename = "test_stdio_ftello_giga_file";
+	FILE *f = fopen(filename, "w+");
+	TEST_ASSERT_NOT_NULL(f);
+	off_t large_offset = (off_t)3 * 1024 * 1024 * 1024LL;
+	TEST_ASSERT_EQUAL_INT(0, fseeko(f, large_offset, SEEK_SET));
+	TEST_ASSERT_EQUAL_INT64((int64_t)large_offset, (int64_t)ftello(f));
+	fclose(f);
+	remove(filename);
+}
+
+
 TEST_GROUP_RUNNER(stdio_ftell)
 {
 	RUN_TEST_CASE(stdio_ftell, wrong_stream_type_fifo);
@@ -367,6 +477,9 @@ TEST_GROUP_RUNNER(stdio_ftell)
 	RUN_TEST_CASE(stdio_ftell, bad_file_descriptor);
 	RUN_TEST_CASE(stdio_ftell, wrong_stream_type_socket);
 	RUN_TEST_CASE(stdio_ftell, wrong_stream_type_pipe);
+	RUN_TEST_CASE(stdio_ftell, position_after_character_pushed_back);
+	RUN_TEST_CASE(stdio_ftell, position_after_append_after_rewind);
+	RUN_TEST_CASE(stdio_ftell, ftello_support_for_large_files);
 }
 
 
@@ -400,12 +513,11 @@ TEST(stdio_getdelim, existing_delim_empty_or_simple)
 	rewind(f);
 
 	/* Write to each cell of temp_result, compare it with expected_first */
-	{
-		int i = 0;
-		while (getdelim(&lineptr, &len, (int)'e', f) != -1) {
-			TEST_ASSERT_EQUAL_STRING(expected_first[i++], lineptr);
-		}
+	int i = 0;
+	while (getdelim(&lineptr, &len, (int)'e', f) != -1) {
+		TEST_ASSERT_EQUAL_STRING(expected_first[i++], lineptr);
 	}
+	TEST_ASSERT_EQUAL_INT(sizeof(expected_first) / sizeof(expected_first[0]), i);
 
 	TEST_ASSERT_EQUAL_INT(0, fclose(f));
 	free(lineptr);
@@ -442,29 +554,28 @@ TEST(stdio_getdelim, existing_delim_long_text)
 }
 
 
-TEST(stdio_getdelim, too_small_buffer)
+TEST(stdio_getdelim, invalid_arg_when_given_nullptr)
 {
 	char **buffer = NULL;
-	const char *filename = "decently_long_test";
+	const char *filename = "test_getdelim_einval_lineptr";
 	size_t n = 2;
 	FILE *f = fopen(filename, "w+");
 
 	TEST_ASSERT_NOT_NULL(f);
 	TEST_ASSERT_NOT_EQUAL_INT(EOF, fputs("RelativelyLongTextThatWillBeBiggerThanNInGetdelim", f));
 	rewind(f);
-
+	errno = 0;
 	TEST_ASSERT_EQUAL_INT64(-1, getdelim(buffer, &n, '\n', f));
+	TEST_ASSERT_EQUAL_INT(EINVAL, errno);
 	TEST_ASSERT_NULL(buffer);
 	TEST_ASSERT_EQUAL_INT(0, fclose(f));
 	TEST_ASSERT_EQUAL_INT(0, remove(filename));
 }
 
-
 TEST(stdio_getdelim, realloc_lineptr_if_n_too_small)
 {
 	char *buffer = NULL;
-	char *bufferBefore;
-	const char *filename = "other_decently_long_test";
+	const char *filename = "test_reallocation_when_n_too_small";
 	size_t n = 10;
 	FILE *f = fopen(filename, "w+");
 	size_t n_before;
@@ -481,12 +592,9 @@ TEST(stdio_getdelim, realloc_lineptr_if_n_too_small)
 	TEST_ASSERT_NOT_EQUAL_INT(EOF, fputs(testdata_hugeStr, f));
 	rewind(f);
 
-	bufferBefore = buffer;
-
 	TEST_ASSERT_NOT_EQUAL_INT64(-1, getdelim(&buffer, &n, '\n', f));
 
 	TEST_ASSERT_GREATER_OR_EQUAL_INT64(n_before, n);
-	TEST_ASSERT_NOT_EQUAL(bufferBefore, buffer);
 
 	TEST_ASSERT_EQUAL_INT(0, fclose(f));
 	TEST_ASSERT_EQUAL_INT(0, remove(filename));
@@ -597,7 +705,7 @@ TEST(stdio_getdelim, delim_boundary_values)
 	const char *filename = "delim_test.txt";
 	char *buffer = (char *)malloc(1);
 	*buffer = 'X';
-	int delim = 65;
+	int delim = 'A';
 	size_t n = 1;
 
 	FILE *stream = fopen(filename, "w+");
@@ -607,10 +715,11 @@ TEST(stdio_getdelim, delim_boundary_values)
 
 	char *lineptr;
 	lineptr = buffer;
+	ssize_t bytes_read = getdelim(&lineptr, &n, delim, stream);
 
-	TEST_ASSERT_GREATER_THAN(0, getdelim(&lineptr, &n, delim, stream));
+	TEST_ASSERT_GREATER_THAN(0, bytes_read);
 
-	TEST_ASSERT_EQUAL_INT(delim, 65);
+	TEST_ASSERT_EQUAL_INT('A', lineptr[bytes_read - 1]);
 	fclose(stream);
 	free(lineptr);
 	remove(filename);
@@ -623,7 +732,7 @@ TEST_GROUP_RUNNER(stdio_getdelim)
 	RUN_TEST_CASE(stdio_getdelim, invalid_argument_null_length);
 	RUN_TEST_CASE(stdio_getdelim, every_delimiter);
 	RUN_TEST_CASE(stdio_getdelim, getdelim_wronly);
-	RUN_TEST_CASE(stdio_getdelim, too_small_buffer);
+	RUN_TEST_CASE(stdio_getdelim, invalid_arg_when_given_nullptr);
 	RUN_TEST_CASE(stdio_getdelim, realloc_lineptr_if_n_too_small);
-	RUN_TEST_CASE(stdio_getdelim, delim_boundary_values)
+	RUN_TEST_CASE(stdio_getdelim, delim_boundary_values);
 }
