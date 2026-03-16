@@ -9,3 +9,6 @@ test:
 
     - name: perf
       execute: test-sys-perf
+
+    - name: msg
+      execute: test-sys-msg
