@@ -77,6 +77,7 @@ class TestStage(Enum):
     INIT = auto()
     REBOOT = auto()
     FLASH = auto()
+    SETUP = auto()
     RUN = auto()
     DONE = auto()
 
@@ -456,6 +457,7 @@ class TestOptions:
     cmd: Optional[str] = None
     harness: Callable[[TestResult], TestResult] = void_harness_fn
     target: Optional[str] = None
+    iface_config: Optional[str] = None
     bootloader: Optional[BootloaderOptions] = None
     shell: Optional[ShellOptions] = None
     should_reboot: bool = False

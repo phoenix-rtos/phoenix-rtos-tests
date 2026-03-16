@@ -1,0 +1,15 @@
+test:
+  harness: network_unity.py
+
+  tests:
+    - name: tcp
+      execute: test_tcp en1
+      network_setup: True
+      targets:
+        value: [armv7a7-imx6ull-evk, armv7m7-imxrt106x-evk]
+
+    - name: tcp
+      execute: test_tcp en2
+      network_setup: True
+      targets:
+        value: [armv7m7-imxrt117x-evk]
