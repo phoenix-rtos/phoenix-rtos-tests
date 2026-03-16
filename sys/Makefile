@@ -19,3 +19,4 @@ endef
 $(eval $(call add_test_sys,cond))
 $(eval $(call add_test_sys,mutex))
 $(eval $(call add_test_sys,perf))
+$(eval $(call add_test_sys,msg))
