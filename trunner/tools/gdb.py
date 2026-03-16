@@ -17,12 +17,13 @@ class GdbError(ProcessError):
 
 
 class GdbInteractive:
-    def __init__(self, port: int = 3333, cwd: Union[Path, str] = "."):
+    def __init__(self, port: int = 3333, cwd: Union[Path, str] = ".", init_commands: Optional[List[str]] = None):
         self.port = port
         self.cwd = cwd
         self.proc = None
         self.output = ""
         self.logfile = io.StringIO()
+        self.init_commands = init_commands or []
 
     def expect_prompt(self):
         try:
@@ -83,6 +84,9 @@ class GdbInteractive:
                 logfile=self.logfile,
             )
             self.proc.expect_exact("(gdb) ")
+            for cmd in self.init_commands:
+                self.proc.sendline(cmd)
+                self.expect_prompt()
             yield
         finally:
             self._close()
