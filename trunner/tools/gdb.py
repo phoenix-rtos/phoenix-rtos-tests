@@ -17,6 +17,13 @@ class GdbError(ProcessError):
 
 
 class GdbInteractive:
+    """Interactive GDB session for loading binaries and debugging via gdb-multiarch.
+
+    Args:
+        port: GDB remote target port.
+        cwd: Working directory for the GDB process.
+    """
+
     def __init__(self, port: int = 3333, cwd: Union[Path, str] = "."):
         self.port = port
         self.cwd = cwd
