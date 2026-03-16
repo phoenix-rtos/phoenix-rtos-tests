@@ -36,6 +36,17 @@ test:
       targets:
         include: [host-generic-pc]
 
+    - name: fs-root
+      execute: test-libc-fs --fs-under-test /
+      targets:
+        include: [host-generic-pc]
+
+    - name: fs-tmp
+      execute: test-libc-fs --fs-under-test /tmp
+      targets:
+        exclude: [armv7m7-imxrt106x-evk, armv7m7-imxrt117x-evk, armv7m4-stm32l4x6-nucleo, armv8m33-mcxn94x-frdm]
+        include: [host-generic-pc]
+
     - name: stdio
       execute: test-libc-stdio
       targets:

@@ -15,21 +15,20 @@
 
 #include <string.h>
 #include <unistd.h>
-#include <sys/wait.h>
 #include <stdlib.h>
-
+#include <sys/wait.h>
 #include <unity_fixture.h>
 
 
-TEST_GROUP(unistd_uids);
+TEST_GROUP(uids);
 
 
-TEST_SETUP(unistd_uids)
+TEST_SETUP(uids)
 {
 }
 
 
-TEST_TEAR_DOWN(unistd_uids)
+TEST_TEAR_DOWN(uids)
 {
 }
 
@@ -40,7 +39,7 @@ TEST_TEAR_DOWN(unistd_uids)
 
 	for self standing process
 */
-TEST(unistd_uids, getuids_parent)
+TEST(uids, getuids_parent)
 {
 	pid_t pid = -1;
 
@@ -64,7 +63,7 @@ TEST(unistd_uids, getuids_parent)
 	TEST_ASSERT_EQUAL_INT(0, geteuid());
 }
 
-TEST(unistd_uids, setuids_parent)
+TEST(uids, setuids_parent)
 {
 	/*
 		setuid(), seteuid(), setgid(), setegid() are stub implemented so testing them
@@ -74,7 +73,7 @@ TEST(unistd_uids, setuids_parent)
 	TEST_IGNORE();
 }
 
-TEST(unistd_uids, setpuids_setsid)
+TEST(uids, setpuids_setsid)
 {
 	volatile pid_t child[6], parent[3], pid;
 	int err = -1;
@@ -124,7 +123,7 @@ TEST(unistd_uids, setpuids_setsid)
 	TEST_ASSERT_EQUAL_INT(child[4], child[5]);      /* pgrp == sid */
 }
 
-TEST(unistd_uids, setpuids_setpgid)
+TEST(uids, setpuids_setpgid)
 {
 	/* 
 		setpgid() changes child session for no reason.
@@ -182,10 +181,10 @@ TEST(unistd_uids, setpuids_setpgid)
 	TEST_ASSERT_NOT_EQUAL_INT(child[3], child[5]);  /* pid != sid */
 }
 
-TEST_GROUP_RUNNER(unistd_uids)
+TEST_GROUP_RUNNER(uids)
 {
-	RUN_TEST_CASE(unistd_uids, getuids_parent);
-	RUN_TEST_CASE(unistd_uids, setuids_parent);
-	RUN_TEST_CASE(unistd_uids, setpuids_setsid);
-	RUN_TEST_CASE(unistd_uids, setpuids_setpgid)
+	RUN_TEST_CASE(uids, getuids_parent);
+	RUN_TEST_CASE(uids, setuids_parent);
+	RUN_TEST_CASE(uids, setpuids_setsid);
+	RUN_TEST_CASE(uids, setpuids_setpgid)
 }

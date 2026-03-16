@@ -3,7 +3,7 @@
  *
  * libc-tests
  *
- * Testing unistd.h file related functions
+ * Testing file related functions
  *
  * Copyright 2022 Phoenix Systems
  * Author: Mateusz Niewiadomski, Damian Loewnau, Jakub Rak
@@ -19,9 +19,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <sys/stat.h>
 #include <pthread.h>
-
+#include <sys/stat.h>
 #include <unity_fixture.h>
 
 #define LINE1 "line1\n"
@@ -29,13 +28,13 @@
 #define LINE3 "line3\n"     /* same length as LINE1 */
 #define LINE4 "\n"
 
-#define FNAME "unistd_file_testfile"
+#define FNAME "file_testfile"
 
 #define LOREM               "Lorem ipsum dolor sit amet, consectetur adipiscing elit."
 #define LOREM_LEN           56
-#define LOREM_PATH          "/tmp/lorem"
-#define NEWLOREM_PATH       "/tmp/newlorem"
-#define IPSUM_PATH          "/tmp/ipsum"
+#define LOREM_PATH          "lorem"
+#define NEWLOREM_PATH       "newlorem"
+#define IPSUM_PATH          "ipsum"
 #define OVERLAPPING_REPEATS 500
 
 
@@ -181,10 +180,10 @@ static int assert_free_fd(int fildes)
 #ifdef __phoenix__ /* test libphoenix internal functions */
 
 
-TEST_GROUP(unistd_file_safe);
+TEST_GROUP(file_safe);
 
 
-TEST_SETUP(unistd_file_safe)
+TEST_SETUP(file_safe)
 {
 	/* open a file */
 	fd = __safe_open(FNAME, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
@@ -193,7 +192,7 @@ TEST_SETUP(unistd_file_safe)
 }
 
 
-TEST_TEAR_DOWN(unistd_file_safe)
+TEST_TEAR_DOWN(file_safe)
 {
 	memset(buf, '\0', sizeof(buf));
 	if (fd >= 0) {
@@ -203,7 +202,7 @@ TEST_TEAR_DOWN(unistd_file_safe)
 }
 
 
-TEST(unistd_file_safe, file_safe_readwrite)
+TEST(file_safe, file_safe_readwrite)
 {
 	ssize_t ret;
 
@@ -225,7 +224,7 @@ TEST(unistd_file_safe, file_safe_readwrite)
 }
 
 
-TEST(unistd_file_safe, file_safe_readwrite_zero)
+TEST(file_safe, file_safe_readwrite_zero)
 {
 	ssize_t ret;
 
@@ -237,7 +236,7 @@ TEST(unistd_file_safe, file_safe_readwrite_zero)
 }
 
 
-TEST(unistd_file_safe, file_safe_readwrite_badfd)
+TEST(file_safe, file_safe_readwrite_badfd)
 {
 	ssize_t ret;
 
@@ -256,21 +255,21 @@ TEST(unistd_file_safe, file_safe_readwrite_badfd)
 }
 
 
-TEST_GROUP_RUNNER(unistd_file_safe)
+TEST_GROUP_RUNNER(file_safe)
 {
-	RUN_TEST_CASE(unistd_file_safe, file_safe_readwrite);
-	RUN_TEST_CASE(unistd_file_safe, file_safe_readwrite_zero);
-	RUN_TEST_CASE(unistd_file_safe, file_safe_readwrite_badfd);
+	RUN_TEST_CASE(file_safe, file_safe_readwrite);
+	RUN_TEST_CASE(file_safe, file_safe_readwrite_zero);
+	RUN_TEST_CASE(file_safe, file_safe_readwrite_badfd);
 }
 
 
 #endif /* __phoenix__ */
 
 
-TEST_GROUP(unistd_file);
+TEST_GROUP(file);
 
 
-TEST_SETUP(unistd_file)
+TEST_SETUP(file)
 {
 	/* open a file */
 	fd = open(FNAME, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
@@ -279,7 +278,7 @@ TEST_SETUP(unistd_file)
 }
 
 
-TEST_TEAR_DOWN(unistd_file)
+TEST_TEAR_DOWN(file)
 {
 	memset(buf, '\0', sizeof(buf));
 	if (fd >= 0) {
@@ -289,7 +288,7 @@ TEST_TEAR_DOWN(unistd_file)
 }
 
 
-TEST(unistd_file, file_close)
+TEST(file, file_close)
 {
 	/* close an opened descriptor */
 	TEST_ASSERT_EQUAL_INT(0, close(fd));
@@ -304,7 +303,7 @@ TEST(unistd_file, file_close)
 
 
 /* Simple usage of read() and write() */
-TEST(unistd_file, file_readwrite_nbytes)
+TEST(file, file_readwrite_nbytes)
 {
 	assert_write(fd, LINE1);
 
@@ -323,7 +322,7 @@ TEST(unistd_file, file_readwrite_nbytes)
 }
 
 
-TEST(unistd_file, file_write_zero)
+TEST(file, file_write_zero)
 {
 	/* test writing no bytes */
 	TEST_ASSERT_EQUAL_INT(0, write(fd, NULL, 0));
@@ -331,7 +330,7 @@ TEST(unistd_file, file_write_zero)
 
 
 /* simultaneous write with two open descriptors */
-TEST(unistd_file, file_write_reopened)
+TEST(file, file_write_reopened)
 {
 	int fdr;
 	int fd2;
@@ -359,7 +358,7 @@ TEST(unistd_file, file_write_reopened)
 
 
 /* test simultaneous write() on duplicated file descriptor */
-TEST(unistd_file, file_write_dup)
+TEST(file, file_write_dup)
 {
 	int sum;
 	int fdr;
@@ -386,7 +385,7 @@ TEST(unistd_file, file_write_dup)
 
 
 /* Test write() to closed descriptor */
-TEST(unistd_file, file_readwrite_badfd)
+TEST(file, file_readwrite_badfd)
 {
 	TEST_ASSERT_EQUAL_INT(0, close(fd));
 
@@ -401,7 +400,7 @@ TEST(unistd_file, file_readwrite_badfd)
 
 
 /* test write() outside of the file */
-TEST(unistd_file, file_write_incrlength)
+TEST(file, file_write_incrlength)
 {
 	/* set offset outside of the file */
 	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, lseek(fd, 1, SEEK_SET));
@@ -415,7 +414,7 @@ TEST(unistd_file, file_write_incrlength)
 
 
 /* test write on readonly file descriptor */
-TEST(unistd_file, file_write_readonly)
+TEST(file, file_write_readonly)
 {
 	int fd2;
 
@@ -430,7 +429,7 @@ TEST(unistd_file, file_write_readonly)
 
 
 /* test simple pipe() usage */
-TEST(unistd_file, file_readwrite_pipe)
+TEST(file, file_readwrite_pipe)
 {
 	int p[2];
 
@@ -450,7 +449,7 @@ TEST(unistd_file, file_readwrite_pipe)
 
 
 /* test simple use of lseek() */
-TEST(unistd_file, file_lseek)
+TEST(file, file_lseek)
 {
 	/* fill file with content */
 	assert_write(fd, LINE1);
@@ -482,7 +481,7 @@ TEST(unistd_file, file_lseek)
 
 
 /* test lseek() outside of the file */
-TEST(unistd_file, file_lseek_pastfile)
+TEST(file, file_lseek_pastfile)
 {
 	int fd2;
 	/* offsets for SEEK_SET, SEEK_CUR and SEEK_END tests of past-the-file lseek() */
@@ -529,7 +528,7 @@ TEST(unistd_file, file_lseek_pastfile)
 
 
 /* test lseek() with offsets that result in overall negative offset in file */
-TEST(unistd_file, file_lseek_negative)
+TEST(file, file_lseek_negative)
 {
 	assert_write(fd, LINE1);
 
@@ -545,7 +544,7 @@ TEST(unistd_file, file_lseek_negative)
 
 
 /* test lseek() with invalid file descriptor */
-TEST(unistd_file, file_lseek_ebadf)
+TEST(file, file_lseek_ebadf)
 {
 	assert_write(fd, LINE1);
 	TEST_ASSERT_EQUAL_INT(0, close(fd));
@@ -565,7 +564,7 @@ TEST(unistd_file, file_lseek_ebadf)
 
 
 /* test lseek() on pipe */
-TEST(unistd_file, file_lseek_espipe)
+TEST(file, file_lseek_espipe)
 {
 	int p[2];
 
@@ -591,7 +590,7 @@ TEST(unistd_file, file_lseek_espipe)
 
 
 /* test truncate()-ing a file to smaller size than it already is */
-TEST(unistd_file, file_truncate_down)
+TEST(file, file_truncate_down)
 {
 	struct stat st;
 
@@ -621,7 +620,7 @@ TEST(unistd_file, file_truncate_down)
 
 
 /* test truncate()-ing a file to larger size than it already is */
-TEST(unistd_file, file_truncate_up)
+TEST(file, file_truncate_up)
 {
 	struct stat st;
 	char testbuf[sizeof(buf)];
@@ -658,7 +657,7 @@ TEST(unistd_file, file_truncate_up)
 }
 
 /* truncate()-ing down file with opened descriptor so that it is in not truncated part */
-TEST(unistd_file, file_truncate_opened)
+TEST(file, file_truncate_opened)
 {
 	/* write LINE1, then LINE2 and then LINE3 to the file  with fd */
 	assert_write(fd, LINE1);
@@ -680,7 +679,7 @@ TEST(unistd_file, file_truncate_opened)
 
 
 /* truncate()-ing down file with opened descriptor so that it in truncated part */
-TEST(unistd_file, file_truncate_opened_eof)
+TEST(file, file_truncate_opened_eof)
 {
 	/* write LINE1, then LINE2 to the file with fd */
 	assert_write(fd, LINE1);
@@ -694,14 +693,14 @@ TEST(unistd_file, file_truncate_opened_eof)
 }
 
 /* truncate()-ing file to negative length*/
-TEST(unistd_file, file_truncate_einval)
+TEST(file, file_truncate_einval)
 {
 	TEST_ASSERT_EQUAL_INT(-1, truncate(FNAME, -1));
 	TEST_ASSERT_EQUAL_INT(EINVAL, errno);
 }
 
 /* truncate()-ing with invalid or nonexistent filepath */
-TEST(unistd_file, file_truncate_enoent)
+TEST(file, file_truncate_enoent)
 {
 	TEST_ASSERT_EQUAL_INT(-1, truncate("", 0));
 	TEST_ASSERT_EQUAL_INT(ENOENT, errno);
@@ -711,7 +710,7 @@ TEST(unistd_file, file_truncate_enoent)
 }
 
 /* truncate()-ing on directory */
-TEST(unistd_file, file_truncate_eisdir)
+TEST(file, file_truncate_eisdir)
 {
 	/* <posix incmpliance> truncate() wrong errno returned
 
@@ -729,7 +728,7 @@ TEST(unistd_file, file_truncate_eisdir)
 }
 
 /* test ftruncate()-ing a file to smaller size than it already is */
-TEST(unistd_file, file_ftruncate_down)
+TEST(file, file_ftruncate_down)
 {
 	struct stat st;
 
@@ -758,7 +757,7 @@ TEST(unistd_file, file_ftruncate_down)
 }
 
 /* test ftruncate()-ing a file to larger size than it already is */
-TEST(unistd_file, file_ftruncate_up)
+TEST(file, file_ftruncate_up)
 {
 	struct stat st;
 	char testbuf[sizeof(buf)];
@@ -796,7 +795,7 @@ TEST(unistd_file, file_ftruncate_up)
 }
 
 /* ftruncate()-ing down file with opened descriptor so that it is in not truncated part */
-TEST(unistd_file, file_ftruncate_opened)
+TEST(file, file_ftruncate_opened)
 {
 	/* write LINE1, then LINE2 and then LINE3 to the file with fd */
 	assert_write(fd, LINE1);
@@ -817,7 +816,7 @@ TEST(unistd_file, file_ftruncate_opened)
 }
 
 /* ftruncate()-ing down file with opened descriptor so that it is in truncated part */
-TEST(unistd_file, file_ftruncate_opened_eof)
+TEST(file, file_ftruncate_opened_eof)
 {
 	/* write LINE1, then LINE2 to the file  with fd */
 	assert_write(fd, LINE1);
@@ -832,14 +831,14 @@ TEST(unistd_file, file_ftruncate_opened_eof)
 }
 
 /* ftruncate()-ing file to negative length */
-TEST(unistd_file, file_ftruncate_einval)
+TEST(file, file_ftruncate_einval)
 {
 	TEST_ASSERT_EQUAL_INT(-1, ftruncate(fd, -1));
 	TEST_ASSERT_EQUAL_INT(EINVAL, errno);
 }
 
 /* ftruncate()-ing file with invalid file descriptors */
-TEST(unistd_file, file_ftruncate_ebadf)
+TEST(file, file_ftruncate_ebadf)
 {
 	/* try to truncate on closed descriptor */
 	TEST_ASSERT_EQUAL_INT(0, close(fd));
@@ -854,14 +853,14 @@ TEST(unistd_file, file_ftruncate_ebadf)
 }
 
 /* ftruncate()-ing directory */
-TEST(unistd_file, file_ftruncate_eisdir)
+TEST(file, file_ftruncate_eisdir)
 {
 	TEST_ASSERT_EQUAL_INT(-1, truncate("bin", 0));
 	TEST_ASSERT_EQUAL_INT(EISDIR, errno);
 }
 
 /* test if descriptor from dup() refers to the same file */
-TEST(unistd_file, file_dup)
+TEST(file, file_dup)
 {
 	int fd2;
 
@@ -878,7 +877,7 @@ TEST(unistd_file, file_dup)
 }
 
 /* test for invalid descriptors used in dup() */
-TEST(unistd_file, file_dup_closed)
+TEST(file, file_dup_closed)
 {
 	int fd2 = 0;
 
@@ -894,7 +893,7 @@ TEST(unistd_file, file_dup_closed)
 }
 
 /* test if descriptor from dup2() refers to the same file */
-TEST(unistd_file, file_dup2)
+TEST(file, file_dup2)
 {
 	/* some value different than 0, 1, 2 (stdin, stdout, stderr) */
 	int fd2 = 7;
@@ -913,9 +912,9 @@ TEST(unistd_file, file_dup2)
 }
 
 /* dup2() on file descriptor that refers to file opened by another descriptor */
-TEST(unistd_file, file_dup2_opened)
+TEST(file, file_dup2_opened)
 {
-	const char filename2[] = "unistd_dup_file";
+	const char filename2[] = "dup_file";
 	int fd2;
 	/* some value different than 0, 1, 2 (stdin, stdout, stderr) */
 	int fdr = 7;
@@ -948,7 +947,7 @@ TEST(unistd_file, file_dup2_opened)
 }
 
 /* test for not valid descriptors used in dup2() */
-TEST(unistd_file, file_dup2_closed)
+TEST(file, file_dup2_closed)
 {
 	/* some value different than 0, 1, 2 (stdin, stdout, stderr) */
 	int fd2 = 7;
@@ -967,53 +966,53 @@ TEST(unistd_file, file_dup2_closed)
 }
 
 
-TEST_GROUP_RUNNER(unistd_file)
+TEST_GROUP_RUNNER(file)
 {
-	RUN_TEST_CASE(unistd_file, file_close);
+	RUN_TEST_CASE(file, file_close);
 
-	RUN_TEST_CASE(unistd_file, file_readwrite_nbytes);
-	RUN_TEST_CASE(unistd_file, file_write_zero);
-	RUN_TEST_CASE(unistd_file, file_write_reopened);
-	RUN_TEST_CASE(unistd_file, file_write_dup);
-	RUN_TEST_CASE(unistd_file, file_readwrite_badfd);
-	RUN_TEST_CASE(unistd_file, file_write_incrlength);
+	RUN_TEST_CASE(file, file_readwrite_nbytes);
+	RUN_TEST_CASE(file, file_write_zero);
+	RUN_TEST_CASE(file, file_write_reopened);
+	RUN_TEST_CASE(file, file_write_dup);
+	RUN_TEST_CASE(file, file_readwrite_badfd);
+	RUN_TEST_CASE(file, file_write_incrlength);
 
-	RUN_TEST_CASE(unistd_file, file_write_readonly);
-	RUN_TEST_CASE(unistd_file, file_readwrite_pipe);
+	RUN_TEST_CASE(file, file_write_readonly);
+	RUN_TEST_CASE(file, file_readwrite_pipe);
 
-	RUN_TEST_CASE(unistd_file, file_lseek);
-	RUN_TEST_CASE(unistd_file, file_lseek_pastfile);
-	RUN_TEST_CASE(unistd_file, file_lseek_negative);
-	RUN_TEST_CASE(unistd_file, file_lseek_ebadf);
-	RUN_TEST_CASE(unistd_file, file_lseek_espipe);
+	RUN_TEST_CASE(file, file_lseek);
+	RUN_TEST_CASE(file, file_lseek_pastfile);
+	RUN_TEST_CASE(file, file_lseek_negative);
+	RUN_TEST_CASE(file, file_lseek_ebadf);
+	RUN_TEST_CASE(file, file_lseek_espipe);
 
-	RUN_TEST_CASE(unistd_file, file_truncate_down);
-	RUN_TEST_CASE(unistd_file, file_truncate_up);
-	RUN_TEST_CASE(unistd_file, file_truncate_opened);
-	RUN_TEST_CASE(unistd_file, file_truncate_opened_eof);
-	RUN_TEST_CASE(unistd_file, file_truncate_einval);
-	RUN_TEST_CASE(unistd_file, file_truncate_eisdir);
-	RUN_TEST_CASE(unistd_file, file_truncate_enoent);
+	RUN_TEST_CASE(file, file_truncate_down);
+	RUN_TEST_CASE(file, file_truncate_up);
+	RUN_TEST_CASE(file, file_truncate_opened);
+	RUN_TEST_CASE(file, file_truncate_opened_eof);
+	RUN_TEST_CASE(file, file_truncate_einval);
+	RUN_TEST_CASE(file, file_truncate_eisdir);
+	RUN_TEST_CASE(file, file_truncate_enoent);
 
-	RUN_TEST_CASE(unistd_file, file_ftruncate_down);
-	RUN_TEST_CASE(unistd_file, file_ftruncate_up);
-	RUN_TEST_CASE(unistd_file, file_ftruncate_opened);
-	RUN_TEST_CASE(unistd_file, file_ftruncate_opened_eof);
-	RUN_TEST_CASE(unistd_file, file_ftruncate_einval);
-	RUN_TEST_CASE(unistd_file, file_ftruncate_ebadf);
+	RUN_TEST_CASE(file, file_ftruncate_down);
+	RUN_TEST_CASE(file, file_ftruncate_up);
+	RUN_TEST_CASE(file, file_ftruncate_opened);
+	RUN_TEST_CASE(file, file_ftruncate_opened_eof);
+	RUN_TEST_CASE(file, file_ftruncate_einval);
+	RUN_TEST_CASE(file, file_ftruncate_ebadf);
 
-	RUN_TEST_CASE(unistd_file, file_dup);
-	RUN_TEST_CASE(unistd_file, file_dup_closed);
-	RUN_TEST_CASE(unistd_file, file_dup2);
-	RUN_TEST_CASE(unistd_file, file_dup2_opened);
-	RUN_TEST_CASE(unistd_file, file_dup2_closed);
+	RUN_TEST_CASE(file, file_dup);
+	RUN_TEST_CASE(file, file_dup_closed);
+	RUN_TEST_CASE(file, file_dup2);
+	RUN_TEST_CASE(file, file_dup2_opened);
+	RUN_TEST_CASE(file, file_dup2_closed);
 }
 
 
-TEST_GROUP(unistd_file_pread);
+TEST_GROUP(file_pread);
 
 
-TEST_SETUP(unistd_file_pread)
+TEST_SETUP(file_pread)
 {
 	fd = open(LOREM_PATH, O_RDWR | O_CREAT | O_TRUNC, 0777);
 	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fd);
@@ -1021,7 +1020,7 @@ TEST_SETUP(unistd_file_pread)
 }
 
 
-TEST_TEAR_DOWN(unistd_file_pread)
+TEST_TEAR_DOWN(file_pread)
 {
 	TEST_ASSERT_EQUAL_INT(0, close(fd));
 	unlink(LOREM_PATH);
@@ -1029,7 +1028,7 @@ TEST_TEAR_DOWN(unistd_file_pread)
 
 
 /* Test basic reading on different offset */
-TEST(unistd_file_pread, pread_offset)
+TEST(file_pread, pread_offset)
 {
 	TEST_ASSERT_EQUAL(14, pread(fd, buf, 14, 12));
 	buf[14] = '\0';
@@ -1041,7 +1040,7 @@ TEST(unistd_file_pread, pread_offset)
 
 
 /* Test basic writing on different offset */
-TEST(unistd_file_pread, pwrite_offset)
+TEST(file_pread, pwrite_offset)
 {
 	assert_write_pos(fd, "OVERWRITE", 12);
 	assert_read_pos(fd, buf, 26, 0);
@@ -1055,7 +1054,7 @@ TEST(unistd_file_pread, pwrite_offset)
 
 
 /* Test closed fd, incompatible open mode and nonexistent fd */
-TEST(unistd_file_pread, pread_ebadf)
+TEST(file_pread, pread_ebadf)
 {
 	int bad_fd = open(LOREM_PATH, O_RDONLY, 0777);
 	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, bad_fd);
@@ -1076,7 +1075,7 @@ TEST(unistd_file_pread, pread_ebadf)
 
 
 /* Test closed fd, incompatible open mode and nonexistent fd */
-TEST(unistd_file_pread, pwrite_ebadf)
+TEST(file_pread, pwrite_ebadf)
 {
 	int bad_fd = open(LOREM_PATH, O_WRONLY, 0777);
 	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, bad_fd);
@@ -1097,7 +1096,7 @@ TEST(unistd_file_pread, pwrite_ebadf)
 
 
 /* Test negative offset */
-TEST(unistd_file_pread, pread_einval)
+TEST(file_pread, pread_einval)
 {
 	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fd);
 	TEST_ASSERT_EQUAL_INT(-1, pread(fd, buf, 2, -1));
@@ -1106,7 +1105,7 @@ TEST(unistd_file_pread, pread_einval)
 
 
 /* Test negative offset */
-TEST(unistd_file_pread, pwrite_einval)
+TEST(file_pread, pwrite_einval)
 {
 	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fd);
 	TEST_ASSERT_EQUAL_INT(-1, pwrite(fd, buf, 2, -1));
@@ -1115,7 +1114,7 @@ TEST(unistd_file_pread, pwrite_einval)
 
 
 /* Test trying to read on non-seekable file */
-TEST(unistd_file_pread, pread_espipe)
+TEST(file_pread, pread_espipe)
 {
 	int pipe_fds[2];
 	if (pipe(pipe_fds) != 0) {
@@ -1131,7 +1130,7 @@ TEST(unistd_file_pread, pread_espipe)
 
 
 /* Test trying to read on non-seekable file */
-TEST(unistd_file_pread, pwrite_espipe)
+TEST(file_pread, pwrite_espipe)
 {
 	int pipe_fds[2];
 	if (pipe(pipe_fds) != 0) {
@@ -1206,7 +1205,7 @@ static void *pwrite_thread(void *arg)
 
 
 /* Test concurrent reading on multiple threads from the same fd */
-TEST(unistd_file_pread, pread_multithread)
+TEST(file_pread, pread_multithread)
 {
 	const int chunk = LOREM_LEN / 4;
 	const int remainder = LOREM_LEN % 4;
@@ -1232,7 +1231,7 @@ TEST(unistd_file_pread, pread_multithread)
 
 
 /* Test concurrent writing on multiple threads from the same fd */
-TEST(unistd_file_pread, pwrite_multithread)
+TEST(file_pread, pwrite_multithread)
 {
 	const int chunk = LOREM_LEN / 4;
 	const int remainder = LOREM_LEN % 4;
@@ -1277,7 +1276,7 @@ static void *pread_overlapping_thread(void *arg)
 
 
 /* Test concurrent reading overlapping fragments from the same fd */
-TEST(unistd_file_pread, pread_multithread_overlapping)
+TEST(file_pread, pread_multithread_overlapping)
 {
 	int i;
 	char buffer[4][6];
@@ -1317,7 +1316,7 @@ static void *pwrite_overlapping_thread(void *arg)
 
 
 /* Test concurrent writing overlapping fragments from the same fd */
-TEST(unistd_file_pread, pwrite_multithread_overlapping)
+TEST(file_pread, pwrite_multithread_overlapping)
 {
 	int ipsum_fd, i;
 	char buffer[4][6] = { "ipsum", "psum ", "sum d", "um do" };
@@ -1348,28 +1347,28 @@ TEST(unistd_file_pread, pwrite_multithread_overlapping)
 
 /* TODO: write more demanding tests for overalpping pread and pwrite */
 
-TEST_GROUP_RUNNER(unistd_file_pread)
+TEST_GROUP_RUNNER(file_pread)
 {
-	RUN_TEST_CASE(unistd_file_pread, pread_offset);
-	RUN_TEST_CASE(unistd_file_pread, pwrite_offset);
-	RUN_TEST_CASE(unistd_file_pread, pread_ebadf);
-	RUN_TEST_CASE(unistd_file_pread, pwrite_ebadf);
-	RUN_TEST_CASE(unistd_file_pread, pread_einval);
-	RUN_TEST_CASE(unistd_file_pread, pwrite_einval);
-	RUN_TEST_CASE(unistd_file_pread, pread_espipe);
-	RUN_TEST_CASE(unistd_file_pread, pwrite_espipe);
-	RUN_TEST_CASE(unistd_file_pread, pread_multithread);
-	RUN_TEST_CASE(unistd_file_pread, pread_multithread_overlapping);
-	RUN_TEST_CASE(unistd_file_pread, pwrite_multithread);
-	RUN_TEST_CASE(unistd_file_pread, pwrite_multithread_overlapping);
+	RUN_TEST_CASE(file_pread, pread_offset);
+	RUN_TEST_CASE(file_pread, pwrite_offset);
+	RUN_TEST_CASE(file_pread, pread_ebadf);
+	RUN_TEST_CASE(file_pread, pwrite_ebadf);
+	RUN_TEST_CASE(file_pread, pread_einval);
+	RUN_TEST_CASE(file_pread, pwrite_einval);
+	RUN_TEST_CASE(file_pread, pread_espipe);
+	RUN_TEST_CASE(file_pread, pwrite_espipe);
+	RUN_TEST_CASE(file_pread, pread_multithread);
+	RUN_TEST_CASE(file_pread, pread_multithread_overlapping);
+	RUN_TEST_CASE(file_pread, pwrite_multithread);
+	RUN_TEST_CASE(file_pread, pwrite_multithread_overlapping);
 }
 
 
 #ifdef __phoenix__
-TEST_GROUP(unistd_file_safe_pread);
+TEST_GROUP(file_safe_pread);
 
 
-TEST_SETUP(unistd_file_safe_pread)
+TEST_SETUP(file_safe_pread)
 {
 	fd = __safe_open(LOREM_PATH, O_RDWR | O_CREAT | O_TRUNC, 0777);
 	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fd);
@@ -1377,7 +1376,7 @@ TEST_SETUP(unistd_file_safe_pread)
 }
 
 
-TEST_TEAR_DOWN(unistd_file_safe_pread)
+TEST_TEAR_DOWN(file_safe_pread)
 {
 	TEST_ASSERT_EQUAL_INT(0, __safe_close(fd));
 	unlink(LOREM_PATH);
@@ -1385,7 +1384,7 @@ TEST_TEAR_DOWN(unistd_file_safe_pread)
 
 
 /* Test simple reading from file at given offset */
-TEST(unistd_file_safe_pread, safe_pread)
+TEST(file_safe_pread, safe_pread)
 {
 	char buf[LOREM_LEN];
 	TEST_ASSERT_EQUAL_INT(14, __safe_pread(fd, buf, 14, 12));
@@ -1395,7 +1394,7 @@ TEST(unistd_file_safe_pread, safe_pread)
 
 
 /* Test simple writing to file at given offset */
-TEST(unistd_file_safe_pread, safe_pwrite)
+TEST(file_safe_pread, safe_pwrite)
 {
 	TEST_ASSERT_EQUAL_INT(9, __safe_pwrite(fd, "OVERWRITE", 9, 12));
 	assert_read_pos(fd, buf, 26, 0);
@@ -1409,7 +1408,7 @@ TEST(unistd_file_safe_pread, safe_pwrite)
 
 
 /* Test EINVAL errno code when passing negative offset */
-TEST(unistd_file_safe_pread, safe_pread_negative_offset)
+TEST(file_safe_pread, safe_pread_negative_offset)
 {
 	TEST_ASSERT_EQUAL_INT(-1, __safe_pread(fd, buf, 2, -1));
 	TEST_ASSERT_EQUAL_INT(EINVAL, errno);
@@ -1417,18 +1416,18 @@ TEST(unistd_file_safe_pread, safe_pread_negative_offset)
 
 
 /* Test EINVAL errno code when passing negative offset */
-TEST(unistd_file_safe_pread, safe_pwrite_negative_offset)
+TEST(file_safe_pread, safe_pwrite_negative_offset)
 {
 	TEST_ASSERT_EQUAL_INT(-1, __safe_pwrite(fd, buf, 2, -1));
 	TEST_ASSERT_EQUAL_INT(EINVAL, errno);
 }
 
 
-TEST_GROUP_RUNNER(unistd_file_safe_pread)
+TEST_GROUP_RUNNER(file_safe_pread)
 {
-	RUN_TEST_CASE(unistd_file_safe_pread, safe_pread);
-	RUN_TEST_CASE(unistd_file_safe_pread, safe_pwrite);
-	RUN_TEST_CASE(unistd_file_safe_pread, safe_pread_negative_offset);
-	RUN_TEST_CASE(unistd_file_safe_pread, safe_pwrite_negative_offset);
+	RUN_TEST_CASE(file_safe_pread, safe_pread);
+	RUN_TEST_CASE(file_safe_pread, safe_pwrite);
+	RUN_TEST_CASE(file_safe_pread, safe_pread_negative_offset);
+	RUN_TEST_CASE(file_safe_pread, safe_pwrite_negative_offset);
 }
 #endif

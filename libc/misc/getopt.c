@@ -79,20 +79,20 @@ static int testmain(int argc, char *const argv[], struct getopt_t *results, cons
 }
 
 
-TEST_GROUP(unistd_getopt);
+TEST_GROUP(getopt);
 
-TEST_SETUP(unistd_getopt)
+TEST_SETUP(getopt)
 {
 	/* reset of getopt() index value optind */
 	optind = 0;
 }
 
 
-TEST_TEAR_DOWN(unistd_getopt)
+TEST_TEAR_DOWN(getopt)
 {
 }
 
-TEST(unistd_getopt, getopt_zeroargs)
+TEST(getopt, getopt_zeroargs)
 {
 	/* mocks of main() arguments */
 	char *const testargv[] = { "cmd", NULL };
@@ -109,7 +109,7 @@ TEST(unistd_getopt, getopt_zeroargs)
 }
 
 
-TEST(unistd_getopt, getopt_normal_flags)
+TEST(getopt, getopt_normal_flags)
 {
 	/* mocks of main() arguments */
 	char *testargv[] = { "cmd", "-a", "-b", NULL };
@@ -126,7 +126,7 @@ TEST(unistd_getopt, getopt_normal_flags)
 }
 
 
-TEST(unistd_getopt, getopt_joined_flags)
+TEST(getopt, getopt_joined_flags)
 {
 	/* mocks of main() arguments */
 	char *testargv[] = { "cmd", "-ab", NULL };
@@ -143,7 +143,7 @@ TEST(unistd_getopt, getopt_joined_flags)
 }
 
 
-TEST(unistd_getopt, getopt_normal_parameter)
+TEST(getopt, getopt_normal_parameter)
 {
 	/* mocks of main() arguments */
 	char *testargv[] = { "cmd", "-c", "foo", NULL };
@@ -159,7 +159,7 @@ TEST(unistd_getopt, getopt_normal_parameter)
 	TEST_ASSERT_EQUAL_INT(0, ret.nonopts);
 }
 
-TEST(unistd_getopt, getopt_normal_optparameter)
+TEST(getopt, getopt_normal_optparameter)
 {
 	/* mocks of main() arguments */
 	char *testargv[] = { "cmd", "-c", "-a", "-b", NULL };
@@ -176,7 +176,7 @@ TEST(unistd_getopt, getopt_normal_optparameter)
 }
 
 
-TEST(unistd_getopt, getopt_joined_parameter)
+TEST(getopt, getopt_joined_parameter)
 {
 	/* mocks of main() arguments */
 	char *testargv[] = { "cmd", "-cfoo", NULL };
@@ -193,7 +193,7 @@ TEST(unistd_getopt, getopt_joined_parameter)
 }
 
 
-TEST(unistd_getopt, getopt_nonopt)
+TEST(getopt, getopt_nonopt)
 {
 	/* mocks of main() arguments */
 	char *testargv[] = { "cmd", "arg1", NULL };
@@ -210,7 +210,7 @@ TEST(unistd_getopt, getopt_nonopt)
 }
 
 
-TEST(unistd_getopt, getopt_parameter_nonopt)
+TEST(getopt, getopt_parameter_nonopt)
 {
 	/* mocks of main() arguments */
 	char *testargv[] = { "cmd", "-c", "foo", "arg", NULL };
@@ -226,7 +226,7 @@ TEST(unistd_getopt, getopt_parameter_nonopt)
 }
 
 
-TEST(unistd_getopt, getopt_endofargs_doubledash)
+TEST(getopt, getopt_endofargs_doubledash)
 {
 	/* mocks of main() arguments */
 	char *testargv[] = { "cmd", "-a", "--", "-b", NULL };
@@ -242,7 +242,7 @@ TEST(unistd_getopt, getopt_endofargs_doubledash)
 }
 
 
-TEST(unistd_getopt, getopt_endofargs_singledash)
+TEST(getopt, getopt_endofargs_singledash)
 {
 	/* mocks of main() arguments */
 	char *testargv[] = { "cmd", "-a", "-", "-b", NULL };
@@ -257,7 +257,7 @@ TEST(unistd_getopt, getopt_endofargs_singledash)
 	TEST_ASSERT_EQUAL_INT(2, ret.nonopts);
 }
 
-TEST(unistd_getopt, getopt_unknownopt)
+TEST(getopt, getopt_unknownopt)
 {
 	/* mocks of main() arguments */
 	char *testargv[] = { "cmd", "-axb", "-c", "--", "arg1", "arg2", NULL };
@@ -273,7 +273,7 @@ TEST(unistd_getopt, getopt_unknownopt)
 }
 
 
-TEST(unistd_getopt, getopt_unknownopt_optreq)
+TEST(getopt, getopt_unknownopt_optreq)
 {
 	/* mocks of main() arguments */
 	char *testargv[] = { "cmd", "-axb", "-c", NULL };
@@ -288,7 +288,7 @@ TEST(unistd_getopt, getopt_unknownopt_optreq)
 	TEST_ASSERT_EQUAL_INT(0, ret.nonopts);
 }
 
-TEST(unistd_getopt, getopt_noarg)
+TEST(getopt, getopt_noarg)
 {
 	/* mocks of main() arguments */
 	char *testargv[] = { "cmd", "-ab", "-c", NULL };
@@ -303,7 +303,7 @@ TEST(unistd_getopt, getopt_noarg)
 	TEST_ASSERT_EQUAL_INT(0, ret.nonopts);
 }
 
-TEST(unistd_getopt, getopt_unknownopt_noarg)
+TEST(getopt, getopt_unknownopt_noarg)
 {
 	/* mocks of main() arguments */
 	char *testargv[] = { "cmd", "-axb", "-c", NULL };
@@ -319,7 +319,7 @@ TEST(unistd_getopt, getopt_unknownopt_noarg)
 }
 
 
-TEST(unistd_getopt, getopt_unknownopt_multiple)
+TEST(getopt, getopt_unknownopt_multiple)
 {
 	/* mocks of main() arguments */
 	char *testargv1[] = { "cmd", "-xxx", NULL };
@@ -349,7 +349,7 @@ TEST(unistd_getopt, getopt_unknownopt_multiple)
 }
 
 
-TEST(unistd_getopt, getopt_doubledash_simple)
+TEST(getopt, getopt_doubledash_simple)
 {
 	/* mocks of main() arguments */
 	char *testargv[] = { "cmd", "-a", "--", "-b", NULL };
@@ -365,7 +365,7 @@ TEST(unistd_getopt, getopt_doubledash_simple)
 }
 
 
-TEST(unistd_getopt, getopt_doubledash_one)
+TEST(getopt, getopt_doubledash_one)
 {
 	/* mocks of main() arguments */
 	char *testargv[] = { "cmd", "--x", "-ab", "nonopt", NULL };
@@ -381,7 +381,7 @@ TEST(unistd_getopt, getopt_doubledash_one)
 }
 
 
-TEST(unistd_getopt, getopt_doubledash_multi)
+TEST(getopt, getopt_doubledash_multi)
 {
 	/* mocks of main() arguments */
 	char *testargv[] = { "cmd", "--x!?<>;gfngfna", "-b", NULL };
@@ -397,7 +397,7 @@ TEST(unistd_getopt, getopt_doubledash_multi)
 }
 
 
-TEST(unistd_getopt, getopt_tripledash)
+TEST(getopt, getopt_tripledash)
 {
 	/* mocks of main() arguments */
 	char *testargv[] = { "cmd", "-a", "---", "-b", NULL };
@@ -413,30 +413,30 @@ TEST(unistd_getopt, getopt_tripledash)
 }
 
 
-TEST_GROUP_RUNNER(unistd_getopt)
+TEST_GROUP_RUNNER(getopt)
 {
-	RUN_TEST_CASE(unistd_getopt, getopt_zeroargs);
-	RUN_TEST_CASE(unistd_getopt, getopt_normal_flags);
-	RUN_TEST_CASE(unistd_getopt, getopt_joined_flags);
+	RUN_TEST_CASE(getopt, getopt_zeroargs);
+	RUN_TEST_CASE(getopt, getopt_normal_flags);
+	RUN_TEST_CASE(getopt, getopt_joined_flags);
 
-	RUN_TEST_CASE(unistd_getopt, getopt_normal_parameter);
-	RUN_TEST_CASE(unistd_getopt, getopt_normal_optparameter);
-	RUN_TEST_CASE(unistd_getopt, getopt_joined_parameter);
+	RUN_TEST_CASE(getopt, getopt_normal_parameter);
+	RUN_TEST_CASE(getopt, getopt_normal_optparameter);
+	RUN_TEST_CASE(getopt, getopt_joined_parameter);
 
-	RUN_TEST_CASE(unistd_getopt, getopt_nonopt);
-	RUN_TEST_CASE(unistd_getopt, getopt_parameter_nonopt);
-	RUN_TEST_CASE(unistd_getopt, getopt_endofargs_singledash);
-	RUN_TEST_CASE(unistd_getopt, getopt_endofargs_doubledash);
-	RUN_TEST_CASE(unistd_getopt, getopt_unknownopt_optreq);
-	RUN_TEST_CASE(unistd_getopt, getopt_unknownopt);
-	RUN_TEST_CASE(unistd_getopt, getopt_unknownopt_multiple);
+	RUN_TEST_CASE(getopt, getopt_nonopt);
+	RUN_TEST_CASE(getopt, getopt_parameter_nonopt);
+	RUN_TEST_CASE(getopt, getopt_endofargs_singledash);
+	RUN_TEST_CASE(getopt, getopt_endofargs_doubledash);
+	RUN_TEST_CASE(getopt, getopt_unknownopt_optreq);
+	RUN_TEST_CASE(getopt, getopt_unknownopt);
+	RUN_TEST_CASE(getopt, getopt_unknownopt_multiple);
 
-	RUN_TEST_CASE(unistd_getopt, getopt_noarg);
-	RUN_TEST_CASE(unistd_getopt, getopt_unknownopt_noarg);
+	RUN_TEST_CASE(getopt, getopt_noarg);
+	RUN_TEST_CASE(getopt, getopt_unknownopt_noarg);
 
-	RUN_TEST_CASE(unistd_getopt, getopt_doubledash_simple);
-	RUN_TEST_CASE(unistd_getopt, getopt_doubledash_one);
-	RUN_TEST_CASE(unistd_getopt, getopt_doubledash_multi);
+	RUN_TEST_CASE(getopt, getopt_doubledash_simple);
+	RUN_TEST_CASE(getopt, getopt_doubledash_one);
+	RUN_TEST_CASE(getopt, getopt_doubledash_multi);
 
-	RUN_TEST_CASE(unistd_getopt, getopt_tripledash);
+	RUN_TEST_CASE(getopt, getopt_tripledash);
 }

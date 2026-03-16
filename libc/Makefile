@@ -46,3 +46,4 @@ $(eval $(call add_test_libc,math, -lm, -ffloat-store)) # -ffloat-store - prevent
 $(eval $(call add_test_libc_custom,socket,inet-socket,, -Wno-attribute-warning, inet-socket.c common.c))
 $(eval $(call add_test_libc_custom,socket,unix-socket,, -Wno-attribute-warning, unix-socket.c common.c))
 $(eval $(call add_test_libc,poll))
+$(eval $(call add_test_libc,fs))

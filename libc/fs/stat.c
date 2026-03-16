@@ -534,7 +534,13 @@ TEST(stat_mode, sock_type)
 	int sfd;
 	struct stat buffer;
 	struct sockaddr_un addr;
-	const char *socketPath = "/tmp/test_stat_socket";
+	char socketPath[] = "test_stat_socket";
+
+	/* I form absolute path due to: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1567 */
+	char fullPath[sizeof(addr.sun_path)];
+	char cwd[sizeof(fullPath) - sizeof(socketPath) - 2];
+	TEST_ASSERT_NOT_NULL(getcwd(cwd, sizeof(cwd)));
+	snprintf(fullPath, sizeof(fullPath), "%s/%s", cwd, socketPath);
 
 	unlink(socketPath);
 
@@ -544,7 +550,7 @@ TEST(stat_mode, sock_type)
 	/* Set the address for the socket. */
 	memset(&addr, 0, sizeof(struct sockaddr_un));
 	addr.sun_family = AF_UNIX;
-	strncpy(addr.sun_path, socketPath, sizeof(addr.sun_path) - 1);
+	strncpy(addr.sun_path, fullPath, sizeof(addr.sun_path));
 
 	/* Bind the socket to the address. */
 	TEST_ASSERT_EQUAL_INT(0, bind(sfd, (struct sockaddr *)&addr, sizeof(struct sockaddr_un)));
