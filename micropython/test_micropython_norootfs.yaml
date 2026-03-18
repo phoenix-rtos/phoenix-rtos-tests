@@ -1,0 +1,3362 @@
+test:
+  harness: micropython_norootfs.py
+  nightly: true
+  targets:
+    value:
+    - armv7r5f-zynqmp-qemu
+  tests:
+  - name: basics.0prelim
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/0prelim.py
+  - name: basics.andor
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/andor.py
+  - name: basics.annotate_var
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/annotate_var.py
+  - name: basics.array1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/array1.py
+  - name: basics.array_add
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/array_add.py
+  - name: basics.array_construct
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/array_construct.py
+  - name: basics.array_construct2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/array_construct2.py
+  - name: basics.array_construct_endian
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/array_construct_endian.py
+  - name: basics.array_intbig
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/array_intbig.py
+  - name: basics.array_micropython
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/array_micropython.py
+  - name: basics.assign1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/assign1.py
+  - name: basics.assign_expr
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/assign_expr.py
+  - name: basics.assign_expr_scope
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/assign_expr_scope.py
+  - name: basics.assign_expr_syntaxerror
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/assign_expr_syntaxerror.py
+  - name: basics.async_await
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/async_await.py
+  - name: basics.async_await2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/async_await2.py
+  - name: basics.async_def
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/async_def.py
+  - name: basics.async_for
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/async_for.py
+  - name: basics.async_for2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/async_for2.py
+  - name: basics.async_syntaxerror
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/async_syntaxerror.py
+  - name: basics.async_with
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/async_with.py
+  - name: basics.async_with2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/async_with2.py
+  - name: basics.async_with_break
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/async_with_break.py
+  - name: basics.async_with_return
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/async_with_return.py
+  - name: basics.attrtuple1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/attrtuple1.py
+  - name: basics.bool1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/bool1.py
+  - name: basics.boundmeth1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/boundmeth1.py
+  - name: basics.break
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/break.py
+  - name: basics.builtin_abs
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_abs.py
+  - name: basics.builtin_abs_intbig
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_abs_intbig.py
+  - name: basics.builtin_allany
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_allany.py
+  - name: basics.builtin_bin
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_bin.py
+  - name: basics.builtin_bin_intbig
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_bin_intbig.py
+  - name: basics.builtin_callable
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_callable.py
+  - name: basics.builtin_chr
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_chr.py
+  - name: basics.builtin_compile
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_compile.py
+  - name: basics.builtin_delattr
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_delattr.py
+  - name: basics.builtin_dir
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_dir.py
+  - name: basics.builtin_divmod
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_divmod.py
+  - name: basics.builtin_divmod_intbig
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_divmod_intbig.py
+  - name: basics.builtin_ellipsis
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_ellipsis.py
+  - name: basics.builtin_enumerate
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_enumerate.py
+  - name: basics.builtin_eval
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_eval.py
+  - name: basics.builtin_eval_buffer
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_eval_buffer.py
+  - name: basics.builtin_eval_error
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_eval_error.py
+  - name: basics.builtin_exec
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_exec.py
+  - name: basics.builtin_exec_buffer
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_exec_buffer.py
+  - name: basics.builtin_filter
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_filter.py
+  - name: basics.builtin_getattr
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_getattr.py
+  - name: basics.builtin_hasattr
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_hasattr.py
+  - name: basics.builtin_hash
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_hash.py
+  - name: basics.builtin_hash_gen
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_hash_gen.py
+  - name: basics.builtin_hash_intbig
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_hash_intbig.py
+  - name: basics.builtin_hex
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_hex.py
+  - name: basics.builtin_hex_intbig
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_hex_intbig.py
+  - name: basics.builtin_id
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_id.py
+  - name: basics.builtin_issubclass
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_issubclass.py
+  - name: basics.builtin_len1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_len1.py
+  - name: basics.builtin_locals
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_locals.py
+  - name: basics.builtin_map
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_map.py
+  - name: basics.builtin_minmax
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_minmax.py
+  - name: basics.builtin_next_arg2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_next_arg2.py
+  - name: basics.builtin_oct
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_oct.py
+  - name: basics.builtin_oct_intbig
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_oct_intbig.py
+  - name: basics.builtin_ord
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_ord.py
+  - name: basics.builtin_override
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_override.py
+  - name: basics.builtin_pow
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_pow.py
+  - name: basics.builtin_pow3
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_pow3.py
+  - name: basics.builtin_pow3_intbig
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_pow3_intbig.py
+  - name: basics.builtin_print
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_print.py
+  - name: basics.builtin_property
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_property.py
+  - name: basics.builtin_property_inherit
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_property_inherit.py
+  - name: basics.builtin_range
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_range.py
+  - name: basics.builtin_range_attrs
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_range_attrs.py
+  - name: basics.builtin_reversed
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_reversed.py
+  - name: basics.builtin_round
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_round.py
+  - name: basics.builtin_round_int
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_round_int.py
+  - name: basics.builtin_round_intbig
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_round_intbig.py
+  - name: basics.builtin_setattr
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_setattr.py
+  - name: basics.builtin_slice
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_slice.py
+  - name: basics.builtin_sorted
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_sorted.py
+  - name: basics.builtin_str_hex
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_str_hex.py
+  - name: basics.builtin_sum
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_sum.py
+  - name: basics.builtin_super
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_super.py
+  - name: basics.builtin_type
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_type.py
+  - name: basics.builtin_zip
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/builtin_zip.py
+  - name: basics.bytearray1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/bytearray1.py
+  - name: basics.bytearray_add
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/bytearray_add.py
+  - name: basics.bytearray_add_self
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/bytearray_add_self.py
+  - name: basics.bytearray_append
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/bytearray_append.py
+  - name: basics.bytearray_byte_operations
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/bytearray_byte_operations.py
+  - name: basics.bytearray_center
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/bytearray_center.py
+  - name: basics.bytearray_construct
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/bytearray_construct.py
+  - name: basics.bytearray_construct_array
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/bytearray_construct_array.py
+  - name: basics.bytearray_construct_endian
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/bytearray_construct_endian.py
+  - name: basics.bytearray_count
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/bytearray_count.py
+  - name: basics.bytearray_decode
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/bytearray_decode.py
+  - name: basics.bytearray_intbig
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/bytearray_intbig.py
+  - name: basics.bytearray_partition
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/bytearray_partition.py
+  - name: basics.bytearray_slice_assign
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/bytearray_slice_assign.py
+  - name: basics.bytes
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/bytes.py
+  - name: basics.bytes_add
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/bytes_add.py
+  - name: basics.bytes_add_array
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/bytes_add_array.py
+  - name: basics.bytes_add_bytearray
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/bytes_add_bytearray.py
+  - name: basics.bytes_add_endian
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/bytes_add_endian.py
+  - name: basics.bytes_center
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/bytes_center.py
+  - name: basics.bytes_compare
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/bytes_compare.py
+  - name: basics.bytes_compare2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/bytes_compare2.py
+  - name: basics.bytes_compare_array
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/bytes_compare_array.py
+  - name: basics.bytes_compare_bytearray
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/bytes_compare_bytearray.py
+  - name: basics.bytes_construct
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/bytes_construct.py
+  - name: basics.bytes_construct_array
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/bytes_construct_array.py
+  - name: basics.bytes_construct_bytearray
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/bytes_construct_bytearray.py
+  - name: basics.bytes_construct_endian
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/bytes_construct_endian.py
+  - name: basics.bytes_construct_intbig
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/bytes_construct_intbig.py
+  - name: basics.bytes_count
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/bytes_count.py
+  - name: basics.bytes_escape_unicode
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/bytes_escape_unicode.py
+  - name: basics.bytes_find
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/bytes_find.py
+  - name: basics.bytes_format_modulo
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/bytes_format_modulo.py
+  - name: basics.bytes_gen
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/bytes_gen.py
+  - name: basics.bytes_large
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/bytes_large.py
+  - name: basics.bytes_mult
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/bytes_mult.py
+  - name: basics.bytes_partition
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/bytes_partition.py
+  - name: basics.bytes_replace
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/bytes_replace.py
+  - name: basics.bytes_split
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/bytes_split.py
+  - name: basics.bytes_strip
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/bytes_strip.py
+  - name: basics.bytes_subscr
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/bytes_subscr.py
+  - name: basics.class1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/class1.py
+  - name: basics.class2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/class2.py
+  - name: basics.class3
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/class3.py
+  - name: basics.class_bases
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/class_bases.py
+  - name: basics.class_bind_self
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/class_bind_self.py
+  - name: basics.class_binop
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/class_binop.py
+  - name: basics.class_call
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/class_call.py
+  - name: basics.class_contains
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/class_contains.py
+  - name: basics.class_delattr_setattr
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/class_delattr_setattr.py
+  - name: basics.class_descriptor
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/class_descriptor.py
+  - name: basics.class_dict
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/class_dict.py
+  - name: basics.class_emptybases
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/class_emptybases.py
+  - name: basics.class_getattr
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/class_getattr.py
+  - name: basics.class_inherit1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/class_inherit1.py
+  - name: basics.class_inherit_mul
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/class_inherit_mul.py
+  - name: basics.class_inplace_op
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/class_inplace_op.py
+  - name: basics.class_instance_override
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/class_instance_override.py
+  - name: basics.class_item
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/class_item.py
+  - name: basics.class_misc
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/class_misc.py
+  - name: basics.class_new
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/class_new.py
+  - name: basics.class_notimpl
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/class_notimpl.py
+  - name: basics.class_number
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/class_number.py
+  - name: basics.class_ordereddict
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/class_ordereddict.py
+  - name: basics.class_reverse_op
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/class_reverse_op.py
+  - name: basics.class_setname_hazard
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/class_setname_hazard.py
+  - name: basics.class_staticclassmethod
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/class_staticclassmethod.py
+  - name: basics.class_store
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/class_store.py
+  - name: basics.class_store_class
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/class_store_class.py
+  - name: basics.class_str
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/class_str.py
+  - name: basics.class_super
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/class_super.py
+  - name: basics.class_super_aslocal
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/class_super_aslocal.py
+  - name: basics.class_super_closure
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/class_super_closure.py
+  - name: basics.class_super_multinherit
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/class_super_multinherit.py
+  - name: basics.class_super_object
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/class_super_object.py
+  - name: basics.class_use_other
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/class_use_other.py
+  - name: basics.closure1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/closure1.py
+  - name: basics.closure2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/closure2.py
+  - name: basics.closure_defargs
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/closure_defargs.py
+  - name: basics.closure_manyvars
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/closure_manyvars.py
+  - name: basics.closure_namedarg
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/closure_namedarg.py
+  - name: basics.compare_multi
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/compare_multi.py
+  - name: basics.comprehension1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/comprehension1.py
+  - name: basics.containment
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/containment.py
+  - name: basics.continue
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/continue.py
+  - name: basics.decorator
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/decorator.py
+  - name: basics.del_attr
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/del_attr.py
+  - name: basics.del_deref
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/del_deref.py
+  - name: basics.del_global
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/del_global.py
+  - name: basics.del_local
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/del_local.py
+  - name: basics.del_name
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/del_name.py
+  - name: basics.del_subscr
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/del_subscr.py
+  - name: basics.deque1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/deque1.py
+  - name: basics.deque2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/deque2.py
+  - name: basics.deque_micropython
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/deque_micropython.py
+  - name: basics.deque_slice
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/deque_slice.py
+  - name: basics.dict1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/dict1.py
+  - name: basics.dict2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/dict2.py
+  - name: basics.dict_clear
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/dict_clear.py
+  - name: basics.dict_construct
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/dict_construct.py
+  - name: basics.dict_copy
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/dict_copy.py
+  - name: basics.dict_del
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/dict_del.py
+  - name: basics.dict_fixed
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/dict_fixed.py
+  - name: basics.dict_from_iter
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/dict_from_iter.py
+  - name: basics.dict_fromkeys
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/dict_fromkeys.py
+  - name: basics.dict_fromkeys2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/dict_fromkeys2.py
+  - name: basics.dict_get
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/dict_get.py
+  - name: basics.dict_intern
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/dict_intern.py
+  - name: basics.dict_iterator
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/dict_iterator.py
+  - name: basics.dict_pop
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/dict_pop.py
+  - name: basics.dict_popitem
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/dict_popitem.py
+  - name: basics.dict_setdefault
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/dict_setdefault.py
+  - name: basics.dict_specialmeth
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/dict_specialmeth.py
+  - name: basics.dict_union
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/dict_union.py
+  - name: basics.dict_update
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/dict_update.py
+  - name: basics.dict_views
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/dict_views.py
+  - name: basics.equal
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/equal.py
+  - name: basics.equal_class
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/equal_class.py
+  - name: basics.errno1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/errno1.py
+  - name: basics.except_match_tuple
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/except_match_tuple.py
+  - name: basics.exception1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/exception1.py
+  - name: basics.exception_chain
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/exception_chain.py
+  - name: basics.exceptpoly
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/exceptpoly.py
+  - name: basics.exceptpoly2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/exceptpoly2.py
+  - name: basics.floordivide
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/floordivide.py
+  - name: basics.floordivide_intbig
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/floordivide_intbig.py
+  - name: basics.for1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/for1.py
+  - name: basics.for2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/for2.py
+  - name: basics.for3
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/for3.py
+  - name: basics.for_break
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/for_break.py
+  - name: basics.for_else
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/for_else.py
+  - name: basics.for_range
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/for_range.py
+  - name: basics.for_return
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/for_return.py
+  - name: basics.frozenset1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/frozenset1.py
+  - name: basics.frozenset_add
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/frozenset_add.py
+  - name: basics.frozenset_binop
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/frozenset_binop.py
+  - name: basics.frozenset_copy
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/frozenset_copy.py
+  - name: basics.frozenset_difference
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/frozenset_difference.py
+  - name: basics.frozenset_set
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/frozenset_set.py
+  - name: basics.fun1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/fun1.py
+  - name: basics.fun2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/fun2.py
+  - name: basics.fun3
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/fun3.py
+  - name: basics.fun_annotations
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/fun_annotations.py
+  - name: basics.fun_calldblstar
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/fun_calldblstar.py
+  - name: basics.fun_calldblstar2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/fun_calldblstar2.py
+  - name: basics.fun_calldblstar3
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/fun_calldblstar3.py
+  - name: basics.fun_calldblstar4
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/fun_calldblstar4.py
+  - name: basics.fun_callstar
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/fun_callstar.py
+  - name: basics.fun_callstardblstar
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/fun_callstardblstar.py
+  - name: basics.fun_defargs
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/fun_defargs.py
+  - name: basics.fun_defargs2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/fun_defargs2.py
+  - name: basics.fun_error
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/fun_error.py
+  - name: basics.fun_error2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/fun_error2.py
+  - name: basics.fun_globals
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/fun_globals.py
+  - name: basics.fun_kwargs
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/fun_kwargs.py
+  - name: basics.fun_kwonly
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/fun_kwonly.py
+  - name: basics.fun_kwonlydef
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/fun_kwonlydef.py
+  - name: basics.fun_kwvarargs
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/fun_kwvarargs.py
+  - name: basics.fun_largestate
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/fun_largestate.py
+  - name: basics.fun_name
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/fun_name.py
+  - name: basics.fun_str
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/fun_str.py
+  - name: basics.fun_varargs
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/fun_varargs.py
+  - name: basics.gc1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/gc1.py
+  - name: basics.gen_yield_from
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/gen_yield_from.py
+  - name: basics.gen_yield_from_close
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/gen_yield_from_close.py
+  - name: basics.gen_yield_from_ducktype
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/gen_yield_from_ducktype.py
+  - name: basics.gen_yield_from_exc
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/gen_yield_from_exc.py
+  - name: basics.gen_yield_from_executing
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/gen_yield_from_executing.py
+  - name: basics.gen_yield_from_iter
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/gen_yield_from_iter.py
+  - name: basics.gen_yield_from_pending
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/gen_yield_from_pending.py
+  - name: basics.gen_yield_from_send
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/gen_yield_from_send.py
+  - name: basics.gen_yield_from_stopped
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/gen_yield_from_stopped.py
+  - name: basics.gen_yield_from_throw
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/gen_yield_from_throw.py
+  - name: basics.gen_yield_from_throw2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/gen_yield_from_throw2.py
+  - name: basics.gen_yield_from_throw3
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/gen_yield_from_throw3.py
+  - name: basics.gen_yield_from_throw_repeat
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/gen_yield_from_throw_repeat.py
+  - name: basics.generator1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/generator1.py
+  - name: basics.generator2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/generator2.py
+  - name: basics.generator_args
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/generator_args.py
+  - name: basics.generator_close
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/generator_close.py
+  - name: basics.generator_closure
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/generator_closure.py
+  - name: basics.generator_exc
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/generator_exc.py
+  - name: basics.generator_name
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/generator_name.py
+  - name: basics.generator_pend_throw
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/generator_pend_throw.py
+  - name: basics.generator_pep479
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/generator_pep479.py
+  - name: basics.generator_return
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/generator_return.py
+  - name: basics.generator_send
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/generator_send.py
+  - name: basics.generator_throw
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/generator_throw.py
+  - name: basics.generator_throw_multi_arg
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/generator_throw_multi_arg.py
+  - name: basics.generator_throw_nested
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/generator_throw_nested.py
+  - name: basics.generator_throw_repeat
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/generator_throw_repeat.py
+  - name: basics.getattr
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/getattr.py
+  - name: basics.getitem
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/getitem.py
+  - name: basics.globals_del
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/globals_del.py
+  - name: basics.ifcond
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/ifcond.py
+  - name: basics.ifexpr
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/ifexpr.py
+  - name: basics.int1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/int1.py
+  - name: basics.int2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/int2.py
+  - name: basics.int_64_basics
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/int_64_basics.py
+  - name: basics.int_big1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/int_big1.py
+  - name: basics.int_big_add
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/int_big_add.py
+  - name: basics.int_big_and
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/int_big_and.py
+  - name: basics.int_big_and2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/int_big_and2.py
+  - name: basics.int_big_and3
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/int_big_and3.py
+  - name: basics.int_big_cmp
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/int_big_cmp.py
+  - name: basics.int_big_div
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/int_big_div.py
+  - name: basics.int_big_error
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/int_big_error.py
+  - name: basics.int_big_lshift
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/int_big_lshift.py
+  - name: basics.int_big_mod
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/int_big_mod.py
+  - name: basics.int_big_mul
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/int_big_mul.py
+  - name: basics.int_big_or
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/int_big_or.py
+  - name: basics.int_big_or2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/int_big_or2.py
+  - name: basics.int_big_or3
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/int_big_or3.py
+  - name: basics.int_big_pow
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/int_big_pow.py
+  - name: basics.int_big_rshift
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/int_big_rshift.py
+  - name: basics.int_big_to_small
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/int_big_to_small.py
+  - name: basics.int_big_unary
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/int_big_unary.py
+  - name: basics.int_big_xor
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/int_big_xor.py
+  - name: basics.int_big_xor2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/int_big_xor2.py
+  - name: basics.int_big_xor3
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/int_big_xor3.py
+  - name: basics.int_big_zeroone
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/int_big_zeroone.py
+  - name: basics.int_bytes
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/int_bytes.py
+  - name: basics.int_bytes_int64
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/int_bytes_int64.py
+  - name: basics.int_bytes_intbig
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/int_bytes_intbig.py
+  - name: basics.int_constfolding
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/int_constfolding.py
+  - name: basics.int_constfolding_intbig
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/int_constfolding_intbig.py
+  - name: basics.int_divmod
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/int_divmod.py
+  - name: basics.int_divmod_intbig
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/int_divmod_intbig.py
+  - name: basics.int_divzero
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/int_divzero.py
+  - name: basics.int_intbig
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/int_intbig.py
+  - name: basics.int_parse
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/int_parse.py
+  - name: basics.int_small
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/int_small.py
+  - name: basics.io_bytesio_cow
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/io_bytesio_cow.py
+  - name: basics.io_bytesio_ext
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/io_bytesio_ext.py
+  - name: basics.io_bytesio_ext2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/io_bytesio_ext2.py
+  - name: basics.io_iobase
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/io_iobase.py
+  - name: basics.io_stringio1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/io_stringio1.py
+  - name: basics.io_stringio_base
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/io_stringio_base.py
+  - name: basics.io_stringio_with
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/io_stringio_with.py
+  - name: basics.io_write_ext
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/io_write_ext.py
+  - name: basics.is_isnot
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/is_isnot.py
+  - name: basics.is_isnot_literal
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/is_isnot_literal.py
+  - name: basics.iter0
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/iter0.py
+  - name: basics.iter1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/iter1.py
+  - name: basics.iter2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/iter2.py
+  - name: basics.iter_of_iter
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/iter_of_iter.py
+  - name: basics.lambda1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/lambda1.py
+  - name: basics.lambda_defargs
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/lambda_defargs.py
+  - name: basics.lexer
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/lexer.py
+  - name: basics.list1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/list1.py
+  - name: basics.list_clear
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/list_clear.py
+  - name: basics.list_compare
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/list_compare.py
+  - name: basics.list_copy
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/list_copy.py
+  - name: basics.list_count
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/list_count.py
+  - name: basics.list_extend
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/list_extend.py
+  - name: basics.list_index
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/list_index.py
+  - name: basics.list_insert
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/list_insert.py
+  - name: basics.list_mult
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/list_mult.py
+  - name: basics.list_pop
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/list_pop.py
+  - name: basics.list_remove
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/list_remove.py
+  - name: basics.list_reverse
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/list_reverse.py
+  - name: basics.list_slice
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/list_slice.py
+  - name: basics.list_slice_3arg
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/list_slice_3arg.py
+  - name: basics.list_slice_assign
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/list_slice_assign.py
+  - name: basics.list_slice_assign_grow
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/list_slice_assign_grow.py
+  - name: basics.list_sort
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/list_sort.py
+  - name: basics.list_sum
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/list_sum.py
+  - name: basics.logic_constfolding
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/logic_constfolding.py
+  - name: basics.memoryerror
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/memoryerror.py
+  - name: basics.memoryview1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/memoryview1.py
+  - name: basics.memoryview2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/memoryview2.py
+  - name: basics.memoryview_gc
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/memoryview_gc.py
+  - name: basics.memoryview_intbig
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/memoryview_intbig.py
+  - name: basics.memoryview_slice_assign
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/memoryview_slice_assign.py
+  - name: basics.memoryview_slice_size
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/memoryview_slice_size.py
+  - name: basics.module1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/module1.py
+  - name: basics.module2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/module2.py
+  - name: basics.module_dict
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/module_dict.py
+  - name: basics.namedtuple1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/namedtuple1.py
+  - name: basics.object1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/object1.py
+  - name: basics.object_dict
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/object_dict.py
+  - name: basics.object_new
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/object_new.py
+  - name: basics.op_error
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/op_error.py
+  - name: basics.op_error_bytearray
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/op_error_bytearray.py
+  - name: basics.op_error_intbig
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/op_error_intbig.py
+  - name: basics.op_error_literal
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/op_error_literal.py
+  - name: basics.op_error_memoryview
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/op_error_memoryview.py
+  - name: basics.op_precedence
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/op_precedence.py
+  - name: basics.ordereddict1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/ordereddict1.py
+  - name: basics.ordereddict_eq
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/ordereddict_eq.py
+  - name: basics.parser
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/parser.py
+  - name: basics.python34
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/python34.py
+  - name: basics.python36
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/python36.py
+  - name: basics.return1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/return1.py
+  - name: basics.scope
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/scope.py
+  - name: basics.scope_class
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/scope_class.py
+  - name: basics.scope_implicit
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/scope_implicit.py
+  - name: basics.self_type_check
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/self_type_check.py
+  - name: basics.seq_unpack
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/seq_unpack.py
+  - name: basics.set_add
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/set_add.py
+  - name: basics.set_basic
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/set_basic.py
+  - name: basics.set_binop
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/set_binop.py
+  - name: basics.set_clear
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/set_clear.py
+  - name: basics.set_comprehension
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/set_comprehension.py
+  - name: basics.set_containment
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/set_containment.py
+  - name: basics.set_copy
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/set_copy.py
+  - name: basics.set_difference
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/set_difference.py
+  - name: basics.set_discard
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/set_discard.py
+  - name: basics.set_intersection
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/set_intersection.py
+  - name: basics.set_isdisjoint
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/set_isdisjoint.py
+  - name: basics.set_isfooset
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/set_isfooset.py
+  - name: basics.set_iter
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/set_iter.py
+  - name: basics.set_iter_of_iter
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/set_iter_of_iter.py
+  - name: basics.set_pop
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/set_pop.py
+  - name: basics.set_remove
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/set_remove.py
+  - name: basics.set_specialmeth
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/set_specialmeth.py
+  - name: basics.set_symmetric_difference
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/set_symmetric_difference.py
+  - name: basics.set_type
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/set_type.py
+  - name: basics.set_union
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/set_union.py
+  - name: basics.set_unop
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/set_unop.py
+  - name: basics.set_update
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/set_update.py
+  - name: basics.slice_attrs
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/slice_attrs.py
+  - name: basics.slice_indices
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/slice_indices.py
+  - name: basics.slice_intbig
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/slice_intbig.py
+  - name: basics.slice_op
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/slice_op.py
+  - name: basics.slice_optimise
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/slice_optimise.py
+  - name: basics.slots_bool_len
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/slots_bool_len.py
+  - name: basics.special_comparisons
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/special_comparisons.py
+  - name: basics.special_comparisons2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/special_comparisons2.py
+  - name: basics.special_methods
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/special_methods.py
+  - name: basics.special_methods2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/special_methods2.py
+  - name: basics.special_methods_intbig
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/special_methods_intbig.py
+  - name: basics.stopiteration
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/stopiteration.py
+  - name: basics.string1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/string1.py
+  - name: basics.string_center
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/string_center.py
+  - name: basics.string_compare
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/string_compare.py
+  - name: basics.string_count
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/string_count.py
+  - name: basics.string_cr_conversion
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/string_cr_conversion.py
+  - name: basics.string_crlf_conversion
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/string_crlf_conversion.py
+  - name: basics.string_endswith
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/string_endswith.py
+  - name: basics.string_escape
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/string_escape.py
+  - name: basics.string_escape_invalid
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/string_escape_invalid.py
+  - name: basics.string_find
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/string_find.py
+  - name: basics.string_format
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/string_format.py
+  - name: basics.string_format2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/string_format2.py
+  - name: basics.string_format_cp310
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/string_format_cp310.py
+  - name: basics.string_format_error
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/string_format_error.py
+  - name: basics.string_format_intbig
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/string_format_intbig.py
+  - name: basics.string_format_modulo
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/string_format_modulo.py
+  - name: basics.string_format_modulo_int
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/string_format_modulo_int.py
+  - name: basics.string_fstring
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/string_fstring.py
+  - name: basics.string_fstring_debug
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/string_fstring_debug.py
+  - name: basics.string_fstring_invalid
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/string_fstring_invalid.py
+  - name: basics.string_index
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/string_index.py
+  - name: basics.string_istest
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/string_istest.py
+  - name: basics.string_join
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/string_join.py
+  - name: basics.string_large
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/string_large.py
+  - name: basics.string_mult
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/string_mult.py
+  - name: basics.string_partition
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/string_partition.py
+  - name: basics.string_replace
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/string_replace.py
+  - name: basics.string_repr
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/string_repr.py
+  - name: basics.string_rfind
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/string_rfind.py
+  - name: basics.string_rindex
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/string_rindex.py
+  - name: basics.string_rpartition
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/string_rpartition.py
+  - name: basics.string_rsplit
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/string_rsplit.py
+  - name: basics.string_slice
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/string_slice.py
+  - name: basics.string_split
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/string_split.py
+  - name: basics.string_splitlines
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/string_splitlines.py
+  - name: basics.string_startswith
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/string_startswith.py
+  - name: basics.string_strip
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/string_strip.py
+  - name: basics.struct1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/struct1.py
+  - name: basics.struct1_intbig
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/struct1_intbig.py
+  - name: basics.struct2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/struct2.py
+  - name: basics.struct_endian
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/struct_endian.py
+  - name: basics.struct_micropython
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/struct_micropython.py
+  - name: basics.subclass_classmethod
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/subclass_classmethod.py
+  - name: basics.subclass_native1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/subclass_native1.py
+  - name: basics.subclass_native2_list
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/subclass_native2_list.py
+  - name: basics.subclass_native2_tuple
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/subclass_native2_tuple.py
+  - name: basics.subclass_native3
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/subclass_native3.py
+  - name: basics.subclass_native4
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/subclass_native4.py
+  - name: basics.subclass_native5
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/subclass_native5.py
+  - name: basics.subclass_native_buffer
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/subclass_native_buffer.py
+  - name: basics.subclass_native_call
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/subclass_native_call.py
+  - name: basics.subclass_native_cmp
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/subclass_native_cmp.py
+  - name: basics.subclass_native_containment
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/subclass_native_containment.py
+  - name: basics.subclass_native_exc_new
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/subclass_native_exc_new.py
+  - name: basics.subclass_native_init
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/subclass_native_init.py
+  - name: basics.subclass_native_iter
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/subclass_native_iter.py
+  - name: basics.subclass_native_specmeth
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/subclass_native_specmeth.py
+  - name: basics.subclass_native_str
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/subclass_native_str.py
+  - name: basics.syntaxerror
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/syntaxerror.py
+  - name: basics.syntaxerror_return
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/syntaxerror_return.py
+  - name: basics.sys1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/sys1.py
+  - name: basics.sys_exit
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/sys_exit.py
+  - name: basics.sys_path
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/sys_path.py
+  - name: basics.sys_stdio
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/sys_stdio.py
+  - name: basics.sys_stdio_buffer
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/sys_stdio_buffer.py
+  - name: basics.true_value
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/true_value.py
+  - name: basics.try1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/try1.py
+  - name: basics.try2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/try2.py
+  - name: basics.try3
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/try3.py
+  - name: basics.try4
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/try4.py
+  - name: basics.try_as_var
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/try_as_var.py
+  - name: basics.try_continue
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/try_continue.py
+  - name: basics.try_else
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/try_else.py
+  - name: basics.try_else_finally
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/try_else_finally.py
+  - name: basics.try_error
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/try_error.py
+  - name: basics.try_except_break
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/try_except_break.py
+  - name: basics.try_finally1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/try_finally1.py
+  - name: basics.try_finally2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/try_finally2.py
+  - name: basics.try_finally_break
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/try_finally_break.py
+  - name: basics.try_finally_break2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/try_finally_break2.py
+  - name: basics.try_finally_continue
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/try_finally_continue.py
+  - name: basics.try_finally_loops
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/try_finally_loops.py
+  - name: basics.try_finally_return
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/try_finally_return.py
+  - name: basics.try_finally_return2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/try_finally_return2.py
+  - name: basics.try_finally_return3
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/try_finally_return3.py
+  - name: basics.try_finally_return4
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/try_finally_return4.py
+  - name: basics.try_finally_return5
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/try_finally_return5.py
+  - name: basics.try_reraise
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/try_reraise.py
+  - name: basics.try_reraise2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/try_reraise2.py
+  - name: basics.try_return
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/try_return.py
+  - name: basics.tuple1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/tuple1.py
+  - name: basics.tuple_compare
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/tuple_compare.py
+  - name: basics.tuple_count
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/tuple_count.py
+  - name: basics.tuple_index
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/tuple_index.py
+  - name: basics.tuple_mult
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/tuple_mult.py
+  - name: basics.tuple_slice
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/tuple_slice.py
+  - name: basics.types1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/types1.py
+  - name: basics.types2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/types2.py
+  - name: basics.unary_op
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/unary_op.py
+  - name: basics.unboundlocal
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/unboundlocal.py
+  - name: basics.unpack1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/unpack1.py
+  - name: basics.while1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/while1.py
+  - name: basics.while_cond
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/while_cond.py
+  - name: basics.while_nest_exc
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/while_nest_exc.py
+  - name: basics.with1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/with1.py
+  - name: basics.with_break
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/with_break.py
+  - name: basics.with_continue
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/with_continue.py
+  - name: basics.with_raise
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/with_raise.py
+  - name: basics.with_return
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/basics/with_return.py
+  - name: extmod.asyncio_as_uasyncio
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/asyncio_as_uasyncio.py
+  - name: extmod.asyncio_await_return
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/asyncio_await_return.py
+  - name: extmod.asyncio_basic
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/asyncio_basic.py
+  - name: extmod.asyncio_basic2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/asyncio_basic2.py
+  - name: extmod.asyncio_cancel_fair
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/asyncio_cancel_fair.py
+  - name: extmod.asyncio_cancel_fair2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/asyncio_cancel_fair2.py
+  - name: extmod.asyncio_cancel_self
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/asyncio_cancel_self.py
+  - name: extmod.asyncio_cancel_task
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/asyncio_cancel_task.py
+  - name: extmod.asyncio_current_task
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/asyncio_current_task.py
+  - name: extmod.asyncio_event
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/asyncio_event.py
+  - name: extmod.asyncio_event_fair
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/asyncio_event_fair.py
+  - name: extmod.asyncio_event_queue
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/asyncio_event_queue.py
+  - name: extmod.asyncio_exception
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/asyncio_exception.py
+  - name: extmod.asyncio_fair
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/asyncio_fair.py
+  - name: extmod.asyncio_gather
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/asyncio_gather.py
+  - name: extmod.asyncio_gather_notimpl
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/asyncio_gather_notimpl.py
+  - name: extmod.asyncio_get_event_loop
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/asyncio_get_event_loop.py
+  - name: extmod.asyncio_heaplock
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/asyncio_heaplock.py
+  - name: extmod.asyncio_iterator_event
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/asyncio_iterator_event.py
+  - name: extmod.asyncio_lock
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/asyncio_lock.py
+  - name: extmod.asyncio_lock_cancel
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/asyncio_lock_cancel.py
+  - name: extmod.asyncio_loop_stop
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/asyncio_loop_stop.py
+  - name: extmod.asyncio_micropython
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/asyncio_micropython.py
+  - name: extmod.asyncio_new_event_loop
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/asyncio_new_event_loop.py
+  - name: extmod.asyncio_task_done
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/asyncio_task_done.py
+  - name: extmod.asyncio_threadsafeflag
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/asyncio_threadsafeflag.py
+  - name: extmod.asyncio_wait_for
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/asyncio_wait_for.py
+  - name: extmod.asyncio_wait_for_fwd
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/asyncio_wait_for_fwd.py
+  - name: extmod.asyncio_wait_for_linked_task
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/asyncio_wait_for_linked_task.py
+  - name: extmod.asyncio_wait_task
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/asyncio_wait_task.py
+  - name: extmod.binascii_a2b_base64
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/binascii_a2b_base64.py
+  - name: extmod.binascii_b2a_base64
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/binascii_b2a_base64.py
+  - name: extmod.binascii_crc32
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/binascii_crc32.py
+  - name: extmod.binascii_hexlify
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/binascii_hexlify.py
+  - name: extmod.binascii_unhexlify
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/binascii_unhexlify.py
+  - name: extmod.cryptolib_aes128_cbc
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/cryptolib_aes128_cbc.py
+  - name: extmod.cryptolib_aes128_ecb
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/cryptolib_aes128_ecb.py
+  - name: extmod.cryptolib_aes128_ecb_enc
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/cryptolib_aes128_ecb_enc.py
+  - name: extmod.cryptolib_aes128_ecb_inpl
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/cryptolib_aes128_ecb_inpl.py
+  - name: extmod.cryptolib_aes128_ecb_into
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/cryptolib_aes128_ecb_into.py
+  - name: extmod.cryptolib_aes256_cbc
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/cryptolib_aes256_cbc.py
+  - name: extmod.cryptolib_aes256_ecb
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/cryptolib_aes256_ecb.py
+  - name: extmod.framebuf1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/framebuf1.py
+  - name: extmod.framebuf16
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/framebuf16.py
+  - name: extmod.framebuf2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/framebuf2.py
+  - name: extmod.framebuf4
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/framebuf4.py
+  - name: extmod.framebuf8
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/framebuf8.py
+  - name: extmod.framebuf_blit
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/framebuf_blit.py
+  - name: extmod.framebuf_bounds
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/framebuf_bounds.py
+  - name: extmod.framebuf_ellipse
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/framebuf_ellipse.py
+  - name: extmod.framebuf_palette
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/framebuf_palette.py
+  - name: extmod.framebuf_scroll
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/framebuf_scroll.py
+  - name: extmod.framebuf_subclass
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/framebuf_subclass.py
+  - name: extmod.hashlib_final
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/hashlib_final.py
+  - name: extmod.hashlib_md5
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/hashlib_md5.py
+  - name: extmod.hashlib_sha1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/hashlib_sha1.py
+  - name: extmod.hashlib_sha256
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/hashlib_sha256.py
+  - name: extmod.heapq1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/heapq1.py
+  - name: extmod.json_dump
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/json_dump.py
+  - name: extmod.json_dump_iobase
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/json_dump_iobase.py
+  - name: extmod.json_dump_separators
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/json_dump_separators.py
+  - name: extmod.json_dumps
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/json_dumps.py
+  - name: extmod.json_dumps_extra
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/json_dumps_extra.py
+  - name: extmod.json_dumps_float
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/json_dumps_float.py
+  - name: extmod.json_dumps_ordereddict
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/json_dumps_ordereddict.py
+  - name: extmod.json_dumps_separators
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/json_dumps_separators.py
+  - name: extmod.json_load
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/json_load.py
+  - name: extmod.json_loads_bytes
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/json_loads_bytes.py
+  - name: extmod.json_loads_float
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/json_loads_float.py
+  - name: extmod.json_loads_int_64
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/json_loads_int_64.py
+  - name: extmod.machine_pinbase
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/machine_pinbase.py
+  - name: extmod.machine_pulse
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/machine_pulse.py
+  - name: extmod.machine_signal
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/machine_signal.py
+  - name: extmod.platform_basic
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/platform_basic.py
+  - name: extmod.re1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/re1.py
+  - name: extmod.re_error
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/re_error.py
+  - name: extmod.re_group
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/re_group.py
+  - name: extmod.re_limit
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/re_limit.py
+  - name: extmod.re_split
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/re_split.py
+  - name: extmod.re_split_empty
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/re_split_empty.py
+  - name: extmod.re_split_notimpl
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/re_split_notimpl.py
+  - name: extmod.re_stack_overflow
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/re_stack_overflow.py
+  - name: extmod.re_sub
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/re_sub.py
+  - name: extmod.re_sub_unmatched
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/re_sub_unmatched.py
+  - name: extmod.ssl_basic
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/ssl_basic.py
+  - name: extmod.ssl_keycert
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/ssl_keycert.py
+  - name: extmod.ssl_sslcontext
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/ssl_sslcontext.py
+  - name: extmod.ssl_sslcontext_verify_mode
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/ssl_sslcontext_verify_mode.py
+  - name: extmod.ticks_add
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/ticks_add.py
+  - name: extmod.ticks_diff
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/ticks_diff.py
+  - name: extmod.time_mktime
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/time_mktime.py
+  - name: extmod.time_ms_us
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/time_ms_us.py
+  - name: extmod.time_res
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/time_res.py
+  - name: extmod.time_time_ns
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/time_time_ns.py
+  - name: extmod.tls_sslcontext_micropython
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/tls_sslcontext_micropython.py
+  - name: extmod.uctypes_32bit_intbig
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/uctypes_32bit_intbig.py
+  - name: extmod.uctypes_addressof
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/uctypes_addressof.py
+  - name: extmod.uctypes_array_assign_le
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/uctypes_array_assign_le.py
+  - name: extmod.uctypes_array_load_store
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/uctypes_array_load_store.py
+  - name: extmod.uctypes_bytearray
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/uctypes_bytearray.py
+  - name: extmod.uctypes_byteat
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/uctypes_byteat.py
+  - name: extmod.uctypes_error
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/uctypes_error.py
+  - name: extmod.uctypes_le
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/uctypes_le.py
+  - name: extmod.uctypes_le_float
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/uctypes_le_float.py
+  - name: extmod.uctypes_native_float
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/uctypes_native_float.py
+  - name: extmod.uctypes_native_le
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/uctypes_native_le.py
+  - name: extmod.uctypes_print
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/uctypes_print.py
+  - name: extmod.uctypes_ptr_le
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/uctypes_ptr_le.py
+  - name: extmod.uctypes_ptr_native_le
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/uctypes_ptr_native_le.py
+  - name: extmod.uctypes_sizeof
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/uctypes_sizeof.py
+  - name: extmod.uctypes_sizeof_float
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/uctypes_sizeof_float.py
+  - name: extmod.uctypes_sizeof_layout
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/uctypes_sizeof_layout.py
+  - name: extmod.uctypes_sizeof_native
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/uctypes_sizeof_native.py
+  - name: extmod.uctypes_sizeof_od
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/uctypes_sizeof_od.py
+  - name: extmod.vfs_basic
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/vfs_basic.py
+  - name: extmod.vfs_lfs_superblock
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/vfs_lfs_superblock.py
+  - name: extmod.vfs_mountinfo
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/vfs_mountinfo.py
+  - name: extmod.vfs_posix
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/vfs_posix.py
+  - name: extmod.vfs_posix_ilistdir_del
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/vfs_posix_ilistdir_del.py
+  - name: extmod.vfs_posix_ilistdir_filter
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/vfs_posix_ilistdir_filter.py
+  - name: extmod.vfs_posix_readonly
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/vfs_posix_readonly.py
+  - name: extmod.vfs_userfs
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/vfs_userfs.py
+  - name: extmod.websocket_basic
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/extmod/websocket_basic.py
+  - name: float.array_construct
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/array_construct.py
+  - name: float.builtin_float_abs
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/builtin_float_abs.py
+  - name: float.builtin_float_hash
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/builtin_float_hash.py
+  - name: float.builtin_float_minmax
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/builtin_float_minmax.py
+  - name: float.builtin_float_pow
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/builtin_float_pow.py
+  - name: float.builtin_float_round_intbig
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/builtin_float_round_intbig.py
+  - name: float.bytearray_construct_endian
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/bytearray_construct_endian.py
+  - name: float.bytes_construct_endian
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/bytes_construct_endian.py
+  - name: float.cmath_dunder
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/cmath_dunder.py
+  - name: float.cmath_fun
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/cmath_fun.py
+  - name: float.cmath_fun_special
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/cmath_fun_special.py
+  - name: float.complex1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/complex1.py
+  - name: float.complex1_intbig
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/complex1_intbig.py
+  - name: float.complex_dunder
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/complex_dunder.py
+  - name: float.complex_reverse_op
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/complex_reverse_op.py
+  - name: float.complex_special_methods
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/complex_special_methods.py
+  - name: float.float1
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/float1.py
+  - name: float.float2int_doubleprec_intbig
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/float2int_doubleprec_intbig.py
+  - name: float.float2int_fp30_intbig
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/float2int_fp30_intbig.py
+  - name: float.float2int_intbig
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/float2int_intbig.py
+  - name: float.float_array
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/float_array.py
+  - name: float.float_compare
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/float_compare.py
+  - name: float.float_divmod_relaxed
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/float_divmod_relaxed.py
+  - name: float.float_dunder
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/float_dunder.py
+  - name: float.float_format
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/float_format.py
+  - name: float.float_format_ftoe
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/float_format_ftoe.py
+  - name: float.float_format_ints
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/float_format_ints.py
+  - name: float.float_format_ints_doubleprec
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/float_format_ints_doubleprec.py
+  - name: float.float_format_ints_power10
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/float_format_ints_power10.py
+  - name: float.float_parse
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/float_parse.py
+  - name: float.float_struct
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/float_struct.py
+  - name: float.float_struct_e
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/float_struct_e.py
+  - name: float.float_struct_e_doubleprec
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/float_struct_e_doubleprec.py
+  - name: float.float_struct_e_fp30
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/float_struct_e_fp30.py
+  - name: float.int_64_float
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/int_64_float.py
+  - name: float.int_big_float
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/int_big_float.py
+  - name: float.int_divzero
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/int_divzero.py
+  - name: float.int_power
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/int_power.py
+  - name: float.lexer
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/lexer.py
+  - name: float.list_index
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/list_index.py
+  - name: float.math_constants
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/math_constants.py
+  - name: float.math_constants_extra
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/math_constants_extra.py
+  - name: float.math_domain_python311
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/math_domain_python311.py
+  - name: float.math_domain_special
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/math_domain_special.py
+  - name: float.math_dunder
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/math_dunder.py
+  - name: float.math_factorial_intbig
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/math_factorial_intbig.py
+  - name: float.math_fun_bool
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/math_fun_bool.py
+  - name: float.math_fun_int
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/math_fun_int.py
+  - name: float.math_fun_intbig
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/math_fun_intbig.py
+  - name: float.math_isclose
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/math_isclose.py
+  - name: float.python36
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/python36.py
+  - name: float.string_format
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/string_format.py
+  - name: float.string_format2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/string_format2.py
+  - name: float.string_format_modulo
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/string_format_modulo.py
+  - name: float.string_format_modulo2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/string_format_modulo2.py
+  - name: float.string_format_modulo2_intbig
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/string_format_modulo2_intbig.py
+  - name: float.string_format_modulo3
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/string_format_modulo3.py
+  - name: float.true_value
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/true_value.py
+  - name: float.types
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/float/types.py
+  - name: io.builtin_print_file
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/io/builtin_print_file.py
+  - name: io.file_stdio
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/io/file_stdio.py
+  - name: io.file_stdio2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/io/file_stdio2.py
+  - name: io.open_append
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/io/open_append.py
+  - name: io.open_plus
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/io/open_plus.py
+  - name: micropython.builtin_execfile
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/builtin_execfile.py
+  - name: micropython.const
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/const.py
+  - name: micropython.const2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/const2.py
+  - name: micropython.const_alltypes
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/const_alltypes.py
+  - name: micropython.const_error
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/const_error.py
+  - name: micropython.const_float
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/const_float.py
+  - name: micropython.const_intbig
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/const_intbig.py
+  - name: micropython.const_math
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/const_math.py
+  - name: micropython.decorator
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/decorator.py
+  - name: micropython.decorator_error
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/decorator_error.py
+  - name: micropython.emg_exc
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/emg_exc.py
+  - name: micropython.extreme_exc
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/extreme_exc.py
+  - name: micropython.heap_lock
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/heap_lock.py
+  - name: micropython.heapalloc
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/heapalloc.py
+  - name: micropython.heapalloc_bytesio
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/heapalloc_bytesio.py
+  - name: micropython.heapalloc_bytesio2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/heapalloc_bytesio2.py
+  - name: micropython.heapalloc_exc_compressed
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/heapalloc_exc_compressed.py
+  - name: micropython.heapalloc_exc_raise
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/heapalloc_exc_raise.py
+  - name: micropython.heapalloc_fail_bytearray
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/heapalloc_fail_bytearray.py
+  - name: micropython.heapalloc_fail_dict
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/heapalloc_fail_dict.py
+  - name: micropython.heapalloc_fail_list
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/heapalloc_fail_list.py
+  - name: micropython.heapalloc_fail_memoryview
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/heapalloc_fail_memoryview.py
+  - name: micropython.heapalloc_fail_set
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/heapalloc_fail_set.py
+  - name: micropython.heapalloc_fail_tuple
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/heapalloc_fail_tuple.py
+  - name: micropython.heapalloc_inst_call
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/heapalloc_inst_call.py
+  - name: micropython.heapalloc_int_from_bytes
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/heapalloc_int_from_bytes.py
+  - name: micropython.heapalloc_iter
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/heapalloc_iter.py
+  - name: micropython.heapalloc_slice
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/heapalloc_slice.py
+  - name: micropython.heapalloc_str
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/heapalloc_str.py
+  - name: micropython.heapalloc_super
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/heapalloc_super.py
+  - name: micropython.heapalloc_traceback
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/heapalloc_traceback.py
+  - name: micropython.heapalloc_yield_from
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/heapalloc_yield_from.py
+  - name: micropython.import_mpy_invalid
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/import_mpy_invalid.py
+  - name: micropython.import_mpy_native
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/import_mpy_native.py
+  - name: micropython.import_mpy_native_gc
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/import_mpy_native_gc.py
+  - name: micropython.kbd_intr
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/kbd_intr.py
+  - name: micropython.native_closure
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/native_closure.py
+  - name: micropython.native_const
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/native_const.py
+  - name: micropython.native_const_intbig
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/native_const_intbig.py
+  - name: micropython.native_for
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/native_for.py
+  - name: micropython.native_fun_attrs
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/native_fun_attrs.py
+  - name: micropython.native_gen
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/native_gen.py
+  - name: micropython.native_misc
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/native_misc.py
+  - name: micropython.native_try
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/native_try.py
+  - name: micropython.native_try_deep
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/native_try_deep.py
+  - name: micropython.native_while
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/native_while.py
+  - name: micropython.native_with
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/native_with.py
+  - name: micropython.opt_level
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/opt_level.py
+  - name: micropython.opt_level_lineno
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/opt_level_lineno.py
+  - name: micropython.ringio
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/ringio.py
+  - name: micropython.ringio_async
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/ringio_async.py
+  - name: micropython.schedule
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/schedule.py
+  - name: micropython.stack_use
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/stack_use.py
+  - name: micropython.viper_addr
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/viper_addr.py
+  - name: micropython.viper_args
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/viper_args.py
+  - name: micropython.viper_binop_arith
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/viper_binop_arith.py
+  - name: micropython.viper_binop_arith_uint
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/viper_binop_arith_uint.py
+  - name: micropython.viper_binop_bitwise_uint
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/viper_binop_bitwise_uint.py
+  - name: micropython.viper_binop_comp
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/viper_binop_comp.py
+  - name: micropython.viper_binop_comp_imm
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/viper_binop_comp_imm.py
+  - name: micropython.viper_binop_comp_uint
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/viper_binop_comp_uint.py
+  - name: micropython.viper_binop_divmod
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/viper_binop_divmod.py
+  - name: micropython.viper_binop_multi_comp
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/viper_binop_multi_comp.py
+  - name: micropython.viper_cond
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/viper_cond.py
+  - name: micropython.viper_const
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/viper_const.py
+  - name: micropython.viper_const_intbig
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/viper_const_intbig.py
+  - name: micropython.viper_error
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/viper_error.py
+  - name: micropython.viper_globals
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/viper_globals.py
+  - name: micropython.viper_import
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/viper_import.py
+  - name: micropython.viper_misc
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/viper_misc.py
+  - name: micropython.viper_misc2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/viper_misc2.py
+  - name: micropython.viper_misc3
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/viper_misc3.py
+  - name: micropython.viper_misc_intbig
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/viper_misc_intbig.py
+  - name: micropython.viper_ptr16_load
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/viper_ptr16_load.py
+  - name: micropython.viper_ptr16_load_boundary
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/viper_ptr16_load_boundary.py
+  - name: micropython.viper_ptr16_store
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/viper_ptr16_store.py
+  - name: micropython.viper_ptr32_load
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/viper_ptr32_load.py
+  - name: micropython.viper_ptr32_load_boundary
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/viper_ptr32_load_boundary.py
+  - name: micropython.viper_ptr32_store
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/viper_ptr32_store.py
+  - name: micropython.viper_ptr8_load
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/viper_ptr8_load.py
+  - name: micropython.viper_ptr8_load_boundary
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/viper_ptr8_load_boundary.py
+  - name: micropython.viper_ptr8_store
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/viper_ptr8_store.py
+  - name: micropython.viper_storeattr
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/viper_storeattr.py
+  - name: micropython.viper_subscr
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/viper_subscr.py
+  - name: micropython.viper_subscr_multi
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/viper_subscr_multi.py
+  - name: micropython.viper_try
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/viper_try.py
+  - name: micropython.viper_types
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/viper_types.py
+  - name: micropython.viper_unop
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/viper_unop.py
+  - name: micropython.viper_with
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/micropython/viper_with.py
+  - name: misc.features
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/misc/features.py
+  - name: misc.non_compliant
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/misc/non_compliant.py
+  - name: misc.non_compliant_lexer
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/misc/non_compliant_lexer.py
+  - name: misc.print_exception
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/misc/print_exception.py
+  - name: misc.sys_atexit
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/misc/sys_atexit.py
+  - name: misc.sys_exc_info
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/misc/sys_exc_info.py
+  - name: unicode.unicode
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/unicode/unicode.py
+  - name: unicode.unicode_chr
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/unicode/unicode_chr.py
+  - name: unicode.unicode_id
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/unicode/unicode_id.py
+  - name: unicode.unicode_index
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/unicode/unicode_index.py
+  - name: unicode.unicode_iter
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/unicode/unicode_iter.py
+  - name: unicode.unicode_ord
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/unicode/unicode_ord.py
+  - name: unicode.unicode_pos
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/unicode/unicode_pos.py
+  - name: unicode.unicode_slice
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/unicode/unicode_slice.py
+  - name: unicode.unicode_str_format
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/unicode/unicode_str_format.py
+  - name: unicode.unicode_str_modulo
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/unicode/unicode_str_modulo.py
+  - name: unicode.unicode_subscr
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/unicode/unicode_subscr.py
+  - name: unix.time_mktime_localtime
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/unix/time_mktime_localtime.py
+  - name: import.builtin_import
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/import/builtin_import.py
+  - name: import.gen_context
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/import/gen_context.py
+    - file: /usr/test/micropython/import/gen_context2.py
+  - name: import.gen_context2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/import/gen_context2.py
+  - name: import.import1a
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/import/import1a.py
+    - file: /usr/test/micropython/import/import1b.py
+  - name: import.import1b
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/import/import1b.py
+  - name: import.import2a
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/import/import2a.py
+    - file: /usr/test/micropython/import/import1b.py
+  - name: import.import3a
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/import/import3a.py
+    - file: /usr/test/micropython/import/import1b.py
+  - name: import.import_long_dyn
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/import/import_long_dyn.py
+  - name: import.import_long_dyn2
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/import/import_long_dyn2.py
+  - name: import.import_override
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/import/import_override.py
+    - file: /usr/test/micropython/import/import1a.py
+  - name: import.import_star_error
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/import/import_star_error.py
+  - name: import.module_dict
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/import/module_dict.py
+    - file: /usr/test/micropython/import/import1b.py
+  - name: import.module_getattr
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/import/module_getattr.py
+  - name: import.rel_import_inv
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/import/rel_import_inv.py
+  - name: import.try_module
+    load:
+    - app: micropython
+    - file: /usr/test/micropython/import/try_module.py
+    - file: /usr/test/micropython/import/import1b.py
