@@ -1,0 +1,3020 @@
+test:
+  harness: micropython_armv7r5f.py
+  nightly: true
+  targets:
+    value: [armv7r5f-zynqmp-qemu]
+
+  tests:
+    - name: basics.0prelim
+      kwargs:
+        test: basics/0prelim.py
+    - name: basics.andor
+      kwargs:
+        test: basics/andor.py
+    - name: basics.annotate_var
+      kwargs:
+        test: basics/annotate_var.py
+    - name: basics.array1
+      kwargs:
+        test: basics/array1.py
+    - name: basics.array_add
+      kwargs:
+        test: basics/array_add.py
+    - name: basics.array_construct2
+      kwargs:
+        test: basics/array_construct2.py
+    - name: basics.array_construct_endian
+      kwargs:
+        test: basics/array_construct_endian.py
+    - name: basics.array_construct
+      kwargs:
+        test: basics/array_construct.py
+    - name: basics.array_intbig
+      kwargs:
+        test: basics/array_intbig.py
+    - name: basics.array_micropython
+      kwargs:
+        test: basics/array_micropython.py
+    - name: basics.assign1
+      kwargs:
+        test: basics/assign1.py
+    - name: basics.assign_expr
+      kwargs:
+        test: basics/assign_expr.py
+    - name: basics.assign_expr_scope
+      kwargs:
+        test: basics/assign_expr_scope.py
+    - name: basics.assign_expr_syntaxerror
+      kwargs:
+        test: basics/assign_expr_syntaxerror.py
+    - name: basics.async_await2
+      kwargs:
+        test: basics/async_await2.py
+    - name: basics.async_await
+      kwargs:
+        test: basics/async_await.py
+    - name: basics.async_def
+      kwargs:
+        test: basics/async_def.py
+    - name: basics.async_for2
+      kwargs:
+        test: basics/async_for2.py
+    - name: basics.async_for
+      kwargs:
+        test: basics/async_for.py
+    - name: basics.async_syntaxerror
+      kwargs:
+        test: basics/async_syntaxerror.py
+    - name: basics.async_with2
+      kwargs:
+        test: basics/async_with2.py
+    - name: basics.async_with_break
+      kwargs:
+        test: basics/async_with_break.py
+    - name: basics.async_with
+      kwargs:
+        test: basics/async_with.py
+    - name: basics.async_with_return
+      kwargs:
+        test: basics/async_with_return.py
+    - name: basics.attrtuple1
+      kwargs:
+        test: basics/attrtuple1.py
+    - name: basics.attrtuple2
+      kwargs:
+        test: basics/attrtuple2.py
+    - name: basics.bool1
+      kwargs:
+        test: basics/bool1.py
+    - name: basics.boundmeth1
+      kwargs:
+        test: basics/boundmeth1.py
+    - name: basics.break
+      kwargs:
+        test: basics/break.py
+    - name: basics.builtin_abs_intbig
+      kwargs:
+        test: basics/builtin_abs_intbig.py
+    - name: basics.builtin_abs
+      kwargs:
+        test: basics/builtin_abs.py
+    - name: basics.builtin_allany
+      kwargs:
+        test: basics/builtin_allany.py
+    - name: basics.builtin_bin_intbig
+      kwargs:
+        test: basics/builtin_bin_intbig.py
+    - name: basics.builtin_bin
+      kwargs:
+        test: basics/builtin_bin.py
+    - name: basics.builtin_callable
+      kwargs:
+        test: basics/builtin_callable.py
+    - name: basics.builtin_chr
+      kwargs:
+        test: basics/builtin_chr.py
+    - name: basics.builtin_compile
+      kwargs:
+        test: basics/builtin_compile.py
+    - name: basics.builtin_delattr
+      kwargs:
+        test: basics/builtin_delattr.py
+    - name: basics.builtin_dir
+      kwargs:
+        test: basics/builtin_dir.py
+    - name: basics.builtin_divmod_intbig
+      kwargs:
+        test: basics/builtin_divmod_intbig.py
+    - name: basics.builtin_divmod
+      kwargs:
+        test: basics/builtin_divmod.py
+    - name: basics.builtin_ellipsis
+      kwargs:
+        test: basics/builtin_ellipsis.py
+    - name: basics.builtin_enumerate
+      kwargs:
+        test: basics/builtin_enumerate.py
+    - name: basics.builtin_eval_buffer
+      kwargs:
+        test: basics/builtin_eval_buffer.py
+    - name: basics.builtin_eval_error
+      kwargs:
+        test: basics/builtin_eval_error.py
+    - name: basics.builtin_eval
+      kwargs:
+        test: basics/builtin_eval.py
+    - name: basics.builtin_exec_buffer
+      kwargs:
+        test: basics/builtin_exec_buffer.py
+    - name: basics.builtin_exec
+      kwargs:
+        test: basics/builtin_exec.py
+    - name: basics.builtin_filter
+      kwargs:
+        test: basics/builtin_filter.py
+    - name: basics.builtin_getattr
+      kwargs:
+        test: basics/builtin_getattr.py
+    - name: basics.builtin_hasattr
+      kwargs:
+        test: basics/builtin_hasattr.py
+    - name: basics.builtin_hash_gen
+      kwargs:
+        test: basics/builtin_hash_gen.py
+    - name: basics.builtin_hash_intbig
+      kwargs:
+        test: basics/builtin_hash_intbig.py
+    - name: basics.builtin_hash
+      kwargs:
+        test: basics/builtin_hash.py
+    - name: basics.builtin_help
+      kwargs:
+        test: basics/builtin_help.py
+    - name: basics.builtin_hex_intbig
+      kwargs:
+        test: basics/builtin_hex_intbig.py
+    - name: basics.builtin_hex
+      kwargs:
+        test: basics/builtin_hex.py
+    - name: basics.builtin_id
+      kwargs:
+        test: basics/builtin_id.py
+    - name: basics.builtin_issubclass
+      kwargs:
+        test: basics/builtin_issubclass.py
+    - name: basics.builtin_len1
+      kwargs:
+        test: basics/builtin_len1.py
+    - name: basics.builtin_locals
+      kwargs:
+        test: basics/builtin_locals.py
+    - name: basics.builtin_map
+      kwargs:
+        test: basics/builtin_map.py
+    - name: basics.builtin_minmax
+      kwargs:
+        test: basics/builtin_minmax.py
+    - name: basics.builtin_next_arg2
+      kwargs:
+        test: basics/builtin_next_arg2.py
+    - name: basics.builtin_oct_intbig
+      kwargs:
+        test: basics/builtin_oct_intbig.py
+    - name: basics.builtin_oct
+      kwargs:
+        test: basics/builtin_oct.py
+    - name: basics.builtin_ord
+      kwargs:
+        test: basics/builtin_ord.py
+    - name: basics.builtin_override
+      kwargs:
+        test: basics/builtin_override.py
+    - name: basics.builtin_pow3_intbig
+      kwargs:
+        test: basics/builtin_pow3_intbig.py
+    - name: basics.builtin_pow3
+      kwargs:
+        test: basics/builtin_pow3.py
+    - name: basics.builtin_pow
+      kwargs:
+        test: basics/builtin_pow.py
+    - name: basics.builtin_print
+      kwargs:
+        test: basics/builtin_print.py
+    - name: basics.builtin_property_inherit
+      kwargs:
+        test: basics/builtin_property_inherit.py
+    - name: basics.builtin_property
+      kwargs:
+        test: basics/builtin_property.py
+    - name: basics.builtin_range_attrs
+      kwargs:
+        test: basics/builtin_range_attrs.py
+    - name: basics.builtin_range_binop
+      kwargs:
+        test: basics/builtin_range_binop.py
+    - name: basics.builtin_range
+      kwargs:
+        test: basics/builtin_range.py
+    - name: basics.builtin_reversed
+      kwargs:
+        test: basics/builtin_reversed.py
+    - name: basics.builtin_round_intbig
+      kwargs:
+        test: basics/builtin_round_intbig.py
+    - name: basics.builtin_round_int
+      kwargs:
+        test: basics/builtin_round_int.py
+    - name: basics.builtin_round
+      kwargs:
+        test: basics/builtin_round.py
+    - name: basics.builtin_setattr
+      kwargs:
+        test: basics/builtin_setattr.py
+    - name: basics.builtin_slice
+      kwargs:
+        test: basics/builtin_slice.py
+    - name: basics.builtin_sorted
+      kwargs:
+        test: basics/builtin_sorted.py
+    - name: basics.builtin_str_hex
+      kwargs:
+        test: basics/builtin_str_hex.py
+    - name: basics.builtin_sum
+      kwargs:
+        test: basics/builtin_sum.py
+    - name: basics.builtin_super
+      kwargs:
+        test: basics/builtin_super.py
+    - name: basics.builtin_type
+      kwargs:
+        test: basics/builtin_type.py
+    - name: basics.builtin_zip
+      kwargs:
+        test: basics/builtin_zip.py
+    - name: basics.bytearray1
+      kwargs:
+        test: basics/bytearray1.py
+    - name: basics.bytearray_add
+      kwargs:
+        test: basics/bytearray_add.py
+    - name: basics.bytearray_add_self
+      kwargs:
+        test: basics/bytearray_add_self.py
+    - name: basics.bytearray_append
+      kwargs:
+        test: basics/bytearray_append.py
+    - name: basics.bytearray_byte_operations
+      kwargs:
+        test: basics/bytearray_byte_operations.py
+    - name: basics.bytearray_center
+      kwargs:
+        test: basics/bytearray_center.py
+    - name: basics.bytearray_construct_array
+      kwargs:
+        test: basics/bytearray_construct_array.py
+    - name: basics.bytearray_construct_endian
+      kwargs:
+        test: basics/bytearray_construct_endian.py
+    - name: basics.bytearray_construct
+      kwargs:
+        test: basics/bytearray_construct.py
+    - name: basics.bytearray_count
+      kwargs:
+        test: basics/bytearray_count.py
+    - name: basics.bytearray_decode
+      kwargs:
+        test: basics/bytearray_decode.py
+    - name: basics.bytearray_intbig
+      kwargs:
+        test: basics/bytearray_intbig.py
+    - name: basics.bytearray_partition
+      kwargs:
+        test: basics/bytearray_partition.py
+    - name: basics.bytearray_slice_assign
+      kwargs:
+        test: basics/bytearray_slice_assign.py
+    - name: basics.bytes_add_array
+      kwargs:
+        test: basics/bytes_add_array.py
+    - name: basics.bytes_add_bytearray
+      kwargs:
+        test: basics/bytes_add_bytearray.py
+    - name: basics.bytes_add_endian
+      kwargs:
+        test: basics/bytes_add_endian.py
+    - name: basics.bytes_add
+      kwargs:
+        test: basics/bytes_add.py
+    - name: basics.bytes_center
+      kwargs:
+        test: basics/bytes_center.py
+    - name: basics.bytes_compare2
+      kwargs:
+        test: basics/bytes_compare2.py
+    - name: basics.bytes_compare3
+      kwargs:
+        test: basics/bytes_compare3.py
+    - name: basics.bytes_compare_array
+      kwargs:
+        test: basics/bytes_compare_array.py
+    - name: basics.bytes_compare_bytearray
+      kwargs:
+        test: basics/bytes_compare_bytearray.py
+    - name: basics.bytes_compare
+      kwargs:
+        test: basics/bytes_compare.py
+    - name: basics.bytes_construct_array
+      kwargs:
+        test: basics/bytes_construct_array.py
+    - name: basics.bytes_construct_bytearray
+      kwargs:
+        test: basics/bytes_construct_bytearray.py
+    - name: basics.bytes_construct_endian
+      kwargs:
+        test: basics/bytes_construct_endian.py
+    - name: basics.bytes_construct_intbig
+      kwargs:
+        test: basics/bytes_construct_intbig.py
+    - name: basics.bytes_construct
+      kwargs:
+        test: basics/bytes_construct.py
+    - name: basics.bytes_count
+      kwargs:
+        test: basics/bytes_count.py
+    - name: basics.bytes_escape_unicode
+      kwargs:
+        test: basics/bytes_escape_unicode.py
+    - name: basics.bytes_find
+      kwargs:
+        test: basics/bytes_find.py
+    - name: basics.bytes_format_modulo
+      kwargs:
+        test: basics/bytes_format_modulo.py
+    - name: basics.bytes_gen
+      kwargs:
+        test: basics/bytes_gen.py
+    - name: basics.bytes_large
+      kwargs:
+        test: basics/bytes_large.py
+    - name: basics.bytes_mult
+      kwargs:
+        test: basics/bytes_mult.py
+    - name: basics.bytes_partition
+      kwargs:
+        test: basics/bytes_partition.py
+    - name: basics.bytes
+      kwargs:
+        test: basics/bytes.py
+    - name: basics.bytes_replace
+      kwargs:
+        test: basics/bytes_replace.py
+    - name: basics.bytes_split
+      kwargs:
+        test: basics/bytes_split.py
+    - name: basics.bytes_strip
+      kwargs:
+        test: basics/bytes_strip.py
+    - name: basics.bytes_subscr
+      kwargs:
+        test: basics/bytes_subscr.py
+    - name: basics.class1
+      kwargs:
+        test: basics/class1.py
+    - name: basics.class2
+      kwargs:
+        test: basics/class2.py
+    - name: basics.class3
+      kwargs:
+        test: basics/class3.py
+    - name: basics.class_bases
+      kwargs:
+        test: basics/class_bases.py
+    - name: basics.class_bind_self
+      kwargs:
+        test: basics/class_bind_self.py
+    - name: basics.class_binop
+      kwargs:
+        test: basics/class_binop.py
+    - name: basics.class_call
+      kwargs:
+        test: basics/class_call.py
+    - name: basics.class_contains
+      kwargs:
+        test: basics/class_contains.py
+    - name: basics.class_delattr_setattr
+      kwargs:
+        test: basics/class_delattr_setattr.py
+    - name: basics.class_descriptor
+      kwargs:
+        test: basics/class_descriptor.py
+    - name: basics.class_dict
+      kwargs:
+        test: basics/class_dict.py
+    - name: basics.class_emptybases
+      kwargs:
+        test: basics/class_emptybases.py
+    - name: basics.class_getattr
+      kwargs:
+        test: basics/class_getattr.py
+    - name: basics.class_inherit1
+      kwargs:
+        test: basics/class_inherit1.py
+    - name: basics.class_inherit_mul
+      kwargs:
+        test: basics/class_inherit_mul.py
+    - name: basics.class_inplace_op2
+      kwargs:
+        test: basics/class_inplace_op2.py
+    - name: basics.class_inplace_op
+      kwargs:
+        test: basics/class_inplace_op.py
+    - name: basics.class_instance_override
+      kwargs:
+        test: basics/class_instance_override.py
+    - name: basics.class_item
+      kwargs:
+        test: basics/class_item.py
+    - name: basics.class_misc
+      kwargs:
+        test: basics/class_misc.py
+    - name: basics.class_new
+      kwargs:
+        test: basics/class_new.py
+    - name: basics.class_notimpl
+      kwargs:
+        test: basics/class_notimpl.py
+    - name: basics.class_number
+      kwargs:
+        test: basics/class_number.py
+    - name: basics.class_ordereddict
+      kwargs:
+        test: basics/class_ordereddict.py
+    - name: basics.class_reverse_op
+      kwargs:
+        test: basics/class_reverse_op.py
+    - name: basics.class_setname_hazard
+      kwargs:
+        test: basics/class_setname_hazard.py
+    - name: basics.class_setname_hazard_rand
+      kwargs:
+        test: basics/class_setname_hazard_rand.py
+    - name: basics.class_staticclassmethod
+      kwargs:
+        test: basics/class_staticclassmethod.py
+    - name: basics.class_store_class
+      kwargs:
+        test: basics/class_store_class.py
+    - name: basics.class_store
+      kwargs:
+        test: basics/class_store.py
+    - name: basics.class_str
+      kwargs:
+        test: basics/class_str.py
+    - name: basics.class_super_aslocal
+      kwargs:
+        test: basics/class_super_aslocal.py
+    - name: basics.class_super_closure
+      kwargs:
+        test: basics/class_super_closure.py
+    - name: basics.class_super_multinherit
+      kwargs:
+        test: basics/class_super_multinherit.py
+    - name: basics.class_super_object
+      kwargs:
+        test: basics/class_super_object.py
+    - name: basics.class_super
+      kwargs:
+        test: basics/class_super.py
+    - name: basics.class_use_other
+      kwargs:
+        test: basics/class_use_other.py
+    - name: basics.closure1
+      kwargs:
+        test: basics/closure1.py
+    - name: basics.closure2
+      kwargs:
+        test: basics/closure2.py
+    - name: basics.closure_defargs
+      kwargs:
+        test: basics/closure_defargs.py
+    - name: basics.closure_manyvars
+      kwargs:
+        test: basics/closure_manyvars.py
+    - name: basics.closure_namedarg
+      kwargs:
+        test: basics/closure_namedarg.py
+    - name: basics.compare_multi
+      kwargs:
+        test: basics/compare_multi.py
+    - name: basics.comprehension1
+      kwargs:
+        test: basics/comprehension1.py
+    - name: basics.containment
+      kwargs:
+        test: basics/containment.py
+    - name: basics.continue
+      kwargs:
+        test: basics/continue.py
+    - name: basics.decorator
+      kwargs:
+        test: basics/decorator.py
+    - name: basics.del_attr
+      kwargs:
+        test: basics/del_attr.py
+    - name: basics.del_deref
+      kwargs:
+        test: basics/del_deref.py
+    - name: basics.del_global
+      kwargs:
+        test: basics/del_global.py
+    - name: basics.del_local
+      kwargs:
+        test: basics/del_local.py
+    - name: basics.del_name
+      kwargs:
+        test: basics/del_name.py
+    - name: basics.del_subscr
+      kwargs:
+        test: basics/del_subscr.py
+    - name: basics.deque1
+      kwargs:
+        test: basics/deque1.py
+    - name: basics.deque2
+      kwargs:
+        test: basics/deque2.py
+    - name: basics.deque_micropython
+      kwargs:
+        test: basics/deque_micropython.py
+    - name: basics.deque_slice
+      kwargs:
+        test: basics/deque_slice.py
+    - name: basics.dict1
+      kwargs:
+        test: basics/dict1.py
+    - name: basics.dict2
+      kwargs:
+        test: basics/dict2.py
+    - name: basics.dict_clear
+      kwargs:
+        test: basics/dict_clear.py
+    - name: basics.dict_construct
+      kwargs:
+        test: basics/dict_construct.py
+    - name: basics.dict_copy
+      kwargs:
+        test: basics/dict_copy.py
+    - name: basics.dict_del
+      kwargs:
+        test: basics/dict_del.py
+    - name: basics.dict_fixed
+      kwargs:
+        test: basics/dict_fixed.py
+    - name: basics.dict_from_iter
+      kwargs:
+        test: basics/dict_from_iter.py
+    - name: basics.dict_fromkeys2
+      kwargs:
+        test: basics/dict_fromkeys2.py
+    - name: basics.dict_fromkeys
+      kwargs:
+        test: basics/dict_fromkeys.py
+    - name: basics.dict_get
+      kwargs:
+        test: basics/dict_get.py
+    - name: basics.dict_intern
+      kwargs:
+        test: basics/dict_intern.py
+    - name: basics.dict_iterator
+      kwargs:
+        test: basics/dict_iterator.py
+    - name: basics.dict_popitem
+      kwargs:
+        test: basics/dict_popitem.py
+    - name: basics.dict_pop
+      kwargs:
+        test: basics/dict_pop.py
+    - name: basics.dict_setdefault
+      kwargs:
+        test: basics/dict_setdefault.py
+    - name: basics.dict_specialmeth
+      kwargs:
+        test: basics/dict_specialmeth.py
+    - name: basics.dict_union
+      kwargs:
+        test: basics/dict_union.py
+    - name: basics.dict_update
+      kwargs:
+        test: basics/dict_update.py
+    - name: basics.dict_views
+      kwargs:
+        test: basics/dict_views.py
+    - name: basics.equal_class
+      kwargs:
+        test: basics/equal_class.py
+    - name: basics.equal
+      kwargs:
+        test: basics/equal.py
+    - name: basics.errno1
+      kwargs:
+        test: basics/errno1.py
+    - name: basics.exception1
+      kwargs:
+        test: basics/exception1.py
+    - name: basics.exception_chain
+      kwargs:
+        test: basics/exception_chain.py
+    - name: basics.except_match_tuple
+      kwargs:
+        test: basics/except_match_tuple.py
+    - name: basics.exceptpoly2
+      kwargs:
+        test: basics/exceptpoly2.py
+    - name: basics.exceptpoly
+      kwargs:
+        test: basics/exceptpoly.py
+    - name: basics.floordivide_intbig
+      kwargs:
+        test: basics/floordivide_intbig.py
+    - name: basics.floordivide
+      kwargs:
+        test: basics/floordivide.py
+    - name: basics.for1
+      kwargs:
+        test: basics/for1.py
+    - name: basics.for2
+      kwargs:
+        test: basics/for2.py
+    - name: basics.for3
+      kwargs:
+        test: basics/for3.py
+    - name: basics.for_break
+      kwargs:
+        test: basics/for_break.py
+    - name: basics.for_else
+      kwargs:
+        test: basics/for_else.py
+    - name: basics.for_range
+      kwargs:
+        test: basics/for_range.py
+    - name: basics.for_return
+      kwargs:
+        test: basics/for_return.py
+    - name: basics.frozenset1
+      kwargs:
+        test: basics/frozenset1.py
+    - name: basics.frozenset_add
+      kwargs:
+        test: basics/frozenset_add.py
+    - name: basics.frozenset_binop
+      kwargs:
+        test: basics/frozenset_binop.py
+    - name: basics.frozenset_copy
+      kwargs:
+        test: basics/frozenset_copy.py
+    - name: basics.frozenset_difference
+      kwargs:
+        test: basics/frozenset_difference.py
+    - name: basics.frozenset_set
+      kwargs:
+        test: basics/frozenset_set.py
+    - name: basics.fun1
+      kwargs:
+        test: basics/fun1.py
+    - name: basics.fun2
+      kwargs:
+        test: basics/fun2.py
+    - name: basics.fun3
+      kwargs:
+        test: basics/fun3.py
+    - name: basics.fun_annotations
+      kwargs:
+        test: basics/fun_annotations.py
+    - name: basics.fun_calldblstar2
+      kwargs:
+        test: basics/fun_calldblstar2.py
+    - name: basics.fun_calldblstar3
+      kwargs:
+        test: basics/fun_calldblstar3.py
+    - name: basics.fun_calldblstar4
+      kwargs:
+        test: basics/fun_calldblstar4.py
+    - name: basics.fun_calldblstar
+      kwargs:
+        test: basics/fun_calldblstar.py
+    - name: basics.fun_callstardblstar
+      kwargs:
+        test: basics/fun_callstardblstar.py
+    - name: basics.fun_callstar
+      kwargs:
+        test: basics/fun_callstar.py
+    - name: basics.fun_code_colines
+      kwargs:
+        test: basics/fun_code_colines.py
+    - name: basics.fun_code_full
+      kwargs:
+        test: basics/fun_code_full.py
+    - name: basics.fun_code_lnotab
+      kwargs:
+        test: basics/fun_code_lnotab.py
+    - name: basics.fun_code_micropython
+      kwargs:
+        test: basics/fun_code_micropython.py
+    - name: basics.fun_code
+      kwargs:
+        test: basics/fun_code.py
+    - name: basics.fun_defargs2
+      kwargs:
+        test: basics/fun_defargs2.py
+    - name: basics.fun_defargs
+      kwargs:
+        test: basics/fun_defargs.py
+    - name: basics.fun_error2
+      kwargs:
+        test: basics/fun_error2.py
+    - name: basics.fun_error
+      kwargs:
+        test: basics/fun_error.py
+    - name: basics.fun_globals
+      kwargs:
+        test: basics/fun_globals.py
+    - name: basics.fun_kwargs
+      kwargs:
+        test: basics/fun_kwargs.py
+    - name: basics.fun_kwonlydef
+      kwargs:
+        test: basics/fun_kwonlydef.py
+    - name: basics.fun_kwonly
+      kwargs:
+        test: basics/fun_kwonly.py
+    - name: basics.fun_kwvarargs
+      kwargs:
+        test: basics/fun_kwvarargs.py
+    - name: basics.fun_largestate
+      kwargs:
+        test: basics/fun_largestate.py
+    - name: basics.fun_name
+      kwargs:
+        test: basics/fun_name.py
+    - name: basics.fun_str
+      kwargs:
+        test: basics/fun_str.py
+    - name: basics.fun_varargs
+      kwargs:
+        test: basics/fun_varargs.py
+    - name: basics.gc1
+      kwargs:
+        test: basics/gc1.py
+    - name: basics.generator1
+      kwargs:
+        test: basics/generator1.py
+    - name: basics.generator2
+      kwargs:
+        test: basics/generator2.py
+    - name: basics.generator_args
+      kwargs:
+        test: basics/generator_args.py
+    - name: basics.generator_close
+      kwargs:
+        test: basics/generator_close.py
+    - name: basics.generator_closure
+      kwargs:
+        test: basics/generator_closure.py
+    - name: basics.generator_exc
+      kwargs:
+        test: basics/generator_exc.py
+    - name: basics.generator_name
+      kwargs:
+        test: basics/generator_name.py
+    - name: basics.generator_pend_throw
+      kwargs:
+        test: basics/generator_pend_throw.py
+    - name: basics.generator_pep479
+      kwargs:
+        test: basics/generator_pep479.py
+    - name: basics.generator_return
+      kwargs:
+        test: basics/generator_return.py
+    - name: basics.generator_send
+      kwargs:
+        test: basics/generator_send.py
+    - name: basics.generator_throw_multi_arg
+      kwargs:
+        test: basics/generator_throw_multi_arg.py
+    - name: basics.generator_throw_nested
+      kwargs:
+        test: basics/generator_throw_nested.py
+    - name: basics.generator_throw
+      kwargs:
+        test: basics/generator_throw.py
+    - name: basics.generator_throw_repeat
+      kwargs:
+        test: basics/generator_throw_repeat.py
+    - name: basics.gen_yield_from_close
+      kwargs:
+        test: basics/gen_yield_from_close.py
+    - name: basics.gen_yield_from_ducktype
+      kwargs:
+        test: basics/gen_yield_from_ducktype.py
+    - name: basics.gen_yield_from_exc
+      kwargs:
+        test: basics/gen_yield_from_exc.py
+    - name: basics.gen_yield_from_executing
+      kwargs:
+        test: basics/gen_yield_from_executing.py
+    - name: basics.gen_yield_from_iter
+      kwargs:
+        test: basics/gen_yield_from_iter.py
+    - name: basics.gen_yield_from_pending
+      kwargs:
+        test: basics/gen_yield_from_pending.py
+    - name: basics.gen_yield_from
+      kwargs:
+        test: basics/gen_yield_from.py
+    - name: basics.gen_yield_from_send
+      kwargs:
+        test: basics/gen_yield_from_send.py
+    - name: basics.gen_yield_from_stopped
+      kwargs:
+        test: basics/gen_yield_from_stopped.py
+    - name: basics.gen_yield_from_throw2
+      kwargs:
+        test: basics/gen_yield_from_throw2.py
+    - name: basics.gen_yield_from_throw3
+      kwargs:
+        test: basics/gen_yield_from_throw3.py
+    - name: basics.gen_yield_from_throw_multi_arg
+      kwargs:
+        test: basics/gen_yield_from_throw_multi_arg.py
+    - name: basics.gen_yield_from_throw
+      kwargs:
+        test: basics/gen_yield_from_throw.py
+    - name: basics.gen_yield_from_throw_repeat
+      kwargs:
+        test: basics/gen_yield_from_throw_repeat.py
+    - name: basics.getattr
+      kwargs:
+        test: basics/getattr.py
+    - name: basics.getitem
+      kwargs:
+        test: basics/getitem.py
+    - name: basics.globals_del
+      kwargs:
+        test: basics/globals_del.py
+    - name: basics.ifcond
+      kwargs:
+        test: basics/ifcond.py
+    - name: basics.ifexpr
+      kwargs:
+        test: basics/ifexpr.py
+    - name: basics.int1
+      kwargs:
+        test: basics/int1.py
+    - name: basics.int2
+      kwargs:
+        test: basics/int2.py
+    - name: basics.int_64_basics
+      kwargs:
+        test: basics/int_64_basics.py
+    - name: basics.int_big1
+      kwargs:
+        test: basics/int_big1.py
+    - name: basics.int_big_add
+      kwargs:
+        test: basics/int_big_add.py
+    - name: basics.int_big_and2
+      kwargs:
+        test: basics/int_big_and2.py
+    - name: basics.int_big_and3
+      kwargs:
+        test: basics/int_big_and3.py
+    - name: basics.int_big_and
+      kwargs:
+        test: basics/int_big_and.py
+    - name: basics.int_big_cmp
+      kwargs:
+        test: basics/int_big_cmp.py
+    - name: basics.int_big_div
+      kwargs:
+        test: basics/int_big_div.py
+    - name: basics.int_big_error
+      kwargs:
+        test: basics/int_big_error.py
+    - name: basics.int_big_lshift
+      kwargs:
+        test: basics/int_big_lshift.py
+    - name: basics.int_big_mod
+      kwargs:
+        test: basics/int_big_mod.py
+    - name: basics.int_big_mul
+      kwargs:
+        test: basics/int_big_mul.py
+    - name: basics.int_big_or2
+      kwargs:
+        test: basics/int_big_or2.py
+    - name: basics.int_big_or3
+      kwargs:
+        test: basics/int_big_or3.py
+    - name: basics.int_big_or
+      kwargs:
+        test: basics/int_big_or.py
+    - name: basics.int_big_pow
+      kwargs:
+        test: basics/int_big_pow.py
+    - name: basics.int_big_rshift
+      kwargs:
+        test: basics/int_big_rshift.py
+    - name: basics.int_big_to_small
+      kwargs:
+        test: basics/int_big_to_small.py
+    - name: basics.int_big_unary
+      kwargs:
+        test: basics/int_big_unary.py
+    - name: basics.int_big_xor2
+      kwargs:
+        test: basics/int_big_xor2.py
+    - name: basics.int_big_xor3
+      kwargs:
+        test: basics/int_big_xor3.py
+    - name: basics.int_big_xor
+      kwargs:
+        test: basics/int_big_xor.py
+    - name: basics.int_big_zeroone
+      kwargs:
+        test: basics/int_big_zeroone.py
+    - name: basics.int_bytes_int64
+      kwargs:
+        test: basics/int_bytes_int64.py
+    - name: basics.int_bytes_intbig
+      kwargs:
+        test: basics/int_bytes_intbig.py
+    - name: basics.int_bytes_optional_args_cp311
+      kwargs:
+        test: basics/int_bytes_optional_args_cp311.py
+    - name: basics.int_bytes
+      kwargs:
+        test: basics/int_bytes.py
+    - name: basics.int_constfolding_intbig
+      kwargs:
+        test: basics/int_constfolding_intbig.py
+    - name: basics.int_constfolding
+      kwargs:
+        test: basics/int_constfolding.py
+    - name: basics.int_divmod_intbig
+      kwargs:
+        test: basics/int_divmod_intbig.py
+    - name: basics.int_divmod
+      kwargs:
+        test: basics/int_divmod.py
+    - name: basics.int_divzero
+      kwargs:
+        test: basics/int_divzero.py
+    - name: basics.int_intbig
+      kwargs:
+        test: basics/int_intbig.py
+    - name: basics.int_parse
+      kwargs:
+        test: basics/int_parse.py
+    - name: basics.int_small
+      kwargs:
+        test: basics/int_small.py
+    - name: basics.io_buffered_writer
+      kwargs:
+        test: basics/io_buffered_writer.py
+    - name: basics.io_bytesio_cow
+      kwargs:
+        test: basics/io_bytesio_cow.py
+    - name: basics.io_bytesio_ext2
+      kwargs:
+        test: basics/io_bytesio_ext2.py
+    - name: basics.io_bytesio_ext
+      kwargs:
+        test: basics/io_bytesio_ext.py
+    - name: basics.io_iobase
+      kwargs:
+        test: basics/io_iobase.py
+    - name: basics.io_stringio1
+      kwargs:
+        test: basics/io_stringio1.py
+    - name: basics.io_stringio_base
+      kwargs:
+        test: basics/io_stringio_base.py
+    - name: basics.io_stringio_with
+      kwargs:
+        test: basics/io_stringio_with.py
+    - name: basics.io_write_ext
+      kwargs:
+        test: basics/io_write_ext.py
+    - name: basics.is_isnot_literal
+      kwargs:
+        test: basics/is_isnot_literal.py
+    - name: basics.is_isnot
+      kwargs:
+        test: basics/is_isnot.py
+    - name: basics.iter0
+      kwargs:
+        test: basics/iter0.py
+    - name: basics.iter1
+      kwargs:
+        test: basics/iter1.py
+    - name: basics.iter2
+      kwargs:
+        test: basics/iter2.py
+    - name: basics.iter_of_iter
+      kwargs:
+        test: basics/iter_of_iter.py
+    - name: basics.lambda1
+      kwargs:
+        test: basics/lambda1.py
+    - name: basics.lambda_defargs
+      kwargs:
+        test: basics/lambda_defargs.py
+    - name: basics.lexer
+      kwargs:
+        test: basics/lexer.py
+    - name: basics.list1
+      kwargs:
+        test: basics/list1.py
+    - name: basics.list_clear
+      kwargs:
+        test: basics/list_clear.py
+    - name: basics.list_compare
+      kwargs:
+        test: basics/list_compare.py
+    - name: basics.list_copy
+      kwargs:
+        test: basics/list_copy.py
+    - name: basics.list_count
+      kwargs:
+        test: basics/list_count.py
+    - name: basics.list_extend
+      kwargs:
+        test: basics/list_extend.py
+    - name: basics.list_index
+      kwargs:
+        test: basics/list_index.py
+    - name: basics.list_insert
+      kwargs:
+        test: basics/list_insert.py
+    - name: basics.list_mult
+      kwargs:
+        test: basics/list_mult.py
+    - name: basics.list_pop
+      kwargs:
+        test: basics/list_pop.py
+    - name: basics.list_remove
+      kwargs:
+        test: basics/list_remove.py
+    - name: basics.list_reverse
+      kwargs:
+        test: basics/list_reverse.py
+    - name: basics.list_slice_3arg
+      kwargs:
+        test: basics/list_slice_3arg.py
+    - name: basics.list_slice_assign_grow
+      kwargs:
+        test: basics/list_slice_assign_grow.py
+    - name: basics.list_slice_assign
+      kwargs:
+        test: basics/list_slice_assign.py
+    - name: basics.list_slice
+      kwargs:
+        test: basics/list_slice.py
+    - name: basics.list_sort
+      kwargs:
+        test: basics/list_sort.py
+    - name: basics.list_sum
+      kwargs:
+        test: basics/list_sum.py
+    - name: basics.logic_constfolding
+      kwargs:
+        test: basics/logic_constfolding.py
+    - name: basics.memoryerror
+      kwargs:
+        test: basics/memoryerror.py
+    - name: basics.memoryview1
+      kwargs:
+        test: basics/memoryview1.py
+    - name: basics.memoryview2
+      kwargs:
+        test: basics/memoryview2.py
+    - name: basics.memoryview_gc
+      kwargs:
+        test: basics/memoryview_gc.py
+    - name: basics.memoryview_intbig
+      kwargs:
+        test: basics/memoryview_intbig.py
+    - name: basics.memoryview_itemsize
+      kwargs:
+        test: basics/memoryview_itemsize.py
+    - name: basics.memoryview_slice_assign
+      kwargs:
+        test: basics/memoryview_slice_assign.py
+    - name: basics.memoryview_slice_size
+      kwargs:
+        test: basics/memoryview_slice_size.py
+    - name: basics.module1
+      kwargs:
+        test: basics/module1.py
+    - name: basics.module2
+      kwargs:
+        test: basics/module2.py
+    - name: basics.module_dict
+      kwargs:
+        test: basics/module_dict.py
+    - name: basics.namedtuple1
+      kwargs:
+        test: basics/namedtuple1.py
+    - name: basics.namedtuple_asdict
+      kwargs:
+        test: basics/namedtuple_asdict.py
+    - name: basics.nanbox_smallint
+      kwargs:
+        test: basics/nanbox_smallint.py
+    - name: basics.object1
+      kwargs:
+        test: basics/object1.py
+    - name: basics.object_dict
+      kwargs:
+        test: basics/object_dict.py
+    - name: basics.object_new
+      kwargs:
+        test: basics/object_new.py
+    - name: basics.op_error_bytearray
+      kwargs:
+        test: basics/op_error_bytearray.py
+    - name: basics.op_error_intbig
+      kwargs:
+        test: basics/op_error_intbig.py
+    - name: basics.op_error_literal
+      kwargs:
+        test: basics/op_error_literal.py
+    - name: basics.op_error_memoryview
+      kwargs:
+        test: basics/op_error_memoryview.py
+    - name: basics.op_error
+      kwargs:
+        test: basics/op_error.py
+    - name: basics.op_precedence
+      kwargs:
+        test: basics/op_precedence.py
+    - name: basics.ordereddict1
+      kwargs:
+        test: basics/ordereddict1.py
+    - name: basics.ordereddict_eq
+      kwargs:
+        test: basics/ordereddict_eq.py
+    - name: basics.parser
+      kwargs:
+        test: basics/parser.py
+    - name: basics.python34
+      kwargs:
+        test: basics/python34.py
+    - name: basics.python36
+      kwargs:
+        test: basics/python36.py
+    - name: basics.return1
+      kwargs:
+        test: basics/return1.py
+    - name: basics.scope_class
+      kwargs:
+        test: basics/scope_class.py
+    - name: basics.scope_implicit
+      kwargs:
+        test: basics/scope_implicit.py
+    - name: basics.scope
+      kwargs:
+        test: basics/scope.py
+    - name: basics.self_type_check
+      kwargs:
+        test: basics/self_type_check.py
+    - name: basics.seq_unpack
+      kwargs:
+        test: basics/seq_unpack.py
+    - name: basics.set_add
+      kwargs:
+        test: basics/set_add.py
+    - name: basics.set_basic
+      kwargs:
+        test: basics/set_basic.py
+    - name: basics.set_binop
+      kwargs:
+        test: basics/set_binop.py
+    - name: basics.set_clear
+      kwargs:
+        test: basics/set_clear.py
+    - name: basics.set_comprehension
+      kwargs:
+        test: basics/set_comprehension.py
+    - name: basics.set_containment
+      kwargs:
+        test: basics/set_containment.py
+    - name: basics.set_copy
+      kwargs:
+        test: basics/set_copy.py
+    - name: basics.set_difference
+      kwargs:
+        test: basics/set_difference.py
+    - name: basics.set_discard
+      kwargs:
+        test: basics/set_discard.py
+    - name: basics.set_intersection
+      kwargs:
+        test: basics/set_intersection.py
+    - name: basics.set_isdisjoint
+      kwargs:
+        test: basics/set_isdisjoint.py
+    - name: basics.set_isfooset
+      kwargs:
+        test: basics/set_isfooset.py
+    - name: basics.set_iter_of_iter
+      kwargs:
+        test: basics/set_iter_of_iter.py
+    - name: basics.set_iter
+      kwargs:
+        test: basics/set_iter.py
+    - name: basics.set_pop
+      kwargs:
+        test: basics/set_pop.py
+    - name: basics.set_remove
+      kwargs:
+        test: basics/set_remove.py
+    - name: basics.set_specialmeth
+      kwargs:
+        test: basics/set_specialmeth.py
+    - name: basics.set_symmetric_difference
+      kwargs:
+        test: basics/set_symmetric_difference.py
+    - name: basics.set_type
+      kwargs:
+        test: basics/set_type.py
+    - name: basics.set_union
+      kwargs:
+        test: basics/set_union.py
+    - name: basics.set_unop
+      kwargs:
+        test: basics/set_unop.py
+    - name: basics.set_update
+      kwargs:
+        test: basics/set_update.py
+    - name: basics.slice_attrs
+      kwargs:
+        test: basics/slice_attrs.py
+    - name: basics.slice_indices
+      kwargs:
+        test: basics/slice_indices.py
+    - name: basics.slice_intbig
+      kwargs:
+        test: basics/slice_intbig.py
+    - name: basics.slice_op
+      kwargs:
+        test: basics/slice_op.py
+    - name: basics.slice_optimise
+      kwargs:
+        test: basics/slice_optimise.py
+    - name: basics.slots_bool_len
+      kwargs:
+        test: basics/slots_bool_len.py
+    - name: basics.special_comparisons2
+      kwargs:
+        test: basics/special_comparisons2.py
+    - name: basics.special_comparisons
+      kwargs:
+        test: basics/special_comparisons.py
+    - name: basics.special_methods2
+      kwargs:
+        test: basics/special_methods2.py
+    - name: basics.special_methods_intbig
+      kwargs:
+        test: basics/special_methods_intbig.py
+    - name: basics.special_methods
+      kwargs:
+        test: basics/special_methods.py
+    - name: basics.stopiteration
+      kwargs:
+        test: basics/stopiteration.py
+    - name: basics.string1
+      kwargs:
+        test: basics/string1.py
+    - name: basics.string_center
+      kwargs:
+        test: basics/string_center.py
+    - name: basics.string_compare
+      kwargs:
+        test: basics/string_compare.py
+    - name: basics.string_count
+      kwargs:
+        test: basics/string_count.py
+    - name: basics.string_cr_conversion
+      kwargs:
+        test: basics/string_cr_conversion.py
+    - name: basics.string_crlf_conversion
+      kwargs:
+        test: basics/string_crlf_conversion.py
+    - name: basics.string_endswith
+      kwargs:
+        test: basics/string_endswith.py
+    - name: basics.string_escape_invalid
+      kwargs:
+        test: basics/string_escape_invalid.py
+    - name: basics.string_escape
+      kwargs:
+        test: basics/string_escape.py
+    - name: basics.string_find
+      kwargs:
+        test: basics/string_find.py
+    - name: basics.string_format2
+      kwargs:
+        test: basics/string_format2.py
+    - name: basics.string_format_cp310
+      kwargs:
+        test: basics/string_format_cp310.py
+    - name: basics.string_format_error
+      kwargs:
+        test: basics/string_format_error.py
+    - name: basics.string_format_intbig
+      kwargs:
+        test: basics/string_format_intbig.py
+    - name: basics.string_format_modulo_int
+      kwargs:
+        test: basics/string_format_modulo_int.py
+    - name: basics.string_format_modulo
+      kwargs:
+        test: basics/string_format_modulo.py
+    - name: basics.string_format
+      kwargs:
+        test: basics/string_format.py
+    - name: basics.string_fstring_debug
+      kwargs:
+        test: basics/string_fstring_debug.py
+    - name: basics.string_fstring_invalid
+      kwargs:
+        test: basics/string_fstring_invalid.py
+    - name: basics.string_fstring
+      kwargs:
+        test: basics/string_fstring.py
+    - name: basics.string_index
+      kwargs:
+        test: basics/string_index.py
+    - name: basics.string_istest
+      kwargs:
+        test: basics/string_istest.py
+    - name: basics.string_join
+      kwargs:
+        test: basics/string_join.py
+    - name: basics.string_large
+      kwargs:
+        test: basics/string_large.py
+    - name: basics.string_mult
+      kwargs:
+        test: basics/string_mult.py
+    - name: basics.string_partition
+      kwargs:
+        test: basics/string_partition.py
+    - name: basics.string_replace
+      kwargs:
+        test: basics/string_replace.py
+    - name: basics.string_repr
+      kwargs:
+        test: basics/string_repr.py
+    - name: basics.string_rfind
+      kwargs:
+        test: basics/string_rfind.py
+    - name: basics.string_rindex
+      kwargs:
+        test: basics/string_rindex.py
+    - name: basics.string_rpartition
+      kwargs:
+        test: basics/string_rpartition.py
+    - name: basics.string_rsplit
+      kwargs:
+        test: basics/string_rsplit.py
+    - name: basics.string_slice
+      kwargs:
+        test: basics/string_slice.py
+    - name: basics.string_splitlines
+      kwargs:
+        test: basics/string_splitlines.py
+    - name: basics.string_split
+      kwargs:
+        test: basics/string_split.py
+    - name: basics.string_startswith
+      kwargs:
+        test: basics/string_startswith.py
+    - name: basics.string_strip
+      kwargs:
+        test: basics/string_strip.py
+    - name: basics.string_upperlow
+      kwargs:
+        test: basics/string_upperlow.py
+    - name: basics.struct1_intbig
+      kwargs:
+        test: basics/struct1_intbig.py
+    - name: basics.struct1
+      kwargs:
+        test: basics/struct1.py
+    - name: basics.struct2
+      kwargs:
+        test: basics/struct2.py
+    - name: basics.struct_endian
+      kwargs:
+        test: basics/struct_endian.py
+    - name: basics.struct_micropython
+      kwargs:
+        test: basics/struct_micropython.py
+    - name: basics.subclass_classmethod
+      kwargs:
+        test: basics/subclass_classmethod.py
+    - name: basics.subclass_native1
+      kwargs:
+        test: basics/subclass_native1.py
+    - name: basics.subclass_native2_list
+      kwargs:
+        test: basics/subclass_native2_list.py
+    - name: basics.subclass_native2_tuple
+      kwargs:
+        test: basics/subclass_native2_tuple.py
+    - name: basics.subclass_native3
+      kwargs:
+        test: basics/subclass_native3.py
+    - name: basics.subclass_native4
+      kwargs:
+        test: basics/subclass_native4.py
+    - name: basics.subclass_native5
+      kwargs:
+        test: basics/subclass_native5.py
+    - name: basics.subclass_native_buffer
+      kwargs:
+        test: basics/subclass_native_buffer.py
+    - name: basics.subclass_native_call
+      kwargs:
+        test: basics/subclass_native_call.py
+    - name: basics.subclass_native_cmp
+      kwargs:
+        test: basics/subclass_native_cmp.py
+    - name: basics.subclass_native_containment
+      kwargs:
+        test: basics/subclass_native_containment.py
+    - name: basics.subclass_native_exc_new
+      kwargs:
+        test: basics/subclass_native_exc_new.py
+    - name: basics.subclass_native_init
+      kwargs:
+        test: basics/subclass_native_init.py
+    - name: basics.subclass_native_iter
+      kwargs:
+        test: basics/subclass_native_iter.py
+    - name: basics.subclass_native_specmeth
+      kwargs:
+        test: basics/subclass_native_specmeth.py
+    - name: basics.subclass_native_str
+      kwargs:
+        test: basics/subclass_native_str.py
+    - name: basics.syntaxerror
+      kwargs:
+        test: basics/syntaxerror.py
+    - name: basics.syntaxerror_return
+      kwargs:
+        test: basics/syntaxerror_return.py
+    - name: basics.sys1
+      kwargs:
+        test: basics/sys1.py
+    - name: basics.sys_exit
+      kwargs:
+        test: basics/sys_exit.py
+    - name: basics.sys_getsizeof
+      kwargs:
+        test: basics/sys_getsizeof.py
+    - name: basics.sys_path
+      kwargs:
+        test: basics/sys_path.py
+    - name: basics.sys_stdio_buffer
+      kwargs:
+        test: basics/sys_stdio_buffer.py
+    - name: basics.sys_stdio
+      kwargs:
+        test: basics/sys_stdio.py
+    - name: basics.sys_tracebacklimit
+      kwargs:
+        test: basics/sys_tracebacklimit.py
+    - name: basics.true_value
+      kwargs:
+        test: basics/true_value.py
+    - name: basics.try1
+      kwargs:
+        test: basics/try1.py
+    - name: basics.try2
+      kwargs:
+        test: basics/try2.py
+    - name: basics.try3
+      kwargs:
+        test: basics/try3.py
+    - name: basics.try4
+      kwargs:
+        test: basics/try4.py
+    - name: basics.try_as_var
+      kwargs:
+        test: basics/try_as_var.py
+    - name: basics.try_continue
+      kwargs:
+        test: basics/try_continue.py
+    - name: basics.try_else_finally
+      kwargs:
+        test: basics/try_else_finally.py
+    - name: basics.try_else
+      kwargs:
+        test: basics/try_else.py
+    - name: basics.try_error
+      kwargs:
+        test: basics/try_error.py
+    - name: basics.try_except_break
+      kwargs:
+        test: basics/try_except_break.py
+    - name: basics.try_finally1
+      kwargs:
+        test: basics/try_finally1.py
+    - name: basics.try_finally2
+      kwargs:
+        test: basics/try_finally2.py
+    - name: basics.try_finally_break2
+      kwargs:
+        test: basics/try_finally_break2.py
+    - name: basics.try_finally_break
+      kwargs:
+        test: basics/try_finally_break.py
+    - name: basics.try_finally_continue
+      kwargs:
+        test: basics/try_finally_continue.py
+    - name: basics.try_finally_loops
+      kwargs:
+        test: basics/try_finally_loops.py
+    - name: basics.try_finally_return2
+      kwargs:
+        test: basics/try_finally_return2.py
+    - name: basics.try_finally_return3
+      kwargs:
+        test: basics/try_finally_return3.py
+    - name: basics.try_finally_return4
+      kwargs:
+        test: basics/try_finally_return4.py
+    - name: basics.try_finally_return5
+      kwargs:
+        test: basics/try_finally_return5.py
+    - name: basics.try_finally_return
+      kwargs:
+        test: basics/try_finally_return.py
+    - name: basics.try_reraise2
+      kwargs:
+        test: basics/try_reraise2.py
+    - name: basics.try_reraise
+      kwargs:
+        test: basics/try_reraise.py
+    - name: basics.try_return
+      kwargs:
+        test: basics/try_return.py
+    - name: basics.tuple1
+      kwargs:
+        test: basics/tuple1.py
+    - name: basics.tuple_compare
+      kwargs:
+        test: basics/tuple_compare.py
+    - name: basics.tuple_count
+      kwargs:
+        test: basics/tuple_count.py
+    - name: basics.tuple_index
+      kwargs:
+        test: basics/tuple_index.py
+    - name: basics.tuple_mult
+      kwargs:
+        test: basics/tuple_mult.py
+    - name: basics.tuple_slice
+      kwargs:
+        test: basics/tuple_slice.py
+    - name: basics.types1
+      kwargs:
+        test: basics/types1.py
+    - name: basics.types2
+      kwargs:
+        test: basics/types2.py
+    - name: basics.unary_op
+      kwargs:
+        test: basics/unary_op.py
+    - name: basics.unboundlocal
+      kwargs:
+        test: basics/unboundlocal.py
+    - name: basics.unpack1
+      kwargs:
+        test: basics/unpack1.py
+    - name: basics.while1
+      kwargs:
+        test: basics/while1.py
+    - name: basics.while_cond
+      kwargs:
+        test: basics/while_cond.py
+    - name: basics.while_nest_exc
+      kwargs:
+        test: basics/while_nest_exc.py
+    - name: basics.with1
+      kwargs:
+        test: basics/with1.py
+    - name: basics.with_break
+      kwargs:
+        test: basics/with_break.py
+    - name: basics.with_continue
+      kwargs:
+        test: basics/with_continue.py
+    - name: basics.with_raise
+      kwargs:
+        test: basics/with_raise.py
+    - name: basics.with_return
+      kwargs:
+        test: basics/with_return.py
+    - name: cmdline.cmd_optimise
+      kwargs:
+        test: cmdline/cmd_optimise.py
+    - name: cmdline.cmd_parsetree
+      kwargs:
+        test: cmdline/cmd_parsetree.py
+      ignore: True # Ignored by default in MicroPython
+    - name: cmdline.cmd_showbc_const
+      kwargs:
+        test: cmdline/cmd_showbc_const.py
+    - name: cmdline.cmd_showbc_opt
+      kwargs:
+        test: cmdline/cmd_showbc_opt.py
+    - name: cmdline.cmd_showbc
+      kwargs:
+        test: cmdline/cmd_showbc.py
+    - name: cmdline.cmd_verbose
+      kwargs:
+        test: cmdline/cmd_verbose.py
+    - name: extmod.asyncio_as_uasyncio
+      kwargs:
+        test: extmod/asyncio_as_uasyncio.py
+    - name: extmod.asyncio_await_return
+      kwargs:
+        test: extmod/asyncio_await_return.py
+    - name: extmod.asyncio_basic2
+      kwargs:
+        test: extmod/asyncio_basic2.py
+    - name: extmod.asyncio_basic
+      kwargs:
+        test: extmod/asyncio_basic.py
+    - name: extmod.asyncio_cancel_fair2
+      kwargs:
+        test: extmod/asyncio_cancel_fair2.py
+    - name: extmod.asyncio_cancel_fair
+      kwargs:
+        test: extmod/asyncio_cancel_fair.py
+    - name: extmod.asyncio_cancel_self
+      kwargs:
+        test: extmod/asyncio_cancel_self.py
+    - name: extmod.asyncio_cancel_task
+      kwargs:
+        test: extmod/asyncio_cancel_task.py
+    - name: extmod.asyncio_cancel_wait_on_finished
+      kwargs:
+        test: extmod/asyncio_cancel_wait_on_finished.py
+    - name: extmod.asyncio_current_task
+      kwargs:
+        test: extmod/asyncio_current_task.py
+    - name: extmod.asyncio_event_fair
+      kwargs:
+        test: extmod/asyncio_event_fair.py
+    - name: extmod.asyncio_event
+      kwargs:
+        test: extmod/asyncio_event.py
+    - name: extmod.asyncio_event_queue
+      kwargs:
+        test: extmod/asyncio_event_queue.py
+    - name: extmod.asyncio_exception
+      kwargs:
+        test: extmod/asyncio_exception.py
+    - name: extmod.asyncio_fair
+      kwargs:
+        test: extmod/asyncio_fair.py
+    - name: extmod.asyncio_gather_finished_early
+      kwargs:
+        test: extmod/asyncio_gather_finished_early.py
+    - name: extmod.asyncio_gather_notimpl
+      kwargs:
+        test: extmod/asyncio_gather_notimpl.py
+    - name: extmod.asyncio_gather
+      kwargs:
+        test: extmod/asyncio_gather.py
+    - name: extmod.asyncio_get_event_loop
+      kwargs:
+        test: extmod/asyncio_get_event_loop.py
+    - name: extmod.asyncio_heaplock
+      kwargs:
+        test: extmod/asyncio_heaplock.py
+    - name: extmod.asyncio_iterator_event
+      kwargs:
+        test: extmod/asyncio_iterator_event.py
+    - name: extmod.asyncio_lock_cancel
+      kwargs:
+        test: extmod/asyncio_lock_cancel.py
+    - name: extmod.asyncio_lock
+      kwargs:
+        test: extmod/asyncio_lock.py
+    - name: extmod.asyncio_loop_stop
+      kwargs:
+        test: extmod/asyncio_loop_stop.py
+    - name: extmod.asyncio_micropython
+      kwargs:
+        test: extmod/asyncio_micropython.py
+    - name: extmod.asyncio_new_event_loop
+      kwargs:
+        test: extmod/asyncio_new_event_loop.py
+    - name: extmod.asyncio_set_exception_handler
+      kwargs:
+        test: extmod/asyncio_set_exception_handler.py
+    - name: extmod.asyncio_task_done
+      kwargs:
+        test: extmod/asyncio_task_done.py
+    - name: extmod.asyncio_threadsafeflag
+      kwargs:
+        test: extmod/asyncio_threadsafeflag.py
+    - name: extmod.asyncio_wait_for_fwd
+      kwargs:
+        test: extmod/asyncio_wait_for_fwd.py
+    - name: extmod.asyncio_wait_for_linked_task
+      kwargs:
+        test: extmod/asyncio_wait_for_linked_task.py
+    - name: extmod.asyncio_wait_for
+      kwargs:
+        test: extmod/asyncio_wait_for.py
+    - name: extmod.asyncio_wait_task
+      kwargs:
+        test: extmod/asyncio_wait_task.py
+    - name: extmod.binascii_a2b_base64
+      kwargs:
+        test: extmod/binascii_a2b_base64.py
+    - name: extmod.binascii_b2a_base64
+      kwargs:
+        test: extmod/binascii_b2a_base64.py
+    - name: extmod.binascii_crc32
+      kwargs:
+        test: extmod/binascii_crc32.py
+    - name: extmod.binascii_hexlify
+      kwargs:
+        test: extmod/binascii_hexlify.py
+    - name: extmod.binascii_unhexlify
+      kwargs:
+        test: extmod/binascii_unhexlify.py
+    - name: extmod.btree1
+      kwargs:
+        test: extmod/btree1.py
+    - name: extmod.btree_closed
+      kwargs:
+        test: extmod/btree_closed.py
+    - name: extmod.btree_error
+      kwargs:
+        test: extmod/btree_error.py
+    - name: extmod.btree_gc
+      kwargs:
+        test: extmod/btree_gc.py
+    - name: extmod.cryptolib_aes128_cbc
+      kwargs:
+        test: extmod/cryptolib_aes128_cbc.py
+    - name: extmod.cryptolib_aes128_ctr
+      kwargs:
+        test: extmod/cryptolib_aes128_ctr.py
+    - name: extmod.cryptolib_aes128_ecb_enc
+      kwargs:
+        test: extmod/cryptolib_aes128_ecb_enc.py
+    - name: extmod.cryptolib_aes128_ecb_inpl
+      kwargs:
+        test: extmod/cryptolib_aes128_ecb_inpl.py
+    - name: extmod.cryptolib_aes128_ecb_into
+      kwargs:
+        test: extmod/cryptolib_aes128_ecb_into.py
+    - name: extmod.cryptolib_aes128_ecb
+      kwargs:
+        test: extmod/cryptolib_aes128_ecb.py
+    - name: extmod.cryptolib_aes256_cbc
+      kwargs:
+        test: extmod/cryptolib_aes256_cbc.py
+    - name: extmod.cryptolib_aes256_ecb
+      kwargs:
+        test: extmod/cryptolib_aes256_ecb.py
+    - name: extmod.deflate_compress_memory_error
+      kwargs:
+        test: extmod/deflate_compress_memory_error.py
+    - name: extmod.deflate_compress
+      kwargs:
+        test: extmod/deflate_compress.py
+    - name: extmod.deflate_decompress
+      kwargs:
+        test: extmod/deflate_decompress.py
+    - name: extmod.deflate_stream_error
+      kwargs:
+        test: extmod/deflate_stream_error.py
+    - name: extmod.framebuf16
+      kwargs:
+        test: extmod/framebuf16.py
+    - name: extmod.framebuf1
+      kwargs:
+        test: extmod/framebuf1.py
+    - name: extmod.framebuf2
+      kwargs:
+        test: extmod/framebuf2.py
+    - name: extmod.framebuf4
+      kwargs:
+        test: extmod/framebuf4.py
+    - name: extmod.framebuf8
+      kwargs:
+        test: extmod/framebuf8.py
+    - name: extmod.framebuf_blit
+      kwargs:
+        test: extmod/framebuf_blit.py
+    - name: extmod.framebuf_bounds
+      kwargs:
+        test: extmod/framebuf_bounds.py
+    - name: extmod.framebuf_ellipse
+      kwargs:
+        test: extmod/framebuf_ellipse.py
+    - name: extmod.framebuf_palette
+      kwargs:
+        test: extmod/framebuf_palette.py
+    - name: extmod.framebuf_polygon
+      kwargs:
+        test: extmod/framebuf_polygon.py
+    - name: extmod.framebuf_scroll
+      kwargs:
+        test: extmod/framebuf_scroll.py
+    - name: extmod.framebuf_subclass
+      kwargs:
+        test: extmod/framebuf_subclass.py
+    - name: extmod.hashlib_final
+      kwargs:
+        test: extmod/hashlib_final.py
+    - name: extmod.hashlib_md5
+      kwargs:
+        test: extmod/hashlib_md5.py
+    - name: extmod.hashlib_sha1
+      kwargs:
+        test: extmod/hashlib_sha1.py
+    - name: extmod.hashlib_sha256
+      kwargs:
+        test: extmod/hashlib_sha256.py
+    - name: extmod.heapq1
+      kwargs:
+        test: extmod/heapq1.py
+    - name: extmod.json_dump_iobase
+      kwargs:
+        test: extmod/json_dump_iobase.py
+    - name: extmod.json_dump
+      kwargs:
+        test: extmod/json_dump.py
+    - name: extmod.json_dump_separators
+      kwargs:
+        test: extmod/json_dump_separators.py
+    - name: extmod.json_dumps_extra
+      kwargs:
+        test: extmod/json_dumps_extra.py
+    - name: extmod.json_dumps_float
+      kwargs:
+        test: extmod/json_dumps_float.py
+    - name: extmod.json_dumps_ordereddict
+      kwargs:
+        test: extmod/json_dumps_ordereddict.py
+    - name: extmod.json_dumps
+      kwargs:
+        test: extmod/json_dumps.py
+    - name: extmod.json_dumps_separators
+      kwargs:
+        test: extmod/json_dumps_separators.py
+    - name: extmod.json_load
+      kwargs:
+        test: extmod/json_load.py
+    - name: extmod.json_loads_bytes
+      kwargs:
+        test: extmod/json_loads_bytes.py
+    - name: extmod.json_loads_float
+      kwargs:
+        test: extmod/json_loads_float.py
+    - name: extmod.json_loads_int_64
+      kwargs:
+        test: extmod/json_loads_int_64.py
+    - name: extmod.json_loads
+      kwargs:
+        test: extmod/json_loads.py
+    - name: extmod.machine1
+      kwargs:
+        test: extmod/machine1.py
+      ignore: True # No 'unittest' module
+    - name: extmod.machine_disable_irq
+      kwargs:
+        test: extmod/machine_disable_irq.py
+    - name: extmod.machine_i2s_rate
+      kwargs:
+        test: extmod/machine_i2s_rate.py
+    - name: extmod.machine_pinbase
+      kwargs:
+        test: extmod/machine_pinbase.py
+    - name: extmod.machine_pulse
+      kwargs:
+        test: extmod/machine_pulse.py
+    - name: extmod.machine_rtc
+      kwargs:
+        test: extmod/machine_rtc.py
+    - name: extmod.machine_signal
+      kwargs:
+        test: extmod/machine_signal.py
+    - name: extmod.machine_soft_timer
+      kwargs:
+        test: extmod/machine_soft_timer.py
+    - name: extmod.machine_spi_rate
+      kwargs:
+        test: extmod/machine_spi_rate.py
+    - name: extmod.machine_uart_irq_txidle
+      kwargs:
+        test: extmod/machine_uart_irq_txidle.py
+    - name: extmod.machine_uart_tx
+      kwargs:
+        test: extmod/machine_uart_tx.py
+    - name: extmod.marshal_basic
+      kwargs:
+        test: extmod/marshal_basic.py
+    - name: extmod.marshal_micropython
+      kwargs:
+        test: extmod/marshal_micropython.py
+    - name: extmod.marshal_stress
+      kwargs:
+        test: extmod/marshal_stress.py
+    - name: extmod.platform_basic
+      kwargs:
+        test: extmod/platform_basic.py
+    - name: extmod.random_basic
+      kwargs:
+        test: extmod/random_basic.py
+    - name: extmod.random_extra_float
+      kwargs:
+        test: extmod/random_extra_float.py
+    - name: extmod.random_extra
+      kwargs:
+        test: extmod/random_extra.py
+    - name: extmod.random_seed_default
+      kwargs:
+        test: extmod/random_seed_default.py
+    - name: extmod.re1
+      kwargs:
+        test: extmod/re1.py
+    - name: extmod.re_debug
+      kwargs:
+        test: extmod/re_debug.py
+    - name: extmod.re_error
+      kwargs:
+        test: extmod/re_error.py
+    - name: extmod.re_group
+      kwargs:
+        test: extmod/re_group.py
+    - name: extmod.re_groups
+      kwargs:
+        test: extmod/re_groups.py
+    - name: extmod.re_limit
+      kwargs:
+        test: extmod/re_limit.py
+    - name: extmod.re_namedclass
+      kwargs:
+        test: extmod/re_namedclass.py
+    - name: extmod.re_span
+      kwargs:
+        test: extmod/re_span.py
+    - name: extmod.re_split_empty
+      kwargs:
+        test: extmod/re_split_empty.py
+    - name: extmod.re_split_notimpl
+      kwargs:
+        test: extmod/re_split_notimpl.py
+    - name: extmod.re_split
+      kwargs:
+        test: extmod/re_split.py
+    - name: extmod.re_stack_overflow
+      kwargs:
+        test: extmod/re_stack_overflow.py
+    - name: extmod.re_sub
+      kwargs:
+        test: extmod/re_sub.py
+    - name: extmod.re_sub_unmatched
+      kwargs:
+        test: extmod/re_sub_unmatched.py
+    - name: extmod.select_ipoll
+      kwargs:
+        test: extmod/select_ipoll.py
+    - name: extmod.select_poll_basic
+      kwargs:
+        test: extmod/select_poll_basic.py
+    - name: extmod.select_poll_custom
+      kwargs:
+        test: extmod/select_poll_custom.py
+    - name: extmod.select_poll_eintr
+      kwargs:
+        test: extmod/select_poll_eintr.py
+    - name: extmod.select_poll_fd
+      kwargs:
+        test: extmod/select_poll_fd.py
+    - name: extmod.select_poll_udp
+      kwargs:
+        test: extmod/select_poll_udp.py
+    - name: extmod.socket_tcp_basic
+      kwargs:
+        test: extmod/socket_tcp_basic.py
+      ignore: True # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/460
+    - name: extmod.socket_udp_nonblock
+      kwargs:
+        test: extmod/socket_udp_nonblock.py
+    - name: extmod.ssl_basic
+      kwargs:
+        test: extmod/ssl_basic.py
+    - name: extmod.ssl_cadata
+      kwargs:
+        test: extmod/ssl_cadata.py
+    - name: extmod.ssl_ioctl
+      kwargs:
+        test: extmod/ssl_ioctl.py
+    - name: extmod.ssl_keycert_pkcs8
+      kwargs:
+        test: extmod/ssl_keycert_pkcs8.py
+    - name: extmod.ssl_keycert
+      kwargs:
+        test: extmod/ssl_keycert.py
+    - name: extmod.ssl_poll
+      kwargs:
+        test: extmod/ssl_poll.py
+      ignore: True # Ignored by default in MicroPython
+    - name: extmod.ssl_sslcontext
+      kwargs:
+        test: extmod/ssl_sslcontext.py
+    - name: extmod.ssl_sslcontext_verify_mode2
+      kwargs:
+        test: extmod/ssl_sslcontext_verify_mode2.py
+    - name: extmod.ssl_sslcontext_verify_mode
+      kwargs:
+        test: extmod/ssl_sslcontext_verify_mode.py
+    - name: extmod.ticks_add
+      kwargs:
+        test: extmod/ticks_add.py
+    - name: extmod.ticks_diff
+      kwargs:
+        test: extmod/ticks_diff.py
+    - name: extmod.time_mktime
+      kwargs:
+        test: extmod/time_mktime.py
+    - name: extmod.time_ms_us
+      kwargs:
+        test: extmod/time_ms_us.py
+    - name: extmod.time_res
+      kwargs:
+        test: extmod/time_res.py
+    - name: extmod.time_time_ns
+      kwargs:
+        test: extmod/time_time_ns.py
+    - name: extmod.tls_dtls
+      kwargs:
+        test: extmod/tls_dtls.py
+    - name: extmod.tls_noleak
+      kwargs:
+        test: extmod/tls_noleak.py
+      ignore: True # No 'unittest' module
+    - name: extmod.tls_sslcontext_ciphers
+      kwargs:
+        test: extmod/tls_sslcontext_ciphers.py
+    - name: extmod.tls_sslcontext_micropython
+      kwargs:
+        test: extmod/tls_sslcontext_micropython.py
+    - name: extmod.tls_threads
+      kwargs:
+        test: extmod/tls_threads.py
+      ignore: True # No 'unittest' module
+    - name: extmod.uctypes_32bit_intbig
+      kwargs:
+        test: extmod/uctypes_32bit_intbig.py
+    - name: extmod.uctypes_addressof
+      kwargs:
+        test: extmod/uctypes_addressof.py
+    - name: extmod.uctypes_array_assign_le
+      kwargs:
+        test: extmod/uctypes_array_assign_le.py
+    - name: extmod.uctypes_array_assign_native_le_intbig
+      kwargs:
+        test: extmod/uctypes_array_assign_native_le_intbig.py
+    - name: extmod.uctypes_array_assign_native_le
+      kwargs:
+        test: extmod/uctypes_array_assign_native_le.py
+    - name: extmod.uctypes_array_load_store
+      kwargs:
+        test: extmod/uctypes_array_load_store.py
+    - name: extmod.uctypes_bytearray
+      kwargs:
+        test: extmod/uctypes_bytearray.py
+    - name: extmod.uctypes_byteat
+      kwargs:
+        test: extmod/uctypes_byteat.py
+    - name: extmod.uctypes_error
+      kwargs:
+        test: extmod/uctypes_error.py
+    - name: extmod.uctypes_le_float
+      kwargs:
+        test: extmod/uctypes_le_float.py
+    - name: extmod.uctypes_le
+      kwargs:
+        test: extmod/uctypes_le.py
+    - name: extmod.uctypes_native_float
+      kwargs:
+        test: extmod/uctypes_native_float.py
+    - name: extmod.uctypes_native_le
+      kwargs:
+        test: extmod/uctypes_native_le.py
+    - name: extmod.uctypes_print
+      kwargs:
+        test: extmod/uctypes_print.py
+    - name: extmod.uctypes_ptr_le
+      kwargs:
+        test: extmod/uctypes_ptr_le.py
+    - name: extmod.uctypes_ptr_native_le
+      kwargs:
+        test: extmod/uctypes_ptr_native_le.py
+    - name: extmod.uctypes_sizeof_float
+      kwargs:
+        test: extmod/uctypes_sizeof_float.py
+    - name: extmod.uctypes_sizeof_layout
+      kwargs:
+        test: extmod/uctypes_sizeof_layout.py
+    - name: extmod.uctypes_sizeof_native
+      kwargs:
+        test: extmod/uctypes_sizeof_native.py
+    - name: extmod.uctypes_sizeof_od
+      kwargs:
+        test: extmod/uctypes_sizeof_od.py
+    - name: extmod.uctypes_sizeof
+      kwargs:
+        test: extmod/uctypes_sizeof.py
+    - name: extmod.vfs_basic
+      kwargs:
+        test: extmod/vfs_basic.py
+    - name: extmod.vfs_blockdev_invalid
+      kwargs:
+        test: extmod/vfs_blockdev_invalid.py
+    - name: extmod.vfs_blockdev
+      kwargs:
+        test: extmod/vfs_blockdev.py
+    - name: extmod.vfs_fat_fileio1
+      kwargs:
+        test: extmod/vfs_fat_fileio1.py
+    - name: extmod.vfs_fat_fileio2
+      kwargs:
+        test: extmod/vfs_fat_fileio2.py
+    - name: extmod.vfs_fat_finaliser
+      kwargs:
+        test: extmod/vfs_fat_finaliser.py
+    - name: extmod.vfs_fat_ilistdir_del
+      kwargs:
+        test: extmod/vfs_fat_ilistdir_del.py
+    - name: extmod.vfs_fat_more
+      kwargs:
+        test: extmod/vfs_fat_more.py
+    - name: extmod.vfs_fat_mtime
+      kwargs:
+        test: extmod/vfs_fat_mtime.py
+      ignore: True # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1390
+    - name: extmod.vfs_fat_oldproto
+      kwargs:
+        test: extmod/vfs_fat_oldproto.py
+    - name: extmod.vfs_fat_ramdisklarge
+      kwargs:
+        test: extmod/vfs_fat_ramdisklarge.py
+    - name: extmod.vfs_fat_ramdisk
+      kwargs:
+        test: extmod/vfs_fat_ramdisk.py
+    - name: extmod.vfs_lfs_corrupt
+      kwargs:
+        test: extmod/vfs_lfs_corrupt.py
+    - name: extmod.vfs_lfs_error
+      kwargs:
+        test: extmod/vfs_lfs_error.py
+    - name: extmod.vfs_lfs_file
+      kwargs:
+        test: extmod/vfs_lfs_file.py
+    - name: extmod.vfs_lfs_ilistdir_del
+      kwargs:
+        test: extmod/vfs_lfs_ilistdir_del.py
+    - name: extmod.vfs_lfs_mount
+      kwargs:
+        test: extmod/vfs_lfs_mount.py
+    - name: extmod.vfs_lfs_mtime
+      kwargs:
+        test: extmod/vfs_lfs_mtime.py
+      ignore: True # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1390
+    - name: extmod.vfs_lfs
+      kwargs:
+        test: extmod/vfs_lfs.py
+    - name: extmod.vfs_lfs_superblock
+      kwargs:
+        test: extmod/vfs_lfs_superblock.py
+    - name: extmod.vfs_mountinfo
+      kwargs:
+        test: extmod/vfs_mountinfo.py
+    - name: extmod.vfs_posix_enoent
+      kwargs:
+        test: extmod/vfs_posix_enoent.py
+      ignore: True # There's no mention of ENOENT in POSIX specification of getcwd
+    - name: extmod.vfs_posix_ilistdir_del
+      kwargs:
+        test: extmod/vfs_posix_ilistdir_del.py
+    - name: extmod.vfs_posix_ilistdir_filter
+      kwargs:
+        test: extmod/vfs_posix_ilistdir_filter.py
+    - name: extmod.vfs_posix_paths
+      kwargs:
+        test: extmod/vfs_posix_paths.py
+    - name: extmod.vfs_posix
+      kwargs:
+        test: extmod/vfs_posix.py
+    - name: extmod.vfs_posix_readonly
+      kwargs:
+        test: extmod/vfs_posix_readonly.py
+    - name: extmod.vfs_rom
+      kwargs:
+        test: extmod/vfs_rom.py
+      ignore: True # No 'unittest' module
+    - name: extmod.vfs_userfs
+      kwargs:
+        test: extmod/vfs_userfs.py
+    - name: extmod.websocket_basic
+      kwargs:
+        test: extmod/websocket_basic.py
+    - name: float.array_construct
+      kwargs:
+        test: float/array_construct.py
+    - name: float.builtin_float_abs
+      kwargs:
+        test: float/builtin_float_abs.py
+    - name: float.builtin_float_hash
+      kwargs:
+        test: float/builtin_float_hash.py
+    - name: float.builtin_float_minmax
+      kwargs:
+        test: float/builtin_float_minmax.py
+    - name: float.builtin_float_pow
+      kwargs:
+        test: float/builtin_float_pow.py
+    - name: float.builtin_float_round_intbig
+      kwargs:
+        test: float/builtin_float_round_intbig.py
+    - name: float.builtin_float_round
+      kwargs:
+        test: float/builtin_float_round.py
+      ignore: True # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/465
+    - name: float.bytearray_construct_endian
+      kwargs:
+        test: float/bytearray_construct_endian.py
+    - name: float.bytes_construct_endian
+      kwargs:
+        test: float/bytes_construct_endian.py
+    - name: float.cmath_dunder
+      kwargs:
+        test: float/cmath_dunder.py
+    - name: float.cmath_fun
+      kwargs:
+        test: float/cmath_fun.py
+    - name: float.cmath_fun_special
+      kwargs:
+        test: float/cmath_fun_special.py
+    - name: float.complex1_intbig
+      kwargs:
+        test: float/complex1_intbig.py
+    - name: float.complex1
+      kwargs:
+        test: float/complex1.py
+    - name: float.complex_dunder
+      kwargs:
+        test: float/complex_dunder.py
+    - name: float.complex_reverse_op
+      kwargs:
+        test: float/complex_reverse_op.py
+    - name: float.complex_special_methods
+      kwargs:
+        test: float/complex_special_methods.py
+    - name: float.float1
+      kwargs:
+        test: float/float1.py
+    - name: float.float2int_doubleprec_intbig
+      kwargs:
+        test: float/float2int_doubleprec_intbig.py
+    - name: float.float2int_fp30_intbig
+      kwargs:
+        test: float/float2int_fp30_intbig.py
+    - name: float.float2int_intbig
+      kwargs:
+        test: float/float2int_intbig.py
+    - name: float.float_array
+      kwargs:
+        test: float/float_array.py
+    - name: float.float_compare
+      kwargs:
+        test: float/float_compare.py
+    - name: float.float_divmod
+      kwargs:
+        test: float/float_divmod.py
+    - name: float.float_divmod_relaxed
+      kwargs:
+        test: float/float_divmod_relaxed.py
+    - name: float.float_dunder
+      kwargs:
+        test: float/float_dunder.py
+    - name: float.float_format_accuracy
+      kwargs:
+        test: float/float_format_accuracy.py
+    - name: float.float_format_ftoe
+      kwargs:
+        test: float/float_format_ftoe.py
+    - name: float.float_format_ints_doubleprec
+      kwargs:
+        test: float/float_format_ints_doubleprec.py
+    - name: float.float_format_ints_power10
+      kwargs:
+        test: float/float_format_ints_power10.py
+    - name: float.float_format_ints
+      kwargs:
+        test: float/float_format_ints.py
+    - name: float.float_format
+      kwargs:
+        test: float/float_format.py
+    - name: float.float_parse_doubleprec
+      kwargs:
+        test: float/float_parse_doubleprec.py
+    - name: float.float_parse
+      kwargs:
+        test: float/float_parse.py
+    - name: float.float_struct_e_doubleprec
+      kwargs:
+        test: float/float_struct_e_doubleprec.py
+    - name: float.float_struct_e_fp30
+      kwargs:
+        test: float/float_struct_e_fp30.py
+    - name: float.float_struct_e
+      kwargs:
+        test: float/float_struct_e.py
+    - name: float.float_struct
+      kwargs:
+        test: float/float_struct.py
+    - name: float.inf_nan_arith
+      kwargs:
+        test: float/inf_nan_arith.py
+      # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/462
+      # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/461
+      ignore: True
+    - name: float.int_64_float
+      kwargs:
+        test: float/int_64_float.py
+    - name: float.int_big_float
+      kwargs:
+        test: float/int_big_float.py
+    - name: float.int_divzero
+      kwargs:
+        test: float/int_divzero.py
+    - name: float.int_power
+      kwargs:
+        test: float/int_power.py
+    - name: float.lexer
+      kwargs:
+        test: float/lexer.py
+    - name: float.list_index
+      kwargs:
+        test: float/list_index.py
+    - name: float.math_constants_extra
+      kwargs:
+        test: float/math_constants_extra.py
+      ignore: True # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/462
+    - name: float.math_constants
+      kwargs:
+        test: float/math_constants.py
+    - name: float.math_domain
+      kwargs:
+        test: float/math_domain.py
+      ignore: True # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/463
+    - name: float.math_domain_python311
+      kwargs:
+        test: float/math_domain_python311.py
+      ignore: True # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/463
+    - name: float.math_domain_special
+      kwargs:
+        test: float/math_domain_special.py
+    - name: float.math_dunder
+      kwargs:
+        test: float/math_dunder.py
+    - name: float.math_factorial_intbig
+      kwargs:
+        test: float/math_factorial_intbig.py
+    - name: float.math_fun_bool
+      kwargs:
+        test: float/math_fun_bool.py
+    - name: float.math_fun_intbig
+      kwargs:
+        test: float/math_fun_intbig.py
+    - name: float.math_fun_int
+      kwargs:
+        test: float/math_fun_int.py
+    - name: float.math_fun
+      kwargs:
+        test: float/math_fun.py
+      ignore: True # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/463
+    - name: float.math_fun_special
+      kwargs:
+        test: float/math_fun_special.py
+      ignore: True # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/463
+    - name: float.math_isclose
+      kwargs:
+        test: float/math_isclose.py
+    - name: float.python36
+      kwargs:
+        test: float/python36.py
+    - name: float.string_format2
+      kwargs:
+        test: float/string_format2.py
+    - name: float.string_format_modulo2_intbig
+      kwargs:
+        test: float/string_format_modulo2_intbig.py
+    - name: float.string_format_modulo2
+      kwargs:
+        test: float/string_format_modulo2.py
+    - name: float.string_format_modulo3
+      kwargs:
+        test: float/string_format_modulo3.py
+    - name: float.string_format_modulo
+      kwargs:
+        test: float/string_format_modulo.py
+    - name: float.string_format
+      kwargs:
+        test: float/string_format.py
+    - name: float.true_value
+      kwargs:
+        test: float/true_value.py
+    - name: float.types
+      kwargs:
+        test: float/types.py
+    - name: import.builtin_ext
+      kwargs:
+        test: import/builtin_ext.py
+    - name: import.builtin_import
+      kwargs:
+        test: import/builtin_import.py
+    - name: import.gen_context2
+      kwargs:
+        test: import/gen_context2.py
+    - name: import.gen_context
+      kwargs:
+        test: import/gen_context.py
+    - name: import.import1a
+      kwargs:
+        test: import/import1a.py
+    - name: import.import1b
+      kwargs:
+        test: import/import1b.py
+    - name: import.import2a
+      kwargs:
+        test: import/import2a.py
+    - name: import.import3a
+      kwargs:
+        test: import/import3a.py
+    - name: import.import_broken
+      kwargs:
+        test: import/import_broken.py
+    - name: import.import_circular
+      kwargs:
+        test: import/import_circular.py
+    - name: import.import_file
+      kwargs:
+        test: import/import_file.py
+    - name: import.import_long_dyn2
+      kwargs:
+        test: import/import_long_dyn2.py
+    - name: import.import_long_dyn
+      kwargs:
+        test: import/import_long_dyn.py
+    - name: import.import_override
+      kwargs:
+        test: import/import_override.py
+    - name: import.import_pkg1
+      kwargs:
+        test: import/import_pkg1.py
+    - name: import.import_pkg2
+      kwargs:
+        test: import/import_pkg2.py
+    - name: import.import_pkg3
+      kwargs:
+        test: import/import_pkg3.py
+    - name: import.import_pkg4
+      kwargs:
+        test: import/import_pkg4.py
+    - name: import.import_pkg5
+      kwargs:
+        test: import/import_pkg5.py
+    - name: import.import_pkg6
+      kwargs:
+        test: import/import_pkg6.py
+    - name: import.import_pkg7
+      kwargs:
+        test: import/import_pkg7.py
+    - name: import.import_pkg8
+      kwargs:
+        test: import/import_pkg8.py
+    - name: import.import_pkg9
+      kwargs:
+        test: import/import_pkg9.py
+    - name: import.import_star_error
+      kwargs:
+        test: import/import_star_error.py
+    - name: import.import_star
+      kwargs:
+        test: import/import_star.py
+    - name: import.module_dict
+      kwargs:
+        test: import/module_dict.py
+    - name: import.module_getattr
+      kwargs:
+        test: import/module_getattr.py
+    - name: import.rel_import_inv
+      kwargs:
+        test: import/rel_import_inv.py
+    - name: import.try_module
+      kwargs:
+        test: import/try_module.py
+    - name: io.argv
+      kwargs:
+        test: io/argv.py
+    - name: io.builtin_print_file
+      kwargs:
+        test: io/builtin_print_file.py
+    - name: io.file1
+      kwargs:
+        test: io/file1.py
+    - name: io.file_iter
+      kwargs:
+        test: io/file_iter.py
+    - name: io.file_long_read2
+      kwargs:
+        test: io/file_long_read2.py
+    - name: io.file_long_read3
+      kwargs:
+        test: io/file_long_read3.py
+    - name: io.file_long_read
+      kwargs:
+        test: io/file_long_read.py
+    - name: io.file_readinto_len
+      kwargs:
+        test: io/file_readinto_len.py
+    - name: io.file_readinto
+      kwargs:
+        test: io/file_readinto.py
+    - name: io.file_readline
+      kwargs:
+        test: io/file_readline.py
+    - name: io.file_seek
+      kwargs:
+        test: io/file_seek.py
+    - name: io.file_stdio2
+      kwargs:
+        test: io/file_stdio2.py
+    - name: io.file_stdio
+      kwargs:
+        test: io/file_stdio.py
+    - name: io.file_with
+      kwargs:
+        test: io/file_with.py
+    - name: io.open_append
+      kwargs:
+        test: io/open_append.py
+    - name: io.open_plus
+      kwargs:
+        test: io/open_plus.py
+    - name: micropython.builtin_execfile
+      kwargs:
+        test: micropython/builtin_execfile.py
+    - name: micropython.const2
+      kwargs:
+        test: micropython/const2.py
+    - name: micropython.const_alltypes
+      kwargs:
+        test: micropython/const_alltypes.py
+    - name: micropython.const_error
+      kwargs:
+        test: micropython/const_error.py
+    - name: micropython.const_float
+      kwargs:
+        test: micropython/const_float.py
+    - name: micropython.const_intbig
+      kwargs:
+        test: micropython/const_intbig.py
+    - name: micropython.const_math
+      kwargs:
+        test: micropython/const_math.py
+    - name: micropython.const
+      kwargs:
+        test: micropython/const.py
+    - name: micropython.decorator_error
+      kwargs:
+        test: micropython/decorator_error.py
+    - name: micropython.decorator
+      kwargs:
+        test: micropython/decorator.py
+    - name: micropython.emg_exc
+      kwargs:
+        test: micropython/emg_exc.py
+    - name: micropython.extreme_exc
+      kwargs:
+        test: micropython/extreme_exc.py
+    - name: micropython.heapalloc_bytesio2
+      kwargs:
+        test: micropython/heapalloc_bytesio2.py
+    - name: micropython.heapalloc_bytesio
+      kwargs:
+        test: micropython/heapalloc_bytesio.py
+    - name: micropython.heapalloc_exc_compressed_emg_exc
+      kwargs:
+        test: micropython/heapalloc_exc_compressed_emg_exc.py
+    - name: micropython.heapalloc_exc_compressed
+      kwargs:
+        test: micropython/heapalloc_exc_compressed.py
+    - name: micropython.heapalloc_exc_raise
+      kwargs:
+        test: micropython/heapalloc_exc_raise.py
+    - name: micropython.heapalloc_fail_bytearray
+      kwargs:
+        test: micropython/heapalloc_fail_bytearray.py
+    - name: micropython.heapalloc_fail_dict
+      kwargs:
+        test: micropython/heapalloc_fail_dict.py
+    - name: micropython.heapalloc_fail_list
+      kwargs:
+        test: micropython/heapalloc_fail_list.py
+    - name: micropython.heapalloc_fail_memoryview
+      kwargs:
+        test: micropython/heapalloc_fail_memoryview.py
+    - name: micropython.heapalloc_fail_set
+      kwargs:
+        test: micropython/heapalloc_fail_set.py
+    - name: micropython.heapalloc_fail_tuple
+      kwargs:
+        test: micropython/heapalloc_fail_tuple.py
+    - name: micropython.heapalloc_inst_call
+      kwargs:
+        test: micropython/heapalloc_inst_call.py
+    - name: micropython.heapalloc_int_from_bytes
+      kwargs:
+        test: micropython/heapalloc_int_from_bytes.py
+    - name: micropython.heapalloc_iter
+      kwargs:
+        test: micropython/heapalloc_iter.py
+    - name: micropython.heapalloc
+      kwargs:
+        test: micropython/heapalloc.py
+    - name: micropython.heapalloc_slice
+      kwargs:
+        test: micropython/heapalloc_slice.py
+    - name: micropython.heapalloc_str
+      kwargs:
+        test: micropython/heapalloc_str.py
+    - name: micropython.heapalloc_super
+      kwargs:
+        test: micropython/heapalloc_super.py
+    - name: micropython.heapalloc_traceback
+      kwargs:
+        test: micropython/heapalloc_traceback.py
+    - name: micropython.heapalloc_yield_from
+      kwargs:
+        test: micropython/heapalloc_yield_from.py
+    - name: micropython.heap_locked
+      kwargs:
+        test: micropython/heap_locked.py
+    - name: micropython.heap_lock
+      kwargs:
+        test: micropython/heap_lock.py
+    - name: micropython.import_mpy_invalid
+      kwargs:
+        test: micropython/import_mpy_invalid.py
+    - name: micropython.import_mpy_native_gc
+      kwargs:
+        test: micropython/import_mpy_native_gc.py
+    - name: micropython.import_mpy_native
+      kwargs:
+        test: micropython/import_mpy_native.py
+    - name: micropython.kbd_intr
+      kwargs:
+        test: micropython/kbd_intr.py
+    - name: micropython.meminfo
+      kwargs:
+        test: micropython/meminfo.py
+    - name: micropython.memstats
+      kwargs:
+        test: micropython/memstats.py
+    - name: micropython.native_closure
+      kwargs:
+        test: micropython/native_closure.py
+    - name: micropython.native_const_intbig
+      kwargs:
+        test: micropython/native_const_intbig.py
+    - name: micropython.native_const
+      kwargs:
+        test: micropython/native_const.py
+    - name: micropython.native_for
+      kwargs:
+        test: micropython/native_for.py
+    - name: micropython.native_fun_attrs_code
+      kwargs:
+        test: micropython/native_fun_attrs_code.py
+    - name: micropython.native_fun_attrs
+      kwargs:
+        test: micropython/native_fun_attrs.py
+    - name: micropython.native_gen
+      kwargs:
+        test: micropython/native_gen.py
+    - name: micropython.native_misc
+      kwargs:
+        test: micropython/native_misc.py
+    - name: micropython.native_try_deep
+      kwargs:
+        test: micropython/native_try_deep.py
+    - name: micropython.native_try
+      kwargs:
+        test: micropython/native_try.py
+    - name: micropython.native_while
+      kwargs:
+        test: micropython/native_while.py
+    - name: micropython.native_with
+      kwargs:
+        test: micropython/native_with.py
+    - name: micropython.opt_level_lineno
+      kwargs:
+        test: micropython/opt_level_lineno.py
+    - name: micropython.opt_level
+      kwargs:
+        test: micropython/opt_level.py
+    - name: micropython.ringio_async
+      kwargs:
+        test: micropython/ringio_async.py
+    - name: micropython.ringio
+      kwargs:
+        test: micropython/ringio.py
+    - name: micropython.schedule
+      kwargs:
+        test: micropython/schedule.py
+    - name: micropython.stack_use
+      kwargs:
+        test: micropython/stack_use.py
+    - name: micropython.viper_addr
+      kwargs:
+        test: micropython/viper_addr.py
+    - name: micropython.viper_args
+      kwargs:
+        test: micropython/viper_args.py
+    - name: micropython.viper_binop_arith
+      kwargs:
+        test: micropython/viper_binop_arith.py
+    - name: micropython.viper_binop_arith_uint
+      kwargs:
+        test: micropython/viper_binop_arith_uint.py
+    - name: micropython.viper_binop_bitwise_uint
+      kwargs:
+        test: micropython/viper_binop_bitwise_uint.py
+    - name: micropython.viper_binop_comp_imm
+      kwargs:
+        test: micropython/viper_binop_comp_imm.py
+    - name: micropython.viper_binop_comp
+      kwargs:
+        test: micropython/viper_binop_comp.py
+    - name: micropython.viper_binop_comp_uint
+      kwargs:
+        test: micropython/viper_binop_comp_uint.py
+    - name: micropython.viper_binop_divmod
+      kwargs:
+        test: micropython/viper_binop_divmod.py
+    - name: micropython.viper_binop_multi_comp
+      kwargs:
+        test: micropython/viper_binop_multi_comp.py
+    - name: micropython.viper_cond
+      kwargs:
+        test: micropython/viper_cond.py
+    - name: micropython.viper_const_intbig
+      kwargs:
+        test: micropython/viper_const_intbig.py
+    - name: micropython.viper_const
+      kwargs:
+        test: micropython/viper_const.py
+    - name: micropython.viper_error
+      kwargs:
+        test: micropython/viper_error.py
+    - name: micropython.viper_globals
+      kwargs:
+        test: micropython/viper_globals.py
+    - name: micropython.viper_import
+      kwargs:
+        test: micropython/viper_import.py
+    - name: micropython.viper_misc2
+      kwargs:
+        test: micropython/viper_misc2.py
+    - name: micropython.viper_misc3
+      kwargs:
+        test: micropython/viper_misc3.py
+    - name: micropython.viper_misc_intbig
+      kwargs:
+        test: micropython/viper_misc_intbig.py
+    - name: micropython.viper_misc
+      kwargs:
+        test: micropython/viper_misc.py
+    - name: micropython.viper_ptr16_load_boundary
+      kwargs:
+        test: micropython/viper_ptr16_load_boundary.py
+    - name: micropython.viper_ptr16_load
+      kwargs:
+        test: micropython/viper_ptr16_load.py
+    - name: micropython.viper_ptr16_store_boundary_intbig
+      kwargs:
+        test: micropython/viper_ptr16_store_boundary_intbig.py
+    - name: micropython.viper_ptr16_store
+      kwargs:
+        test: micropython/viper_ptr16_store.py
+    - name: micropython.viper_ptr32_load_boundary
+      kwargs:
+        test: micropython/viper_ptr32_load_boundary.py
+    - name: micropython.viper_ptr32_load
+      kwargs:
+        test: micropython/viper_ptr32_load.py
+    - name: micropython.viper_ptr32_store_boundary_intbig
+      kwargs:
+        test: micropython/viper_ptr32_store_boundary_intbig.py
+    - name: micropython.viper_ptr32_store
+      kwargs:
+        test: micropython/viper_ptr32_store.py
+    - name: micropython.viper_ptr8_load_boundary
+      kwargs:
+        test: micropython/viper_ptr8_load_boundary.py
+    - name: micropython.viper_ptr8_load
+      kwargs:
+        test: micropython/viper_ptr8_load.py
+    - name: micropython.viper_ptr8_store_boundary_intbig
+      kwargs:
+        test: micropython/viper_ptr8_store_boundary_intbig.py
+    - name: micropython.viper_ptr8_store
+      kwargs:
+        test: micropython/viper_ptr8_store.py
+    - name: micropython.viper_storeattr
+      kwargs:
+        test: micropython/viper_storeattr.py
+    - name: micropython.viper_subscr_multi
+      kwargs:
+        test: micropython/viper_subscr_multi.py
+    - name: micropython.viper_subscr
+      kwargs:
+        test: micropython/viper_subscr.py
+    - name: micropython.viper_try
+      kwargs:
+        test: micropython/viper_try.py
+    - name: micropython.viper_types
+      kwargs:
+        test: micropython/viper_types.py
+    - name: micropython.viper_unop
+      kwargs:
+        test: micropython/viper_unop.py
+    - name: micropython.viper_with
+      kwargs:
+        test: micropython/viper_with.py
+    - name: misc.cexample_class
+      kwargs:
+        test: misc/cexample_class.py
+    - name: misc.cexample_module
+      kwargs:
+        test: misc/cexample_module.py
+    - name: misc.cexample_subclass
+      kwargs:
+        test: misc/cexample_subclass.py
+    - name: misc.features
+      kwargs:
+        test: misc/features.py
+    - name: misc.non_compliant_lexer
+      kwargs:
+        test: misc/non_compliant_lexer.py
+    - name: misc.non_compliant
+      kwargs:
+        test: misc/non_compliant.py
+    - name: misc.print_exception
+      kwargs:
+        test: misc/print_exception.py
+    - name: misc.rge_sm
+      kwargs:
+        test: misc/rge_sm.py
+    - name: misc.sys_atexit
+      kwargs:
+        test: misc/sys_atexit.py
+    - name: misc.sys_exc_info
+      kwargs:
+        test: misc/sys_exc_info.py
+    - name: misc.sys_settrace_cov
+      kwargs:
+        test: misc/sys_settrace_cov.py
+    - name: misc.sys_settrace_features
+      kwargs:
+        test: misc/sys_settrace_features.py
+    - name: misc.sys_settrace_generator
+      kwargs:
+        test: misc/sys_settrace_generator.py
+    - name: misc.sys_settrace_loop
+      kwargs:
+        test: misc/sys_settrace_loop.py
+    - name: unicode.file1
+      kwargs:
+        test: unicode/file1.py
+    - name: unicode.file2
+      kwargs:
+        test: unicode/file2.py
+    - name: unicode.file_invalid
+      kwargs:
+        test: unicode/file_invalid.py
+    - name: unicode.unicode_chr
+      kwargs:
+        test: unicode/unicode_chr.py
+    - name: unicode.unicode_id
+      kwargs:
+        test: unicode/unicode_id.py
+    - name: unicode.unicode_index
+      kwargs:
+        test: unicode/unicode_index.py
+    - name: unicode.unicode_iter
+      kwargs:
+        test: unicode/unicode_iter.py
+    - name: unicode.unicode_ord
+      kwargs:
+        test: unicode/unicode_ord.py
+    - name: unicode.unicode_pos
+      kwargs:
+        test: unicode/unicode_pos.py
+    - name: unicode.unicode
+      kwargs:
+        test: unicode/unicode.py
+    - name: unicode.unicode_slice
+      kwargs:
+        test: unicode/unicode_slice.py
+    - name: unicode.unicode_str_format
+      kwargs:
+        test: unicode/unicode_str_format.py
+    - name: unicode.unicode_str_modulo
+      kwargs:
+        test: unicode/unicode_str_modulo.py
+    - name: unicode.unicode_subscr
+      kwargs:
+        test: unicode/unicode_subscr.py
+    - name: unicode.unicode_ure
+      kwargs:
+        test: unicode/unicode_ure.py
+    - name: unix.extra_coverage
+      kwargs:
+        test: unix/extra_coverage.py
+    - name: unix.ffi_callback
+      kwargs:
+        test: unix/ffi_callback.py
+    - name: unix.ffi_float2
+      kwargs:
+        test: unix/ffi_float2.py
+    - name: unix.ffi_float
+      kwargs:
+        test: unix/ffi_float.py
+    - name: unix.ffi_int_base
+      kwargs:
+        test: unix/ffi_int_base.py
+    - name: unix.ffi_int_long32
+      kwargs:
+        test: unix/ffi_int_long32.py
+    - name: unix.ffi_int_long64
+      kwargs:
+        test: unix/ffi_int_long64.py
+    - name: unix.ffi_int_types
+      kwargs:
+        test: unix/ffi_int_types.py
+    - name: unix.mod_os
+      kwargs:
+        test: unix/mod_os.py
+    - name: unix.time_mktime_localtime
+      kwargs:
+        test: unix/time_mktime_localtime.py
