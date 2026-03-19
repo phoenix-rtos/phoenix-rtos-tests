@@ -1258,7 +1258,7 @@ test:
           # 38: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1258
           # 40: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1463
         - name: T.execv
-          execute: run-test /tset/POSIX.os/procprim/exec/T.execv{1-14,17-20,22,24,31,33,39,41,43-50}
+          execute: run-test /tset/POSIX.os/procprim/Mexec/T.execv{1-14,17-20,22,24,31,33,39,41,43-50}
           kwargs:
             testcase_count: 50
 
@@ -1273,7 +1273,7 @@ test:
           # 38: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1258
           # 40: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1463
         - name: T.execve
-          execute: run-test /tset/POSIX.os/procprim/exec/T.execve{1-14,17-20,22,24,31,33,39,41,43-50}
+          execute: run-test /tset/POSIX.os/procprim/Mexec/T.execve{1-14,17-20,22,24,31,33,39,41,43-50}
           kwargs:
             testcase_count: 50
 
@@ -1288,7 +1288,7 @@ test:
           # 38: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1258
           # 40: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1463
         - name: T.execvp
-          execute: run-test /tset/POSIX.os/procprim/exec/T.execvp{1-14,17-20,22,24,31,33,39,41-50}
+          execute: run-test /tset/POSIX.os/procprim/Mexec/T.execvp{1-14,17-20,22,24,31,33,39,41-50}
           kwargs:
             testcase_count: 50
 
@@ -1303,7 +1303,7 @@ test:
           # 38: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1258
           # 40: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1463
         - name: T.execl
-          execute: run-test /tset/POSIX.os/procprim/exec/T.execl{1-14,17-20,22,24,31,33,39,41,43-50}
+          execute: run-test /tset/POSIX.os/procprim/Mexec/T.execl{1-14,17-20,22,24,31,33,39,41,43-50}
           kwargs:
             testcase_count: 50
 
@@ -1320,7 +1320,7 @@ test:
           # 38: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1258
           # 40: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1463
         - name: T.execle
-          execute: run-test /tset/POSIX.os/procprim/exec/T.execle{6-12,17-20,22,24,31,33,39,41,43-50}
+          execute: run-test /tset/POSIX.os/procprim/Mexec/T.execle{6-12,17-20,22,24,31,33,39,41,43-50}
           kwargs:
             testcase_count: 50
 
@@ -1335,7 +1335,7 @@ test:
           # 38: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1258
           # 40: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1463
         - name: T.execlp
-          execute: run-test /tset/POSIX.os/procprim/exec/T.execlp{1-14,17-20,22,24,31,33,39,41-50}
+          execute: run-test /tset/POSIX.os/procprim/Mexec/T.execlp{1-14,17-20,22,24,31,33,39,41-50}
           kwargs:
             testcase_count: 50
 
