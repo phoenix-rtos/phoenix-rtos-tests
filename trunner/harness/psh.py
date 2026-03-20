@@ -84,6 +84,8 @@ class ShellHarness(IntermediateHarness):
         # suppress klog output to console while test is running to avoid problems with parsing
         if self.suppress_dmesg:
             self.dut.pexpect_proc.sendline("dmesg -D")
+            self.dut.pexpect_proc.sendline("mem")
+            self.dut.pexpect_proc.sendline("df .")
             self.assert_prompt()
 
         if self.cmd is not None:
@@ -106,6 +108,8 @@ class ShellHarness(IntermediateHarness):
             # re-enable log output to release collected output
             if self.suppress_dmesg:
                 self.dut.pexpect_proc.sendline("dmesg -E")
+                self.dut.pexpect_proc.sendline("mem")
+                self.dut.pexpect_proc.sendline("df .")
                 self.assert_prompt()
 
         return test_result
