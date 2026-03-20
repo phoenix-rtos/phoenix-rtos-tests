@@ -1,10 +1,20 @@
 from abc import abstractmethod
-from typing import Callable, TextIO
+from pathlib import Path
+from typing import Callable, Sequence, TextIO
 
 from trunner.ctx import TestContext
-from trunner.dut import QemuDut
-from trunner.harness import HarnessBuilder, RebooterHarness, ShellHarness, TestStartRunningHarness
-from trunner.types import TestOptions, TestResult
+from trunner.dut import Dut, QemuDut
+from trunner.harness import (
+    HarnessBuilder,
+    PloHarness,
+    PloInterface,
+    RebooterHarness,
+    ShellHarness,
+    TerminalHarness,
+    TestStartRunningHarness,
+)
+from trunner.tools import GdbInteractive
+from trunner.types import AppOptions, TestOptions, TestResult
 from .base import TargetBase
 
 
@@ -123,14 +133,92 @@ class AARCH64A53ZynqmpQemuTarget(QemuTarget):
         return cls()
 
 
+class ARMV7R5FPloAppLoader(TerminalHarness, PloInterface):
+    def __init__(self, dut: Dut, apps: Sequence[AppOptions], gdb: GdbInteractive):
+        TerminalHarness.__init__(self)
+        PloInterface.__init__(self, dut)
+        self.apps = apps
+        self.gdb = gdb
+        self.ramdisk_addr = 0x8000000
+        self.page_sz = 0x200
+
+    def _aligned_app_size(self, path: Path):
+        sz = path.stat().st_size
+        offset = (self.page_sz - sz) % self.page_sz
+        return sz + offset
+
+    def __call__(self):
+        with self.gdb.run():
+            offset = 0
+            self.gdb.connect()
+
+            for app in self.apps:
+                path = self.gdb.cwd / Path(app.file)
+                sz = self._aligned_app_size(path)
+                self.gdb.load(path, self.ramdisk_addr + offset)
+                offset += sz
+
+        offset = 0
+        for app in self.apps:
+            path = self.gdb.cwd / Path(app.file)
+            sz = path.stat().st_size
+
+            self.alias(app.file, offset=offset, size=sz)
+            self.app("ramdisk", app.file, "ddr", "ddr")
+
+            offset += self._aligned_app_size(path)
+
+
 class ARMV7R5FZynqmpQemuTarget(QemuTarget):
     name = "armv7r5f-zynqmp-qemu"
     rootfs = False
-    experimental = True
 
     def __init__(self):
-        super().__init__("armv7r5f-zynqmp-qemu.sh")
+        super().__init__("armv7r5f-zynqmp-qemu-test.sh")
 
     @classmethod
     def from_context(cls, _: TestContext):
         return cls()
+
+    def build_test(self, test: TestOptions) -> Callable[[TestResult], TestResult]:
+        builder = HarnessBuilder()
+
+        if test.should_reboot:
+            builder.add(RebooterHarness(self.rebooter))
+
+        if test.bootloader is not None:
+            app_loader = None
+
+            if test.bootloader.apps:
+                app_loader = ARMV7R5FPloAppLoader(
+                    dut=self.dut,
+                    apps=test.bootloader.apps,
+                    # port from armv7r5f-zynqmp-qemu-test.sh
+                    gdb=GdbInteractive(
+                        port=2024,
+                        cwd=self.root_dir() / test.shell.path,
+                        init_commands=[
+                            "set architecture aarch64",
+                            "set remote target-features-packet off",
+                        ],
+                    ),
+                )
+
+            builder.add(PloHarness(self.dut, app_loader=app_loader))
+
+        if test.shell is not None:
+            builder.add(
+                ShellHarness(
+                    self.dut,
+                    self.shell_prompt,
+                    test.shell.cmd,
+                    prompt_timeout=self.prompt_timeout,
+                    suppress_dmesg=False,
+                )
+            )
+        else:
+            builder.add(TestStartRunningHarness())
+
+        builder.add(test.harness)
+
+        return builder.get_harness()
