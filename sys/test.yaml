@@ -9,3 +9,6 @@ test:
 
     - name: perf
       execute: test-sys-perf
+      targets:
+          # Excluded due to: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1587
+          exclude: [armv7r5f-zynqmp-qemu]
