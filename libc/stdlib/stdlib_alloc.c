@@ -44,6 +44,30 @@ const char *__asan_default_options()
 
 #endif
 
+
+/*
+Macros for allocation functions made specifically for allocation overflow tests.
+
+If we run on Linux and AddressSanitizer is active, we want to prevent ASan from
+intercepting and failing the allocation by calling the allocation functions
+directly from libc.
+
+This works only with `glibc`
+*/
+
+#if defined(__GLIBC__) && defined(__SANITIZE_ADDRESS__) && !defined(__phoenix__)
+extern void *__libc_malloc(size_t size);
+extern void *__libc_calloc(size_t nmemb, size_t size);
+extern void *__libc_realloc(void *ptr, size_t size);
+#define OVERFLOW_MALLOC(size)        __libc_malloc(size)
+#define OVERFLOW_CALLOC(nmemb, size) __libc_calloc(nmemb, size)
+#define OVERFLOW_REALLOC(ptr, size)  __libc_realloc(ptr, size)
+#else
+#define OVERFLOW_MALLOC(size)        malloc(size)
+#define OVERFLOW_CALLOC(nmemb, size) calloc(nmemb, size)
+#define OVERFLOW_REALLOC(ptr, size)  realloc(ptr, size)
+#endif
+
 /*
 Test group for:
 malloc, calloc,
@@ -163,7 +187,7 @@ TEST(stdlib_alloc, malloc_overflow)
 #pragma GCC diagnostic ignored "-Walloc-size-larger-than="
 
 	errno = 0;
-	TEST_ASSERT_NULL(malloc(SIZE_MAX));
+	TEST_ASSERT_NULL(OVERFLOW_MALLOC(SIZE_MAX));
 	TEST_ASSERT_EQUAL_INT(ENOMEM, errno);
 
 #pragma GCC diagnostic pop
@@ -243,22 +267,21 @@ TEST(stdlib_alloc, calloc_iterate)
 	}
 }
 
-
 TEST(stdlib_alloc, calloc_overflow)
 {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Walloc-size-larger-than="
 
 	errno = 0;
-	TEST_ASSERT_NULL(calloc(1, SIZE_MAX));
+	TEST_ASSERT_NULL(OVERFLOW_CALLOC(1, SIZE_MAX));
 	TEST_ASSERT_EQUAL_INT(ENOMEM, errno);
 
 	errno = 0;
-	TEST_ASSERT_NULL(calloc(SIZE_MAX, 1));
+	TEST_ASSERT_NULL(OVERFLOW_CALLOC(SIZE_MAX, 1));
 	TEST_ASSERT_EQUAL_INT(ENOMEM, errno);
 
 	errno = 0;
-	TEST_ASSERT_NULL(calloc(SIZE_MAX, SIZE_MAX));
+	TEST_ASSERT_NULL(OVERFLOW_CALLOC(SIZE_MAX, SIZE_MAX));
 	TEST_ASSERT_EQUAL_INT(ENOMEM, errno);
 
 #pragma GCC diagnostic pop
@@ -475,27 +498,26 @@ TEST(stdlib_alloc, realloc_multiple)
 	free(ptr3);
 }
 
-
 TEST(stdlib_alloc, realloc_overflow)
 {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Walloc-size-larger-than="
 
 	errno = 0;
-	TEST_ASSERT_NULL(realloc(NULL, SIZE_MAX));
+	TEST_ASSERT_NULL(OVERFLOW_REALLOC(NULL, SIZE_MAX));
 	TEST_ASSERT_EQUAL_INT(ENOMEM, errno);
 
 	errno = 0;
 	void *ptr = malloc(BLOCK_SIZE);
 	TEST_ASSERT_NOT_NULL(ptr);
-	TEST_ASSERT_NULL(realloc(ptr, SIZE_MAX));
+	TEST_ASSERT_NULL(OVERFLOW_REALLOC(ptr, SIZE_MAX));
 	TEST_ASSERT_EQUAL_INT(ENOMEM, errno);
 
 	errno = 0;
 	int *ptr1 = calloc(1, BLOCK_SIZE);
 	TEST_ASSERT_NOT_NULL(ptr1);
 	TEST_ASSERT_EACH_EQUAL_INT(0, ptr1, BLOCK_SIZE / sizeof(int));
-	TEST_ASSERT_NULL(realloc(ptr1, SIZE_MAX));
+	TEST_ASSERT_NULL(OVERFLOW_REALLOC(ptr1, SIZE_MAX));
 	TEST_ASSERT_EQUAL_INT(ENOMEM, errno);
 
 	free(ptr);
