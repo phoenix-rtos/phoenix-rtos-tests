@@ -7,9 +7,8 @@ from trunner.dut import Dut, SerialDut
 from trunner.host import Host
 from trunner.harness import (
     IntermediateHarness,
-    TerminalHarness,
-    PloInterface,
     PloHarness,
+    PloRamAppLoader,
     ShellHarness,
     TestStartRunningHarness,
     Rebooter,
@@ -66,24 +65,18 @@ class STM32L4x6OpenocdGdbServerHarness(IntermediateHarness):
         return self.next_harness(result)
 
 
-class STM32L4x6PloAppLoader(TerminalHarness, PloInterface):
+class STM32L4x6PloAppLoader(PloRamAppLoader):
+    """Loads app binaries into RAM via GDB and registers them with PLO on STM32L4x6."""
+
+    load_offset = 0x30000
+    ram_addr = 0x20000000
+    page_sz = 0x200
+
     def __init__(self, dut: Dut, apps: Sequence[AppOptions], gdb: GdbInteractive):
-        TerminalHarness.__init__(self)
-        PloInterface.__init__(self, dut)
-        self.dut = dut
-        self.apps = apps
+        super().__init__(dut, apps)
         self.gdb = gdb
-        self.load_offset = 0x30000
-        self.ram_addr = 0x20000000
-        self.page_sz = 0x200
 
-    def _aligned_app_size(self, path: Path):
-        sz = path.stat().st_size
-        # round up to the size of the page
-        offset = (self.page_sz - sz) % self.page_sz
-        return sz + offset
-
-    def __call__(self):
+    def __call__(self) -> None:
         # First, load the apps into ram memory using gdb
         with self.gdb.run():
             offset = self.load_offset
@@ -91,10 +84,10 @@ class STM32L4x6PloAppLoader(TerminalHarness, PloInterface):
 
             for app in self.apps:
                 path = self.gdb.cwd / Path(app.file)
-                sz = self._aligned_app_size(path)
+                aligned_sz = self._aligned_app_size(path)
 
                 self.gdb.load(path, self.ram_addr + offset)
-                offset += sz
+                offset += aligned_sz
 
             self.gdb.cont()
 

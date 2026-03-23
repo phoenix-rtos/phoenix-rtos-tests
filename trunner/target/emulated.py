@@ -7,10 +7,9 @@ from trunner.dut import Dut, QemuDut
 from trunner.harness import (
     HarnessBuilder,
     PloHarness,
-    PloInterface,
+    PloRamAppLoader,
     RebooterHarness,
     ShellHarness,
-    TerminalHarness,
     TestStartRunningHarness,
 )
 from trunner.tools import GdbInteractive
@@ -133,24 +132,15 @@ class AARCH64A53ZynqmpQemuTarget(QemuTarget):
         return cls()
 
 
-class ARMV7R5FPloAppLoader(TerminalHarness, PloInterface):
+class ARMV7R5FPloAppLoader(PloRamAppLoader):
     """Loads application binaries to syspage via GDB on armv7r5f-zynqmp-qemu."""
 
-    # TODO: _aligned_app_size() is duplicated across STM32L4x6PloAppLoader, MCXN947PloAppLoader
-    # and this class — unify into a shared base class
     ramdisk_addr = 0x8000000
     page_sz = 0x200
 
     def __init__(self, dut: Dut, apps: Sequence[AppOptions], gdb: GdbInteractive):
-        TerminalHarness.__init__(self)
-        PloInterface.__init__(self, dut)
-        self.apps = apps
+        super().__init__(dut, apps)
         self.gdb = gdb
-
-    def _aligned_app_size(self, path: Path) -> int:
-        sz = path.stat().st_size
-        offset = (self.page_sz - sz) % self.page_sz
-        return sz + offset
 
     def __call__(self) -> None:
         with self.gdb.run():
@@ -159,9 +149,9 @@ class ARMV7R5FPloAppLoader(TerminalHarness, PloInterface):
 
             for app in self.apps:
                 path = self.gdb.cwd / Path(app.file)
-                sz = self._aligned_app_size(path)
+                aligned_sz = self._aligned_app_size(path)
                 self.gdb.load(path, self.ramdisk_addr + offset)
-                offset += sz
+                offset += aligned_sz
 
         offset = 0
         for app in self.apps:
