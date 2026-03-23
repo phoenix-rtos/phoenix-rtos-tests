@@ -493,9 +493,9 @@ TEST(stdlib_alloc, realloc_overflow)
 
 	errno = 0;
 	int *ptr1 = calloc(1, BLOCK_SIZE);
-	TEST_ASSERT_NOT_NULL(ptr);
+	TEST_ASSERT_NOT_NULL(ptr1);
 	TEST_ASSERT_EACH_EQUAL_INT(0, ptr1, BLOCK_SIZE / sizeof(int));
-	TEST_ASSERT_NULL(realloc(ptr, SIZE_MAX));
+	TEST_ASSERT_NULL(realloc(ptr1, SIZE_MAX));
 	TEST_ASSERT_EQUAL_INT(ENOMEM, errno);
 
 	free(ptr);
