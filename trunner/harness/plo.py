@@ -1,4 +1,6 @@
+from abc import abstractmethod
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Callable, Optional, Sequence
 import time
 
@@ -315,6 +317,33 @@ class PloPhoenixdAppLoader(TerminalHarness, PloInterface):
                     dmap=app.dmap,
                     exec=app.exec,
                 )
+
+
+class PloRamAppLoader(TerminalHarness, PloInterface):
+    """Base class for harnesses that load app binaries into RAM and register them with PLO.
+
+    Subclasses must implement ``__call__`` to define the specific loading mechanism
+    (e.g. GDB, pyocd) and PLO registration steps.
+
+    Subclasses must define ``page_sz`` as a class attribute.
+    """
+
+    page_sz: int
+
+    def __init__(self, dut: Dut, apps: Sequence[AppOptions]):
+        TerminalHarness.__init__(self)
+        PloInterface.__init__(self, dut)
+        self.apps = apps
+
+    def _aligned_app_size(self, path: Path) -> int:
+        """Returns app file size rounded up to the next page boundary."""
+        sz = path.stat().st_size
+        offset = (self.page_sz - sz) % self.page_sz
+        return sz + offset
+
+    @abstractmethod
+    def __call__(self) -> None:
+        """Loads apps into memory and registers them as PLO programs."""
 
 
 class PloHarness(IntermediateHarness, PloInterface):

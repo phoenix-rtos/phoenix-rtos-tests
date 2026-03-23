@@ -5,9 +5,8 @@ from trunner.ctx import TestContext
 from trunner.dut import Dut, SerialDut
 from trunner.host import Host
 from trunner.harness import (
-    TerminalHarness,
-    PloInterface,
     PloHarness,
+    PloRamAppLoader,
     ShellHarness,
     TestStartRunningHarness,
     Rebooter,
@@ -35,25 +34,18 @@ class ARMv8M33Rebooter(Rebooter):
         PyocdProcess(target="mcxn947").reset()
 
 
-class MCXN947PloAppLoader(TerminalHarness, PloInterface):
+class MCXN947PloAppLoader(PloRamAppLoader):
+    """Loads app binaries into RAM via pyocd and registers them with PLO on MCXN947."""
+
+    load_offset = 0x25000
+    ram_addr = 0x20000000
+    page_sz = 0x200
+
     def __init__(self, dut: Dut, apps: Sequence[AppOptions], app_host_dir: Path):
-        TerminalHarness.__init__(self)
-        PloInterface.__init__(self, dut)
-        self.dut = dut
-        self.apps = apps
+        super().__init__(dut, apps)
         self.app_host_dir = app_host_dir
-        self.load_offset = 0x25000
-        self.ram_addr = 0x20000000
-        self.page_sz = 0x200
 
-    # TODO: unify the AppLoader interface and place the _aligned_app_size() in one place then
-    def _aligned_app_size(self, path: Path):
-        sz = path.stat().st_size
-        # round up to the size of the page
-        offset = (self.page_sz - sz) % self.page_sz
-        return sz + offset
-
-    def __call__(self):
+    def __call__(self) -> None:
         # Load the apps into ram using pyocd and after that map loaded binaries as runnable programs
         offset = self.load_offset
 
