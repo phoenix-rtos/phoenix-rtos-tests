@@ -4,6 +4,8 @@ import signal
 import threading
 import time
 import pexpect
+from pathlib import Path
+from typing import Optional
 
 from trunner.harness import ProcessError
 from trunner.dut import PortNotFound
@@ -93,7 +95,7 @@ class Phoenixd:
         self.cwd = cwd
         self.dir = directory
         self.dispatcher_event = None
-        self.logfile = io.StringIO()
+        self.logfile = None
         self.output = ""
 
     def _reader(self):
@@ -115,16 +117,20 @@ class Phoenixd:
         # EOF occurs always after killing the phoenixd process
         self.proc.expect(pexpect.EOF, timeout=None)
 
-    def _run(self):
+    def _run(self, dir_path: Optional[Path] = None):
+        # Fresh StringIO each call — _close() closes the previous one.
+        self.logfile = io.StringIO()
         try:
             self.port = wait_for_vid_pid(self.vid, self.pid, device="plo", timeout=10)
         except (TimeoutError, Exception) as exc:
             raise PhoenixdError(str(exc)) from exc
 
+        dir_str = str(dir_path) if dir_path is not None else str(self.dir)
+
         # Use pexpect.spawn to run a process as PTY, so it will flush on a new line
         self.proc = pexpect.spawn(
             "phoenixd",
-            ["-p", self.port, "-s", str(self.dir)],
+            ["-p", self.port, "-s", dir_str],
             cwd=self.cwd,
             encoding="ascii",
             logfile=self.logfile,
@@ -143,9 +149,14 @@ class Phoenixd:
 
     @contextmanager
     @add_output_to_exception(PhoenixdError)
-    def run(self):
+    def run(self, dir_path: Optional[Path] = None):
+        """Context manager that starts phoenixd and stops it on exit.
+
+        Args:
+            dir_path: Directory to serve files from. Defaults to self.dir.
+        """
         try:
-            self._run()
+            self._run(dir_path=dir_path)
             yield
         finally:
             self._close()

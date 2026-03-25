@@ -6,7 +6,7 @@ from trunner.dut import Dut, SerialDut
 from trunner.host import Host
 from trunner.harness import (
     PloHarness,
-    PloRamAppLoader,
+    PloRamSyspageLoader,
     ShellHarness,
     TestStartRunningHarness,
     Rebooter,
@@ -15,7 +15,7 @@ from trunner.harness import (
     FlashError,
 )
 from trunner.tools import PyocdProcess, PyocdError
-from trunner.types import AppOptions, TestOptions
+from trunner.types import AppOptions, FileOptions, TestOptions
 from .base import TargetBase, find_port
 
 
@@ -34,32 +34,48 @@ class ARMv8M33Rebooter(Rebooter):
         PyocdProcess(target="mcxn947").reset()
 
 
-class MCXN947PloAppLoader(PloRamAppLoader):
-    """Loads app binaries into RAM via pyocd and registers them with PLO on MCXN947."""
+class MCXN947SyspageLoader(PloRamSyspageLoader):
+    """Loads app binaries and file blobs into RAM via pyocd and registers them with PLO on MCXN947."""
 
+    source_device = "ramdev"
+    destination_map = "ram"
     load_offset = 0x25000
     ram_addr = 0x20000000
     page_sz = 0x200
 
-    def __init__(self, dut: Dut, apps: Sequence[AppOptions], app_host_dir: Path):
-        super().__init__(dut, apps)
+    def __init__(
+        self,
+        dut: Dut,
+        apps: Sequence[AppOptions],
+        app_host_dir: Path,
+        files: Sequence[FileOptions] = (),
+        root_dir: Optional[Path] = None,
+    ):
+        super().__init__(dut, apps, files, root_dir)
         self.app_host_dir = app_host_dir
 
     def __call__(self) -> None:
-        # Load the apps into ram using pyocd and after that map loaded binaries as runnable programs
         offset = self.load_offset
 
+        apps_offset = offset
         for app in self.apps:
             path = self.app_host_dir / Path(app.file)
-
             PyocdProcess(target="mcxn947", extra_args=["--format=bin", "--no-reset"], cwd=self.app_host_dir).load(
                 load_file=app.file, load_offset=self.ram_addr + offset
             )
+            offset += self._aligned_size(path)
 
-            self.alias(app.file, offset=offset, size=path.stat().st_size)
-            self.app("ramdev", app.file, "ram", "ram")
+        files_offset = offset
+        for f in self.files:
+            path = self._root_dir / Path(f.file).relative_to("/")
+            PyocdProcess(target="mcxn947", extra_args=["--format=bin", "--no-reset"], cwd=self._root_dir).load(
+                load_file=str(Path(f.file).relative_to("/")), load_offset=self.ram_addr + offset
+            )
 
-            offset += self._aligned_app_size(path)
+            offset += self._aligned_size(path)
+
+        self._register_apps_in_plo(apps_offset, self.app_host_dir)
+        self._register_files_in_plo(files_offset)
 
 
 class MCXN94xTarget(TargetBase):
@@ -98,16 +114,18 @@ class MCXN94xTarget(TargetBase):
             builder.add(RebooterHarness(self.rebooter))
 
         if test.bootloader is not None:
-            app_loader = None
+            syspage_loader = None
 
-            if test.bootloader.apps:
-                app_loader = MCXN947PloAppLoader(
+            if test.bootloader.apps or test.bootloader.files:
+                syspage_loader = MCXN947SyspageLoader(
                     dut=self.dut,
                     apps=test.bootloader.apps,
                     app_host_dir=self.root_dir() / test.shell.path,
+                    files=test.bootloader.files,
+                    root_dir=self.root_dir(),
                 )
 
-            builder.add(PloHarness(self.dut, app_loader=app_loader))
+            builder.add(PloHarness(self.dut, syspage_loader=syspage_loader))
 
         if test.shell is not None:
             builder.add(
