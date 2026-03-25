@@ -9,7 +9,7 @@ import pexpect
 from trunner.dut import Dut
 from trunner.text import bold
 from trunner.tools import Phoenixd
-from trunner.types import AppOptions, TestResult, TestStage
+from trunner.types import AppOptions, FileOptions, TestResult, TestStage
 from .base import HarnessError, IntermediateHarness, Rebooter, TerminalHarness
 
 
@@ -216,6 +216,10 @@ class PloInterface:
         """Sets alias for the memory region."""
         self.cmd(f"alias {name} {offset:#x} {size:#x}", timeout=4)
 
+    def blob(self, device: str, file: str, map: str):
+        """Loads a raw binary blob from device into the syspage."""
+        self.cmd(f"blob {device} {file} {map}", timeout=30)
+
     def go(self):
         """Sends go command to jump out from plo."""
         self.dut.send("go!\r")
@@ -288,62 +292,126 @@ class PloImageLoader(TerminalHarness, PloInterface):
         self.rebooter(flash=False, hard=True)
 
 
-class PloPhoenixdAppLoader(TerminalHarness, PloInterface):
-    """Harness to load the binaries to syspage using plo bootloader.
+class PloPhoenixdSyspageLoader(TerminalHarness, PloInterface):
+    """Harness to load app binaries and file blobs to syspage using plo bootloader and phoenixd.
 
-    It loads the binariers of applications using plo bootloader with the help of a phoenixd program.
+    Apps are loaded from the directory configured in the phoenixd instance.
+    File blobs are resolved against root_dir and loaded by restarting phoenixd
+    once per unique parent directory, so that each blob is served from the
+    correct host path.
 
     Attributes:
         dut: Device on which harness will be run.
         apps: Sequence of applications that will be loaded.
+        files: Sequence of file blobs that will be loaded.
         phoenixd: Phoenixd object that wraps phoenixd program.
+        root_dir: Host path to root directory for the target. Required when files is non-empty.
 
     """
 
-    def __init__(self, dut: Dut, apps: Sequence[AppOptions], phoenixd: Phoenixd):
+    def __init__(
+        self,
+        dut: Dut,
+        apps: Sequence[AppOptions],
+        phoenixd: Phoenixd,
+        files: Sequence[FileOptions] = (),
+        root_dir: Optional[Path] = None,
+    ):
         TerminalHarness.__init__(self)
         PloInterface.__init__(self, dut)
         self.dut = dut
         self.apps = apps
+        self.files = files
         self.phoenixd = phoenixd
+        if files and root_dir is None:
+            raise ValueError(f"{self.__class__.__name__}: root_dir is required when files is non-empty")
+        self._root_dir = root_dir
 
     def __call__(self):
-        with self.phoenixd.run():
-            for app in self.apps:
-                self.app(
-                    device=app.source,
-                    file=app.file,
-                    imap=app.imap,
-                    dmap=app.dmap,
-                    exec=app.exec,
-                )
+        if self.apps:
+            with self.phoenixd.run():
+                for app in self.apps:
+                    self.app(
+                        device=app.source,
+                        file=app.file,
+                        imap=app.imap,
+                        dmap=app.dmap,
+                        exec=app.exec,
+                    )
+
+        files_by_dir = {}
+        for f in self.files:
+            parent = self._root_dir / Path(f.file).relative_to("/").parent
+            files_by_dir.setdefault(parent, []).append(f)
+
+        for dir_path, dir_files in files_by_dir.items():
+            with self.phoenixd.run(dir_path=dir_path):
+                for f in dir_files:
+                    self.blob(
+                        device=f.source,
+                        file=Path(f.file).name,
+                        map=f.map,
+                    )
 
 
-class PloRamAppLoader(TerminalHarness, PloInterface):
-    """Base class for harnesses that load app binaries into RAM and register them with PLO.
+class PloRamSyspageLoader(TerminalHarness, PloInterface):
+    """Base class for harnesses that load app binaries and file blobs into RAM and register them with PLO.
 
     Subclasses must implement ``__call__`` to define the specific loading mechanism
     (e.g. GDB, pyocd) and PLO registration steps.
 
-    Subclasses must define ``page_sz`` as a class attribute.
+    Subclasses must define ``page_sz``, ``source_device``, and ``destination_map`` as class attributes.
     """
 
     page_sz: int
+    source_device: str
+    destination_map: str
 
-    def __init__(self, dut: Dut, apps: Sequence[AppOptions]):
+    def __init__(
+        self,
+        dut: Dut,
+        apps: Sequence[AppOptions],
+        files: Sequence[FileOptions] = (),
+        root_dir: Optional[Path] = None,
+    ):
         TerminalHarness.__init__(self)
         PloInterface.__init__(self, dut)
         self.apps = apps
+        self.files = files
+        if files and root_dir is None:
+            raise ValueError(f"{self.__class__.__name__}: root_dir is required when files is non-empty")
+        self._root_dir = root_dir
 
-    def _aligned_app_size(self, path: Path) -> int:
-        """Returns app file size rounded up to the next page boundary."""
+    def _aligned_size(self, path: Path) -> int:
+        """Returns file size rounded up to the next page boundary."""
         sz = path.stat().st_size
         offset = (self.page_sz - sz) % self.page_sz
         return sz + offset
 
+    def _register_apps_in_plo(self, offset: int, app_host_dir: Path) -> int:
+        """Registers app binaries in syspage at the given memory offset. Returns updated offset."""
+        for app in self.apps:
+            path = app_host_dir / Path(app.file)
+            sz = path.stat().st_size
+            self.alias(app.file, offset=offset, size=sz)
+            self.app(self.source_device, app.file, self.destination_map, self.destination_map)
+            offset += self._aligned_size(path)
+        return offset
+
+    def _register_files_in_plo(self, offset: int) -> int:
+        """Registers file blobs in syspage at the given memory offset. Returns updated offset."""
+        for f in self.files:
+            path = self._root_dir / Path(f.file).relative_to("/")
+            basename = Path(f.file).name
+            sz = path.stat().st_size
+            self.alias(basename, offset=offset, size=sz)
+            self.blob(self.source_device, basename, self.destination_map)
+            offset += self._aligned_size(path)
+        return offset
+
     @abstractmethod
     def __call__(self) -> None:
-        """Loads apps into memory and registers them as PLO programs."""
+        """Loads apps and file blobs into memory and registers them in syspage."""
 
 
 class PloHarness(IntermediateHarness, PloInterface):
@@ -353,21 +421,21 @@ class PloHarness(IntermediateHarness, PloInterface):
 
     Attributes:
         dut: Device on which harness will be run.
-        app_loader: Optional app loader harness to copy the binaries to the syspage.
+        syspage_loader: Optional syspage loader harness to copy the files/binaries to the syspage.
 
     """
 
-    def __init__(self, dut: Dut, app_loader: Optional[Callable[[], None]] = None):
+    def __init__(self, dut: Dut, syspage_loader: Optional[Callable[[], None]] = None):
         IntermediateHarness.__init__(self)
         PloInterface.__init__(self, dut)
         self.dut = dut
-        self.app_loader = app_loader
+        self.syspage_loader = syspage_loader
 
     def __call__(self, result: TestResult) -> TestResult:
         result.set_stage(TestStage.FLASH)
         self.enter_bootloader()
         self.wait_prompt()
-        if self.app_loader:
-            self.app_loader()
+        if self.syspage_loader:
+            self.syspage_loader()
         self.go()
         return self.next_harness(result)

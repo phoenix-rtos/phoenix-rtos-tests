@@ -434,8 +434,26 @@ class AppOptions:
 
 
 @dataclass
+class FileOptions:
+    """Options for loading a plain file (blob) into the syspage.
+
+    Attributes:
+        file: Absolute path to the file within the target root filesystem.
+        source: USB transport device for phoenixd-based loaders (e.g. 'usb0').
+                Ignored by GDB/pyocd-based loaders — the blob device is determined by the loader.
+        map: PLO memory map name to register the blob into (e.g. 'ddr', 'ocram2').
+             Used by phoenixd-based loaders; GDB/pyocd-based loaders use a loader-defined map.
+    """
+
+    file: str
+    source: str = "usb0"
+    map: str = "ocram2"
+
+
+@dataclass
 class BootloaderOptions:
     apps: List[AppOptions] = field(default_factory=list)
+    files: List[FileOptions] = field(default_factory=list)
 
 
 @dataclass

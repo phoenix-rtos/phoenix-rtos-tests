@@ -9,7 +9,7 @@ import yaml
 
 from trunner.ctx import TestContext
 from trunner.harness import PyHarness, unity_harness
-from trunner.types import AppOptions, BootloaderOptions, TestOptions, ShellOptions, TestType
+from trunner.types import AppOptions, BootloaderOptions, FileOptions, TestOptions, ShellOptions, TestType
 
 
 class ParserError(Exception):
@@ -99,43 +99,67 @@ class ConfigParser:
         self.test.harness = PyHarness(self.ctx.target.dut, self.ctx, unity_harness, self.test.kwargs)
 
     def _parse_load(self, config: dict):
-        apps = config.get("load", [])
-        apps_to_boot = []
+        load_items = config.get("load", [])
+        apps_to_load = []
+        files_to_load = []
+        file_basenames = set()
 
-        for app in apps:
-            file = app.get("app", None)
-            if not file:
-                raise ParserError("generic error")
+        for item in load_items:
+            if "app" in item:
+                file = item["app"]
+                if not isinstance(file, str) or not file:
+                    raise ParserError("'app' must be a non-empty string")
+                opts = AppOptions(file=file)
 
-            opts = AppOptions(file=file)
+                if "source" in item:
+                    opts.source = item["source"]
+                if "imap" in item:
+                    opts.imap = item["imap"]
+                if "dmap" in item:
+                    opts.dmap = item["dmap"]
+                if "exec" in item:
+                    opts.exec = item["exec"]
 
-            if "source" in app:
-                opts.source = app["source"]
-            if "imap" in app:
-                opts.imap = app["imap"]
-            if "dmap" in app:
-                opts.dmap = app["dmap"]
-            if "exec" in app:
-                opts.exec = app["exec"]
+                apps_to_load.append(opts)
+            elif "file" in item:
+                file_path = item["file"]
+                if not isinstance(file_path, str) or not file_path:
+                    raise ParserError("'file' must be a non-empty string")
+                if not file_path.startswith("/"):
+                    raise ParserError(f"'file' path must be absolute (start with '/'), got: '{file_path}'")
 
-            apps_to_boot.append(opts)
+                basename = Path(file_path).name
+                if basename in file_basenames:
+                    raise ParserError(f"duplicate blob basename in load section: '{basename}'")
+                file_basenames.add(basename)
+
+                opts = FileOptions(file=file_path)
+
+                if "source" in item:
+                    opts.source = item["source"]
+                if "map" in item:
+                    opts.map = item["map"]
+
+                files_to_load.append(opts)
+            else:
+                raise ParserError("load entry must contain either 'app' or 'file' key")
 
         if self.test.shell is not None and self.test.shell.binary:
             # If it is non rootfs target then we have to load test binary
-            for app in apps_to_boot:
+            for app in apps_to_load:
                 if app.file == self.test.shell.binary:
                     break
             else:
                 if not self.ctx.target.rootfs:
-                    apps_to_boot.append(
+                    apps_to_load.append(
                         AppOptions(
                             file=self.test.shell.binary,
                             exec=False,
                         )
                     )
 
-        if apps_to_boot:
-            self.test.bootloader = BootloaderOptions(apps=apps_to_boot)
+        if apps_to_load or files_to_load:
+            self.test.bootloader = BootloaderOptions(apps=apps_to_load, files=files_to_load)
         else:
             self.test.bootloader = None
 

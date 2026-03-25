@@ -259,8 +259,12 @@ class TestRunner:
             if self.ctx.nightly:
                 test.should_reboot = True
 
-            # We have to enter the bootloader in order to load applications.
-            if not self.ctx.target.rootfs and test.bootloader is not None and test.bootloader.apps:
+            # We have to enter the bootloader in order to load file blobs or applications.
+            if (
+                not self.ctx.target.rootfs
+                and test.bootloader
+                and (test.bootloader.apps or test.bootloader.files)
+            ):
                 test.should_reboot = True
 
             result = TestResult(test.name)

@@ -8,7 +8,7 @@ from trunner.host import Host
 from trunner.harness import (
     IntermediateHarness,
     PloHarness,
-    PloRamAppLoader,
+    PloRamSyspageLoader,
     ShellHarness,
     TestStartRunningHarness,
     Rebooter,
@@ -17,7 +17,7 @@ from trunner.harness import (
     FlashError,
 )
 from trunner.tools import GdbInteractive, OpenocdGdbServer, OpenocdProcess, OpenocdError
-from trunner.types import AppOptions, TestOptions, TestResult
+from trunner.types import AppOptions, FileOptions, TestOptions, TestResult
 from .base import TargetBase, find_port
 
 
@@ -65,26 +65,43 @@ class STM32L4x6OpenocdGdbServerHarness(IntermediateHarness):
         return self.next_harness(result)
 
 
-class STM32L4x6PloAppLoader(PloRamAppLoader):
-    """Loads app binaries into RAM via GDB and registers them with PLO on STM32L4x6."""
+class STM32L4x6SyspageLoader(PloRamSyspageLoader):
+    """Loads app binaries and file blobs into RAM via GDB and registers them with PLO on STM32L4x6."""
 
+    source_device = "ramdev"
+    destination_map = "ram"
     load_offset = 0x30000
     ram_addr = 0x20000000
     page_sz = 0x200
 
-    def __init__(self, dut: Dut, apps: Sequence[AppOptions], gdb: GdbInteractive):
-        super().__init__(dut, apps)
+    def __init__(
+        self,
+        dut: Dut,
+        apps: Sequence[AppOptions],
+        gdb: GdbInteractive,
+        files: Sequence[FileOptions] = (),
+        root_dir: Optional[Path] = None,
+    ):
+        super().__init__(dut, apps, files, root_dir)
         self.gdb = gdb
 
     def __call__(self) -> None:
-        # First, load the apps into ram memory using gdb
         with self.gdb.run():
             offset = self.load_offset
+            apps_offset = offset
             self.gdb.connect()
 
             for app in self.apps:
                 path = self.gdb.cwd / Path(app.file)
-                aligned_sz = self._aligned_app_size(path)
+                aligned_sz = self._aligned_size(path)
+
+                self.gdb.load(path, self.ram_addr + offset)
+                offset += aligned_sz
+
+            files_offset = offset
+            for f in self.files:
+                path = self._root_dir / Path(f.file).relative_to("/")
+                aligned_sz = self._aligned_size(path)
 
                 self.gdb.load(path, self.ram_addr + offset)
                 offset += aligned_sz
@@ -94,16 +111,8 @@ class STM32L4x6PloAppLoader(PloRamAppLoader):
             # When closing right after continuing plo will get stuck
             time.sleep(0.5)
 
-        # Secondly, map loaded binaries as runnable programs
-        offset = self.load_offset
-        for app in self.apps:
-            path = self.gdb.cwd / Path(app.file)
-            sz = path.stat().st_size
-
-            self.alias(app.file, offset=offset, size=sz)
-            self.app("ramdev", app.file, "ram", "ram")
-
-            offset += self._aligned_app_size(path)
+        self._register_apps_in_plo(apps_offset, app_host_dir=self.gdb.cwd)
+        self._register_files_in_plo(files_offset)
 
 
 class STM32L4x6Target(TargetBase):
@@ -156,19 +165,21 @@ class STM32L4x6Target(TargetBase):
             builder.add(RebooterHarness(self.rebooter))
 
         if test.bootloader is not None:
-            app_loader = None
+            syspage_loader = None
 
-            if test.bootloader.apps:
-                app_loader = STM32L4x6PloAppLoader(
+            if test.bootloader.apps or test.bootloader.files:
+                syspage_loader = STM32L4x6SyspageLoader(
                     dut=self.dut,
                     apps=test.bootloader.apps,
                     gdb=GdbInteractive(port=3333, cwd=self.root_dir() / test.shell.path),
+                    files=test.bootloader.files,
+                    root_dir=self.root_dir(),
                 )
 
-            builder.add(PloHarness(self.dut, app_loader=app_loader))
+            builder.add(PloHarness(self.dut, syspage_loader=syspage_loader))
 
-        if test.bootloader is not None and test.bootloader.apps:
-            # In the case we are loading apps using OpenGdbServer we would like to run plo
+        if test.bootloader is not None and (test.bootloader.apps or test.bootloader.files):
+            # In the case we are loading apps/files using OpenGdbServer we would like to run plo
             # in the gdb server context. Get the harness that we already build, pack it in gdb
             # server context and continue building harness
             setup = builder.get_harness()
