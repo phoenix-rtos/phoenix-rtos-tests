@@ -12,12 +12,17 @@
 # %LICENSE%
 #
 
+from trunner import ctx
+
 import psh.tools.psh as psh
 
 
+# TODO switch to new test harness template providing ctx in args
 @psh.run
 def harness(p):
-    psh.assert_cmd(p, 'cat etc/shells',
+    # On NOMMU targets shells file is loaded to syspage
+    dir = "syspage" if not ctx.target.rootfs else "etc"
+    psh.assert_cmd(p, f'cat {dir}/shells',
                    expected=r'# /etc/shells: valid login shells(\r+)\n/bin/sh(\r+)\n',
-                   msg='The /etc/shells/ file content is invalid',
+                   msg=f'The /{dir}/shells/ file content is invalid',
                    is_regex=True)
