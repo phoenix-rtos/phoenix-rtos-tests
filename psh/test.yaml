@@ -45,14 +45,12 @@ test:
 
         - name: cat-shells
           harness: test-cat-shells.py
+          load:
+          - file: /etc/shells
           targets:
+              # To be included after adding PloSyspageLoader on this platform
               exclude: [
-                armv7m7-imxrt106x-evk,
-                armv7m7-imxrt117x-evk,
-                armv7m4-stm32l4x6-nucleo,
                 sparcv8leon-generic-qemu,
-                armv7r5f-zynqmp-qemu,
-                armv8m33-mcxn94x-frdm
                 ]
 
         - name: kill
