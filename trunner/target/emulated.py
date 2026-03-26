@@ -158,8 +158,12 @@ class ARMV7R5FPloAppLoader(PloRamAppLoader):
             path = self.gdb.cwd / Path(app.file)
             sz = path.stat().st_size
 
-            self.alias(app.file, offset=offset, size=sz)
-            self.app("ramdisk", app.file, "ddr", "ddr")
+            if ".py" in app.file:
+                self.alias(Path(app.file).name, offset=offset, size=sz)
+                self.cmd(f"blob ramdisk {Path(app.file).name} {"ddr"}", timeout=30)
+            else:
+                self.alias(app.file, offset=offset, size=sz)
+                self.app("ramdisk", app.file, "ddr", "ddr")
 
             offset += self._aligned_app_size(path)
 
