@@ -24,6 +24,7 @@ from .plo import (
 from .psh import ShellHarness
 from .pyharness import PyHarness
 from .unity import unity_harness
+from .pytest import pytest_harness
 
 __all__ = [
     "HarnessBuilder",
@@ -48,4 +49,5 @@ __all__ = [
     "PloImageProperty",
     "PloJffsImageProperty",
     "unity_harness",
+    "pytest_harness"
 ]
