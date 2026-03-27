@@ -1,0 +1,17 @@
+test:
+  type: unity
+  tests:
+    - name: dirent
+      execute: test-posix-dirent
+      # Targets excluded from tests as they use root filesystems that do note
+      # support the (dirent, opendir_retainpos) test (no read() on directories)
+      targets:
+        exclude:
+          - armv7m7-imxrt117x-evk
+          - armv7m7-imxrt106x-evk
+          - armv7a9-zynq7000-zedboard
+          - armv7a9-zynq7000-qemu
+          - armv7a7-imx6ull-evk
+          - armv7r5f-zynqmp-qemu
+          - aarch64a53-zynqmp-qemu
+          - armv7m4-stm32l4x6-nucleo
