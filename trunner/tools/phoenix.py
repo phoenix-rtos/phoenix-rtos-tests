@@ -59,13 +59,7 @@ class Psu:
 
     def run(self):
         # TODO handle lack of psu program?
-        self.proc = pexpect.spawn(
-            "psu",
-            [self.script],
-            cwd=self.cwd,
-            encoding="ascii",
-            logfile=self.host_log
-        )
+        self.proc = pexpect.spawn("psu", [self.script], cwd=self.cwd, encoding="ascii", logfile=self.host_log)
 
         try:
             self.proc.expect(pexpect.EOF, timeout=20)
