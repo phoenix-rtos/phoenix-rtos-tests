@@ -4,7 +4,7 @@ from trunner.harness import (
     HarnessBuilder,
     PloImageLoader,
     PloImageProperty,
-    PloPhoenixdAppLoader,
+    PloPhoenixdSyspageLoader,
     PloHarness,
     Rebooter,
     RebooterHarness,
@@ -65,16 +65,18 @@ class ARMv7M7Target(TargetBase):
             builder.add(RebooterHarness(self.rebooter, hard=False))
 
         if test.bootloader is not None:
-            app_loader = None
+            syspage_loader = None
 
-            if test.bootloader.apps:
-                app_loader = PloPhoenixdAppLoader(
+            if test.bootloader.apps or test.bootloader.files:
+                syspage_loader = PloPhoenixdSyspageLoader(
                     dut=self.dut,
                     apps=test.bootloader.apps,
                     phoenixd=Phoenixd(directory=self.root_dir() / test.shell.path),
+                    files=test.bootloader.files,
+                    root_dir=self.root_dir(),
                 )
 
-            builder.add(PloHarness(self.dut, app_loader=app_loader))
+            builder.add(PloHarness(self.dut, syspage_loader=syspage_loader))
 
         if test.shell is not None:
             builder.add(ShellHarness(self.dut, self.shell_prompt, test.shell.cmd))

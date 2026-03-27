@@ -1,19 +1,19 @@
 from abc import abstractmethod
 from pathlib import Path
-from typing import Callable, Sequence, TextIO
+from typing import Callable, Optional, Sequence, TextIO
 
 from trunner.ctx import TestContext
 from trunner.dut import Dut, QemuDut
 from trunner.harness import (
     HarnessBuilder,
     PloHarness,
-    PloRamAppLoader,
+    PloRamSyspageLoader,
     RebooterHarness,
     ShellHarness,
     TestStartRunningHarness,
 )
 from trunner.tools import GdbInteractive
-from trunner.types import AppOptions, TestOptions, TestResult
+from trunner.types import AppOptions, FileOptions, TestOptions, TestResult
 from .base import TargetBase
 
 
@@ -132,36 +132,46 @@ class AARCH64A53ZynqmpQemuTarget(QemuTarget):
         return cls()
 
 
-class ARMV7R5FPloAppLoader(PloRamAppLoader):
-    """Loads application binaries to syspage via GDB on armv7r5f-zynqmp-qemu."""
+class ARMV7R5FSyspageLoader(PloRamSyspageLoader):
+    """Loads app binaries and file blobs into syspage via GDB on armv7r5f-zynqmp-qemu."""
 
+    source_device = "ramdisk"
+    destination_map = "ddr"
     ramdisk_addr = 0x8000000
     page_sz = 0x200
 
-    def __init__(self, dut: Dut, apps: Sequence[AppOptions], gdb: GdbInteractive):
-        super().__init__(dut, apps)
+    def __init__(
+        self,
+        dut: Dut,
+        apps: Sequence[AppOptions],
+        gdb: GdbInteractive,
+        files: Sequence[FileOptions] = (),
+        root_dir: Optional[Path] = None,
+    ):
+        super().__init__(dut, apps, files, root_dir)
         self.gdb = gdb
 
     def __call__(self) -> None:
         with self.gdb.run():
             offset = 0
+            apps_offset = offset
             self.gdb.connect()
 
             for app in self.apps:
                 path = self.gdb.cwd / Path(app.file)
-                aligned_sz = self._aligned_app_size(path)
+                aligned_sz = self._aligned_size(path)
                 self.gdb.load(path, self.ramdisk_addr + offset)
                 offset += aligned_sz
 
-        offset = 0
-        for app in self.apps:
-            path = self.gdb.cwd / Path(app.file)
-            sz = path.stat().st_size
+            files_offset = offset
+            for f in self.files:
+                path = self._root_dir / Path(f.file).relative_to("/")
+                aligned_sz = self._aligned_size(path)
+                self.gdb.load(path, self.ramdisk_addr + offset)
+                offset += aligned_sz
 
-            self.alias(app.file, offset=offset, size=sz)
-            self.app("ramdisk", app.file, "ddr", "ddr")
-
-            offset += self._aligned_app_size(path)
+        self._register_apps_in_plo(apps_offset, app_host_dir=self.gdb.cwd)
+        self._register_files_in_plo(files_offset)
 
 
 class ARMV7R5FZynqmpQemuTarget(QemuTarget):
@@ -184,22 +194,21 @@ class ARMV7R5FZynqmpQemuTarget(QemuTarget):
             builder.add(RebooterHarness(self.rebooter))
 
         if test.bootloader is not None:
-            app_loader = None
+            syspage_loader = None
 
-            if test.bootloader.apps:
-                if test.shell is None:
-                    raise ValueError(f"Test '{test.name}' requires shell.path to resolve app binaries for GDB loading")
-
-                app_loader = ARMV7R5FPloAppLoader(
+            if test.bootloader.apps or test.bootloader.files:
+                syspage_loader = ARMV7R5FSyspageLoader(
                     dut=self.dut,
                     apps=test.bootloader.apps,
                     gdb=GdbInteractive(
                         port=self.gdb_port,
                         cwd=self.root_dir() / test.shell.path,
                     ),
+                    files=test.bootloader.files,
+                    root_dir=self.root_dir(),
                 )
 
-            builder.add(PloHarness(self.dut, app_loader=app_loader))
+            builder.add(PloHarness(self.dut, syspage_loader=syspage_loader))
 
         if test.shell is not None:
             builder.add(
