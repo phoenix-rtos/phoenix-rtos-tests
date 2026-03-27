@@ -403,16 +403,10 @@ class TestSubResult(TestResult):
 
             # multi-line message that break width limit, mainly for subtests with long name
             if remaining_lines and shift_len + max(len(line) for line in msg_lines) > 120:
-                out += ":\n" + "\n".join(
-                    f"{tab}{tab}{line}"
-                    for line in msg_lines
-                )
+                out += ":\n" + "\n".join(f"{tab}{tab}{line}" for line in msg_lines)
             # multi-line message that does not exceed width limit
             elif remaining_lines:
-                out += ": " + first_line + "\n" + "\n".join(
-                    f'{" " * shift_len}{line}'
-                    for line in remaining_lines
-                )
+                out += ": " + first_line + "\n" + "\n".join(f'{" " * shift_len}{line}' for line in remaining_lines)
             # single-line message
             else:
                 out += ": " + first_line
