@@ -52,6 +52,13 @@ TEST_TEAR_DOWN(ctype)
 }
 
 
+/* TEMP: deliberate failure to test CI notification pipeline */
+TEST(ctype, deliberate_fail)
+{
+	TEST_FAIL_MESSAGE("TEMP: this test deliberately fails to verify CI notification integration");
+}
+
+
 TEST(ctype, isalnum)
 {
 	for (int i = MIN_VALUE; i <= MAX_VALUE; i++) {
@@ -335,6 +342,7 @@ TEST(ctype, _toupper)
 
 TEST_GROUP_RUNNER(ctype)
 {
+	RUN_TEST_CASE(ctype, deliberate_fail);
 	RUN_TEST_CASE(ctype, isalnum);
 	RUN_TEST_CASE(ctype, isalpha);
 	RUN_TEST_CASE(ctype, isascii);
