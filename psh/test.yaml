@@ -22,6 +22,7 @@ test:
                 armv7m4-stm32l4x6-nucleo,
                 sparcv8leon-generic-qemu,
                 armv7r5f-zynqmp-qemu,
+                armv7r5f-zynqmp-som,
                 armv8m33-mcxn94x-frdm
                 ]
 
@@ -71,6 +72,7 @@ test:
                 armv7m4-stm32l4x6-nucleo,
                 sparcv8leon-generic-qemu,
                 armv7r5f-zynqmp-qemu,
+                armv7r5f-zynqmp-som,
                 armv8m33-mcxn94x-frdm
                 ]
 
@@ -86,6 +88,7 @@ test:
                 armv7m4-stm32l4x6-nucleo,
                 sparcv8leon-generic-qemu,
                 armv7r5f-zynqmp-qemu,
+                armv7r5f-zynqmp-som,
                 armv8m33-mcxn94x-frdm
                 ]
 
@@ -101,6 +104,7 @@ test:
                 armv7m4-stm32l4x6-nucleo,
                 sparcv8leon-generic-qemu,
                 armv7r5f-zynqmp-qemu,
+                armv7r5f-zynqmp-som,
                 armv8m33-mcxn94x-frdm
                 ]
 

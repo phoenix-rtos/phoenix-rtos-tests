@@ -11,4 +11,5 @@ test:
               armv7m4-stm32l4x6-nucleo,
               armv8m33-mcxn94x-frdm,
               armv7r5f-zynqmp-qemu,
+              armv7r5f-zynqmp-som,
               ]
