@@ -304,13 +304,12 @@ test:
             testcase_count: 2
 
           # 6: POSIX no longer strictly requires fclose() on open STREAMS when abort() is called
-          # 7: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1230
           # 13: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1401
           # 14: ulimit() is POSIX XSI extension
           # 15, 16: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/733
           # 17: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
         - name: T.fclose
-          execute: run-test /tset/ANSI.os/streamio/fclose/T.fclose{1-5,8-12,18-21}
+          execute: run-test /tset/ANSI.os/streamio/fclose/T.fclose{1-5,7-12,18-21}
           kwargs:
             testcase_count: 21
 
@@ -334,9 +333,8 @@ test:
           # 26: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1462
           # 27: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1412
           # 28: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1401 (same problem with EINTR)
-          # 35: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1230
         - name: T.freopen
-          execute: run-test /tset/ANSI.os/streamio/freopen/T.freopen{1,3-4,7,10-12,15,18-20,24,29-34,36,38-49}
+          execute: run-test /tset/ANSI.os/streamio/freopen/T.freopen{1,3-4,7,10-12,15,18-20,24,29-36,38-49}
           kwargs:
             testcase_count: 49
 
@@ -1040,9 +1038,8 @@ test:
           kwargs:
             testcase_count: 29
 
-          # 3: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1230
         - name: T.close
-          execute: run-test /tset/POSIX.os/ioprim/close/T.close{1-2,4-6}
+          execute: run-test /tset/POSIX.os/ioprim/close/T.close{1-6}
           kwargs:
             testcase_count: 6
 
