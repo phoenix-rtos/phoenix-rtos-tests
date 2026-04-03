@@ -41,6 +41,7 @@ $(eval $(call add_test_libc,stdlib))
 $(eval $(call add_test_libc,string))
 $(eval $(call add_test_libc,exit, -lpthread))
 $(eval $(call add_test_libc,time))
+$(eval $(call add_test_libc,unistd))
 $(eval $(call add_test_libc,math, -lm, -ffloat-store)) # -ffloat-store - prevent extended precision on ia32
 # -Wno-attribute-warning - ignore warning when using sendmsg/recvmsg, we know it's not fully supported
 $(eval $(call add_test_libc_custom,socket,inet-socket,, -Wno-attribute-warning, inet-socket.c common.c))
