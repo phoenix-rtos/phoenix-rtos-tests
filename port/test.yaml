@@ -1,0 +1,9 @@
+test:
+    tests:
+        - name: test_register
+          type: unity
+          execute: test_register
+
+        - name: test_dev
+          type: unity
+          execute: test_dev
