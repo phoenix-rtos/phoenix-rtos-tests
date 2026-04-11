@@ -27,6 +27,7 @@ from trunner.target import (
     AARCH64A53ZynqmpQemuTarget,
     ARMV7R5FZynqmpQemuTarget,
     STM32N6Target,
+    ARMV7R5FSomTarget,
 )
 from trunner.ctx import TestContext
 from trunner.target.base import TargetBase
@@ -114,9 +115,8 @@ def parse_args(targets: Dict[str, Type[TargetBase]], hosts: Dict[str, Type[Host]
         "--output",
         action="store",
         const="report.xml",
-        nargs='?',
-        help=("Write machine-readable test results as csv and xml file. "
-              "When no value is provided uses %(const)s"),
+        nargs="?",
+        help=("Write machine-readable test results as csv and xml file. " "When no value is provided uses %(const)s"),
     )
 
     parser.add_argument(
@@ -253,6 +253,7 @@ def resolve_targets_and_hosts() -> Tuple[Dict[str, Type[TargetBase]], Dict[str, 
         AARCH64A53ZynqmpQemuTarget,
         ARMV7R5FZynqmpQemuTarget,
         STM32N6Target,
+        ARMV7R5FSomTarget,
     ]
 
     hosts: List[Type[Host]] = [EmulatorHost, RpiHost]
