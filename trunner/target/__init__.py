@@ -8,6 +8,7 @@ from .armv7m4 import STM32L4x6Target
 from .armv8m33 import MCXN94xTarget
 from .armv7a7 import IMX6ULLEvkTarget
 from .armv7a9 import Zynq7000ZedboardTarget
+from .armv7r5f import ARMV7R5FSomTarget
 from .emulated import (
     IA32GenericQemuTarget,
     RISCV64GenericQemuTarget,
@@ -35,4 +36,5 @@ __all__ = [
     "MCXN94xTarget",
     "AARCH64A53ZynqmpQemuTarget",
     "ARMV7R5FZynqmpQemuTarget",
+    "ARMV7R5FSomTarget",
 ]
