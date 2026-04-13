@@ -3,7 +3,7 @@ future==0.18.3
 junitparser==3.1.2
 pexpect==4.9.0
 pyserial==3.5
-pytest==7.4.1
+pytest==9.0.3
 PyYAML==6.0.1
 pyusb==1.2.1
 rpi-lgpio==0.6; platform_machine == 'armv7l' or platform_machine == 'aarch64'
