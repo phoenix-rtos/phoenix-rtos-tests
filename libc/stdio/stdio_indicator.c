@@ -333,6 +333,7 @@ TEST(stdio_ftell, wrong_stream_type_socket)
 	errno = 0;
 	socket_stream = fdopen(socketfd, "r");
 
+	/* issue #923: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/923 */
 	if (!socket_stream) {
 		TEST_IGNORE_MESSAGE("#923 issue: unix sockets not supported");
 	}
@@ -348,13 +349,22 @@ TEST(stdio_ftell, wrong_stream_type_socket)
 	TEST_ASSERT_EQUAL_INT(0, fclose(socket_stream));
 }
 
+
 TEST(stdio_ftell, wrong_stream_type_pipe)
 {
 	errno = 0;
 	int pipefd[2];
 	int pipe_res = pipe(pipefd);
 
-	TEST_ASSERT_NOT_EQUAL_INT(-1, pipe_res);
+	if (pipe_res == -1) {
+		/* disabled because of issue #1338: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1338 */
+		if (errno == ENOSYS) {
+			TEST_IGNORE_MESSAGE("#1338 issue");
+		}
+		else {
+			TEST_FAIL_MESSAGE("pipe() returned -1");
+		}
+	}
 
 	FILE *pipe_stream_read = fdopen(pipefd[0], "r");
 	FILE *pipe_stream_write = fdopen(pipefd[1], "w");
@@ -380,7 +390,15 @@ TEST(stdio_ftell, wrong_stream_type_fifo)
 {
 	const char *fifo_path = "test_stdio_ftell_fufu";
 	remove(fifo_path);
-	TEST_ASSERT_NOT_EQUAL_INT(-1, mkfifo(fifo_path, S_IRWXU));
+	if (mkfifo(fifo_path, S_IRWXU) == -1) {
+		/* disabled because of issue #1338: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1338 */
+		if (errno == ENOSYS) {
+			TEST_IGNORE_MESSAGE("#1338 issue");
+		}
+		else {
+			TEST_FAIL_MESSAGE("mkfifo() returned -1");
+		}
+	}
 
 	int fifofd = open(fifo_path, O_RDONLY | O_NONBLOCK);
 
@@ -431,6 +449,8 @@ TEST(stdio_ftell, position_after_character_pushed_back)
 
 TEST(stdio_ftell, position_after_append_after_rewind)
 {
+
+/* disabled because of issue #1403: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1403 */
 #ifdef __phoenix__
 	TEST_IGNORE_MESSAGE("#1403 issue");
 #endif
