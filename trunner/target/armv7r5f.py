@@ -30,11 +30,7 @@ from .base import TargetBase
 
 
 class ARMV7R5FSomRebooter(Rebooter):
-    """Rebooter for armv7r5f-zynqmp-som.
-
-    Uses OpenOCD JLink to reset the RPU for soft reboot.
-    On hosts without GPIO, prompts the user for manual boot mode changes and power cycling.
-    """
+    """Rebooter for armv7r5f-zynqmp-som."""
 
     def __init__(self, host: Host, dut: Dut, openocd_config: str):
         super().__init__(host, dut)
@@ -47,42 +43,28 @@ class ARMV7R5FSomRebooter(Rebooter):
 
         if hard:
             if self.host.has_gpio():
-                self._reboot_dut_gpio(hard=True)
-            else:
+                self.host.set_power(False)
+                time.sleep(1)
                 self.dut.clear_buffer()
-                input("Perform a hard (power cycle) reboot of the board and press Enter...")
-        else:
-            self._reboot_by_debugger()
+                self.host.set_power(True)
+                time.sleep(1)
 
     def _set_flash_mode(self, flash: bool):
-        if self.host.has_gpio():
-            self.host.set_flash_mode(not flash)
-        else:
-            mode = "JTAG" if flash else "flash (normal boot)"
-            input(f"Switch board boot mode to {mode} and press Enter...")
+        self.host.set_flash_mode(not flash)
 
     def _reboot_by_debugger(self):
         """Reset the board via SRST through OpenOCD JLink."""
         args = [
             "openocd",
-            "-c",
-            "adapter driver jlink",
-            "-c",
-            "transport select jtag",
-            "-c",
-            "adapter speed 12000",
-            "-c",
-            "reset_config srst_only",
-            "-f",
-            self.openocd_config,
-            "-c",
-            "init",
-            "-c",
-            "reset run",
-            "-c",
-            "sleep 500",
-            "-c",
-            "exit",
+            "-c adapter driver jlink",
+            "-c transport select jtag",
+            "-c adapter speed 12000",
+            "-c reset_config srst_only",
+            f"-f{self.openocd_config}",
+            "-c init",
+            "-c reset run",
+            "-c sleep 500",
+            "-c exit",
         ]
 
         try:
@@ -122,21 +104,15 @@ class ARMV7R5FSomSyspageLoader(PloRamSyspageLoader):
     @contextmanager
     def _openocd_gdb_server(self):
         """Starts OpenOCD as a GDB server with JLink adapter, halting the target."""
+
         args = [
-            "-c",
-            "adapter driver jlink",
-            "-c",
-            "transport select jtag",
-            "-c",
-            "adapter speed 12000",
-            "-f",
-            self.openocd_config,
-            "-c",
-            "targets uscale.r5.0",
-            "-c",
-            "init",
-            "-c",
-            "halt",
+            "-c adapter driver jlink",
+            "-c transport select jtag",
+            "-c adapter speed 12000",
+            f"-f{self.openocd_config}",
+            "-c targets uscale.r5.0",
+            "-c init",
+            "-c halt",
         ]
         logfile = io.StringIO()
         proc = pexpect.spawn("openocd", args, encoding="ascii", logfile=logfile, timeout=30)
@@ -158,13 +134,8 @@ class ARMV7R5FSomSyspageLoader(PloRamSyspageLoader):
                 proc.close(force=True)
 
     def _gdb_detach_and_resume(self):
-        """Resume target via OpenOCD monitor command and disconnect GDB cleanly.
+        """Resume target via OpenOCD monitor command and disconnect GDB cleanly."""
 
-        Using 'monitor resume' (synchronous - OpenOCD completes the JTAG transaction before
-        returning the GDB prompt) followed by 'disconnect' (no D packet, unlike 'detach')
-        avoids the race where 'detach' triggers a second OpenOCD resume event concurrently
-        with the TCP close, which corrupts DAP CTRL/STAT and leaves a sticky error.
-        """
         self.gdb.proc.sendline("monitor resume")
         self.gdb.expect_prompt()
         self.gdb.proc.sendline("disconnect")
@@ -246,14 +217,10 @@ class ARMV7R5FSomTarget(TargetBase):
         """Run a one-shot OpenOCD command with JLink adapter."""
         args = [
             "openocd",
-            "-c",
-            "adapter driver jlink",
-            "-c",
-            "transport select jtag",
-            "-c",
-            f"adapter speed {self.openocd_adapter_speed}",
-            "-f",
-            self.openocd_config,
+            "-c adapter driver jlink",
+            "-c transport select jtag",
+            f"-c adapter speed {self.openocd_adapter_speed}",
+            f"-f{str(self.openocd_config)}",
         ]
         args.extend(commands)
 
@@ -270,76 +237,49 @@ class ARMV7R5FSomTarget(TargetBase):
             raise FlashError(msg=str(e)) from e
 
     def flash_dut(self, host_log: TextIO):
-        """Flashes the system image via JTAG + PLO.
+        """Flashes the system image via JTAG + PLO."""
 
-        Process:
-        1. Enter JTAG boot mode (user prompt on non-GPIO hosts)
-        2. Load PLO to RAM via OpenOCD
-        3. Load system image to ramdisk via OpenOCD
-        4. Copy ramdisk to flash via PLO
-        5. Switch to flash boot mode and reboot
-        """
         plo = PloInterface(self.dut)
 
-        # Step 1: Enter JTAG mode and hard reboot
         self.rebooter(flash=True, hard=True)
 
-        # Step 2: Load PLO to RAM
         self._run_openocd_jlink(
             commands=[
-                "-c",
-                "targets uscale.r5.0",
-                "-c",
-                "init",
-                "-c",
-                "start_rpu 0",
-                "-c",
-                "halt",
-                "-c",
-                f"load_image {self.plo_ram_image} {self.plo_ram_addr:#x} bin",
-                "-c",
-                "resume",
-                "-c",
-                "exit",
+                "-c targets uscale.r5.0",
+                "-c init",
+                "-c start_rpu 0",
+                "-c halt",
+                f"-c load_image {self.plo_ram_image} {self.plo_ram_addr:#x} bin",
+                "-c resume",
+                "-c exit",
             ],
             cwd=self.boot_dir(),
         )
         plo.wait_prompt()
 
-        # Step 3: Load system image to ramdisk
         self._run_openocd_jlink(
             commands=[
-                "-c",
-                "targets uscale.r5.0",
-                "-c",
-                "init",
-                "-c",
-                "halt",
-                "-c",
-                f"load_image {self.flash_image} {self.ramdisk_addr:#x} bin",
-                "-c",
-                "resume",
-                "-c",
-                "exit",
+                "-c targets uscale.r5.0",
+                "-c init",
+                "-c halt",
+                f"-c load_image {self.flash_image} {self.ramdisk_addr:#x} bin",
+                "-c resume",
+                "-c exit",
             ],
             cwd=self.boot_dir(),
             timeout=300,
         )
 
-        # Step 4: Copy ramdisk to flash (can take several minutes)
-        plo.cmd(
-            f"copy ramdisk 0x0 0x{self.flash_copy_size:x} flash0 0x0 0x{self.flash_copy_size:x}",
-            timeout=600,
-        )
+        plo.cmd("jffs2 -d 2.0 -e -c 0x80:0x100:0x10000:16", timeout=600)
+        plo.cmd(f"copy ramdisk 0x0 0x{self.flash_copy_size:x} flash0 0x0 0x{self.flash_copy_size:x}", timeout=600)
 
-        # Step 5: Switch to flash mode and reboot
         self.rebooter(flash=False, hard=True)
 
     def build_test(self, test: TestOptions) -> Callable[[TestResult], TestResult]:
         builder = HarnessBuilder()
 
         if test.should_reboot:
-            builder.add(RebooterHarness(self.rebooter))
+            builder.add(RebooterHarness(self.rebooter, flash=False, hard=True))
 
         if test.bootloader is not None:
             syspage_loader = None
