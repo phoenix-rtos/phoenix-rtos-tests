@@ -238,24 +238,6 @@ TEST(unistd_fsdir, rmdir_notempty)
 }
 
 
-IGNORE_TEST(unistd_fsdir, fchdir)
-{
-	/*
-		Declared but unimplemented in libphoenix
-		https://github.com/phoenix-rtos/phoenix-rtos-project/issues/280
-	*/
-}
-
-
-IGNORE_TEST(unistd_fsdir, fchown)
-{
-	/*
-		Unimplemented in libphoenix
-		https://github.com/phoenix-rtos/phoenix-rtos-project/issues/280
-	*/
-}
-
-
 TEST_GROUP_RUNNER(unistd_fsdir)
 {
 	RUN_TEST_CASE(unistd_fsdir, getcwd);
@@ -275,6 +257,4 @@ TEST_GROUP_RUNNER(unistd_fsdir)
 	RUN_TEST_CASE(unistd_fsdir, rmdir_file);
 	RUN_TEST_CASE(unistd_fsdir, rmdir_notempty);
 
-	RUN_TEST_CASE(unistd_fsdir, fchdir);
-	RUN_TEST_CASE(unistd_fsdir, fchown);
 }
