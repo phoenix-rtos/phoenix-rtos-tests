@@ -1,0 +1,16 @@
+test:
+    targets:
+        value:
+            - aarch64a53-zynqmp-virt
+            - aarch64a53-zynqmp-zcu104
+    tests:
+        - name: rh_task_switch
+          harness: rh_task_switch.py
+          reboot: True
+          load:
+          - app: rh_task_switch
+        - name: rh_msg_latency
+          harness: rh_msg_latency.py
+          reboot: True
+          load:
+          - app: rh_msg_latency
