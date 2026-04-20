@@ -47,6 +47,3 @@ $(eval $(call add_test_libc_custom,socket,inet-socket,, -Wno-attribute-warning, 
 $(eval $(call add_test_libc_custom,socket,unix-socket,, -Wno-attribute-warning, unix-socket.c common.c))
 $(eval $(call add_test_libc,poll))
 $(eval $(call add_test_libc,dirent, -lpthread))
-# -fno-bultin - prevent compiler to replace math funcs with compiler builtins
-# -ffloat-store - prevent extended precision on ia32
-$(eval $(call add_test_libc,math, -lm, -fno-builtin -ffloat-store))

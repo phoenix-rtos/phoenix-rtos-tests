@@ -7,8 +7,8 @@
  * TESTED:
  *    - closedir()
  *
- * Copyright 2023 Phoenix Systems
- * Author: Arkadiusz Kozlowski
+ * Copyright 2023-2026 Phoenix Systems
+ * Authors: Arkadiusz Kozlowski, Lukasz Kruszynski
  *
  * This file is part of Phoenix-RTOS.
  *
@@ -20,6 +20,7 @@
 #include <dirent.h>
 #include <errno.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include <unity_fixture.h>
 #include "common.h"
@@ -46,7 +47,7 @@ TEST_TEAR_DOWN(dirent_closedir)
 }
 
 
-TEST(dirent_closedir, closing_empty_dir)
+TEST(dirent_closedir, closes_empty_dir)
 {
 	DIR *dp = opendir(MAIN_DIR "/dir1");
 
@@ -55,7 +56,7 @@ TEST(dirent_closedir, closing_empty_dir)
 }
 
 
-TEST(dirent_closedir, closing_non_empty_dir)
+TEST(dirent_closedir, closes_non_empty_dir)
 {
 	DIR *dp = opendir(MAIN_DIR);
 
@@ -64,15 +65,16 @@ TEST(dirent_closedir, closing_non_empty_dir)
 }
 
 
-TEST(dirent_closedir, preserving_content_after_closedir)
+TEST(dirent_closedir, preserves_content_after_use)
 {
-	char dirNames[7][10];
-	ino_t inodes[7];
+	char(*dirNames)[NAME_MAX + 1] = malloc(10 * sizeof(*dirNames));
+	TEST_ASSERT_NOT_NULL(dirNames);
+	ino_t inodes[10];
 	struct dirent *info;
 	DIR *dp1;
 	int result = 0;
+	int num_entries = 0;
 	errno = 0;
-
 
 	TEST_MKDIR_ASSERTED(MAIN_DIR "/test_preserve", S_IRWXU);
 	TEST_MKDIR_ASSERTED(MAIN_DIR "/test_preserve/B", S_IRUSR);
@@ -80,63 +82,40 @@ TEST(dirent_closedir, preserving_content_after_closedir)
 	TEST_MKDIR_ASSERTED(MAIN_DIR "/test_preserve/DDDD", S_IRUSR);
 	TEST_MKDIR_ASSERTED(MAIN_DIR "/test_preserve/EEEEEE", S_IRUSR);
 
-
 	dp1 = opendir(MAIN_DIR "/test_preserve");
 	TEST_ASSERT_NOT_NULL(dp1);
 
-	/*
-	 *Create an array with names of dirs.
-	 *Indexes will be used to associate name of each directory with a bit
-	 */
-
-	{
-		int i = 0;
-		while ((info = readdir(dp1)) != NULL) {
-			inodes[i] = info->d_ino;
-			strcpy(dirNames[i++], info->d_name);
-		}
+	while ((info = readdir(dp1)) != NULL && num_entries < 10) {
+		inodes[num_entries] = info->d_ino;
+		strcpy(dirNames[num_entries++], info->d_name);
 	}
 
 	TEST_ASSERT_EQUAL_INT(0, closedir(dp1));
+
 	DIR *dp2 = opendir(MAIN_DIR "/test_preserve");
 	TEST_ASSERT_NOT_NULL(dp2);
-	rewinddir(dp2);
-
-	/*
-	 * Map each directory to a bit.
-	 * In case of fail set most left bit to 1.
-	 * Assert every bit is high except the first two.
-	 */
-
-	/* Go through each entry */
 
 	while ((info = readdir(dp2)) != NULL) {
 		int found = 0;
-		char name[10];
-		strcpy(name, info->d_name);
 
-		/* determine the index of given name */
-		for (int i = 0; i < 7; ++i) {
-			if (!strcmp(name, dirNames[i])) {
+		for (int i = 0; i < num_entries; ++i) {
+			if (!strcmp(info->d_name, dirNames[i])) {
 				TEST_ASSERT_EQUAL_INT64(inodes[i], info->d_ino);
 				/* Set the index bit of found name */
-				result |= 1 << i;
-
+				result |= (1 << i);
 				found = 1;
+				break;
 			}
 		}
-		/* Name found, time to search for another name */
-		if (found) {
-			continue;
-		}
-
-		TEST_FAIL();
+		TEST_ASSERT_EQUAL_INT(1, found);
 	}
 
-	/* result variable should be 0b0011 1111, which is 63, or 3f */
-	TEST_ASSERT_EQUAL_INT(0x3f, result);
+	/* Dynamically calculate the expected bitmask (e.g., 6 entries = (1<<6)-1 = 63 = 0x3f) */
+	int expected_mask = (1 << num_entries) - 1;
+	TEST_ASSERT_EQUAL_INT(expected_mask, result);
 
 	closedir(dp2);
+	free(dirNames);
 
 	rmdir(MAIN_DIR "/test_preserve/B");
 	rmdir(MAIN_DIR "/test_preserve/CC");
@@ -146,9 +125,31 @@ TEST(dirent_closedir, preserving_content_after_closedir)
 }
 
 
+TEST(dirent_closedir, releases_file_descriptor)
+{
+	DIR *dp;
+
+	long fd_limit = sysconf(_SC_OPEN_MAX);
+
+	if (fd_limit <= 0) {
+		/* value high enough to cause a potential leak */
+		fd_limit = 2000;
+	}
+
+	long loop_count = fd_limit + 10;
+
+	for (long i = 0; i < loop_count; i++) {
+		dp = opendir(MAIN_DIR);
+		TEST_ASSERT_NOT_NULL(dp);
+		TEST_ASSERT_EQUAL_INT(0, closedir(dp));
+	}
+}
+
+
 TEST_GROUP_RUNNER(dirent_closedir)
 {
-	RUN_TEST_CASE(dirent_closedir, closing_empty_dir);
-	RUN_TEST_CASE(dirent_closedir, closing_non_empty_dir);
-	RUN_TEST_CASE(dirent_closedir, preserving_content_after_closedir);
+	RUN_TEST_CASE(dirent_closedir, closes_empty_dir);
+	RUN_TEST_CASE(dirent_closedir, closes_non_empty_dir);
+	RUN_TEST_CASE(dirent_closedir, preserves_content_after_use);
+	RUN_TEST_CASE(dirent_closedir, releases_file_descriptor);
 }

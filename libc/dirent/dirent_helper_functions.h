@@ -1,5 +1,20 @@
-#ifndef _DIRENT_HELPER_FUNCTIONS_H
-#define _DIRENT_HELPER_FUNCTIONS_H
+/*
+ * Phoenix-RTOS
+ *
+ * test-libc-dirent
+ *
+ * Test helper functions.
+ *
+ * Copyright 2023 Phoenix Systems
+ * Author: Arkadiusz Kozlowski
+ *
+ * This file is part of Phoenix-RTOS.
+ *
+ * %LICENSE%
+ */
+
+#ifndef DIRENT_HELPER_FUNCTIONS_H
+#define DIRENT_HELPER_FUNCTIONS_H
 
 #include <dirent.h>
 #include <sys/stat.h>

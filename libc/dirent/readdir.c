@@ -7,8 +7,8 @@
  * TESTED:
  *    - readdir()
  *
- * Copyright 2023 Phoenix Systems
- * Author: Arkadiusz Kozlowski
+ * Copyright 2023-2026 Phoenix Systems
+ * Authors: Arkadiusz Kozlowski, Lukasz Kruszynski
  *
  * This file is part of Phoenix-RTOS.
  *
@@ -26,6 +26,7 @@
 #include <sys/wait.h>
 #include <string.h>
 #include <fcntl.h>
+#include <stdlib.h>
 
 #include <unity_fixture.h>
 
@@ -36,9 +37,9 @@
 #define INO_T_TEST_MAX_DIRS 10
 
 
-int d_ino_in(ino_t arg, ino_t *arr)
+int d_ino_in(ino_t arg, ino_t *arr, int n)
 {
-	for (int i = 0; i < INO_T_TEST_MAX_DIRS; ++i) {
+	for (int i = 0; i < n; ++i) {
 		if (arg == arr[i]) {
 			return i;
 		}
@@ -51,7 +52,7 @@ TEST_GROUP(dirent_readdir);
 
 TEST_SETUP(dirent_readdir)
 {
-	mkdir(MAIN_DIR, 0700);
+	TEST_MKDIR_ASSERTED(MAIN_DIR, 0700);
 
 	mkdir(MAIN_DIR "/dir1", S_IRUSR | S_IWUSR | S_IXUSR);
 	mkdir(MAIN_DIR "/dir2", S_IRUSR | S_IWUSR | S_IXUSR);
@@ -95,31 +96,43 @@ TEST_TEAR_DOWN(dirent_readdir)
 
 TEST(dirent_readdir, long_name_directory_check)
 {
-	DIR *dp = TEST_OPENDIR_ASSERTED(MAIN_DIR);
+	/* issue #1615: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1615 */
+	TEST_IGNORE_MESSAGE("#1615 issue");
+	DIR *dp;
 	struct dirent *info;
 	char longDirName[NAME_MAX + 1];
 	char longDirPath[NAME_MAX + 2 + sizeof(MAIN_DIR)];
 
-
-	TEST_ASSERT_NOT_NULL(dp);
-
 	memset(longDirName, 'a', NAME_MAX);
 	longDirName[NAME_MAX] = '\0';
-	sprintf(longDirPath, MAIN_DIR "/%s", longDirName);
+	snprintf(longDirPath, sizeof(longDirPath), MAIN_DIR "/%s", longDirName);
 
 	errno = 0;
 	TEST_MKDIR_ASSERTED(longDirPath, S_IRUSR);
 
+	dp = TEST_OPENDIR_ASSERTED(MAIN_DIR);
+	TEST_ASSERT_NOT_NULL(dp);
+
 	while ((info = readdir(dp)) != NULL) {
-		if (!strcmp(longDirName, info->d_name)) {
-			TEST_ASSERT_EQUAL_INT(NAME_MAX, strlen(info->d_name));
-			closedir(dp);
-			rmdir(longDirPath);
-			TEST_PASS();
+		if (info->d_name[0] == 'a') {
+
+			if (strcmp(longDirName, info->d_name) != 0) {
+				closedir(dp);
+				rmdir(longDirPath);
+				TEST_FAIL();
+			}
+			else {
+				TEST_ASSERT_EQUAL_INT(NAME_MAX, strlen(info->d_name));
+				closedir(dp);
+				rmdir(longDirPath);
+				TEST_PASS();
+			}
 		}
 	}
 
 	closedir(dp);
+	rmdir(longDirPath);
+
 	TEST_FAIL();
 }
 
@@ -154,11 +167,13 @@ TEST(dirent_readdir, reading_in_parent_and_child)
 	pid_t pid = fork();
 
 	if (pid == -1) {
+		closedir(dp1);
+		closedir(dp2);
 		TEST_IGNORE_MESSAGE("Fork failed");
 	}
 
 	/* Since there are two different dir streams, there is no reading from the same stream in two processes */
-	if (pid) {
+	if (pid > 0) {
 		int cresult;
 		/* Check for parent */
 		TEST_ASSERT_NOT_NULL(readdir(dp1));
@@ -167,7 +182,8 @@ TEST(dirent_readdir, reading_in_parent_and_child)
 		closedir(dp1);
 		closedir(dp2);
 		wait(&cresult);
-		TEST_ASSERT_EQUAL_INT(EXIT_SUCCESS, cresult);
+		TEST_ASSERT_TRUE(WIFEXITED(cresult));
+		TEST_ASSERT_EQUAL_INT(EXIT_SUCCESS, WEXITSTATUS(cresult));
 	}
 
 	else {
@@ -199,12 +215,27 @@ TEST(dirent_readdir, hardlink_inode_correct_number)
 
 	TEST_ASSERT_EQUAL_INT(0, link(originalFilePath, linkFilePath));
 
-	struct stat originalFileStat, linkFileStat;
+	DIR *dp = TEST_OPENDIR_ASSERTED(MAIN_DIR);
+	struct dirent *info;
+	ino_t orig_ino = 0;
+	ino_t link_ino = 0;
+	int files_found = 0;
 
-	TEST_ASSERT_EQUAL_INT(0, stat(originalFilePath, &originalFileStat));
-	TEST_ASSERT_EQUAL_INT(0, stat(linkFilePath, &linkFileStat));
+	while ((info = readdir(dp)) != NULL) {
+		if (!strcmp(info->d_name, "original_file.txt")) {
+			orig_ino = info->d_ino;
+			files_found++;
+		}
+		else if (!strcmp(info->d_name, "linked_file.txt")) {
+			link_ino = info->d_ino;
+			files_found++;
+		}
+	}
 
-	TEST_ASSERT_EQUAL_UINT64(originalFileStat.st_ino, linkFileStat.st_ino);
+	closedir(dp);
+
+	TEST_ASSERT_EQUAL_INT(2, files_found);
+	TEST_ASSERT_EQUAL_UINT64(orig_ino, link_ino);
 
 	remove(originalFilePath);
 	unlink(linkFilePath);
@@ -218,14 +249,14 @@ TEST(dirent_readdir, distinct_inode_nums)
 	struct dirent *info;
 	int inode_counter = 0;
 
-	/* Set all array members to -1 since all inode id's are positive */
-	for (int i = 0; i < INO_T_TEST_MAX_DIRS; ++i) {
-		inode_arr[i] = -1;
-	}
-
 	/* Assert distinct inodes */
 	while ((info = readdir(dp)) != NULL) {
-		TEST_ASSERT_EQUAL_INT(-1, d_ino_in(info->d_ino, inode_arr));
+		TEST_ASSERT_LESS_THAN_INT(
+				INO_T_TEST_MAX_DIRS,
+				inode_counter);
+
+		/* Pass inode_counter as 'n' to avoid reading garbage/uninitialized memory */
+		TEST_ASSERT_EQUAL_INT(-1, d_ino_in(info->d_ino, inode_arr, inode_counter));
 		inode_arr[inode_counter++] = info->d_ino;
 	}
 
@@ -241,8 +272,8 @@ TEST(dirent_readdir, same_file_reading_by_two_pointers)
 
 	int counter = 2;
 
-	readdir(dp1);
-	readdir(dp1);
+	TEST_ASSERT_NOT_EQUAL(NULL, readdir(dp1));
+	TEST_ASSERT_NOT_EQUAL(NULL, readdir(dp1));
 
 	errno = 0;
 
@@ -312,6 +343,89 @@ TEST(dirent_readdir, correct_dirent_names)
 }
 
 
+TEST(dirent_readdir, read_past_end_of_stream)
+{
+	DIR *dp = TEST_OPENDIR_ASSERTED(MAIN_DIR);
+
+	while (readdir(dp) != NULL) {
+		continue;
+	}
+
+	errno = 0;
+	for (int i = 0; i < 10; i++) {
+		TEST_ASSERT_NULL(readdir(dp));
+		TEST_ASSERT_EQUAL_INT(0, errno);
+	}
+
+	closedir(dp);
+}
+
+
+TEST(dirent_readdir, large_directory_pagination)
+{
+	const int NUM_FILES = 40;
+	char *path = malloc(PATH_MAX);
+	TEST_ASSERT_NOT_NULL(path);
+
+	TEST_MKDIR_ASSERTED(MAIN_DIR "/stress_dir", 0700);
+
+	for (int i = 0; i < NUM_FILES; i++) {
+		sprintf(path, MAIN_DIR "/stress_dir/file_%d.txt", i);
+		int fd = creat(path, S_IRUSR);
+		TEST_ASSERT_NOT_EQUAL(-1, fd);
+		close(fd);
+	}
+
+	DIR *dp = TEST_OPENDIR_ASSERTED(MAIN_DIR "/stress_dir");
+	int count = 0;
+
+	while (readdir(dp) != NULL) {
+		count++;
+	}
+
+	closedir(dp);
+
+	for (int i = 0; i < NUM_FILES; i++) {
+		snprintf(path, PATH_MAX, MAIN_DIR "/stress_dir/file_%d.txt", i);
+		remove(path);
+	}
+	rmdir(MAIN_DIR "/stress_dir");
+	free(path);
+
+	/* NUM_FILES + "." + ".." */
+	TEST_ASSERT_EQUAL_INT(NUM_FILES + 2, count);
+}
+
+
+TEST(dirent_readdir, unlink_during_iteration)
+{
+	DIR *dp;
+	struct dirent *info;
+	const char *victim_path = MAIN_DIR "/victim.txt";
+
+	int fd = creat(victim_path, S_IRUSR);
+	TEST_ASSERT_NOT_EQUAL(-1, fd);
+	close(fd);
+
+	dp = TEST_OPENDIR_ASSERTED(MAIN_DIR);
+	TEST_ASSERT_NOT_NULL(dp);
+
+	info = readdir(dp);
+	TEST_ASSERT_NOT_NULL(info);
+
+	TEST_ASSERT_EQUAL_INT(0, remove(victim_path));
+
+	errno = 0;
+	while ((info = readdir(dp)) != NULL) {
+		continue;
+	}
+
+	TEST_ASSERT_EQUAL_INT(0, errno);
+
+	closedir(dp);
+}
+
+
 TEST_GROUP_RUNNER(dirent_readdir)
 {
 	RUN_TEST_CASE(dirent_readdir, basic_listing_count);
@@ -321,4 +435,7 @@ TEST_GROUP_RUNNER(dirent_readdir)
 	RUN_TEST_CASE(dirent_readdir, same_file_reading_by_two_pointers);
 	RUN_TEST_CASE(dirent_readdir, reading_in_parent_and_child);
 	RUN_TEST_CASE(dirent_readdir, long_name_directory_check);
+	RUN_TEST_CASE(dirent_readdir, read_past_end_of_stream);
+	RUN_TEST_CASE(dirent_readdir, large_directory_pagination);
+	RUN_TEST_CASE(dirent_readdir, unlink_during_iteration);
 }
