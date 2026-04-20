@@ -72,7 +72,7 @@ class ARMv7A7Target(TargetBase, PloInterface, Rebooter):
             builder.add(RebooterHarness(self.rebooter))
 
         if test.shell is not None:
-            builder.add(ShellHarness(self.dut, self.shell_prompt, test.shell.cmd))
+            builder.add(ShellHarness(self.dut, self.shell_prompt, test.shell.cmd, suppress_dmesg=False))
         else:
             builder.add(TestStartRunningHarness())
 
