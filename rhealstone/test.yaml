@@ -1,0 +1,17 @@
+test:
+    targets:
+        value:
+            - armv7a7-imx6ull-evk
+            # - armv7r5f-zynqmp-som
+    tests:
+        - name: rh_preemption
+          harness: rh_preemption.py
+          reboot: True
+          load:
+          - app: rh_preemption
+        - name: rh_msg_latency
+          harness: rh_msg_latency.py
+          reboot: True
+          load:
+          - app: rh_msg_latency
+          - app: rh_msg_latency_send
