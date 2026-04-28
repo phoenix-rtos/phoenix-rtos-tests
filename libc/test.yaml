@@ -89,7 +89,7 @@ test:
       execute: test-libc-unix-socket --extra-poll-delay-ms 150
       targets:
         value: [armv7a9-zynq7000-qemu]
-    
+
     - name: unix-socket # Issue: 1342 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1342
       execute: test-libc-unix-socket --extra-poll-delay-ms 250 --transfer-loop-cnt 30
       targets:
@@ -99,3 +99,9 @@ test:
       execute: test-libc-inet-socket
       targets:
         value: [ia32-generic-qemu, armv7a7-imx6ull-evk, host-generic-pc]
+
+    - name: dirent
+      execute: test-libc-dirent
+      targets:
+        include: [host-generic-pc]
+
