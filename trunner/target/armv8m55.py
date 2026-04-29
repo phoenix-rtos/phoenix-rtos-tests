@@ -33,10 +33,14 @@ class ARMv8M55Rebooter(Rebooter):
     def __call__(self, flash=False, hard=False):
         """Sets flash mode and perform hard or soft & debugger reboot based on `hard` flag."""
 
+        self._set_flash_mode(flash)
         if hard and self.host.has_gpio():
             self._reboot_dut_gpio(hard=hard)
         else:
             self._reboot_by_debugger()
+
+    def _set_flash_mode(self, flash: bool):
+        self.host.set_flash_mode(not flash)
 
     def _reboot_by_debugger(self):
         with self.gdb.run():
@@ -63,7 +67,7 @@ class STM32N6STLinkGdbServerHarness(IntermediateHarness):
         self.harness = harness
 
     def __call__(self, result: TestResult) -> TestResult:
-        with OpenocdGdbServer(interface="stlink-dap", target="stm32n6x").run():
+        with OpenocdGdbServer(interface="stlink", target="stm32n6x").run():
             self.harness(result)
 
         return self.next_harness(result)
@@ -121,9 +125,10 @@ class STM32N6Target(TargetBase):
     name = "armv8m55-stm32n6-nucleo"
     rootfs = False
     experimental = False
-    image_file = "phoenix.disk.bin"
+    part_plo = "part_plo.img"
+    part_user = "part_user.img"
     plo_file = "plo-ram.elf"
-    image_addr = 0x70000000
+    part_user_offset = 0x10000
     ram_addr = 0x34100000
 
     def __init__(self, host: Host, port: Optional[str] = None, baudrate: int = 115200):
@@ -143,9 +148,8 @@ class STM32N6Target(TargetBase):
 
     def flash_dut(self, host_log: TextIO):
         try:
-            print("Set BOOT1 jumper to 1 and power cycle the board")
-            input("Press Enter to continue...")
-            with OpenocdGdbServer(interface="stlink-dap", target="stm32n6x").run():
+            self.rebooter(hard=True, flash=True)
+            with OpenocdGdbServer(interface="stlink", target="stm32n6x").run():
                 gdb = GdbInteractive(port=3333, cwd=self.boot_dir())
                 with gdb.run():
                     plo = PloInterface(self.dut)
@@ -170,41 +174,48 @@ class STM32N6Target(TargetBase):
 
                         plo.wait_prompt()
 
-                    # Load disk image to ramdisk
-                    # TODO: load image in parts if it's larger than ramdisk size (512 KiB)
+                    plo.erase("flash0", 0x0, 0x80000)
+
                     gdb.pause()
-                    gdb.load(self.image_file, self.ram_addr)
+                    gdb.send_cmd(f"monitor fast_load_image {self.boot_dir()}/{self.part_plo} {self.ram_addr} bin")
+                    gdb.send_cmd("monitor fast_load")
+                    gdb.send_cmd(
+                        "monitor fast_load_image "
+                        + f"{self.boot_dir()}/{self.part_user} "
+                        + f"{self.ram_addr + self.part_user_offset} bin"
+                    )
+                    gdb.send_cmd("monitor fast_load")
                     gdb.cont()
 
                     # Copy from ramdisk to flash
                     # TODO: use image size rather  than ramdisk size
-                    plo.erase("flash0", 0x0, 0x80000)
                     plo.copy("ramdisk", 0x0, "flash0", 0x0, 0x80000, 0x80000)
+
+                    self.rebooter(hard=True, flash=False)
 
         except FileNotFoundError as e:
             raise FlashError(msg=str(e)) from e
         except OpenocdError as e:
             raise FlashError(msg=str(e)) from e
-        print("Set BOOT1 jumper to 0 WITHOUT power cycling the board")
-        input("Press Enter to continue...")
 
     def build_test(self, test: TestOptions):
         builder = HarnessBuilder()
 
         if test.should_reboot:
             self.rebooter = ARMv8M55Rebooter(self.host, self.dut, GdbInteractive(port=3333))
-            builder.add(RebooterHarness(self.rebooter))
+            builder.add(RebooterHarness(self.rebooter, flash=False))
 
-            app_loader = None
+            if test.bootloader is not None:
+                syspage_loader = None
 
-            if test.bootloader and test.bootloader.apps:
-                app_loader = STM32N6PloAppLoader(
-                    dut=self.dut,
-                    apps=test.bootloader.apps,
-                    gdb=GdbInteractive(port=3333, cwd=self.root_dir() / test.shell.path),
-                )
+                if test.bootloader and test.bootloader.apps:
+                    syspage_loader = STM32N6PloAppLoader(
+                        dut=self.dut,
+                        apps=test.bootloader.apps,
+                        gdb=GdbInteractive(port=3333, cwd=self.root_dir() / test.shell.path),
+                    )
 
-            builder.add(PloHarness(self.dut, app_loader=app_loader))
+                builder.add(PloHarness(self.dut, syspage_loader=syspage_loader))
 
             setup = builder.get_harness()
             builder = HarnessBuilder()
