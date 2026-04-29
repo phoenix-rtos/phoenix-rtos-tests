@@ -782,9 +782,8 @@ test:
           ignore: True
 
           # 1, 2: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1437
-          # 5: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1435
         - name: T.tcgetattr
-          execute: run-test /tset/POSIX.os/devclass/tcgetattr/T.tcgetattr{3-4}
+          execute: run-test /tset/POSIX.os/devclass/tcgetattr/T.tcgetattr{3-5}
           kwargs:
             testcase_count: 5
 
@@ -803,10 +802,8 @@ test:
           kwargs:
             testcase_count: 7
 
-          # 2, 3, 4: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
-          # 6, 8, 10: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
+          # 2, 3, 4, 6, 8, 9, 10: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
           # 7: this testcase assumes that tcsetpgrp() is not supported
-          # 9: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1435
         - name: T.tcsetpgrp
           execute: run-test /tset/POSIX.os/devclass/tcsetpgrp/T.tcsetpgrp{1,5}
           kwargs:
