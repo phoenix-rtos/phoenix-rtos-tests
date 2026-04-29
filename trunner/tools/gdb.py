@@ -45,6 +45,13 @@ class GdbInteractive:
         except (pexpect.TIMEOUT, pexpect.EOF) as e:
             raise GdbError(f"Failed to connect to localhost:{self.port}", output=self.logfile.getvalue()) from e
 
+    def send_cmd(self, cmd: str):
+        try:
+            self.proc.sendline(cmd)
+            self.expect_prompt()
+        except (pexpect.TIMEOUT, pexpect.EOF) as e:
+            raise GdbError("Failed to execute command", output=self.logfile.getvalue()) from e
+
     def load(self, test_path: Union[Path, str], addr: int):
         try:
             self.proc.sendline(f"restore {test_path} binary {addr}")
