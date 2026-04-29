@@ -45,6 +45,13 @@ class GdbInteractive:
         except (pexpect.TIMEOUT, pexpect.EOF) as e:
             raise GdbError(f"Failed to connect to localhost:{self.port}", output=self.logfile.getvalue()) from e
 
+    def send_cmd(self, cmd: str):
+        try:
+            self.proc.sendline(cmd)
+            self.expect_prompt()
+        except (pexpect.TIMEOUT, pexpect.EOF) as e:
+            raise GdbError("Failed to execute command", output=self.logfile.getvalue()) from e
+
     def load(self, test_path: Union[Path, str], addr: int):
         try:
             self.proc.sendline(f"restore {test_path} binary {addr}")
@@ -137,6 +144,7 @@ class OpenocdProcess:
         self,
         interface: Optional[str] = None,
         target: Optional[str] = None,
+        target_path: Optional[tuple[str, str]] = None,
         board: Optional[str] = None,
         extra_args: Optional[List[str]] = None,
         host_log: Optional[TextIO] = None,
@@ -146,6 +154,7 @@ class OpenocdProcess:
         self._shutdown_done = False
         self.interface = interface
         self.target = target
+        self.target_path = target_path
         self.board = board
         self.extra_args = extra_args
         self.host_log = host_log if host_log is not None else io.StringIO()
@@ -155,14 +164,21 @@ class OpenocdProcess:
         if board:
             if target or interface:
                 raise OpenocdError("Target or Interface arguments provided when board is specified")
-        else:
-            if not target or not interface:
-                raise OpenocdError("Target or Interface arguments missing")
+
+        elif target_path is None and not all((target, interface)):
+            raise OpenocdError("Target or Interface arguments missing")
 
     def _start(self):
         # Use pexpect.spawn to run a process as PTY, so it will flush on a new line
         if self.board:
             args = ["-f", f"board/{self.board}.cfg"]
+        elif self.target_path:
+            args = [
+                "-f",
+                f"interface/{self.interface}.cfg",
+                "-f",
+                f"{self.target_path[0]}/scripts/openocd/{self.target_path[1]}",
+            ]
         else:
             args = ["-f", f"interface/{self.interface}.cfg", "-f", f"target/{self.target}.cfg"]
 

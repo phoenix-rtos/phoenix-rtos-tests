@@ -140,9 +140,14 @@ class PloInterface:
         self.send_cmd(cmd)
 
         try:
-            if self.dut.expect_exact(["Serious risk of data loss, type YES! to proceed.", "Erased"]) == 0:
+            erase_needs_confirming = (
+                self.dut.expect_exact(["Serious risk of data loss, type YES! to proceed.", "Erased"]) == 0
+            )
+
+            if erase_needs_confirming:
                 self.send_cmd("YES!")
                 self.dut.expect_exact("Erased", timeout=timeout)
+
         except pexpect.TIMEOUT as e:
             raise PloError("Wrong erase command output!", cmd=cmd, output=self.dut.before) from e
 
