@@ -1,5 +1,6 @@
 from abc import abstractmethod
 from pathlib import Path
+import traceback
 from typing import Callable, Optional, Sequence, TextIO
 
 from trunner.ctx import TestContext
@@ -33,6 +34,7 @@ class QemuTarget(TargetBase):
         # TODO Make sure that script path exists
         self.dut = QemuDut(f"{self.project_dir}/scripts/{self.script}", encoding="utf-8")
         self.rebooter = QemuDutRebooter(self.dut)
+        # traceback.print_stack()
 
     @classmethod
     @abstractmethod

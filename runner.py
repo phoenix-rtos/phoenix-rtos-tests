@@ -30,6 +30,7 @@ from trunner.target import (
 from trunner.ctx import TestContext
 from trunner.target.base import TargetBase
 from trunner.types import is_github_actions
+from concurrent.futures import ThreadPoolExecutor
 
 
 def args_file(arg):
@@ -269,46 +270,55 @@ def main():
 
     args = parse_args(targets, hosts)
 
-    ctx = TestContext(
-        port=args.port,
-        baudrate=args.baudrate,
-        project_path=resolve_project_path(),
-        nightly=args.nightly,
-        logdir=args.logdir,
-        should_flash=not args.no_flash,
-        should_test=not args.no_test,
-        verbosity=args.verbose,
-        stream_output=args.stream,
-        output=args.output,
-        kwargs=args.kwargs,
-    )
+    runner = []
+    for i in range(4):
+        ctx = TestContext(
+            port=args.port,
+            baudrate=args.baudrate,
+            project_path=resolve_project_path(),
+            nightly=args.nightly,
+            logdir=args.logdir,
+            should_flash=not args.no_flash,
+            should_test=not args.no_test,
+            verbosity=args.verbose,
+            stream_output=args.stream,
+            output=args.output,
+            kwargs=args.kwargs,
+        )
 
-    host_cls = hosts[args.host]
-    host = host_cls.from_context(ctx)
-    ctx = dataclasses.replace(ctx, host=host)
+        host_cls = hosts[args.host]
+        host = host_cls.from_context(ctx)
+        ctx = dataclasses.replace(ctx, host=host)
 
-    target_cls = targets[args.target]
-    try:
-        target = target_cls.from_context(ctx)
-    except PortError as e:
-        # TODO Make port finding in the global scope
-        print(e)
-        return 2
+        target_cls = targets[args.target]
+        try:
+            target = target_cls.from_context(ctx)
+        except PortError as e:
+            # TODO Make port finding in the global scope
+            print(e)
+            return 2
 
-    ctx = dataclasses.replace(ctx, target=target)
-    ctx = host.add_to_context(ctx)
+        ctx = dataclasses.replace(ctx, target=target)
+        ctx = host.add_to_context(ctx)
 
-    # Set global context
-    trunner.ctx = ctx
+        # Set global context
+        trunner.ctx = ctx
 
-    runner = TestRunner(
-        ctx=ctx,
-        test_paths=args.test,
-    )
+        runner.append(TestRunner(
+            ctx=ctx,
+            test_paths=args.test,
+        ))
 
-    ok = runner.run()
-    if not ok:
-        return 1
+    def run_worker(idx):
+        ok = runner[i].run()
+        if not ok:
+            return 1
+
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        futures = [executor.submit(run_worker, i) for i in range(4)]
+        for future in futures:
+            if future.result():
+                return future.result()
 
     return 0
 

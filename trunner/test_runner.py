@@ -6,6 +6,7 @@ from io import StringIO
 from pathlib import Path
 from collections import Counter
 from typing import List, Sequence, TextIO, Optional
+import threading
 
 from trunner.config import ConfigParser
 from trunner.ctx import TestContext
@@ -14,6 +15,8 @@ from trunner.harness import HarnessError, FlashError
 from trunner.text import green, red, yellow, magenta
 from trunner.types import Status, TestOptions, TestResult, TestStage, is_github_actions, get_ci_url
 
+_parse_lock = threading.Lock()
+_tests = None
 
 def _add_tests_module_to_syspath(project_path: Path):
     # Add phoenix-rtos-tests to python path to make sure that module is visible for tests, whenever they are
@@ -134,17 +137,21 @@ class TestRunner:
 
         return paths
 
-    def parse_tests(self) -> Sequence[TestOptions]:
+    def parse_tests(self) -> List[TestOptions]:
         """Returns test options that can be used to build test harness."""
+        global _tests
 
-        test_yamls = self.search_for_tests()
-        parser = ConfigParser(self.ctx)
+        with _parse_lock:
+            if _tests is not None:
+                return _tests
+            test_yamls = self.search_for_tests()
+            parser = ConfigParser(self.ctx)
 
-        tests = []
-        for path in test_yamls:
-            tests.extend(parser.parse(path))
+            _tests = []
+            for path in test_yamls:
+                _tests.extend(parser.parse(path))
 
-        return tests
+            return _tests
 
     def flash(self, host_tools_log: TextIO) -> TestResult:
         """Flashes the device under test."""
@@ -236,7 +243,7 @@ class TestRunner:
 
         print(f"Test results written to: {fname}")
 
-    def run_tests(self, tests: Sequence[TestOptions]) -> Sequence[TestResult]:
+    def run_tests(self, tests: List[TestOptions]) -> Sequence[TestResult]:
         """It builds and runs tests based on given test options.
 
         For each test description in tests this method builds the test, runs it and prints the result.
@@ -250,7 +257,11 @@ class TestRunner:
         # Ensure first test will start with reboot
         last_test_failed = True
 
-        for test in tests:
+        while True:
+            try:
+                test = tests.pop()
+            except IndexError:
+                break
             # By default we don't want to reboot the entire device to speed up the test execution)
             # if not explicitly required by the test.
             if last_test_failed:
@@ -268,7 +279,7 @@ class TestRunner:
                 test.should_reboot = True
 
             result = TestResult(test.name)
-            self._print_test_header_begin(test)
+            # self._print_test_header_begin(test)
 
             if test.ignore:
                 result.skip()
@@ -291,6 +302,8 @@ class TestRunner:
                     result.fail(str(e))
 
             self.target.dut.read(timeout=0.1)  # try to read (pass to logs) remaining test output
+
+            self._print_test_header_begin(test)
             self._print_test_header_end(test)
             print(result.to_str(self.ctx.verbosity), end="", flush=True)
 
