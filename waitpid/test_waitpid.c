@@ -68,6 +68,31 @@ TEST(test_waitpid, waitpid_wnohang)
 }
 
 
+TEST(test_waitpid, waitpid_wuntraced)
+{
+	int res;
+
+	/* WUNTRACED is currently unsupported in the kernel */
+	errno = 0;
+	res = waitpid(1111, NULL, WUNTRACED);
+
+	TEST_ASSERT_EQUAL_INT(-1, res);
+	TEST_ASSERT_EQUAL_INT(ENOSYS, errno);
+}
+
+
+TEST(test_waitpid, waitpid_bad_option)
+{
+	int res;
+
+	errno = 0;
+	res = waitpid(1111, NULL, 42);
+
+	TEST_ASSERT_EQUAL_INT(-1, res);
+	TEST_ASSERT_EQUAL_INT(EINVAL, errno);
+}
+
+
 TEST(test_waitpid, waitpid_other_zombie)
 {
 	int pid[2];
@@ -127,6 +152,8 @@ TEST(test_waitpid, waitpid_other_zombie_before)
 TEST_GROUP_RUNNER(test_waitpid)
 {
 	RUN_TEST_CASE(test_waitpid, waitpid_wnohang);
+	RUN_TEST_CASE(test_waitpid, waitpid_wuntraced);
+	RUN_TEST_CASE(test_waitpid, waitpid_bad_option);
 	RUN_TEST_CASE(test_waitpid, waitpid_other_zombie);
 	RUN_TEST_CASE(test_waitpid, waitpid_other_zombie_before);
 }
