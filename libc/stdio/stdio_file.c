@@ -355,7 +355,159 @@ TEST(stdio_getput, fgets_eof)
 }
 
 
-TEST(stdio_getput, getsputs_basic)
+TEST(stdio_getput, fgets_sizes)
+{
+	static const struct {
+		int size;
+		const char *expected;
+	} cases[] = {
+		{ .size = 0, .expected = NULL },
+		{ .size = 1, .expected = "" },
+		{ .size = 2, .expected = "A" },
+		{ .size = 3, .expected = "AB" },
+		{ .size = 4, .expected = "ABC" },
+		{ .size = 5, .expected = "ABC\n" },
+	};
+
+	char buf[16];
+	size_t i;
+
+	for (i = 0; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+		filep = fopen(STDIO_TEST_FILENAME, "r+");
+		TEST_ASSERT_NOT_NULL(filep);
+		TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fputs("ABC\n", filep));
+		TEST_ASSERT_EQUAL(0, fflush(filep));
+		rewind(filep);
+
+		memset(buf, 0xaa, sizeof(buf));
+
+		char *ret = fgets(buf, cases[i].size, filep);
+
+		if (cases[i].expected == NULL) {
+			TEST_ASSERT_NULL(ret);
+			TEST_ASSERT_EACH_EQUAL_HEX8(0xaa, buf, sizeof(buf));
+		}
+		else {
+			TEST_ASSERT_EQUAL_PTR_MESSAGE(buf, ret, cases[i].expected);
+			TEST_ASSERT_EQUAL_STRING(cases[i].expected, (char *)buf);
+			TEST_ASSERT_NOT_NULL(memchr(buf, '\0', cases[i].size));
+		}
+
+		assert_fclosed(&filep);
+	}
+}
+
+
+TEST(stdio_getput, fgets_truncation)
+{
+	char buf[5];
+
+	filep = fopen(STDIO_TEST_FILENAME, "r+");
+	TEST_ASSERT_NOT_NULL(filep);
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fputs("abcdef\n", filep));
+	TEST_ASSERT_EQUAL(0, fflush(filep));
+	rewind(filep);
+
+	TEST_ASSERT_EQUAL_PTR(buf, fgets(buf, sizeof(buf), filep));
+	TEST_ASSERT_EQUAL_STRING("abcd", buf);
+
+	assert_fclosed(&filep);
+}
+
+
+TEST(stdio_getput, fgets_newline_preserved)
+{
+	char buf[16];
+	filep = fopen(STDIO_TEST_FILENAME, "r+");
+	TEST_ASSERT_NOT_NULL(filep);
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fputs("abc\nxyz\n", filep));
+	TEST_ASSERT_EQUAL(0, fflush(filep));
+	rewind(filep);
+
+	TEST_ASSERT_EQUAL_PTR(buf, fgets(buf, sizeof(buf), filep));
+	TEST_ASSERT_EQUAL_STRING("abc\n", buf);
+
+	TEST_ASSERT_EQUAL_PTR(buf, fgets(buf, sizeof(buf), filep));
+	TEST_ASSERT_EQUAL_STRING("xyz\n", buf);
+
+	assert_fclosed(&filep);
+}
+
+
+TEST(stdio_getput, fgets_partial_reads)
+{
+	char buf[4];
+	filep = fopen(STDIO_TEST_FILENAME, "r+");
+	TEST_ASSERT_NOT_NULL(filep);
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fputs("abcdef\n", filep));
+	TEST_ASSERT_EQUAL(0, fflush(filep));
+	rewind(filep);
+
+	TEST_ASSERT_EQUAL_PTR(buf, fgets(buf, sizeof(buf), filep));
+	TEST_ASSERT_EQUAL_STRING("abc", buf);
+
+	TEST_ASSERT_EQUAL_PTR(buf, fgets(buf, sizeof(buf), filep));
+	TEST_ASSERT_EQUAL_STRING("def", buf);
+
+	TEST_ASSERT_EQUAL_PTR(buf, fgets(buf, sizeof(buf), filep));
+	TEST_ASSERT_EQUAL_STRING("\n", buf);
+
+	assert_fclosed(&filep);
+}
+
+
+#ifndef __phoenix__
+/* >c99 doesn't seem to expose gets() anymore, but we still want to test it on host to keep libphoenix implementation in sync */
+extern char *gets(char *str);
+#endif
+
+
+static void assertGetsOnStream(FILE *stream, char *buf, const char *expected)
+{
+	FILE *oldStdin = stdin;
+	stdin = filep;
+	char *s = gets(buf);
+	stdin = oldStdin;
+
+	TEST_ASSERT_EQUAL_PTR(buf, s);
+	TEST_ASSERT_EQUAL_STRING(expected, buf);
+}
+
+
+TEST(stdio_getput, gets_basic)
+{
+	char buf[16];
+	filep = fopen(STDIO_TEST_FILENAME, "r+");
+	TEST_ASSERT_NOT_NULL(filep);
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fputs("hello\n", filep));
+	TEST_ASSERT_EQUAL(0, fflush(filep));
+	rewind(filep);
+
+	assertGetsOnStream(filep, buf, "hello");
+
+	assert_fclosed(&filep);
+}
+
+
+TEST(stdio_getput, gets_multiline)
+{
+	char buf[16];
+	filep = fopen(STDIO_TEST_FILENAME, "r+");
+	TEST_ASSERT_NOT_NULL(filep);
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fputs("hello\nworld\n\nsecret", filep));
+	TEST_ASSERT_EQUAL(0, fflush(filep));
+	rewind(filep);
+
+	assertGetsOnStream(filep, buf, "hello");
+	assertGetsOnStream(filep, buf, "world");
+	assertGetsOnStream(filep, buf, "");
+	assertGetsOnStream(filep, buf, "secret");
+
+	assert_fclosed(&filep);
+}
+
+
+TEST(stdio_getput, fgetsfputs_basic)
 {
 	char buf[BUF_SIZE];
 
@@ -381,7 +533,7 @@ TEST(stdio_getput, getsputs_basic)
 }
 
 
-TEST(stdio_getput, getsputs_readonly)
+TEST(stdio_getput, fgetsfputs_readonly)
 {
 	char buf[BUF_SIZE];
 
@@ -437,9 +589,15 @@ TEST_GROUP_RUNNER(stdio_getput)
 	RUN_TEST_CASE(stdio_getput, fwritefread_basic);
 	RUN_TEST_CASE(stdio_getput, getput_basic);
 	RUN_TEST_CASE(stdio_getput, fgetc_eof);
-	RUN_TEST_CASE(stdio_getput, getsputs_basic);
+	RUN_TEST_CASE(stdio_getput, fgetsfputs_basic);
 	RUN_TEST_CASE(stdio_getput, fgets_eof);
-	RUN_TEST_CASE(stdio_getput, getsputs_readonly);
+	RUN_TEST_CASE(stdio_getput, fgetsfputs_readonly);
+	RUN_TEST_CASE(stdio_getput, fgets_sizes);
+	RUN_TEST_CASE(stdio_getput, fgets_truncation);
+	RUN_TEST_CASE(stdio_getput, fgets_newline_preserved);
+	RUN_TEST_CASE(stdio_getput, fgets_partial_reads);
+	RUN_TEST_CASE(stdio_getput, gets_basic);
+	RUN_TEST_CASE(stdio_getput, gets_multiline);
 	RUN_TEST_CASE(stdio_getput, ungetc_basic);
 }
 
