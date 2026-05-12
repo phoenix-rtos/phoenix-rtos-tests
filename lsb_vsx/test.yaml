@@ -1445,10 +1445,8 @@ test:
           # 8, 15, 16, 17: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
           # 12: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1448
           # 13, 14: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1233
-          # 18, 19, 23, 24: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1436
-          # 21: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1449
         - name: T.waitpid
-          execute: run-test /tset/POSIX.os/procprim/waitpid/T.waitpid{1-7,9-11,20,22}
+          execute: run-test /tset/POSIX.os/procprim/waitpid/T.waitpid{1-7,9-11,18-24}
           kwargs:
             testcase_count: 24
 
