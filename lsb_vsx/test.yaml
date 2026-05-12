@@ -1307,8 +1307,6 @@ test:
           kwargs:
             testcase_count: 50
 
-          # 1, 2, 3, 4, 5: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1457
-          # 13, 14: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1465
           # 15, 16, 29, 30, 34: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1458
           # 21: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1235
           # 23: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1464
@@ -1320,7 +1318,7 @@ test:
           # 38: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1258
           # 40: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1463
         - name: T.execle
-          execute: run-test /tset/POSIX.os/procprim/exec/T.execle{6-12,17-20,22,24,31,33,39,41,43-50}
+          execute: run-test /tset/POSIX.os/procprim/exec/T.execle{1-14,17-20,22,24,31,33,39,41,43-50}
           kwargs:
             testcase_count: 50
 
