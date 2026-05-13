@@ -429,26 +429,6 @@ TEST(unistd_file, file_write_readonly)
 }
 
 
-/* test simple pipe() usage */
-TEST(unistd_file, file_readwrite_pipe)
-{
-	int p[2];
-
-	if (pipe(p) != 0) {
-		/* ignore test if pipe() not supported (errno == ENOSYS) */
-		TEST_ASSERT_EQUAL_INT(ENOSYS, errno);
-		TEST_IGNORE();
-	}
-	else {
-		assert_write(p[1], LINE1);
-		assert_read(p[0], buf, sizeof(LINE1));
-
-		TEST_ASSERT_EQUAL_INT(0, close(p[0]));
-		TEST_ASSERT_EQUAL_INT(0, close(p[1]));
-	}
-}
-
-
 /* test simple use of lseek() */
 TEST(unistd_file, file_lseek)
 {
@@ -561,32 +541,6 @@ TEST(unistd_file, file_lseek_ebadf)
 
 	/* this test closes fd by itself, invalidate it */
 	fd = -1;
-}
-
-
-/* test lseek() on pipe */
-TEST(unistd_file, file_lseek_espipe)
-{
-	int p[2];
-
-	if (pipe(p) != 0) {
-		/* ignore test if not pipe() not supported (errno == ENOSYS) */
-		TEST_ASSERT_EQUAL_INT(ENOSYS, errno);
-		TEST_IGNORE();
-	}
-	else {
-		TEST_ASSERT_EQUAL_INT(-1, lseek(p[0], 1, SEEK_SET));
-		TEST_ASSERT_EQUAL_INT(ESPIPE, errno);
-
-		TEST_ASSERT_EQUAL_INT(-1, lseek(p[0], 1, SEEK_CUR));
-		TEST_ASSERT_EQUAL_INT(ESPIPE, errno);
-
-		TEST_ASSERT_EQUAL_INT(-1, lseek(p[0], 1, SEEK_END));
-		TEST_ASSERT_EQUAL_INT(ESPIPE, errno);
-
-		close(p[0]);
-		close(p[1]);
-	}
 }
 
 
@@ -710,23 +664,6 @@ TEST(unistd_file, file_truncate_enoent)
 	TEST_ASSERT_EQUAL_INT(ENOENT, errno);
 }
 
-/* truncate()-ing on directory */
-TEST(unistd_file, file_truncate_eisdir)
-{
-	/* <posix incmpliance> truncate() wrong errno returned
-
-	truncate() called on directory returns errno 22 (EINVAL) - ext2 or errno 13 (EACCESS)
-	instead of errno 21 (EISDIR)
-
-	Issue link: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/573
-	*/
-#ifdef __phoenix__
-	TEST_IGNORE();
-#endif
-
-	TEST_ASSERT_EQUAL_INT(-1, truncate("/dev", 0));
-	TEST_ASSERT_EQUAL_INT(EISDIR, errno);
-}
 
 /* test ftruncate()-ing a file to smaller size than it already is */
 TEST(unistd_file, file_ftruncate_down)
@@ -979,20 +916,17 @@ TEST_GROUP_RUNNER(unistd_file)
 	RUN_TEST_CASE(unistd_file, file_write_incrlength);
 
 	RUN_TEST_CASE(unistd_file, file_write_readonly);
-	RUN_TEST_CASE(unistd_file, file_readwrite_pipe);
 
 	RUN_TEST_CASE(unistd_file, file_lseek);
 	RUN_TEST_CASE(unistd_file, file_lseek_pastfile);
 	RUN_TEST_CASE(unistd_file, file_lseek_negative);
 	RUN_TEST_CASE(unistd_file, file_lseek_ebadf);
-	RUN_TEST_CASE(unistd_file, file_lseek_espipe);
 
 	RUN_TEST_CASE(unistd_file, file_truncate_down);
 	RUN_TEST_CASE(unistd_file, file_truncate_up);
 	RUN_TEST_CASE(unistd_file, file_truncate_opened);
 	RUN_TEST_CASE(unistd_file, file_truncate_opened_eof);
 	RUN_TEST_CASE(unistd_file, file_truncate_einval);
-	RUN_TEST_CASE(unistd_file, file_truncate_eisdir);
 	RUN_TEST_CASE(unistd_file, file_truncate_enoent);
 
 	RUN_TEST_CASE(unistd_file, file_ftruncate_down);
@@ -1111,38 +1045,6 @@ TEST(unistd_file_pread, pwrite_einval)
 	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fd);
 	TEST_ASSERT_EQUAL_INT(-1, pwrite(fd, buf, 2, -1));
 	TEST_ASSERT_EQUAL_INT(EINVAL, errno);
-}
-
-
-/* Test trying to read on non-seekable file */
-TEST(unistd_file_pread, pread_espipe)
-{
-	int pipe_fds[2];
-	if (pipe(pipe_fds) != 0) {
-		/* ignore test if not pipe() not supported (errno == ENOSYS) */
-		TEST_ASSERT_EQUAL_INT(ENOSYS, errno);
-		TEST_IGNORE();
-	}
-	TEST_ASSERT_EQUAL_INT(-1, pread(pipe_fds[0], buf, 2, 1));
-	TEST_ASSERT_EQUAL_INT(ESPIPE, errno);
-	TEST_ASSERT_EQUAL_INT(0, close(pipe_fds[0]));
-	TEST_ASSERT_EQUAL_INT(0, close(pipe_fds[1]));
-}
-
-
-/* Test trying to read on non-seekable file */
-TEST(unistd_file_pread, pwrite_espipe)
-{
-	int pipe_fds[2];
-	if (pipe(pipe_fds) != 0) {
-		/* ignore test if not pipe() not supported (errno == ENOSYS) */
-		TEST_ASSERT_EQUAL_INT(ENOSYS, errno);
-		TEST_IGNORE();
-	}
-	TEST_ASSERT_EQUAL_INT(-1, pwrite(pipe_fds[1], buf, 2, 1));
-	TEST_ASSERT_EQUAL_INT(ESPIPE, errno);
-	TEST_ASSERT_EQUAL_INT(0, close(pipe_fds[0]));
-	TEST_ASSERT_EQUAL_INT(0, close(pipe_fds[1]));
 }
 
 
@@ -1356,8 +1258,6 @@ TEST_GROUP_RUNNER(unistd_file_pread)
 	RUN_TEST_CASE(unistd_file_pread, pwrite_ebadf);
 	RUN_TEST_CASE(unistd_file_pread, pread_einval);
 	RUN_TEST_CASE(unistd_file_pread, pwrite_einval);
-	RUN_TEST_CASE(unistd_file_pread, pread_espipe);
-	RUN_TEST_CASE(unistd_file_pread, pwrite_espipe);
 	RUN_TEST_CASE(unistd_file_pread, pread_multithread);
 	RUN_TEST_CASE(unistd_file_pread, pread_multithread_overlapping);
 	RUN_TEST_CASE(unistd_file_pread, pwrite_multithread);

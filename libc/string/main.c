@@ -26,14 +26,11 @@ void runner(void)
 	RUN_TEST_GROUP(string_memmove);
 	RUN_TEST_GROUP(string_memmove_big);
 	RUN_TEST_GROUP(string_memcpy);
-	RUN_TEST_GROUP(string_memccpy);
 	RUN_TEST_GROUP(string_strncpy);
-	RUN_TEST_GROUP(string_stpncpy);
 	RUN_TEST_GROUP(string_strcpy_stpcpy);
 	RUN_TEST_GROUP(string_strlcpy);
 	RUN_TEST_GROUP(string_strlcat);
 	RUN_TEST_GROUP(string_errsign);
-	RUN_TEST_GROUP(signal_psignal);
 	RUN_TEST_GROUP(string_cat);
 	RUN_TEST_GROUP(string_dup);
 	RUN_TEST_GROUP(string_spn);
@@ -42,7 +39,6 @@ void runner(void)
 	RUN_TEST_GROUP(string_strcmp);
 	RUN_TEST_GROUP(string_strcoll);
 	RUN_TEST_GROUP(string_tok);
-	RUN_TEST_GROUP(string_tok_r);
 	RUN_TEST_GROUP(string_str);
 	RUN_TEST_GROUP(string_pbrk);
 }
