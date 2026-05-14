@@ -103,6 +103,18 @@ ssize_t msg_recv(int sock, void *buf, size_t len, int *fd, size_t *fdcnt)
 }
 
 
+int get_flags(int fd)
+{
+	return fcntl(fd, F_GETFL, 0);
+}
+
+
+int get_fd_flags(int fd)
+{
+	return fcntl(fd, F_GETFD, 0);
+}
+
+
 int set_nonblock(int fd, int enable)
 {
 	int flags;
@@ -129,7 +141,22 @@ int open_files(int *fd, size_t cnt)
 
 	for (i = 0; i < cnt; ++i) {
 		snprintf(buf, sizeof(buf), "/tmp/test_file_%zu", i);
-		if ((fd[i] = open(buf, O_CREAT | O_RDWR, S_IFREG | 0666)) < 0)
+		if ((fd[i] = open(buf, O_CREAT | O_RDWR, 0666)) < 0)
+			return -1;
+	}
+
+	return 0;
+}
+
+
+int open_files_with_flags(int *fd, int *flags, size_t cnt)
+{
+	size_t i;
+	char buf[64];
+
+	for (i = 0; i < cnt; ++i) {
+		snprintf(buf, sizeof(buf), "/tmp/test_file_%zu", i);
+		if ((fd[i] = open(buf, O_CREAT | flags[i], 0666)) < 0)
 			return -1;
 	}
 

@@ -40,7 +40,7 @@
 
 #define FAIL_OR_EXIT(pid, msg) \
 	do { \
-		if (pid) \
+		if (pid != 0) \
 			FAIL(msg); \
 		else \
 			exit(1); \
@@ -530,6 +530,124 @@ TEST(test_unix_socket, dgram_sock_data_and_fd)
 }
 
 
+/*
+ * When passing a file descriptor with sendmsg(), file status flags are shared
+ * with the receiver, while file descriptor flags (such as FD_CLOEXEC) are not.
+ */
+static void unix_msg_fd_flags(int type)
+{
+	int fd[2];
+	int oflags[] = {
+		O_WRONLY,
+		O_RDWR,
+		O_RDWR | O_NONBLOCK,
+		O_RDWR | O_APPEND,
+		O_RDWR | O_CLOEXEC
+	};
+	pid_t pid;
+	size_t sfdcnt, rfdcnt;
+
+
+	sfdcnt = sizeof(oflags) / sizeof(oflags[0]);
+
+	if (socketpair(AF_UNIX, type, 0, fd) < 0)
+		FAIL("socketpair");
+
+	pid = safe_fork();
+
+	if (pid != 0) {
+		int sfd[MAX_FD_CNT];
+		ssize_t n;
+		int status, flags;
+
+		if (open_files_with_flags(sfd, oflags, sfdcnt) < 0)
+			FAIL("open_files");
+
+		flags = get_flags(sfd[0]);
+		TEST_ASSERT(flags >= 0);
+		TEST_ASSERT((flags & O_ACCMODE) == O_WRONLY);
+		flags = get_flags(sfd[1]);
+		TEST_ASSERT(flags >= 0);
+		TEST_ASSERT((flags & O_ACCMODE) == O_RDWR);
+		flags = get_flags(sfd[2]);
+		TEST_ASSERT(flags >= 0);
+		TEST_ASSERT((flags & O_NONBLOCK) != 0);
+		flags = get_flags(sfd[3]);
+		TEST_ASSERT(flags >= 0);
+		TEST_ASSERT((flags & O_APPEND) != 0);
+		flags = get_fd_flags(sfd[4]);
+		TEST_ASSERT(flags >= 0);
+		TEST_ASSERT((flags & FD_CLOEXEC) != 0);
+
+		n = msg_send(fd[0], data, 1, sfd, sfdcnt);
+		TEST_ASSERT(n == 1);
+
+		if (close_files(sfd, sfdcnt) < 0)
+			FAIL("close_files");
+
+		if (waitpid(pid, &status, 0) < 0)
+			FAIL("waitpid");
+
+		TEST_ASSERT(WIFEXITED(status));
+		TEST_ASSERT(WEXITSTATUS(status) == 0);
+
+		if (stat_files(sfd, sfdcnt, 0) < 0)
+			FAIL("stat_files");
+
+		if (unlink_files(sfdcnt) < 0)
+			FAIL("unlink_files");
+
+		close(fd[0]);
+		close(fd[1]);
+	}
+	else {
+		int rfd[MAX_FD_CNT];
+		ssize_t n;
+		int flags;
+
+		n = msg_recv(fd[1], buf, sizeof(buf), rfd, &rfdcnt);
+		if (n != 1 || rfdcnt != sfdcnt)
+			exit(1);
+
+		flags = get_flags(rfd[0]);
+		CHILD_ASSERT(flags >= 0);
+		CHILD_ASSERT((flags & O_ACCMODE) == O_WRONLY);
+		flags = get_flags(rfd[1]);
+		CHILD_ASSERT(flags >= 0);
+		CHILD_ASSERT((flags & O_ACCMODE) == O_RDWR);
+		flags = get_flags(rfd[2]);
+		CHILD_ASSERT(flags >= 0);
+		CHILD_ASSERT((flags & O_NONBLOCK) != 0);
+		flags = get_flags(rfd[3]);
+		CHILD_ASSERT(flags >= 0);
+		CHILD_ASSERT((flags & O_APPEND) != 0);
+		flags = get_fd_flags(rfd[4]);
+		CHILD_ASSERT(flags >= 0);
+		CHILD_ASSERT((flags & FD_CLOEXEC) == 0);
+
+		if (close_files(rfd, rfdcnt) < 0)
+			exit(2);
+
+		if (stat_files(rfd, rfdcnt, 0) < 0)
+			exit(3);
+
+		exit(0);
+	}
+}
+
+
+TEST(test_unix_socket, stream_sock_fd_flags)
+{
+	unix_msg_fd_flags(SOCK_STREAM);
+}
+
+
+TEST(test_unix_socket, dgram_sock_fd_flags)
+{
+	unix_msg_fd_flags(SOCK_DGRAM);
+}
+
+
 static void unix_msg_fork(int type)
 {
 	int fd[2];
@@ -543,7 +661,7 @@ static void unix_msg_fork(int type)
 
 	pid = safe_fork();
 
-	if (pid) {
+	if (pid != 0) {
 		int sfd[MAX_FD_CNT];
 		ssize_t n;
 		int status;
@@ -643,7 +761,7 @@ static void unix_transfer(int type)
 
 	pid = safe_fork();
 
-	if (pid) {
+	if (pid != 0) {
 		size_t max_len, len, pos = 0;
 		ssize_t n;
 		int status;
@@ -940,7 +1058,7 @@ TEST(test_unix_socket, poll)
 		int rv; \
 		memset(buf, 0, read_msg_len); \
 		rv = read(fd, buf, read_msg_len); \
-		if (pid) { \
+		if (pid != 0) { \
 			TEST_ASSERT(rv >= 0); \
 		} \
 		else { \
@@ -948,7 +1066,7 @@ TEST(test_unix_socket, poll)
 				exit(1); \
 			} \
 		} \
-		if (pid) { \
+		if (pid != 0) { \
 			TEST_ASSERT_EQUAL_INT(read_msg_len, rv); \
 		} \
 		else { \
@@ -957,7 +1075,7 @@ TEST(test_unix_socket, poll)
 			} \
 		} \
 		rv = strncmp(buf, data, read_msg_len); \
-		if (pid) { \
+		if (pid != 0) { \
 			TEST_ASSERT_EQUAL_INT(0, rv); \
 		} \
 		else { \
@@ -973,7 +1091,7 @@ TEST(test_unix_socket, poll)
 		int send_msg_len = 128; \
 		int rv; \
 		rv = send(fd, data, send_msg_len, flags); \
-		if (pid) { \
+		if (pid != 0) { \
 			TEST_ASSERT(rv >= 0); \
 		} \
 		else { \
@@ -981,7 +1099,7 @@ TEST(test_unix_socket, poll)
 				exit(1); \
 			} \
 		} \
-		if (pid) { \
+		if (pid != 0) { \
 			TEST_ASSERT_EQUAL_INT(send_msg_len, rv); \
 		} \
 		else { \
@@ -1203,7 +1321,7 @@ static void unix_accept_connect_liveness_helper(int type)
 
 	pid = safe_fork();
 
-	if (pid) {
+	if (pid != 0) {
 		if ((named = unix_named_socket(type, socket_name)) < 0)
 			FAIL("unix_named_socket");
 
@@ -1252,7 +1370,7 @@ static void unix_accept_connect_liveness_helper(int type)
 
 	pid = safe_fork();
 
-	if (pid) {
+	if (pid != 0) {
 		if ((named = unix_named_socket(type, socket_name)) < 0)
 			FAIL("unix_named_socket");
 
@@ -1305,7 +1423,7 @@ static void unix_accept_connect_liveness_helper(int type)
 
 	pid = safe_fork();
 
-	if (pid) {
+	if (pid != 0) {
 		if ((fd = socket(AF_UNIX, type, 0)) < 0)
 			FAIL("socket");
 
@@ -1681,6 +1799,8 @@ TEST_GROUP_RUNNER(test_unix_socket)
 	RUN_TEST_CASE(test_unix_socket, msg_data_only);
 	RUN_TEST_CASE(test_unix_socket, stream_sock_data_and_fd);
 	RUN_TEST_CASE(test_unix_socket, dgram_sock_data_and_fd);
+	RUN_TEST_CASE(test_unix_socket, stream_sock_fd_flags);
+	RUN_TEST_CASE(test_unix_socket, dgram_sock_fd_flags);
 	RUN_TEST_CASE(test_unix_socket, stream_sock_msg_fork);
 	RUN_TEST_CASE(test_unix_socket, dgram_sock_msg_fork);
 	RUN_TEST_CASE(test_unix_socket, transfer);
