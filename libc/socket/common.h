@@ -33,9 +33,15 @@ ssize_t msg_send(int sock, void *buf, size_t len, int *fd, size_t fdcnt);
 
 ssize_t msg_recv(int sock, void *buf, size_t len, int *fd, size_t *fdcnt);
 
+int get_flags(int fd);
+
+int get_fd_flags(int fd);
+
 int set_nonblock(int fd, int enable);
 
 int open_files(int *fd, size_t cnt);
+
+int open_files_with_flags(int *fd, int *flags, size_t cnt);
 
 int close_files(int *fd, size_t cnt);
 
