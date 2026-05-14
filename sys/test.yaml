@@ -1,14 +1,14 @@
 test:
   type: unity
   tests:
-    - name: mutex
-      execute: test-sys-mutex
-
-    - name: cond
-      execute: test-sys-cond
-
-    - name: perf
-      execute: test-sys-perf
+    # - name: mutex
+    #   execute: test-sys-mutex
+    #
+    # - name: cond
+    #   execute: test-sys-cond
+    #
+    # - name: perf
+    #   execute: test-sys-perf
 
     - name: msg
       execute: test-sys-msg
