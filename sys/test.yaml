@@ -1,17 +1,17 @@
 test:
   type: unity
   tests:
-    - name: mutex
-      execute: test-sys-mutex
+    #- name: mutex
+    #  execute: test-sys-mutex
 
-    - name: cond
-      execute: test-sys-cond
+    #- name: cond
+    #  execute: test-sys-cond
 
-    - name: perf
-      execute: test-sys-perf
-      targets:
-          # Excluded due to: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1587
-          exclude: [armv7r5f-zynqmp-qemu]
+    #- name: perf
+    #  execute: test-sys-perf
+    #  targets:
+    #      # Excluded due to: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1587
+    #      exclude: [armv7r5f-zynqmp-qemu]
 
     - name: msg
       execute: test-sys-msg

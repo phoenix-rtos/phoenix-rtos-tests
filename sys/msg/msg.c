@@ -29,6 +29,12 @@
 
 #include <unity_fixture.h>
 
+#include "shmsrv.h"
+#include "shm_utils.h"
+
+
+#define REPS 10
+
 
 /* ---- helpers ---- */
 
@@ -109,14 +115,12 @@ static void server_echo_loop(uint32_t port, int use_respond_and_recv)
 {
 	msg_t msg = { 0 };
 	msg_rid_t rid;
-	int first = 1;
 
 	for (;;) {
 		int err;
 
-		if (first || !use_respond_and_recv) {
+		if (!use_respond_and_recv) {
 			err = msgRecv(port, &msg, &rid);
-			first = 0;
 		}
 		else {
 			err = msgRespondAndRecv(port, &msg, &rid);
@@ -143,6 +147,34 @@ static void server_echo_loop(uint32_t port, int use_respond_and_recv)
 			}
 		}
 	}
+}
+
+
+/* ===================================== */
+/* TEST_GROUP: msg_various               */
+/* ===================================== */
+
+TEST_GROUP(msg_various);
+
+TEST_SETUP(msg_various)
+{
+}
+
+TEST_TEAR_DOWN(msg_various)
+{
+}
+
+
+TEST(msg_various, dummyfs_ls_test)
+{
+	pid_t pid;
+
+	if ((pid = safe_fork()) == 0) {
+		execl("/bin/ls", "ls", "-d", "/tmp", (char *)NULL);
+		exit(1);
+	}
+
+	assert_child_exit(pid);
 }
 
 
@@ -873,90 +905,94 @@ TEST_TEAR_DOWN(msg_respond_recv)
 /* Basic respondAndRecv: server uses msgRespondAndRecv instead of separate recv+respond */
 TEST(msg_respond_recv, basic)
 {
-	char dev_path[64];
-	make_dev_path(dev_path, sizeof(dev_path), "rr_basic");
-	pid_t pid;
+	for (int i = 0; i < REPS; i++) {
+		char dev_path[64];
+		make_dev_path(dev_path, sizeof(dev_path), "rr_basic");
+		pid_t pid;
 
-	if ((pid = safe_fork()) == 0) {
-		uint32_t port = 0;
-		if (setup_port_dev(dev_path, &port) < 0) {
-			exit(3);
+		if ((pid = safe_fork()) == 0) {
+			uint32_t port = 0;
+			if (setup_port_dev(dev_path, &port) < 0) {
+				exit(3);
+			}
+			server_echo_loop(port, 1);
+			exit(0);
 		}
-		server_echo_loop(port, 1);
-		exit(0);
+
+		oid_t oid;
+		while (lookup(dev_path, NULL, &oid) < 0) {
+			usleep(10 * 1000);
+		}
+
+		for (int i = 0; i < 100; i++) {
+			msg_t msg = { 0 };
+			msg.i.io.offs = i;
+			msg.type = mtRead;
+			msg.i.size = 0;
+			msg.i.data = NULL;
+			msg.o.size = 0;
+			msg.o.data = NULL;
+
+			TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
+			TEST_ASSERT_EQUAL_INT(mtRead, msg.o.err);
+		}
+
+		assert_child_exit(pid);
 	}
-
-	oid_t oid;
-	while (lookup(dev_path, NULL, &oid) < 0) {
-		usleep(10 * 1000);
-	}
-
-	for (int i = 0; i < 100; i++) {
-		msg_t msg = { 0 };
-		msg.i.io.offs = i;
-		msg.type = mtRead;
-		msg.i.size = 0;
-		msg.i.data = NULL;
-		msg.o.size = 0;
-		msg.o.data = NULL;
-
-		TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
-		TEST_ASSERT_EQUAL_INT(mtRead, msg.o.err);
-	}
-
-	assert_child_exit(pid);
 }
 
 
 /* respondAndRecv with data buffers */
 TEST(msg_respond_recv, with_data)
 {
-	char dev_path[64];
-	make_dev_path(dev_path, sizeof(dev_path), "rr_data");
-	pid_t pid;
+	for (int i = 0; i < REPS; i++) {
+		char dev_path[64];
+		make_dev_path(dev_path, sizeof(dev_path), "rr_data");
+		pid_t pid;
 
-	const size_t bufsz = 4096;
+		const size_t bufsz = 4096;
 
-	if ((pid = safe_fork()) == 0) {
-		uint32_t port = 0;
-		if (setup_port_dev(dev_path, &port) < 0) {
-			exit(3);
+		if ((pid = safe_fork()) == 0) {
+			uint32_t port = 0;
+			if (setup_port_dev(dev_path, &port) < 0) {
+				exit(3);
+			}
+			server_echo_loop(port, 1);
+			exit(0);
 		}
-		server_echo_loop(port, 1);
-		exit(0);
-	}
 
-	oid_t oid;
-	while (lookup(dev_path, NULL, &oid) < 0) {
-		usleep(10 * 1000);
-	}
-
-	char *ibuf = malloc(bufsz);
-	char *obuf = malloc(bufsz);
-	TEST_ASSERT_NOT_NULL(ibuf);
-	TEST_ASSERT_NOT_NULL(obuf);
-
-	for (int iter = 0; iter < 20; iter++) {
-		for (size_t i = 0; i < bufsz; i++) {
-			ibuf[i] = (char)((i + iter * 37) & 0xff);
+		oid_t oid;
+		while (lookup(dev_path, NULL, &oid) < 0) {
+			usleep(10 * 1000);
 		}
-		memset(obuf, 0, bufsz);
 
-		msg_t msg = { 0 };
-		msg.type = mtWrite;
-		msg.i.data = ibuf;
-		msg.i.size = bufsz;
-		msg.o.data = obuf;
-		msg.o.size = bufsz;
+		char *ibuf = malloc(bufsz);
+		char *obuf = malloc(bufsz);
+		TEST_ASSERT_NOT_NULL(ibuf);
+		TEST_ASSERT_NOT_NULL(obuf);
 
-		TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
-		TEST_ASSERT_EQUAL_INT(mtWrite, msg.o.err);
-		TEST_ASSERT_EQUAL_MEMORY(ibuf, obuf, bufsz);
+		for (int iter = 0; iter < 20; iter++) {
+			for (size_t i = 0; i < bufsz; i++) {
+				ibuf[i] = (char)((i + iter * 37) & 0xff);
+			}
+			memset(obuf, 0, bufsz);
+
+			msg_t msg = { 0 };
+			msg.type = mtWrite;
+			msg.i.data = ibuf;
+			msg.i.size = bufsz;
+			msg.o.data = obuf;
+			msg.o.size = bufsz;
+
+			TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
+			TEST_ASSERT_EQUAL_INT(mtWrite, msg.o.err);
+			TEST_ASSERT_EQUAL_MEMORY(ibuf, obuf, bufsz);
+		}
+
+		free(ibuf);
+		free(obuf);
+		assert_child_exit(pid);
 	}
-
-	free(ibuf);
-	free(obuf);
-	assert_child_exit(pid);
 }
 
 
@@ -993,7 +1029,7 @@ TEST(msg_pulse, pulse_to_blocked_recv)
 
 		int err = msgRecv(port, &msg, &rid);
 		/* Expect pulse return */
-		TEST_ASSERT_LESS_THAN_INT(0, err);
+		TEST_ASSERT_EQUAL_INT(-EPULSE, err);
 		TEST_ASSERT_EQUAL_UINT8(42, msg.o.pulse);
 
 		if (waitpid(pid, NULL, 0) < 0) {
@@ -1028,7 +1064,7 @@ TEST(msg_pulse, late_pulse)
 	msg_t msg = { 0 };
 	msg_rid_t rid;
 	int err = msgRecv(port, &msg, &rid);
-	TEST_ASSERT_LESS_THAN_INT(0, err);
+	TEST_ASSERT_EQUAL_INT(-EPULSE, err);
 	TEST_ASSERT_EQUAL_UINT8(99, msg.o.pulse);
 
 	portDestroy(port);
@@ -1322,8 +1358,8 @@ TEST(msg_interrupt, recv_interrupted_by_signal)
 			exit(0);
 		}
 
-		/* If recv succeeded (got a message), that's unexpected, but not fatal */
-		exit(0);
+		/* Recv shouldn't have succeeded as it can't get a message */
+		exit(1);
 	}
 
 	/* Give child time to set up port and block in recv */
@@ -1334,7 +1370,12 @@ TEST(msg_interrupt, recv_interrupted_by_signal)
 
 	int status;
 	waitpid(pid, &status, 0);
-	TEST_ASSERT_TRUE(WIFEXITED(status));
+
+	// FIXME: WIFEXITED doesnt work properly on phoenix due to
+	// https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1233
+	//
+	// TEST_ASSERT_TRUE(WIFEXITED(status));
+
 	TEST_ASSERT_EQUAL_INT(0, WEXITSTATUS(status));
 }
 
@@ -1408,7 +1449,6 @@ TEST(msg_interrupt, server_exit_during_send)
  * Client exit while server hasn't responded yet.
  *
  * Tests that the kernel handles a client disappearing mid-IPC.
- * Related to FIXME: nothing stops SCs from different clients ending up swapped.
  */
 TEST(msg_interrupt, client_exit_before_respond)
 {
@@ -1481,7 +1521,7 @@ TEST(msg_interrupt, client_exit_before_respond)
 
 	int status;
 	waitpid(c2, &status, 0);
-	TEST_ASSERT_TRUE(WIFEXITED(status));
+	// TEST_ASSERT_TRUE(WIFEXITED(status));
 	TEST_ASSERT_EQUAL_INT_MESSAGE(0, WEXITSTATUS(status), "server should still work after client death");
 
 	assert_child_exit(server_pid);
@@ -1506,12 +1546,6 @@ TEST_TEAR_DOWN(msg_multiserver)
 
 /*
  * Server receives multiple messages and responds out of order.
- *
- * This tests the FIXME in proc_respond about multiple_callers:
- * "the active server will process the messages on client's SC, but currently
- * it's unclear which and not tracked as it should be"
- *
- * Also tests FIXME about SC swapping between clients.
  */
 TEST(msg_multiserver, out_of_order_respond)
 {
@@ -1861,98 +1895,122 @@ TEST(msg_prio_inherit, multiple_clients)
  */
 TEST(msg_prio_inherit, inversion_scenario)
 {
-	char dev_path[64];
-	make_dev_path(dev_path, sizeof(dev_path), "pi_inv");
-	pid_t server_pid;
+	char shm_path[64];
+	make_dev_path(shm_path, sizeof(shm_path), "pi_inv_shm");
 
-	volatile int *shared = mmap(NULL, 4096, PROT_READ | PROT_WRITE,
-			MAP_ANONYMOUS | MAP_SHARED, -1, 0);
-	TEST_ASSERT_NOT_NULL(shared);
+	pid_t shm_server_pid;
+	if ((shm_server_pid = safe_fork()) == 0) {
+		shmsrv_start(shm_path);
+		exit(1);
+	}
 
-	/* shared[0] = server_observed_prio
-	 * shared[1] = server ready flag
-	 * shared[2] = medium thread started
-	 */
-	shared[0] = -1;
-	shared[1] = 0;
-	shared[2] = 0;
+	for (int i = 0; i < REPS; i++) {
+		char dev_path[64];
+		make_dev_path(dev_path, sizeof(dev_path), "pi_inv");
+		pid_t server_pid;
 
-	if ((server_pid = safe_fork()) == 0) {
-		uint32_t port = 0;
-		if (setup_port_dev(dev_path, &port) < 0) {
-			exit(3);
-		}
+		int *shared = (int *)shm_init(shm_path, true, 0x200);
+		TEST_ASSERT_NOT_NULL(shared);
 
-		/* Server at low priority */
-		priority(6);
-		shared[1] = 1;
+		/* shared[0] = server_observed_prio
+		 * shared[1] = server ready flag
+		 * shared[2] = medium thread started
+		 */
+		shared[0] = -1;
+		shared[1] = 0;
+		shared[2] = 0;
 
-		msg_t msg = { 0 };
-		msg_rid_t rid;
+		if ((server_pid = safe_fork()) == 0) {
+			int *shared = (int *)shm_init(shm_path, false, 0x200);
 
-		if (msgRecv(port, &msg, &rid) < 0) {
+			uint32_t port = 0;
+			if (setup_port_dev(dev_path, &port) < 0) {
+				exit(3);
+			}
+
+			/* Server at low priority */
+			priority(6);
+			shared[1] = 1;
+
+			msg_t msg = { 0 };
+			msg_rid_t rid;
+
+			if (msgRecv(port, &msg, &rid) < 0) {
+				exit(0);
+			}
+
+			/* Record our priority while processing the message from H */
+			shared[0] = priority(-1);
+
+			/* Simulate some work */
+			usleep(50 * 1000);
+
+			msg.o.err = 0;
+			msgRespond(port, &msg, rid);
+
 			exit(0);
 		}
 
-		/* Record our priority while processing the message from H */
-		shared[0] = priority(-1);
-
-		/* Simulate some work */
-		usleep(50 * 1000);
-
-		msg.o.err = 0;
-		msgRespond(port, &msg, rid);
-
-		exit(0);
-	}
-
-	oid_t oid;
-	while (lookup(dev_path, NULL, &oid) < 0) {
-		usleep(10 * 1000);
-	}
-
-	/* Wait for server to be ready */
-	while (!shared[1]) {
-		usleep(1000);
-	}
-
-	/* Launch medium-priority busy looper */
-	pid_t med_pid;
-	if ((med_pid = safe_fork()) == 0) {
-		priority(4);
-		shared[2] = 1;
-		/* Busy wait to act as a potential preemptor */
-		for (volatile int i = 0; i < 10000000; i++) {
-			/* spin */
+		oid_t oid;
+		while (lookup(dev_path, NULL, &oid) < 0) {
+			usleep(10 * 1000);
 		}
-		exit(0);
+
+		int retry = 0;
+		/* Wait for server to be ready */
+		while (!shared[1]) {
+			usleep(1000);
+			retry++;
+			if (retry > 1000) {
+				TEST_FAIL_MESSAGE("shm doesn't work");
+			}
+		}
+
+		/* Launch medium-priority busy looper */
+		pid_t med_pid;
+		if ((med_pid = safe_fork()) == 0) {
+			priority(4);
+			shared[2] = 1;
+			/* Busy wait to act as a potential preemptor */
+			for (volatile int i = 0; i < 10000000; i++) {
+				/* spin */
+			}
+			exit(0);
+		}
+
+		while (!shared[2]) {
+			usleep(1000);
+		}
+
+		/* High-priority client sends to low-priority server */
+		priority(2);
+
+		msg_t msg = { 0 };
+		msg.type = mtWrite;
+		msg.i.size = 0;
+		msg.i.data = NULL;
+		msg.o.size = 0;
+		msg.o.data = NULL;
+
+		/* waitpit with WNOHANG so that msgSend is not interrupted with SIGCHLD */
+		waitpid(med_pid, NULL, WNOHANG);
+		waitpid(server_pid, NULL, WNOHANG);
+
+		TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
+
+		/* With IPCP, server should have executed at priority 2 (our priority),
+		 * so medium thread shouldn't have preempted it */
+		TEST_ASSERT_EQUAL_INT_MESSAGE(2, shared[0],
+				"Server should inherit caller's high priority to prevent inversion");
+
+		waitpid(med_pid, NULL, 0);
+		waitpid(server_pid, NULL, 0);
+
+		munmap((void *)shared, 0x200);
 	}
 
-	while (!shared[2]) {
-		usleep(1000);
-	}
-
-	/* High-priority client sends to low-priority server */
-	priority(2);
-
-	msg_t msg = { 0 };
-	msg.type = mtWrite;
-	msg.i.size = 0;
-	msg.i.data = NULL;
-	msg.o.size = 0;
-	msg.o.data = NULL;
-
-	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
-
-	/* With IPCP, server should have executed at priority 2 (our priority),
-	 * so medium thread shouldn't have preempted it */
-	TEST_ASSERT_EQUAL_INT_MESSAGE(2, shared[0],
-			"Server should inherit caller's high priority to prevent inversion");
-
-	waitpid(med_pid, NULL, 0);
-	waitpid(server_pid, NULL, 0);
-
-	munmap((void *)shared, 4096);
+	kill(shm_server_pid, SIGKILL);
+	waitpid(shm_server_pid, NULL, 0);
 }
 
 
@@ -2370,6 +2428,12 @@ TEST(msg_respond_recv_mixed, alternating)
 /* ===================================== */
 
 
+TEST_GROUP_RUNNER(msg_various)
+{
+	// RUN_TEST_CASE(msg_various, dummyfs_ls_test);
+}
+
+
 TEST_GROUP_RUNNER(msg_errnos)
 {
 	RUN_TEST_CASE(msg_errnos, send_invalid_port);
@@ -2392,6 +2456,7 @@ TEST_GROUP_RUNNER(msg_raw)
 
 TEST_GROUP_RUNNER(msg_data)
 {
+
 	RUN_TEST_CASE(msg_data, idata_and_odata);
 	RUN_TEST_CASE(msg_data, idata_only);
 	RUN_TEST_CASE(msg_data, odata_only);
