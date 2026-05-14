@@ -1,6 +1,8 @@
 import shlex
 from typing import Callable, List, TextIO
 
+import pexpect
+
 from trunner.ctx import TestContext
 from trunner.dut import HostDut
 from trunner.harness import IntermediateHarness, HarnessBuilder
@@ -32,7 +34,7 @@ class HostPCGenericTarget(TargetBase):
                 exitstatus = self.dut.wait()
                 if exitstatus != 0:
                     result.fail(msg=f"non-zero exit status: {exitstatus}", summary="Exit Status failure")
-            except TimeoutError as exc:
+            except (TimeoutError, pexpect.TIMEOUT) as exc:
                 result.fail_harness_exception(exc)
 
             return res
