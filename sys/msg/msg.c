@@ -17,10 +17,12 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 #include <signal.h>
 #include <sys/wait.h>
 #include <sys/mman.h>
+#include <sys/time.h>
 
 #include <posix/utils.h>
 
@@ -2395,6 +2397,1729 @@ TEST(msg_respond_recv_mixed, alternating)
 }
 
 
+/* =====================================================  */
+/* TEST_GROUP: msg_bwi_edge                               */
+/* Complex BWI / priority inheritance edge cases          */
+/* =====================================================  */
+
+TEST_GROUP(msg_bwi_edge);
+
+TEST_SETUP(msg_bwi_edge)
+{
+}
+
+TEST_TEAR_DOWN(msg_bwi_edge)
+{
+}
+
+
+/*
+ * Chained IPC priority inheritance (depth 2):
+ * Client(prio 2) -> Server1(prio 6) -> Server2(prio 7)
+ *
+ * Server1 receives from client (gets SC at prio 2), then calls Server2.
+ * Server2 should also run at effective priority 2 via transitive SC donation.
+ */
+TEST(msg_bwi_edge, chained_donation)
+{
+	char shm_path[64];
+	make_dev_path(shm_path, sizeof(shm_path), "bwi_ch_shm");
+	pid_t shm_pid;
+	if ((shm_pid = safe_fork()) == 0) {
+		shmsrv_start(shm_path);
+		exit(1);
+	}
+
+	char dev1[64], dev2[64];
+	make_dev_path(dev1, sizeof(dev1), "bwi_ch1");
+	make_dev_path(dev2, sizeof(dev2), "bwi_ch2");
+
+	int *shared = (int *)shm_init(shm_path, true, 0x200);
+	TEST_ASSERT_NOT_NULL(shared);
+	/* shared[0] = server2 observed prio */
+	shared[0] = -1;
+
+	pid_t s2_pid;
+	if ((s2_pid = safe_fork()) == 0) {
+		int *sh = (int *)shm_init(shm_path, false, 0x200);
+		uint32_t port = 0;
+		if (setup_port_dev(dev2, &port) < 0)
+			exit(3);
+
+		priority(7);
+
+		msg_t msg = { 0 };
+		msg_rid_t rid;
+		for (;;) {
+			if (msgRecv(port, &msg, &rid) < 0)
+				exit(0);
+			sh[0] = priority(-1);
+			msg.o.err = priority(-1);
+			if (msgRespond(port, &msg, rid) < 0)
+				exit(2);
+		}
+	}
+
+	pid_t s1_pid;
+	if ((s1_pid = safe_fork()) == 0) {
+		uint32_t port = 0;
+		if (setup_port_dev(dev1, &port) < 0)
+			exit(3);
+
+		priority(6);
+
+		oid_t backend;
+		while (lookup(dev2, NULL, &backend) < 0)
+			usleep(10 * 1000);
+
+		msg_t msg = { 0 };
+		msg_rid_t rid;
+		for (;;) {
+			if (msgRecv(port, &msg, &rid) < 0)
+				exit(0);
+
+			/* Forward to server2 */
+			msg_t fwd = { 0 };
+			fwd.type = msg.type;
+			fwd.i.size = 0;
+			fwd.i.data = NULL;
+			fwd.o.size = 0;
+			fwd.o.data = NULL;
+			if (msgSend(backend.port, &fwd) != 0)
+				exit(4);
+
+			msg.o.err = fwd.o.err;
+			if (msgRespond(port, &msg, rid) < 0)
+				exit(5);
+		}
+	}
+
+	oid_t oid;
+	while (lookup(dev1, NULL, &oid) < 0)
+		usleep(10 * 1000);
+
+	priority(2);
+
+	msg_t msg = { 0 };
+	msg.type = mtRead;
+	msg.i.size = 0;
+	msg.i.data = NULL;
+	msg.o.size = 0;
+	msg.o.data = NULL;
+	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
+
+	/* Server2 should have observed prio 2 through transitive SC donation */
+	TEST_ASSERT_EQUAL_INT_MESSAGE(2, shared[0],
+			"Transitive SC donation: server2 should run at client prio");
+
+	assert_child_exit(s1_pid);
+	assert_child_exit(s2_pid);
+	munmap((void *)shared, 0x200);
+	kill(shm_pid, SIGKILL);
+	waitpid(shm_pid, NULL, 0);
+}
+
+
+/*
+ * BWI with multiple queued clients at different priorities.
+ *
+ * Server at prio 6. Three clients at prio 1, 3, 5 queue.
+ * Server should process each message running at the SC prio of that client.
+ */
+TEST(msg_bwi_edge, queued_clients_sc_tracking)
+{
+	char shm_path[64];
+	make_dev_path(shm_path, sizeof(shm_path), "bwi_qc_shm");
+	pid_t shm_pid;
+	if ((shm_pid = safe_fork()) == 0) {
+		shmsrv_start(shm_path);
+		exit(1);
+	}
+
+	char dev_path[64];
+	make_dev_path(dev_path, sizeof(dev_path), "bwi_qc");
+
+	int *shared = (int *)shm_init(shm_path, true, 0x200);
+	TEST_ASSERT_NOT_NULL(shared);
+	/* shared[0..2] = observed prios for each msg processed
+	 * shared[3] = server ready
+	 * shared[4] = count of messages processed */
+	memset((void *)shared, 0, 0x200);
+	shared[0] = shared[1] = shared[2] = -1;
+	shared[4] = 0;
+
+	pid_t server_pid;
+	if ((server_pid = safe_fork()) == 0) {
+		int *sh = (int *)shm_init(shm_path, false, 0x200);
+		uint32_t port = 0;
+		if (setup_port_dev(dev_path, &port) < 0)
+			exit(3);
+
+		priority(6);
+		sh[3] = 1;
+
+		msg_t msg = { 0 };
+		msg_rid_t rid;
+		for (int i = 0; i < 3; i++) {
+			if (msgRecv(port, &msg, &rid) < 0)
+				exit(1);
+			sh[i] = priority(-1);
+			sh[4] = i + 1;
+			msg.o.err = priority(-1);
+			if (msgRespond(port, &msg, rid) < 0)
+				exit(2);
+		}
+		exit(0);
+	}
+
+	oid_t oid;
+	while (lookup(dev_path, NULL, &oid) < 0)
+		usleep(10 * 1000);
+
+	while (!shared[3])
+		usleep(1000);
+
+	/* Send from 3 clients at different prios */
+	int prios[] = { 5, 3, 1 };
+	pid_t clients[3];
+	for (int i = 0; i < 3; i++) {
+		if ((clients[i] = safe_fork()) == 0) {
+			priority(prios[i]);
+			msg_t msg = { 0 };
+			msg.type = mtWrite;
+			msg.i.size = 0;
+			msg.i.data = NULL;
+			msg.o.size = 0;
+			msg.o.data = NULL;
+			if (msgSend(oid.port, &msg) != 0)
+				exit(1);
+			/* Verify server ran at our prio */
+			if (msg.o.err != prios[i])
+				exit(2);
+			exit(0);
+		}
+		usleep(5 * 1000);
+	}
+
+	for (int i = 0; i < 3; i++) {
+		int status;
+		waitpid(clients[i], &status, 0);
+		TEST_ASSERT_EQUAL_INT_MESSAGE(0, WEXITSTATUS(status),
+				"BWI: client didn't get correct SC prio from server");
+	}
+
+	waitpid(server_pid, NULL, 0);
+	munmap((void *)shared, 0x200);
+	kill(shm_pid, SIGKILL);
+	waitpid(shm_pid, NULL, 0);
+}
+
+
+/*
+ * Priority restoration after respond: after responding, server's effective
+ * priority must return to its base, not remain elevated.
+ */
+TEST(msg_bwi_edge, prio_restored_after_respond)
+{
+	char shm_path[64];
+	make_dev_path(shm_path, sizeof(shm_path), "bwi_pr_shm");
+	pid_t shm_pid;
+	if ((shm_pid = safe_fork()) == 0) {
+		shmsrv_start(shm_path);
+		exit(1);
+	}
+
+	char dev_path[64];
+	make_dev_path(dev_path, sizeof(dev_path), "bwi_pr");
+
+	int *shared = (int *)shm_init(shm_path, true, 0x200);
+	TEST_ASSERT_NOT_NULL(shared);
+	/* shared[0] = prio during msg processing
+	 * shared[1] = prio after respond */
+	shared[0] = -1;
+	shared[1] = -1;
+
+	pid_t server_pid;
+	if ((server_pid = safe_fork()) == 0) {
+		int *sh = (int *)shm_init(shm_path, false, 0x200);
+		uint32_t port = 0;
+		if (setup_port_dev(dev_path, &port) < 0)
+			exit(3);
+		priority(6);
+
+		msg_t msg = { 0 };
+		msg_rid_t rid;
+		if (msgRecv(port, &msg, &rid) < 0)
+			exit(1);
+		sh[0] = priority(-1);
+		msg.o.err = 0;
+		if (msgRespond(port, &msg, rid) < 0)
+			exit(2);
+		sh[1] = priority(-1);
+		exit(0);
+	}
+
+	oid_t oid;
+	while (lookup(dev_path, NULL, &oid) < 0)
+		usleep(10 * 1000);
+
+	priority(2);
+	msg_t msg = { 0 };
+	msg.type = mtRead;
+	msg.i.size = 0;
+	msg.i.data = NULL;
+	msg.o.size = 0;
+	msg.o.data = NULL;
+	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
+
+	waitpid(server_pid, NULL, 0);
+
+	TEST_ASSERT_EQUAL_INT_MESSAGE(2, shared[0], "Server should run at client prio 2");
+	TEST_ASSERT_EQUAL_INT_MESSAGE(6, shared[1], "Server prio should restore to 6 after respond");
+
+	munmap((void *)shared, 0x200);
+	kill(shm_pid, SIGKILL);
+	waitpid(shm_pid, NULL, 0);
+}
+
+
+/*
+ * SC swap correctness under out-of-order respond:
+ *
+ * Two clients (A at prio 2, B at prio 4) send to server (prio 6).
+ * Server receives both, responds in reverse order.
+ * After all IPC, each client must hold its *own* SC (not swapped).
+ *
+ * Tests the FIXME: "currently nothing stops SCs from different clients to
+ * end up swapped".
+ */
+TEST(msg_bwi_edge, sc_not_swapped)
+{
+	char dev_path[64];
+	make_dev_path(dev_path, sizeof(dev_path), "bwi_sc");
+	pid_t server_pid;
+
+	if ((server_pid = safe_fork()) == 0) {
+		uint32_t port = 0;
+		if (setup_port_dev(dev_path, &port) < 0)
+			exit(3);
+		priority(6);
+
+		msg_t msgs[2];
+		msg_rid_t rids[2];
+		for (int i = 0; i < 2; i++) {
+			memset(&msgs[i], 0, sizeof(msg_t));
+			if (msgRecv(port, &msgs[i], &rids[i]) < 0)
+				exit(1);
+		}
+		/* Respond in reverse order */
+		for (int i = 1; i >= 0; i--) {
+			msgs[i].o.err = 0;
+			if (msgRespond(port, &msgs[i], rids[i]) < 0)
+				exit(2);
+		}
+		exit(0);
+	}
+
+	oid_t oid;
+	while (lookup(dev_path, NULL, &oid) < 0)
+		usleep(10 * 1000);
+
+	pid_t c1, c2;
+	if ((c1 = safe_fork()) == 0) {
+		priority(2);
+		msg_t msg = { 0 };
+		msg.type = mtRead;
+		msg.i.size = 0;
+		msg.i.data = NULL;
+		msg.o.size = 0;
+		msg.o.data = NULL;
+		if (msgSend(oid.port, &msg) != 0)
+			exit(1);
+		/* After IPC, our effective priority should still be 2 */
+		if (priority(-1) != 2)
+			exit(2);
+		exit(0);
+	}
+
+	usleep(20 * 1000);
+
+	if ((c2 = safe_fork()) == 0) {
+		priority(4);
+		msg_t msg = { 0 };
+		msg.type = mtRead;
+		msg.i.size = 0;
+		msg.i.data = NULL;
+		msg.o.size = 0;
+		msg.o.data = NULL;
+		if (msgSend(oid.port, &msg) != 0)
+			exit(1);
+		/* After IPC, our effective priority should still be 4 */
+		if (priority(-1) != 4)
+			exit(2);
+		exit(0);
+	}
+
+	int s1, s2;
+	waitpid(c1, &s1, 0);
+	waitpid(c2, &s2, 0);
+	waitpid(server_pid, NULL, 0);
+
+	TEST_ASSERT_EQUAL_INT_MESSAGE(0, WEXITSTATUS(s1),
+			"Client A: SC should not be swapped, prio must be 2");
+	TEST_ASSERT_EQUAL_INT_MESSAGE(0, WEXITSTATUS(s2),
+			"Client B: SC should not be swapped, prio must be 4");
+}
+
+
+/* =====================================================  */
+/* TEST_GROUP: msg_lock_ipc                               */
+/* Priority inversion between IPC BWI and kernel mutexes  */
+/* =====================================================  */
+
+TEST_GROUP(msg_lock_ipc);
+
+TEST_SETUP(msg_lock_ipc)
+{
+}
+
+TEST_TEAR_DOWN(msg_lock_ipc)
+{
+}
+
+
+/*
+ * Shared state for intra-process thread coordination in lock_ipc tests.
+ * These tests fork a server process that spawns threads with beginthreadex.
+ * Threads within that process share this struct.
+ */
+static struct {
+	handle_t mutex;
+	volatile int phase;     /* coordination barrier */
+	volatile int prio_obs;  /* observed priority */
+	volatile int prio_obs2; /* second observed priority */
+	volatile int mid_ran;   /* medium thread ran to completion */
+	char stack[4][4096] __attribute__((aligned(8)));
+} li_common;
+
+
+/*
+ * Two-Task Problem with IPC:
+ *
+ *   Client H (P1) --IPC--> Server process:
+ *     Thread S (base P4): receives IPC (gets SC at P1), tries to lock mutex M
+ *     Thread L (base P6): holds mutex M
+ *
+ * When S (effective P1 via SC) blocks on mutex held by L, mutex PI should
+ * boost L to P1 (S's effective priority, not just S's base P4).
+ *
+ * We verify by observing L's priority while it holds the mutex under
+ * contention from S.
+ */
+
+static void li_two_task_holder(void *arg)
+{
+	/* Thread L: hold mutex, wait for S to contend, observe priority */
+	mutexLock(li_common.mutex);
+	li_common.phase = 1; /* signal: mutex held */
+
+	/* Wait for S to block on mutex (it will try after receiving IPC) */
+	while (li_common.phase < 2)
+		usleep(1000);
+
+	/* Small delay to let S actually block on mutexLock */
+	usleep(20 * 1000);
+
+	/* Observe our priority - should be boosted to P1 if mutex PI sees SC */
+	li_common.prio_obs = priority(-1);
+
+	mutexUnlock(li_common.mutex);
+	endthread();
+}
+
+TEST(msg_lock_ipc, two_task)
+{
+	char shm_path[64];
+	make_dev_path(shm_path, sizeof(shm_path), "li2t_shm");
+	pid_t shm_pid;
+	if ((shm_pid = safe_fork()) == 0) {
+		shmsrv_start(shm_path);
+		exit(1);
+	}
+
+	char dev_path[64];
+	make_dev_path(dev_path, sizeof(dev_path), "li2t");
+
+	int *shared = (int *)shm_init(shm_path, true, 0x200);
+	TEST_ASSERT_NOT_NULL(shared);
+	/* shared[0] = server ready
+	 * shared[1] = L's observed priority while holding mutex under contention
+	 * shared[2] = S's priority during IPC (before mutex)
+	 * shared[3] = S's priority after acquiring mutex */
+	memset((void *)shared, 0, 0x200);
+
+	pid_t server_pid;
+	if ((server_pid = safe_fork()) == 0) {
+		int *sh = (int *)shm_init(shm_path, false, 0x200);
+		uint32_t port = 0;
+		if (setup_port_dev(dev_path, &port) < 0)
+			exit(3);
+
+		mutexCreate(&li_common.mutex);
+		li_common.phase = 0;
+		li_common.prio_obs = -1;
+
+		handle_t tid_l;
+		beginthreadex(li_two_task_holder, 6, li_common.stack[0],
+				sizeof(li_common.stack[0]), NULL, &tid_l);
+
+		/* Wait for L to hold the mutex */
+		while (li_common.phase < 1)
+			usleep(1000);
+
+		priority(4);
+		sh[0] = 1;
+
+		msg_t msg = { 0 };
+		msg_rid_t rid;
+		if (msgRecv(port, &msg, &rid) < 0)
+			exit(1);
+
+		/* Running on client's SC at P1 now */
+		sh[2] = priority(-1);
+		li_common.phase = 2; /* signal: about to contend */
+
+		/* This should block until L releases; mutex PI should boost L */
+		mutexLock(li_common.mutex);
+		sh[3] = priority(-1);
+		mutexUnlock(li_common.mutex);
+
+		sh[1] = li_common.prio_obs;
+
+		msg.o.err = 0;
+		msgRespond(port, &msg, rid);
+
+		threadJoin(tid_l, 0);
+		resourceDestroy(li_common.mutex);
+		exit(0);
+	}
+
+	oid_t oid;
+	while (lookup(dev_path, NULL, &oid) < 0)
+		usleep(10 * 1000);
+	while (!shared[0])
+		usleep(1000);
+
+	priority(1);
+	msg_t msg = { 0 };
+	msg.type = mtRead;
+	msg.i.size = 0;
+	msg.i.data = NULL;
+	msg.o.size = 0;
+	msg.o.data = NULL;
+	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
+
+	waitpid(server_pid, NULL, 0);
+
+	TEST_ASSERT_EQUAL_INT_MESSAGE(1, shared[2],
+			"Server thread S should run at P1 via SC donation");
+	TEST_ASSERT_EQUAL_INT_MESSAGE(1, shared[1],
+			"Two-task: mutex holder L should be boosted to P1 (SC effective prio)");
+
+	munmap((void *)shared, 0x200);
+	kill(shm_pid, SIGKILL);
+	waitpid(shm_pid, NULL, 0);
+}
+
+
+/*
+ * Three-Task Problem with IPC:
+ *
+ *   Client H (P1) --IPC--> Server process:
+ *     Thread S (base P4): receives IPC (gets SC at P1), blocks on mutex
+ *     Thread L (base P6): holds mutex M
+ *     Thread M (base P2): CPU-bound busy loop
+ *
+ * Correct behavior (mutex PI sees SC prio):
+ *   S blocks on mutex -> L boosted to P1 -> M (P2) cannot preempt L ->
+ *   L finishes quickly -> S gets mutex -> responds -> H unblocks.
+ *
+ * Broken behavior (mutex PI only sees thread prio P4):
+ *   S blocks on mutex -> L boosted to P4 -> M (P2) preempts L ->
+ *   unbounded priority inversion: H (highest prio) waits for M to finish.
+ *
+ * We measure elapsed time. If M is a long busy loop and the IPC completes
+ * fast, mutex PI correctly propagated SC priority. If IPC takes as long
+ * as M's loop, we have inversion.
+ */
+
+static volatile int li_three_m_done;
+
+static void li_three_task_holder(void *arg)
+{
+	/* Thread L (P6): hold mutex, do modest work, release */
+	mutexLock(li_common.mutex);
+	li_common.phase = 1;
+
+	/* Wait until S has received IPC and is about to contend */
+	while (li_common.phase < 2)
+		usleep(1000);
+
+	/* Let S actually block on the mutex */
+	usleep(20 * 1000);
+
+	li_common.prio_obs = priority(-1);
+
+	/* Simulate some work (short) */
+	for (volatile int i = 0; i < 10000; i++)
+		;
+
+	mutexUnlock(li_common.mutex);
+	endthread();
+}
+
+static void li_three_task_medium(void *arg)
+{
+	/* Thread M (P2): CPU-bound busy loop - long enough to cause
+	 * observable inversion if L is not properly boosted */
+	while (li_common.phase < 1)
+		usleep(1000);
+
+	/* Long busy loop */
+	for (volatile int i = 0; i < 20000000; i++)
+		;
+
+	li_three_m_done = 1;
+	endthread();
+}
+
+TEST(msg_lock_ipc, three_task)
+{
+	char shm_path[64];
+	make_dev_path(shm_path, sizeof(shm_path), "li3t_shm");
+	pid_t shm_pid;
+	if ((shm_pid = safe_fork()) == 0) {
+		shmsrv_start(shm_path);
+		exit(1);
+	}
+
+	char dev_path[64];
+	make_dev_path(dev_path, sizeof(dev_path), "li3t");
+
+	int *shared = (int *)shm_init(shm_path, true, 0x200);
+	TEST_ASSERT_NOT_NULL(shared);
+	/* shared[0] = server ready
+	 * shared[1] = L's observed priority while holding mutex
+	 * shared[2] = IPC round-trip time (us)
+	 * shared[3] = M finished before IPC returned (1=inversion) */
+	memset((void *)shared, 0, 0x200);
+
+	pid_t server_pid;
+	if ((server_pid = safe_fork()) == 0) {
+		int *sh = (int *)shm_init(shm_path, false, 0x200);
+		uint32_t port = 0;
+		if (setup_port_dev(dev_path, &port) < 0)
+			exit(3);
+
+		mutexCreate(&li_common.mutex);
+		li_common.phase = 0;
+		li_common.prio_obs = -1;
+		li_three_m_done = 0;
+
+		handle_t tid_l, tid_m;
+		beginthreadex(li_three_task_holder, 6, li_common.stack[0],
+				sizeof(li_common.stack[0]), NULL, &tid_l);
+		beginthreadex(li_three_task_medium, 2, li_common.stack[1],
+				sizeof(li_common.stack[1]), NULL, &tid_m);
+
+		/* Wait for L to hold the mutex */
+		while (li_common.phase < 1)
+			usleep(1000);
+
+		priority(4);
+		sh[0] = 1;
+
+		msg_t msg = { 0 };
+		msg_rid_t rid;
+		if (msgRecv(port, &msg, &rid) < 0)
+			exit(1);
+
+		/* Running on client's SC at P1 */
+		li_common.phase = 2;
+
+		/* Block on mutex held by L */
+		mutexLock(li_common.mutex);
+		mutexUnlock(li_common.mutex);
+
+		sh[1] = li_common.prio_obs;
+		sh[3] = li_three_m_done;
+
+		msg.o.err = 0;
+		msgRespond(port, &msg, rid);
+
+		threadJoin(tid_l, 0);
+		threadJoin(tid_m, 0);
+		resourceDestroy(li_common.mutex);
+		exit(0);
+	}
+
+	oid_t oid;
+	while (lookup(dev_path, NULL, &oid) < 0)
+		usleep(10 * 1000);
+	while (!shared[0])
+		usleep(1000);
+
+	priority(1);
+	msg_t msg = { 0 };
+	msg.type = mtRead;
+	msg.i.size = 0;
+	msg.i.data = NULL;
+	msg.o.size = 0;
+	msg.o.data = NULL;
+
+	time_t t_start, t_end;
+	gettime(&t_start, NULL);
+	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
+	gettime(&t_end, NULL);
+
+	waitpid(server_pid, NULL, 0);
+
+	time_t elapsed = t_end - t_start;
+	shared[2] = (int)elapsed;
+
+	TEST_ASSERT_EQUAL_INT_MESSAGE(1, shared[1],
+			"Three-task: L should be boosted to P1 (SC prio), not just P4 (thread prio)");
+	TEST_ASSERT_EQUAL_INT_MESSAGE(0, shared[3],
+			"Three-task: M (P2) should NOT have finished before IPC returned "
+			"(would indicate priority inversion)");
+
+	munmap((void *)shared, 0x200);
+	kill(shm_pid, SIGKILL);
+	waitpid(shm_pid, NULL, 0);
+}
+
+
+/*
+ * Three-Task Problem, reversed direction: mutex inside IPC server,
+ * IPC client does the contention.
+ *
+ *   Thread L (P6) in server: holds mutex, processes IPC from H
+ *   Thread M (P3) in server: CPU-bound
+ *   Client H (P1): sends IPC
+ *
+ * L receives IPC (gets SC at P1), holds mutex, starts processing.
+ * M should not preempt L since L runs at P1 via SC.
+ * Meanwhile another thread in server (T at P5) contends on the same
+ * mutex. Mutex PI should boost L to at least T's prio, but L already
+ * runs at P1 via SC, so the boost should be a no-op.
+ *
+ * Verifies that mutex PI and SC donation don't conflict / corrupt
+ * each other when the SC-donated thread is the mutex owner.
+ */
+
+static void li_reverse_contender(void *arg)
+{
+	/* Thread T (P5): waits then contends on mutex */
+	while (li_common.phase < 2)
+		usleep(1000);
+
+	mutexLock(li_common.mutex);
+	li_common.prio_obs2 = priority(-1);
+	mutexUnlock(li_common.mutex);
+	endthread();
+}
+
+static void li_reverse_medium(void *arg)
+{
+	/* Thread M (P3): CPU hog */
+	while (li_common.phase < 1)
+		usleep(1000);
+
+	for (volatile int i = 0; i < 20000000; i++)
+		;
+
+	li_common.mid_ran = 1;
+	endthread();
+}
+
+TEST(msg_lock_ipc, reverse_three_task)
+{
+	char shm_path[64];
+	make_dev_path(shm_path, sizeof(shm_path), "lir3_shm");
+	pid_t shm_pid;
+	if ((shm_pid = safe_fork()) == 0) {
+		shmsrv_start(shm_path);
+		exit(1);
+	}
+
+	char dev_path[64];
+	make_dev_path(dev_path, sizeof(dev_path), "lir3");
+
+	int *shared = (int *)shm_init(shm_path, true, 0x200);
+	TEST_ASSERT_NOT_NULL(shared);
+	/* shared[0] = server ready
+	 * shared[1] = S's prio during IPC while holding mutex
+	 * shared[2] = S's prio after mutex contention from T
+	 * shared[3] = M finished before IPC response */
+	memset((void *)shared, 0, 0x200);
+
+	pid_t server_pid;
+	if ((server_pid = safe_fork()) == 0) {
+		int *sh = (int *)shm_init(shm_path, false, 0x200);
+		uint32_t port = 0;
+		if (setup_port_dev(dev_path, &port) < 0)
+			exit(3);
+
+		mutexCreate(&li_common.mutex);
+		li_common.phase = 0;
+		li_common.prio_obs = -1;
+		li_common.prio_obs2 = -1;
+		li_common.mid_ran = 0;
+
+		handle_t tid_t, tid_m;
+		/* Spawn M first so it's ready */
+		beginthreadex(li_reverse_medium, 3, li_common.stack[1],
+				sizeof(li_common.stack[1]), NULL, &tid_m);
+
+		priority(6);
+		sh[0] = 1;
+
+		msg_t msg = { 0 };
+		msg_rid_t rid;
+		if (msgRecv(port, &msg, &rid) < 0)
+			exit(1);
+
+		/* Running on client H's SC at P1 now */
+		li_common.phase = 1; /* let M start spinning */
+
+		mutexLock(li_common.mutex);
+		sh[1] = priority(-1); /* should be P1 from SC */
+
+		/* Spawn T to contend on mutex */
+		beginthreadex(li_reverse_contender, 5, li_common.stack[2],
+				sizeof(li_common.stack[2]), NULL, &tid_t);
+		li_common.phase = 2;
+
+		/* Hold mutex for a bit under contention */
+		usleep(20 * 1000);
+		sh[2] = priority(-1); /* should still be P1, T's P5 < P1 */
+
+		mutexUnlock(li_common.mutex);
+		sh[3] = li_common.mid_ran;
+
+		msg.o.err = 0;
+		msgRespond(port, &msg, rid);
+
+		threadJoin(tid_t, 0);
+		threadJoin(tid_m, 0);
+		resourceDestroy(li_common.mutex);
+		exit(0);
+	}
+
+	oid_t oid;
+	while (lookup(dev_path, NULL, &oid) < 0)
+		usleep(10 * 1000);
+	while (!shared[0])
+		usleep(1000);
+
+	priority(1);
+	msg_t msg = { 0 };
+	msg.type = mtRead;
+	msg.i.size = 0;
+	msg.i.data = NULL;
+	msg.o.size = 0;
+	msg.o.data = NULL;
+	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
+
+	waitpid(server_pid, NULL, 0);
+
+	TEST_ASSERT_EQUAL_INT_MESSAGE(1, shared[1],
+			"Reverse: S should run at P1 via SC while holding mutex");
+	TEST_ASSERT_EQUAL_INT_MESSAGE(1, shared[2],
+			"Reverse: S should still be at P1 even after T (P5) contends");
+	TEST_ASSERT_EQUAL_INT_MESSAGE(0, shared[3],
+			"Reverse: M (P3) should not finish before IPC response");
+
+	munmap((void *)shared, 0x200);
+	kill(shm_pid, SIGKILL);
+	waitpid(shm_pid, NULL, 0);
+}
+
+
+/*
+ * Nested: IPC within lock critical section, with PI propagation.
+ *
+ * Single process, two threads + external server:
+ *   Thread L (P6): locks mutex, then sends IPC to external server S2 (P7)
+ *   Thread H (P1): blocks on same mutex -> mutex PI boosts L to P1
+ *
+ * When L does IPC to S2 while boosted by mutex PI, S2 should see P1
+ * as the effective caller priority (the boosted prio should propagate
+ * through IPC SC donation).
+ */
+
+static struct {
+	handle_t mutex;
+	volatile int phase;
+	volatile int l_prio_before_ipc;
+	oid_t backend_oid;
+	char stack[2][4096] __attribute__((aligned(8)));
+} li_nest;
+
+static void li_nest_low(void *arg)
+{
+	/* Thread L (P6): lock mutex, wait for H to contend, then do IPC */
+	mutexLock(li_nest.mutex);
+	li_nest.phase = 1; /* signal: mutex held */
+
+	/* Wait for H to block on mutex (which boosts us) */
+	while (li_nest.phase < 2)
+		usleep(1000);
+	usleep(20 * 1000); /* let H actually block */
+
+	li_nest.l_prio_before_ipc = priority(-1);
+
+	/* Do IPC while holding mutex and being boosted */
+	msg_t msg = { 0 };
+	msg.type = mtRead;
+	msg.i.size = 0;
+	msg.i.data = NULL;
+	msg.o.size = 0;
+	msg.o.data = NULL;
+	msgSend(li_nest.backend_oid.port, &msg);
+
+	mutexUnlock(li_nest.mutex);
+	endthread();
+}
+
+static void li_nest_high(void *arg)
+{
+	/* Thread H (P1): wait for L to hold mutex, then block on it */
+	while (li_nest.phase < 1)
+		usleep(1000);
+
+	li_nest.phase = 2; /* signal: about to contend */
+
+	/* This blocks -> mutex PI boosts L to our P1 */
+	mutexLock(li_nest.mutex);
+	mutexUnlock(li_nest.mutex);
+	endthread();
+}
+
+TEST(msg_lock_ipc, nested_lock_then_ipc)
+{
+	char shm_path[64];
+	make_dev_path(shm_path, sizeof(shm_path), "lin_shm");
+	pid_t shm_pid;
+	if ((shm_pid = safe_fork()) == 0) {
+		shmsrv_start(shm_path);
+		exit(1);
+	}
+
+	char dev_path[64];
+	make_dev_path(dev_path, sizeof(dev_path), "lin_s2");
+
+	int *shared = (int *)shm_init(shm_path, true, 0x200);
+	TEST_ASSERT_NOT_NULL(shared);
+	/* shared[0] = S2's observed priority during IPC from L */
+	memset((void *)shared, 0, 0x200);
+	shared[0] = -1;
+
+	/* Spawn echo server S2 that reports caller's effective priority */
+	pid_t s2_pid;
+	if ((s2_pid = safe_fork()) == 0) {
+		int *sh = (int *)shm_init(shm_path, false, 0x200);
+		uint32_t port = 0;
+		if (setup_port_dev(dev_path, &port) < 0)
+			exit(3);
+		priority(7);
+
+		msg_t msg = { 0 };
+		msg_rid_t rid;
+		for (;;) {
+			if (msgRecv(port, &msg, &rid) < 0)
+				exit(0);
+			sh[0] = priority(-1);
+			msg.o.err = 0;
+			if (msgRespond(port, &msg, rid) < 0)
+				exit(2);
+		}
+	}
+
+	while (lookup(dev_path, NULL, &li_nest.backend_oid) < 0)
+		usleep(10 * 1000);
+
+	mutexCreate(&li_nest.mutex);
+	li_nest.phase = 0;
+	li_nest.l_prio_before_ipc = -1;
+
+	handle_t tid_l, tid_h;
+	beginthreadex(li_nest_low, 6, li_nest.stack[0],
+			sizeof(li_nest.stack[0]), NULL, &tid_l);
+	beginthreadex(li_nest_high, 1, li_nest.stack[1],
+			sizeof(li_nest.stack[1]), NULL, &tid_h);
+
+	threadJoin(tid_l, 0);
+	threadJoin(tid_h, 0);
+	resourceDestroy(li_nest.mutex);
+
+	TEST_ASSERT_EQUAL_INT_MESSAGE(1, li_nest.l_prio_before_ipc,
+			"Nested: L should be boosted to P1 by mutex PI before IPC");
+	TEST_ASSERT_EQUAL_INT_MESSAGE(1, shared[0],
+			"Nested: S2 should see P1 from L's boosted priority via IPC SC");
+
+	assert_child_exit(s2_pid);
+	munmap((void *)shared, 0x200);
+	kill(shm_pid, SIGKILL);
+	waitpid(shm_pid, NULL, 0);
+}
+
+
+/*
+ * Cascaded: IPC donation -> mutex contention -> IPC donation.
+ *
+ *   Client H (P1) --IPC--> Server process:
+ *     Thread S (base P4): receives IPC (SC at P1), locks mutex
+ *     Thread W (base P5): blocks on mutex, then does IPC to S2 (P7)
+ *
+ * Chain: H's P1 -> SC to S -> mutex PI should boost... wait, S is the
+ * owner, W blocks. S runs at P1, W at P5. W blocks on S's mutex,
+ * but S is already P1, no boost needed.
+ *
+ * Better scenario: S receives IPC at P1, blocks on mutex held by W.
+ * Mutex PI boosts W to P1. W then does IPC to S2. S2 should see P1.
+ *
+ *   Client H (P1) --IPC--> Server:
+ *     Thread S (base P4): receives IPC (SC@P1), blocks on mutex held by W
+ *     Thread W (base P5): holds mutex, does IPC to S2 when boosted
+ */
+
+static struct {
+	handle_t mutex;
+	volatile int phase;
+	oid_t backend_oid;
+	char stack[2][4096] __attribute__((aligned(8)));
+} li_casc;
+
+static void li_casc_worker(void *arg)
+{
+	int *sh = (int *)arg;
+	/* Thread W (P5): hold mutex, wait for S to contend, observe boost,
+	 * then do IPC to S2 */
+	mutexLock(li_casc.mutex);
+	li_casc.phase = 1; /* signal: mutex held */
+
+	/* Wait for S to receive IPC and try to lock */
+	while (li_casc.phase < 2)
+		usleep(1000);
+	usleep(20 * 1000); /* let S block on mutex */
+
+	/* Our priority should be boosted by mutex PI */
+	sh[1] = priority(-1);
+
+	/* Do IPC while holding mutex and (hopefully) boosted */
+	msg_t fwd = { 0 };
+	fwd.type = mtRead;
+	fwd.i.size = 0;
+	fwd.i.data = NULL;
+	fwd.o.size = 0;
+	fwd.o.data = NULL;
+	msgSend(li_casc.backend_oid.port, &fwd);
+
+	mutexUnlock(li_casc.mutex);
+	endthread();
+}
+
+TEST(msg_lock_ipc, cascaded_ipc_lock_ipc)
+{
+	char shm_path[64];
+	make_dev_path(shm_path, sizeof(shm_path), "lic_shm");
+	pid_t shm_pid;
+	if ((shm_pid = safe_fork()) == 0) {
+		shmsrv_start(shm_path);
+		exit(1);
+	}
+
+	char dev1[64], dev2[64];
+	make_dev_path(dev1, sizeof(dev1), "lic_s1");
+	make_dev_path(dev2, sizeof(dev2), "lic_s2");
+
+	int *shared = (int *)shm_init(shm_path, true, 0x200);
+	TEST_ASSERT_NOT_NULL(shared);
+	/* shared[0] = server ready
+	 * shared[1] = W's observed prio (should be P1 from cascaded PI)
+	 * shared[2] = S2's observed prio during IPC from W */
+	memset((void *)shared, 0, 0x200);
+	shared[1] = -1;
+	shared[2] = -1;
+
+	/* Spawn S2: echo server that reports observed priority */
+	pid_t s2_pid;
+	if ((s2_pid = safe_fork()) == 0) {
+		int *sh = (int *)shm_init(shm_path, false, 0x200);
+		uint32_t port = 0;
+		if (setup_port_dev(dev2, &port) < 0)
+			exit(3);
+		priority(7);
+
+		msg_t msg = { 0 };
+		msg_rid_t rid;
+		for (;;) {
+			if (msgRecv(port, &msg, &rid) < 0)
+				exit(0);
+			sh[2] = priority(-1);
+			msg.o.err = 0;
+			if (msgRespond(port, &msg, rid) < 0)
+				exit(2);
+		}
+	}
+
+	while (lookup(dev2, NULL, &li_casc.backend_oid) < 0)
+		usleep(10 * 1000);
+
+	/* Spawn server S1: receives IPC, contends on mutex held by W */
+	pid_t s1_pid;
+	if ((s1_pid = safe_fork()) == 0) {
+		int *sh = (int *)shm_init(shm_path, false, 0x200);
+		uint32_t port = 0;
+		if (setup_port_dev(dev1, &port) < 0)
+			exit(3);
+
+		mutexCreate(&li_casc.mutex);
+		li_casc.phase = 0;
+
+		handle_t tid_w;
+		beginthreadex(li_casc_worker, 5, li_casc.stack[0],
+				sizeof(li_casc.stack[0]), sh, &tid_w);
+
+		/* Wait for W to hold the mutex */
+		while (li_casc.phase < 1)
+			usleep(1000);
+
+		priority(4);
+		sh[0] = 1;
+
+		msg_t msg = { 0 };
+		msg_rid_t rid;
+		if (msgRecv(port, &msg, &rid) < 0)
+			exit(1);
+
+		/* Running on H's SC at P1 */
+		li_casc.phase = 2; /* signal: about to contend */
+
+		/* Block on mutex held by W ->
+ PI should boost W to P1 */
+		mutexLock(li_casc.mutex);
+		mutexUnlock(li_casc.mutex);
+
+		msg.o.err = 0;
+		msgRespond(port, &msg, rid);
+
+		threadJoin(tid_w, 0);
+		resourceDestroy(li_casc.mutex);
+		exit(0);
+	}
+
+	oid_t oid;
+	while (lookup(dev1, NULL, &oid) < 0)
+		usleep(10 * 1000);
+	while (!shared[0])
+		usleep(1000);
+
+	priority(1);
+	msg_t msg = { 0 };
+	msg.type = mtRead;
+	msg.i.size = 0;
+	msg.i.data = NULL;
+	msg.o.size = 0;
+	msg.o.data = NULL;
+	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
+
+	waitpid(s1_pid, NULL, 0);
+
+	TEST_ASSERT_EQUAL_INT_MESSAGE(1, shared[1],
+			"Cascaded: W should be boosted to P1 via mutex PI from S (SC@P1)");
+	TEST_ASSERT_EQUAL_INT_MESSAGE(1, shared[2],
+			"Cascaded: S2 should see P1 from W's boosted IPC SC");
+
+	assert_child_exit(s2_pid);
+	munmap((void *)shared, 0x200);
+	kill(shm_pid, SIGKILL);
+	waitpid(shm_pid, NULL, 0);
+}
+
+
+/* =====================================================  */
+/* TEST_GROUP: msg_stress                                 */
+/* Stress tests provoking races in IPC                    */
+/* =====================================================  */
+
+TEST_GROUP(msg_stress);
+
+TEST_SETUP(msg_stress)
+{
+}
+
+TEST_TEAR_DOWN(msg_stress)
+{
+}
+
+
+/*
+ * Many clients hammering one server concurrently.
+ * Stress the fastpath/slowpath transition and SC queuing.
+ */
+TEST(msg_stress, many_clients_hammer)
+{
+	char dev_path[64];
+	make_dev_path(dev_path, sizeof(dev_path), "str_mc");
+	pid_t server_pid;
+
+	const int NUM_CLIENTS = 8;
+	const int MSGS_PER_CLIENT = 50;
+
+	if ((server_pid = safe_fork()) == 0) {
+		uint32_t port = 0;
+		if (setup_port_dev(dev_path, &port) < 0)
+			exit(3);
+		server_echo_loop(port, 0);
+		exit(0);
+	}
+
+	oid_t oid;
+	while (lookup(dev_path, NULL, &oid) < 0)
+		usleep(10 * 1000);
+
+	pid_t clients[NUM_CLIENTS];
+	for (int c = 0; c < NUM_CLIENTS; c++) {
+		if ((clients[c] = safe_fork()) == 0) {
+			for (int m = 0; m < MSGS_PER_CLIENT; m++) {
+				msg_t msg = { 0 };
+				msg.type = mtWrite;
+				msg.i.io.offs = c * 10000 + m;
+				msg.i.size = 0;
+				msg.i.data = NULL;
+				msg.o.size = 0;
+				msg.o.data = NULL;
+				if (msgSend(oid.port, &msg) != 0)
+					exit(1);
+				if (msg.o.err != mtWrite)
+					exit(2);
+			}
+			exit(0);
+		}
+	}
+
+	for (int c = 0; c < NUM_CLIENTS; c++) {
+		int status;
+		waitpid(clients[c], &status, 0);
+		TEST_ASSERT_EQUAL_INT_MESSAGE(0, WEXITSTATUS(status),
+				"Stress: client failed under load");
+	}
+	assert_child_exit(server_pid);
+}
+
+
+/*
+ * Concurrent clients with data buffers (stresses buffer mapping/unmapping
+ * concurrency and the ipc_buf_layout_t lifecycle).
+ */
+TEST(msg_stress, concurrent_data_transfer)
+{
+	char dev_path[64];
+	make_dev_path(dev_path, sizeof(dev_path), "str_dt");
+	pid_t server_pid;
+
+	const int NUM_CLIENTS = 4;
+	const int MSGS_PER_CLIENT = 20;
+	const size_t BUFSZ = 4096;
+
+	if ((server_pid = safe_fork()) == 0) {
+		uint32_t port = 0;
+		if (setup_port_dev(dev_path, &port) < 0)
+			exit(3);
+		server_echo_loop(port, 0);
+		exit(0);
+	}
+
+	oid_t oid;
+	while (lookup(dev_path, NULL, &oid) < 0)
+		usleep(10 * 1000);
+
+	pid_t clients[NUM_CLIENTS];
+	for (int c = 0; c < NUM_CLIENTS; c++) {
+		if ((clients[c] = safe_fork()) == 0) {
+			char *ibuf = malloc(BUFSZ);
+			char *obuf = malloc(BUFSZ);
+			if (ibuf == NULL || obuf == NULL)
+				exit(10);
+
+			for (int m = 0; m < MSGS_PER_CLIENT; m++) {
+				for (size_t i = 0; i < BUFSZ; i++)
+					ibuf[i] = (char)((i + c + m) & 0xff);
+				memset(obuf, 0, BUFSZ);
+
+				msg_t msg = { 0 };
+				msg.type = mtWrite;
+				msg.i.data = ibuf;
+				msg.i.size = BUFSZ;
+				msg.o.data = obuf;
+				msg.o.size = BUFSZ;
+				if (msgSend(oid.port, &msg) != 0)
+					exit(1);
+				if (memcmp(ibuf, obuf, BUFSZ) != 0)
+					exit(2);
+			}
+			free(ibuf);
+			free(obuf);
+			exit(0);
+		}
+	}
+
+	for (int c = 0; c < NUM_CLIENTS; c++) {
+		int status;
+		waitpid(clients[c], &status, 0);
+		TEST_ASSERT_EQUAL_INT_MESSAGE(0, WEXITSTATUS(status),
+				"Stress: data transfer failed under concurrency");
+	}
+	assert_child_exit(server_pid);
+}
+
+
+/*
+ * Rapid send/respond cycling with respondAndRecv (fastpath stress).
+ * One client, one server, many rapid-fire messages.
+ */
+TEST(msg_stress, rapid_respondandrecv)
+{
+	char dev_path[64];
+	make_dev_path(dev_path, sizeof(dev_path), "str_rr");
+	pid_t server_pid;
+
+	if ((server_pid = safe_fork()) == 0) {
+		uint32_t port = 0;
+		if (setup_port_dev(dev_path, &port) < 0)
+			exit(3);
+		server_echo_loop(port, 1);
+		exit(0);
+	}
+
+	oid_t oid;
+	while (lookup(dev_path, NULL, &oid) < 0)
+		usleep(10 * 1000);
+
+	for (int m = 0; m < 1000; m++) {
+		msg_t msg = { 0 };
+		msg.type = mtRead;
+		msg.i.io.offs = m;
+		msg.i.size = 0;
+		msg.i.data = NULL;
+		msg.o.size = 0;
+		msg.o.data = NULL;
+		TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
+		TEST_ASSERT_EQUAL_INT(mtRead, msg.o.err);
+	}
+
+	assert_child_exit(server_pid);
+}
+
+
+/*
+ * Concurrent clients with respondAndRecv server (combination of queuing
+ * + fastpath + SC switching under concurrency).
+ */
+TEST(msg_stress, concurrent_respondandrecv)
+{
+	char dev_path[64];
+	make_dev_path(dev_path, sizeof(dev_path), "str_crr");
+	pid_t server_pid;
+
+	const int NUM_CLIENTS = 4;
+	const int MSGS_PER_CLIENT = 50;
+
+	if ((server_pid = safe_fork()) == 0) {
+		uint32_t port = 0;
+		if (setup_port_dev(dev_path, &port) < 0)
+			exit(3);
+		server_echo_loop(port, 1);
+		exit(0);
+	}
+
+	oid_t oid;
+	while (lookup(dev_path, NULL, &oid) < 0)
+		usleep(10 * 1000);
+
+	pid_t clients[NUM_CLIENTS];
+	for (int c = 0; c < NUM_CLIENTS; c++) {
+		if ((clients[c] = safe_fork()) == 0) {
+			for (int m = 0; m < MSGS_PER_CLIENT; m++) {
+				msg_t msg = { 0 };
+				msg.type = mtWrite;
+				msg.i.io.offs = c * 10000 + m;
+				msg.i.size = 0;
+				msg.i.data = NULL;
+				msg.o.size = 0;
+				msg.o.data = NULL;
+				if (msgSend(oid.port, &msg) != 0)
+					exit(1);
+				if (msg.o.err != mtWrite)
+					exit(2);
+			}
+			exit(0);
+		}
+	}
+
+	for (int c = 0; c < NUM_CLIENTS; c++) {
+		int status;
+		waitpid(clients[c], &status, 0);
+		TEST_ASSERT_EQUAL_INT_MESSAGE(0, WEXITSTATUS(status),
+				"Stress: concurrent respondAndRecv client failed");
+	}
+	assert_child_exit(server_pid);
+}
+
+
+/*
+ * Pulse racing with send: one process sends pulses while another sends messages.
+ * Server should handle both correctly without deadlock/crash.
+ */
+TEST(msg_stress, pulse_send_race)
+{
+	char dev_path[64];
+	make_dev_path(dev_path, sizeof(dev_path), "str_ps");
+	pid_t server_pid;
+
+	if ((server_pid = safe_fork()) == 0) {
+		uint32_t port = 0;
+		if (setup_port_dev(dev_path, &port) < 0)
+			exit(3);
+
+		msg_t msg = { 0 };
+		msg_rid_t rid;
+		int count = 0;
+
+		for (;;) {
+			int err = msgRecv(port, &msg, &rid);
+			if (err == -EPULSE) {
+				/* got pulse, loop */
+				continue;
+			}
+			if (err < 0) {
+				exit(0);
+			}
+			msg.o.err = msg.type;
+			if (msgRespond(port, &msg, rid) < 0)
+				exit(2);
+			count++;
+			if (count >= 20)
+				exit(0);
+		}
+	}
+
+	oid_t oid;
+	while (lookup(dev_path, NULL, &oid) < 0)
+		usleep(10 * 1000);
+
+	/* Pulser */
+	pid_t pulser;
+	if ((pulser = safe_fork()) == 0) {
+		for (int i = 0; i < 20; i++) {
+			msgPulse(oid.port, (uint8_t)(i + 1));
+			usleep(5 * 1000);
+		}
+		exit(0);
+	}
+
+	/* Sender */
+	for (int m = 0; m < 20; m++) {
+		msg_t msg = { 0 };
+		msg.type = mtRead;
+		msg.i.size = 0;
+		msg.i.data = NULL;
+		msg.o.size = 0;
+		msg.o.data = NULL;
+		/* Ignoring errors here - the server may exit mid-test */
+		msgSend(oid.port, &msg);
+	}
+
+	waitpid(pulser, NULL, 0);
+	waitpid(server_pid, NULL, 0);
+	/* If we got here without hanging, the test passes */
+}
+
+
+/* =====================================================  */
+/* TEST_GROUP: msg_bench                                  */
+/* IPC round-trip performance benchmarks                  */
+/* =====================================================  */
+
+TEST_GROUP(msg_bench);
+
+TEST_SETUP(msg_bench)
+{
+}
+
+TEST_TEAR_DOWN(msg_bench)
+{
+}
+
+
+/* Helper: spawn a chain of N forwarding servers, return the front port oid.
+ * chain[0] is the echo server (leaf), chain[i>0] forwards to chain[i-1].
+ * Returns number of pids written to out_pids. */
+static int bench_spawn_chain(int depth, oid_t *front_oid, pid_t *out_pids,
+		int use_respond_and_recv)
+{
+	char paths[5][64];
+	int n = 0;
+
+	if (depth < 1 || depth > 5)
+		return -1;
+
+	for (int i = 0; i < depth; i++)
+		make_dev_path(paths[i], sizeof(paths[i]), "bench");
+
+	/* Spawn echo server (leaf) */
+	pid_t pid;
+	if ((pid = safe_fork()) == 0) {
+		uint32_t port = 0;
+		if (setup_port_dev(paths[0], &port) < 0)
+			exit(3);
+		server_echo_loop(port, use_respond_and_recv);
+		exit(0);
+	}
+	out_pids[n++] = pid;
+
+	/* Spawn forwarding servers (depth-1 of them) */
+	for (int i = 1; i < depth; i++) {
+		if ((pid = safe_fork()) == 0) {
+			uint32_t port = 0;
+			if (setup_port_dev(paths[i], &port) < 0)
+				exit(3);
+
+			oid_t backend;
+			while (lookup(paths[i - 1], NULL, &backend) < 0)
+				usleep(10 * 1000);
+
+			msg_t msg = { 0 };
+			msg_rid_t rid;
+
+			for (;;) {
+				if (msgRecv(port, &msg, &rid) < 0)
+					exit(0);
+
+				/* Forward to next server in chain */
+				msg_t fwd = { 0 };
+				fwd.type = msg.type;
+				memcpy(fwd.i.raw, msg.i.raw, sizeof(fwd.i.raw));
+				fwd.i.data = msg.i.data;
+				fwd.i.size = msg.i.size;
+				fwd.o.data = msg.o.data;
+				fwd.o.size = msg.o.size;
+
+				if (msgSend(backend.port, &fwd) != 0)
+					exit(4);
+
+				memcpy(msg.o.raw, fwd.o.raw, sizeof(msg.o.raw));
+				msg.o.err = fwd.o.err;
+
+				if (msgRespond(port, &msg, rid) < 0)
+					exit(5);
+			}
+		}
+		out_pids[n++] = pid;
+	}
+
+	/* Wait for all servers to register their paths */
+	while (lookup(paths[depth - 1], NULL, front_oid) < 0)
+		usleep(10 * 1000);
+
+	return n;
+}
+
+
+static void bench_kill_chain(pid_t *pids, int n)
+{
+	for (int i = n - 1; i >= 0; i--) {
+		kill(pids[i], SIGKILL);
+		waitpid(pids[i], NULL, 0);
+	}
+}
+
+
+static void run_bench(int depth, size_t payload_sz, int iterations, int use_rr)
+{
+	oid_t oid;
+	pid_t pids[5];
+	int npids;
+	time_t start, end;
+	char label[64];
+	char *ibuf = NULL, *obuf = NULL;
+
+	npids = bench_spawn_chain(depth, &oid, pids, use_rr);
+	TEST_ASSERT_GREATER_THAN_INT(0, npids);
+
+	if (payload_sz > 0) {
+		ibuf = malloc(payload_sz);
+		obuf = malloc(payload_sz);
+		TEST_ASSERT_NOT_NULL(ibuf);
+		TEST_ASSERT_NOT_NULL(obuf);
+		memset(ibuf, 0xAB, payload_sz);
+	}
+
+	/* Warm up */
+	for (int w = 0; w < 10; w++) {
+		msg_t msg = { 0 };
+		msg.type = mtRead;
+		msg.i.size = payload_sz;
+		msg.i.data = ibuf;
+		msg.o.size = payload_sz;
+		msg.o.data = obuf;
+		msgSend(oid.port, &msg);
+	}
+
+	gettime(&start, NULL);
+
+	for (int i = 0; i < iterations; i++) {
+		msg_t msg = { 0 };
+		msg.type = mtRead;
+		msg.i.size = payload_sz;
+		msg.i.data = ibuf;
+		msg.o.size = payload_sz;
+		msg.o.data = obuf;
+		if (msgSend(oid.port, &msg) != 0) {
+			TEST_FAIL_MESSAGE("bench: msgSend failed");
+		}
+	}
+
+	gettime(&end, NULL);
+
+	time_t total_us = end - start;
+	time_t avg_us = (iterations > 0) ? total_us / iterations : 0;
+
+	snprintf(label, sizeof(label), "depth=%d payload=%zu rr=%d",
+			depth, payload_sz, use_rr);
+	UnityPrint("  [BENCH] ");
+	UnityPrint(label);
+	snprintf(label, sizeof(label), ": %d iters, %llu us total, %llu us/iter",
+			iterations, (unsigned long long)total_us, (unsigned long long)avg_us);
+	UnityPrint(label);
+	UNITY_PRINT_EOL();
+
+	if (ibuf != NULL) {
+		free(ibuf);
+		free(obuf);
+	}
+
+	bench_kill_chain(pids, npids);
+}
+
+
+/* Zero payload benchmarks */
+TEST(msg_bench, zero_depth1)
+{
+	run_bench(1, 0, 1000, 0);
+}
+
+
+TEST(msg_bench, zero_depth1_rr)
+{
+	run_bench(1, 0, 1000, 1);
+}
+
+
+TEST(msg_bench, zero_depth2)
+{
+	run_bench(2, 0, 500, 0);
+}
+
+
+TEST(msg_bench, zero_depth3)
+{
+	run_bench(3, 0, 500, 0);
+}
+
+
+TEST(msg_bench, zero_depth5)
+{
+	run_bench(5, 0, 200, 0);
+}
+
+
+/* Small payload (fits in raw/msgbuf, 64 bytes) */
+TEST(msg_bench, small_depth1)
+{
+	run_bench(1, 64, 1000, 0);
+}
+
+
+TEST(msg_bench, small_depth1_rr)
+{
+	run_bench(1, 64, 1000, 1);
+}
+
+
+TEST(msg_bench, small_depth2)
+{
+	run_bench(2, 64, 500, 0);
+}
+
+
+TEST(msg_bench, small_depth3)
+{
+	run_bench(3, 64, 500, 0);
+}
+
+
+TEST(msg_bench, small_depth5)
+{
+	run_bench(5, 64, 200, 0);
+}
+
+
+/* Large SHM payload (4096 bytes) */
+TEST(msg_bench, large_depth1)
+{
+	run_bench(1, 4096, 500, 0);
+}
+
+
+TEST(msg_bench, large_depth1_rr)
+{
+	run_bench(1, 4096, 500, 1);
+}
+
+
+TEST(msg_bench, large_depth2)
+{
+	run_bench(2, 4096, 200, 0);
+}
+
+
+TEST(msg_bench, large_depth3)
+{
+	run_bench(3, 4096, 200, 0);
+}
+
+
+TEST(msg_bench, large_depth5)
+{
+	run_bench(5, 4096, 100, 0);
+}
+
+
+/* Very large SHM payload (32KB) */
+TEST(msg_bench, vlarge_depth1)
+{
+	run_bench(1, 32768, 200, 0);
+}
+
+
+TEST(msg_bench, vlarge_depth2)
+{
+	run_bench(2, 32768, 100, 0);
+}
+
 /* ===================================== */
 /* Group runners                         */
 /* ===================================== */
@@ -2502,6 +4227,57 @@ TEST_GROUP_RUNNER(msg_respond_recv_mixed)
 }
 
 
+TEST_GROUP_RUNNER(msg_bwi_edge)
+{
+	RUN_TEST_CASE(msg_bwi_edge, chained_donation);
+	RUN_TEST_CASE(msg_bwi_edge, queued_clients_sc_tracking);
+	RUN_TEST_CASE(msg_bwi_edge, prio_restored_after_respond);
+	RUN_TEST_CASE(msg_bwi_edge, sc_not_swapped);
+}
+
+
+TEST_GROUP_RUNNER(msg_lock_ipc)
+{
+	RUN_TEST_CASE(msg_lock_ipc, two_task);
+	RUN_TEST_CASE(msg_lock_ipc, three_task);
+	RUN_TEST_CASE(msg_lock_ipc, reverse_three_task);
+	RUN_TEST_CASE(msg_lock_ipc, nested_lock_then_ipc);
+	RUN_TEST_CASE(msg_lock_ipc, cascaded_ipc_lock_ipc);
+}
+
+
+TEST_GROUP_RUNNER(msg_stress)
+{
+	RUN_TEST_CASE(msg_stress, many_clients_hammer);
+	RUN_TEST_CASE(msg_stress, concurrent_data_transfer);
+	RUN_TEST_CASE(msg_stress, rapid_respondandrecv);
+	RUN_TEST_CASE(msg_stress, concurrent_respondandrecv);
+	RUN_TEST_CASE(msg_stress, pulse_send_race);
+}
+
+
+TEST_GROUP_RUNNER(msg_bench)
+{
+	RUN_TEST_CASE(msg_bench, zero_depth1);
+	RUN_TEST_CASE(msg_bench, zero_depth1_rr);
+	RUN_TEST_CASE(msg_bench, zero_depth2);
+	RUN_TEST_CASE(msg_bench, zero_depth3);
+	RUN_TEST_CASE(msg_bench, zero_depth5);
+	RUN_TEST_CASE(msg_bench, small_depth1);
+	RUN_TEST_CASE(msg_bench, small_depth1_rr);
+	RUN_TEST_CASE(msg_bench, small_depth2);
+	RUN_TEST_CASE(msg_bench, small_depth3);
+	RUN_TEST_CASE(msg_bench, small_depth5);
+	RUN_TEST_CASE(msg_bench, large_depth1);
+	RUN_TEST_CASE(msg_bench, large_depth1_rr);
+	RUN_TEST_CASE(msg_bench, large_depth2);
+	RUN_TEST_CASE(msg_bench, large_depth3);
+	RUN_TEST_CASE(msg_bench, large_depth5);
+	RUN_TEST_CASE(msg_bench, vlarge_depth1);
+	RUN_TEST_CASE(msg_bench, vlarge_depth2);
+}
+
+
 void runner(void)
 {
 	RUN_TEST_GROUP(msg_errnos);
@@ -2516,6 +4292,10 @@ void runner(void)
 	RUN_TEST_GROUP(msg_priority_field);
 	RUN_TEST_GROUP(msg_edge);
 	RUN_TEST_GROUP(msg_respond_recv_mixed);
+	// RUN_TEST_GROUP(msg_bwi_edge);
+	// RUN_TEST_GROUP(msg_lock_ipc);
+	RUN_TEST_GROUP(msg_stress);
+	RUN_TEST_GROUP(msg_bench);
 }
 
 
