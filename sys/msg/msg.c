@@ -3849,6 +3849,465 @@ TEST(msg_stress, pulse_send_race)
 
 
 /* =====================================================  */
+/* TEST_GROUP: msg_respond_recv_chain                     */
+/* respondAndRecv leaf behind forwarding servers           */
+/* =====================================================  */
+
+TEST_GROUP(msg_respond_recv_chain);
+
+TEST_SETUP(msg_respond_recv_chain)
+{
+}
+
+TEST_TEAR_DOWN(msg_respond_recv_chain)
+{
+}
+
+
+/* Helper: spawn a forwarding server that uses separate recv + respond
+ * and forwards to the given backend port. */
+static pid_t spawn_forwarder(const char *dev_path, oid_t *backend)
+{
+	oid_t be = *backend;
+	pid_t pid;
+	if ((pid = safe_fork()) == 0) {
+		uint32_t port = 0;
+		if (setup_port_dev(dev_path, &port) < 0)
+			exit(3);
+
+		msg_t msg = { 0 };
+		msg_rid_t rid;
+		for (;;) {
+			if (msgRecv(port, &msg, &rid) < 0)
+				exit(0);
+
+			msg_t fwd = { 0 };
+			fwd.type = msg.type;
+			memcpy(fwd.i.raw, msg.i.raw, sizeof(fwd.i.raw));
+			fwd.i.data = msg.i.data;
+			fwd.i.size = msg.i.size;
+			fwd.o.data = msg.o.data;
+			fwd.o.size = msg.o.size;
+
+			if (msgSend(be.port, &fwd) != 0)
+				exit(4);
+
+			memcpy(msg.o.raw, fwd.o.raw, sizeof(msg.o.raw));
+			msg.o.err = fwd.o.err;
+
+			if (msgRespond(port, &msg, rid) < 0)
+				exit(5);
+		}
+	}
+	return pid;
+}
+
+
+/*
+ * Direct call to respondAndRecv leaf (depth 1, no forwarding).
+ * Baseline: this should work (and it does in msg_respond_recv).
+ */
+TEST(msg_respond_recv_chain, rr_leaf_direct)
+{
+	char dev_path[64];
+	make_dev_path(dev_path, sizeof(dev_path), "rrc_d1");
+	pid_t server_pid;
+
+	if ((server_pid = safe_fork()) == 0) {
+		uint32_t port = 0;
+		if (setup_port_dev(dev_path, &port) < 0)
+			exit(3);
+		server_echo_loop(port, 1);
+		exit(0);
+	}
+
+	oid_t oid;
+	while (lookup(dev_path, NULL, &oid) < 0)
+		usleep(10 * 1000);
+
+	for (int i = 0; i < 10; i++) {
+		msg_t msg = { 0 };
+		msg.type = mtRead;
+		msg.i.io.offs = i;
+		msg.i.size = 0;
+		msg.i.data = NULL;
+		msg.o.size = 0;
+		msg.o.data = NULL;
+		TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
+		TEST_ASSERT_EQUAL_INT(mtRead, msg.o.err);
+	}
+
+	assert_child_exit(server_pid);
+}
+
+
+/*
+ * respondAndRecv leaf behind ONE forwarding server (depth 2).
+ *
+ * Forwarder uses separate recv+respond, leaf uses respondAndRecv.
+ * This is the minimal reproduction of the hang observed in msg_bench.
+ */
+TEST(msg_respond_recv_chain, rr_leaf_behind_forwarder)
+{
+	char leaf_path[64], fwd_path[64];
+	make_dev_path(leaf_path, sizeof(leaf_path), "rrc_leaf");
+	make_dev_path(fwd_path, sizeof(fwd_path), "rrc_fwd");
+
+	/* Spawn the respondAndRecv leaf */
+	pid_t leaf_pid;
+	if ((leaf_pid = safe_fork()) == 0) {
+		uint32_t port = 0;
+		if (setup_port_dev(leaf_path, &port) < 0)
+			exit(3);
+		server_echo_loop(port, 1);
+		exit(0);
+	}
+
+	oid_t leaf_oid;
+	while (lookup(leaf_path, NULL, &leaf_oid) < 0)
+		usleep(10 * 1000);
+
+	/* Spawn forwarder that does recv+respond and forwards to leaf */
+	pid_t fwd_pid = spawn_forwarder(fwd_path, &leaf_oid);
+
+	oid_t fwd_oid;
+	while (lookup(fwd_path, NULL, &fwd_oid) < 0)
+		usleep(10 * 1000);
+
+	for (int i = 0; i < 10; i++) {
+		msg_t msg = { 0 };
+		msg.type = mtWrite;
+		msg.i.io.offs = i;
+		msg.i.size = 0;
+		msg.i.data = NULL;
+		msg.o.size = 0;
+		msg.o.data = NULL;
+		TEST_ASSERT_EQUAL_INT(0, msgSend(fwd_oid.port, &msg));
+		TEST_ASSERT_EQUAL_INT(mtWrite, msg.o.err);
+	}
+
+	kill(fwd_pid, SIGKILL);
+	waitpid(fwd_pid, NULL, 0);
+	kill(leaf_pid, SIGKILL);
+	waitpid(leaf_pid, NULL, 0);
+}
+
+
+/*
+ * Same as above but leaf uses separate recv+respond (should always work).
+ * Control test to confirm the forwarding logic itself is fine.
+ *
+ * Regression test for not handling the server thread->end != 0 prior to becoming passive.
+ * If it is left unhandled, the thread goes passive and is never reaped.
+ */
+TEST(msg_respond_recv_chain, normal_leaf_behind_forwarder)
+{
+	char leaf_path[64], fwd_path[64];
+	make_dev_path(leaf_path, sizeof(leaf_path), "rrc_nl");
+	make_dev_path(fwd_path, sizeof(fwd_path), "rrc_nf");
+
+	pid_t leaf_pid;
+	if ((leaf_pid = safe_fork()) == 0) {
+		uint32_t port = 0;
+		if (setup_port_dev(leaf_path, &port) < 0)
+			exit(3);
+		server_echo_loop(port, 0);
+		exit(0);
+	}
+
+	oid_t leaf_oid;
+	while (lookup(leaf_path, NULL, &leaf_oid) < 0)
+		usleep(10 * 1000);
+
+	pid_t fwd_pid = spawn_forwarder(fwd_path, &leaf_oid);
+
+	oid_t fwd_oid;
+	while (lookup(fwd_path, NULL, &fwd_oid) < 0)
+		usleep(10 * 1000);
+
+	for (int i = 0; i < 10; i++) {
+		msg_t msg = { 0 };
+		msg.type = mtWrite;
+		msg.i.io.offs = i;
+		msg.i.size = 0;
+		msg.i.data = NULL;
+		msg.o.size = 0;
+		msg.o.data = NULL;
+		TEST_ASSERT_EQUAL_INT(0, msgSend(fwd_oid.port, &msg));
+		TEST_ASSERT_EQUAL_INT(mtWrite, msg.o.err);
+	}
+
+	kill(fwd_pid, SIGKILL);
+	waitpid(fwd_pid, NULL, 0);
+	kill(leaf_pid, SIGKILL);
+	waitpid(leaf_pid, NULL, 0);
+}
+
+
+/*
+ * respondAndRecv leaf behind TWO forwarding servers (depth 3).
+ */
+TEST(msg_respond_recv_chain, rr_leaf_depth3)
+{
+	char leaf_path[64], fwd1_path[64], fwd2_path[64];
+	make_dev_path(leaf_path, sizeof(leaf_path), "rrc3_l");
+	make_dev_path(fwd1_path, sizeof(fwd1_path), "rrc3_f1");
+	make_dev_path(fwd2_path, sizeof(fwd2_path), "rrc3_f2");
+
+	pid_t leaf_pid;
+	if ((leaf_pid = safe_fork()) == 0) {
+		uint32_t port = 0;
+		if (setup_port_dev(leaf_path, &port) < 0)
+			exit(3);
+		server_echo_loop(port, 1);
+		exit(0);
+	}
+
+	oid_t leaf_oid;
+	while (lookup(leaf_path, NULL, &leaf_oid) < 0)
+		usleep(10 * 1000);
+
+	/* fwd1 forwards to leaf */
+	pid_t fwd1_pid = spawn_forwarder(fwd1_path, &leaf_oid);
+
+	oid_t fwd1_oid;
+	while (lookup(fwd1_path, NULL, &fwd1_oid) < 0)
+		usleep(10 * 1000);
+
+	/* fwd2 forwards to fwd1 */
+	pid_t fwd2_pid = spawn_forwarder(fwd2_path, &fwd1_oid);
+
+	oid_t fwd2_oid;
+	while (lookup(fwd2_path, NULL, &fwd2_oid) < 0)
+		usleep(10 * 1000);
+
+	for (int i = 0; i < 10; i++) {
+		msg_t msg = { 0 };
+		msg.type = mtRead;
+		msg.i.io.offs = i;
+		msg.i.size = 0;
+		msg.i.data = NULL;
+		msg.o.size = 0;
+		msg.o.data = NULL;
+		TEST_ASSERT_EQUAL_INT(0, msgSend(fwd2_oid.port, &msg));
+		TEST_ASSERT_EQUAL_INT(mtRead, msg.o.err);
+	}
+
+	kill(fwd2_pid, SIGKILL);
+	waitpid(fwd2_pid, NULL, 0);
+	kill(fwd1_pid, SIGKILL);
+	waitpid(fwd1_pid, NULL, 0);
+	kill(leaf_pid, SIGKILL);
+	waitpid(leaf_pid, NULL, 0);
+}
+
+
+/*
+ * respondAndRecv leaf behind forwarder, with data buffers.
+ * The hang could be data-transfer related, so test with payloads too.
+ */
+TEST(msg_respond_recv_chain, rr_leaf_behind_forwarder_data)
+{
+	char leaf_path[64], fwd_path[64];
+	make_dev_path(leaf_path, sizeof(leaf_path), "rrcd_l");
+	make_dev_path(fwd_path, sizeof(fwd_path), "rrcd_f");
+
+	pid_t leaf_pid;
+	if ((leaf_pid = safe_fork()) == 0) {
+		uint32_t port = 0;
+		if (setup_port_dev(leaf_path, &port) < 0)
+			exit(3);
+		server_echo_loop(port, 1);
+		exit(0);
+	}
+
+	oid_t leaf_oid;
+	while (lookup(leaf_path, NULL, &leaf_oid) < 0)
+		usleep(10 * 1000);
+
+	pid_t fwd_pid = spawn_forwarder(fwd_path, &leaf_oid);
+
+	oid_t fwd_oid;
+	while (lookup(fwd_path, NULL, &fwd_oid) < 0)
+		usleep(10 * 1000);
+
+	const size_t bufsz = 256;
+	char *ibuf = malloc(bufsz);
+	char *obuf = malloc(bufsz);
+	TEST_ASSERT_NOT_NULL(ibuf);
+	TEST_ASSERT_NOT_NULL(obuf);
+
+	for (int i = 0; i < 5; i++) {
+		for (size_t j = 0; j < bufsz; j++)
+			ibuf[j] = (char)((j + i * 17) & 0xff);
+		memset(obuf, 0, bufsz);
+
+		msg_t msg = { 0 };
+		msg.type = mtWrite;
+		msg.i.data = ibuf;
+		msg.i.size = bufsz;
+		msg.o.data = obuf;
+		msg.o.size = bufsz;
+		TEST_ASSERT_EQUAL_INT(0, msgSend(fwd_oid.port, &msg));
+		TEST_ASSERT_EQUAL_INT(mtWrite, msg.o.err);
+		TEST_ASSERT_EQUAL_MEMORY(ibuf, obuf, bufsz);
+	}
+
+	free(ibuf);
+	free(obuf);
+	kill(fwd_pid, SIGKILL);
+	waitpid(fwd_pid, NULL, 0);
+	kill(leaf_pid, SIGKILL);
+	waitpid(leaf_pid, NULL, 0);
+}
+
+
+/*
+ * Forwarder also uses respondAndRecv (both layers use it).
+ * Tests whether two levels of respondAndRecv chain correctly.
+ */
+TEST(msg_respond_recv_chain, rr_forwarder_rr_leaf)
+{
+	char leaf_path[64], fwd_path[64];
+	make_dev_path(leaf_path, sizeof(leaf_path), "rrcr_l");
+	make_dev_path(fwd_path, sizeof(fwd_path), "rrcr_f");
+
+	/* respondAndRecv leaf */
+	pid_t leaf_pid;
+	if ((leaf_pid = safe_fork()) == 0) {
+		uint32_t port = 0;
+		if (setup_port_dev(leaf_path, &port) < 0)
+			exit(3);
+		server_echo_loop(port, 1);
+		exit(0);
+	}
+
+	oid_t leaf_oid;
+	while (lookup(leaf_path, NULL, &leaf_oid) < 0)
+		usleep(10 * 1000);
+
+	/* respondAndRecv forwarder */
+	oid_t be = leaf_oid;
+	pid_t fwd_pid;
+	if ((fwd_pid = safe_fork()) == 0) {
+		uint32_t port = 0;
+		if (setup_port_dev(fwd_path, &port) < 0)
+			exit(3);
+
+		msg_t msg = { 0 };
+		msg_rid_t rid;
+
+		for (;;) {
+			int err = msgRespondAndRecv(port, &msg, &rid);
+			if (err < 0)
+				exit(0);
+
+			msg_t fwd = { 0 };
+			fwd.type = msg.type;
+			memcpy(fwd.i.raw, msg.i.raw, sizeof(fwd.i.raw));
+			fwd.i.data = msg.i.data;
+			fwd.i.size = msg.i.size;
+			fwd.o.data = msg.o.data;
+			fwd.o.size = msg.o.size;
+
+			if (msgSend(be.port, &fwd) != 0)
+				exit(4);
+
+			memcpy(msg.o.raw, fwd.o.raw, sizeof(msg.o.raw));
+			msg.o.err = fwd.o.err;
+		}
+	}
+
+	oid_t fwd_oid;
+	while (lookup(fwd_path, NULL, &fwd_oid) < 0)
+		usleep(10 * 1000);
+
+	for (int i = 0; i < 10; i++) {
+		msg_t msg = { 0 };
+		msg.type = mtRead;
+		msg.i.io.offs = i;
+		msg.i.size = 0;
+		msg.i.data = NULL;
+		msg.o.size = 0;
+		msg.o.data = NULL;
+		TEST_ASSERT_EQUAL_INT(0, msgSend(fwd_oid.port, &msg));
+		TEST_ASSERT_EQUAL_INT(mtRead, msg.o.err);
+	}
+
+	kill(fwd_pid, SIGKILL);
+	waitpid(fwd_pid, NULL, 0);
+	kill(leaf_pid, SIGKILL);
+	waitpid(leaf_pid, NULL, 0);
+}
+
+
+/*
+ * Multiple concurrent clients sending through forwarder to respondAndRecv leaf.
+ * If there's a race in SC handling with respondAndRecv under load, this catches it.
+ */
+TEST(msg_respond_recv_chain, rr_leaf_concurrent_clients)
+{
+	char leaf_path[64], fwd_path[64];
+	make_dev_path(leaf_path, sizeof(leaf_path), "rrcc_l");
+	make_dev_path(fwd_path, sizeof(fwd_path), "rrcc_f");
+
+	pid_t leaf_pid;
+	if ((leaf_pid = safe_fork()) == 0) {
+		uint32_t port = 0;
+		if (setup_port_dev(leaf_path, &port) < 0)
+			exit(3);
+		server_echo_loop(port, 1);
+		exit(0);
+	}
+
+	oid_t leaf_oid;
+	while (lookup(leaf_path, NULL, &leaf_oid) < 0)
+		usleep(10 * 1000);
+
+	pid_t fwd_pid = spawn_forwarder(fwd_path, &leaf_oid);
+
+	oid_t fwd_oid;
+	while (lookup(fwd_path, NULL, &fwd_oid) < 0)
+		usleep(10 * 1000);
+
+	const int NUM_CLIENTS = 4;
+	const int MSGS_PER = 10;
+	pid_t clients[NUM_CLIENTS];
+
+	for (int c = 0; c < NUM_CLIENTS; c++) {
+		if ((clients[c] = safe_fork()) == 0) {
+			for (int m = 0; m < MSGS_PER; m++) {
+				msg_t msg = { 0 };
+				msg.type = mtRead;
+				msg.i.io.offs = c * 1000 + m;
+				msg.i.size = 0;
+				msg.i.data = NULL;
+				msg.o.size = 0;
+				msg.o.data = NULL;
+				if (msgSend(fwd_oid.port, &msg) != 0)
+					exit(1);
+				if (msg.o.err != mtRead)
+					exit(2);
+			}
+			exit(0);
+		}
+	}
+
+	for (int c = 0; c < NUM_CLIENTS; c++) {
+		int status;
+		waitpid(clients[c], &status, 0);
+		TEST_ASSERT_EQUAL_INT_MESSAGE(0, WEXITSTATUS(status),
+				"Concurrent client failed through rr-leaf chain");
+	}
+
+	kill(fwd_pid, SIGKILL);
+	waitpid(fwd_pid, NULL, 0);
+	kill(leaf_pid, SIGKILL);
+	waitpid(leaf_pid, NULL, 0);
+}
+
+
+/* =====================================================  */
 /* TEST_GROUP: msg_bench                                  */
 /* IPC round-trip performance benchmarks                  */
 /* =====================================================  */
@@ -4256,6 +4715,22 @@ TEST_GROUP_RUNNER(msg_stress)
 }
 
 
+TEST_GROUP_RUNNER(msg_respond_recv_chain)
+{
+	for (int i = 0; i < 100; i++) {
+		printf("i=%d\n", i);
+		RUN_TEST_CASE(msg_respond_recv_chain, rr_leaf_direct);
+		RUN_TEST_CASE(msg_respond_recv_chain, rr_leaf_behind_forwarder);
+		RUN_TEST_CASE(msg_respond_recv_chain, normal_leaf_behind_forwarder);
+		RUN_TEST_CASE(msg_respond_recv_chain, rr_leaf_depth3);
+		RUN_TEST_CASE(msg_respond_recv_chain, rr_leaf_behind_forwarder_data);
+		RUN_TEST_CASE(msg_respond_recv_chain, rr_forwarder_rr_leaf);
+		RUN_TEST_CASE(msg_respond_recv_chain, rr_leaf_concurrent_clients);
+	}
+	printf("\n");
+}
+
+
 TEST_GROUP_RUNNER(msg_bench)
 {
 	RUN_TEST_CASE(msg_bench, zero_depth1);
@@ -4292,9 +4767,13 @@ void runner(void)
 	RUN_TEST_GROUP(msg_priority_field);
 	RUN_TEST_GROUP(msg_edge);
 	RUN_TEST_GROUP(msg_respond_recv_mixed);
+
+	// TODO:
 	// RUN_TEST_GROUP(msg_bwi_edge);
 	// RUN_TEST_GROUP(msg_lock_ipc);
+	//
 	RUN_TEST_GROUP(msg_stress);
+	RUN_TEST_GROUP(msg_respond_recv_chain);
 	RUN_TEST_GROUP(msg_bench);
 }
 
