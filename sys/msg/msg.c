@@ -151,34 +151,6 @@ static void server_echo_loop(uint32_t port, int use_respond_and_recv)
 
 
 /* ===================================== */
-/* TEST_GROUP: msg_various               */
-/* ===================================== */
-
-TEST_GROUP(msg_various);
-
-TEST_SETUP(msg_various)
-{
-}
-
-TEST_TEAR_DOWN(msg_various)
-{
-}
-
-
-TEST(msg_various, dummyfs_ls_test)
-{
-	pid_t pid;
-
-	if ((pid = safe_fork()) == 0) {
-		execl("/bin/ls", "ls", "-d", "/tmp", (char *)NULL);
-		exit(1);
-	}
-
-	assert_child_exit(pid);
-}
-
-
-/* ===================================== */
 /* TEST_GROUP: msg_errnos                */
 /* ===================================== */
 
@@ -2426,12 +2398,6 @@ TEST(msg_respond_recv_mixed, alternating)
 /* ===================================== */
 /* Group runners                         */
 /* ===================================== */
-
-
-TEST_GROUP_RUNNER(msg_various)
-{
-	// RUN_TEST_CASE(msg_various, dummyfs_ls_test);
-}
 
 
 TEST_GROUP_RUNNER(msg_errnos)
