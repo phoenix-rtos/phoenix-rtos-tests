@@ -158,24 +158,6 @@ TEST(resolve_path, realpath_errno)
 }
 
 
-/* FIXME: this will fail due to not respecting NAME_MAX */
-IGNORE_TEST(resolve_path, realpath_max_path)
-{
-	const char *tmp_prefix = "/tmp/";
-	char path[PATH_MAX]; /* note: PATH_MAX includes \0 */
-
-	memset(path, 'a', sizeof(path));
-	memcpy(path, tmp_prefix, strlen(tmp_prefix));
-	path[sizeof(path) - 1] = 0;
-	printf("path: %s\n", path);
-
-	create_file(path, NULL);
-
-	check_and_free_str(path, realpath(path, NULL));
-	/* FIXME: unlink */
-}
-
-
 #ifdef __phoenix__
 /* testing resolve_path -> phoenix-specific API */
 TEST(resolve_path, missing_leaf)
@@ -526,7 +508,6 @@ TEST_GROUP_RUNNER(resolve_path)
 	RUN_TEST_CASE(resolve_path, realpath_pwd_noalloc);
 
 	RUN_TEST_CASE(resolve_path, realpath_errno);
-	RUN_TEST_CASE(resolve_path, realpath_max_path);
 
 #ifdef __phoenix__
 	RUN_TEST_CASE(resolve_path, missing_leaf);

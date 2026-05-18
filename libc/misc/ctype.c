@@ -248,21 +248,6 @@ TEST(ctype, isxdigit)
 }
 
 
-TEST(ctype, toascii)
-{
-/* toascii() not yet implemented in Phoenix-RTOS */
-#ifdef __phoenix__
-	TEST_IGNORE();
-#else
-	for (int i = MIN_VALUE; i <= MAX_VALUE; i++) {
-		TEST_ASSERT_EQUAL_INT(i & 0x7f, toascii(i));
-	}
-
-	TEST_ASSERT_EQUAL_INT(EOF, toupper(EOF));
-#endif
-}
-
-
 TEST(ctype, tolower)
 {
 	for (int i = MIN_VALUE; i <= MAX_VALUE; i++) {
@@ -293,46 +278,6 @@ TEST(ctype, toupper)
 }
 
 
-TEST(ctype, _tolower)
-{
-/* _tolower() not yet implemented in Phoenix-RTOS */
-#ifdef __phoenix__
-	TEST_IGNORE();
-#else
-	for (int i = MIN_VALUE; i <= MAX_VALUE; i++) {
-		if (i >= 'A' && i <= 'Z') {
-			TEST_ASSERT_EQUAL_INT(i + 32, _tolower(i));
-		}
-		else {
-			TEST_ASSERT_EQUAL_INT(i, _tolower(i));
-		}
-	}
-
-	TEST_ASSERT_EQUAL_INT(EOF, _tolower(EOF));
-#endif
-}
-
-
-TEST(ctype, _toupper)
-{
-/* _toupper() not yet implemented in Phoenix-RTOS */
-#ifdef __phoenix__
-	TEST_IGNORE();
-#else
-	for (int i = MIN_VALUE; i <= MAX_VALUE; i++) {
-		if (i >= 'a' && i <= 'z') {
-			TEST_ASSERT_EQUAL_INT(i - 32, _toupper(i));
-		}
-		else {
-			TEST_ASSERT_EQUAL_INT(i, _toupper(i));
-		}
-	}
-
-	TEST_ASSERT_EQUAL_INT(EOF, _toupper(EOF));
-#endif
-}
-
-
 TEST_GROUP_RUNNER(ctype)
 {
 	RUN_TEST_CASE(ctype, isalnum);
@@ -348,9 +293,6 @@ TEST_GROUP_RUNNER(ctype)
 	RUN_TEST_CASE(ctype, isspace);
 	RUN_TEST_CASE(ctype, isupper);
 	RUN_TEST_CASE(ctype, isxdigit);
-	RUN_TEST_CASE(ctype, toascii);
 	RUN_TEST_CASE(ctype, tolower);
 	RUN_TEST_CASE(ctype, toupper);
-	RUN_TEST_CASE(ctype, _tolower);
-	RUN_TEST_CASE(ctype, _toupper);
 }

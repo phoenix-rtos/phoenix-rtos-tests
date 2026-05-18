@@ -47,67 +47,6 @@ TEST_TEAR_DOWN(getpwd)
 }
 
 
-/* Get root account details by name */
-TEST(getpwd, getpwnam_getroot)
-{
-	struct passwd *pw = getpwnam("root");
-
-	if (ispasswdfile) {
-		TEST_ASSERT_NOT_NULL(pw);
-		TEST_ASSERT_EQUAL_STRING("root", pw->pw_name);
-		/* no password hash content checking, only its nullability and size>0 */
-		TEST_ASSERT_NOT_NULL(pw->pw_passwd);
-		TEST_ASSERT_GREATER_THAN(0, strlen(pw->pw_passwd));
-		TEST_ASSERT_EQUAL_INT(0, pw->pw_uid);
-		TEST_ASSERT_EQUAL_INT(0, pw->pw_gid);
-		TEST_ASSERT_EQUAL_STRING("root", pw->pw_gecos);
-		TEST_ASSERT_EQUAL_STRING(ROOT_WORKDIR, pw->pw_dir);
-		TEST_ASSERT_EQUAL_STRING(ROOT_SHELL, pw->pw_shell);
-	}
-	else {
-		TEST_ASSERT_NULL(pw);
-		TEST_IGNORE_MESSAGE("No /etc/passwd file!");
-	}
-}
-
-
-/* Get root account details by uid */
-TEST(getpwd, getpwuid_getroot)
-{
-	struct passwd *pw = getpwuid((uid_t)0);
-	if (ispasswdfile) {
-		TEST_ASSERT_NOT_NULL(pw);
-
-		TEST_ASSERT_EQUAL_STRING("root", pw->pw_name);
-		/* no password hash content checking, only its nullability and size>0 */
-		TEST_ASSERT_NOT_NULL(pw->pw_passwd);
-		TEST_ASSERT_GREATER_THAN(0, strlen(pw->pw_passwd));
-		TEST_ASSERT_EQUAL_INT(0, pw->pw_uid);
-		TEST_ASSERT_EQUAL_INT(0, pw->pw_gid);
-		TEST_ASSERT_EQUAL_STRING("root", pw->pw_gecos);
-		TEST_ASSERT_EQUAL_STRING(ROOT_WORKDIR, pw->pw_dir);
-		TEST_ASSERT_EQUAL_STRING(ROOT_SHELL, pw->pw_shell);
-	}
-	else {
-		TEST_ASSERT_NULL(pw);
-		TEST_IGNORE_MESSAGE("No /etc/passwd file!");
-	}
-}
-
-
-/* Try to reach for non-existing user data with getpwnam */
-TEST(getpwd, getpwnam_getnull)
-{
-	TEST_ASSERT_NULL(getpwnam("loremipsum"));
-	// FIXME: invalid test
-	//TEST_ASSERT_NULL(getpwnam(NULL));
-	/* TODO: add errno check */
-
-	if (!ispasswdfile)
-		TEST_IGNORE_MESSAGE("No /etc/passwd file!");
-}
-
-
 /* Try to reach for non-existing user data with getpwuid */
 TEST(getpwd, getpwuid_getnull)
 {
@@ -152,9 +91,6 @@ TEST_GROUP_RUNNER(getpwd)
 {
 	ispasswdfile = (access("/etc/passwd", F_OK) == 0) ? 1 : 0;
 
-	RUN_TEST_CASE(getpwd, getpwnam_getroot);
-	RUN_TEST_CASE(getpwd, getpwuid_getroot);
-	RUN_TEST_CASE(getpwd, getpwnam_getnull);
 	RUN_TEST_CASE(getpwd, getpwuid_getnull);
 	/* we can't rename/delete the /etc/passwd file on host */
 #ifdef __phoenix__

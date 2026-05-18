@@ -42,17 +42,11 @@ TEST(unity_example, example_3)
 	TEST_PASS_MESSAGE("test example_3 succeeded!");
 }
 
-IGNORE_TEST(unity_example, example_4)
-{
-	FAIL("this test is ignored so it shouldn't fail");
-}
-
 TEST_GROUP_RUNNER(unity_example)
 {
 	RUN_TEST_CASE(unity_example, example_1);
 	RUN_TEST_CASE(unity_example, example_2);
 	RUN_TEST_CASE(unity_example, example_3);
-	RUN_TEST_CASE(unity_example, example_4);
 }
 
 void runner(void)
