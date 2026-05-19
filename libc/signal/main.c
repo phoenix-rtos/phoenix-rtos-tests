@@ -21,6 +21,7 @@
 /* no need for forward declarations, RUN_TEST_GROUP does it by itself */
 void runner(void)
 {
+	RUN_TEST_GROUP(sigbulk);
 	RUN_TEST_GROUP(mask);
 	RUN_TEST_GROUP(handler);
 	RUN_TEST_GROUP(sigaction);
