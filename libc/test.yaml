@@ -56,6 +56,11 @@ test:
       targets:
         include: [host-generic-pc]
 
+    - name: stat
+      execute: test-libc-stat
+      targets:
+        include: [host-generic-pc]
+
     - name: math
       execute: test-libc-math
       targets:
@@ -99,3 +104,13 @@ test:
       execute: test-libc-inet-socket
       targets:
         value: [ia32-generic-qemu, armv7a7-imx6ull-evk, host-generic-pc]
+
+    - name: poll
+      execute: test-libc-poll
+      targets:
+        include: [host-generic-pc]
+
+    - name: fcntl
+      execute: test-libc-fcntl
+      targets:
+        include: [host-generic-pc]
