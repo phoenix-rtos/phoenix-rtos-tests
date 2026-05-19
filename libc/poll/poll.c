@@ -110,17 +110,3 @@ TEST_GROUP_RUNNER(test_poll)
 {
 	RUN_TEST_CASE(test_poll, select_errnos);
 }
-
-
-static void runner(void)
-{
-	RUN_TEST_GROUP(test_poll);
-}
-
-
-int main(int argc, char *argv[])
-{
-	int failures = UnityMain(argc, (const char **)argv, runner);
-
-	return (failures == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
-}
