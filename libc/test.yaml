@@ -41,6 +41,13 @@ test:
       targets:
         include: [host-generic-pc]
 
+    - name: posixsrv
+      execute: test-libc-posixsrv
+      targets:
+        include: [host-generic-pc]
+        # no posixsrv
+        exclude: [armv7r5f-zynqmp-qemu]
+
     - name: stdlib
       execute: test-libc-stdlib
       targets:

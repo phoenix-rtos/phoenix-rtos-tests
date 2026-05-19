@@ -20,7 +20,7 @@
  *
  * UNTESTED:
  * puts, gets < needs writing to stdin/unimplemented
- * popen, pclose, tmpfile < not usable on all targets
+ * popen, pclose < not usable on all targets
  *
  * Copyright 2021, 2022 Phoenix Systems
  * Author: Mateusz Niewiadomski, Damian Loewnau
