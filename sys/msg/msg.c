@@ -118,6 +118,11 @@ static void server_echo_loop(uint32_t port, int use_respond_and_recv)
 	msg_t msg = { 0 };
 	msg_rid_t rid;
 
+	__attribute__((aligned(_PAGE_SIZE))) char buf[256];
+
+	msg.edata = buf;
+	msg.esize = sizeof(buf);
+
 	for (;;) {
 		int err;
 
@@ -4323,6 +4328,12 @@ TEST_TEAR_DOWN(msg_bench)
 }
 
 
+/* TODO: replace some of below tests with just iterations of one test
+ * (especially edata) */
+
+#define USE_EDATA 1
+
+
 /* Helper: spawn a chain of N forwarding servers, return the front port oid.
  * chain[0] is the echo server (leaf), chain[i>0] forwards to chain[i-1].
  * Returns number of pids written to out_pids. */
@@ -4331,6 +4342,10 @@ static int bench_spawn_chain(int depth, oid_t *front_oid, pid_t *out_pids,
 {
 	char paths[5][64];
 	int n = 0;
+
+#if USE_EDATA
+	__attribute__((aligned(_PAGE_SIZE))) char ebuf[256];
+#endif
 
 	if (depth < 1 || depth > 5)
 		return -1;
@@ -4363,24 +4378,35 @@ static int bench_spawn_chain(int depth, oid_t *front_oid, pid_t *out_pids,
 			msg_t msg = { 0 };
 			msg_rid_t rid;
 
+#if USE_EDATA
+			msg.edata = ebuf;
+			msg.esize = sizeof(ebuf);
+#endif
+
 			for (;;) {
 				if (msgRecv(port, &msg, &rid) < 0)
 					exit(0);
 
-				/* Forward to next server in chain */
-				msg_t fwd = { 0 };
-				fwd.type = msg.type;
-				memcpy(fwd.i.raw, msg.i.raw, sizeof(fwd.i.raw));
-				fwd.i.data = msg.i.data;
-				fwd.i.size = msg.i.size;
-				fwd.o.data = msg.o.data;
-				fwd.o.size = msg.o.size;
+				// 				/* Forward to next server in chain */
+				// 				msg_t fwd = { 0 };
+				//
+				// #if USE_EDATA
+				// 				fwd.edata = ebuf;
+				// 				fwd.esize = sizeof(ebuf);
+				// #endif
+				//
+				// 				fwd.type = msg.type;
+				// 				memcpy(fwd.i.raw, msg.i.raw, sizeof(fwd.i.raw));
+				// 				fwd.i.data = msg.i.data;
+				// 				fwd.i.size = msg.i.size;
+				// 				fwd.o.data = msg.o.data;
+				// 				fwd.o.size = msg.o.size;
 
-				if (msgSend(backend.port, &fwd) != 0)
+				if (msgSend(backend.port, &msg) != 0)
 					exit(4);
 
-				memcpy(msg.o.raw, fwd.o.raw, sizeof(msg.o.raw));
-				msg.o.err = fwd.o.err;
+				// memcpy(msg.o.raw, fwd.o.raw, sizeof(msg.o.raw));
+				// msg.o.err = fwd.o.err;
 
 				if (msgRespond(port, &msg, rid) < 0)
 					exit(5);
@@ -4415,6 +4441,10 @@ static void run_bench(int depth, size_t payload_sz, int iterations, int use_rr)
 	char label[64];
 	char *ibuf = NULL, *obuf = NULL;
 
+#if USE_EDATA
+	__attribute__((aligned(_PAGE_SIZE))) char ebuf[256];
+#endif
+
 	npids = bench_spawn_chain(depth, &oid, pids, use_rr);
 	TEST_ASSERT_GREATER_THAN_INT(0, npids);
 
@@ -4429,6 +4459,10 @@ static void run_bench(int depth, size_t payload_sz, int iterations, int use_rr)
 	/* Warm up */
 	for (int w = 0; w < 10; w++) {
 		msg_t msg = { 0 };
+#if USE_EDATA
+		msg.edata = ebuf;
+		msg.esize = sizeof(ebuf);
+#endif
 		msg.type = mtRead;
 		msg.i.size = payload_sz;
 		msg.i.data = ibuf;
@@ -4441,6 +4475,10 @@ static void run_bench(int depth, size_t payload_sz, int iterations, int use_rr)
 
 	for (int i = 0; i < iterations; i++) {
 		msg_t msg = { 0 };
+#if USE_EDATA
+		msg.edata = ebuf;
+		msg.esize = sizeof(ebuf);
+#endif
 		msg.type = mtRead;
 		msg.i.size = payload_sz;
 		msg.i.data = ibuf;
@@ -4717,17 +4755,13 @@ TEST_GROUP_RUNNER(msg_stress)
 
 TEST_GROUP_RUNNER(msg_respond_recv_chain)
 {
-	for (int i = 0; i < 100; i++) {
-		printf("i=%d\n", i);
-		RUN_TEST_CASE(msg_respond_recv_chain, rr_leaf_direct);
-		RUN_TEST_CASE(msg_respond_recv_chain, rr_leaf_behind_forwarder);
-		RUN_TEST_CASE(msg_respond_recv_chain, normal_leaf_behind_forwarder);
-		RUN_TEST_CASE(msg_respond_recv_chain, rr_leaf_depth3);
-		RUN_TEST_CASE(msg_respond_recv_chain, rr_leaf_behind_forwarder_data);
-		RUN_TEST_CASE(msg_respond_recv_chain, rr_forwarder_rr_leaf);
-		RUN_TEST_CASE(msg_respond_recv_chain, rr_leaf_concurrent_clients);
-	}
-	printf("\n");
+	RUN_TEST_CASE(msg_respond_recv_chain, rr_leaf_direct);
+	RUN_TEST_CASE(msg_respond_recv_chain, rr_leaf_behind_forwarder);
+	RUN_TEST_CASE(msg_respond_recv_chain, normal_leaf_behind_forwarder);
+	RUN_TEST_CASE(msg_respond_recv_chain, rr_leaf_depth3);
+	RUN_TEST_CASE(msg_respond_recv_chain, rr_leaf_behind_forwarder_data);
+	RUN_TEST_CASE(msg_respond_recv_chain, rr_forwarder_rr_leaf);
+	RUN_TEST_CASE(msg_respond_recv_chain, rr_leaf_concurrent_clients);
 }
 
 
@@ -4768,10 +4802,9 @@ void runner(void)
 	RUN_TEST_GROUP(msg_edge);
 	RUN_TEST_GROUP(msg_respond_recv_mixed);
 
-	// TODO:
-	// RUN_TEST_GROUP(msg_bwi_edge);
-	// RUN_TEST_GROUP(msg_lock_ipc);
-	//
+	RUN_TEST_GROUP(msg_bwi_edge);
+	RUN_TEST_GROUP(msg_lock_ipc);
+
 	RUN_TEST_GROUP(msg_stress);
 	RUN_TEST_GROUP(msg_respond_recv_chain);
 	RUN_TEST_GROUP(msg_bench);
