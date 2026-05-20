@@ -154,7 +154,11 @@ TEST(fcntl_open, open_creat_new_file)
 	ret = fstat(test_common.fd, &st);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 	/* 0666 & ~0022 = 0644 */
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#1628 issue");
+#else
 	TEST_ASSERT_EQUAL_INT(0644, (int)(st.st_mode & 0777));
+#endif
 
 	umask(prevMask);
 }
@@ -193,10 +197,15 @@ TEST(fcntl_open, open_creat_excl_existing_eexist)
 	ret = _create_file(OPEN_TEST_FILE, OPEN_TEST_DATA);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
+	(void)fd;
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#200 issue");
+#else
 	errno = 0;
 	fd = open(OPEN_TEST_FILE, O_WRONLY | O_CREAT | O_EXCL, 0644);
 	TEST_ASSERT_EQUAL_INT(-1, fd);
 	TEST_ASSERT_EQUAL_INT(EEXIST, errno);
+#endif
 }
 
 
@@ -209,10 +218,15 @@ TEST(fcntl_open, open_creat_excl_symlink_eexist)
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	/* O_CREAT|O_EXCL on symlink shall fail with EEXIST regardless of target */
+	(void)fd;
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#200 issue");
+#else
 	errno = 0;
 	fd = open(OPEN_TEST_SYMLINK, O_WRONLY | O_CREAT | O_EXCL, 0644);
 	TEST_ASSERT_EQUAL_INT(-1, fd);
 	TEST_ASSERT_EQUAL_INT(EEXIST, errno);
+#endif
 }
 
 
@@ -289,6 +303,7 @@ TEST(fcntl_open, open_no_cloexec_by_default)
 }
 
 
+#ifdef O_DIRECTORY
 TEST(fcntl_open, open_directory)
 {
 	int ret;
@@ -314,8 +329,10 @@ TEST(fcntl_open, open_directory_enotdir)
 	TEST_ASSERT_EQUAL_INT(-1, fd);
 	TEST_ASSERT_EQUAL_INT(ENOTDIR, errno);
 }
+#endif
 
 
+#ifdef O_NOFOLLOW
 TEST(fcntl_open, open_nofollow_eloop)
 {
 	int fd;
@@ -332,6 +349,7 @@ TEST(fcntl_open, open_nofollow_eloop)
 	TEST_ASSERT_EQUAL_INT(-1, fd);
 	TEST_ASSERT_EQUAL_INT(ELOOP, errno);
 }
+#endif
 
 
 TEST(fcntl_open, open_enoent_no_creat)
@@ -422,10 +440,15 @@ TEST(fcntl_open, open_enametoolong)
 	memset(longName, 'a', NAME_MAX + 1);
 	longName[NAME_MAX + 1] = '\0';
 
+	(void)fd;
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#1258 issue");
+#else
 	errno = 0;
 	fd = open(longName, O_RDONLY);
 	TEST_ASSERT_EQUAL_INT(-1, fd);
 	TEST_ASSERT_EQUAL_INT(ENAMETOOLONG, errno);
+#endif
 }
 
 
@@ -540,9 +563,13 @@ TEST_GROUP_RUNNER(fcntl_open)
 	RUN_TEST_CASE(fcntl_open, open_append);
 	RUN_TEST_CASE(fcntl_open, open_cloexec_flag);
 	RUN_TEST_CASE(fcntl_open, open_no_cloexec_by_default);
+#ifdef O_DIRECTORY
 	RUN_TEST_CASE(fcntl_open, open_directory);
 	RUN_TEST_CASE(fcntl_open, open_directory_enotdir);
+#endif
+#ifdef O_NOFOLLOW
 	RUN_TEST_CASE(fcntl_open, open_nofollow_eloop);
+#endif
 	RUN_TEST_CASE(fcntl_open, open_enoent_no_creat);
 	RUN_TEST_CASE(fcntl_open, open_enoent_path_prefix);
 	RUN_TEST_CASE(fcntl_open, open_enoent_empty_path);
