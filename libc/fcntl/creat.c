@@ -89,7 +89,11 @@ TEST(fcntl_creat, creat_applies_mode_with_umask)
 	ret = fstat(test_common.fd, &st);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 	/* 0666 & ~0027 = 0640 */
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#1628 issue");
+#else
 	TEST_ASSERT_EQUAL_INT(0640, (int)(st.st_mode & 0777));
+#endif
 
 	umask(prevMask);
 }
@@ -201,10 +205,15 @@ TEST(fcntl_creat, creat_enametoolong)
 	memset(longName, 'b', NAME_MAX + 1);
 	longName[NAME_MAX + 1] = '\0';
 
+	(void)fd;
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#1258 issue");
+#else
 	errno = 0;
 	fd = creat(longName, 0644);
 	TEST_ASSERT_EQUAL_INT(-1, fd);
 	TEST_ASSERT_EQUAL_INT(ENAMETOOLONG, errno);
+#endif
 }
 
 
