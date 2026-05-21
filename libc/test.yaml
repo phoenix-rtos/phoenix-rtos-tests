@@ -122,3 +122,8 @@ test:
       execute: test-libc-fcntl
       targets:
         include: [host-generic-pc]
+
+    - name: syslog
+      execute: test-libc-syslog
+      targets:
+        include: [host-generic-pc]
