@@ -30,6 +30,7 @@ void runner(void)
 	RUN_TEST_GROUP(stdio_fread);
 	RUN_TEST_GROUP(stdio_fwrite);
 	RUN_TEST_GROUP(stdio_fflush);
+	RUN_TEST_GROUP(stdio_flockfile);
 }
 
 

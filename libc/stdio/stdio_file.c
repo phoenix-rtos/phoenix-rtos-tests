@@ -34,6 +34,7 @@
 #include <errno.h>
 #include <string.h>
 #include <limits.h>
+#include <pthread.h>
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -1798,4 +1799,121 @@ TEST_GROUP_RUNNER(stdio_fflush)
 {
 	RUN_TEST_CASE(stdio_fflush, stdio_fflush_socket);
 	RUN_TEST_CASE(stdio_fflush, stdio_fflush_eagain);
+}
+
+
+TEST_GROUP(stdio_flockfile);
+
+
+TEST_SETUP(stdio_flockfile)
+{
+	filep = NULL;
+}
+
+
+TEST_TEAR_DOWN(stdio_flockfile)
+{
+	if (filep != NULL) {
+		fclose(filep);
+		filep = NULL;
+	}
+	remove(STDIO_TEST_FILENAME);
+}
+
+
+TEST(stdio_flockfile, basic)
+{
+	filep = fopen(STDIO_TEST_FILENAME, "w+");
+	TEST_ASSERT_NOT_NULL(filep);
+
+	/* unlocked stream should be lockable */
+	TEST_ASSERT_EQUAL_INT(0, ftrylockfile(filep));
+
+	funlockfile(filep);
+
+	assert_fclosed(&filep);
+}
+
+
+TEST(stdio_flockfile, recursive)
+{
+	filep = fopen(STDIO_TEST_FILENAME, "w+");
+
+	TEST_ASSERT_NOT_NULL(filep);
+
+	/* recursive locking by same thread should succeed */
+	flockfile(filep);
+	TEST_ASSERT_EQUAL_INT(0, ftrylockfile(filep));
+
+	/* two unlocks required */
+	funlockfile(filep);
+	funlockfile(filep);
+
+	/* stream should now be available again */
+	TEST_ASSERT_EQUAL_INT(0, ftrylockfile(filep));
+
+	funlockfile(filep);
+
+	assert_fclosed(&filep);
+}
+
+
+struct thread_arg {
+	FILE *f;
+	volatile int locked;
+	volatile int try_result;
+};
+
+
+static void *flock_thread(void *arg)
+{
+	struct thread_arg *a = arg;
+
+	a->try_result = ftrylockfile(a->f);
+	a->locked = 1;
+
+	if (a->try_result == 0) {
+		funlockfile(a->f);
+	}
+
+	return NULL;
+}
+
+
+TEST(stdio_flockfile, other_thread)
+{
+	pthread_t tid;
+	struct thread_arg arg = { 0 };
+
+	filep = fopen(STDIO_TEST_FILENAME, "w+");
+
+	TEST_ASSERT_NOT_NULL(filep);
+
+	arg.f = filep;
+
+	/* lock stream in current thread */
+	flockfile(filep);
+
+	TEST_ASSERT_EQUAL_INT(0, pthread_create(&tid, NULL, flock_thread, &arg));
+
+	while (arg.locked == 0) {
+		usleep(1000);
+	}
+
+	/* another thread must not acquire the lock */
+	TEST_ASSERT_NOT_EQUAL(0, arg.try_result);
+
+	funlockfile(filep);
+
+	pthread_join(tid, NULL);
+
+	assert_fclosed(&filep);
+}
+
+
+TEST_GROUP_RUNNER(stdio_flockfile)
+{
+	RUN_TEST_CASE(stdio_flockfile, basic);
+	RUN_TEST_CASE(stdio_flockfile, recursive);
+	RUN_TEST_CASE(stdio_flockfile, other_thread);
 }
