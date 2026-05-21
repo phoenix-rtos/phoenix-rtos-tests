@@ -58,3 +58,4 @@ $(eval $(call add_test_libc,grp))
 # $(eval $(call add_test_libc,sem, -lpthread))
 # $(eval $(call add_test_libc,resource))
 
+$(eval $(call add_test_libc,syslog))
