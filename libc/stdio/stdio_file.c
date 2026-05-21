@@ -19,7 +19,6 @@
  * setvbuf, setbuf, fflush,
  *
  * UNTESTED:
- * puts, gets < needs writing to stdin/unimplemented
  * popen, pclose, tmpfile < not usable on all targets
  *
  * Copyright 2021, 2022 Phoenix Systems
@@ -222,7 +221,7 @@ Tets group for:
 - getc, fgetc,
 - putchar, getchar, < need threads
 - ungetc,
-- puts, fputs, fgets
+- puts, fputs, gets, fgets
 */
 TEST_GROUP(stdio_getput);
 
@@ -471,6 +470,19 @@ extern char *gets(char *str);
 #endif
 
 
+static void assertPutsOnStream(FILE *stream, const char *buf)
+{
+	FILE *oldStdin = stdout;
+	stdout = filep;
+	int putsRes = puts(buf);
+	int fflushRes = fflush(stdout);
+	stdout = oldStdin;
+
+	TEST_ASSERT_GREATER_OR_EQUAL(0, putsRes);
+	TEST_ASSERT_EQUAL(0, fflushRes);
+}
+
+
 static void assertGetsOnStream(FILE *stream, char *buf, const char *expected)
 {
 	FILE *oldStdin = stdin;
@@ -488,8 +500,8 @@ TEST(stdio_getput, getsputs_basic)
 	char buf[16];
 	filep = fopen(STDIO_TEST_FILENAME, "r+");
 	TEST_ASSERT_NOT_NULL(filep);
-	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fputs("hello\n", filep));
-	TEST_ASSERT_EQUAL(0, fflush(filep));
+
+	assertPutsOnStream(filep, "hello\n");
 	rewind(filep);
 
 	assertGetsOnStream(filep, buf, "hello");
@@ -503,8 +515,11 @@ TEST(stdio_getput, getsputs_multiline)
 	char buf[16];
 	filep = fopen(STDIO_TEST_FILENAME, "r+");
 	TEST_ASSERT_NOT_NULL(filep);
-	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fputs("hello\nworld\n\nsecret", filep));
-	TEST_ASSERT_EQUAL(0, fflush(filep));
+
+	assertPutsOnStream(filep, "hello");
+	assertPutsOnStream(filep, "world");
+	assertPutsOnStream(filep, "");
+	assertPutsOnStream(filep, "secret");
 	rewind(filep);
 
 	assertGetsOnStream(filep, buf, "hello");
