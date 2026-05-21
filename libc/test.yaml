@@ -102,10 +102,10 @@ test:
       targets:
         include: [ia32-generic-qemu, host-generic-pc]
 
-    # - name: unix-socket
-    #   execute: test-libc-unix-socket --extra-poll-delay-ms 150
-    #   targets:
-    #     value: [armv7a9-zynq7000-qemu]
+    - name: unix-socket
+      execute: test-libc-unix-socket --extra-poll-delay-ms 150
+      targets:
+        value: [armv7a9-zynq7000-qemu]
 
     # - name: unix-socket # Issue: 1342 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1342
     #   execute: test-libc-unix-socket --extra-poll-delay-ms 250 --transfer-loop-cnt 30
@@ -170,10 +170,18 @@ test:
 
     - name: socket
       execute: test-libc-socket
+
+    - name: unix-socket # Issue: 1342 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1342
+      execute: test-libc-unix-socket --extra-poll-delay-ms 250 --transfer-loop-cnt 30
       targets:
         include: [ia32-generic-qemu, host-generic-pc]
 
-    # - name: statvfs
-    #   execute: test-libc-statvfs
-    #   targets:
-    #     include: [host-generic-pc]
+    - name: inet-socket
+      execute: test-libc-inet-socket
+      targets:
+        value: [ia32-generic-qemu, armv7a7-imx6ull-evk, host-generic-pc]
+
+    - name: syslog
+      execute: test-libc-syslog
+      targets:
+        include: [host-generic-pc]
