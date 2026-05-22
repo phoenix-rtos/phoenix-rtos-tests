@@ -225,6 +225,7 @@ static void recursive_thread(void *arg)
 		}
 		if ((mutexLock(mt_common.mutex)) < 0) {
 			mt_common.thrErrors[targ->id]++;
+			mutexUnlock(mt_common.mutex);
 			endthread();
 		}
 		if (targ->id == 0) {
@@ -257,6 +258,7 @@ static void recursive_try_thread(void *arg)
 		}
 		if ((mutexTry(mt_common.mutex)) < 0) {
 			mt_common.thrErrors[targ->id]++;
+			mutexUnlock(mt_common.mutex);
 			endthread();
 		}
 		if (targ->id == 0) {
