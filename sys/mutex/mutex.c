@@ -132,6 +132,20 @@ TEST(mutex_single_thread, type_recursive)
 }
 
 
+TEST(mutex_single_thread, type_recursive_try)
+{
+	handle_t mutex;
+	struct lockAttr attr = { .type = PH_LOCK_RECURSIVE };
+
+	TEST_ASSERT_EQUAL_INT(0, mutexCreateWithAttr(&mutex, &attr));
+	TEST_ASSERT_EQUAL_INT(0, mutexTry(mutex));
+	TEST_ASSERT_EQUAL_INT(0, mutexTry(mutex));
+	TEST_ASSERT_EQUAL_INT(0, mutexUnlock(mutex));
+	TEST_ASSERT_EQUAL_INT(0, mutexUnlock(mutex));
+	TEST_ASSERT_EQUAL_INT(0, resourceDestroy(mutex));
+}
+
+
 /*
  *--------------------------------- MULTITHREADED TESTS -----------------------------------*
  */
@@ -210,6 +224,38 @@ static void recursive_thread(void *arg)
 			endthread();
 		}
 		if ((mutexLock(mt_common.mutex)) < 0) {
+			mt_common.thrErrors[targ->id]++;
+			endthread();
+		}
+		if (targ->id == 0) {
+			mt_common.counter++;
+		}
+		else {
+			mt_common.counter--;
+		}
+		usleep(targ->delay);
+		if ((mutexUnlock(mt_common.mutex)) < 0) {
+			mt_common.thrErrors[targ->id]++;
+			endthread();
+		}
+		if ((mutexUnlock(mt_common.mutex)) < 0) {
+			mt_common.thrErrors[targ->id]++;
+			endthread();
+		}
+	}
+	endthread();
+}
+
+
+static void recursive_try_thread(void *arg)
+{
+	threadArg_t *targ = (threadArg_t *)arg;
+	for (int i = 0; i < 100; i++) {
+		if ((mutexLock(mt_common.mutex)) < 0) {
+			mt_common.thrErrors[targ->id]++;
+			endthread();
+		}
+		if ((mutexTry(mt_common.mutex)) < 0) {
 			mt_common.thrErrors[targ->id]++;
 			endthread();
 		}
@@ -318,6 +364,24 @@ TEST(mutex_multithreaded, type_recursive)
 }
 
 
+TEST(mutex_multithreaded, type_recursive_try)
+{
+	handle_t tid1, tid2;
+	struct lockAttr attr = { .type = PH_LOCK_RECURSIVE };
+	threadArg_t arg1 = { .id = 0, .delay = 1 };
+	threadArg_t arg2 = { .id = 1, .delay = 3 };
+
+	TEST_ASSERT_EQUAL_INT(0, mutexCreateWithAttr(&mt_common.mutex, &attr));
+	TEST_ASSERT_EQUAL_INT(0, beginthreadex(recursive_try_thread, 4, mt_common.stack[0], sizeof(mt_common.stack[0]), &arg1, &tid1));
+	TEST_ASSERT_EQUAL_INT(0, beginthreadex(recursive_try_thread, 4, mt_common.stack[1], sizeof(mt_common.stack[1]), &arg2, &tid2));
+	TEST_ASSERT_EQUAL_INT(tid1, threadJoin(tid1, 0));
+	TEST_ASSERT_EQUAL_INT(tid2, threadJoin(tid2, 0));
+	TEST_ASSERT_EQUAL_INT(0, mt_common.counter);
+	TEST_ASSERT_EQUAL_INT(0, mt_common.thrErrors[0]);
+	TEST_ASSERT_EQUAL_INT(0, mt_common.thrErrors[1]);
+}
+
+
 /*
 ///////////////////////////////////////////////////////////////////////////////////////////////
 */
@@ -336,6 +400,7 @@ TEST_GROUP_RUNNER(mutex_single_thread)
 	RUN_TEST_CASE(mutex_single_thread, type_default);
 	RUN_TEST_CASE(mutex_single_thread, type_errorcheck);
 	RUN_TEST_CASE(mutex_single_thread, type_recursive);
+	RUN_TEST_CASE(mutex_single_thread, type_recursive_try);
 }
 
 
@@ -345,6 +410,7 @@ TEST_GROUP_RUNNER(mutex_multithreaded)
 	RUN_TEST_CASE(mutex_multithreaded, type_default);
 	RUN_TEST_CASE(mutex_multithreaded, type_errorcheck);
 	RUN_TEST_CASE(mutex_multithreaded, type_recursive);
+	RUN_TEST_CASE(mutex_multithreaded, type_recursive_try);
 }
 
 
