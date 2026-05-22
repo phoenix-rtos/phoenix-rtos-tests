@@ -49,4 +49,6 @@ $(eval $(call add_test_libc_custom,socket,unix-socket,, -Wno-attribute-warning, 
 $(eval $(call add_test_libc,poll))
 $(eval $(call add_test_libc,dirent, -lpthread))
 $(eval $(call add_test_libc,fcntl))
+
+$(eval $(call add_test_libc,statvfs))
 $(eval $(call add_test_libc,syslog))
