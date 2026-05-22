@@ -161,3 +161,7 @@ test:
       execute: test-libc-resource
       targets:
         include: [host-generic-pc]
+    - name: statvfs
+      execute: test-libc-statvfs
+      targets:
+        include: [host-generic-pc]
