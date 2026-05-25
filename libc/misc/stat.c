@@ -492,7 +492,7 @@ TEST(stat_mode, fifo_type)
 	close(fifo_fd);
 	remove(tempPath);
 
-	TEST_ASSERT_EQUAL_INT(0, mkfifo(tempPath, 0000));
+	TEST_ASSERT_EQUAL_INT(0, mkfifo(tempPath, 0600));
 
 	TEST_ASSERT_EQUAL_INT(0, stat(tempPath, &buffer));
 	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFIFO);
@@ -500,7 +500,8 @@ TEST(stat_mode, fifo_type)
 	TEST_ASSERT_EQUAL_INT(0, lstat(tempPath, &buffer));
 	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFIFO);
 
-	fifo_fd = open(tempPath, O_NONBLOCK);
+	fifo_fd = open(tempPath, O_RDONLY | O_NONBLOCK);
+	TEST_ASSERT_NOT_EQUAL_INT(-1, fifo_fd);
 	TEST_ASSERT_EQUAL_INT(0, fstat(fifo_fd, &buffer));
 	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFIFO);
 
