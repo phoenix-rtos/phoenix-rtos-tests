@@ -134,6 +134,11 @@ test:
         # no posixsrv
         exclude: [armv7r5f-zynqmp-qemu, armv8m33-mcxn94x-frdm, armv8m33-mcxn94x-frdm_cpu1 ]
 
+    - name: socket
+      execute: test-libc-socket
+      targets:
+        value: [host-generic-pc, ia32-generic-qemu]
+
     - name: poll
       execute: test-libc-poll
       targets:
