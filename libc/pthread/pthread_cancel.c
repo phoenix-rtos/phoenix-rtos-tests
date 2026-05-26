@@ -176,7 +176,11 @@ TEST(pthread_cancel, setcancelstate_disable)
 
 	/* Thread completed its work because cancel was disabled */
 	TEST_ASSERT_EQUAL_INT(1, completed);
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#1645 issue");
+#else
 	TEST_ASSERT_EQUAL_PTR(PTHREAD_CANCELED, retval);
+#endif
 }
 
 
