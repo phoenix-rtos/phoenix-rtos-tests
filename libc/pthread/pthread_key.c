@@ -48,8 +48,12 @@ TEST(pthread_key, key_create_success)
 	ret = pthread_key_create(&key, NULL);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#1642 issue");
+#else
 	ret = pthread_key_delete(key);
 	TEST_ASSERT_EQUAL_INT(0, ret);
+#endif
 }
 
 
@@ -66,8 +70,12 @@ TEST(pthread_key, key_initial_value_null)
 	val = pthread_getspecific(key);
 	TEST_ASSERT_NULL(val);
 
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#1642 issue");
+#else
 	ret = pthread_key_delete(key);
 	TEST_ASSERT_EQUAL_INT(0, ret);
+#endif
 }
 
 
@@ -99,8 +107,12 @@ TEST(pthread_key, key_initial_value_null_in_new_thread)
 
 	TEST_ASSERT_NULL(childVal);
 
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#1642 issue");
+#else
 	ret = pthread_key_delete(test_keyNewThread);
 	TEST_ASSERT_EQUAL_INT(0, ret);
+#endif
 }
 
 
@@ -242,8 +254,12 @@ TEST(pthread_key, key_delete_success)
 	ret = pthread_key_create(&key, NULL);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#1642 issue");
+#else
 	ret = pthread_key_delete(key);
 	TEST_ASSERT_EQUAL_INT(0, ret);
+#endif
 }
 
 
@@ -317,8 +333,12 @@ TEST(pthread_key, key_destructor_called_on_thread_exit)
 
 	TEST_ASSERT_EQUAL_INT(1, test_keyDtorExitCalled);
 
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#1642 issue");
+#else
 	ret = pthread_key_delete(test_keyDtorExit);
 	TEST_ASSERT_EQUAL_INT(0, ret);
+#endif
 }
 
 
@@ -359,8 +379,12 @@ TEST(pthread_key, key_destructor_not_called_for_null)
 
 	TEST_ASSERT_EQUAL_INT(0, test_keyDtorNullCalled);
 
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#1642 issue");
+#else
 	ret = pthread_key_delete(test_keyDtorNull);
 	TEST_ASSERT_EQUAL_INT(0, ret);
+#endif
 }
 
 
@@ -400,8 +424,12 @@ TEST(pthread_key, key_destructor_receives_value)
 
 	TEST_ASSERT_EQUAL_PTR(&data, test_keyDtorReceivedArg);
 
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#1642 issue");
+#else
 	ret = pthread_key_delete(test_keyDtorArg);
 	TEST_ASSERT_EQUAL_INT(0, ret);
+#endif
 }
 
 

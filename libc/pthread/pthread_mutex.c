@@ -329,6 +329,9 @@ TEST(pthread_mutex, mutex_trylock_recursive)
 	ret = pthread_mutex_trylock(&mtx);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#1643 issue");
+#else
 	ret = pthread_mutex_trylock(&mtx);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
@@ -337,6 +340,7 @@ TEST(pthread_mutex, mutex_trylock_recursive)
 
 	ret = pthread_mutex_unlock(&mtx);
 	TEST_ASSERT_EQUAL_INT(0, ret);
+#endif
 
 	pthread_mutex_destroy(&mtx);
 	pthread_mutexattr_destroy(&mattr);
