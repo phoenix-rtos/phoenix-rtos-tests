@@ -114,3 +114,8 @@ test:
       execute: test-libc-fcntl
       targets:
         include: [host-generic-pc]
+
+    - name: sched
+      execute: test-libc-sched
+      targets:
+        include: [host-generic-pc]
