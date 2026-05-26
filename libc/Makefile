@@ -50,5 +50,6 @@ $(eval $(call add_test_libc,poll))
 $(eval $(call add_test_libc,dirent, -lpthread))
 $(eval $(call add_test_libc,statvfs))
 $(eval $(call add_test_libc,fcntl))
+$(eval $(call add_test_libc,sched))
 
 $(eval $(call add_test_libc,syslog))
