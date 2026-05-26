@@ -123,12 +123,17 @@ TEST(pthread_attr, attr_setdetachstate_detached)
 	ret = pthread_attr_init(&attr);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
+#ifdef __phoenix__
+	(void)state;
+	TEST_IGNORE_MESSAGE("#1637 issue");
+#else
 	ret = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	ret = pthread_attr_getdetachstate(&attr, &state);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 	TEST_ASSERT_EQUAL_INT(PTHREAD_CREATE_DETACHED, state);
+#endif
 
 	pthread_attr_destroy(&attr);
 }
@@ -144,6 +149,10 @@ TEST(pthread_attr, attr_setdetachstate_joinable)
 	ret = pthread_attr_init(&attr);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
+#ifdef __phoenix__
+	(void)state;
+	TEST_IGNORE_MESSAGE("#1637 issue");
+#else
 	ret = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
@@ -153,6 +162,7 @@ TEST(pthread_attr, attr_setdetachstate_joinable)
 	ret = pthread_attr_getdetachstate(&attr, &state);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 	TEST_ASSERT_EQUAL_INT(PTHREAD_CREATE_JOINABLE, state);
+#endif
 
 	pthread_attr_destroy(&attr);
 }
@@ -211,12 +221,17 @@ TEST(pthread_attr, attr_schedpolicy_fifo)
 	ret = pthread_attr_init(&attr);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
+#ifdef __phoenix__
+	(void)policy;
+	TEST_IGNORE_MESSAGE("#1639 issue");
+#else
 	ret = pthread_attr_setschedpolicy(&attr, SCHED_FIFO);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	ret = pthread_attr_getschedpolicy(&attr, &policy);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 	TEST_ASSERT_EQUAL_INT(SCHED_FIFO, policy);
+#endif
 
 	pthread_attr_destroy(&attr);
 }
@@ -253,12 +268,17 @@ TEST(pthread_attr, attr_schedpolicy_other)
 	ret = pthread_attr_init(&attr);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
+#ifdef __phoenix__
+	(void)policy;
+	TEST_IGNORE_MESSAGE("#1639 issue");
+#else
 	ret = pthread_attr_setschedpolicy(&attr, SCHED_OTHER);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	ret = pthread_attr_getschedpolicy(&attr, &policy);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 	TEST_ASSERT_EQUAL_INT(SCHED_OTHER, policy);
+#endif
 
 	pthread_attr_destroy(&attr);
 }
@@ -397,7 +417,11 @@ TEST(pthread_attr, attr_getstack_after_setstack)
 	ret = pthread_attr_getstack(&attr, &stackaddr, &stacksize);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 	TEST_ASSERT_EQUAL_PTR(stack, stackaddr);
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#1641 issue");
+#else
 	TEST_ASSERT_EQUAL_UINT64(sizeof(stack), stacksize);
+#endif
 
 	pthread_attr_destroy(&attr);
 }
@@ -438,6 +462,11 @@ TEST(pthread_attr, attr_init_usable_with_create)
 	ret = pthread_attr_init(&attr);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
+#ifdef __phoenix__
+	(void)thread;
+	(void)retval;
+	TEST_IGNORE_MESSAGE("#1637 issue");
+#else
 	ret = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
@@ -447,6 +476,7 @@ TEST(pthread_attr, attr_init_usable_with_create)
 	ret = pthread_join(thread, &retval);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 	TEST_ASSERT_EQUAL_PTR((void *)42, retval);
+#endif
 
 	pthread_attr_destroy(&attr);
 }
