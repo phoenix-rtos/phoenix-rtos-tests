@@ -1,0 +1,19 @@
+libc/sched/sched_get_priority.c
+  s_617a1142c573dc::t_160089e2bc32eb 128-130,154
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "69fb52cc88aeda7e8457fd14159422d768d26117",
+  "prompts": {},
+  "sessions": {
+    "s_617a1142c573dc": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "53e7508f-9755-4c45-b639-5ea42c444fae",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    }
+  }
+}
