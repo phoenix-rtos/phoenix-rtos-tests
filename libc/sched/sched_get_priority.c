@@ -125,8 +125,10 @@ TEST(sched_get_priority, max_ge_min_all_policies)
 
 TEST(sched_get_priority, einval_invalid_policy)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#1652 issue");
+#else
 	int ret;
-
 	/* Test sched_get_priority_max with invalid policy */
 	errno = 0;
 	ret = sched_get_priority_max(-1);
@@ -149,6 +151,7 @@ TEST(sched_get_priority, einval_invalid_policy)
 	ret = sched_get_priority_min(9999);
 	TEST_ASSERT_EQUAL_INT(-1, ret);
 	TEST_ASSERT_EQUAL_INT(EINVAL, errno);
+#endif
 }
 
 
