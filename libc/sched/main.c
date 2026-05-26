@@ -10,7 +10,7 @@
  *    - sched_yield()
  *
  * Copyright 2026 Phoenix Systems
- * Author: Daniel Loew
+ * Author: Damian Loewnau
  *
  * This file is part of Phoenix-RTOS.
  *
