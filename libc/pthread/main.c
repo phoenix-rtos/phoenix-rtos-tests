@@ -25,15 +25,32 @@ void runner(void)
 	RUN_TEST_GROUP(test_pthread_cond);
 	RUN_TEST_GROUP(test_pthread_cleanup);
 	RUN_TEST_GROUP(pthread_attr);
+	RUN_TEST_GROUP(pthread_attr_guardsize);
+	RUN_TEST_GROUP(pthread_attr_inheritsched);
+	RUN_TEST_GROUP(pthread_attr_setscope);
+	RUN_TEST_GROUP(pthread_attr_setstack);
 	RUN_TEST_GROUP(pthread_mutex);
+	RUN_TEST_GROUP(pthread_mutex_consistent);
+	RUN_TEST_GROUP(pthread_mutex_prioceiling);
+	RUN_TEST_GROUP(pthread_mutex_timedlock);
 	RUN_TEST_GROUP(pthread_mutexattr);
+	RUN_TEST_GROUP(pthread_mutexattr_prioceiling);
+	RUN_TEST_GROUP(pthread_mutexattr_protocol);
+	RUN_TEST_GROUP(pthread_mutexattr_pshared);
+	RUN_TEST_GROUP(pthread_mutexattr_robust);
 	RUN_TEST_GROUP(pthread_lifecycle);
 	RUN_TEST_GROUP(pthread_once);
 	RUN_TEST_GROUP(pthread_key);
 	RUN_TEST_GROUP(pthread_cancel);
+	RUN_TEST_GROUP(pthread_cancel_type);
 	RUN_TEST_GROUP(pthread_atfork);
 	RUN_TEST_GROUP(pthread_kill);
 	RUN_TEST_GROUP(pthread_sigmask);
+	RUN_TEST_GROUP(pthread_rwlock);
+	RUN_TEST_GROUP(pthread_rwlockattr);
+	RUN_TEST_GROUP(pthread_spin);
+	RUN_TEST_GROUP(pthread_sched);
+	RUN_TEST_GROUP(pthread_getcpuclockid);
 }
 
 
