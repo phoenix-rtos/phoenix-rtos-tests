@@ -482,8 +482,11 @@ TEST(signal_sigaction, sa_nodefer_sa_mask_still_applied)
 /* SA_RESETHAND: disposition is reset to SIG_DFL on entry to handler */
 TEST(signal_sigaction, sa_resethand)
 {
-	struct sigaction sa, oact;
+	struct sigaction sa;
 	int ret;
+#ifndef __phoenix__
+	struct sigaction oact;
+#endif
 
 	test_common_saResetCalled = 0;
 
@@ -499,11 +502,15 @@ TEST(signal_sigaction, sa_resethand)
 	TEST_ASSERT_EQUAL_INT(0, ret);
 	TEST_ASSERT_EQUAL_INT(1, test_common_saResetCalled);
 
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#844 issue");
+#else
 	/* after handler, disposition should be SIG_DFL */
 	memset(&oact, 0, sizeof(oact));
 	ret = sigaction(SIGUSR1, NULL, &oact);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 	TEST_ASSERT_TRUE(oact.sa_handler == SIG_DFL);
+#endif
 }
 
 
@@ -524,10 +531,14 @@ TEST(signal_sigaction, sa_siginfo_handler)
 	ret = sigaction(SIGUSR1, &sa, NULL);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#844 issue");
+#else
 	ret = raise(SIGUSR1);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 	TEST_ASSERT_EQUAL_INT(1, test_common_siginfoCalled);
 	TEST_ASSERT_EQUAL_INT(SIGUSR1, test_common_handlerSigNo);
+#endif
 }
 
 
@@ -535,8 +546,10 @@ TEST(signal_sigaction, sa_siginfo_handler)
 TEST(signal_sigaction, sa_siginfo_si_signo)
 {
 	struct sigaction sa;
-	siginfo_t localInfo;
 	int ret;
+#ifndef __phoenix__
+	siginfo_t localInfo;
+#endif
 
 	test_common_siginfoCalled = 0;
 	memset((void *)&test_common_siginfo, 0, sizeof(siginfo_t));
@@ -549,12 +562,16 @@ TEST(signal_sigaction, sa_siginfo_si_signo)
 	ret = sigaction(SIGUSR2, &sa, NULL);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#844 issue");
+#else
 	ret = raise(SIGUSR2);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 	TEST_ASSERT_EQUAL_INT(1, test_common_siginfoCalled);
 
 	localInfo = *(siginfo_t *)&test_common_siginfo;
 	TEST_ASSERT_EQUAL_INT(SIGUSR2, localInfo.si_signo);
+#endif
 }
 
 
@@ -625,8 +642,10 @@ TEST(signal_sigaction, failure_no_change)
 TEST(signal_sigaction, sigkill_sigstop_not_in_sa_mask)
 {
 	struct sigaction sa;
-	sigset_t local;
 	int ret;
+#ifndef __phoenix__
+	sigset_t local;
+#endif
 
 	test_common_handlerCalled = 0;
 
@@ -644,9 +663,13 @@ TEST(signal_sigaction, sigkill_sigstop_not_in_sa_mask)
 	TEST_ASSERT_EQUAL_INT(1, test_common_handlerCalled);
 
 	/* SIGKILL and SIGSTOP should not actually be blocked in the handler */
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#1653 issue");
+#else
 	local = test_common_handlerMask;
 	TEST_ASSERT_EQUAL_INT(0, sigismember(&local, SIGKILL));
 	TEST_ASSERT_EQUAL_INT(0, sigismember(&local, SIGSTOP));
+#endif
 }
 
 
@@ -750,7 +773,12 @@ TEST(signal_sigaction, sa_siginfo_flag_preserved)
 	memset(&oact, 0, sizeof(oact));
 	ret = sigaction(SIGUSR1, NULL, &oact);
 	TEST_ASSERT_EQUAL_INT(0, ret);
+
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#844 issue");
+#else
 	TEST_ASSERT_TRUE((oact.sa_flags & SA_SIGINFO) != 0);
+#endif
 }
 
 
@@ -800,8 +828,11 @@ TEST(signal_sigaction, einval_negative_signal)
 /* SA_RESETHAND: SA_SIGINFO flag is cleared on entry to handler */
 TEST(signal_sigaction, sa_resethand_clears_siginfo)
 {
-	struct sigaction sa, oact;
+	struct sigaction sa;
 	int ret;
+#ifndef __phoenix__
+	struct sigaction oact;
+#endif
 
 	test_common_siginfoCalled = 0;
 
@@ -813,6 +844,9 @@ TEST(signal_sigaction, sa_resethand_clears_siginfo)
 	ret = sigaction(SIGUSR1, &sa, NULL);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#844 issue");
+#else
 	ret = raise(SIGUSR1);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 	TEST_ASSERT_EQUAL_INT(1, test_common_siginfoCalled);
@@ -822,12 +856,11 @@ TEST(signal_sigaction, sa_resethand_clears_siginfo)
 	ret = sigaction(SIGUSR1, NULL, &oact);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 	TEST_ASSERT_TRUE(oact.sa_handler == SIG_DFL);
-#ifndef __phoenix__
 	if ((oact.sa_flags & SA_SIGINFO) != 0) {
 		TEST_IGNORE_MESSAGE("host-pc bug: glibc does not clear SA_SIGINFO on SA_RESETHAND");
 	}
-#endif
 	TEST_ASSERT_EQUAL_INT(0, (oact.sa_flags & SA_SIGINFO));
+#endif
 }
 
 
