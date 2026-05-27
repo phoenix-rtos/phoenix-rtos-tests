@@ -146,3 +146,18 @@ test:
       execute: test-libc-grp
       targets:
         include: [host-generic-pc]
+
+    - name: pwd
+      execute: test-libc-pwd
+      targets:
+        include: [host-generic-pc]
+
+    - name: sem
+      execute: test-libc-sem
+      targets:
+        include: [host-generic-pc]
+
+    - name: resource
+      execute: test-libc-resource
+      targets:
+        include: [host-generic-pc]
