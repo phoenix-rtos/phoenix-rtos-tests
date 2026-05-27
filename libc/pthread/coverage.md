@@ -252,3 +252,33 @@
 | "The prepare fork handlers shall be called in the opposite order" | `pthread_atfork.atfork_prepare_reverse_order` | covered |
 | "The parent and child fork handlers shall be called in the order in which they were established" | `pthread_atfork.atfork_prepare_reverse_order` / `pthread_atfork.atfork_child_registration_order` | covered |
 | shall fail with [ENOMEM] | — | not tested: cannot exhaust table space portably |
+
+## pthread_kill
+
+| Requirement (POSIX verbatim) | Test case | Status |
+|---|---|---|
+| "shall request that a signal be delivered to the specified thread" | `pthread_kill.signal_delivery_to_self` | covered |
+| Signal handled in the context of the given thread | `pthread_kill.handler_context_is_target_thread` | covered |
+| Signal delivered to a different thread | `pthread_kill.signal_delivery_to_other_thread` | covered |
+| "if sig is zero, error checking shall be performed but no signal shall actually be sent" | `pthread_kill.sig_zero_no_signal_sent` | covered |
+| "Upon successful completion, the function shall return a value of zero" | `pthread_kill.signal_delivery_to_self` | covered |
+| "Otherwise, the function shall return an error number" | `pthread_kill.einval_invalid_signal_number` | covered |
+| [EINVAL] "The value of the sig argument is an invalid or unsupported signal number" (positive) | `pthread_kill.einval_invalid_signal_number` | covered |
+| [EINVAL] "The value of the sig argument is an invalid or unsupported signal number" (negative) | `pthread_kill.einval_negative_signal_number` | covered |
+| Delivery of different signal numbers (SIGUSR1 and SIGUSR2) | `pthread_kill.multiple_signals` | covered |
+
+## pthread_sigmask
+
+| Requirement (POSIX verbatim) | Test case | Status |
+|---|---|---|
+| "shall examine or change (or both) the calling thread's signal mask" | `pthread_sigmask.block_adds_to_mask` | covered |
+| SIG_BLOCK: "The resulting set shall be the union of the current set and the signal set pointed to by set" | `pthread_sigmask.block_union_semantics` | covered |
+| SIG_UNBLOCK: "The resulting set shall be the intersection of the current set and the complement of the signal set pointed to by set" | `pthread_sigmask.unblock_removes_from_mask` | covered |
+| SIG_SETMASK: "The resulting set shall be the signal set pointed to by set" | `pthread_sigmask.setmask_replaces_mask` | covered |
+| "If the argument oset is not a null pointer, the previous mask shall be stored in the location pointed to by oset" | `pthread_sigmask.oset_stores_previous_mask` | covered |
+| "If set is a null pointer … the thread's signal mask shall be unchanged; thus the call can be used to enquire about currently blocked signals" | `pthread_sigmask.set_null_queries_without_change` | covered |
+| "If there are any pending unblocked signals after the call to sigprocmask(), at least one of those signals shall be delivered before the call to sigprocmask() returns" | `pthread_sigmask.pending_signal_delivered_on_unblock` | covered |
+| "It is not possible to block those signals which cannot be ignored. This shall be enforced by the system without causing an error to be indicated" (SIGKILL) | `pthread_sigmask.cannot_block_sigkill` | covered |
+| "It is not possible to block those signals which cannot be ignored. This shall be enforced by the system without causing an error to be indicated" (SIGSTOP) | `pthread_sigmask.cannot_block_sigstop` | covered |
+| "Upon successful completion pthread_sigmask() shall return 0" | `pthread_sigmask.block_adds_to_mask` | covered |
+| [EINVAL] "The value of the how argument is not equal to one of the defined values" | `pthread_sigmask.einval_invalid_how` | covered |
