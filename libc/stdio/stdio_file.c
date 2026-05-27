@@ -13,7 +13,7 @@
  * ungetc,
  * getline,
  * fseek, fseeko, rewind,
- * ftell,
+ * ftell, fgetpos, fsetpos,
  * fileno, feof, remove,
  * ferror, clearerr,
  * setvbuf, setbuf, fflush,
@@ -1798,4 +1798,298 @@ TEST_GROUP_RUNNER(stdio_fflush)
 {
 	RUN_TEST_CASE(stdio_fflush, stdio_fflush_socket);
 	RUN_TEST_CASE(stdio_fflush, stdio_fflush_eagain);
+}
+
+
+/*
+Test group for fgetpos.
+*/
+TEST_GROUP(stdio_fgetpos);
+
+
+TEST_SETUP(stdio_fgetpos)
+{
+	filep = NULL;
+}
+
+
+TEST_TEAR_DOWN(stdio_fgetpos)
+{
+	if (filep != NULL) {
+		fclose(filep);
+		filep = NULL;
+	}
+
+	remove(STDIO_TEST_FILENAME);
+}
+
+
+TEST(stdio_fgetpos, fgetpos_basic)
+{
+	fpos_t pos;
+
+	filep = fopen(STDIO_TEST_FILENAME, "w+");
+	TEST_ASSERT_NOT_NULL(filep);
+	{
+		TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fputs(teststr, filep));
+		rewind(filep);
+		TEST_ASSERT_EQUAL_INT(0, fgetpos(filep, &pos));
+		TEST_ASSERT_EQUAL_INT(teststr[0], fgetc(filep));
+		TEST_ASSERT_EQUAL_INT(teststr[1], fgetc(filep));
+		TEST_ASSERT_EQUAL_INT(0, fgetpos(filep, &pos));
+	}
+	assert_fclosed(&filep);
+}
+
+
+TEST(stdio_fgetpos, fgetpos_no_errno_change)
+{
+	fpos_t pos;
+
+	/* fgetpos shall not change errno if successful */
+	filep = fopen(STDIO_TEST_FILENAME, "w+");
+	TEST_ASSERT_NOT_NULL(filep);
+	{
+		errno = EDOM;
+		TEST_ASSERT_EQUAL_INT(0, fgetpos(filep, &pos));
+		TEST_ASSERT_EQUAL_INT(EDOM, errno);
+	}
+	assert_fclosed(&filep);
+}
+
+
+TEST(stdio_fgetpos, fgetpos_espipe)
+{
+	int fd[2];
+	int ret;
+	fpos_t pos;
+
+	/* fgetpos shall fail with ESPIPE on a pipe */
+	ret = pipe(fd);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+
+	filep = fdopen(fd[0], "r");
+	TEST_ASSERT_NOT_NULL(filep);
+	{
+		errno = 0;
+		TEST_ASSERT_NOT_EQUAL_INT(0, fgetpos(filep, &pos));
+		TEST_ASSERT_EQUAL_INT(ESPIPE, errno);
+	}
+	fclose(filep);
+	filep = NULL;
+	close(fd[1]);
+}
+
+
+TEST(stdio_fgetpos, fgetpos_ebadf)
+{
+	fpos_t pos;
+
+	filep = fopen(STDIO_TEST_FILENAME, "w+");
+	TEST_ASSERT_NOT_NULL(filep);
+	{
+		/* invalidate the underlying fd */
+		close(fileno(filep));
+		errno = 0;
+		TEST_ASSERT_NOT_EQUAL_INT(0, fgetpos(filep, &pos));
+		TEST_ASSERT_EQUAL_INT(EBADF, errno);
+	}
+	/* fclose on invalid fd - just clean up the FILE structure */
+	fclose(filep);
+	filep = NULL;
+}
+
+
+TEST_GROUP_RUNNER(stdio_fgetpos)
+{
+	RUN_TEST_CASE(stdio_fgetpos, fgetpos_basic);
+	RUN_TEST_CASE(stdio_fgetpos, fgetpos_no_errno_change);
+	RUN_TEST_CASE(stdio_fgetpos, fgetpos_espipe);
+	RUN_TEST_CASE(stdio_fgetpos, fgetpos_ebadf);
+}
+
+
+/*
+Test group for fsetpos.
+*/
+TEST_GROUP(stdio_fsetpos);
+
+
+TEST_SETUP(stdio_fsetpos)
+{
+	filep = NULL;
+}
+
+
+TEST_TEAR_DOWN(stdio_fsetpos)
+{
+	if (filep != NULL) {
+		fclose(filep);
+		filep = NULL;
+	}
+
+	remove(STDIO_TEST_FILENAME);
+}
+
+
+TEST(stdio_fsetpos, fsetpos_basic)
+{
+	fpos_t pos0, pos2;
+
+	filep = fopen(STDIO_TEST_FILENAME, "w+");
+	TEST_ASSERT_NOT_NULL(filep);
+	{
+		TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fputs(teststr, filep));
+		rewind(filep);
+
+		/* save position at offset 0 */
+		TEST_ASSERT_EQUAL_INT(0, fgetpos(filep, &pos0));
+		TEST_ASSERT_EQUAL_INT(teststr[0], fgetc(filep));
+		TEST_ASSERT_EQUAL_INT(teststr[1], fgetc(filep));
+
+		/* save position at offset 2 */
+		TEST_ASSERT_EQUAL_INT(0, fgetpos(filep, &pos2));
+		TEST_ASSERT_EQUAL_INT(teststr[2], fgetc(filep));
+
+		/* restore to offset 0 */
+		TEST_ASSERT_EQUAL_INT(0, fsetpos(filep, &pos0));
+		TEST_ASSERT_EQUAL_INT(teststr[0], fgetc(filep));
+
+		/* restore to offset 2 */
+		TEST_ASSERT_EQUAL_INT(0, fsetpos(filep, &pos2));
+		TEST_ASSERT_EQUAL_INT(teststr[2], fgetc(filep));
+	}
+	assert_fclosed(&filep);
+}
+
+
+TEST(stdio_fsetpos, fsetpos_clears_eof)
+{
+	fpos_t pos;
+
+	/* A successful call to fsetpos shall clear the end-of-file indicator */
+	filep = fopen(STDIO_TEST_FILENAME, "w+");
+	TEST_ASSERT_NOT_NULL(filep);
+	{
+		TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fputs(teststr, filep));
+		rewind(filep);
+		TEST_ASSERT_EQUAL_INT(0, fgetpos(filep, &pos));
+
+		/* advance to EOF */
+		TEST_ASSERT_EQUAL_INT(0, fseek(filep, 0, SEEK_END));
+		TEST_ASSERT_EQUAL_INT(EOF, fgetc(filep));
+		TEST_ASSERT_NOT_EQUAL_INT(0, feof(filep));
+
+		/* fsetpos shall clear EOF */
+		TEST_ASSERT_EQUAL_INT(0, fsetpos(filep, &pos));
+		TEST_ASSERT_EQUAL_INT(0, feof(filep));
+	}
+	assert_fclosed(&filep);
+}
+
+
+TEST(stdio_fsetpos, fsetpos_undoes_ungetc)
+{
+	fpos_t pos;
+
+	/* A successful call to fsetpos shall undo effects of ungetc */
+	filep = fopen(STDIO_TEST_FILENAME, "w+");
+	TEST_ASSERT_NOT_NULL(filep);
+	{
+		TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fputs(teststr, filep));
+		rewind(filep);
+
+		TEST_ASSERT_EQUAL_INT(teststr[0], fgetc(filep));
+		TEST_ASSERT_EQUAL_INT(0, fgetpos(filep, &pos));
+
+		/* push back a different character */
+		TEST_ASSERT_EQUAL_INT('Z', ungetc('Z', filep));
+		TEST_ASSERT_EQUAL_INT('Z', fgetc(filep));
+
+		/* fsetpos shall undo ungetc effects, restoring to saved position */
+		TEST_ASSERT_EQUAL_INT('Z', ungetc('Z', filep));
+		TEST_ASSERT_EQUAL_INT(0, fsetpos(filep, &pos));
+		TEST_ASSERT_EQUAL_INT(teststr[1], fgetc(filep));
+	}
+	assert_fclosed(&filep);
+}
+
+
+TEST(stdio_fsetpos, fsetpos_no_errno_change)
+{
+	fpos_t pos;
+
+	/* fsetpos shall not change errno if successful */
+	filep = fopen(STDIO_TEST_FILENAME, "w+");
+	TEST_ASSERT_NOT_NULL(filep);
+	{
+		TEST_ASSERT_EQUAL_INT(0, fgetpos(filep, &pos));
+		errno = EDOM;
+		TEST_ASSERT_EQUAL_INT(0, fsetpos(filep, &pos));
+		TEST_ASSERT_EQUAL_INT(EDOM, errno);
+	}
+	assert_fclosed(&filep);
+}
+
+
+TEST(stdio_fsetpos, fsetpos_espipe)
+{
+	int fd[2];
+	int ret;
+	fpos_t pos;
+
+	/* fsetpos shall fail with ESPIPE on a pipe */
+	ret = pipe(fd);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+
+	filep = fdopen(fd[1], "w");
+	TEST_ASSERT_NOT_NULL(filep);
+	{
+		memset(&pos, 0, sizeof(pos));
+		errno = 0;
+		TEST_ASSERT_NOT_EQUAL_INT(0, fsetpos(filep, &pos));
+		TEST_ASSERT_EQUAL_INT(ESPIPE, errno);
+	}
+	fclose(filep);
+	filep = NULL;
+	close(fd[0]);
+}
+
+
+TEST(stdio_fsetpos, fsetpos_update_stream)
+{
+	fpos_t pos;
+	char buf[BUF_SIZE];
+
+	/* After fsetpos, next operation on update stream may be either input or output */
+	filep = fopen(STDIO_TEST_FILENAME, "w+");
+	TEST_ASSERT_NOT_NULL(filep);
+	{
+		TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fputs(teststr, filep));
+		rewind(filep);
+		TEST_ASSERT_EQUAL_INT(0, fgetpos(filep, &pos));
+
+		/* read some data */
+		TEST_ASSERT_NOT_NULL(fgets(buf, 5, filep));
+
+		/* fsetpos, then write (switch from read to write) */
+		TEST_ASSERT_EQUAL_INT(0, fsetpos(filep, &pos));
+		TEST_ASSERT_EQUAL_INT('X', fputc('X', filep));
+
+		/* fsetpos, then read (switch from write to read) */
+		TEST_ASSERT_EQUAL_INT(0, fsetpos(filep, &pos));
+		TEST_ASSERT_EQUAL_INT('X', fgetc(filep));
+	}
+	assert_fclosed(&filep);
+}
+
+
+TEST_GROUP_RUNNER(stdio_fsetpos)
+{
+	RUN_TEST_CASE(stdio_fsetpos, fsetpos_basic);
+	RUN_TEST_CASE(stdio_fsetpos, fsetpos_clears_eof);
+	RUN_TEST_CASE(stdio_fsetpos, fsetpos_undoes_ungetc);
+	RUN_TEST_CASE(stdio_fsetpos, fsetpos_no_errno_change);
+	RUN_TEST_CASE(stdio_fsetpos, fsetpos_espipe);
+	RUN_TEST_CASE(stdio_fsetpos, fsetpos_update_stream);
 }
