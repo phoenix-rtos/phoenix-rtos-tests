@@ -48,5 +48,7 @@ $(eval $(call add_test_libc_custom,socket,unix-socket,, -Wno-attribute-warning, 
 $(eval $(call add_test_libc,poll))
 $(eval $(call add_test_libc,fcntl))
 $(eval $(call add_test_libc,sched))
-# $(eval $(call add_test_libc,mman))
-# $(eval $(call add_test_libc,dirent))
+$(eval $(call add_test_libc,mman))
+$(eval $(call add_test_libc,dirent))
+$(eval $(call add_test_libc,grp))
+

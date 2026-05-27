@@ -1,9 +1,12 @@
 /*
  * Phoenix-RTOS
  *
- * test-libc-dirent
- *
- * Main entry point.
+ * POSIX.1-2017 standard library functions tests
+ * HEADER:
+ *    - <grp.h>
+ * TESTED:
+ *    - getgrgid()
+ *    - getgrnam()
  *
  * Copyright 2026 Phoenix Systems
  * Author: Damian Loewnau
@@ -17,17 +20,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-
 #include "unity_fixture.h"
 
 void runner(void)
 {
-	RUN_TEST_GROUP(dirent_fdopendir);
-	RUN_TEST_GROUP(dirent_seekdir_telldir);
-	RUN_TEST_GROUP(dirent_dirfd);
-	RUN_TEST_GROUP(dirent_scandir);
+	RUN_TEST_GROUP(grp_getgrgid);
+	RUN_TEST_GROUP(grp_getgrnam);
 }
-
 
 int main(int argc, char *argv[])
 {

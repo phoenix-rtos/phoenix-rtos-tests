@@ -129,3 +129,8 @@ test:
       execute: test-libc-dirent
       targets:
         include: [host-generic-pc]
+
+    - name: grp
+      execute: test-libc-grp
+      targets:
+        include: [host-generic-pc]
