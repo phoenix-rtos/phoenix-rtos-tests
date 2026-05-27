@@ -3,11 +3,13 @@
  *
  * POSIX.1-2017 standard library functions tests
  * HEADER:
- *    - sched.h
+ *    - <sys/resource.h>
  * TESTED:
- *    - sched_get_priority_max()
- *    - sched_get_priority_min()
- *    - sched_yield()
+ *    - getpriority()
+ *    - getrlimit()
+ *    - getrusage()
+ *    - setpriority()
+ *    - setrlimit()
  *
  * Copyright 2026 Phoenix Systems
  * Author: Damian Loewnau
@@ -25,11 +27,9 @@
 
 void runner(void)
 {
-	RUN_TEST_GROUP(sched_get_priority);
-	RUN_TEST_GROUP(sched_yield);
-	RUN_TEST_GROUP(sched_param);
-	RUN_TEST_GROUP(sched_scheduler);
-	RUN_TEST_GROUP(sched_rr_get_interval);
+	RUN_TEST_GROUP(resource_priority);
+	RUN_TEST_GROUP(resource_rlimit);
+	RUN_TEST_GROUP(resource_rusage);
 }
 
 int main(int argc, char *argv[])

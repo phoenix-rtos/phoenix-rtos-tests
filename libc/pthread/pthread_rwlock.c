@@ -16,7 +16,7 @@
  *    - pthread_rwlock_timedwrlock()
  *
  * Copyright 2026 Phoenix Systems
- * Author: Daniel Loewnau
+ * Author: Damian Loewnau
  *
  * This file is part of Phoenix-RTOS.
  *

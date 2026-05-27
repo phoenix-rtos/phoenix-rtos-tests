@@ -26,6 +26,7 @@ void runner(void)
 	RUN_TEST_GROUP(stdlib_strto);
 	RUN_TEST_GROUP(stdlib_mkdtemp);
 	RUN_TEST_GROUP(stdlib_mkstemp);
+	RUN_TEST_GROUP(stdlib_system);
 }
 
 
