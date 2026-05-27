@@ -26,6 +26,8 @@ void runner(void)
 {
 	RUN_TEST_GROUP(fcntl_open);
 	RUN_TEST_GROUP(fcntl_creat);
+	RUN_TEST_GROUP(fcntl_fcntl);
+	RUN_TEST_GROUP(fcntl_openat);
 }
 
 int main(int argc, char *argv[])
