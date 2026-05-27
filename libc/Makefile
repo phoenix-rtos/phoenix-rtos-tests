@@ -53,4 +53,7 @@ $(eval $(call add_test_libc,sched))
 $(eval $(call add_test_libc,mman))
 $(eval $(call add_test_libc,dirent))
 $(eval $(call add_test_libc,grp))
+$(eval $(call add_test_libc,pwd))
+$(eval $(call add_test_libc,sem, -lpthread))
+$(eval $(call add_test_libc,resource))
 
