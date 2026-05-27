@@ -3,11 +3,18 @@
  *
  * POSIX.1-2017 standard library functions tests
  * HEADER:
- *    - sched.h
+ *    - <semaphore.h>
  * TESTED:
- *    - sched_get_priority_max()
- *    - sched_get_priority_min()
- *    - sched_yield()
+ *    - sem_close()
+ *    - sem_destroy()
+ *    - sem_getvalue()
+ *    - sem_init()
+ *    - sem_open()
+ *    - sem_post()
+ *    - sem_timedwait()
+ *    - sem_trywait()
+ *    - sem_unlink()
+ *    - sem_wait()
  *
  * Copyright 2026 Phoenix Systems
  * Author: Damian Loewnau
@@ -25,11 +32,8 @@
 
 void runner(void)
 {
-	RUN_TEST_GROUP(sched_get_priority);
-	RUN_TEST_GROUP(sched_yield);
-	RUN_TEST_GROUP(sched_param);
-	RUN_TEST_GROUP(sched_scheduler);
-	RUN_TEST_GROUP(sched_rr_get_interval);
+	RUN_TEST_GROUP(sem_unnamed);
+	RUN_TEST_GROUP(sem_named);
 }
 
 int main(int argc, char *argv[])
