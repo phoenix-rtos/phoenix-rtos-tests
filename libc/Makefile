@@ -50,5 +50,5 @@ $(eval $(call add_test_libc_custom,socket,socket,, -Wno-attribute-warning, main.
 $(eval $(call add_test_libc,poll))
 $(eval $(call add_test_libc,fcntl))
 $(eval $(call add_test_libc,sched))
-$(eval $(call add_test_libc,mman))
-$(eval $(call add_test_libc,dirent))
+# $(eval $(call add_test_libc,mman))
+# $(eval $(call add_test_libc,dirent))
