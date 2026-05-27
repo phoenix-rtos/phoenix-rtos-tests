@@ -137,3 +137,13 @@ test:
       execute: test-libc-sched
       targets:
         include: [host-generic-pc]
+
+    - name: mman
+      execute: test-libc-mman
+      targets:
+        include: [host-generic-pc]
+
+    - name: dirent
+      execute: test-libc-dirent
+      targets:
+        include: [host-generic-pc]
