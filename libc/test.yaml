@@ -142,6 +142,11 @@ test:
       targets:
         include: [host-generic-pc]
 
+    - name: mman
+      execute: test-libc-mman
+      targets:
+        include: [host-generic-pc]
+
     - name: syslog
       execute: test-libc-syslog
       targets:
