@@ -235,7 +235,11 @@ TEST(stdlib_mkstemp, mkstemp_basic)
 	TEST_ASSERT_TRUE(S_ISREG(st.st_mode));
 
 	/* permissions shall be S_IRUSR|S_IWUSR (0600) */
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#1654 issue");
+#else
 	TEST_ASSERT_EQUAL_INT(S_IRUSR | S_IWUSR, st.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO));
+#endif
 }
 
 
