@@ -26,6 +26,7 @@ void runner(void)
 	RUN_TEST_GROUP(handler);
 	RUN_TEST_GROUP(sigaction);
 	RUN_TEST_GROUP(sigsuspend);
+	RUN_TEST_GROUP(signal_sigaction);
 }
 
 
