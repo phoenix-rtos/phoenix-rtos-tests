@@ -29,6 +29,10 @@
 
 #include <unity_fixture.h>
 
+#ifndef O_DIRECTORY
+#define O_DIRECTORY 0
+#endif
+
 #define DIRENT_TEST_DIR   "dirent_test_dir"
 #define DIRENT_FILE_A     "dirent_test_dir/aaa"
 #define DIRENT_FILE_B     "dirent_test_dir/bbb"
