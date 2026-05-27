@@ -32,6 +32,8 @@ void runner(void)
 	RUN_TEST_GROUP(pthread_key);
 	RUN_TEST_GROUP(pthread_cancel);
 	RUN_TEST_GROUP(pthread_atfork);
+	RUN_TEST_GROUP(pthread_kill);
+	RUN_TEST_GROUP(pthread_sigmask);
 }
 
 
