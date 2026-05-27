@@ -1,33 +1,29 @@
 /*
  * Phoenix-RTOS
  *
- * test-libc-dirent
+ * test-libc-mman
  *
  * Main entry point.
  *
- * Copyright 2023-2026 Phoenix Systems
- * Author: Arkadiusz Kozlowski, Damian Loewnau
+ * Copyright 2026 Phoenix Systems
+ * Author: Damian Loewnau
  *
  * This file is part of Phoenix-RTOS.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#include "unity_fixture.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 
-/* No need for forward declarations, RUN_TEST_GROUP does it by itself */
+#include "unity_fixture.h"
+
 void runner(void)
 {
-	RUN_TEST_GROUP(dirent_opendir);
-	RUN_TEST_GROUP(dirent_closedir);
-	RUN_TEST_GROUP(dirent_readdir);
-	RUN_TEST_GROUP(dirent_rewinddir);
-	RUN_TEST_GROUP(dirent_fdopendir);
-	RUN_TEST_GROUP(dirent_seekdir_telldir);
+	RUN_TEST_GROUP(mman_mmap);
+	RUN_TEST_GROUP(mman_munmap);
 }
 
 

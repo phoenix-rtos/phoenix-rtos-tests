@@ -33,6 +33,8 @@ void runner(void)
 	RUN_TEST_GROUP(stdio_feof);
 	RUN_TEST_GROUP(stdio_ftell);
 	RUN_TEST_GROUP(stdio_getdelim);
+	RUN_TEST_GROUP(stdio_fgetpos);
+	RUN_TEST_GROUP(stdio_fsetpos);
 }
 
 
