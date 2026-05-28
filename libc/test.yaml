@@ -147,6 +147,11 @@ test:
       targets:
         include: [host-generic-pc]
 
+    - name: grp
+      execute: test-libc-grp
+      targets:
+        include: [host-generic-pc]
+
     - name: syslog
       execute: test-libc-syslog
       targets:
