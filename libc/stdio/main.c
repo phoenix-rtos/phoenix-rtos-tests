@@ -33,6 +33,12 @@ void runner(void)
 	RUN_TEST_GROUP(stdio_feof);
 	RUN_TEST_GROUP(stdio_ftell);
 	RUN_TEST_GROUP(stdio_getdelim);
+	RUN_TEST_GROUP(stdio_fgetpos);
+	RUN_TEST_GROUP(stdio_fsetpos);
+	RUN_TEST_GROUP(stdio_unlocked);
+	RUN_TEST_GROUP(stdio_renameat);
+	RUN_TEST_GROUP(stdio_tmpnam);
+	RUN_TEST_GROUP(stdio_vdprintf);
 }
 
 
