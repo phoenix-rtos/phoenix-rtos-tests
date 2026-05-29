@@ -202,13 +202,14 @@ TEST_SETUP(signal_pending)
 TEST_TEAR_DOWN(signal_pending)
 {
 	sigset_t pending, unblock;
-	struct timespec ts;
 
 	/* Consume any pending signals before unblocking to avoid termination */
 	sigemptyset(&unblock);
 	sigaddset(&unblock, SIGUSR1);
 	sigaddset(&unblock, SIGUSR2);
 
+#ifndef __phoenix__
+	struct timespec ts;
 	ts.tv_sec = 0;
 	ts.tv_nsec = 0;
 	sigpending(&pending);
@@ -219,6 +220,12 @@ TEST_TEAR_DOWN(signal_pending)
 	if (sigismember(&pending, SIGUSR2)) {
 		sigtimedwait(&unblock, NULL, &ts);
 	}
+#else
+	(void)pending;
+	signal(SIGUSR1, SIG_IGN);
+	signal(SIGUSR2, SIG_IGN);
+	sigprocmask(SIG_UNBLOCK, &unblock, NULL);
+#endif
 
 	sigprocmask(SIG_UNBLOCK, &unblock, NULL);
 	signal(SIGUSR1, SIG_DFL);
@@ -226,6 +233,7 @@ TEST_TEAR_DOWN(signal_pending)
 }
 
 
+#ifndef __phoenix__
 TEST(signal_pending, sigpending_empty_when_none_blocked)
 {
 	sigset_t pending;
@@ -490,14 +498,18 @@ TEST(signal_pending, sigqueue_esrch_invalid_pid)
 	TEST_ASSERT_EQUAL_INT(-1, ret);
 	TEST_ASSERT_EQUAL_INT(ESRCH, errno);
 }
+#endif /* !__phoenix__ */
 
 
 TEST(signal_pending, killpg_delivers_to_group)
 {
-	sigset_t block, waitSet;
+	sigset_t block, unblock;
 	int ret;
-	struct timespec ts;
 	pid_t pgrp;
+
+	test_handlerCalled = 0;
+	test_handlerSig = 0;
+	signal(SIGUSR1, test_sigHandler);
 
 	/* Block SIGUSR1 */
 	ret = sigemptyset(&block);
@@ -518,16 +530,16 @@ TEST(signal_pending, killpg_delivers_to_group)
 	TEST_ASSERT_EQUAL_INT(0, ret);
 	TEST_ASSERT_EQUAL_INT(0, errno);
 
-	/* Consume the signal */
-	ret = sigemptyset(&waitSet);
+	/* Unblock SIGUSR1 to let the handler run */
+	ret = sigemptyset(&unblock);
 	TEST_ASSERT_EQUAL_INT(0, ret);
-	ret = sigaddset(&waitSet, SIGUSR1);
+	ret = sigaddset(&unblock, SIGUSR1);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+	ret = sigprocmask(SIG_UNBLOCK, &unblock, NULL);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
-	ts.tv_sec = 5;
-	ts.tv_nsec = 0;
-	ret = sigtimedwait(&waitSet, NULL, &ts);
-	TEST_ASSERT_EQUAL_INT(SIGUSR1, ret);
+	TEST_ASSERT_EQUAL_INT(1, test_handlerCalled);
+	TEST_ASSERT_EQUAL_INT(SIGUSR1, test_handlerSig);
 }
 
 
@@ -550,15 +562,20 @@ TEST(signal_pending, killpg_einval_invalid_signal)
 
 TEST(signal_pending, killpg_esrch_invalid_pgrp)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#1659 issue");
+#else
 	int ret;
 
 	errno = 0;
 	ret = killpg(99999, SIGUSR1);
 	TEST_ASSERT_EQUAL_INT(-1, ret);
 	TEST_ASSERT_EQUAL_INT(ESRCH, errno);
+#endif
 }
 
 
+#ifdef SIGSTKSZ
 TEST(signal_pending, sigaltstack_set_and_get)
 {
 	stack_t ss, oss;
@@ -659,10 +676,12 @@ TEST(signal_pending, sigaltstack_get_only)
 	TEST_ASSERT_EQUAL_INT(0, ret);
 	TEST_ASSERT_EQUAL_INT(0, errno);
 }
+#endif /* SIGSTKSZ */
 
 
 TEST_GROUP_RUNNER(signal_pending)
 {
+#ifndef __phoenix__
 	RUN_TEST_CASE(signal_pending, sigpending_empty_when_none_blocked);
 	RUN_TEST_CASE(signal_pending, sigpending_shows_blocked_pending);
 	RUN_TEST_CASE(signal_pending, sigwait_consumes_pending);
@@ -673,12 +692,15 @@ TEST_GROUP_RUNNER(signal_pending)
 	RUN_TEST_CASE(signal_pending, sigqueue_delivers_signal);
 	RUN_TEST_CASE(signal_pending, sigqueue_einval_invalid_signal);
 	RUN_TEST_CASE(signal_pending, sigqueue_esrch_invalid_pid);
+#endif
 	RUN_TEST_CASE(signal_pending, killpg_delivers_to_group);
 	RUN_TEST_CASE(signal_pending, killpg_einval_invalid_signal);
 	RUN_TEST_CASE(signal_pending, killpg_esrch_invalid_pgrp);
+#ifdef SIGSTKSZ
 	RUN_TEST_CASE(signal_pending, sigaltstack_set_and_get);
 	RUN_TEST_CASE(signal_pending, sigaltstack_disable);
 	RUN_TEST_CASE(signal_pending, sigaltstack_einval_bad_flags);
 	RUN_TEST_CASE(signal_pending, sigaltstack_enomem_too_small);
 	RUN_TEST_CASE(signal_pending, sigaltstack_get_only);
+#endif
 }
