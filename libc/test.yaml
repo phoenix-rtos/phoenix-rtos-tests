@@ -143,6 +143,11 @@ test:
       targets:
         include: [host-generic-pc]
 
+    - name: pwd
+      execute: test-libc-pwd
+      targets:
+        include: [host-generic-pc]
+
     - name: statvfs
       execute: test-libc-statvfs
 
