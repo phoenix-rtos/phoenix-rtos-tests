@@ -46,7 +46,7 @@ $(eval $(call add_test_libc,math, -lm, -ffloat-store)) # -ffloat-store - prevent
 # -Wno-attribute-warning - ignore warning when using sendmsg/recvmsg, we know it's not fully supported
 $(eval $(call add_test_libc_custom,socket,inet-socket,, -Wno-attribute-warning, inet-socket.c common.c))
 $(eval $(call add_test_libc_custom,socket,unix-socket,, -Wno-attribute-warning, unix-socket.c common.c))
-$(eval $(call add_test_libc_custom,socket,socket,, -Wno-attribute-warning, main.c getsockopt.c listen.c recv.c recvfrom.c recvmsg.c send.c sendmsg.c sendto.c setsockopt.c shutdown.c socketpair.c))
+$(eval $(call add_test_libc_custom,socket,socket,, -Wno-attribute-warning, main.c getsockopt.c listen.c recv.c recvfrom.c recvmsg.c send.c sendmsg.c sendto.c setsockopt.c shutdown.c socketpair.c accept.c bind.c connect.c getpeername.c getsockname.c))
 $(eval $(call add_test_libc,poll))
 $(eval $(call add_test_libc,statvfs))
 $(eval $(call add_test_libc,syslog))

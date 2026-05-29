@@ -5,6 +5,11 @@
  * HEADER:
  *    - <sys/socket.h>
  * TESTED:
+ *    - accept()
+ *    - bind()
+ *    - connect()
+ *    - getpeername()
+ *    - getsockname()
  *    - getsockopt()
  *    - listen()
  *    - recv()
@@ -44,6 +49,11 @@ void runner(void)
 	RUN_TEST_GROUP(socket_api_recv);
 	RUN_TEST_GROUP(socket_api_recvfrom);
 	RUN_TEST_GROUP(socket_api_recvmsg);
+	RUN_TEST_GROUP(socket_api_accept);
+	RUN_TEST_GROUP(socket_api_bind);
+	RUN_TEST_GROUP(socket_api_connect);
+	RUN_TEST_GROUP(socket_api_getpeername);
+	RUN_TEST_GROUP(socket_api_getsockname);
 }
 
 int main(int argc, char *argv[])
