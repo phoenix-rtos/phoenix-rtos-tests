@@ -23,6 +23,10 @@ void runner(void)
 	RUN_TEST_GROUP(test_utimes);
 	RUN_TEST_GROUP(test_futimes);
 	RUN_TEST_GROUP(test_lutimes);
+	RUN_TEST_GROUP(time_clock_gettime);
+	RUN_TEST_GROUP(time_clock_settime);
+	RUN_TEST_GROUP(time_clock_nanosleep);
+	RUN_TEST_GROUP(time_nanosleep);
 }
 
 
