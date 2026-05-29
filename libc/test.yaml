@@ -157,6 +157,11 @@ test:
       targets:
         include: [host-generic-pc]
 
+    - name: resource
+      execute: test-libc-resource
+      targets:
+        include: [host-generic-pc]
+
     - name: syslog
       execute: test-libc-syslog
       targets:
