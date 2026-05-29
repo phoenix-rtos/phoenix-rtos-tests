@@ -54,6 +54,7 @@ void runner(void)
 	RUN_TEST_GROUP(socket_api_connect);
 	RUN_TEST_GROUP(socket_api_getpeername);
 	RUN_TEST_GROUP(socket_api_getsockname);
+	RUN_TEST_GROUP(socket_api_sockatmark);
 }
 
 int main(int argc, char *argv[])
