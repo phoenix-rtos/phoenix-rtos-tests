@@ -270,3 +270,16 @@
 | [EMSGSIZE]: "The msg_iovlen member of the msghdr structure is less than or equal to 0, or is greater than {IOV_MAX}" | — | not tested: msg_iovlen=0 does not portably return EMSGSIZE on all implementations |
 | [EOPNOTSUPP]: "The specified flags are not supported for this socket type" | — | not tested: no portable unsupported flag value |
 | [ETIMEDOUT]: "The connection timed out during connection establishment, or due to a transmission timeout on active connection" | — | not tested: cannot trigger on AF_UNIX sockets |
+
+## sockatmark()
+
+| Requirement (POSIX verbatim) | Test case | Status |
+|---|---|---|
+| "shall determine whether the socket specified by s is at the out-of-band data mark" | `socket_sockatmark.sockatmark_not_at_mark` | covered |
+| "If the protocol ... supports out-of-band data ... sockatmark() shall return 1 when all data ... before the mark has been read and the out-of-band data byte is the next data to be read" | — | not tested: requires precise OOB send/recv timing |
+| "Otherwise, sockatmark() shall return 0" (not at mark) | `socket_sockatmark.sockatmark_not_at_mark` | covered |
+| "Upon successful completion ... shall return a value indicating whether the socket is at an out-of-band data mark" | `socket_sockatmark.sockatmark_not_at_mark` | covered |
+| "If determination could not be made, -1 shall be returned and errno set" | `socket_sockatmark.sockatmark_ebadf` | covered |
+| [EBADF]: "The s argument is not a valid file descriptor" | `socket_sockatmark.sockatmark_ebadf` | covered |
+| [ENOTTY]: "The file descriptor ... does not refer to a socket" | `socket_sockatmark.sockatmark_enotty_not_socket` | covered |
+| Behavior on UDP socket (non-stream) | `socket_sockatmark.sockatmark_udp_socket` | covered |
