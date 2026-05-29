@@ -34,6 +34,13 @@ void runner(void)
 	RUN_TEST_GROUP(stat_nlink_size_blk_tim);
 	RUN_TEST_GROUP(stat_errno);
 	RUN_TEST_GROUP(misc_umask);
+	RUN_TEST_GROUP(unistd_gethostid);
+	RUN_TEST_GROUP(unistd_gethostname);
+	RUN_TEST_GROUP(unistd_getpgid);
+	RUN_TEST_GROUP(unistd_getpgrp);
+	RUN_TEST_GROUP(unistd_getsid);
+	RUN_TEST_GROUP(unistd_setpgrp);
+	RUN_TEST_GROUP(unistd_fsync);
 #ifdef __phoenix__
 	/* tests libphoenix internal functions */
 	RUN_TEST_GROUP(unistd_file_safe);
