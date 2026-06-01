@@ -165,3 +165,8 @@ test:
       execute: test-libc-syslog
       targets:
         include: [host-generic-pc]
+
+    - name: fileops
+      execute: test-libc-fileops
+      targets:
+        include: [host-generic-pc]
