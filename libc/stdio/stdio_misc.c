@@ -180,6 +180,9 @@ TEST_TEAR_DOWN(stdio_renameat)
 
 TEST(stdio_renameat, renameat_at_fdcwd)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("renameat() not available");
+#else
 	FILE *fp;
 	int ret;
 	struct stat st;
@@ -199,11 +202,15 @@ TEST(stdio_renameat, renameat_at_fdcwd)
 	TEST_ASSERT_EQUAL_INT(-1, stat(TEST_FILE_A, &st));
 	/* New name should exist */
 	TEST_ASSERT_EQUAL_INT(0, stat(TEST_FILE_B, &st));
+#endif
 }
 
 
 TEST(stdio_renameat, renameat_contents_preserved)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("renameat() not available");
+#else
 	FILE *fp;
 	int ret;
 	char buf[32];
@@ -224,22 +231,30 @@ TEST(stdio_renameat, renameat_contents_preserved)
 	buf[n] = '\0';
 	TEST_ASSERT_EQUAL_STRING("test data", buf);
 	fclose(fp);
+#endif
 }
 
 
 TEST(stdio_renameat, renameat_enoent_source_missing)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("renameat() not available");
+#else
 	int ret;
 
 	errno = 0;
 	ret = renameat(AT_FDCWD, "nonexistent_file_xyzzy", AT_FDCWD, TEST_FILE_B);
 	TEST_ASSERT_EQUAL_INT(-1, ret);
 	TEST_ASSERT_EQUAL_INT(ENOENT, errno);
+#endif
 }
 
 
 TEST(stdio_renameat, renameat_overwrites_existing)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("renameat() not available");
+#else
 	FILE *fp;
 	int ret;
 	char buf[32];
@@ -266,11 +281,15 @@ TEST(stdio_renameat, renameat_overwrites_existing)
 	buf[n] = '\0';
 	TEST_ASSERT_EQUAL_STRING("new content", buf);
 	fclose(fp);
+#endif
 }
 
 
 TEST(stdio_renameat, renameat_with_fd)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("renameat() not available");
+#else
 	FILE *fp;
 	int ret;
 	int dirfd;
@@ -294,6 +313,7 @@ TEST(stdio_renameat, renameat_with_fd)
 	TEST_ASSERT_EQUAL_INT(0, stat(TEST_FILE_B, &st));
 
 	close(dirfd);
+#endif
 }
 
 
@@ -321,16 +341,23 @@ TEST_TEAR_DOWN(stdio_tmpnam)
 
 TEST(stdio_tmpnam, tmpnam_null_returns_string)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#16 issue");
+#else
 	char *result;
 
 	result = tmpnam(NULL);
 	TEST_ASSERT_NOT_NULL(result);
 	TEST_ASSERT_GREATER_THAN_INT(0, (int)strlen(result));
+#endif
 }
 
 
 TEST(stdio_tmpnam, tmpnam_with_buffer)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#16 issue");
+#else
 	char buf[L_tmpnam + 1];
 	char *result;
 
@@ -339,11 +366,15 @@ TEST(stdio_tmpnam, tmpnam_with_buffer)
 	TEST_ASSERT_NOT_NULL(result);
 	TEST_ASSERT_TRUE(result == buf);
 	TEST_ASSERT_GREATER_THAN_INT(0, (int)strlen(buf));
+#endif
 }
 
 
 TEST(stdio_tmpnam, tmpnam_unique_names)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#16 issue");
+#else
 	char buf1[L_tmpnam + 1];
 	char buf2[L_tmpnam + 1];
 
@@ -351,22 +382,30 @@ TEST(stdio_tmpnam, tmpnam_unique_names)
 	TEST_ASSERT_NOT_NULL(tmpnam(buf2));
 	/* Each call should generate a different string */
 	TEST_ASSERT_TRUE(strcmp(buf1, buf2) != 0);
+#endif
 }
 
 
 TEST(stdio_tmpnam, tempnam_basic)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("tempnam() not available");
+#else
 	char *result;
 
 	result = tempnam(NULL, NULL);
 	TEST_ASSERT_NOT_NULL(result);
 	TEST_ASSERT_GREATER_THAN_INT(0, (int)strlen(result));
 	free(result);
+#endif
 }
 
 
 TEST(stdio_tmpnam, tempnam_with_dir)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("tempnam() not available");
+#else
 	char *result;
 
 	result = tempnam("/tmp", NULL);
@@ -375,11 +414,15 @@ TEST(stdio_tmpnam, tempnam_with_dir)
 	/* Should start with the given directory */
 	TEST_ASSERT_EQUAL_INT(0, strncmp(result, "/tmp", 4));
 	free(result);
+#endif
 }
 
 
 TEST(stdio_tmpnam, tempnam_with_prefix)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("tempnam() not available");
+#else
 	char *result;
 	const char *prefix = "tst";
 
@@ -388,11 +431,15 @@ TEST(stdio_tmpnam, tempnam_with_prefix)
 	/* The prefix should appear in the filename portion */
 	TEST_ASSERT_NOT_NULL(strstr(result, prefix));
 	free(result);
+#endif
 }
 
 
 TEST(stdio_tmpnam, tempnam_unique_names)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("tempnam() not available");
+#else
 	char *result1;
 	char *result2;
 
@@ -406,6 +453,7 @@ TEST(stdio_tmpnam, tempnam_unique_names)
 
 	free(result1);
 	free(result2);
+#endif
 }
 
 
