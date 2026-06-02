@@ -121,3 +121,8 @@ test:
         # the path; only dummyfs/ext2/jffs2 implement statfs. On these targets the
         # root/tmp filesystem is flash-backed (no statfs handler)
         exclude: [armv7m4-stm32l4x6-nucleo, armv8m55-stm32n6-nucleo, armv8m33-mcxn94x-frdm]
+
+    - name: socket
+      execute: test-libc-socket
+      targets:
+        value: [host-generic-pc, ia32-generic-qemu]
