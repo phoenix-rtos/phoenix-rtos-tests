@@ -59,5 +59,6 @@ $(eval $(call add_test_libc,resource))
 
 $(eval $(call add_test_libc,statvfs))
 $(eval $(call add_test_libc,syslog))
+$(eval $(call add_test_libc,termios))
 $(eval $(call add_test_libc,proc))
 $(eval $(call add_test_libc,fileops))
