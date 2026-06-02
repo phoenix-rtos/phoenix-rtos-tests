@@ -172,6 +172,11 @@ test:
       targets:
         include: [host-generic-pc]
 
+    - name: termios
+      execute: test-libc-termios
+      targets:
+        include: [host-generic-pc]
+
     - name: proc
       execute: test-libc-proc
       targets:
