@@ -113,3 +113,11 @@ test:
       targets:
         include: [host-generic-pc]
 
+    - name: statvfs
+      execute: test-libc-statvfs
+      targets:
+        include: [host-generic-pc]
+        # statvfs()/fstatvfs() forward an mtStat request to the fs server owning
+        # the path; only dummyfs/ext2/jffs2 implement statfs. On these targets the
+        # root/tmp filesystem is flash-backed (no statfs handler)
+        exclude: [armv7m4-stm32l4x6-nucleo, armv8m55-stm32n6-nucleo]
