@@ -1,0 +1,37 @@
+libc/signal/sigaction.c
+  s_c24278c9d12371::t_b3b1b643598902 1-10,12-484,486,490-504,508-512,514-533,537-540,542-548,553-564,568-573,575-644,649-665,669-671,673-775,780,782-830,832,836-846,850-858,864-899,776
+  s_c24278c9d12371::t_89cd9299ad1910 859-861
+  s_258432621c4a6b::t_dce1baa3e53acd 485,487-488,550-551,646,831,833-834
+  h_3689a52f3dab5f 489,505-507,513,534-536,541,552,565-567,574,648,666,668,672,777-779,781,835,847-849,863
+  s_258432621c4a6b::t_ec0ab870ec0024 647
+  s_258432621c4a6b::t_cff13d7f223bd1 667
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "a244bc7b08c2c1c629c2cfe76f2cc798ba6512a2",
+  "prompts": {},
+  "humans": {
+    "h_3689a52f3dab5f": {
+      "author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    }
+  },
+  "sessions": {
+    "s_258432621c4a6b": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "fa3746ea-800e-4f43-bcf7-a7e17d331bf8",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    },
+    "s_c24278c9d12371": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "b512f1c2-4348-4342-a325-f7e23450c880",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    }
+  }
+}
