@@ -62,6 +62,9 @@ static char buf[DATA_SIZE];
 static int pollTimeoutDelay = 30;
 static int transferLoopCnt = TRANSFER_LOOP_CNT;
 
+static int sv[2], sendfds[MAX_FD_CNT], recvfds[MAX_FD_CNT], recvfds2[MAX_FD_CNT];
+static char cbuf[CMSG_SPACE(sizeof(int)) * MAX_FD_CNT];
+
 
 static ssize_t unix_named_socket(int type, const char *name)
 {
@@ -102,7 +105,7 @@ static int unlink_files(size_t cnt)
 	char buf[64];
 
 	for (i = 0; i < cnt; ++i) {
-		snprintf(buf, sizeof(buf), "/tmp/test_file_%zu", i);
+		snprintf(buf, sizeof(buf), TEST_FILE_PATH_TEMPLATE, i);
 		if (unlink(buf) < 0)
 			return -1;
 	}
@@ -138,11 +141,24 @@ TEST_SETUP(test_unix_socket)
 	for (i = 0; i < sizeof(data); i++) {
 		data[i] = rand();
 	}
+
+	sv[0] = -1;
+	sv[1] = -1;
+
+	for (int i = 0; i < MAX_FD_CNT; i++) {
+		sendfds[i] = -1;
+		recvfds[i] = -1;
+		recvfds2[i] = -1;
+	}
 }
 
 
 TEST_TEAR_DOWN(test_unix_socket)
 {
+	TEST_ASSERT_EQUAL(0, close_files(sv, 2));
+	TEST_ASSERT_EQUAL(0, close_files(sendfds, sizeof(sendfds) / sizeof(sendfds[0])));
+	TEST_ASSERT_EQUAL(0, close_files(recvfds, sizeof(recvfds) / sizeof(recvfds[0])));
+	TEST_ASSERT_EQUAL(0, close_files(recvfds2, sizeof(recvfds2) / sizeof(recvfds2[0])));
 }
 
 
@@ -1570,6 +1586,206 @@ TEST(test_unix_socket, recv_msg_peek)
 }
 
 
+TEST(test_unix_socket, trunc_basic)
+{
+	struct iovec iov;
+	struct msghdr msg = { 0 };
+	size_t nfds = MAX_FD_CNT;
+	char payload[64];
+	char recvbuf[8] = { 0 };
+
+	memset(payload, 'A', sizeof(payload));
+
+	TEST_ASSERT_EQUAL(0, socketpair(AF_UNIX, SOCK_DGRAM, 0, sv));
+
+	setup_msg(&msg, &iov, payload, sizeof(payload), NULL, 0);
+	TEST_ASSERT_EQUAL(sizeof(payload), sendmsg(sv[0], &msg, 0));
+
+	setup_msg(&msg, &iov, recvbuf, sizeof(recvbuf), NULL, 0);
+	TEST_ASSERT_EQUAL(sizeof(recvbuf), recvmsg(sv[1], &msg, 0));
+	TEST_ASSERT_EQUAL(0, unpack_fds(&msg, recvfds, &nfds));
+
+	TEST_ASSERT_EQUAL_MEMORY(payload, recvbuf, sizeof(recvbuf));
+	TEST_ASSERT_EQUAL_size_t(0, nfds);
+
+	TEST_ASSERT_BITS_HIGH(MSG_TRUNC, msg.msg_flags);
+	TEST_ASSERT_BITS_LOW(MSG_CTRUNC, msg.msg_flags);
+
+	TEST_ASSERT_EQUAL(0, close_files(sv, 2));
+}
+
+
+TEST(test_unix_socket, trunc_peek)
+{
+	struct iovec iov;
+	struct msghdr msg = { 0 };
+	size_t nfds = MAX_FD_CNT;
+	char payload[64];
+	char recvbuf[8] = { 0 };
+	char restbuf[sizeof(payload)] = { 0 };
+
+	memset(payload, 'A', sizeof(payload));
+
+	TEST_ASSERT_EQUAL(0, socketpair(AF_UNIX, SOCK_DGRAM, 0, sv));
+
+	setup_msg(&msg, &iov, payload, sizeof(payload), NULL, 0);
+	TEST_ASSERT_EQUAL(sizeof(payload), sendmsg(sv[0], &msg, 0));
+
+	/* peek 8 bytes */
+	setup_msg(&msg, &iov, recvbuf, sizeof(recvbuf), NULL, 0);
+	TEST_ASSERT_EQUAL(sizeof(recvbuf), recvmsg(sv[1], &msg, MSG_PEEK));
+	TEST_ASSERT_EQUAL(0, unpack_fds(&msg, recvfds, &nfds));
+
+	TEST_ASSERT_EQUAL_MEMORY(payload, recvbuf, sizeof(recvbuf));
+	TEST_ASSERT_EQUAL_size_t(0, nfds);
+
+	TEST_ASSERT_BITS_HIGH(MSG_TRUNC, msg.msg_flags);
+	TEST_ASSERT_BITS_LOW(MSG_CTRUNC, msg.msg_flags);
+
+	/* read the data */
+	setup_msg(&msg, &iov, restbuf, sizeof(restbuf), NULL, 0);
+	TEST_ASSERT_EQUAL(sizeof(restbuf), recvmsg(sv[1], &msg, 0));
+	TEST_ASSERT_EQUAL(0, unpack_fds(&msg, recvfds, &nfds));
+
+	TEST_ASSERT_EQUAL_MEMORY(payload, restbuf, sizeof(restbuf));
+	TEST_ASSERT_EQUAL_size_t(0, nfds);
+	TEST_ASSERT_BITS_LOW(MSG_TRUNC | MSG_CTRUNC, msg.msg_flags);
+
+	/* next read should return with EWOULDBLOCK */
+	setup_msg(&msg, &iov, restbuf, sizeof(restbuf), NULL, 0);
+	errno = 0;
+	TEST_ASSERT_EQUAL(-1, recvmsg(sv[1], &msg, MSG_DONTWAIT));
+	TEST_ASSERT_EQUAL(EWOULDBLOCK, errno);
+
+	TEST_ASSERT_EQUAL(0, close_files(sv, 2));
+}
+
+
+TEST(test_unix_socket, ctrunc_basic)
+{
+	struct iovec iov;
+	struct msghdr msg;
+	size_t nfds = MAX_FD_CNT;
+	char payload[] = "HELLO";
+	char recvbuf[8] = { 0 };
+
+	TEST_ASSERT_EQUAL(0, socketpair(AF_UNIX, SOCK_DGRAM, 0, sv));
+
+	TEST_ASSERT_EQUAL(0, open_files(sendfds, 2));
+
+	setup_msg(&msg, &iov, payload, sizeof(payload), cbuf, sizeof(cbuf));
+	pack_fds(&msg, sendfds, 2);
+	TEST_ASSERT_EQUAL(sizeof(payload), sendmsg(sv[0], &msg, 0));
+
+	setup_msg(&msg, &iov, recvbuf, sizeof(recvbuf), cbuf, 1);
+	TEST_ASSERT_EQUAL(sizeof(payload), recvmsg(sv[1], &msg, 0));
+	TEST_ASSERT_EQUAL(0, unpack_fds(&msg, recvfds, &nfds));
+
+	TEST_ASSERT_EQUAL_MEMORY(payload, recvbuf, sizeof(payload));
+	TEST_ASSERT_EQUAL_size_t(0, nfds);
+
+	TEST_ASSERT_BITS_LOW(MSG_TRUNC, msg.msg_flags);
+	TEST_ASSERT_BITS_HIGH(MSG_CTRUNC, msg.msg_flags);
+
+	TEST_ASSERT_EQUAL(0, close_files(sv, 2));
+	TEST_ASSERT_EQUAL(0, close_files(sendfds, 2));
+	TEST_ASSERT_EQUAL(0, unlink_files(2));
+}
+
+
+TEST(test_unix_socket, trunc_and_ctrunc)
+{
+	struct iovec iov;
+	struct msghdr msg;
+	size_t nfds = MAX_FD_CNT;
+	char payload[64];
+	char recvbuf[8];
+	memset(payload, 'B', sizeof(payload));
+
+	TEST_ASSERT_EQUAL(0, socketpair(AF_UNIX, SOCK_DGRAM, 0, sv));
+
+	TEST_ASSERT_EQUAL(0, open_files(sendfds, 2));
+
+	setup_msg(&msg, &iov, payload, sizeof(payload), cbuf, sizeof(cbuf));
+	pack_fds(&msg, sendfds, 2);
+	TEST_ASSERT_EQUAL(sizeof(payload), sendmsg(sv[0], &msg, 0));
+
+	setup_msg(&msg, &iov, recvbuf, sizeof(recvbuf), cbuf, 1);
+	TEST_ASSERT_EQUAL(sizeof(recvbuf), recvmsg(sv[1], &msg, 0));
+	TEST_ASSERT_EQUAL(0, unpack_fds(&msg, recvfds, &nfds));
+
+	TEST_ASSERT_EQUAL_MEMORY(payload, recvbuf, sizeof(recvbuf));
+	TEST_ASSERT_EQUAL_size_t(0, nfds);
+
+	TEST_ASSERT_BITS_HIGH(MSG_TRUNC | MSG_CTRUNC, msg.msg_flags);
+
+	TEST_ASSERT_EQUAL(0, close_files(sv, 2));
+	TEST_ASSERT_EQUAL(0, close_files(sendfds, 2));
+	TEST_ASSERT_EQUAL(0, unlink_files(2));
+}
+
+
+TEST(test_unix_socket, trunc_and_ctrunc_peek)
+{
+	struct iovec iov;
+	struct msghdr msg;
+	size_t nfds = MAX_FD_CNT;
+	char payload[64];
+	char recvbuf[8];
+	char restbuf[sizeof(payload)];
+	memset(payload, 'B', sizeof(payload));
+
+	TEST_ASSERT_EQUAL(0, socketpair(AF_UNIX, SOCK_DGRAM, 0, sv));
+
+	TEST_ASSERT_EQUAL(0, open_files(sendfds, 2));
+
+	setup_msg(&msg, &iov, payload, sizeof(payload), cbuf, sizeof(cbuf));
+	pack_fds(&msg, sendfds, 2);
+	TEST_ASSERT_EQUAL(sizeof(payload), sendmsg(sv[0], &msg, 0));
+
+	setup_msg(&msg, &iov, recvbuf, sizeof(recvbuf), cbuf, 1);
+	TEST_ASSERT_EQUAL(sizeof(recvbuf), recvmsg(sv[1], &msg, MSG_PEEK));
+	TEST_ASSERT_EQUAL(0, unpack_fds(&msg, recvfds, &nfds));
+
+	TEST_ASSERT_EQUAL_MEMORY(payload, recvbuf, sizeof(recvbuf));
+	TEST_ASSERT_EQUAL_size_t(0, nfds);
+
+	TEST_ASSERT_BITS_HIGH(MSG_TRUNC | MSG_CTRUNC, msg.msg_flags);
+
+	/* try peeking the data again */
+	nfds = MAX_FD_CNT;
+	setup_msg(&msg, &iov, restbuf, sizeof(restbuf), cbuf, CMSG_LEN(sizeof(int) * 2));
+	TEST_ASSERT_EQUAL(sizeof(restbuf), recvmsg(sv[1], &msg, MSG_PEEK));
+	TEST_ASSERT_EQUAL(0, unpack_fds(&msg, recvfds, &nfds));
+
+	TEST_ASSERT_EQUAL_MEMORY(payload, restbuf, sizeof(restbuf));
+	TEST_ASSERT_EQUAL_size_t(2, nfds);
+	TEST_ASSERT_EQUAL(0, write_files(sendfds, nfds, data));
+	TEST_ASSERT_EQUAL(0, read_files(recvfds, nfds, data, buf));
+
+	/* consume the data */
+	nfds = MAX_FD_CNT;
+	setup_msg(&msg, &iov, restbuf, sizeof(restbuf), cbuf, CMSG_LEN(sizeof(int) * 2));
+	TEST_ASSERT_EQUAL(sizeof(restbuf), recvmsg(sv[1], &msg, 0));
+	TEST_ASSERT_EQUAL(0, unpack_fds(&msg, recvfds2, &nfds));
+
+	TEST_ASSERT_EQUAL_MEMORY(payload, restbuf, sizeof(restbuf));
+	TEST_ASSERT_EQUAL_size_t(2, nfds);
+	TEST_ASSERT_EQUAL(0, write_files(recvfds, nfds, data));
+	TEST_ASSERT_EQUAL(0, read_files(recvfds2, nfds, data, buf));
+
+	/* try reading empty buffer */
+	setup_msg(&msg, &iov, restbuf, sizeof(restbuf), cbuf, sizeof(cbuf));
+	errno = 0;
+	TEST_ASSERT_EQUAL(-1, recvmsg(sv[1], &msg, MSG_DONTWAIT));
+	TEST_ASSERT_EQUAL(EWOULDBLOCK, errno);
+
+	TEST_ASSERT_EQUAL(0, close_files(sv, 2));
+	TEST_ASSERT_EQUAL(0, close_files(sendfds, 2));
+	TEST_ASSERT_EQUAL(0, unlink_files(2));
+}
+
+
 // TODO: add listen() backlog test when implemented
 
 TEST(test_unix_socket, flags)
@@ -1810,6 +2026,11 @@ TEST_GROUP_RUNNER(test_unix_socket)
 	RUN_TEST_CASE(test_unix_socket, connect_after_close);
 	RUN_TEST_CASE(test_unix_socket, poll);
 	RUN_TEST_CASE(test_unix_socket, recv_msg_peek);
+	RUN_TEST_CASE(test_unix_socket, trunc_basic);
+	RUN_TEST_CASE(test_unix_socket, trunc_peek);
+	RUN_TEST_CASE(test_unix_socket, ctrunc_basic);
+	RUN_TEST_CASE(test_unix_socket, trunc_and_ctrunc);
+	RUN_TEST_CASE(test_unix_socket, trunc_and_ctrunc_peek);
 	RUN_TEST_CASE(test_unix_socket, accept_connect_errnos);
 	RUN_TEST_CASE(test_unix_socket, accept_connect_async);
 	RUN_TEST_CASE(test_unix_socket, accept_connect_liveness);
