@@ -2986,9 +2986,12 @@ static void li_three_task_holder(void *arg)
 static void li_three_task_medium(void *arg)
 {
 	/* Thread M (P2): CPU-bound busy loop - long enough to cause
-	 * observable inversion if L is not properly boosted */
-	while (li_common.phase < 1)
+	 * observable inversion if L is not properly boosted.
+	 * Wait until S has received IPC and is contending on the mutex,
+	 * so the PI chain is fully formed. */
+	while (li_common.phase < 2)
 		usleep(1000);
+	usleep(10 * 1000); /* let S actually block on the mutex */
 
 	/* Long busy loop */
 	for (volatile int i = 0; i < 20000000; i++)
@@ -3548,6 +3551,1121 @@ TEST(msg_lock_ipc, cascaded_ipc_lock_ipc)
 			"Cascaded: S2 should see P1 from W's boosted IPC SC");
 
 	assert_child_exit(s2_pid);
+	munmap((void *)shared, 0x200);
+	kill(shm_pid, SIGKILL);
+	waitpid(shm_pid, NULL, 0);
+}
+
+
+/*
+ * Transitive mutex chain with IPC (the classic chained dependency):
+ *
+ *   Client H (P1) --IPC--> Server process:
+ *     Thread S (base P4): receives IPC (SC@P1), blocks on M1 (held by L2)
+ *     Thread L2 (base P5): holds M1, blocked on M2 (held by L1)
+ *     Thread L1 (base P7): holds M2, doing work
+ *     Thread M (base P2): CPU-bound busy loop (interferer)
+ *
+ * Dependency chain: S(P1) --M1--> L2(P5) --M2--> L1(P7)
+ *
+ * Correct (transitive PI):
+ *   S blocks on M1 -> L2 boosted to P1 (via SC)
+ *   But L2 is blocked on M2 -> L1 should ALSO be boosted to P1
+ *   L1 finishes at P1 -> releases M2 -> L2 runs at P1 -> releases M1 ->
+ *   S runs -> responds -> H unblocks. M(P2) never preempts.
+ *
+ * Broken (single-hop PI only):
+ *   S blocks on M1 -> L2 boosted to P1, but L2 is sleeping on M2
+ *   L1 stays at P7 -> M(P2) preempts L1 -> unbounded inversion
+ */
+
+static struct {
+	handle_t m1;
+	handle_t m2;
+	volatile int phase;
+	volatile int l1_prio; /* L1's observed prio while holding M2 under chain */
+	volatile int l2_prio; /* L2's observed prio while holding M1 under chain */
+	volatile int m_done;  /* medium thread completed */
+	char stack[4][4096] __attribute__((aligned(8)));
+} li_chain;
+
+static void li_chain_l1(void *arg)
+{
+	/* Thread L1 (P7): lock M2, signal, wait for chain to form, observe prio */
+	mutexLock(li_chain.m2);
+	li_chain.phase = 1; /* M2 held */
+
+	/* Wait until S has received IPC and L2 is blocked on M2 */
+	while (li_chain.phase < 4)
+		usleep(1000);
+	usleep(30 * 1000); /* let the chain fully form */
+
+	li_chain.l1_prio = priority(-1);
+
+	/* Short work, then release */
+	for (volatile int i = 0; i < 5000; i++)
+		;
+
+	mutexUnlock(li_chain.m2);
+	endthread();
+}
+
+static void li_chain_l2(void *arg)
+{
+	/* Thread L2 (P5): wait for L1 to hold M2, then lock M1 and block on M2 */
+	while (li_chain.phase < 1)
+		usleep(1000);
+
+	mutexLock(li_chain.m1);
+	li_chain.phase = 2; /* M1 held */
+
+	/* Wait for S to be ready to contend */
+	while (li_chain.phase < 3)
+		usleep(1000);
+
+	li_chain.phase = 4; /* about to block on M2 */
+
+	/* Block on M2 (held by L1) — this is where transitive PI matters */
+	mutexLock(li_chain.m2);
+
+	/* After wakeup: L2 holds M1 (S waiting at P1) + M2 (no waiters).
+	 * BWI should recalculate L2's priority from held locks → P1. */
+	li_chain.l2_prio = priority(-1);
+
+	mutexUnlock(li_chain.m2);
+	mutexUnlock(li_chain.m1);
+	endthread();
+}
+
+static void li_chain_medium(void *arg)
+{
+	/* Thread M (P2): CPU hog — causes inversion if L1 isn't boosted.
+	 * Wait until S has received IPC and the full chain is forming. */
+	while (li_chain.phase < 4)
+		usleep(1000);
+	usleep(20 * 1000); /* let S block on M1 and propagate boosts */
+
+	for (volatile int i = 0; i < 30000000; i++)
+		;
+
+	li_chain.m_done = 1;
+	endthread();
+}
+
+TEST(msg_lock_ipc, transitive_chain)
+{
+	char shm_path[64];
+	make_dev_path(shm_path, sizeof(shm_path), "litc_shm");
+	pid_t shm_pid;
+	if ((shm_pid = safe_fork()) == 0) {
+		shmsrv_start(shm_path);
+		exit(1);
+	}
+
+	char dev_path[64];
+	make_dev_path(dev_path, sizeof(dev_path), "litc");
+
+	int *shared = (int *)shm_init(shm_path, true, 0x200);
+	TEST_ASSERT_NOT_NULL(shared);
+	/* shared[0] = server ready
+	 * shared[1] = L1's observed prio
+	 * shared[2] = L2's observed prio
+	 * shared[3] = M finished before IPC returned (1=inversion)
+	 * shared[4] = S's prio during IPC */
+	memset((void *)shared, 0, 0x200);
+
+	pid_t server_pid;
+	if ((server_pid = safe_fork()) == 0) {
+		int *sh = (int *)shm_init(shm_path, false, 0x200);
+		uint32_t port = 0;
+		if (setup_port_dev(dev_path, &port) < 0)
+			exit(3);
+
+		mutexCreate(&li_chain.m1);
+		mutexCreate(&li_chain.m2);
+		li_chain.phase = 0;
+		li_chain.l1_prio = -1;
+		li_chain.l2_prio = -1;
+		li_chain.m_done = 0;
+
+		handle_t tid_l1, tid_l2, tid_m;
+		beginthreadex(li_chain_l1, 7, li_chain.stack[0],
+				sizeof(li_chain.stack[0]), NULL, &tid_l1);
+		beginthreadex(li_chain_l2, 5, li_chain.stack[1],
+				sizeof(li_chain.stack[1]), NULL, &tid_l2);
+		beginthreadex(li_chain_medium, 2, li_chain.stack[2],
+				sizeof(li_chain.stack[2]), NULL, &tid_m);
+
+		/* Wait for L2 to hold M1 */
+		while (li_chain.phase < 2)
+			usleep(1000);
+
+		priority(4);
+		sh[0] = 1;
+
+		msg_t msg = { 0 };
+		msg_rid_t rid;
+		if (msgRecv(port, &msg, &rid) < 0)
+			exit(1);
+
+		/* Running on client's SC at P1 */
+		sh[4] = priority(-1);
+		li_chain.phase = 3; /* signal: about to contend on M1 */
+
+		/* Wait for L2 to start blocking on M2 */
+		while (li_chain.phase < 4)
+			usleep(1000);
+		usleep(10 * 1000);
+
+		/* Block on M1 (held by L2, who is blocked on M2 held by L1) */
+		mutexLock(li_chain.m1);
+		mutexUnlock(li_chain.m1);
+
+		sh[1] = li_chain.l1_prio;
+		sh[2] = li_chain.l2_prio;
+		sh[3] = li_chain.m_done;
+
+		msg.o.err = 0;
+		msgRespond(port, &msg, rid);
+
+		threadJoin(tid_l1, 0);
+		threadJoin(tid_l2, 0);
+		threadJoin(tid_m, 0);
+		resourceDestroy(li_chain.m1);
+		resourceDestroy(li_chain.m2);
+		exit(0);
+	}
+
+	oid_t oid;
+	while (lookup(dev_path, NULL, &oid) < 0)
+		usleep(10 * 1000);
+	while (!shared[0])
+		usleep(1000);
+
+	priority(1);
+	msg_t msg = { 0 };
+	msg.type = mtRead;
+	msg.i.size = 0;
+	msg.i.data = NULL;
+	msg.o.size = 0;
+	msg.o.data = NULL;
+	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
+
+	waitpid(server_pid, NULL, 0);
+
+	TEST_ASSERT_EQUAL_INT_MESSAGE(1, shared[4],
+			"Transitive chain: S should run at P1 via SC");
+	TEST_ASSERT_EQUAL_INT_MESSAGE(1, shared[2],
+			"Transitive chain: L2 should be boosted to P1");
+	TEST_ASSERT_EQUAL_INT_MESSAGE(1, shared[1],
+			"Transitive chain: L1 should be transitively boosted to P1");
+	TEST_ASSERT_EQUAL_INT_MESSAGE(0, shared[3],
+			"Transitive chain: M(P2) must NOT finish before IPC (inversion)");
+
+	munmap((void *)shared, 0x200);
+	kill(shm_pid, SIGKILL);
+	waitpid(shm_pid, NULL, 0);
+}
+
+
+/*
+ * Diamond dependency: two high-prio paths converge on one lock holder.
+ *
+ *   Client H1 (P1) --IPC--> Server process:
+ *     Thread S (base P4): receives IPC (SC@P1), blocks on M (held by L)
+ *     Thread T (base P3): also blocks on M (held by L)
+ *     Thread L (base P7): holds M
+ *     Thread M_thr (base P2): CPU-bound interferer
+ *
+ * Both S(eff P1) and T(P3) block on M. L should be boosted to P1
+ * (from S, not just P3 from T). When L releases M, the highest-prio
+ * waiter (S at P1) should get the lock first.
+ */
+
+static struct {
+	handle_t mutex;
+	volatile int phase;
+	volatile int l_prio;
+	volatile int first_acquirer_prio;
+	volatile int m_done;
+	char stack[4][4096] __attribute__((aligned(8)));
+} li_diamond;
+
+static void li_diamond_holder(void *arg)
+{
+	/* Thread L (P7): hold mutex, wait for both S and T to contend */
+	mutexLock(li_diamond.mutex);
+	li_diamond.phase = 1;
+
+	/* Wait for both contenders to be ready */
+	while (li_diamond.phase < 3)
+		usleep(1000);
+	usleep(30 * 1000);
+
+	li_diamond.l_prio = priority(-1);
+
+	for (volatile int i = 0; i < 5000; i++)
+		;
+
+	mutexUnlock(li_diamond.mutex);
+	endthread();
+}
+
+static void li_diamond_contender(void *arg)
+{
+	/* Thread T (P3): wait for L to hold mutex, then contend */
+	while (li_diamond.phase < 1)
+		usleep(1000);
+
+	li_diamond.phase = 2;
+
+	mutexLock(li_diamond.mutex);
+	/* If we get here after L releases, record our prio if we're first */
+	if (li_diamond.first_acquirer_prio == -1)
+		li_diamond.first_acquirer_prio = priority(-1);
+	mutexUnlock(li_diamond.mutex);
+	endthread();
+}
+
+static void li_diamond_medium(void *arg)
+{
+	/* Wait until S has received IPC and both contenders are ready */
+	while (li_diamond.phase < 3)
+		usleep(1000);
+	usleep(10 * 1000); /* let S and T block on mutex */
+
+	for (volatile int i = 0; i < 30000000; i++)
+		;
+
+	li_diamond.m_done = 1;
+	endthread();
+}
+
+TEST(msg_lock_ipc, diamond_contention)
+{
+	char shm_path[64];
+	make_dev_path(shm_path, sizeof(shm_path), "lidc_shm");
+	pid_t shm_pid;
+	if ((shm_pid = safe_fork()) == 0) {
+		shmsrv_start(shm_path);
+		exit(1);
+	}
+
+	char dev_path[64];
+	make_dev_path(dev_path, sizeof(dev_path), "lidc");
+
+	int *shared = (int *)shm_init(shm_path, true, 0x200);
+	TEST_ASSERT_NOT_NULL(shared);
+	/* shared[0] = server ready
+	 * shared[1] = L's observed prio (should be P1)
+	 * shared[2] = M finished before IPC returned
+	 * shared[3] = first acquirer prio after L releases */
+	memset((void *)shared, 0, 0x200);
+
+	pid_t server_pid;
+	if ((server_pid = safe_fork()) == 0) {
+		int *sh = (int *)shm_init(shm_path, false, 0x200);
+		uint32_t port = 0;
+		if (setup_port_dev(dev_path, &port) < 0)
+			exit(3);
+
+		mutexCreate(&li_diamond.mutex);
+		li_diamond.phase = 0;
+		li_diamond.l_prio = -1;
+		li_diamond.first_acquirer_prio = -1;
+		li_diamond.m_done = 0;
+
+		handle_t tid_l, tid_t, tid_m;
+		beginthreadex(li_diamond_holder, 7, li_diamond.stack[0],
+				sizeof(li_diamond.stack[0]), NULL, &tid_l);
+		beginthreadex(li_diamond_contender, 3, li_diamond.stack[1],
+				sizeof(li_diamond.stack[1]), NULL, &tid_t);
+		beginthreadex(li_diamond_medium, 2, li_diamond.stack[2],
+				sizeof(li_diamond.stack[2]), NULL, &tid_m);
+
+		while (li_diamond.phase < 2)
+			usleep(1000);
+
+		priority(4);
+		sh[0] = 1;
+
+		msg_t msg = { 0 };
+		msg_rid_t rid;
+		if (msgRecv(port, &msg, &rid) < 0)
+			exit(1);
+
+		/* Running on H1's SC at P1 */
+		li_diamond.phase = 3; /* tell L both contenders are ready */
+
+		/* Block on mutex held by L (alongside T) */
+		mutexLock(li_diamond.mutex);
+		if (li_diamond.first_acquirer_prio == -1)
+			li_diamond.first_acquirer_prio = priority(-1);
+		mutexUnlock(li_diamond.mutex);
+
+		sh[1] = li_diamond.l_prio;
+		sh[2] = li_diamond.m_done;
+		sh[3] = li_diamond.first_acquirer_prio;
+
+		msg.o.err = 0;
+		msgRespond(port, &msg, rid);
+
+		threadJoin(tid_l, 0);
+		threadJoin(tid_t, 0);
+		threadJoin(tid_m, 0);
+		resourceDestroy(li_diamond.mutex);
+		exit(0);
+	}
+
+	oid_t oid;
+	while (lookup(dev_path, NULL, &oid) < 0)
+		usleep(10 * 1000);
+	while (!shared[0])
+		usleep(1000);
+
+	priority(1);
+	msg_t msg = { 0 };
+	msg.type = mtRead;
+	msg.i.size = 0;
+	msg.i.data = NULL;
+	msg.o.size = 0;
+	msg.o.data = NULL;
+	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
+
+	waitpid(server_pid, NULL, 0);
+
+	TEST_ASSERT_EQUAL_INT_MESSAGE(1, shared[1],
+			"Diamond: L should be boosted to P1 (highest contender via SC)");
+	TEST_ASSERT_EQUAL_INT_MESSAGE(0, shared[2],
+			"Diamond: M(P2) must not finish before IPC (inversion)");
+
+	munmap((void *)shared, 0x200);
+	kill(shm_pid, SIGKILL);
+	waitpid(shm_pid, NULL, 0);
+}
+
+
+/*
+ * Priority restoration correctness after chained unlock.
+ *
+ *   Server process:
+ *     Thread S (base P4): receives IPC (SC@P1), locks M1, locks M2
+ *     Thread A (base P3): blocks on M2
+ *     Thread B (base P5): blocks on M1
+ *
+ * S holds M1 and M2. A(P3) blocks on M2 -> no boost needed (S already P1).
+ * B(P5) blocks on M1 -> no boost needed.
+ *
+ * S unlocks M2 -> A gets M2. S still holds M1 with B waiting.
+ * S's priority should remain P1 (from SC), not drop.
+ *
+ * S unlocks M1 -> B gets M1. S still has SC@P1.
+ * After responding to IPC, S's priority reverts to base P4.
+ *
+ * Tests that unlocking a lock doesn't incorrectly drop the SC-donated prio.
+ */
+
+static struct {
+	handle_t m1;
+	handle_t m2;
+	volatile int phase;
+	char stack[2][4096] __attribute__((aligned(8)));
+} li_restore;
+
+static void li_restore_a(void *arg)
+{
+	/* Thread A (P3): block on M2 */
+	while (li_restore.phase < 2)
+		usleep(1000);
+
+	mutexLock(li_restore.m2);
+	mutexUnlock(li_restore.m2);
+	endthread();
+}
+
+static void li_restore_b(void *arg)
+{
+	/* Thread B (P5): block on M1 */
+	while (li_restore.phase < 2)
+		usleep(1000);
+	usleep(5 * 1000); /* stagger slightly after A */
+
+	mutexLock(li_restore.m1);
+	mutexUnlock(li_restore.m1);
+	endthread();
+}
+
+TEST(msg_lock_ipc, unlock_preserves_sc_prio)
+{
+	char shm_path[64];
+	make_dev_path(shm_path, sizeof(shm_path), "liup_shm");
+	pid_t shm_pid;
+	if ((shm_pid = safe_fork()) == 0) {
+		shmsrv_start(shm_path);
+		exit(1);
+	}
+
+	char dev_path[64];
+	make_dev_path(dev_path, sizeof(dev_path), "liup");
+
+	int *shared = (int *)shm_init(shm_path, true, 0x200);
+	TEST_ASSERT_NOT_NULL(shared);
+	/* shared[0] = server ready
+	 * shared[1] = S prio after unlocking M2 (still holding M1 + SC)
+	 * shared[2] = S prio after unlocking M1 (still holding SC) */
+	memset((void *)shared, 0, 0x200);
+
+	pid_t server_pid;
+	if ((server_pid = safe_fork()) == 0) {
+		int *sh = (int *)shm_init(shm_path, false, 0x200);
+		uint32_t port = 0;
+		if (setup_port_dev(dev_path, &port) < 0)
+			exit(3);
+
+		mutexCreate(&li_restore.m1);
+		mutexCreate(&li_restore.m2);
+		li_restore.phase = 0;
+
+		handle_t tid_a, tid_b;
+		beginthreadex(li_restore_a, 3, li_restore.stack[0],
+				sizeof(li_restore.stack[0]), NULL, &tid_a);
+		beginthreadex(li_restore_b, 5, li_restore.stack[1],
+				sizeof(li_restore.stack[1]), NULL, &tid_b);
+
+		priority(4);
+		sh[0] = 1;
+
+		msg_t msg = { 0 };
+		msg_rid_t rid;
+		if (msgRecv(port, &msg, &rid) < 0)
+			exit(1);
+
+		/* Running on SC@P1 */
+		mutexLock(li_restore.m1);
+		mutexLock(li_restore.m2);
+
+		li_restore.phase = 2; /* let A and B start contending */
+		usleep(30 * 1000);    /* let them block */
+
+		/* Unlock M2 (A gets it). Our prio should stay P1 from SC. */
+		mutexUnlock(li_restore.m2);
+		sh[1] = priority(-1);
+
+		/* Unlock M1 (B gets it). Our prio should stay P1 from SC. */
+		mutexUnlock(li_restore.m1);
+		sh[2] = priority(-1);
+
+		msg.o.err = 0;
+		msgRespond(port, &msg, rid);
+
+		threadJoin(tid_a, 0);
+		threadJoin(tid_b, 0);
+		resourceDestroy(li_restore.m1);
+		resourceDestroy(li_restore.m2);
+		exit(0);
+	}
+
+	oid_t oid;
+	while (lookup(dev_path, NULL, &oid) < 0)
+		usleep(10 * 1000);
+	while (!shared[0])
+		usleep(1000);
+
+	priority(1);
+	msg_t msg = { 0 };
+	msg.type = mtRead;
+	msg.i.size = 0;
+	msg.i.data = NULL;
+	msg.o.size = 0;
+	msg.o.data = NULL;
+	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
+
+	waitpid(server_pid, NULL, 0);
+
+	TEST_ASSERT_EQUAL_INT_MESSAGE(1, shared[1],
+			"Unlock M2: S prio must stay P1 from SC, not drop to base");
+	TEST_ASSERT_EQUAL_INT_MESSAGE(1, shared[2],
+			"Unlock M1: S prio must stay P1 from SC, not drop to base");
+
+	munmap((void *)shared, 0x200);
+	kill(shm_pid, SIGKILL);
+	waitpid(shm_pid, NULL, 0);
+}
+
+
+/*
+ * Lock-order inversion with IPC: two mutexes locked in opposite order
+ * by different threads, with IPC priority in the mix.
+ *
+ *   Client H (P1) --IPC--> Server process:
+ *     Thread S (base P4): receives IPC (SC@P1), locks M1 then blocks on M2
+ *     Thread R (base P5): locks M2 then blocks on M1
+ *     Thread M (base P2): CPU-bound interferer
+ *
+ * S holds M1, R holds M2. S blocks on M2 -> PI boosts R to P1.
+ * R finishes with M2, unlocks, S gets M2. Then R blocks on M1 -> S
+ * already at P1, no further boost needed.
+ *
+ * Key: R must be boosted to P1 (not just P4) to prevent M(P2) from
+ * causing inversion.
+ */
+
+static struct {
+	handle_t m1;
+	handle_t m2;
+	volatile int phase;
+	volatile int r_prio; /* R's observed prio while holding M2 under contention */
+	volatile int m_done;
+	char stack[3][4096] __attribute__((aligned(8)));
+} li_order;
+
+static void li_order_r(void *arg)
+{
+	/* Thread R (P5): lock M2, signal, then block on M1 */
+	mutexLock(li_order.m2);
+	li_order.phase = 1; /* M2 held */
+
+	/* Wait for S to contend on M2 */
+	while (li_order.phase < 2)
+		usleep(1000);
+	usleep(20 * 1000);
+
+	li_order.r_prio = priority(-1);
+
+	/* Release M2 (S gets it), then try M1 (held by S) */
+	mutexUnlock(li_order.m2);
+
+	mutexLock(li_order.m1);
+	mutexUnlock(li_order.m1);
+	endthread();
+}
+
+static void li_order_medium(void *arg)
+{
+	/* Wait until S has received IPC and is contending on M2 */
+	while (li_order.phase < 2)
+		usleep(1000);
+	usleep(10 * 1000); /* let S block on M2 and PI boost R */
+
+	for (volatile int i = 0; i < 30000000; i++)
+		;
+
+	li_order.m_done = 1;
+	endthread();
+}
+
+TEST(msg_lock_ipc, lock_order_inversion)
+{
+	char shm_path[64];
+	make_dev_path(shm_path, sizeof(shm_path), "lioi_shm");
+	pid_t shm_pid;
+	if ((shm_pid = safe_fork()) == 0) {
+		shmsrv_start(shm_path);
+		exit(1);
+	}
+
+	char dev_path[64];
+	make_dev_path(dev_path, sizeof(dev_path), "lioi");
+
+	int *shared = (int *)shm_init(shm_path, true, 0x200);
+	TEST_ASSERT_NOT_NULL(shared);
+	/* shared[0] = server ready
+	 * shared[1] = R's prio while holding M2 under contention from S
+	 * shared[2] = M finished before IPC
+	 * shared[3] = S's prio during IPC */
+	memset((void *)shared, 0, 0x200);
+
+	pid_t server_pid;
+	if ((server_pid = safe_fork()) == 0) {
+		int *sh = (int *)shm_init(shm_path, false, 0x200);
+		uint32_t port = 0;
+		if (setup_port_dev(dev_path, &port) < 0)
+			exit(3);
+
+		mutexCreate(&li_order.m1);
+		mutexCreate(&li_order.m2);
+		li_order.phase = 0;
+		li_order.r_prio = -1;
+		li_order.m_done = 0;
+
+		handle_t tid_r, tid_m;
+		beginthreadex(li_order_r, 5, li_order.stack[0],
+				sizeof(li_order.stack[0]), NULL, &tid_r);
+		beginthreadex(li_order_medium, 2, li_order.stack[1],
+				sizeof(li_order.stack[1]), NULL, &tid_m);
+
+		/* Wait for R to hold M2 */
+		while (li_order.phase < 1)
+			usleep(1000);
+
+		priority(4);
+		sh[0] = 1;
+
+		msg_t msg = { 0 };
+		msg_rid_t rid;
+		if (msgRecv(port, &msg, &rid) < 0)
+			exit(1);
+
+		/* Running on SC@P1 */
+		sh[3] = priority(-1);
+		mutexLock(li_order.m1); /* S holds M1 */
+		li_order.phase = 2;     /* signal: about to block on M2 */
+
+		/* Block on M2 held by R. PI should boost R to P1. */
+		mutexLock(li_order.m2);
+		mutexUnlock(li_order.m2);
+		mutexUnlock(li_order.m1);
+
+		sh[1] = li_order.r_prio;
+		sh[2] = li_order.m_done;
+
+		msg.o.err = 0;
+		msgRespond(port, &msg, rid);
+
+		threadJoin(tid_r, 0);
+		threadJoin(tid_m, 0);
+		resourceDestroy(li_order.m1);
+		resourceDestroy(li_order.m2);
+		exit(0);
+	}
+
+	oid_t oid;
+	while (lookup(dev_path, NULL, &oid) < 0)
+		usleep(10 * 1000);
+	while (!shared[0])
+		usleep(1000);
+
+	priority(1);
+	msg_t msg = { 0 };
+	msg.type = mtRead;
+	msg.i.size = 0;
+	msg.i.data = NULL;
+	msg.o.size = 0;
+	msg.o.data = NULL;
+	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
+
+	waitpid(server_pid, NULL, 0);
+
+	TEST_ASSERT_EQUAL_INT_MESSAGE(1, shared[3],
+			"Lock-order: S should run at P1 via SC");
+	TEST_ASSERT_EQUAL_INT_MESSAGE(1, shared[1],
+			"Lock-order: R should be boosted to P1 when S(SC@P1) contends on M2");
+	TEST_ASSERT_EQUAL_INT_MESSAGE(0, shared[2],
+			"Lock-order: M(P2) must not finish before IPC (inversion)");
+
+	munmap((void *)shared, 0x200);
+	kill(shm_pid, SIGKILL);
+	waitpid(shm_pid, NULL, 0);
+}
+
+
+/*
+ * Multiple IPC clients with different priorities contending through locks.
+ *
+ *   Client H1 (P1) --IPC--> Server (first)
+ *   Client H2 (P3) --IPC--> Server (second, after H1 completes)
+ *
+ *   Thread S (base P4): receives each msg, blocks on M (held by L)
+ *   Thread L (base P7): holds M
+ *
+ * After S finishes H1's request, S receives H2's msg (SC@P3), blocks on M again.
+ * L should now only be boosted to P3 (not lingering P1).
+ *
+ * Tests that the PI boost is recalculated correctly per-IPC-message,
+ * and old SC-donated priorities don't leak.
+ */
+
+static struct {
+	handle_t mutex;
+	volatile int phase;
+	volatile int l_prio_round1;
+	volatile int l_prio_round2;
+	char stack[2][4096] __attribute__((aligned(8)));
+} li_multi_ipc;
+
+static void li_multi_ipc_holder(void *arg)
+{
+	/* Round 1: hold mutex, observe prio from H1's SC@P1 */
+	mutexLock(li_multi_ipc.mutex);
+	li_multi_ipc.phase = 1;
+
+	while (li_multi_ipc.phase < 2)
+		usleep(1000);
+	usleep(20 * 1000);
+
+	li_multi_ipc.l_prio_round1 = priority(-1);
+	mutexUnlock(li_multi_ipc.mutex);
+
+	/* Round 2: hold mutex again, observe prio from H2's SC@P3 */
+	while (li_multi_ipc.phase < 3)
+		usleep(1000);
+
+	mutexLock(li_multi_ipc.mutex);
+	li_multi_ipc.phase = 4;
+
+	while (li_multi_ipc.phase < 5)
+		usleep(1000);
+	usleep(20 * 1000);
+
+	li_multi_ipc.l_prio_round2 = priority(-1);
+	mutexUnlock(li_multi_ipc.mutex);
+	endthread();
+}
+
+TEST(msg_lock_ipc, multi_client_prio_recalc)
+{
+	char shm_path[64];
+	make_dev_path(shm_path, sizeof(shm_path), "limc_shm");
+	pid_t shm_pid;
+	if ((shm_pid = safe_fork()) == 0) {
+		shmsrv_start(shm_path);
+		exit(1);
+	}
+
+	char dev_path[64];
+	make_dev_path(dev_path, sizeof(dev_path), "limc");
+
+	int *shared = (int *)shm_init(shm_path, true, 0x200);
+	TEST_ASSERT_NOT_NULL(shared);
+	/* shared[0] = server ready
+	 * shared[1] = L's prio round1 (should be P1)
+	 * shared[2] = L's prio round2 (should be P3) */
+	memset((void *)shared, 0, 0x200);
+
+	pid_t server_pid;
+	if ((server_pid = safe_fork()) == 0) {
+		int *sh = (int *)shm_init(shm_path, false, 0x200);
+		uint32_t port = 0;
+		if (setup_port_dev(dev_path, &port) < 0)
+			exit(3);
+
+		mutexCreate(&li_multi_ipc.mutex);
+		li_multi_ipc.phase = 0;
+		li_multi_ipc.l_prio_round1 = -1;
+		li_multi_ipc.l_prio_round2 = -1;
+
+		handle_t tid_l;
+		beginthreadex(li_multi_ipc_holder, 7, li_multi_ipc.stack[0],
+				sizeof(li_multi_ipc.stack[0]), NULL, &tid_l);
+
+		while (li_multi_ipc.phase < 1)
+			usleep(1000);
+
+		priority(4);
+		sh[0] = 1;
+
+		/* Round 1: receive H1's message (SC@P1) */
+		msg_t msg = { 0 };
+		msg_rid_t rid;
+		if (msgRecv(port, &msg, &rid) < 0)
+			exit(1);
+
+		li_multi_ipc.phase = 2;
+
+		mutexLock(li_multi_ipc.mutex);
+		mutexUnlock(li_multi_ipc.mutex);
+
+		msg.o.err = 0;
+		msgRespond(port, &msg, rid);
+
+		/* Round 2: wait for L to hold mutex again, then receive H2's message */
+		li_multi_ipc.phase = 3;
+		while (li_multi_ipc.phase < 4)
+			usleep(1000);
+
+		if (msgRecv(port, &msg, &rid) < 0)
+			exit(1);
+
+		li_multi_ipc.phase = 5;
+
+		mutexLock(li_multi_ipc.mutex);
+		mutexUnlock(li_multi_ipc.mutex);
+
+		sh[1] = li_multi_ipc.l_prio_round1;
+		sh[2] = li_multi_ipc.l_prio_round2;
+
+		msg.o.err = 0;
+		msgRespond(port, &msg, rid);
+
+		threadJoin(tid_l, 0);
+		resourceDestroy(li_multi_ipc.mutex);
+		exit(0);
+	}
+
+	oid_t oid;
+	while (lookup(dev_path, NULL, &oid) < 0)
+		usleep(10 * 1000);
+	while (!shared[0])
+		usleep(1000);
+
+	/* H1 sends at P1 */
+	pid_t h1;
+	if ((h1 = safe_fork()) == 0) {
+		priority(1);
+		msg_t msg = { 0 };
+		msg.type = mtRead;
+		msg.i.size = 0;
+		msg.i.data = NULL;
+		msg.o.size = 0;
+		msg.o.data = NULL;
+		if (msgSend(oid.port, &msg) != 0)
+			exit(1);
+		exit(0);
+	}
+
+	waitpid(h1, NULL, 0);
+
+	/* H2 sends at P3 (after H1 completes) */
+	pid_t h2;
+	if ((h2 = safe_fork()) == 0) {
+		priority(3);
+		msg_t msg = { 0 };
+		msg.type = mtWrite;
+		msg.i.size = 0;
+		msg.i.data = NULL;
+		msg.o.size = 0;
+		msg.o.data = NULL;
+		if (msgSend(oid.port, &msg) != 0)
+			exit(1);
+		exit(0);
+	}
+
+	waitpid(h2, NULL, 0);
+	waitpid(server_pid, NULL, 0);
+
+	TEST_ASSERT_EQUAL_INT_MESSAGE(1, shared[1],
+			"Multi-client: L boosted to P1 during H1's IPC");
+	TEST_ASSERT_EQUAL_INT_MESSAGE(3, shared[2],
+			"Multi-client: L boosted to P3 during H2's IPC (not lingering P1)");
+
+	munmap((void *)shared, 0x200);
+	kill(shm_pid, SIGKILL);
+	waitpid(shm_pid, NULL, 0);
+}
+
+
+/*
+ * Long chain: 3 mutexes, 3 holders + IPC SC at the top.
+ *
+ *   Client H (P1) --IPC--> Server process:
+ *     Thread S (base P4): receives IPC (SC@P1), blocks on M1 (held by T1)
+ *     Thread T1 (base P5): holds M1, blocked on M2 (held by T2)
+ *     Thread T2 (base P6): holds M2, blocked on M3 (held by T3)
+ *     Thread T3 (base P7): holds M3, doing work
+ *     Thread M (base P2): CPU-bound interferer
+ *
+ * Full transitive chain: S(P1) -> M1 -> T1(P5) -> M2 -> T2(P6) -> M3 -> T3(P7)
+ *
+ * Correct: T3 boosted to P1, T2 boosted to P1, T1 boosted to P1.
+ * Broken: each hop only boosts one level, T3 stays at P7, M preempts.
+ */
+
+static struct {
+	handle_t m1;
+	handle_t m2;
+	handle_t m3;
+	volatile int phase;
+	volatile int t3_prio;
+	volatile int t2_prio;
+	volatile int t1_prio;
+	volatile int m_done;
+	char stack[5][4096] __attribute__((aligned(8)));
+} li_long;
+
+static void li_long_t3(void *arg)
+{
+	mutexLock(li_long.m3);
+	li_long.phase = 1;
+
+	while (li_long.phase < 6)
+		usleep(1000);
+	usleep(30 * 1000);
+
+	li_long.t3_prio = priority(-1);
+
+	for (volatile int i = 0; i < 5000; i++)
+		;
+
+	mutexUnlock(li_long.m3);
+	endthread();
+}
+
+static void li_long_t2(void *arg)
+{
+	while (li_long.phase < 1)
+		usleep(1000);
+
+	mutexLock(li_long.m2);
+	li_long.phase = 2;
+
+	while (li_long.phase < 5)
+		usleep(1000);
+
+	li_long.phase = 6;
+
+	/* Block on M3 held by T3 */
+	mutexLock(li_long.m3);
+
+	/* After wakeup: T2 holds M2 (T1 at P1 waiting) + M3 → boosted to P1 */
+	li_long.t2_prio = priority(-1);
+
+	mutexUnlock(li_long.m3);
+	mutexUnlock(li_long.m2);
+	endthread();
+}
+
+static void li_long_t1(void *arg)
+{
+	while (li_long.phase < 2)
+		usleep(1000);
+
+	mutexLock(li_long.m1);
+	li_long.phase = 3;
+
+	while (li_long.phase < 4)
+		usleep(1000);
+
+	li_long.phase = 5;
+
+	/* Block on M2 held by T2 */
+	mutexLock(li_long.m2);
+
+	/* After wakeup: T1 holds M1 (S at P1 waiting) + M2 → boosted to P1 */
+	li_long.t1_prio = priority(-1);
+
+	mutexUnlock(li_long.m2);
+	mutexUnlock(li_long.m1);
+	endthread();
+}
+
+static void li_long_medium(void *arg)
+{
+	/* Wait until S has received IPC and the full chain is forming */
+	while (li_long.phase < 6)
+		usleep(1000);
+	usleep(20 * 1000); /* let S block on M1 and propagate boosts */
+
+	for (volatile int i = 0; i < 30000000; i++)
+		;
+
+	li_long.m_done = 1;
+	endthread();
+}
+
+TEST(msg_lock_ipc, long_chain_three_mutexes)
+{
+	char shm_path[64];
+	make_dev_path(shm_path, sizeof(shm_path), "lilc_shm");
+	pid_t shm_pid;
+	if ((shm_pid = safe_fork()) == 0) {
+		shmsrv_start(shm_path);
+		exit(1);
+	}
+
+	char dev_path[64];
+	make_dev_path(dev_path, sizeof(dev_path), "lilc");
+
+	int *shared = (int *)shm_init(shm_path, true, 0x200);
+	TEST_ASSERT_NOT_NULL(shared);
+	/* shared[0] = ready
+	 * shared[1] = T1 prio, shared[2] = T2 prio, shared[3] = T3 prio
+	 * shared[4] = M finished before IPC */
+	memset((void *)shared, 0, 0x200);
+
+	pid_t server_pid;
+	if ((server_pid = safe_fork()) == 0) {
+		int *sh = (int *)shm_init(shm_path, false, 0x200);
+		uint32_t port = 0;
+		if (setup_port_dev(dev_path, &port) < 0)
+			exit(3);
+
+		mutexCreate(&li_long.m1);
+		mutexCreate(&li_long.m2);
+		mutexCreate(&li_long.m3);
+		li_long.phase = 0;
+		li_long.t1_prio = -1;
+		li_long.t2_prio = -1;
+		li_long.t3_prio = -1;
+		li_long.m_done = 0;
+
+		handle_t tid_t3, tid_t2, tid_t1, tid_m;
+		beginthreadex(li_long_t3, 7, li_long.stack[0],
+				sizeof(li_long.stack[0]), NULL, &tid_t3);
+		beginthreadex(li_long_t2, 6, li_long.stack[1],
+				sizeof(li_long.stack[1]), NULL, &tid_t2);
+		beginthreadex(li_long_t1, 5, li_long.stack[2],
+				sizeof(li_long.stack[2]), NULL, &tid_t1);
+		beginthreadex(li_long_medium, 2, li_long.stack[3],
+				sizeof(li_long.stack[3]), NULL, &tid_m);
+
+		/* Wait for T1 to hold M1 */
+		while (li_long.phase < 3)
+			usleep(1000);
+
+		priority(4);
+		sh[0] = 1;
+
+		msg_t msg = { 0 };
+		msg_rid_t rid;
+		if (msgRecv(port, &msg, &rid) < 0)
+			exit(1);
+
+		/* Running on SC@P1 */
+		li_long.phase = 4; /* tell T1 to observe and block on M2 */
+
+		/* Wait for chain to form: T1->M2->T2 and T2->M3->T3 */
+		while (li_long.phase < 6)
+			usleep(1000);
+		usleep(10 * 1000);
+
+		/* S blocks on M1 (held by T1, who is blocked on M2 -> T2 -> M3 -> T3) */
+		mutexLock(li_long.m1);
+		mutexUnlock(li_long.m1);
+
+		sh[1] = li_long.t1_prio;
+		sh[2] = li_long.t2_prio;
+		sh[3] = li_long.t3_prio;
+		sh[4] = li_long.m_done;
+
+		msg.o.err = 0;
+		msgRespond(port, &msg, rid);
+
+		threadJoin(tid_t3, 0);
+		threadJoin(tid_t2, 0);
+		threadJoin(tid_t1, 0);
+		threadJoin(tid_m, 0);
+		resourceDestroy(li_long.m1);
+		resourceDestroy(li_long.m2);
+		resourceDestroy(li_long.m3);
+		exit(0);
+	}
+
+	oid_t oid;
+	while (lookup(dev_path, NULL, &oid) < 0)
+		usleep(10 * 1000);
+	while (!shared[0])
+		usleep(1000);
+
+	priority(1);
+	msg_t msg = { 0 };
+	msg.type = mtRead;
+	msg.i.size = 0;
+	msg.i.data = NULL;
+	msg.o.size = 0;
+	msg.o.data = NULL;
+	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
+
+	waitpid(server_pid, NULL, 0);
+
+	TEST_ASSERT_EQUAL_INT_MESSAGE(1, shared[1],
+			"Long chain: T1 should be boosted to P1");
+	TEST_ASSERT_EQUAL_INT_MESSAGE(1, shared[2],
+			"Long chain: T2 should be transitively boosted to P1");
+	TEST_ASSERT_EQUAL_INT_MESSAGE(1, shared[3],
+			"Long chain: T3 should be transitively boosted to P1");
+	TEST_ASSERT_EQUAL_INT_MESSAGE(0, shared[4],
+			"Long chain: M(P2) must not finish before IPC (inversion)");
+
 	munmap((void *)shared, 0x200);
 	kill(shm_pid, SIGKILL);
 	waitpid(shm_pid, NULL, 0);
@@ -4311,312 +5429,6 @@ TEST(msg_respond_recv_chain, rr_leaf_concurrent_clients)
 	waitpid(leaf_pid, NULL, 0);
 }
 
-
-/* =====================================================  */
-/* TEST_GROUP: msg_bench                                  */
-/* IPC round-trip performance benchmarks                  */
-/* =====================================================  */
-
-TEST_GROUP(msg_bench);
-
-TEST_SETUP(msg_bench)
-{
-}
-
-TEST_TEAR_DOWN(msg_bench)
-{
-}
-
-
-/* TODO: replace some of below tests with just iterations of one test
- * (especially edata) */
-
-#define USE_EDATA 1
-
-
-/* Helper: spawn a chain of N forwarding servers, return the front port oid.
- * chain[0] is the echo server (leaf), chain[i>0] forwards to chain[i-1].
- * Returns number of pids written to out_pids. */
-static int bench_spawn_chain(int depth, oid_t *front_oid, pid_t *out_pids,
-		int use_respond_and_recv)
-{
-	char paths[5][64];
-	int n = 0;
-
-#if USE_EDATA
-	__attribute__((aligned(_PAGE_SIZE))) char ebuf[256];
-#endif
-
-	if (depth < 1 || depth > 5)
-		return -1;
-
-	for (int i = 0; i < depth; i++)
-		make_dev_path(paths[i], sizeof(paths[i]), "bench");
-
-	/* Spawn echo server (leaf) */
-	pid_t pid;
-	if ((pid = safe_fork()) == 0) {
-		uint32_t port = 0;
-		if (setup_port_dev(paths[0], &port) < 0)
-			exit(3);
-		server_echo_loop(port, use_respond_and_recv);
-		exit(0);
-	}
-	out_pids[n++] = pid;
-
-	/* Spawn forwarding servers (depth-1 of them) */
-	for (int i = 1; i < depth; i++) {
-		if ((pid = safe_fork()) == 0) {
-			uint32_t port = 0;
-			if (setup_port_dev(paths[i], &port) < 0)
-				exit(3);
-
-			oid_t backend;
-			while (lookup(paths[i - 1], NULL, &backend) < 0)
-				usleep(10 * 1000);
-
-			msg_t msg = { 0 };
-			msg_rid_t rid;
-
-#if USE_EDATA
-			msg.edata = ebuf;
-			msg.esize = sizeof(ebuf);
-#endif
-
-			for (;;) {
-				if (msgRecv(port, &msg, &rid) < 0)
-					exit(0);
-
-				// 				/* Forward to next server in chain */
-				// 				msg_t fwd = { 0 };
-				//
-				// #if USE_EDATA
-				// 				fwd.edata = ebuf;
-				// 				fwd.esize = sizeof(ebuf);
-				// #endif
-				//
-				// 				fwd.type = msg.type;
-				// 				memcpy(fwd.i.raw, msg.i.raw, sizeof(fwd.i.raw));
-				// 				fwd.i.data = msg.i.data;
-				// 				fwd.i.size = msg.i.size;
-				// 				fwd.o.data = msg.o.data;
-				// 				fwd.o.size = msg.o.size;
-
-				if (msgSend(backend.port, &msg) != 0)
-					exit(4);
-
-				// memcpy(msg.o.raw, fwd.o.raw, sizeof(msg.o.raw));
-				// msg.o.err = fwd.o.err;
-
-				if (msgRespond(port, &msg, rid) < 0)
-					exit(5);
-			}
-		}
-		out_pids[n++] = pid;
-	}
-
-	/* Wait for all servers to register their paths */
-	while (lookup(paths[depth - 1], NULL, front_oid) < 0)
-		usleep(10 * 1000);
-
-	return n;
-}
-
-
-static void bench_kill_chain(pid_t *pids, int n)
-{
-	for (int i = n - 1; i >= 0; i--) {
-		kill(pids[i], SIGKILL);
-		waitpid(pids[i], NULL, 0);
-	}
-}
-
-
-static void run_bench(int depth, size_t payload_sz, int iterations, int use_rr)
-{
-	oid_t oid;
-	pid_t pids[5];
-	int npids;
-	time_t start, end;
-	char label[64];
-	char *ibuf = NULL, *obuf = NULL;
-
-#if USE_EDATA
-	__attribute__((aligned(_PAGE_SIZE))) char ebuf[256];
-#endif
-
-	npids = bench_spawn_chain(depth, &oid, pids, use_rr);
-	TEST_ASSERT_GREATER_THAN_INT(0, npids);
-
-	if (payload_sz > 0) {
-		ibuf = malloc(payload_sz);
-		obuf = malloc(payload_sz);
-		TEST_ASSERT_NOT_NULL(ibuf);
-		TEST_ASSERT_NOT_NULL(obuf);
-		memset(ibuf, 0xAB, payload_sz);
-	}
-
-	/* Warm up */
-	for (int w = 0; w < 10; w++) {
-		msg_t msg = { 0 };
-#if USE_EDATA
-		msg.edata = ebuf;
-		msg.esize = sizeof(ebuf);
-#endif
-		msg.type = mtRead;
-		msg.i.size = payload_sz;
-		msg.i.data = ibuf;
-		msg.o.size = payload_sz;
-		msg.o.data = obuf;
-		msgSend(oid.port, &msg);
-	}
-
-	gettime(&start, NULL);
-
-	for (int i = 0; i < iterations; i++) {
-		msg_t msg = { 0 };
-#if USE_EDATA
-		msg.edata = ebuf;
-		msg.esize = sizeof(ebuf);
-#endif
-		msg.type = mtRead;
-		msg.i.size = payload_sz;
-		msg.i.data = ibuf;
-		msg.o.size = payload_sz;
-		msg.o.data = obuf;
-		if (msgSend(oid.port, &msg) != 0) {
-			TEST_FAIL_MESSAGE("bench: msgSend failed");
-		}
-	}
-
-	gettime(&end, NULL);
-
-	time_t total_us = end - start;
-	time_t avg_us = (iterations > 0) ? total_us / iterations : 0;
-
-	snprintf(label, sizeof(label), "depth=%d payload=%zu rr=%d",
-			depth, payload_sz, use_rr);
-	UnityPrint("  [BENCH] ");
-	UnityPrint(label);
-	snprintf(label, sizeof(label), ": %d iters, %llu us total, %llu us/iter",
-			iterations, (unsigned long long)total_us, (unsigned long long)avg_us);
-	UnityPrint(label);
-	UNITY_PRINT_EOL();
-
-	if (ibuf != NULL) {
-		free(ibuf);
-		free(obuf);
-	}
-
-	bench_kill_chain(pids, npids);
-}
-
-
-/* Zero payload benchmarks */
-TEST(msg_bench, zero_depth1)
-{
-	run_bench(1, 0, 1000, 0);
-}
-
-
-TEST(msg_bench, zero_depth1_rr)
-{
-	run_bench(1, 0, 1000, 1);
-}
-
-
-TEST(msg_bench, zero_depth2)
-{
-	run_bench(2, 0, 500, 0);
-}
-
-
-TEST(msg_bench, zero_depth3)
-{
-	run_bench(3, 0, 500, 0);
-}
-
-
-TEST(msg_bench, zero_depth5)
-{
-	run_bench(5, 0, 200, 0);
-}
-
-
-/* Small payload (fits in raw/msgbuf, 64 bytes) */
-TEST(msg_bench, small_depth1)
-{
-	run_bench(1, 64, 1000, 0);
-}
-
-
-TEST(msg_bench, small_depth1_rr)
-{
-	run_bench(1, 64, 1000, 1);
-}
-
-
-TEST(msg_bench, small_depth2)
-{
-	run_bench(2, 64, 500, 0);
-}
-
-
-TEST(msg_bench, small_depth3)
-{
-	run_bench(3, 64, 500, 0);
-}
-
-
-TEST(msg_bench, small_depth5)
-{
-	run_bench(5, 64, 200, 0);
-}
-
-
-/* Large SHM payload (4096 bytes) */
-TEST(msg_bench, large_depth1)
-{
-	run_bench(1, 4096, 500, 0);
-}
-
-
-TEST(msg_bench, large_depth1_rr)
-{
-	run_bench(1, 4096, 500, 1);
-}
-
-
-TEST(msg_bench, large_depth2)
-{
-	run_bench(2, 4096, 200, 0);
-}
-
-
-TEST(msg_bench, large_depth3)
-{
-	run_bench(3, 4096, 200, 0);
-}
-
-
-TEST(msg_bench, large_depth5)
-{
-	run_bench(5, 4096, 100, 0);
-}
-
-
-/* Very large SHM payload (32KB) */
-TEST(msg_bench, vlarge_depth1)
-{
-	run_bench(1, 32768, 200, 0);
-}
-
-
-TEST(msg_bench, vlarge_depth2)
-{
-	run_bench(2, 32768, 100, 0);
-}
-
 /* ===================================== */
 /* Group runners                         */
 /* ===================================== */
@@ -4740,6 +5552,12 @@ TEST_GROUP_RUNNER(msg_lock_ipc)
 	RUN_TEST_CASE(msg_lock_ipc, reverse_three_task);
 	RUN_TEST_CASE(msg_lock_ipc, nested_lock_then_ipc);
 	RUN_TEST_CASE(msg_lock_ipc, cascaded_ipc_lock_ipc);
+	RUN_TEST_CASE(msg_lock_ipc, transitive_chain);
+	RUN_TEST_CASE(msg_lock_ipc, diamond_contention);
+	RUN_TEST_CASE(msg_lock_ipc, unlock_preserves_sc_prio);
+	RUN_TEST_CASE(msg_lock_ipc, lock_order_inversion);
+	RUN_TEST_CASE(msg_lock_ipc, multi_client_prio_recalc);
+	RUN_TEST_CASE(msg_lock_ipc, long_chain_three_mutexes);
 }
 
 
@@ -4765,28 +5583,6 @@ TEST_GROUP_RUNNER(msg_respond_recv_chain)
 }
 
 
-TEST_GROUP_RUNNER(msg_bench)
-{
-	RUN_TEST_CASE(msg_bench, zero_depth1);
-	RUN_TEST_CASE(msg_bench, zero_depth1_rr);
-	RUN_TEST_CASE(msg_bench, zero_depth2);
-	RUN_TEST_CASE(msg_bench, zero_depth3);
-	RUN_TEST_CASE(msg_bench, zero_depth5);
-	RUN_TEST_CASE(msg_bench, small_depth1);
-	RUN_TEST_CASE(msg_bench, small_depth1_rr);
-	RUN_TEST_CASE(msg_bench, small_depth2);
-	RUN_TEST_CASE(msg_bench, small_depth3);
-	RUN_TEST_CASE(msg_bench, small_depth5);
-	RUN_TEST_CASE(msg_bench, large_depth1);
-	RUN_TEST_CASE(msg_bench, large_depth1_rr);
-	RUN_TEST_CASE(msg_bench, large_depth2);
-	RUN_TEST_CASE(msg_bench, large_depth3);
-	RUN_TEST_CASE(msg_bench, large_depth5);
-	RUN_TEST_CASE(msg_bench, vlarge_depth1);
-	RUN_TEST_CASE(msg_bench, vlarge_depth2);
-}
-
-
 void runner(void)
 {
 	RUN_TEST_GROUP(msg_errnos);
@@ -4807,7 +5603,6 @@ void runner(void)
 
 	RUN_TEST_GROUP(msg_stress);
 	RUN_TEST_GROUP(msg_respond_recv_chain);
-	RUN_TEST_GROUP(msg_bench);
 }
 
 
