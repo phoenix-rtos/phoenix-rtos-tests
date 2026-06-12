@@ -485,9 +485,9 @@ test:
             testcase_count: 5
 
           # 2: system does not support users or groups; only root exists
-          # 3, 6: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1417
+          # 6: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1630
         - name: T.tmpfile
-          execute: run-test /tset/ANSI.os/streamio/tmpfile/T.tmpfile{1,4-5,7-8}
+          execute: run-test /tset/ANSI.os/streamio/tmpfile/T.tmpfile{1,3-5,7-8}
           kwargs:
             testcase_count: 8
 
