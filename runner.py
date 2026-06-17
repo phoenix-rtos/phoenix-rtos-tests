@@ -157,6 +157,13 @@ def parse_args(targets: Dict[str, Type[TargetBase]], hosts: Dict[str, Type[Host]
     )
 
     parser.add_argument(
+        "-r",
+        "--regex",
+        default=None,
+        help="Run only the tests that match the regex",
+    )
+
+    parser.add_argument(
         "--nightly",
         default=False,
         action="store_true",
@@ -281,6 +288,7 @@ def main():
         stream_output=args.stream,
         output=args.output,
         kwargs=args.kwargs,
+        regex=args.regex,
     )
 
     host_cls = hosts[args.host]
