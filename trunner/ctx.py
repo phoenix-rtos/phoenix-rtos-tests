@@ -40,3 +40,4 @@ class TestContext:
     kwargs: dict = field(default_factory=dict)
     target: Optional[TargetBase] = None
     host: Optional[Host] = None
+    regex: Optional[str] = None

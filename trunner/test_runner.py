@@ -1,6 +1,7 @@
 import os
 import shutil
 import sys
+import re
 import junitparser
 from io import StringIO
 from pathlib import Path
@@ -143,6 +144,10 @@ class TestRunner:
         tests = []
         for path in test_yamls:
             tests.extend(parser.parse(path))
+
+        if self.ctx.regex:
+            regex = re.compile(self.ctx.regex)
+            tests = [t for t in tests if regex.search(t.name)]
 
         return tests
 
