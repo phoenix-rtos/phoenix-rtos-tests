@@ -14,4 +14,4 @@ on:
 
 jobs:
   call-lint:
-    uses: phoenix-rtos/phoenix-rtos-project/.github/workflows/lint.yml@master
+    uses: phoenix-rtos/phoenix-rtos-project/.github/workflows/lint.yml@jsarzy/grandeci
