@@ -12,4 +12,5 @@ test:
               armv8m33-mcxn94x-frdm,
               armv7r5f-zynqmp-qemu,
               armv7r5f-zynqmp-som,
+              aarch64a53-zynqmp-virt,
               ]

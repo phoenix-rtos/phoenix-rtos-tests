@@ -23,6 +23,7 @@ test:
                 sparcv8leon-generic-qemu,
                 armv7r5f-zynqmp-qemu,
                 armv7r5f-zynqmp-som,
+                aarch64a53-zynqmp-virt,
                 armv8m33-mcxn94x-frdm
                 ]
 
@@ -73,6 +74,7 @@ test:
                 sparcv8leon-generic-qemu,
                 armv7r5f-zynqmp-qemu,
                 armv7r5f-zynqmp-som,
+                aarch64a53-zynqmp-virt,
                 armv8m33-mcxn94x-frdm
                 ]
 
@@ -89,6 +91,7 @@ test:
                 sparcv8leon-generic-qemu,
                 armv7r5f-zynqmp-qemu,
                 armv7r5f-zynqmp-som,
+                aarch64a53-zynqmp-virt,
                 armv8m33-mcxn94x-frdm
                 ]
 
@@ -99,6 +102,7 @@ test:
               # aarch64a53-zynqmp-qemu: excluded due to https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1386
               exclude: [
                 aarch64a53-zynqmp-qemu,
+                aarch64a53-zynqmp-virt,
                 armv7m7-imxrt106x-evk,
                 armv7m7-imxrt117x-evk,
                 armv7m4-stm32l4x6-nucleo,

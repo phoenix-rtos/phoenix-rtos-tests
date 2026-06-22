@@ -174,6 +174,48 @@ class ARMV7R5FSyspageLoader(PloRamSyspageLoader):
         self._register_files_in_plo(files_offset)
 
 
+class AARCH64A53SyspageLoader(PloRamSyspageLoader):
+    """Loads app binaries and file blobs into syspage via GDB on armv7r5f-zynqmp-qemu."""
+
+    source_device = "ramdisk"
+    destination_map = "ddr"
+    ramdisk_addr = 0x49000000
+    page_sz = 0x200
+
+    def __init__(
+        self,
+        dut: Dut,
+        apps: Sequence[AppOptions],
+        gdb: GdbInteractive,
+        files: Sequence[FileOptions] = (),
+        root_dir: Optional[Path] = None,
+    ):
+        super().__init__(dut, apps, files, root_dir)
+        self.gdb = gdb
+
+    def __call__(self) -> None:
+        with self.gdb.run():
+            offset = 0x4000000
+            apps_offset = offset
+            self.gdb.connect()
+
+            for app in self.apps:
+                path = self.gdb.cwd / Path(app.file)
+                aligned_sz = self._aligned_size(path)
+                self.gdb.load(path, self.ramdisk_addr + offset)
+                offset += aligned_sz
+
+            files_offset = offset
+            for f in self.files:
+                path = self._root_dir / Path(f.file).relative_to("/")
+                aligned_sz = self._aligned_size(path)
+                self.gdb.load(path, self.ramdisk_addr + offset)
+                offset += aligned_sz
+
+        self._register_apps_in_plo(apps_offset, app_host_dir=self.gdb.cwd)
+        self._register_files_in_plo(files_offset)
+
+
 class ARMV7R5FZynqmpQemuTarget(QemuTarget):
     name = "armv7r5f-zynqmp-qemu"
     rootfs = False
@@ -198,6 +240,60 @@ class ARMV7R5FZynqmpQemuTarget(QemuTarget):
 
             if test.bootloader.apps or test.bootloader.files:
                 syspage_loader = ARMV7R5FSyspageLoader(
+                    dut=self.dut,
+                    apps=test.bootloader.apps,
+                    gdb=GdbInteractive(
+                        port=self.gdb_port,
+                        cwd=self.root_dir() / test.shell.path,
+                    ),
+                    files=test.bootloader.files,
+                    root_dir=self.root_dir(),
+                )
+
+            builder.add(PloHarness(self.dut, syspage_loader=syspage_loader))
+
+        if test.shell is not None:
+            builder.add(
+                ShellHarness(
+                    self.dut,
+                    self.shell_prompt,
+                    test.shell.cmd,
+                    prompt_timeout=self.prompt_timeout,
+                    suppress_dmesg=False,
+                )
+            )
+        else:
+            builder.add(TestStartRunningHarness())
+
+        builder.add(test.harness)
+
+        return builder.get_harness()
+
+
+class ARMV7R5FZynqmpQemuTarget(QemuTarget):
+    name = "aarch64a53-zynqmp-virt"
+    rootfs = False
+    # Matches the GDB port defined in armv7r5f-zynqmp-qemu-test.sh
+    gdb_port = 1234
+
+    def __init__(self):
+        super().__init__("aarch64a53-zynqmp-virt.sh")
+
+    @classmethod
+    def from_context(cls, _: TestContext):
+        return cls()
+
+    def build_test(self, test: TestOptions) -> Callable[[TestResult], TestResult]:
+        builder = HarnessBuilder()
+
+        if test.should_reboot:
+            builder.add(RebooterHarness(self.rebooter))
+
+        if test.bootloader is not None:
+            syspage_loader = None
+
+            if test.bootloader.apps or test.bootloader.files:
+                syspage_loader = AARCH64A53SyspageLoader(
                     dut=self.dut,
                     apps=test.bootloader.apps,
                     gdb=GdbInteractive(
