@@ -84,6 +84,8 @@ test:
           armv7m4-stm32l4x6-nucleo,
           armv8m33-mcxn94x-frdm,
           armv7r5f-zynqmp-qemu,
+          armv7r5f-zynqmp-som,
+          aarch64a53-zynqmp-virt,
           ]
         include: [host-generic-pc]
 
@@ -95,7 +97,7 @@ test:
     - name: unix-socket
       execute: test-libc-unix-socket
       targets:
-        exclude: [armv7a9-zynq7000-qemu, aarch64a53-zynqmp-qemu, armv7r5f-zynqmp-qemu]
+        exclude: [armv7a9-zynq7000-qemu, aarch64a53-zynqmp-qemu, aarch64a53-zynqmp-virt, armv7r5f-zynqmp-qemu, armv7r5f-zynqmp-som]
         include: [host-generic-pc]
 
     # - name: unix-socket # Issue: 1342 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1342
