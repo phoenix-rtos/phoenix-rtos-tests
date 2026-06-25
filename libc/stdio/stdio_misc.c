@@ -329,6 +329,8 @@ TEST_GROUP(stdio_tmpnam);
 
 TEST_SETUP(stdio_tmpnam)
 {
+	/* tempnam() falls back to another directory if the given one does not exist */
+	mkdir("/tmp", 0777);
 }
 
 TEST_TEAR_DOWN(stdio_tmpnam)
@@ -338,23 +340,16 @@ TEST_TEAR_DOWN(stdio_tmpnam)
 
 TEST(stdio_tmpnam, tmpnam_null_returns_string)
 {
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#16 issue");
-#else
 	char *result;
 
 	result = tmpnam(NULL);
 	TEST_ASSERT_NOT_NULL(result);
 	TEST_ASSERT_GREATER_THAN_INT(0, (int)strlen(result));
-#endif
 }
 
 
 TEST(stdio_tmpnam, tmpnam_with_buffer)
 {
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#16 issue");
-#else
 	char buf[L_tmpnam + 1];
 	char *result;
 
@@ -363,15 +358,11 @@ TEST(stdio_tmpnam, tmpnam_with_buffer)
 	TEST_ASSERT_NOT_NULL(result);
 	TEST_ASSERT_TRUE(result == buf);
 	TEST_ASSERT_GREATER_THAN_INT(0, (int)strlen(buf));
-#endif
 }
 
 
 TEST(stdio_tmpnam, tmpnam_unique_names)
 {
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#16 issue");
-#else
 	char buf1[L_tmpnam + 1];
 	char buf2[L_tmpnam + 1];
 
@@ -379,30 +370,22 @@ TEST(stdio_tmpnam, tmpnam_unique_names)
 	TEST_ASSERT_NOT_NULL(tmpnam(buf2));
 	/* Each call should generate a different string */
 	TEST_ASSERT_TRUE(strcmp(buf1, buf2) != 0);
-#endif
 }
 
 
 TEST(stdio_tmpnam, tempnam_basic)
 {
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("tempnam() not available");
-#else
 	char *result;
 
 	result = tempnam(NULL, NULL);
 	TEST_ASSERT_NOT_NULL(result);
 	TEST_ASSERT_GREATER_THAN_INT(0, (int)strlen(result));
 	free(result);
-#endif
 }
 
 
 TEST(stdio_tmpnam, tempnam_with_dir)
 {
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("tempnam() not available");
-#else
 	char *result;
 
 	result = tempnam("/tmp", NULL);
@@ -411,15 +394,11 @@ TEST(stdio_tmpnam, tempnam_with_dir)
 	/* Should start with the given directory */
 	TEST_ASSERT_EQUAL_INT(0, strncmp(result, "/tmp", 4));
 	free(result);
-#endif
 }
 
 
 TEST(stdio_tmpnam, tempnam_with_prefix)
 {
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("tempnam() not available");
-#else
 	char *result;
 	const char *prefix = "tst";
 
@@ -428,15 +407,11 @@ TEST(stdio_tmpnam, tempnam_with_prefix)
 	/* The prefix should appear in the filename portion */
 	TEST_ASSERT_NOT_NULL(strstr(result, prefix));
 	free(result);
-#endif
 }
 
 
 TEST(stdio_tmpnam, tempnam_unique_names)
 {
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("tempnam() not available");
-#else
 	char *result1;
 	char *result2;
 
@@ -450,7 +425,6 @@ TEST(stdio_tmpnam, tempnam_unique_names)
 
 	free(result1);
 	free(result2);
-#endif
 }
 
 
