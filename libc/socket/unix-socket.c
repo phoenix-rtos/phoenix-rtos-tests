@@ -1458,9 +1458,9 @@ static void unix_accept_connect_liveness_helper(int type)
 		TEST_ASSERT_EQUAL_INT(POLLOUT, fds[0].revents);
 
 		int optval = 0;
-		int optlen = sizeof(optval);
+		socklen_t optlen = sizeof(optval);
 
-		TEST_ASSERT_EQUAL_INT(0, getsockopt(fds[0].fd, SOL_SOCKET, SO_ERROR, &optval, (socklen_t *)&optlen));
+		TEST_ASSERT_EQUAL_INT(0, getsockopt(fds[0].fd, SOL_SOCKET, SO_ERROR, &optval, &optlen));
 
 		fds[0].events = POLLIN;
 		TEST_ASSERT_EQUAL_INT(1, poll(fds, 1, 250));
