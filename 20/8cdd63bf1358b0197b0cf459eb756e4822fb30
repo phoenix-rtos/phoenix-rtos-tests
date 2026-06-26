@@ -1,7 +1,65 @@
+libc/socket/sockatmark.c
+  h_9f2d068a164dcf 54,68,83,106
+libc/socket/recvmsg.c
+  h_9f2d068a164dcf 148,330,334,376,389-390,421-422,430,432-436,448,451-452,455,459-467,471,475,478,484,488-492,494-495,497,503-514
+libc/socket/sendto.c
+  h_9f2d068a164dcf 63
+libc/socket/main.c
+  s_a24110e91f51b8::t_e7dd28d75f5c59 57
+  h_9f2d068a164dcf 41-56,69
+libc/socket/getsockname.c
+  h_9f2d068a164dcf 81-84,87,171-174,177,267-270,272
+  s_a24110e91f51b8::t_231740b8c32836 256-260
+  s_a24110e91f51b8::t_183a22a027afb1 237
+libc/socket/getpeername.c
+  h_9f2d068a164dcf 80,106-108,110,118-119,153-156,160,179-182,185,233-237,240,251,277-279,281,286-287
+libc/socket/bind.c
+  h_9f2d068a164dcf 192-195,197,223-226,228,277-280,282
+libc/socket/send.c
+  s_f1fe9e343d3ced::t_3874bad36baa40 339
+  h_9f2d068a164dcf 148,317
+  s_f1fe9e343d3ced::t_044b13c4c7b7d9 319-336
+libc/socket/shutdown.c
+  h_9f2d068a164dcf 304-305
+libc/socket/setsockopt.c
+  h_9f2d068a164dcf 225-226,255,259,286
+libc/socket/accept.c
+  h_9f2d068a164dcf 28,46,73,77-83,95,113,115,118,125-132,134-140,144-146,156,161,173-192,204-208,212,221,231,248,254,256
+libc/socket/socketpair.c
+  h_9f2d068a164dcf 292-295,297,302,310,315-316,323,325-326,328
+libc/socket/sendmsg.c
+  h_9f2d068a164dcf 47-48,57-58,74-78,285,468-470,569,571,600,602,604-606,608-610,616,620,682-683
+libc/socket/connect.c
+  h_9f2d068a164dcf 112,123-125,129-136,214-220,224,226,285-288,290,313-316,318,338-342,394-398
+libc/socket/listen.c
+  h_9f2d068a164dcf 228
 ---
 {
   "schema_version": "authorship/3.0.0",
   "git_ai_version": "development:1.4.2",
   "base_commit_sha": "208cdd63bf1358b0197b0cf459eb756e4822fb30",
-  "prompts": {}
+  "prompts": {},
+  "humans": {
+    "h_9f2d068a164dcf": {
+      "author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  },
+  "sessions": {
+    "s_a24110e91f51b8": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "5c5490ae-b9d9-4c5b-8ffd-4f9f39d3d7ee",
+        "model": "copilot/claude-opus-4.8"
+      },
+      "human_author": null
+    },
+    "s_f1fe9e343d3ced": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "334043c6-2723-4bc4-abc5-e155cc686e3e",
+        "model": "copilot/claude-opus-4.8"
+      },
+      "human_author": null
+    }
+  }
 }
