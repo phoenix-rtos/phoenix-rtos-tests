@@ -28,6 +28,7 @@ from trunner.target import (
     ARMV7R5FZynqmpQemuTarget,
     STM32N6Target,
     ARMV7R5FSomTarget,
+    AARCH64A53SomTarget,
 )
 from trunner.ctx import TestContext
 from trunner.target.base import TargetBase
@@ -254,6 +255,7 @@ def resolve_targets_and_hosts() -> Tuple[Dict[str, Type[TargetBase]], Dict[str, 
         ARMV7R5FZynqmpQemuTarget,
         STM32N6Target,
         ARMV7R5FSomTarget,
+        AARCH64A53SomTarget,
     ]
 
     hosts: List[Type[Host]] = [EmulatorHost, RpiHost]
