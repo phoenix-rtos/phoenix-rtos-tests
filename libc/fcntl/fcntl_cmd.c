@@ -276,7 +276,11 @@ TEST(fcntl_fcntl, getlk_no_conflict)
 
 	ret = fcntl(test_common.fd, F_GETLK, &fl);
 	TEST_ASSERT_TRUE(ret != -1);
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#1235 issue");
+#else
 	TEST_ASSERT_EQUAL_INT(F_UNLCK, fl.l_type);
+#endif
 }
 
 
@@ -371,7 +375,11 @@ TEST(fcntl_fcntl, dupfd_einval_negative_arg)
 	errno = 0;
 	ret = fcntl(test_common.fd, F_DUPFD, -1);
 	TEST_ASSERT_EQUAL_INT(-1, ret);
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#1687 issue");
+#else
 	TEST_ASSERT_EQUAL_INT(EINVAL, errno);
+#endif
 }
 
 

@@ -45,6 +45,9 @@ TEST_TEAR_DOWN(pthread_sched)
 /* pthread_getschedparam: returns 0 and valid policy for self */
 TEST(pthread_sched, getschedparam_self)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_getschedparam is not implemented");
+#else
 	struct sched_param param;
 	int policy;
 	int ret;
@@ -52,12 +55,16 @@ TEST(pthread_sched, getschedparam_self)
 	ret = pthread_getschedparam(pthread_self(), &policy, &param);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 	TEST_ASSERT_TRUE(policy == SCHED_FIFO || policy == SCHED_RR || policy == SCHED_OTHER);
+#endif
 }
 
 
 /* pthread_getschedparam: priority within valid range */
 TEST(pthread_sched, getschedparam_priority_in_range)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_getschedparam is not implemented");
+#else
 	struct sched_param param;
 	int policy;
 	int minPrio;
@@ -72,12 +79,16 @@ TEST(pthread_sched, getschedparam_priority_in_range)
 
 	TEST_ASSERT_TRUE(param.sched_priority >= minPrio);
 	TEST_ASSERT_TRUE(param.sched_priority <= maxPrio);
+#endif
 }
 
 
 /* pthread_setschedparam: set SCHED_OTHER with min priority */
 TEST(pthread_sched, setschedparam_sched_other)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_setschedparam/getschedparam is not implemented");
+#else
 	struct sched_param param;
 	int policy;
 	int minPrio;
@@ -101,12 +112,16 @@ TEST(pthread_sched, setschedparam_sched_other)
 	TEST_ASSERT_EQUAL_INT(0, ret);
 	TEST_ASSERT_EQUAL_INT(SCHED_OTHER, policy);
 	TEST_ASSERT_EQUAL_INT(minPrio, param.sched_priority);
+#endif
 }
 
 
 /* pthread_setschedparam: set SCHED_FIFO */
 TEST(pthread_sched, setschedparam_sched_fifo)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_setschedparam/getschedparam is not implemented");
+#else
 	struct sched_param param;
 	struct sched_param origParam;
 	int policy;
@@ -139,12 +154,16 @@ TEST(pthread_sched, setschedparam_sched_fifo)
 
 	/* Restore original */
 	pthread_setschedparam(pthread_self(), origPolicy, &origParam);
+#endif
 }
 
 
 /* pthread_setschedparam: set SCHED_RR */
 TEST(pthread_sched, setschedparam_sched_rr)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_setschedparam/getschedparam is not implemented");
+#else
 	struct sched_param param;
 	struct sched_param origParam;
 	int policy;
@@ -177,12 +196,16 @@ TEST(pthread_sched, setschedparam_sched_rr)
 
 	/* Restore original */
 	pthread_setschedparam(pthread_self(), origPolicy, &origParam);
+#endif
 }
 
 
 /* pthread_setschedparam: EINVAL for invalid policy */
 TEST(pthread_sched, setschedparam_invalid_policy)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_setschedparam is not implemented");
+#else
 	struct sched_param param;
 	int ret;
 
@@ -190,12 +213,16 @@ TEST(pthread_sched, setschedparam_invalid_policy)
 
 	ret = pthread_setschedparam(pthread_self(), -1, &param);
 	TEST_ASSERT_TRUE(ret == EINVAL || ret == ENOTSUP);
+#endif
 }
 
 
 /* pthread_setschedprio: set priority of current thread */
 TEST(pthread_sched, setschedprio_self)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_setschedprio/getschedparam is not implemented");
+#else
 	struct sched_param param;
 	int policy;
 	int minPrio;
@@ -218,22 +245,30 @@ TEST(pthread_sched, setschedprio_self)
 	ret = pthread_getschedparam(pthread_self(), &policy, &param);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 	TEST_ASSERT_EQUAL_INT(minPrio, param.sched_priority);
+#endif
 }
 
 
 /* pthread_setschedprio: EINVAL for out-of-range priority */
 TEST(pthread_sched, setschedprio_invalid_einval)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_setschedprio is not implemented");
+#else
 	int ret;
 
 	ret = pthread_setschedprio(pthread_self(), -9999);
 	TEST_ASSERT_TRUE(ret == EINVAL || ret == EPERM || ret == ENOTSUP);
+#endif
 }
 
 
 /* pthread_setschedparam: roundtrip preserves priority */
 TEST(pthread_sched, setschedparam_roundtrip)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_setschedparam/getschedparam is not implemented");
+#else
 	struct sched_param param;
 	struct sched_param origParam;
 	int policy;
@@ -261,6 +296,7 @@ TEST(pthread_sched, setschedparam_roundtrip)
 
 	/* Restore */
 	pthread_setschedparam(pthread_self(), origPolicy, &origParam);
+#endif
 }
 
 
@@ -297,6 +333,9 @@ TEST_TEAR_DOWN(pthread_getcpuclockid)
 /* pthread_getcpuclockid: returns 0 for current thread */
 TEST(pthread_getcpuclockid, self_success)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_getcpuclockid is not implemented");
+#else
 	clockid_t clkId;
 	int ret;
 
@@ -305,12 +344,16 @@ TEST(pthread_getcpuclockid, self_success)
 		TEST_IGNORE_MESSAGE("Per-thread CPU clock not supported");
 	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
+#endif
 }
 
 
 /* pthread_getcpuclockid: returned clock is usable with clock_gettime */
 TEST(pthread_getcpuclockid, clock_usable)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_getcpuclockid is not implemented");
+#else
 	clockid_t clkId;
 	struct timespec ts;
 	int ret;
@@ -326,12 +369,16 @@ TEST(pthread_getcpuclockid, clock_usable)
 	TEST_ASSERT_TRUE(ts.tv_sec >= 0);
 	TEST_ASSERT_TRUE(ts.tv_nsec >= 0);
 	TEST_ASSERT_TRUE(ts.tv_nsec < 1000000000L);
+#endif
 }
 
 
 /* pthread_getcpuclockid: clock advances with CPU work */
 TEST(pthread_getcpuclockid, clock_advances)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_getcpuclockid is not implemented");
+#else
 	clockid_t clkId;
 	struct timespec ts1;
 	struct timespec ts2;
@@ -358,9 +405,11 @@ TEST(pthread_getcpuclockid, clock_advances)
 	/* ts2 should be >= ts1 */
 	TEST_ASSERT_TRUE((ts2.tv_sec > ts1.tv_sec) ||
 		(ts2.tv_sec == ts1.tv_sec && ts2.tv_nsec >= ts1.tv_nsec));
+#endif
 }
 
 
+#ifndef __phoenix__
 static void *cpuClockThread(void *arg)
 {
 	clockid_t *clkId = (clockid_t *)arg;
@@ -374,11 +423,15 @@ static void *cpuClockThread(void *arg)
 	(void)clkId;
 	return NULL;
 }
+#endif
 
 
 /* pthread_getcpuclockid: get clock for another thread */
 TEST(pthread_getcpuclockid, other_thread)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_getcpuclockid is not implemented");
+#else
 	pthread_t thr;
 	clockid_t clkId;
 	struct timespec ts;
@@ -399,6 +452,7 @@ TEST(pthread_getcpuclockid, other_thread)
 
 	ret = pthread_join(thr, NULL);
 	TEST_ASSERT_EQUAL_INT(0, ret);
+#endif
 }
 
 

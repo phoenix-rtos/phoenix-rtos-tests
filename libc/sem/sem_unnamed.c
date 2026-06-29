@@ -23,12 +23,13 @@
 
 #include <errno.h>
 #include <limits.h>
-#include <semaphore.h>
 #include <string.h>
 #include <time.h>
 
 #include "unity_fixture.h"
 
+#ifndef __phoenix__
+#include <semaphore.h>
 /* Tests: sem_init, sem_destroy, sem_post, sem_wait, sem_trywait, sem_timedwait, sem_getvalue */
 TEST_GROUP(sem_unnamed);
 
@@ -382,3 +383,6 @@ TEST_GROUP_RUNNER(sem_unnamed)
 	RUN_TEST_CASE(sem_unnamed, post_then_wait_roundtrip);
 	RUN_TEST_CASE(sem_unnamed, init_pshared_zero_thread_shared);
 }
+#else
+TEST_GROUP_UNIMPLEMENTED(sem_unnamed, "sempahore.h is non-existent")
+#endif

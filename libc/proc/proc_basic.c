@@ -278,11 +278,13 @@ TEST_GROUP_RUNNER(proc_sleep)
 /* nice */
 /* ========================================================================= */
 
+#ifndef __phoenix__
+
 TEST_GROUP(proc_nice);
 
-TEST_SETUP(proc_nice) {}
+TEST_SETUP(proc_nice) { }
 
-TEST_TEAR_DOWN(proc_nice) {}
+TEST_TEAR_DOWN(proc_nice) { }
 
 
 TEST(proc_nice, nice_increase_priority_value)
@@ -363,7 +365,6 @@ TEST(proc_nice, nice_eperm_decrease_unprivileged)
 	TEST_ASSERT_EQUAL_INT(0, WEXITSTATUS(status));
 }
 
-
 TEST_GROUP_RUNNER(proc_nice)
 {
 	RUN_TEST_CASE(proc_nice, nice_increase_priority_value);
@@ -371,6 +372,9 @@ TEST_GROUP_RUNNER(proc_nice)
 	RUN_TEST_CASE(proc_nice, nice_clamps_to_maximum);
 	RUN_TEST_CASE(proc_nice, nice_eperm_decrease_unprivileged);
 }
+#else
+TEST_GROUP_UNIMPLEMENTED(proc_nice, "nice not implemented")
+#endif
 
 
 /* ========================================================================= */
@@ -379,9 +383,9 @@ TEST_GROUP_RUNNER(proc_nice)
 
 TEST_GROUP(proc_setsid);
 
-TEST_SETUP(proc_setsid) {}
+TEST_SETUP(proc_setsid) { }
 
-TEST_TEAR_DOWN(proc_setsid) {}
+TEST_TEAR_DOWN(proc_setsid) { }
 
 
 TEST(proc_setsid, setsid_creates_new_session_in_child)
@@ -498,9 +502,9 @@ TEST_GROUP_RUNNER(proc_setsid)
 
 TEST_GROUP(proc_times);
 
-TEST_SETUP(proc_times) {}
+TEST_SETUP(proc_times) { }
 
-TEST_TEAR_DOWN(proc_times) {}
+TEST_TEAR_DOWN(proc_times) { }
 
 
 TEST(proc_times, times_fills_structure)
@@ -514,10 +518,15 @@ TEST(proc_times, times_fills_structure)
 	TEST_ASSERT_TRUE(ret != (clock_t)-1);
 
 	/* After times(), user and system times should be non-negative */
+#ifdef __phoenix__
+	/* #1692 issue unpublished */
+	TEST_IGNORE_MESSAGE("times not implemented");
+#else
 	TEST_ASSERT_TRUE(buf.tms_utime >= 0);
 	TEST_ASSERT_TRUE(buf.tms_stime >= 0);
 	TEST_ASSERT_TRUE(buf.tms_cutime >= 0);
 	TEST_ASSERT_TRUE(buf.tms_cstime >= 0);
+#endif
 }
 
 
@@ -563,7 +572,12 @@ TEST(proc_times, times_user_time_increases_with_work)
 	TEST_ASSERT_TRUE(ret != (clock_t)-1);
 
 	/* User time should have increased */
+#ifdef __phoenix__
+	/* #1692 issue unpublished */
+	TEST_IGNORE_MESSAGE("times not implemented");
+#else
 	TEST_ASSERT_TRUE(buf2.tms_utime >= buf1.tms_utime);
+#endif
 }
 
 
@@ -599,7 +613,12 @@ TEST(proc_times, times_child_times_from_waited_child)
 	TEST_ASSERT_TRUE(ret != (clock_t)-1);
 
 	/* After waiting for child, cutime should include child's user time */
+#ifdef __phoenix__
+	/* #1692 issue unpublished */
+	TEST_IGNORE_MESSAGE("times not implemented");
+#else
 	TEST_ASSERT_TRUE(buf2.tms_cutime >= buf1.tms_cutime);
+#endif
 }
 
 

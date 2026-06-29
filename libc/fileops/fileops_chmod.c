@@ -28,15 +28,19 @@
 #define FCHMOD_TEST_FILE "/tmp/test_fchmod_file"
 #define FCHMOD_TEST_DIR  "/tmp/test_fchmod_dir"
 
+#ifndef __phoenix__
 static struct {
 	int fd;
 	int dirFd;
 } test_common;
+#endif
 
 
 /* ========================================================================= */
 /* fchmod */
 /* ========================================================================= */
+
+#ifndef __phoenix__
 
 TEST_GROUP(fileops_fchmod);
 
@@ -131,11 +135,16 @@ TEST_GROUP_RUNNER(fileops_fchmod)
 	RUN_TEST_CASE(fileops_fchmod, fchmod_ebadf);
 	RUN_TEST_CASE(fileops_fchmod, fchmod_returns_zero_on_success);
 }
+#else
+TEST_GROUP_UNIMPLEMENTED(fileops_fchmod, "fchmod only stubbed not implemented")
+#endif
 
 
 /* ========================================================================= */
 /* fchmodat */
 /* ========================================================================= */
+
+#ifndef __phoenix__
 
 TEST_GROUP(fileops_fchmodat);
 
@@ -257,3 +266,6 @@ TEST_GROUP_RUNNER(fileops_fchmodat)
 	RUN_TEST_CASE(fileops_fchmodat, fchmodat_ebadf_invalid_fd);
 	RUN_TEST_CASE(fileops_fchmodat, fchmodat_enotdir_fd_not_dir);
 }
+#else
+TEST_GROUP_UNIMPLEMENTED(fileops_fchmodat, "fchmodat not implemented")
+#endif

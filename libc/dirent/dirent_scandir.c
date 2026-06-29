@@ -34,6 +34,7 @@
 #define SCANDIR_NUM_FILES    3
 #define SCANDIR_SUBDIR       "scandir_test_dir/subdir"
 
+#ifndef __phoenix__
 
 static struct {
 	struct dirent **namelist;
@@ -304,3 +305,7 @@ TEST_GROUP_RUNNER(dirent_scandir)
 	RUN_TEST_CASE(dirent_scandir, alphasort_zero);
 	RUN_TEST_CASE(dirent_scandir, alphasort_positive);
 }
+
+#else
+TEST_GROUP_UNIMPLEMENTED(dirent_scandir, "scandir not implemented")
+#endif

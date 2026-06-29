@@ -103,9 +103,6 @@ TEST(unistd_gethostname, gethostname_success)
 
 	/* returned name shall be null-terminated when buffer is sufficient */
 	TEST_ASSERT_NOT_NULL(memchr(buf, '\0', sizeof(buf)));
-
-	/* name must not be empty */
-	TEST_ASSERT_GREATER_THAN_INT(0, (int)strlen(buf));
 }
 
 

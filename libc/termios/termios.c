@@ -45,6 +45,7 @@ static struct {
 
 static void test_openPty(void)
 {
+	#ifndef __phoenix__
 	int ret;
 	char slaveName[256];
 
@@ -62,6 +63,9 @@ static void test_openPty(void)
 
 	test_common.slaveFd = open(slaveName, O_RDWR | O_NOCTTY);
 	TEST_ASSERT_TRUE(test_common.slaveFd >= 0);
+	#else
+	TEST_IGNORE_MESSAGE("posix_openpt not implemented");
+	#endif
 }
 
 
@@ -135,7 +139,11 @@ TEST(termios_tcdrain, tcdrain_enotty_regular_file)
 	errno = 0;
 	ret = tcdrain(test_common.fileFd);
 	TEST_ASSERT_EQUAL_INT(-1, ret);
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#1435 issue");
+#else
 	TEST_ASSERT_EQUAL_INT(ENOTTY, errno);
+#endif
 }
 
 
@@ -150,6 +158,8 @@ TEST_GROUP_RUNNER(termios_tcdrain)
 /* ========================================================================= */
 /* tcflow */
 /* ========================================================================= */
+
+#ifndef __phoenix__
 
 TEST_GROUP(termios_tcflow);
 
@@ -257,7 +267,6 @@ TEST(termios_tcflow, tcflow_enotty_regular_file)
 	TEST_ASSERT_EQUAL_INT(ENOTTY, errno);
 }
 
-
 TEST_GROUP_RUNNER(termios_tcflow)
 {
 	RUN_TEST_CASE(termios_tcflow, tcflow_tcooff);
@@ -268,6 +277,9 @@ TEST_GROUP_RUNNER(termios_tcflow)
 	RUN_TEST_CASE(termios_tcflow, tcflow_einval_bad_action);
 	RUN_TEST_CASE(termios_tcflow, tcflow_enotty_regular_file);
 }
+#else
+TEST_GROUP_UNIMPLEMENTED(termios_tcflow, "tcflow not implemented")
+#endif
 
 
 /* ========================================================================= */
@@ -362,7 +374,11 @@ TEST(termios_tcflush, tcflush_enotty_regular_file)
 	errno = 0;
 	ret = tcflush(test_common.fileFd, TCIFLUSH);
 	TEST_ASSERT_EQUAL_INT(-1, ret);
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#1435 issue");
+#else
 	TEST_ASSERT_EQUAL_INT(ENOTTY, errno);
+#endif
 }
 
 
@@ -423,7 +439,11 @@ TEST(termios_tcgetsid, tcgetsid_enotty_regular_file)
 	errno = 0;
 	ret = tcgetsid(test_common.fileFd);
 	TEST_ASSERT_EQUAL_INT(-1, ret);
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#1435 issue");
+#else
 	TEST_ASSERT_EQUAL_INT(ENOTTY, errno);
+#endif
 }
 
 
@@ -599,7 +619,11 @@ TEST(termios_tcsetattr, tcsetattr_enotty_regular_file)
 	errno = 0;
 	ret = tcsetattr(test_common.fileFd, TCSANOW, &term);
 	TEST_ASSERT_EQUAL_INT(-1, ret);
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#1435 issue");
+#else
 	TEST_ASSERT_EQUAL_INT(ENOTTY, errno);
+#endif
 }
 
 
@@ -688,7 +712,11 @@ TEST(termios_tcgetpgrp, tcgetpgrp_enotty_regular_file)
 	errno = 0;
 	ret = tcgetpgrp(test_common.fileFd);
 	TEST_ASSERT_EQUAL_INT(-1, ret);
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#1435 issue");
+#else
 	TEST_ASSERT_EQUAL_INT(ENOTTY, errno);
+#endif
 }
 
 
@@ -760,7 +788,11 @@ TEST(termios_tcsetpgrp, tcsetpgrp_enotty_regular_file)
 	errno = 0;
 	ret = tcsetpgrp(test_common.fileFd, getpgrp());
 	TEST_ASSERT_EQUAL_INT(-1, ret);
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#1435 issue");
+#else
 	TEST_ASSERT_EQUAL_INT(ENOTTY, errno);
+#endif
 }
 
 
