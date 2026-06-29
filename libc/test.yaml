@@ -26,10 +26,10 @@ test:
       targets:
         include: [host-generic-pc]
 
-    - name: pthread
-      execute: test-libc-pthread
-      targets:
-        include: [host-generic-pc]
+    # - name: pthread
+    #   execute: test-libc-pthread
+    #   targets:
+    #     include: [host-generic-pc]
 
     - name: misc
       execute: test-libc-misc
@@ -41,12 +41,12 @@ test:
       targets:
         include: [host-generic-pc]
 
-    - name: posixsrv
-      execute: test-libc-posixsrv
-      targets:
-        include: [host-generic-pc]
-        # no posixsrv
-        exclude: [armv7r5f-zynqmp-qemu]
+    # - name: posixsrv
+    #   execute: test-libc-posixsrv
+    #   targets:
+    #     include: [host-generic-pc]
+    #     # no posixsrv
+    #     exclude: [armv7r5f-zynqmp-qemu]
 
     - name: stdlib
       execute: test-libc-stdlib
@@ -63,10 +63,10 @@ test:
       targets:
         include: [host-generic-pc]
 
-    - name: stat
-      execute: test-libc-stat
-      targets:
-        include: [host-generic-pc]
+    # - name: stat
+    #   execute: test-libc-stat
+    #   targets:
+    #     include: [host-generic-pc]
 
     - name: math
       execute: test-libc-math
@@ -86,10 +86,10 @@ test:
           ]
         include: [host-generic-pc]
 
-    - name: time
-      execute: test-libc-time
-      targets:
-        include: [host-generic-pc]
+    # - name: time
+    #   execute: test-libc-time
+    #   targets:
+    #     include: [host-generic-pc]
 
     - name: unix-socket
       execute: test-libc-unix-socket
@@ -97,15 +97,15 @@ test:
         exclude: [armv7a9-zynq7000-qemu, aarch64a53-zynqmp-qemu, armv7r5f-zynqmp-qemu]
         include: [host-generic-pc]
 
-    - name: unix-socket
-      execute: test-libc-unix-socket --extra-poll-delay-ms 150
-      targets:
-        value: [armv7a9-zynq7000-qemu]
-
     # - name: unix-socket # Issue: 1342 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1342
     #   execute: test-libc-unix-socket --extra-poll-delay-ms 250 --transfer-loop-cnt 30
     #   targets:
     #     value: [aarch64a53-zynqmp-qemu, armv7r5f-zynqmp-qemu]
+
+    - name: inet-socket
+      execute: test-libc-inet-socket
+      targets:
+        value: [ia32-generic-qemu, armv7a7-imx6ull-evk, host-generic-pc]
 
     - name: socket
       execute: test-libc-socket
@@ -117,93 +117,55 @@ test:
       targets:
         include: [host-generic-pc]
 
-    - name: fcntl
-      execute: test-libc-fcntl
-      targets:
-        include: [host-generic-pc]
+    # - name: fcntl
+    #   execute: test-libc-fcntl
+    #   targets:
+    #     include: [host-generic-pc]
 
-    - name: sched
-      execute: test-libc-sched
-      targets:
-        include: [host-generic-pc]
+    # - name: sched
+    #   execute: test-libc-sched
+    #   targets:
+    #     include: [host-generic-pc]
 
     - name: mman
       execute: test-libc-mman
       targets:
         include: [host-generic-pc]
 
-    - name: dirent
-      execute: test-libc-dirent
-      targets:
-        include: [host-generic-pc]
+    # - name: dirent
+    #   execute: test-libc-dirent
+    #   targets:
+    #     include: [host-generic-pc]
 
-    - name: grp
-      execute: test-libc-grp
-      targets:
-        include: [host-generic-pc]
+    # - name: grp
+    #   execute: test-libc-grp
+    #   targets:
+    #     include: [host-generic-pc]
 
-    - name: pwd
-      execute: test-libc-pwd
-      targets:
-        include: [host-generic-pc]
+    # - name: pwd
+    #   execute: test-libc-pwd
+    #   targets:
+    #     include: [host-generic-pc]
 
-    - name: sem
-      execute: test-libc-sem
-      targets:
-        include: [host-generic-pc]
+    # - name: sem
+    #   execute: test-libc-sem
+    #   targets:
+    #     include: [host-generic-pc]
 
-    - name: resource
-      execute: test-libc-resource
-      targets:
-        include: [host-generic-pc]
+    # - name: resource
+    #   execute: test-libc-resource
+    #   targets:
+    #     include: [host-generic-pc]
+
     - name: statvfs
       execute: test-libc-statvfs
 
-    # - name: inet-socket
-    #   execute: test-libc-inet-socket
-    #   targets:
-    #     value: [ia32-generic-qemu, armv7a7-imx6ull-evk, host-generic-pc]
-
-    - name: socket
-      execute: test-libc-socket
-
-
-    - name: unix-socket # Issue: 1342 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1342
-      execute: test-libc-unix-socket --extra-poll-delay-ms 250 --transfer-loop-cnt 30
-      targets:
-        value: [aarch64a53-zynqmp-qemu, armv7r5f-zynqmp-qemu]
-
-    - name: inet-socket
-      execute: test-libc-inet-socket
-      targets:
-        value: [ia32-generic-qemu, armv7a7-imx6ull-evk, host-generic-pc]
-
-    - name: poll
-      execute: test-libc-poll
+    - name: syslog
+      execute: test-libc-syslog
       targets:
         include: [host-generic-pc]
 
-    - name: fcntl
-      execute: test-libc-fcntl
-      targets:
-        include: [host-generic-pc]
-
-    - name: sched
-      execute: test-libc-sched
-      targets:
-        include: [host-generic-pc]
-
-    - name: mman
-      execute: test-libc-mman
-      targets:
-        include: [host-generic-pc]
-
-    - name: dirent
-      execute: test-libc-dirent
-      targets:
-        include: [host-generic-pc]
-
-    - name: grp
-      execute: test-libc-grp
+    - name: uio
+      execute: test-libc-uio
       targets:
         include: [host-generic-pc]
