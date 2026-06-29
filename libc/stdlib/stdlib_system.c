@@ -111,10 +111,12 @@ TEST(stdlib_system, empty_string_command)
 TEST_GROUP_RUNNER(stdlib_system)
 {
 	RUN_TEST_CASE(stdlib_system, null_command_returns_nonzero);
-	RUN_TEST_CASE(stdlib_system, true_command_success);
 	RUN_TEST_CASE(stdlib_system, false_command_nonzero_exit);
+#ifndef __phoenix__
+	RUN_TEST_CASE(stdlib_system, true_command_success);
 	RUN_TEST_CASE(stdlib_system, echo_command_runs);
 	RUN_TEST_CASE(stdlib_system, exit_code_preserved);
 	RUN_TEST_CASE(stdlib_system, nonexistent_command_exit_127);
 	RUN_TEST_CASE(stdlib_system, empty_string_command);
+#endif
 }

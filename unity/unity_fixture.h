@@ -52,6 +52,20 @@ int UnityMain(int argc, const char* argv[], void (*runAllTests)(void));
     }\
     void TEST_##group##_##name##_(void)
 
+/* Call this insinde test group if safe-guarding all tests for phoenix macro */
+#define TEST_GROUP_UNIMPLEMENTED(group, msg) \
+	TEST_GROUP(group); \
+	TEST_SETUP(group) {} \
+	TEST_TEAR_DOWN(group) {} \
+	TEST(group, unimplemented) \
+	{ \
+		TEST_IGNORE_MESSAGE(msg); \
+	} \
+	TEST_GROUP_RUNNER(group) \
+	{ \
+		RUN_TEST_CASE(group, unimplemented); \
+	}
+
 /* Call this for each test, insider the group runner */
 #define RUN_TEST_CASE(group, name) \
     { void TEST_##group##_##name##_run(void);\

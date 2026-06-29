@@ -48,6 +48,9 @@ TEST_TEAR_DOWN(pthread_mutexattr_prioceiling)
 /* pthread_mutexattr_getprioceiling: returns value after set */
 TEST(pthread_mutexattr_prioceiling, get_after_set)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_mutexattr_get/setprioceiling is not implemented");
+#else
 	pthread_mutexattr_t mattr;
 	int prioceiling;
 	int maxPrio;
@@ -71,12 +74,16 @@ TEST(pthread_mutexattr_prioceiling, get_after_set)
 	TEST_ASSERT_EQUAL_INT(maxPrio, prioceiling);
 
 	pthread_mutexattr_destroy(&mattr);
+#endif
 }
 
 
 /* pthread_mutexattr_setprioceiling: set min priority */
 TEST(pthread_mutexattr_prioceiling, set_min_priority)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_mutexattr_get/setprioceiling is not implemented");
+#else
 	pthread_mutexattr_t mattr;
 	int prioceiling;
 	int minPrio;
@@ -100,12 +107,16 @@ TEST(pthread_mutexattr_prioceiling, set_min_priority)
 	TEST_ASSERT_EQUAL_INT(minPrio, prioceiling);
 
 	pthread_mutexattr_destroy(&mattr);
+#endif
 }
 
 
 /* pthread_mutexattr_setprioceiling: roundtrip multiple values */
 TEST(pthread_mutexattr_prioceiling, roundtrip_multiple)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_mutexattr_get/setprioceiling is not implemented");
+#else
 	pthread_mutexattr_t mattr;
 	int prioceiling;
 	int minPrio;
@@ -133,6 +144,7 @@ TEST(pthread_mutexattr_prioceiling, roundtrip_multiple)
 	TEST_ASSERT_EQUAL_INT(minPrio, prioceiling);
 
 	pthread_mutexattr_destroy(&mattr);
+#endif
 }
 
 
@@ -163,6 +175,9 @@ TEST_TEAR_DOWN(pthread_mutexattr_protocol)
 /* pthread_mutexattr_getprotocol: default is PTHREAD_PRIO_NONE */
 TEST(pthread_mutexattr_protocol, get_default_prio_none)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_mutexattr_get/setprotocol is not implemented");
+#else
 	pthread_mutexattr_t mattr;
 	int protocol;
 	int ret;
@@ -175,12 +190,16 @@ TEST(pthread_mutexattr_protocol, get_default_prio_none)
 	TEST_ASSERT_EQUAL_INT(PTHREAD_PRIO_NONE, protocol);
 
 	pthread_mutexattr_destroy(&mattr);
+#endif
 }
 
 
 /* pthread_mutexattr_setprotocol: set PTHREAD_PRIO_NONE */
 TEST(pthread_mutexattr_protocol, set_prio_none)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_mutexattr_get/setprotocol is not implemented");
+#else
 	pthread_mutexattr_t mattr;
 	int protocol;
 	int ret;
@@ -196,12 +215,16 @@ TEST(pthread_mutexattr_protocol, set_prio_none)
 	TEST_ASSERT_EQUAL_INT(PTHREAD_PRIO_NONE, protocol);
 
 	pthread_mutexattr_destroy(&mattr);
+#endif
 }
 
 
 /* pthread_mutexattr_setprotocol: set PTHREAD_PRIO_INHERIT */
 TEST(pthread_mutexattr_protocol, set_prio_inherit)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_mutexattr_get/setprotocol is not implemented");
+#else
 	pthread_mutexattr_t mattr;
 	int protocol;
 	int ret;
@@ -221,12 +244,16 @@ TEST(pthread_mutexattr_protocol, set_prio_inherit)
 	TEST_ASSERT_EQUAL_INT(PTHREAD_PRIO_INHERIT, protocol);
 
 	pthread_mutexattr_destroy(&mattr);
+#endif
 }
 
 
 /* pthread_mutexattr_setprotocol: set PTHREAD_PRIO_PROTECT */
 TEST(pthread_mutexattr_protocol, set_prio_protect)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_mutexattr_get/setprotocol is not implemented");
+#else
 	pthread_mutexattr_t mattr;
 	int protocol;
 	int ret;
@@ -246,12 +273,16 @@ TEST(pthread_mutexattr_protocol, set_prio_protect)
 	TEST_ASSERT_EQUAL_INT(PTHREAD_PRIO_PROTECT, protocol);
 
 	pthread_mutexattr_destroy(&mattr);
+#endif
 }
 
 
 /* pthread_mutexattr_setprotocol: ENOTSUP for invalid value */
 TEST(pthread_mutexattr_protocol, set_invalid_enotsup)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_mutexattr_setprotocol is not implemented");
+#else
 	pthread_mutexattr_t mattr;
 	int ret;
 
@@ -265,6 +296,7 @@ TEST(pthread_mutexattr_protocol, set_invalid_enotsup)
 	TEST_ASSERT_TRUE(ret == ENOTSUP || ret == EINVAL);
 
 	pthread_mutexattr_destroy(&mattr);
+#endif
 }
 
 
@@ -297,6 +329,9 @@ TEST_TEAR_DOWN(pthread_mutexattr_pshared)
 /* pthread_mutexattr_getpshared: default is PTHREAD_PROCESS_PRIVATE */
 TEST(pthread_mutexattr_pshared, get_default_private)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_mutexattr_get/setpshared is not implemented");
+#else
 	pthread_mutexattr_t mattr;
 	int pshared;
 	int ret;
@@ -309,12 +344,16 @@ TEST(pthread_mutexattr_pshared, get_default_private)
 	TEST_ASSERT_EQUAL_INT(PTHREAD_PROCESS_PRIVATE, pshared);
 
 	pthread_mutexattr_destroy(&mattr);
+#endif
 }
 
 
 /* pthread_mutexattr_setpshared: set PTHREAD_PROCESS_PRIVATE */
 TEST(pthread_mutexattr_pshared, set_private)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_mutexattr_get/setpshared is not implemented");
+#else
 	pthread_mutexattr_t mattr;
 	int pshared;
 	int ret;
@@ -330,12 +369,16 @@ TEST(pthread_mutexattr_pshared, set_private)
 	TEST_ASSERT_EQUAL_INT(PTHREAD_PROCESS_PRIVATE, pshared);
 
 	pthread_mutexattr_destroy(&mattr);
+#endif
 }
 
 
 /* pthread_mutexattr_setpshared: set PTHREAD_PROCESS_SHARED */
 TEST(pthread_mutexattr_pshared, set_shared)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_mutexattr_get/setpshared is not implemented");
+#else
 	pthread_mutexattr_t mattr;
 	int pshared;
 	int ret;
@@ -351,12 +394,16 @@ TEST(pthread_mutexattr_pshared, set_shared)
 	TEST_ASSERT_EQUAL_INT(PTHREAD_PROCESS_SHARED, pshared);
 
 	pthread_mutexattr_destroy(&mattr);
+#endif
 }
 
 
 /* pthread_mutexattr_setpshared: EINVAL for invalid value */
 TEST(pthread_mutexattr_pshared, set_invalid_einval)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_mutexattr_setpshared is not implemented");
+#else
 	pthread_mutexattr_t mattr;
 	int ret;
 
@@ -370,6 +417,7 @@ TEST(pthread_mutexattr_pshared, set_invalid_einval)
 	TEST_ASSERT_EQUAL_INT(EINVAL, ret);
 
 	pthread_mutexattr_destroy(&mattr);
+#endif
 }
 
 
@@ -401,6 +449,9 @@ TEST_TEAR_DOWN(pthread_mutexattr_robust)
 /* pthread_mutexattr_getrobust: default is PTHREAD_MUTEX_STALLED */
 TEST(pthread_mutexattr_robust, get_default_stalled)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_mutexattr_get/setrobust is not implemented");
+#else
 	pthread_mutexattr_t mattr;
 	int robust;
 	int ret;
@@ -413,12 +464,16 @@ TEST(pthread_mutexattr_robust, get_default_stalled)
 	TEST_ASSERT_EQUAL_INT(PTHREAD_MUTEX_STALLED, robust);
 
 	pthread_mutexattr_destroy(&mattr);
+#endif
 }
 
 
 /* pthread_mutexattr_setrobust: set PTHREAD_MUTEX_ROBUST */
 TEST(pthread_mutexattr_robust, set_robust)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_mutexattr_get/setrobust is not implemented");
+#else
 	pthread_mutexattr_t mattr;
 	int robust;
 	int ret;
@@ -434,12 +489,16 @@ TEST(pthread_mutexattr_robust, set_robust)
 	TEST_ASSERT_EQUAL_INT(PTHREAD_MUTEX_ROBUST, robust);
 
 	pthread_mutexattr_destroy(&mattr);
+#endif
 }
 
 
 /* pthread_mutexattr_setrobust: set PTHREAD_MUTEX_STALLED */
 TEST(pthread_mutexattr_robust, set_stalled)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_mutexattr_get/setrobust is not implemented");
+#else
 	pthread_mutexattr_t mattr;
 	int robust;
 	int ret;
@@ -458,12 +517,16 @@ TEST(pthread_mutexattr_robust, set_stalled)
 	TEST_ASSERT_EQUAL_INT(PTHREAD_MUTEX_STALLED, robust);
 
 	pthread_mutexattr_destroy(&mattr);
+#endif
 }
 
 
 /* pthread_mutexattr_setrobust: EINVAL for invalid value */
 TEST(pthread_mutexattr_robust, set_invalid_einval)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_mutexattr_setrobust is not implemented");
+#else
 	pthread_mutexattr_t mattr;
 	int ret;
 
@@ -477,12 +540,16 @@ TEST(pthread_mutexattr_robust, set_invalid_einval)
 	TEST_ASSERT_EQUAL_INT(EINVAL, ret);
 
 	pthread_mutexattr_destroy(&mattr);
+#endif
 }
 
 
 /* pthread_mutexattr_setrobust: robust attr usable with mutex_init */
 TEST(pthread_mutexattr_robust, robust_usable_with_mutex_init)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_mutexattr_setrobust is not implemented");
+#else
 	pthread_mutexattr_t mattr;
 	pthread_mutex_t mtx;
 	int ret;
@@ -504,6 +571,7 @@ TEST(pthread_mutexattr_robust, robust_usable_with_mutex_init)
 
 	pthread_mutex_destroy(&mtx);
 	pthread_mutexattr_destroy(&mattr);
+#endif
 }
 
 

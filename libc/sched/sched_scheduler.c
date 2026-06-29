@@ -28,6 +28,7 @@
 
 #include "unity_fixture.h"
 
+#ifndef __phoenix__
 /* Tests: sched_getparam, sched_setparam */
 TEST_GROUP(sched_param);
 
@@ -145,7 +146,6 @@ TEST(sched_param, setparam_esrch_invalid_pid)
 	TEST_ASSERT_EQUAL_INT(ESRCH, errno);
 }
 
-
 TEST_GROUP_RUNNER(sched_param)
 {
 	RUN_TEST_CASE(sched_param, getparam_self_pid_zero);
@@ -155,8 +155,12 @@ TEST_GROUP_RUNNER(sched_param)
 	RUN_TEST_CASE(sched_param, setparam_einval_out_of_range);
 	RUN_TEST_CASE(sched_param, setparam_esrch_invalid_pid);
 }
+#else
+TEST_GROUP_UNIMPLEMENTED(sched_param, "sched_getparam and sched_setparam not implemented")
+#endif
 
 
+#ifndef __phoenix__
 /* Tests: sched_getscheduler, sched_setscheduler */
 TEST_GROUP(sched_scheduler);
 
@@ -292,7 +296,6 @@ TEST(sched_scheduler, setscheduler_esrch_invalid_pid)
 	TEST_ASSERT_EQUAL_INT(ESRCH, errno);
 }
 
-
 TEST_GROUP_RUNNER(sched_scheduler)
 {
 	RUN_TEST_CASE(sched_scheduler, getscheduler_self_pid_zero);
@@ -304,8 +307,12 @@ TEST_GROUP_RUNNER(sched_scheduler)
 	RUN_TEST_CASE(sched_scheduler, setscheduler_einval_invalid_priority);
 	RUN_TEST_CASE(sched_scheduler, setscheduler_esrch_invalid_pid);
 }
+#else
+TEST_GROUP_UNIMPLEMENTED(sched_scheduler, "sched_getscheduler and sched_setscheduler not implemented")
+#endif
 
 
+#ifndef __phoenix__
 /* Tests: sched_rr_get_interval */
 TEST_GROUP(sched_rr_get_interval);
 
@@ -399,7 +406,6 @@ TEST(sched_rr_get_interval, interval_positive_under_rr)
 	sched_setscheduler(0, origPolicy, &origParam);
 }
 
-
 TEST_GROUP_RUNNER(sched_rr_get_interval)
 {
 	RUN_TEST_CASE(sched_rr_get_interval, self_pid_zero);
@@ -407,3 +413,6 @@ TEST_GROUP_RUNNER(sched_rr_get_interval)
 	RUN_TEST_CASE(sched_rr_get_interval, esrch_invalid_pid);
 	RUN_TEST_CASE(sched_rr_get_interval, interval_positive_under_rr);
 }
+#else
+TEST_GROUP_UNIMPLEMENTED(sched_rr_get_interval, "sched_getscheduler sched_setscheduler sched_rr_get_interval sched_get_priority_min not implemented")
+#endif

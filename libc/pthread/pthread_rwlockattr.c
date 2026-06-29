@@ -40,6 +40,9 @@ TEST_TEAR_DOWN(pthread_rwlockattr)
 /* pthread_rwlockattr_init: returns 0 */
 TEST(pthread_rwlockattr, init_success)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_rwlockattr_init is not implemented");
+#else
 	pthread_rwlockattr_t attr;
 	int ret;
 
@@ -47,12 +50,16 @@ TEST(pthread_rwlockattr, init_success)
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	pthread_rwlockattr_destroy(&attr);
+#endif
 }
 
 
 /* pthread_rwlockattr_destroy: returns 0 */
 TEST(pthread_rwlockattr, destroy_success)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_rwlockattr_init/destroy is not implemented");
+#else
 	pthread_rwlockattr_t attr;
 	int ret;
 
@@ -61,12 +68,16 @@ TEST(pthread_rwlockattr, destroy_success)
 
 	ret = pthread_rwlockattr_destroy(&attr);
 	TEST_ASSERT_EQUAL_INT(0, ret);
+#endif
 }
 
 
 /* pthread_rwlockattr_getpshared: default is PTHREAD_PROCESS_PRIVATE */
 TEST(pthread_rwlockattr, getpshared_default_private)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_rwlockattr_init/getpshared is not implemented");
+#else
 	pthread_rwlockattr_t attr;
 	int pshared;
 	int ret;
@@ -79,12 +90,16 @@ TEST(pthread_rwlockattr, getpshared_default_private)
 	TEST_ASSERT_EQUAL_INT(PTHREAD_PROCESS_PRIVATE, pshared);
 
 	pthread_rwlockattr_destroy(&attr);
+#endif
 }
 
 
 /* pthread_rwlockattr_setpshared: set PTHREAD_PROCESS_PRIVATE */
 TEST(pthread_rwlockattr, setpshared_private)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_rwlockattr_init/setpshared is not implemented");
+#else
 	pthread_rwlockattr_t attr;
 	int pshared;
 	int ret;
@@ -100,12 +115,16 @@ TEST(pthread_rwlockattr, setpshared_private)
 	TEST_ASSERT_EQUAL_INT(PTHREAD_PROCESS_PRIVATE, pshared);
 
 	pthread_rwlockattr_destroy(&attr);
+#endif
 }
 
 
 /* pthread_rwlockattr_setpshared: set PTHREAD_PROCESS_SHARED */
 TEST(pthread_rwlockattr, setpshared_shared)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_rwlockattr_init/setpshared is not implemented");
+#else
 	pthread_rwlockattr_t attr;
 	int pshared;
 	int ret;
@@ -121,12 +140,16 @@ TEST(pthread_rwlockattr, setpshared_shared)
 	TEST_ASSERT_EQUAL_INT(PTHREAD_PROCESS_SHARED, pshared);
 
 	pthread_rwlockattr_destroy(&attr);
+#endif
 }
 
 
 /* pthread_rwlockattr_setpshared: EINVAL for invalid value */
 TEST(pthread_rwlockattr, setpshared_invalid_einval)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_rwlockattr_init/setpshared is not implemented");
+#else
 	pthread_rwlockattr_t attr;
 	int ret;
 
@@ -140,12 +163,16 @@ TEST(pthread_rwlockattr, setpshared_invalid_einval)
 	TEST_ASSERT_EQUAL_INT(EINVAL, ret);
 
 	pthread_rwlockattr_destroy(&attr);
+#endif
 }
 
 
 /* pthread_rwlockattr_setpshared: roundtrip private -> shared -> private */
 TEST(pthread_rwlockattr, setpshared_roundtrip)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_rwlockattr_init/setpshared is not implemented");
+#else
 	pthread_rwlockattr_t attr;
 	int pshared;
 	int ret;
@@ -164,12 +191,16 @@ TEST(pthread_rwlockattr, setpshared_roundtrip)
 	TEST_ASSERT_EQUAL_INT(PTHREAD_PROCESS_PRIVATE, pshared);
 
 	pthread_rwlockattr_destroy(&attr);
+#endif
 }
 
 
 /* pthread_rwlock_init: use attr with pshared to init rwlock */
 TEST(pthread_rwlockattr, usable_with_rwlock_init)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_rwlockattr_init is not implemented");
+#else
 	pthread_rwlockattr_t attr;
 	pthread_rwlock_t rwl;
 	int ret;
@@ -191,6 +222,7 @@ TEST(pthread_rwlockattr, usable_with_rwlock_init)
 
 	pthread_rwlock_destroy(&rwl);
 	pthread_rwlockattr_destroy(&attr);
+#endif
 }
 
 

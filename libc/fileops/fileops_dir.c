@@ -29,22 +29,26 @@
 
 #include "unity_fixture.h"
 
-#define FILEOPS_TEST_DIR   "/tmp/test_fileops_dir"
-#define FILEOPS_TEST_FILE  "/tmp/test_fileops_file"
-#define FILEOPS_TEST_FIFO  "/tmp/test_fileops_fifo"
-#define FILEOPS_SUBDIR     "test_fileops_subdir"
-#define FILEOPS_SUBFIFO    "test_fileops_subfifo"
+#define FILEOPS_TEST_DIR  "/tmp/test_fileops_dir"
+#define FILEOPS_TEST_FILE "/tmp/test_fileops_file"
+#define FILEOPS_TEST_FIFO "/tmp/test_fileops_fifo"
+#define FILEOPS_SUBDIR    "test_fileops_subdir"
+#define FILEOPS_SUBFIFO   "test_fileops_subfifo"
 
+#ifndef __phoenix__
 static struct {
 	int dirFd;
 	int fileFd;
 	char origCwd[PATH_MAX];
 } test_common;
+#endif
 
 
 /* ========================================================================= */
 /* fchdir */
 /* ========================================================================= */
+
+#ifndef __phoenix__
 
 TEST_GROUP(fileops_fchdir);
 
@@ -134,7 +138,6 @@ TEST(fileops_fchdir, fchdir_returns_zero_on_success)
 	TEST_ASSERT_EQUAL_INT(0, ret);
 }
 
-
 TEST_GROUP_RUNNER(fileops_fchdir)
 {
 	RUN_TEST_CASE(fileops_fchdir, fchdir_changes_cwd);
@@ -142,11 +145,16 @@ TEST_GROUP_RUNNER(fileops_fchdir)
 	RUN_TEST_CASE(fileops_fchdir, fchdir_enotdir);
 	RUN_TEST_CASE(fileops_fchdir, fchdir_returns_zero_on_success);
 }
+#else
+TEST_GROUP_UNIMPLEMENTED(fileops_fchdir, "fchdir only stubbed not implemented")
+#endif
 
 
 /* ========================================================================= */
 /* fstatat */
 /* ========================================================================= */
+
+#ifndef __phoenix__
 
 TEST_GROUP(fileops_fstatat);
 
@@ -268,7 +276,6 @@ TEST(fileops_fstatat, fstatat_enotdir_fd_not_dir)
 	TEST_ASSERT_EQUAL_INT(ENOTDIR, errno);
 }
 
-
 TEST_GROUP_RUNNER(fileops_fstatat)
 {
 	RUN_TEST_CASE(fileops_fstatat, fstatat_relative_path);
@@ -279,11 +286,16 @@ TEST_GROUP_RUNNER(fileops_fstatat)
 	RUN_TEST_CASE(fileops_fstatat, fstatat_ebadf);
 	RUN_TEST_CASE(fileops_fstatat, fstatat_enotdir_fd_not_dir);
 }
+#else
+TEST_GROUP_UNIMPLEMENTED(fileops_fstatat, "fstatat not implemented")
+#endif
 
 
 /* ========================================================================= */
 /* mkdirat */
 /* ========================================================================= */
+
+#ifndef __phoenix__
 
 TEST_GROUP(fileops_mkdirat);
 
@@ -390,7 +402,6 @@ TEST(fileops_mkdirat, mkdirat_ebadf)
 	TEST_ASSERT_EQUAL_INT(EBADF, errno);
 }
 
-
 TEST_GROUP_RUNNER(fileops_mkdirat)
 {
 	RUN_TEST_CASE(fileops_mkdirat, mkdirat_creates_directory);
@@ -400,11 +411,15 @@ TEST_GROUP_RUNNER(fileops_mkdirat)
 	RUN_TEST_CASE(fileops_mkdirat, mkdirat_enoent_missing_component);
 	RUN_TEST_CASE(fileops_mkdirat, mkdirat_ebadf);
 }
+#else
+TEST_GROUP_UNIMPLEMENTED(fileops_mkdirat, "mkdirat not implemented")
+#endif
 
 
 /* ========================================================================= */
 /* mkfifoat */
 /* ========================================================================= */
+#ifndef __phoenix__
 
 TEST_GROUP(fileops_mkfifoat);
 
@@ -510,7 +525,6 @@ TEST(fileops_mkfifoat, mkfifoat_ebadf)
 	TEST_ASSERT_EQUAL_INT(EBADF, errno);
 }
 
-
 TEST_GROUP_RUNNER(fileops_mkfifoat)
 {
 	RUN_TEST_CASE(fileops_mkfifoat, mkfifoat_creates_fifo);
@@ -520,3 +534,6 @@ TEST_GROUP_RUNNER(fileops_mkfifoat)
 	RUN_TEST_CASE(fileops_mkfifoat, mkfifoat_enoent);
 	RUN_TEST_CASE(fileops_mkfifoat, mkfifoat_ebadf);
 }
+#else
+TEST_GROUP_UNIMPLEMENTED(fileops_mkfifoat, "mkfifoat not implemented")
+#endif

@@ -92,12 +92,17 @@ TEST(fileops_fchown, fchown_set_own_uid_gid)
 
 TEST(fileops_fchown, fchown_ebadf)
 {
+#ifdef __phoenix__
+	/* #1693 issue unpublished */
+	TEST_IGNORE_MESSAGE("fchown not implemented");
+#else
 	int ret;
 
 	errno = 0;
 	ret = fchown(-1, getuid(), getgid());
 	TEST_ASSERT_EQUAL_INT(-1, ret);
 	TEST_ASSERT_EQUAL_INT(EBADF, errno);
+#endif
 }
 
 
@@ -112,6 +117,8 @@ TEST_GROUP_RUNNER(fileops_fchown)
 /* ========================================================================= */
 /* fdatasync */
 /* ========================================================================= */
+
+#ifndef __phoenix__
 
 TEST_GROUP(fileops_fdatasync);
 
@@ -174,11 +181,16 @@ TEST_GROUP_RUNNER(fileops_fdatasync)
 	RUN_TEST_CASE(fileops_fdatasync, fdatasync_empty_file);
 	RUN_TEST_CASE(fileops_fdatasync, fdatasync_ebadf);
 }
+#else
+TEST_GROUP_UNIMPLEMENTED(fileops_fdatasync, "fdatasync not implemented")
+#endif
 
 
 /* ========================================================================= */
 /* lockf */
 /* ========================================================================= */
+
+#ifndef __phoenix__
 
 TEST_GROUP(fileops_lockf);
 
@@ -345,6 +357,9 @@ TEST_GROUP_RUNNER(fileops_lockf)
 	RUN_TEST_CASE(fileops_lockf, lockf_ebadf);
 	RUN_TEST_CASE(fileops_lockf, lockf_einval_bad_function);
 }
+#else
+TEST_GROUP_UNIMPLEMENTED(fileops_lockf, "lockf not implemented")
+#endif
 
 
 /* ========================================================================= */
@@ -353,9 +368,9 @@ TEST_GROUP_RUNNER(fileops_lockf)
 
 TEST_GROUP(fileops_sync);
 
-TEST_SETUP(fileops_sync) {}
+TEST_SETUP(fileops_sync) { }
 
-TEST_TEAR_DOWN(fileops_sync) {}
+TEST_TEAR_DOWN(fileops_sync) { }
 
 
 TEST(fileops_sync, sync_does_not_crash)

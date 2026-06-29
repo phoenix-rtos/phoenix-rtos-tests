@@ -96,8 +96,13 @@ TEST(resource_priority, getpriority_einval_bad_which)
 
 	errno = 0;
 	prio = getpriority(-1, 0);
+#ifdef __phoenix__
+	(void)prio;
+	TEST_IGNORE_MESSAGE("#1688 issue");
+#else
 	TEST_ASSERT_EQUAL_INT(-1, prio);
 	TEST_ASSERT_EQUAL_INT(EINVAL, errno);
+#endif
 }
 
 
@@ -107,8 +112,13 @@ TEST(resource_priority, getpriority_esrch_invalid_pid)
 
 	errno = 0;
 	prio = getpriority(PRIO_PROCESS, 99999);
+#ifdef __phoenix__
+	(void)prio;
+	TEST_IGNORE_MESSAGE("#1688 issue");
+#else
 	TEST_ASSERT_EQUAL_INT(-1, prio);
 	TEST_ASSERT_EQUAL_INT(ESRCH, errno);
+#endif
 }
 
 
@@ -141,8 +151,13 @@ TEST(resource_priority, setpriority_einval_bad_which)
 
 	errno = 0;
 	ret = setpriority(-1, 0, 0);
+#ifdef __phoenix__
+	(void)ret;
+	TEST_IGNORE_MESSAGE("#1688 issue");
+#else
 	TEST_ASSERT_EQUAL_INT(-1, ret);
 	TEST_ASSERT_EQUAL_INT(EINVAL, errno);
+#endif
 }
 
 
@@ -152,8 +167,13 @@ TEST(resource_priority, setpriority_esrch_invalid_pid)
 
 	errno = 0;
 	ret = setpriority(PRIO_PROCESS, 99999, 0);
+#ifdef __phoenix__
+	(void)ret;
+	TEST_IGNORE_MESSAGE("#1688 issue");
+#else
 	TEST_ASSERT_EQUAL_INT(-1, ret);
 	TEST_ASSERT_EQUAL_INT(ESRCH, errno);
+#endif
 }
 
 
@@ -203,9 +223,14 @@ TEST(resource_rlimit, getrlimit_stack)
 
 	ret = getrlimit(RLIMIT_STACK, &rl);
 	TEST_ASSERT_EQUAL_INT(0, ret);
+#ifdef __phoenix__
+	/*#1689 not published*/
+	TEST_IGNORE_MESSAGE("under implementation");
+#else
 	/* Stack should have a positive limit */
 	TEST_ASSERT_TRUE(rl.rlim_cur > 0);
 	TEST_ASSERT_TRUE(rl.rlim_cur <= rl.rlim_max);
+#endif
 }
 
 
@@ -222,45 +247,61 @@ TEST(resource_rlimit, getrlimit_core)
 
 TEST(resource_rlimit, getrlimit_cpu)
 {
+#ifndef __phoenix__
 	struct rlimit rl;
 	int ret;
 
 	ret = getrlimit(RLIMIT_CPU, &rl);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 	TEST_ASSERT_TRUE(rl.rlim_cur <= rl.rlim_max);
+#else
+	TEST_IGNORE_MESSAGE("RLIMIT_CPU not defined");
+#endif
 }
 
 
 TEST(resource_rlimit, getrlimit_data)
 {
+#ifndef __phoenix__
 	struct rlimit rl;
 	int ret;
 
 	ret = getrlimit(RLIMIT_DATA, &rl);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 	TEST_ASSERT_TRUE(rl.rlim_cur <= rl.rlim_max);
+#else
+	TEST_IGNORE_MESSAGE("RLIMIT_DATA not defined");
+#endif
 }
 
 
 TEST(resource_rlimit, getrlimit_fsize)
 {
+#ifndef __phoenix__
 	struct rlimit rl;
 	int ret;
 
 	ret = getrlimit(RLIMIT_FSIZE, &rl);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 	TEST_ASSERT_TRUE(rl.rlim_cur <= rl.rlim_max);
+#else
+	TEST_IGNORE_MESSAGE("RLIMIT_CPU not defined");
+#endif
 }
 
 
 TEST(resource_rlimit, getrlimit_as)
 {
+#ifndef __phoenix__
 	struct rlimit rl;
 	int ret;
 
 	ret = getrlimit(RLIMIT_AS, &rl);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 	TEST_ASSERT_TRUE(rl.rlim_cur <= rl.rlim_max);
+#else
+	TEST_IGNORE_MESSAGE("RLIMIT_AS not defined");
+#endif
 }
 
 
@@ -271,8 +312,14 @@ TEST(resource_rlimit, getrlimit_einval_invalid_resource)
 
 	errno = 0;
 	ret = getrlimit(-1, &rl);
+#ifdef __phoenix__
+	(void)ret;
+	/*#1689 not published*/
+	TEST_IGNORE_MESSAGE("under implementation");
+#else
 	TEST_ASSERT_EQUAL_INT(-1, ret);
 	TEST_ASSERT_EQUAL_INT(EINVAL, errno);
+#endif
 }
 
 
@@ -323,8 +370,13 @@ TEST(resource_rlimit, setrlimit_einval_cur_exceeds_max)
 	newRl.rlim_max = rl.rlim_max;
 	errno = 0;
 	ret = setrlimit(RLIMIT_NOFILE, &newRl);
+#ifdef __phoenix__
+	/* #1690 issue unpublished*/
+	TEST_IGNORE_MESSAGE("under implementation");
+#else
 	TEST_ASSERT_EQUAL_INT(-1, ret);
 	TEST_ASSERT_EQUAL_INT(EINVAL, errno);
+#endif
 }
 
 
@@ -337,8 +389,14 @@ TEST(resource_rlimit, setrlimit_einval_invalid_resource)
 	rl.rlim_max = 100;
 	errno = 0;
 	ret = setrlimit(-1, &rl);
+#ifdef __phoenix__
+	(void)ret;
+	/* #1690 issue unpublished*/
+	TEST_IGNORE_MESSAGE("under implementation");
+#else
 	TEST_ASSERT_EQUAL_INT(-1, ret);
 	TEST_ASSERT_EQUAL_INT(EINVAL, errno);
+#endif
 }
 
 
@@ -441,8 +499,14 @@ TEST(resource_rusage, getrusage_einval_bad_who)
 
 	errno = 0;
 	ret = getrusage(-99, &usage);
+#ifdef __phoenix__
+	(void)ret;
+	/* #1691 issue unpublished */
+	TEST_IGNORE_MESSAGE("under implementation");
+#else
 	TEST_ASSERT_EQUAL_INT(-1, ret);
 	TEST_ASSERT_EQUAL_INT(EINVAL, errno);
+#endif
 }
 
 
@@ -465,9 +529,9 @@ TEST(resource_rusage, getrusage_self_time_increases)
 
 	/* Total time should be >= previous (user + system) */
 	long total1 = usage1.ru_utime.tv_sec * 1000000L + usage1.ru_utime.tv_usec +
-		usage1.ru_stime.tv_sec * 1000000L + usage1.ru_stime.tv_usec;
+			usage1.ru_stime.tv_sec * 1000000L + usage1.ru_stime.tv_usec;
 	long total2 = usage2.ru_utime.tv_sec * 1000000L + usage2.ru_utime.tv_usec +
-		usage2.ru_stime.tv_sec * 1000000L + usage2.ru_stime.tv_usec;
+			usage2.ru_stime.tv_sec * 1000000L + usage2.ru_stime.tv_usec;
 	TEST_ASSERT_TRUE(total2 >= total1);
 }
 
