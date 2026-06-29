@@ -24,9 +24,11 @@
 
 #include "unity_fixture.h"
 
-#define NSEC_PER_SEC  1000000000L
-#define SLEEP_10MS_NS 10000000L
-#define SLEEP_50MS_NS 50000000L
+#define NSEC_PER_SEC   1000000000L
+#define SLEEP_10MS_NS  10000000L
+#define SLEEP_50MS_NS  50000000L
+#define SLEEP_EINTR_SEC 3 /* long sleep so an alarm reliably lands mid-sleep */
+#define ALARM_DELAY_SEC 1 /* alarm() granularity is whole seconds */
 
 
 /*
@@ -124,11 +126,15 @@ TEST(time_clock_nanosleep, clock_nanosleep_absolute_success)
 TEST(time_clock_nanosleep, clock_nanosleep_realtime)
 {
 	/* clock_nanosleep with CLOCK_REALTIME (relative) is equivalent to nanosleep */
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#1685 issue");
+#else
 	const struct timespec rqtp = { 0, SLEEP_10MS_NS };
 	int ret;
 
 	ret = clock_nanosleep(CLOCK_REALTIME, 0, &rqtp, NULL);
 	TEST_ASSERT_EQUAL_INT(0, ret);
+#endif
 }
 
 
@@ -199,6 +205,18 @@ TEST_GROUP_RUNNER(time_clock_nanosleep)
  * Tests: nanosleep
  */
 
+static struct {
+	volatile sig_atomic_t sigCaught;
+} test_nanosleep;
+
+
+static void test_nanosleepSigHandler(int sig)
+{
+	(void)sig;
+	test_nanosleep.sigCaught = 1;
+}
+
+
 TEST_GROUP(time_nanosleep);
 
 
@@ -209,6 +227,15 @@ TEST_SETUP(time_nanosleep)
 
 TEST_TEAR_DOWN(time_nanosleep)
 {
+	/* Cancel any pending alarm and restore default SIGALRM disposition.
+	 * No assertions here so cleanup always completes. */
+	struct sigaction sa;
+
+	alarm(0);
+	sa.sa_handler = SIG_DFL;
+	sa.sa_flags = 0;
+	sigemptyset(&sa.sa_mask);
+	sigaction(SIGALRM, &sa, NULL);
 }
 
 
@@ -314,6 +341,51 @@ TEST(time_nanosleep, nanosleep_minimum_duration)
 }
 
 
+TEST(time_nanosleep, nanosleep_eintr_signal)
+{
+	/* "If the nanosleep() function returns because it has been interrupted by
+	 *  a signal, it shall return a value of -1 and set errno to indicate the
+	 *  interruption [EINTR]. If the rmtp argument is non-NULL, the timespec
+	 *  structure referenced by it is updated to contain the amount of time
+	 *  remaining in the interval (the requested time minus the time actually
+	 *  slept)." */
+	struct sigaction sa;
+	const struct timespec rqtp = { SLEEP_EINTR_SEC, 0 };
+	struct timespec rmtp = { -1, -1 };
+	int ret;
+
+	test_nanosleep.sigCaught = 0;
+
+	/* Install a handler without SA_RESTART so the sleep is interrupted, not
+	 * silently resumed. */
+	sa.sa_handler = test_nanosleepSigHandler;
+	sa.sa_flags = 0;
+	TEST_ASSERT_EQUAL_INT(0, sigemptyset(&sa.sa_mask));
+	TEST_ASSERT_EQUAL_INT(0, sigaction(SIGALRM, &sa, NULL));
+
+	/* Schedule the signal to arrive well before the sleep would end. */
+	alarm(ALARM_DELAY_SEC);
+
+	errno = 0;
+	ret = nanosleep(&rqtp, &rmtp);
+
+	TEST_ASSERT_EQUAL_INT(-1, ret);
+	TEST_ASSERT_EQUAL_INT(EINTR, errno);
+	TEST_ASSERT_EQUAL_INT(1, test_nanosleep.sigCaught);
+
+	/* rmtp must be updated to the remaining interval: 0 < remaining < requested,
+	 * with a normalised nanosecond field. Compare the timespec fields directly
+	 * to avoid overflowing a 32-bit long when collapsing to nanoseconds. */
+	TEST_ASSERT_TRUE(rmtp.tv_nsec >= 0);
+	TEST_ASSERT_TRUE(rmtp.tv_nsec < NSEC_PER_SEC);
+	TEST_ASSERT_TRUE(rmtp.tv_sec >= 0);
+	/* remaining > 0 */
+	TEST_ASSERT_TRUE((rmtp.tv_sec > 0) || (rmtp.tv_nsec > 0));
+	/* remaining < requested (SLEEP_EINTR_SEC seconds, 0 nsec) */
+	TEST_ASSERT_TRUE(rmtp.tv_sec < SLEEP_EINTR_SEC);
+}
+
+
 TEST_GROUP_RUNNER(time_nanosleep)
 {
 	RUN_TEST_CASE(time_nanosleep, nanosleep_success);
@@ -323,4 +395,5 @@ TEST_GROUP_RUNNER(time_nanosleep)
 	RUN_TEST_CASE(time_nanosleep, nanosleep_rmtp_null);
 	RUN_TEST_CASE(time_nanosleep, nanosleep_rmtp_same_object);
 	RUN_TEST_CASE(time_nanosleep, nanosleep_minimum_duration);
+	RUN_TEST_CASE(time_nanosleep, nanosleep_eintr_signal);
 }

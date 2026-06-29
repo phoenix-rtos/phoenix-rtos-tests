@@ -199,6 +199,9 @@ TEST(proc_fork, fork_child_inherits_fd)
 
 TEST(proc_fork, fork_child_pending_signals_empty)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("sigpending not implemented");
+#else
 	pid_t childPid;
 	int pipeFds[2];
 	int ret;
@@ -254,6 +257,7 @@ TEST(proc_fork, fork_child_pending_signals_empty)
 		sigprocmask(SIG_UNBLOCK, &blockSet, NULL);
 		sigaction(SIGUSR1, &oldAct, NULL);
 	}
+#endif
 }
 
 
@@ -311,6 +315,8 @@ TEST_GROUP_RUNNER(proc_fork)
 /* ========================================================================= */
 /* waitid */
 /* ========================================================================= */
+
+#ifndef __phoenix__
 
 TEST_GROUP(proc_waitid);
 
@@ -475,3 +481,6 @@ TEST_GROUP_RUNNER(proc_waitid)
 	RUN_TEST_CASE(proc_waitid, waitid_einval_no_flags);
 	RUN_TEST_CASE(proc_waitid, waitid_p_pgid);
 }
+#else
+TEST_GROUP_UNIMPLEMENTED(proc_waitid, "waitid not implemented")
+#endif

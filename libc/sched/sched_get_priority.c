@@ -35,12 +35,16 @@ TEST_TEAR_DOWN(sched_get_priority)
 
 TEST(sched_get_priority, max_sched_fifo)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#1686 issue");
+#else
 	int ret;
 
 	errno = 0;
 	ret = sched_get_priority_max(SCHED_FIFO);
 	TEST_ASSERT_GREATER_THAN_INT(-1, ret);
 	TEST_ASSERT_EQUAL_INT(0, errno);
+#endif
 }
 
 
@@ -57,23 +61,31 @@ TEST(sched_get_priority, max_sched_rr)
 
 TEST(sched_get_priority, max_sched_other)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#1686 issue");
+#else
 	int ret;
 
 	errno = 0;
 	ret = sched_get_priority_max(SCHED_OTHER);
 	TEST_ASSERT_GREATER_THAN_INT(-1, ret);
 	TEST_ASSERT_EQUAL_INT(0, errno);
+#endif
 }
 
 
 TEST(sched_get_priority, min_sched_fifo)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#1686 issue");
+#else
 	int ret;
 
 	errno = 0;
 	ret = sched_get_priority_min(SCHED_FIFO);
 	TEST_ASSERT_GREATER_THAN_INT(-1, ret);
 	TEST_ASSERT_EQUAL_INT(0, errno);
+#endif
 }
 
 
@@ -90,17 +102,24 @@ TEST(sched_get_priority, min_sched_rr)
 
 TEST(sched_get_priority, min_sched_other)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#1686 issue");
+#else
 	int ret;
 
 	errno = 0;
 	ret = sched_get_priority_min(SCHED_OTHER);
 	TEST_ASSERT_GREATER_THAN_INT(-1, ret);
 	TEST_ASSERT_EQUAL_INT(0, errno);
+#endif
 }
 
 
 TEST(sched_get_priority, max_ge_min_all_policies)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#1686 issue");
+#else
 	int maxVal, minVal;
 
 	maxVal = sched_get_priority_max(SCHED_FIFO);
@@ -120,6 +139,7 @@ TEST(sched_get_priority, max_ge_min_all_policies)
 	TEST_ASSERT_GREATER_THAN_INT(-1, maxVal);
 	TEST_ASSERT_GREATER_THAN_INT(-1, minVal);
 	TEST_ASSERT_TRUE(maxVal >= minVal);
+#endif
 }
 
 

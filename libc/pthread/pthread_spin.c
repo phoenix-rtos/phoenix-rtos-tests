@@ -26,9 +26,11 @@
 #include "unity_fixture.h"
 
 
+#ifndef __phoenix__
 static struct {
 	pthread_spinlock_t spin;
 } test_common;
+#endif
 
 
 TEST_GROUP(pthread_spin);
@@ -36,22 +38,29 @@ TEST_GROUP(pthread_spin);
 
 TEST_SETUP(pthread_spin)
 {
+#ifndef __phoenix__
 	int ret;
 
 	ret = pthread_spin_init(&test_common.spin, PTHREAD_PROCESS_PRIVATE);
 	TEST_ASSERT_EQUAL_INT(0, ret);
+#endif
 }
 
 
 TEST_TEAR_DOWN(pthread_spin)
 {
+#ifndef __phoenix__
 	pthread_spin_destroy(&test_common.spin);
+#endif
 }
 
 
 /* pthread_spin_init: init with PTHREAD_PROCESS_PRIVATE returns 0 */
 TEST(pthread_spin, init_private)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_spin_* is not implemented");
+#else
 	pthread_spinlock_t spin;
 	int ret;
 
@@ -59,12 +68,16 @@ TEST(pthread_spin, init_private)
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	pthread_spin_destroy(&spin);
+#endif
 }
 
 
 /* pthread_spin_init: init with PTHREAD_PROCESS_SHARED returns 0 */
 TEST(pthread_spin, init_shared)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_spin_* is not implemented");
+#else
 	pthread_spinlock_t spin;
 	int ret;
 
@@ -72,12 +85,16 @@ TEST(pthread_spin, init_shared)
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	pthread_spin_destroy(&spin);
+#endif
 }
 
 
 /* pthread_spin_destroy: destroy returns 0 */
 TEST(pthread_spin, destroy_success)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_spin_* is not implemented");
+#else
 	pthread_spinlock_t spin;
 	int ret;
 
@@ -86,12 +103,16 @@ TEST(pthread_spin, destroy_success)
 
 	ret = pthread_spin_destroy(&spin);
 	TEST_ASSERT_EQUAL_INT(0, ret);
+#endif
 }
 
 
 /* pthread_spin_lock: lock on unlocked spinlock returns 0 */
 TEST(pthread_spin, lock_unlocked)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_spin_* is not implemented");
+#else
 	int ret;
 
 	ret = pthread_spin_lock(&test_common.spin);
@@ -99,12 +120,16 @@ TEST(pthread_spin, lock_unlocked)
 
 	ret = pthread_spin_unlock(&test_common.spin);
 	TEST_ASSERT_EQUAL_INT(0, ret);
+#endif
 }
 
 
 /* pthread_spin_trylock: success on unlocked spinlock */
 TEST(pthread_spin, trylock_unlocked)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_spin_* is not implemented");
+#else
 	int ret;
 
 	ret = pthread_spin_trylock(&test_common.spin);
@@ -112,12 +137,16 @@ TEST(pthread_spin, trylock_unlocked)
 
 	ret = pthread_spin_unlock(&test_common.spin);
 	TEST_ASSERT_EQUAL_INT(0, ret);
+#endif
 }
 
 
 /* pthread_spin_trylock: EBUSY when already locked */
 TEST(pthread_spin, trylock_locked_ebusy)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_spin_* is not implemented");
+#else
 	int ret;
 
 	ret = pthread_spin_lock(&test_common.spin);
@@ -128,12 +157,16 @@ TEST(pthread_spin, trylock_locked_ebusy)
 
 	ret = pthread_spin_unlock(&test_common.spin);
 	TEST_ASSERT_EQUAL_INT(0, ret);
+#endif
 }
 
 
 /* pthread_spin_unlock: unlock returns 0 */
 TEST(pthread_spin, unlock_success)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_spin_* is not implemented");
+#else
 	int ret;
 
 	ret = pthread_spin_lock(&test_common.spin);
@@ -148,12 +181,16 @@ TEST(pthread_spin, unlock_success)
 
 	ret = pthread_spin_unlock(&test_common.spin);
 	TEST_ASSERT_EQUAL_INT(0, ret);
+#endif
 }
 
 
 /* pthread_spin_lock: lock/unlock cycle multiple times */
 TEST(pthread_spin, lock_unlock_cycle)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_spin_* is not implemented");
+#else
 	int ret;
 	int i;
 
@@ -164,9 +201,11 @@ TEST(pthread_spin, lock_unlock_cycle)
 		ret = pthread_spin_unlock(&test_common.spin);
 		TEST_ASSERT_EQUAL_INT(0, ret);
 	}
+#endif
 }
 
 
+#ifndef __phoenix__
 static void *spinThread(void *arg)
 {
 	pthread_spinlock_t *spin = (pthread_spinlock_t *)arg;
@@ -180,11 +219,15 @@ static void *spinThread(void *arg)
 
 	return NULL;
 }
+#endif
 
 
 /* pthread_spin_lock: thread contention - second thread waits */
 TEST(pthread_spin, lock_thread_contention)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_spin_* is not implemented");
+#else
 	pthread_t thr;
 	int ret;
 
@@ -203,10 +246,12 @@ TEST(pthread_spin, lock_thread_contention)
 
 	ret = pthread_join(thr, NULL);
 	TEST_ASSERT_EQUAL_INT(0, ret);
+#endif
 }
 
 
 /* pthread_spin_trylock: trylock from another thread while locked */
+#ifndef __phoenix__
 static void *spinTrylockThread(void *arg)
 {
 	pthread_spinlock_t *spin = (pthread_spinlock_t *)arg;
@@ -217,10 +262,14 @@ static void *spinTrylockThread(void *arg)
 
 	return NULL;
 }
+#endif
 
 
 TEST(pthread_spin, trylock_thread_ebusy)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_spin_* is not implemented");
+#else
 	pthread_t thr;
 	int ret;
 
@@ -235,6 +284,7 @@ TEST(pthread_spin, trylock_thread_ebusy)
 
 	ret = pthread_spin_unlock(&test_common.spin);
 	TEST_ASSERT_EQUAL_INT(0, ret);
+#endif
 }
 
 

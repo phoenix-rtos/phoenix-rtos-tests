@@ -215,4 +215,5 @@
 | rmtp may be NULL | `time_nanosleep.nanosleep_rmtp_null` | covered |
 | `errno` = `EINVAL`: "rqtp argument specified a nanosecond value less than zero" | `time_nanosleep.nanosleep_einval_negative_nsec` | covered |
 | `errno` = `EINVAL`: "greater than or equal to 1000 million" | `time_nanosleep.nanosleep_einval_nsec_too_large` | covered |
-| `errno` = `EINTR`: "nanosleep() was interrupted by a signal." | — | not tested: requires precise signal timing |
+| `errno` = `EINTR`: "nanosleep() was interrupted by a signal." | `time_nanosleep.nanosleep_eintr_signal` | covered |
+| "If the rmtp argument is non-NULL, the timespec structure referenced by it is updated to contain the amount of time remaining" (on interruption) | `time_nanosleep.nanosleep_eintr_signal` | covered |

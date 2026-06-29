@@ -47,6 +47,9 @@ TEST_TEAR_DOWN(pthread_mutex_consistent)
 /* pthread_mutex_consistent: EINVAL on non-robust mutex */
 TEST(pthread_mutex_consistent, einval_non_robust)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_mutex_consistent is not implemented");
+#else
 	pthread_mutex_t mtx;
 	pthread_mutexattr_t mattr;
 	int ret;
@@ -70,12 +73,16 @@ TEST(pthread_mutex_consistent, einval_non_robust)
 
 	pthread_mutex_destroy(&mtx);
 	pthread_mutexattr_destroy(&mattr);
+#endif
 }
 
 
 /* pthread_mutex_consistent: EINVAL on robust mutex that is not inconsistent */
 TEST(pthread_mutex_consistent, einval_robust_not_inconsistent)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_mutex_consistent is not implemented");
+#else
 	pthread_mutex_t mtx;
 	pthread_mutexattr_t mattr;
 	int ret;
@@ -101,6 +108,7 @@ TEST(pthread_mutex_consistent, einval_robust_not_inconsistent)
 
 	pthread_mutex_destroy(&mtx);
 	pthread_mutexattr_destroy(&mattr);
+#endif
 }
 
 
@@ -131,6 +139,9 @@ TEST_TEAR_DOWN(pthread_mutex_prioceiling)
 /* pthread_mutex_getprioceiling: EINVAL when protocol is PTHREAD_PRIO_NONE */
 TEST(pthread_mutex_prioceiling, getprioceiling_einval_prio_none)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_mutex_getprioceiling is not implemented");
+#else
 	pthread_mutex_t mtx;
 	pthread_mutexattr_t mattr;
 	int prioceiling;
@@ -149,12 +160,16 @@ TEST(pthread_mutex_prioceiling, getprioceiling_einval_prio_none)
 
 	pthread_mutex_destroy(&mtx);
 	pthread_mutexattr_destroy(&mattr);
+#endif
 }
 
 
 /* pthread_mutex_getprioceiling: returns ceiling for PTHREAD_PRIO_PROTECT mutex */
 TEST(pthread_mutex_prioceiling, getprioceiling_protect)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_mutex_getprioceiling is not implemented");
+#else
 	pthread_mutex_t mtx;
 	pthread_mutexattr_t mattr;
 	int prioceiling;
@@ -186,12 +201,16 @@ TEST(pthread_mutex_prioceiling, getprioceiling_protect)
 
 	pthread_mutex_destroy(&mtx);
 	pthread_mutexattr_destroy(&mattr);
+#endif
 }
 
 
 /* pthread_mutex_setprioceiling: changes ceiling and returns old value */
 TEST(pthread_mutex_prioceiling, setprioceiling_changes_ceiling)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_mutex_setprioceiling is not implemented");
+#else
 	pthread_mutex_t mtx;
 	pthread_mutexattr_t mattr;
 	int oldCeiling;
@@ -232,12 +251,16 @@ TEST(pthread_mutex_prioceiling, setprioceiling_changes_ceiling)
 
 	pthread_mutex_destroy(&mtx);
 	pthread_mutexattr_destroy(&mattr);
+#endif
 }
 
 
 /* pthread_mutex_setprioceiling: EINVAL when protocol is PTHREAD_PRIO_NONE */
 TEST(pthread_mutex_prioceiling, setprioceiling_einval_prio_none)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_mutex_setprioceiling is not implemented");
+#else
 	pthread_mutex_t mtx;
 	int oldCeiling;
 	int ret;
@@ -249,6 +272,7 @@ TEST(pthread_mutex_prioceiling, setprioceiling_einval_prio_none)
 	TEST_ASSERT_EQUAL_INT(EINVAL, ret);
 
 	pthread_mutex_destroy(&mtx);
+#endif
 }
 
 
@@ -277,6 +301,7 @@ TEST_TEAR_DOWN(pthread_mutex_timedlock)
 }
 
 
+#ifndef __phoenix__
 static void test_getAbstime(struct timespec *ts, long offsetMs)
 {
 	int ret;
@@ -290,11 +315,15 @@ static void test_getAbstime(struct timespec *ts, long offsetMs)
 		ts->tv_nsec -= 1000000000L;
 	}
 }
+#endif
 
 
 /* pthread_mutex_timedlock: acquire unlocked mutex immediately, return 0 */
 TEST(pthread_mutex_timedlock, lock_unlocked_immediately)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_mutex_timedlock is not implemented");
+#else
 	pthread_mutex_t mtx;
 	struct timespec ts;
 	int ret;
@@ -311,10 +340,12 @@ TEST(pthread_mutex_timedlock, lock_unlocked_immediately)
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	pthread_mutex_destroy(&mtx);
+#endif
 }
 
 
 /* pthread_mutex_timedlock: ETIMEDOUT when mutex held by another thread */
+#ifndef __phoenix__
 static void *test_timedlockHolder(void *arg)
 {
 	pthread_mutex_t *mtx = (pthread_mutex_t *)arg;
@@ -325,10 +356,14 @@ static void *test_timedlockHolder(void *arg)
 	pthread_mutex_unlock(mtx);
 	return NULL;
 }
+#endif
 
 
 TEST(pthread_mutex_timedlock, etimedout_held_by_other)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_mutex_timedlock is not implemented");
+#else
 	pthread_mutex_t mtx;
 	pthread_t thread;
 	struct timespec ts;
@@ -353,10 +388,12 @@ TEST(pthread_mutex_timedlock, etimedout_held_by_other)
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	pthread_mutex_destroy(&mtx);
+#endif
 }
 
 
 /* pthread_mutex_timedlock: succeed if lock becomes available before timeout */
+#ifndef __phoenix__
 static void *test_timedlockShortHolder(void *arg)
 {
 	pthread_mutex_t *mtx = (pthread_mutex_t *)arg;
@@ -367,10 +404,14 @@ static void *test_timedlockShortHolder(void *arg)
 	pthread_mutex_unlock(mtx);
 	return NULL;
 }
+#endif
 
 
 TEST(pthread_mutex_timedlock, succeeds_before_timeout)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_mutex_timedlock is not implemented");
+#else
 	pthread_mutex_t mtx;
 	pthread_t thread;
 	struct timespec ts;
@@ -397,12 +438,16 @@ TEST(pthread_mutex_timedlock, succeeds_before_timeout)
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	pthread_mutex_destroy(&mtx);
+#endif
 }
 
 
 /* pthread_mutex_timedlock: ETIMEDOUT when abstime already passed */
 TEST(pthread_mutex_timedlock, etimedout_abstime_in_past)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_mutex_timedlock is not implemented");
+#else
 	pthread_mutex_t mtx;
 	pthread_t thread;
 	struct timespec ts;
@@ -427,12 +472,16 @@ TEST(pthread_mutex_timedlock, etimedout_abstime_in_past)
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	pthread_mutex_destroy(&mtx);
+#endif
 }
 
 
 /* pthread_mutex_timedlock: EINVAL for invalid nanosecond value */
 TEST(pthread_mutex_timedlock, einval_invalid_nsec)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_mutex_timedlock is not implemented");
+#else
 	pthread_mutex_t mtx;
 	pthread_t thread;
 	struct timespec ts;
@@ -464,12 +513,16 @@ TEST(pthread_mutex_timedlock, einval_invalid_nsec)
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	pthread_mutex_destroy(&mtx);
+#endif
 }
 
 
 /* pthread_mutex_timedlock: EDEADLK for ERRORCHECK mutex relock */
 TEST(pthread_mutex_timedlock, edeadlk_errorcheck)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_mutex_timedlock is not implemented");
+#else
 	pthread_mutex_t mtx;
 	pthread_mutexattr_t mattr;
 	struct timespec ts;
@@ -497,12 +550,16 @@ TEST(pthread_mutex_timedlock, edeadlk_errorcheck)
 
 	pthread_mutex_destroy(&mtx);
 	pthread_mutexattr_destroy(&mattr);
+#endif
 }
 
 
 /* pthread_mutex_timedlock: shall not fail with timeout if mutex can be locked immediately */
 TEST(pthread_mutex_timedlock, no_timeout_if_immediately_lockable)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_mutex_timedlock is not implemented");
+#else
 	pthread_mutex_t mtx;
 	struct timespec ts;
 	int ret;
@@ -521,6 +578,7 @@ TEST(pthread_mutex_timedlock, no_timeout_if_immediately_lockable)
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	pthread_mutex_destroy(&mtx);
+#endif
 }
 
 

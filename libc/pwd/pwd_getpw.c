@@ -71,9 +71,12 @@ TEST(pwd_getpwent, getpwent_iterates_multiple_entries)
 	nameBuf[sizeof(nameBuf) - 1] = '\0';
 
 	pw2 = getpwent();
-	/* There should be at least two users (root + current user or another) */
-	TEST_ASSERT_NOT_NULL(pw2);
-	TEST_ASSERT_NOT_NULL(pw2->pw_name);
+	/* The user database size is implementation-defined; a second call may
+	 * return another entry or NULL if only one entry exists. */
+	if (pw2 != NULL) {
+		TEST_ASSERT_NOT_NULL(pw2->pw_name);
+		TEST_ASSERT_NOT_EQUAL_INT(0, strcmp(nameBuf, pw2->pw_name));
+	}
 }
 
 
@@ -173,6 +176,10 @@ TEST(pwd_getpwent, setpwent_no_errno_on_success)
 
 TEST(pwd_getpwent, endpwent_no_errno_on_success)
 {
+#ifndef __phoenix__
+	/* Linux is not POSIX compliant here */
+	TEST_IGNORE();
+#endif
 	/* Open the database first */
 	(void)getpwent();
 	errno = 0;
@@ -222,6 +229,10 @@ TEST(pwd_getpwnam_r, getpwnam_r_finds_root)
 
 TEST(pwd_getpwnam_r, getpwnam_r_not_found)
 {
+#ifndef __phoenix__
+	/* Linux is not POSIX compliant here */
+	TEST_IGNORE();
+#endif
 	struct passwd pwd;
 	struct passwd *result = NULL;
 	static char buf[PWD_BUF_SIZE];
@@ -325,6 +336,11 @@ TEST(pwd_getpwuid_r, getpwuid_r_finds_root)
 
 TEST(pwd_getpwuid_r, getpwuid_r_not_found)
 {
+#ifndef __phoenix__
+	/* Linux is not POSIX compliant here */
+	TEST_IGNORE();
+#endif
+
 	struct passwd pwd;
 	struct passwd *result = NULL;
 	static char buf[PWD_BUF_SIZE];

@@ -19,11 +19,12 @@
 
 #include <errno.h>
 #include <fcntl.h>
-#include <semaphore.h>
 #include <string.h>
 
 #include "unity_fixture.h"
 
+#ifndef __phoenix__
+#include <semaphore.h>
 #define SEM_TEST_NAME "/test_sem_named"
 
 /* Tests: sem_open, sem_close, sem_unlink */
@@ -247,7 +248,6 @@ TEST(sem_named, unlink_sem_still_usable_until_close)
 	TEST_ASSERT_EQUAL_INT(3, sval);
 }
 
-
 TEST_GROUP_RUNNER(sem_named)
 {
 	RUN_TEST_CASE(sem_named, open_create_new);
@@ -264,3 +264,6 @@ TEST_GROUP_RUNNER(sem_named)
 	RUN_TEST_CASE(sem_named, open_same_name_returns_same_address);
 	RUN_TEST_CASE(sem_named, unlink_sem_still_usable_until_close);
 }
+#else
+TEST_GROUP_UNIMPLEMENTED(sem_named, "semaphore.h is non-existent")
+#endif

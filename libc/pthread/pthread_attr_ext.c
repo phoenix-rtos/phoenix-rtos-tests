@@ -49,6 +49,9 @@ TEST_TEAR_DOWN(pthread_attr_guardsize)
 /* pthread_attr_getguardsize: default value is implementation-defined (>= 0) */
 TEST(pthread_attr_guardsize, get_default)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_attr_getguardsize is not implemented");
+#else
 	pthread_attr_t attr;
 	size_t guardsize;
 	int ret;
@@ -61,12 +64,16 @@ TEST(pthread_attr_guardsize, get_default)
 	/* Default is implementation-defined; just verify the call succeeded */
 
 	pthread_attr_destroy(&attr);
+#endif
 }
 
 
 /* pthread_attr_setguardsize: set to zero disables guard area */
 TEST(pthread_attr_guardsize, set_zero)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_attr_get/setguardsize is not implemented");
+#else
 	pthread_attr_t attr;
 	size_t guardsize;
 	int ret;
@@ -82,12 +89,16 @@ TEST(pthread_attr_guardsize, set_zero)
 	TEST_ASSERT_EQUAL_UINT32(0, (unsigned int)guardsize);
 
 	pthread_attr_destroy(&attr);
+#endif
 }
 
 
 /* pthread_attr_setguardsize: set to page size and retrieve */
 TEST(pthread_attr_guardsize, set_pagesize)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_attr_get/setguardsize is not implemented");
+#else
 	pthread_attr_t attr;
 	size_t guardsize;
 	size_t pagesize;
@@ -107,12 +118,16 @@ TEST(pthread_attr_guardsize, set_pagesize)
 	TEST_ASSERT_TRUE(guardsize >= pagesize);
 
 	pthread_attr_destroy(&attr);
+#endif
 }
 
 
 /* pthread_attr_setguardsize: set to multiple of page size */
 TEST(pthread_attr_guardsize, set_multiple_pagesize)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_attr_get/setguardsize is not implemented");
+#else
 	pthread_attr_t attr;
 	size_t guardsize;
 	size_t requested;
@@ -131,12 +146,16 @@ TEST(pthread_attr_guardsize, set_multiple_pagesize)
 	TEST_ASSERT_TRUE(guardsize >= requested);
 
 	pthread_attr_destroy(&attr);
+#endif
 }
 
 
 /* pthread_attr_setguardsize: round-trip preserves value set by previous call */
 TEST(pthread_attr_guardsize, roundtrip_preserves_value)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_attr_get/setguardsize is not implemented");
+#else
 	pthread_attr_t attr;
 	size_t gs1;
 	size_t gs2;
@@ -163,6 +182,7 @@ TEST(pthread_attr_guardsize, roundtrip_preserves_value)
 	TEST_ASSERT_EQUAL_UINT64(gs1, gs2);
 
 	pthread_attr_destroy(&attr);
+#endif
 }
 
 
@@ -196,6 +216,9 @@ TEST_TEAR_DOWN(pthread_attr_inheritsched)
 /* pthread_attr_getinheritsched: default is implementation-defined */
 TEST(pthread_attr_inheritsched, get_default)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_attr_getinheritsched is not implemented");
+#else
 	pthread_attr_t attr;
 	int inheritsched;
 	int ret;
@@ -208,12 +231,16 @@ TEST(pthread_attr_inheritsched, get_default)
 	TEST_ASSERT_TRUE(inheritsched == PTHREAD_INHERIT_SCHED || inheritsched == PTHREAD_EXPLICIT_SCHED);
 
 	pthread_attr_destroy(&attr);
+#endif
 }
 
 
 /* pthread_attr_setinheritsched: set PTHREAD_INHERIT_SCHED */
 TEST(pthread_attr_inheritsched, set_inherit)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_attr_get/setinheritsched is not implemented");
+#else
 	pthread_attr_t attr;
 	int inheritsched;
 	int ret;
@@ -229,12 +256,16 @@ TEST(pthread_attr_inheritsched, set_inherit)
 	TEST_ASSERT_EQUAL_INT(PTHREAD_INHERIT_SCHED, inheritsched);
 
 	pthread_attr_destroy(&attr);
+#endif
 }
 
 
 /* pthread_attr_setinheritsched: set PTHREAD_EXPLICIT_SCHED */
 TEST(pthread_attr_inheritsched, set_explicit)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_attr_get/setinheritsched is not implemented");
+#else
 	pthread_attr_t attr;
 	int inheritsched;
 	int ret;
@@ -250,12 +281,16 @@ TEST(pthread_attr_inheritsched, set_explicit)
 	TEST_ASSERT_EQUAL_INT(PTHREAD_EXPLICIT_SCHED, inheritsched);
 
 	pthread_attr_destroy(&attr);
+#endif
 }
 
 
 /* pthread_attr_setinheritsched: ENOTSUP for invalid value */
 TEST(pthread_attr_inheritsched, set_invalid_enotsup)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_attr_get/setinheritsched is not implemented");
+#else
 	pthread_attr_t attr;
 	int ret;
 
@@ -269,6 +304,7 @@ TEST(pthread_attr_inheritsched, set_invalid_enotsup)
 	TEST_ASSERT_TRUE(ret == EINVAL || ret == ENOTSUP);
 
 	pthread_attr_destroy(&attr);
+#endif
 }
 
 
@@ -436,6 +472,9 @@ TEST(pthread_attr_setstack, einval_small_stacksize)
 /* pthread_attr_setstack: guardsize is ignored when stackaddr is set */
 TEST(pthread_attr_setstack, guardsize_ignored_with_custom_stack)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("pthread_attr_get/setguardsize is not implemented");
+#else
 	pthread_attr_t attr;
 	size_t guardsize;
 	size_t pagesize;
@@ -463,6 +502,7 @@ TEST(pthread_attr_setstack, guardsize_ignored_with_custom_stack)
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	pthread_attr_destroy(&attr);
+#endif
 }
 
 

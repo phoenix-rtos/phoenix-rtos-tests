@@ -28,15 +28,19 @@
 
 #define FUTIMENS_TEST_FILE "/tmp/test_futimens_file"
 
+#ifndef __phoenix__
 static struct {
 	int fd;
 	int dirFd;
 } test_common;
+#endif
 
 
 /* ========================================================================= */
 /* futimens */
 /* ========================================================================= */
+
+#ifndef __phoenix__
 
 TEST_GROUP(fileops_futimens);
 
@@ -231,11 +235,16 @@ TEST_GROUP_RUNNER(fileops_futimens)
 	RUN_TEST_CASE(fileops_futimens, futimens_einval_bad_nsec);
 	RUN_TEST_CASE(fileops_futimens, futimens_einval_nsec_too_large);
 }
+#else
+TEST_GROUP_UNIMPLEMENTED(fileops_futimens, "futimens not implemented")
+#endif
 
 
 /* ========================================================================= */
 /* utimensat */
 /* ========================================================================= */
+
+#ifndef __phoenix__
 
 TEST_GROUP(fileops_utimensat);
 
@@ -389,3 +398,6 @@ TEST_GROUP_RUNNER(fileops_utimensat)
 	RUN_TEST_CASE(fileops_utimensat, utimensat_ebadf);
 	RUN_TEST_CASE(fileops_utimensat, utimensat_einval_bad_nsec);
 }
+#else
+TEST_GROUP_UNIMPLEMENTED(fileops_utimensat, "utimensat not implemented")
+#endif

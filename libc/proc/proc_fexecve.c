@@ -26,6 +26,7 @@
 #define TRUE_PATH "/usr/bin/true"
 #define FALSE_PATH "/usr/bin/false"
 
+#ifndef __phoenix__
 
 TEST_GROUP(proc_fexecve);
 
@@ -262,7 +263,6 @@ TEST(proc_fexecve, fexecve_cloexec_fd_closed)
 	TEST_ASSERT_EQUAL_INT(0, WEXITSTATUS(status));
 }
 
-
 TEST_GROUP_RUNNER(proc_fexecve)
 {
 	RUN_TEST_CASE(proc_fexecve, fexecve_executes_program);
@@ -272,3 +272,6 @@ TEST_GROUP_RUNNER(proc_fexecve)
 	RUN_TEST_CASE(proc_fexecve, fexecve_eacces_not_executable);
 	RUN_TEST_CASE(proc_fexecve, fexecve_cloexec_fd_closed);
 }
+#else
+TEST_GROUP_UNIMPLEMENTED(proc_fexecve, "fexecve")
+#endif

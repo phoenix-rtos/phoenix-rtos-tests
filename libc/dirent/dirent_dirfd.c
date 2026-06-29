@@ -29,6 +29,7 @@
 
 #define DIRFD_TEST_DIR "dirfd_test_dir"
 
+#ifndef __phoenix__
 
 static struct {
 	DIR *dirp;
@@ -197,3 +198,7 @@ TEST_GROUP_RUNNER(dirent_dirfd)
 	RUN_TEST_CASE(dirent_dirfd, fd_valid_after_rewinddir);
 	RUN_TEST_CASE(dirent_dirfd, fdopendir_returns_same_fd);
 }
+
+#else
+TEST_GROUP_UNIMPLEMENTED(dirent_dirfd, "dirfd not implemented")
+#endif
