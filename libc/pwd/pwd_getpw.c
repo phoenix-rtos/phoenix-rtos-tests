@@ -173,6 +173,10 @@ TEST(pwd_getpwent, setpwent_no_errno_on_success)
 
 TEST(pwd_getpwent, endpwent_no_errno_on_success)
 {
+#ifndef __phoenix_
+	/* Linux is not POSIX compliant here */
+	TEST_IGNORE();
+#endif
 	/* Open the database first */
 	(void)getpwent();
 	errno = 0;
@@ -222,6 +226,10 @@ TEST(pwd_getpwnam_r, getpwnam_r_finds_root)
 
 TEST(pwd_getpwnam_r, getpwnam_r_not_found)
 {
+#ifndef __phoenix_
+	/* Linux is not POSIX compliant here */
+	TEST_IGNORE();
+#endif
 	struct passwd pwd;
 	struct passwd *result = NULL;
 	static char buf[PWD_BUF_SIZE];
@@ -325,6 +333,11 @@ TEST(pwd_getpwuid_r, getpwuid_r_finds_root)
 
 TEST(pwd_getpwuid_r, getpwuid_r_not_found)
 {
+#ifndef __phoenix_
+	/* Linux is not POSIX compliant here */
+	TEST_IGNORE();
+#endif
+
 	struct passwd pwd;
 	struct passwd *result = NULL;
 	static char buf[PWD_BUF_SIZE];
