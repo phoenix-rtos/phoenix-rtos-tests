@@ -20,6 +20,7 @@
 #include <time.h>
 #include <sys/threads.h>
 #include <sys/time.h>
+#include <phoenix/syscalls.h>
 
 #include <unity_fixture.h>
 
@@ -225,7 +226,8 @@ TEST(condvar_invalid_params, invalid_attr)
 
 TEST(condvar_invalid_params, invalid_cond)
 {
-	TEST_ASSERT_EQUAL_INT(-EINVAL, condWait(-1, -1, 0));
+	/* calling syscall directly here to avoid triggering asserts in libphoenix */
+	TEST_ASSERT_EQUAL_INT(-EINVAL, phCondWait(-1, -1, 0));
 	TEST_ASSERT_EQUAL_INT(-EINVAL, condSignal(-1));
 	TEST_ASSERT_EQUAL_INT(-EINVAL, condBroadcast(-1));
 }
