@@ -1,9 +1,9 @@
 /*
  * Phoenix-RTOS
  *
- * test-libc-poll
+ * test-libc-select
  *
- * poll tests
+ * select tests
  *
  * Copyright 2024 Phoenix Systems
  * Author: Adam Greloch
@@ -27,15 +27,15 @@
 	((ts1).tv_sec - (ts0).tv_sec) * 1000 + ((ts1).tv_nsec - (ts0).tv_nsec) / 1000000;
 
 
-TEST_GROUP(test_poll);
+TEST_GROUP(test_select);
 
 
-TEST_SETUP(test_poll)
+TEST_SETUP(test_select)
 {
 }
 
 
-TEST_TEAR_DOWN(test_poll)
+TEST_TEAR_DOWN(test_select)
 {
 }
 
@@ -53,7 +53,7 @@ static int get_bad_fd(int min_num, int max_num)
 }
 
 
-TEST(test_poll, select_errnos)
+TEST(test_select, select_errnos)
 {
 	fd_set rfds;
 	struct timeval tv;
@@ -106,15 +106,15 @@ TEST(test_poll, select_errnos)
 }
 
 
-TEST_GROUP_RUNNER(test_poll)
+TEST_GROUP_RUNNER(test_select)
 {
-	RUN_TEST_CASE(test_poll, select_errnos);
+	RUN_TEST_CASE(test_select, select_errnos);
 }
 
 
 static void runner(void)
 {
-	RUN_TEST_GROUP(test_poll);
+	RUN_TEST_GROUP(test_select);
 }
 
 
