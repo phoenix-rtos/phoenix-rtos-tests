@@ -1,0 +1,14 @@
+libc/dirent/opendir.c
+  h_9f2d068a164dcf 205,208,220-221,314,318,326
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "f16459df0d59ece0344c580e579ef4394cc2bb35",
+  "prompts": {},
+  "humans": {
+    "h_9f2d068a164dcf": {
+      "author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  }
+}
