@@ -4972,6 +4972,476 @@ TEST(msg_stress, pulse_send_race)
 
 
 /* =====================================================  */
+/* TEST_GROUP: msg_forward                                */
+/* Non-blocking intra-process message forwarding           */
+/* =====================================================  */
+
+TEST_GROUP(msg_forward);
+
+TEST_SETUP(msg_forward)
+{
+}
+
+TEST_TEAR_DOWN(msg_forward)
+{
+}
+
+
+/*
+ * Shared state for msg_forward tests.
+ * The server process has two threads:
+ *   - server1: receives from the port, then calls msgForward to hand the
+ *              message+SC to server2
+ *   - server2: waits on msgRecv on the same port, gets the forwarded message,
+ *              handles it, and msgResponds to the original client
+ */
+static struct {
+	volatile int fwd_ready;     /* server2 is waiting on msgRecv */
+	volatile int fwd_done;      /* server1 finished msgForward */
+	volatile int fwd_count;     /* number of forwards completed by server1 */
+	volatile int fwd_err;       /* error from server1's msgForward call */
+	volatile int s2_type;       /* msg.type as seen by server2 */
+	volatile int s1_prio_after; /* server1 priority after forward */
+	char stack[2][4096] __attribute__((aligned(8)));
+} fwd_common;
+
+
+/*
+ * server2 thread: waits on msgRecv, handles forwarded message, responds.
+ * arg = pointer to the port number.
+ */
+static void fwd_server2_echo(void *arg)
+{
+	uint32_t port = *(uint32_t *)arg;
+	msg_t msg = { 0 };
+	msg_rid_t rid;
+
+	fwd_common.fwd_ready = 1;
+
+	int err = msgRecv(port, &msg, &rid);
+	if (err < 0) {
+		endthread();
+	}
+
+	fwd_common.s2_type = msg.type;
+
+	/* echo: copy i.raw -> o.raw, set o.err = msg.type */
+	memcpy(msg.o.raw, msg.i.raw, sizeof(msg.o.raw));
+	msg.o.err = msg.type;
+
+	msgRespond(port, &msg, rid);
+	endthread();
+}
+
+
+/*
+ * server2 thread variant: handles multiple forwarded messages in a loop.
+ * arg = pointer to the port number.
+ */
+static void fwd_server2_echo_loop(void *arg)
+{
+	uint32_t port = *(uint32_t *)arg;
+	msg_t msg = { 0 };
+	msg_rid_t rid;
+	int count = 0;
+
+	fwd_common.fwd_ready = 1;
+
+	for (;;) {
+		int err = msgRecv(port, &msg, &rid);
+		if (err < 0) {
+			break;
+		}
+
+		memcpy(msg.o.raw, msg.i.raw, sizeof(msg.o.raw));
+		msg.o.err = msg.type;
+
+		if (msgRespond(port, &msg, rid) < 0) {
+			break;
+		}
+		count++;
+	}
+
+	endthread();
+}
+
+
+/*
+ * Basic msgForward: client -> server1 -> (msgForward) -> server2 -> client
+ *
+ * 1. Client sends a message to the server port
+ * 2. server1 receives it with msgRecv
+ * 3. server1 calls msgForward to hand the message to server2
+ * 4. server1 returns from msgForward (non-blocking) and is free
+ * 5. server2 wakes from msgRecv with the forwarded message
+ * 6. server2 responds to the client via msgRespond
+ * 7. Client gets the response
+ */
+TEST(msg_forward, basic_roundtrip)
+{
+	char dev_path[64];
+	make_dev_path(dev_path, sizeof(dev_path), "fwd_basic");
+
+	pid_t server_pid;
+	if ((server_pid = safe_fork()) == 0) {
+		uint32_t port = 0;
+		if (setup_port_dev(dev_path, &port) < 0)
+			exit(3);
+
+		fwd_common.fwd_ready = 0;
+		fwd_common.fwd_err = -1;
+		fwd_common.s2_type = -1;
+
+		/* Spawn server2 thread waiting on the same port */
+		handle_t tid_s2;
+		beginthreadex(fwd_server2_echo, 4, fwd_common.stack[0],
+				sizeof(fwd_common.stack[0]), &port, &tid_s2);
+
+		/* Wait for server2 to be ready */
+		while (!fwd_common.fwd_ready)
+			usleep(1000);
+
+		/* server1: receive the client's message */
+		msg_t msg = { 0 };
+		msg_rid_t rid;
+		if (msgRecv(port, &msg, &rid) < 0)
+			exit(1);
+
+		/* server1: forward to server2 (which is waiting on the same port) */
+		fwd_common.fwd_err = msgForward(port, &msg, rid);
+
+		/* server1 is now free - msgForward returned immediately */
+		fwd_common.fwd_done = 1;
+
+		threadJoin(tid_s2, 0);
+
+		/* Validate that server2 saw the correct message type */
+		if (fwd_common.s2_type != mtDevCtl)
+			exit(10);
+
+		exit(fwd_common.fwd_err != 0 ? 11 : 0);
+	}
+
+	oid_t oid;
+	while (lookup(dev_path, NULL, &oid) < 0)
+		usleep(10 * 1000);
+
+	msg_t msg = { 0 };
+	msg.type = mtDevCtl;
+	for (size_t i = 0; i < sizeof(msg.i.raw); i++)
+		msg.i.raw[i] = (unsigned char)(i ^ 0x55);
+	msg.i.size = 0;
+	msg.i.data = NULL;
+	msg.o.size = 0;
+	msg.o.data = NULL;
+
+	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
+	TEST_ASSERT_EQUAL_INT(mtDevCtl, msg.o.err);
+
+	/* Verify the echo: o.raw should match i.raw */
+	for (size_t i = 0; i < sizeof(msg.o.raw); i++)
+		TEST_ASSERT_EQUAL_HEX8((unsigned char)(i ^ 0x55), msg.o.raw[i]);
+
+	assert_child_exit(server_pid);
+}
+
+
+/*
+ * After msgForward, server1 should be running on its own SC and be free to
+ * do work. Verify server1 continues executing independently.
+ */
+TEST(msg_forward, server1_free_after_forward)
+{
+	char dev_path[64];
+	make_dev_path(dev_path, sizeof(dev_path), "fwd_free");
+
+	char shm_path[64];
+	make_dev_path(shm_path, sizeof(shm_path), "fwd_free_shm");
+
+	pid_t shm_pid;
+	if ((shm_pid = safe_fork()) == 0) {
+		shmsrv_start(shm_path);
+		exit(1);
+	}
+
+	int *shared = (int *)shm_init(shm_path, true, 0x200);
+	TEST_ASSERT_NOT_NULL(shared);
+	/* shared[0] = server1 continued after forward (1 = yes)
+	 * shared[1] = server1 priority after forward */
+	memset((void *)shared, 0, 0x200);
+
+	pid_t server_pid;
+	if ((server_pid = safe_fork()) == 0) {
+		int *sh = (int *)shm_init(shm_path, false, 0x200);
+		uint32_t port = 0;
+		if (setup_port_dev(dev_path, &port) < 0)
+			exit(4);
+
+		uint32_t fwdPort = 0;
+
+		if (portCreate(&fwdPort) < 0) {
+			exit(3);
+		}
+
+		fwd_common.fwd_ready = 0;
+
+		handle_t tid_s2;
+		beginthreadex(fwd_server2_echo, 4, fwd_common.stack[0],
+				sizeof(fwd_common.stack[0]), &fwdPort, &tid_s2);
+
+		while (!fwd_common.fwd_ready)
+			usleep(1000);
+
+		priority(4); /* server1 base priority */
+
+		msg_t msg = { 0 };
+		msg_rid_t rid;
+		if (msgRecv(port, &msg, &rid) < 0)
+			exit(1);
+
+		/* While handling the message, server1 runs on the donated SC */
+		if (msgForward(fwdPort, &msg, rid) < 0)
+			exit(2);
+
+		/* After forward, server1 is back on its own SC */
+		sh[0] = 1; /* confirmed: server1 continued */
+		sh[1] = priority(-1);
+
+		threadJoin(tid_s2, 0);
+		exit(0);
+	}
+
+	oid_t oid;
+	while (lookup(dev_path, NULL, &oid) < 0)
+		usleep(10 * 1000);
+
+	priority(1); /* client at high priority */
+	msg_t msg = { 0 };
+	msg.type = mtRead;
+	msg.i.size = 0;
+	msg.i.data = NULL;
+	msg.o.size = 0;
+	msg.o.data = NULL;
+
+	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
+
+	assert_child_exit(server_pid);
+	assert_child_exit(shm_pid);
+
+	/* server1 must have continued after forward */
+	TEST_ASSERT_EQUAL_INT(1, shared[0]);
+
+	/* server1 should be back at its base priority (4), not the donated one (1) */
+	TEST_ASSERT_EQUAL_INT(4, shared[1]);
+}
+
+
+/*
+ * Multiple sequential forwards: server1 receives and forwards multiple
+ * messages one by one to server2, which handles each in turn.
+ */
+TEST(msg_forward, repeated_forward)
+{
+	char dev_path[64];
+	make_dev_path(dev_path, sizeof(dev_path), "fwd_rep");
+
+	pid_t server_pid;
+	if ((server_pid = safe_fork()) == 0) {
+		uint32_t port = 0;
+		if (setup_port_dev(dev_path, &port) < 0)
+			exit(3);
+
+		fwd_common.fwd_ready = 0;
+
+		handle_t tid_s2;
+		beginthreadex(fwd_server2_echo_loop, 4, fwd_common.stack[0],
+				sizeof(fwd_common.stack[0]), &port, &tid_s2);
+
+		while (!fwd_common.fwd_ready)
+			usleep(1000);
+
+		msg_t msg = { 0 };
+		msg_rid_t rid;
+		int count = 0;
+
+		for (;;) {
+			if (msgRecv(port, &msg, &rid) < 0)
+				break;
+
+			if (msgForward(port, &msg, rid) < 0)
+				exit(2);
+
+			count++;
+
+			/* server2 needs to re-enter msgRecv before we forward the next */
+			usleep(1000);
+		}
+
+		exit(0);
+	}
+
+	oid_t oid;
+	while (lookup(dev_path, NULL, &oid) < 0)
+		usleep(10 * 1000);
+
+	for (int i = 0; i < REPS; i++) {
+		msg_t msg = { 0 };
+		msg.type = mtRead + (i % (mtCount - mtRead));
+		msg.i.io.offs = i;
+		msg.i.size = 0;
+		msg.i.data = NULL;
+		msg.o.size = 0;
+		msg.o.data = NULL;
+
+		TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
+		TEST_ASSERT_EQUAL_INT(msg.type, msg.o.err);
+	}
+
+	assert_child_exit(server_pid);
+}
+
+
+/*
+ * Concurrent clients sending to a server that forwards all messages.
+ * server1 receives and forwards; server2 handles and responds.
+ */
+TEST(msg_forward, concurrent_clients)
+{
+	char dev_path[64];
+	make_dev_path(dev_path, sizeof(dev_path), "fwd_conc");
+
+	const int NCLIENTS = 4;
+	const int MSGS_PER_CLIENT = 5;
+
+	pid_t server_pid;
+	if ((server_pid = safe_fork()) == 0) {
+		uint32_t port = 0;
+		if (setup_port_dev(dev_path, &port) < 0)
+			exit(3);
+
+		fwd_common.fwd_ready = 0;
+
+		handle_t tid_s2;
+		beginthreadex(fwd_server2_echo_loop, 4, fwd_common.stack[0],
+				sizeof(fwd_common.stack[0]), &port, &tid_s2);
+
+		while (!fwd_common.fwd_ready)
+			usleep(1000);
+
+		msg_t msg = { 0 };
+		msg_rid_t rid;
+
+		for (int i = 0; i < NCLIENTS * MSGS_PER_CLIENT; i++) {
+			if (msgRecv(port, &msg, &rid) < 0)
+				break;
+			if (msgForward(port, &msg, rid) < 0)
+				exit(2);
+			/* Let server2 re-enter recv */
+			usleep(1000);
+		}
+
+		exit(0);
+	}
+
+	oid_t oid;
+	while (lookup(dev_path, NULL, &oid) < 0)
+		usleep(10 * 1000);
+
+	pid_t clients[NCLIENTS];
+
+	for (int c = 0; c < NCLIENTS; c++) {
+		if ((clients[c] = safe_fork()) == 0) {
+			for (int m = 0; m < MSGS_PER_CLIENT; m++) {
+				msg_t msg = { 0 };
+				msg.type = mtRead;
+				msg.i.io.offs = c * 100 + m;
+				msg.i.size = 0;
+				msg.i.data = NULL;
+				msg.o.size = 0;
+				msg.o.data = NULL;
+
+				if (msgSend(oid.port, &msg) != 0)
+					exit(1);
+				if (msg.o.err != mtRead)
+					exit(2);
+			}
+			exit(0);
+		}
+	}
+
+	for (int c = 0; c < NCLIENTS; c++) {
+		int status;
+		waitpid(clients[c], &status, 0);
+		TEST_ASSERT_TRUE_MESSAGE(WIFEXITED(status) && WEXITSTATUS(status) == 0,
+				"concurrent forward: client failed");
+	}
+
+	assert_child_exit(server_pid);
+}
+
+
+/*
+ * Forward with raw data verification: ensure the full msg.i.raw content
+ * is preserved through the forward path and echoed back correctly.
+ */
+TEST(msg_forward, raw_data_preserved)
+{
+	char dev_path[64];
+	make_dev_path(dev_path, sizeof(dev_path), "fwd_raw");
+
+	pid_t server_pid;
+	if ((server_pid = safe_fork()) == 0) {
+		uint32_t port = 0;
+		if (setup_port_dev(dev_path, &port) < 0)
+			exit(3);
+
+		fwd_common.fwd_ready = 0;
+
+		handle_t tid_s2;
+		beginthreadex(fwd_server2_echo, 4, fwd_common.stack[0],
+				sizeof(fwd_common.stack[0]), &port, &tid_s2);
+
+		while (!fwd_common.fwd_ready)
+			usleep(1000);
+
+		msg_t msg = { 0 };
+		msg_rid_t rid;
+		if (msgRecv(port, &msg, &rid) < 0)
+			exit(1);
+
+		if (msgForward(port, &msg, rid) < 0)
+			exit(2);
+
+		threadJoin(tid_s2, 0);
+		exit(0);
+	}
+
+	oid_t oid;
+	while (lookup(dev_path, NULL, &oid) < 0)
+		usleep(10 * 1000);
+
+	msg_t msg = { 0 };
+	msg.type = mtWrite;
+	/* Fill i.raw with a distinctive pattern */
+	for (size_t i = 0; i < sizeof(msg.i.raw); i++)
+		msg.i.raw[i] = (unsigned char)(i * 7 + 3);
+	msg.i.size = 0;
+	msg.i.data = NULL;
+	msg.o.size = 0;
+	msg.o.data = NULL;
+
+	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
+	TEST_ASSERT_EQUAL_INT(mtWrite, msg.o.err);
+
+	/* Verify that server2 echoed the raw bytes correctly */
+	for (size_t i = 0; i < sizeof(msg.o.raw); i++)
+		TEST_ASSERT_EQUAL_HEX8((unsigned char)(i * 7 + 3), msg.o.raw[i]);
+
+	assert_child_exit(server_pid);
+}
+
+
+/* =====================================================  */
 /* TEST_GROUP: msg_respond_recv_chain                     */
 /* respondAndRecv leaf behind forwarding servers           */
 /* =====================================================  */
@@ -5571,6 +6041,16 @@ TEST_GROUP_RUNNER(msg_stress)
 }
 
 
+TEST_GROUP_RUNNER(msg_forward)
+{
+	RUN_TEST_CASE(msg_forward, basic_roundtrip);
+	RUN_TEST_CASE(msg_forward, server1_free_after_forward);
+	RUN_TEST_CASE(msg_forward, repeated_forward);
+	RUN_TEST_CASE(msg_forward, concurrent_clients);
+	RUN_TEST_CASE(msg_forward, raw_data_preserved);
+}
+
+
 TEST_GROUP_RUNNER(msg_respond_recv_chain)
 {
 	RUN_TEST_CASE(msg_respond_recv_chain, rr_leaf_direct);
@@ -5602,6 +6082,7 @@ void runner(void)
 	RUN_TEST_GROUP(msg_lock_ipc);
 
 	RUN_TEST_GROUP(msg_stress);
+	RUN_TEST_GROUP(msg_forward);
 	RUN_TEST_GROUP(msg_respond_recv_chain);
 }
 
