@@ -1,0 +1,84 @@
+libc/test.yaml
+  h_9f2d068a164dcf 95-96,98,100-103,154,158-159,163-164,168-169
+  s_f0da687f0f1879::t_3dd3f324203889 173-174,176-183,186-187
+libc/fileops/fileops_time.c
+  s_421ba867f76e37::t_c5c01c3036b8fe 238-240,247
+  s_421ba867f76e37::t_6fc5a0e9aa0fd7 401-403
+  s_421ba867f76e37::t_3ea6adcab65f68 31,36,43
+libc/resource/resource.c
+  s_ac2e505d95dbfc::t_516a23c7f91ea0 101-102,105,115-118,121,154-157,160,170-173,176,226-228,232,249,256-258,264,271-273,279,286-288,294,301-303,314-317,320,371-373,376,389-392,395,498-500
+libc/time/clock_nanosleep.c
+  h_9f2d068a164dcf 130
+libc/fileops/fileops_misc.c
+  s_421ba867f76e37::t_437f0d73bd93bf 359-361
+  s_421ba867f76e37::t_e051065dae7108 120-121
+  s_421ba867f76e37::t_500685db3b3828 183-185,192
+  s_ac2e505d95dbfc::t_516a23c7f91ea0 96
+  s_ac2e505d95dbfc::t_42f0b926bfc25a 95,97,104
+libc/fileops/fileops_dir.c
+  s_421ba867f76e37::t_0241501015a62d 38,44
+libc/proc/proc_basic.c
+  s_ac2e505d95dbfc::t_516a23c7f91ea0 522,575,615
+  s_8aef8278d1550c::t_1b095cd2bc2e76 521,523,528
+  s_8aef8278d1550c::t_8026fa5aa217ce 614,616,618
+  s_8aef8278d1550c::t_b3391a6d7c7602 574,576,578
+libc/fcntl/fcntl_cmd.c
+  s_ac2e505d95dbfc::t_516a23c7f91ea0 379
+libc/sched/sched_get_priority.c
+  s_ac2e505d95dbfc::t_516a23c7f91ea0 39-40,47,64-66,73,79-81,88,105-107,114,120-121
+libc/fileops/fileops_chmod.c
+  s_421ba867f76e37::t_9f08c6aee9e9b4 31,36
+  s_421ba867f76e37::t_4cd1fb5eaab621 138-140,147
+  s_421ba867f76e37::t_b6044ff0865ed4 43-44
+  s_421ba867f76e37::t_b43a01c254f1c6 269-271
+libc/proc/proc_fork.c
+  s_421ba867f76e37::t_957e6900f99a45 484-486
+  s_421ba867f76e37::t_f5d80d9921f3a3 260
+  s_421ba867f76e37::t_f1ed78eea687f6 202-204
+  s_421ba867f76e37::t_6f3e7684b8f635 319-320
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "a1303fd06f18e11ca54caf4facdb00b678e04899",
+  "prompts": {},
+  "humans": {
+    "h_9f2d068a164dcf": {
+      "author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  },
+  "sessions": {
+    "s_421ba867f76e37": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9956aff0-2410-4f13-bb8d-870134519bb1",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    },
+    "s_8aef8278d1550c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f976dc38-9a5a-4e63-96fd-4d5c8dbefb85",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    },
+    "s_ac2e505d95dbfc": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ba6f08f4-c499-44aa-98af-e3866827c762",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    },
+    "s_f0da687f0f1879": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "22453eee-25ad-48aa-bc07-0f671ae95e7f",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  }
+}
