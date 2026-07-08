@@ -130,7 +130,7 @@ class ARMv7A9Target(TargetBase):
             builder.add(RebooterHarness(self.rebooter))
 
         if test.shell is not None:
-            builder.add(ShellHarness(self.dut, self.shell_prompt, test.shell.cmd))
+            builder.add(ShellHarness(self.dut, self.shell_prompt, test.shell.cmd, prompt_timeout=60))
         else:
             builder.add(TestStartRunningHarness())
 
