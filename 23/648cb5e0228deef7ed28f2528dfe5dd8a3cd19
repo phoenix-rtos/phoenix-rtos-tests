@@ -1,0 +1,19 @@
+libc/stdio/stdio_misc.c
+  s_58080563270877::t_3cade50afb2d9d 1-182,186-204,206-210,214-233,235-239,243-248,250-254,258-283,285-289,293-315,317-343,347-351,353-357,361-368,370-374,378-384,386-390,394-399,401-405,409-416,418-422,426-433,435-439,443-455,457-583
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "23648cb5e0228deef7ed28f2528dfe5dd8a3cd19",
+  "prompts": {},
+  "sessions": {
+    "s_58080563270877": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "9d7c4a7b-1f1f-4ca4-b4c5-ac18b420f21a",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    }
+  }
+}

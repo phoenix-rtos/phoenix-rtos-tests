@@ -1,0 +1,16 @@
+sample/pytest/test.py
+  h_02b407815a79bd 30,33,40
+sample/pytest/conftest.py
+  h_02b407815a79bd 16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "59aacbcaec8f754befafd33928f93488501a96be",
+  "prompts": {},
+  "humans": {
+    "h_02b407815a79bd": {
+      "author": "Łukasz Kruszyński <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  }
+}

@@ -1,0 +1,28 @@
+libc/syslog/coverage.md
+  s_063795a4010d70::t_1b3acd2771c2e8 1-52
+libc/syslog/openlog.c
+  h_9f2d068a164dcf 210
+  s_063795a4010d70::t_e99550e6873981 212
+  s_063795a4010d70::t_f325d7a06b6639 209,211,214
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "1a154bf88820adda5ccec3accee4918f7b12c6e9",
+  "prompts": {},
+  "humans": {
+    "h_9f2d068a164dcf": {
+      "author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  },
+  "sessions": {
+    "s_063795a4010d70": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "0befbbbd-2c73-42eb-bce2-a1a64d7b585e",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  }
+}

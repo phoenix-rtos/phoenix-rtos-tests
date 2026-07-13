@@ -1,0 +1,30 @@
+libc/sched/main.c
+  s_7999b3b93fa5f5::t_fda78bab3e9992 1-12,14-42
+libc/sched/sched_get_priority.c
+  s_7999b3b93fa5f5::t_8e69ba56442d54 1-11,13-127,131-153,155-168
+  s_617a1142c573dc::t_160089e2bc32eb 128-130,154
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "109084ed02ed12dcb1941af9f7a8d3c5feb8a988",
+  "prompts": {},
+  "sessions": {
+    "s_617a1142c573dc": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "53e7508f-9755-4c45-b639-5ea42c444fae",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    },
+    "s_7999b3b93fa5f5": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "db198862-76ea-4f4a-85b4-264ecf685b35",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    }
+  }
+}

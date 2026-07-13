@@ -1,0 +1,27 @@
+libc/misc/umask.c
+  s_1a4eb9a689c72d::t_56acd83a2635b9 1-19,21-29,31-36,38-43,45-273,322-331,333-335,337
+  h_9f2d068a164dcf 20,30,37,44,274-321,332,336
+libc/misc/main.c
+  s_1a4eb9a689c72d::t_b31f623e1f1bc2 36
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "fe0828e4e6a2d915cf645de446fce42945104dff",
+  "prompts": {},
+  "humans": {
+    "h_9f2d068a164dcf": {
+      "author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  },
+  "sessions": {
+    "s_1a4eb9a689c72d": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "87a44af0-5ef9-4c38-a28f-28c83605b394",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  }
+}

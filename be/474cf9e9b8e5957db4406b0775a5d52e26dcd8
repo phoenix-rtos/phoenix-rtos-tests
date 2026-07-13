@@ -1,0 +1,62 @@
+libc/socket/getpeername.c
+  s_2e44f259a0eccc::t_e90810b8842ef6 1-10,12-267,270-282
+  h_3689a52f3dab5f 11,268-269
+libc/misc/unistd_host.c
+  s_2e44f259a0eccc::t_ac24b1819d6ff4 1-11,13-129,131-147,154-192
+  h_3689a52f3dab5f 12,148-153
+  s_2e44f259a0eccc::t_b49eed8da35c6d 130
+libc/socket/main.c
+  s_2e44f259a0eccc::t_edebfab3c99896 8-12
+  h_3689a52f3dab5f 52-56
+libc/coverage_new_functions.md
+  s_2e44f259a0eccc::t_4744dfc5d36bdc 1-218
+libc/socket/bind.c
+  s_2e44f259a0eccc::t_b1f065522528ba 1-10,12-311
+  h_3689a52f3dab5f 11
+libc/misc/unistd_fsync.c
+  s_2e44f259a0eccc::t_7389c91aecfdd7 1-10,12-212
+  h_3689a52f3dab5f 11
+libc/socket/connect.c
+  s_2e44f259a0eccc::t_cc8fc980bc1212 1-10,12-385
+  h_3689a52f3dab5f 11
+libc/misc/unistd_pgrp.c
+  s_2e44f259a0eccc::t_6f98edfb64f83c 1-13,15-312,315,320-392
+  h_3689a52f3dab5f 14,313-314,316-319
+libc/time/clock_nanosleep.c
+  s_2e44f259a0eccc::t_ca12e97a4512ba 1-11,13-326
+  h_3689a52f3dab5f 12
+libc/misc/main.c
+  h_3689a52f3dab5f 37-43
+libc/time/main.c
+  h_3689a52f3dab5f 26-29
+libc/socket/getsockname.c
+  s_2e44f259a0eccc::t_7aadc34591691c 1-10,12-108,110-272
+  h_3689a52f3dab5f 11,109
+libc/time/clock_gettime.c
+  s_2e44f259a0eccc::t_144b433908d809 1-11,13-293
+  h_3689a52f3dab5f 12
+libc/socket/accept.c
+  s_2e44f259a0eccc::t_6d00978cd1d9e3 1-10,12-323
+  h_3689a52f3dab5f 11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "be474cf9e9b8e5957db4406b0775a5d52e26dcd8",
+  "prompts": {},
+  "humans": {
+    "h_3689a52f3dab5f": {
+      "author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    }
+  },
+  "sessions": {
+    "s_2e44f259a0eccc": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "03efcd8f-d2d0-465c-ad0c-dc29826d5471",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    }
+  }
+}

@@ -1,0 +1,33 @@
+libc/pthread/main.c
+  s_6fe029b321f101::t_dfd5c73f0181f0 8-9,16,18-19,27-34,42-48
+  s_bd5637d7c281c7::t_f44be52b04e89c 35-36
+libc/pthread/coverage.md
+  s_6fe029b321f101::t_d28eb7f59f2cde 1-254
+  s_bd5637d7c281c7::t_3455d11229cd39 255-284
+libc/pthread/pthread_signal.c
+  s_bd5637d7c281c7::t_a30edffa53095b 1-489
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "7b0c22825b98b15ccf4df6a141af723ef49ab5bb",
+  "prompts": {},
+  "sessions": {
+    "s_6fe029b321f101": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "463bbdb8-bdca-4ef0-92ae-cbdee1a269a9",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    },
+    "s_bd5637d7c281c7": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "c72a4436-b25d-4d0a-9391-ad5f1bd0db6a",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    }
+  }
+}

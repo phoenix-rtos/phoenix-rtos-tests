@@ -1,0 +1,22 @@
+libc/grp/grp.c
+  h_9f2d068a164dcf 108-111,233-236,249-252
+libc/test.yaml
+  h_9f2d068a164dcf 29-31,84-86,115-117,120-122,130-132,135-137,140-142,145-147,150-153
+libc/pwd/pwd_getpw.c
+  h_9f2d068a164dcf 176-179,229-232,336-340
+libc/Makefile
+  h_9f2d068a164dcf 51,56-57,63-64
+libc/stdlib/stdlib_system.c
+  h_9f2d068a164dcf 115-119,121
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "df56b20488291c3c3700146eecc4cff873e010e8",
+  "prompts": {},
+  "humans": {
+    "h_9f2d068a164dcf": {
+      "author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  }
+}
