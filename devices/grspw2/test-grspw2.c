@@ -73,7 +73,7 @@ static unsigned int test_spwConfigureRx(const oid_t rxOid, const size_t nPackets
 		.oid.port = rxOid.port,
 	};
 
-	spw_t *idevctl = (spw_t *)msg.i.raw;
+	spw_i_t *idevctl = (spw_i_t *)msg.i.raw;
 	spw_o_t *odevctl = (spw_o_t *)msg.o.raw;
 
 	idevctl->type = spw_rxConfig;
@@ -96,7 +96,7 @@ static void test_spwTx(const oid_t txOid, uint8_t *txBuf, const size_t txBufsz, 
 		.oid.port = txOid.port,
 	};
 
-	spw_t *idevctl = (spw_t *)msg.i.raw;
+	spw_i_t *idevctl = (spw_i_t *)msg.i.raw;
 
 	idevctl->type = spw_tx;
 	idevctl->task.tx.nPackets = nPackets;
@@ -116,7 +116,7 @@ static void test_spwRxRead(const oid_t rxOid, const unsigned int firstDesc, uint
 		.oid.id = TEST_SPW_ID0,
 		.oid.port = rxOid.port,
 	};
-	spw_t *idevctl = (spw_t *)msg.i.raw;
+	spw_i_t *idevctl = (spw_i_t *)msg.i.raw;
 	spw_o_t *odevctl = (spw_o_t *)msg.o.raw;
 
 	idevctl->type = spw_rx;
@@ -207,7 +207,7 @@ static void test_spwRxTimeout(uint32_t timeout)
 		.oid.id = TEST_SPW_ID0,
 		.oid.port = rxOid.port,
 	};
-	spw_t *idevctl = (spw_t *)msg.i.raw;
+	spw_i_t *idevctl = (spw_i_t *)msg.i.raw;
 	spw_o_t *odevctl = (spw_o_t *)msg.o.raw;
 
 	idevctl->type = spw_rx;
@@ -244,7 +244,7 @@ static size_t test_spwRxReadTimeout(const oid_t rxOid, const unsigned int firstD
 		.oid.id = TEST_SPW_ID0,
 		.oid.port = rxOid.port,
 	};
-	spw_t *idevctl = (spw_t *)msg.i.raw;
+	spw_i_t *idevctl = (spw_i_t *)msg.i.raw;
 	spw_o_t *odevctl = (spw_o_t *)msg.o.raw;
 
 	idevctl->type = spw_rx;
@@ -345,7 +345,7 @@ TEST(test_spw, spwSetAddress)
 		.oid.id = TEST_SPW_ID0,
 		.oid.port = oid.port,
 	};
-	spw_t *ispwctl = (spw_t *)msg.i.raw;
+	spw_i_t *ispwctl = (spw_i_t *)msg.i.raw;
 
 	ispwctl->type = spw_config;
 	ispwctl->task.config.node.addr = TEST_SPW_ADDR0;
