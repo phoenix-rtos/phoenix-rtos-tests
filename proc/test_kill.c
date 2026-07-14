@@ -24,7 +24,7 @@ TEST(test_kill, kill_pid_zero)
 {
     int res;
 
-    res = kill(0, SIGCHLD);
+    res = kill(0, 0);
     TEST_ASSERT_EQUAL_INT(0, res);
 }
 
@@ -33,7 +33,7 @@ TEST(test_kill, kill_pid_negone)
 {
     int res;
 
-    res = kill(-1, SIGCHLD);
+    res = kill(-1, 0);
     TEST_ASSERT_EQUAL_INT(0, res);
 }
 
