@@ -63,6 +63,7 @@ TEST_TEAR_DOWN(stdlib_mkdtemp)
 
 TEST(stdlib_mkdtemp, mkdtemp_basic)
 {
+	TEST_IGNORE_MESSAGE("no urandom, todo: make it conditional");
 	struct stat st;
 
 	strncpy(test_common.tmpl, MKTEMP_TEMPLATE, sizeof(test_common.tmpl) - 1);
@@ -85,6 +86,7 @@ TEST(stdlib_mkdtemp, mkdtemp_basic)
 
 TEST(stdlib_mkdtemp, mkdtemp_modifies_template)
 {
+	TEST_IGNORE_MESSAGE("no urandom, todo: make it conditional");
 	const char *suffix;
 
 	strncpy(test_common.tmpl, MKTEMP_TEMPLATE, sizeof(test_common.tmpl) - 1);
@@ -105,6 +107,7 @@ TEST(stdlib_mkdtemp, mkdtemp_modifies_template)
 
 TEST(stdlib_mkdtemp, mkdtemp_unique)
 {
+	TEST_IGNORE_MESSAGE("no urandom, todo: make it conditional");
 	char tmpl2[PATH_MAX];
 	char *dir2;
 
@@ -128,6 +131,7 @@ TEST(stdlib_mkdtemp, mkdtemp_unique)
 
 TEST(stdlib_mkdtemp, mkdtemp_einval)
 {
+	TEST_IGNORE_MESSAGE("no urandom, todo: make it conditional");
 	/* template not ending in XXXXXX */
 	strncpy(test_common.tmpl, "no_suffix_here", sizeof(test_common.tmpl) - 1);
 	test_common.tmpl[sizeof(test_common.tmpl) - 1] = '\0';
@@ -140,6 +144,7 @@ TEST(stdlib_mkdtemp, mkdtemp_einval)
 
 TEST(stdlib_mkdtemp, mkdtemp_enoent)
 {
+	TEST_IGNORE_MESSAGE("no urandom, todo: make it conditional");
 	/* non-existing path prefix */
 	strncpy(test_common.tmpl, "/nonexistent_dir_xyz/tmpXXXXXX", sizeof(test_common.tmpl) - 1);
 	test_common.tmpl[sizeof(test_common.tmpl) - 1] = '\0';
@@ -152,6 +157,7 @@ TEST(stdlib_mkdtemp, mkdtemp_enoent)
 
 TEST(stdlib_mkdtemp, mkdtemp_enotdir)
 {
+	TEST_IGNORE_MESSAGE("no urandom, todo: make it conditional");
 	int fd;
 
 	/* create a regular file, then try to use it as path prefix */
@@ -172,6 +178,7 @@ TEST(stdlib_mkdtemp, mkdtemp_enotdir)
 
 TEST(stdlib_mkdtemp, mkdtemp_enametoolong)
 {
+	TEST_IGNORE_MESSAGE("no urandom, todo: make it conditional");
 	static char longTmpl[PATH_MAX + 16];
 
 	memset(longTmpl, 'a', sizeof(longTmpl));
@@ -222,6 +229,7 @@ TEST_TEAR_DOWN(stdlib_mkstemp)
 
 TEST(stdlib_mkstemp, mkstemp_basic)
 {
+	TEST_IGNORE_MESSAGE("no urandom, todo: make it conditional");
 	struct stat st;
 
 	strncpy(test_common.tmpl, MKTEMP_TEMPLATE, sizeof(test_common.tmpl) - 1);
@@ -245,6 +253,7 @@ TEST(stdlib_mkstemp, mkstemp_basic)
 
 TEST(stdlib_mkstemp, mkstemp_rdwr)
 {
+	TEST_IGNORE_MESSAGE("no urandom, todo: make it conditional");
 	const char data[] = "hello";
 	char buf[sizeof(data)];
 	ssize_t n;
@@ -270,6 +279,7 @@ TEST(stdlib_mkstemp, mkstemp_rdwr)
 
 TEST(stdlib_mkstemp, mkstemp_modifies_template)
 {
+	TEST_IGNORE_MESSAGE("no urandom, todo: make it conditional");
 	const char *suffix;
 
 	strncpy(test_common.tmpl, MKTEMP_TEMPLATE, sizeof(test_common.tmpl) - 1);
@@ -290,6 +300,7 @@ TEST(stdlib_mkstemp, mkstemp_modifies_template)
 
 TEST(stdlib_mkstemp, mkstemp_unique)
 {
+	TEST_IGNORE_MESSAGE("no urandom, todo: make it conditional");
 	char tmpl2[PATH_MAX];
 	int fd2;
 
@@ -314,6 +325,7 @@ TEST(stdlib_mkstemp, mkstemp_unique)
 
 TEST(stdlib_mkstemp, mkstemp_einval)
 {
+	TEST_IGNORE_MESSAGE("no urandom, todo: make it conditional");
 	/* template not ending in XXXXXX */
 	strncpy(test_common.tmpl, "no_suffix_here", sizeof(test_common.tmpl) - 1);
 	test_common.tmpl[sizeof(test_common.tmpl) - 1] = '\0';
@@ -328,6 +340,7 @@ TEST(stdlib_mkstemp, mkstemp_einval)
 
 TEST(stdlib_mkstemp, mkstemp_enoent)
 {
+	TEST_IGNORE_MESSAGE("no urandom, todo: make it conditional");
 	/* non-existing path prefix */
 	strncpy(test_common.tmpl, "/nonexistent_dir_xyz/tmpXXXXXX", sizeof(test_common.tmpl) - 1);
 	test_common.tmpl[sizeof(test_common.tmpl) - 1] = '\0';
@@ -342,6 +355,7 @@ TEST(stdlib_mkstemp, mkstemp_enoent)
 
 TEST(stdlib_mkstemp, mkstemp_enotdir)
 {
+	TEST_IGNORE_MESSAGE("no urandom, todo: make it conditional");
 	int fd;
 
 	fd = open("mkstemp_notdir_file", O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
@@ -363,6 +377,7 @@ TEST(stdlib_mkstemp, mkstemp_enotdir)
 
 TEST(stdlib_mkstemp, mkstemp_enametoolong)
 {
+	TEST_IGNORE_MESSAGE("no urandom, todo: make it conditional");
 	static char longTmpl[PATH_MAX + 16];
 
 	memset(longTmpl, 'a', sizeof(longTmpl));

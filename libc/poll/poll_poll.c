@@ -79,6 +79,7 @@ TEST_TEAR_DOWN(poll_poll)
 
 TEST(poll_poll, poll_regular_file_pollin_pollout)
 {
+	TEST_IGNORE_MESSAGE("no fs, todo: make it conditional");
 	struct pollfd pfd;
 	int ret;
 
@@ -102,6 +103,7 @@ TEST(poll_poll, poll_regular_file_pollin_pollout)
 
 TEST(poll_poll, poll_timeout_zero_returns_immediately)
 {
+	TEST_IGNORE_MESSAGE("no posixsrv, todo: make it conditional");
 	struct pollfd pfd;
 	struct timespec t0, t1;
 	long elapsed;
@@ -130,6 +132,7 @@ TEST(poll_poll, poll_timeout_zero_returns_immediately)
 
 TEST(poll_poll, poll_timeout_expires)
 {
+	TEST_IGNORE_MESSAGE("no posixsrv, todo: make it conditional");
 	struct pollfd pfd;
 	struct timespec t0, t1;
 	long elapsed;
@@ -160,6 +163,7 @@ TEST(poll_poll, poll_timeout_expires)
 
 TEST(poll_poll, poll_returns_count_of_ready_fds)
 {
+	TEST_IGNORE_MESSAGE("no posixsrv, todo: make it conditional");
 	struct pollfd pfds[2];
 	int ret;
 
@@ -184,6 +188,7 @@ TEST(poll_poll, poll_returns_count_of_ready_fds)
 
 TEST(poll_poll, poll_pipe_readable_after_write)
 {
+	TEST_IGNORE_MESSAGE("no posixsrv, todo: make it conditional");
 	struct pollfd pfd;
 	const char data = 'x';
 	ssize_t n;
@@ -207,6 +212,7 @@ TEST(poll_poll, poll_pipe_readable_after_write)
 
 TEST(poll_poll, poll_pipe_hangup_on_writer_close)
 {
+	TEST_IGNORE_MESSAGE("no posixsrv, todo: make it conditional");
 	struct pollfd pfd;
 	int ret;
 
@@ -229,6 +235,7 @@ TEST(poll_poll, poll_pipe_hangup_on_writer_close)
 
 TEST(poll_poll, poll_negative_fd_ignored)
 {
+	TEST_IGNORE_MESSAGE("no posixsrv, todo: make it conditional");
 	struct pollfd pfd;
 	int ret;
 
@@ -261,6 +268,7 @@ TEST(poll_poll, poll_invalid_fd_pollnval)
 
 TEST(poll_poll, poll_pollerr_pollhup_not_in_events)
 {
+	TEST_IGNORE_MESSAGE("no posixsrv, todo: make it conditional");
 	struct pollfd pfd;
 	int ret;
 
@@ -284,6 +292,7 @@ TEST(poll_poll, poll_pollerr_pollhup_not_in_events)
 
 TEST(poll_poll, poll_multiple_fds_mixed)
 {
+	TEST_IGNORE_MESSAGE("no fs, todo: make it conditional");
 	struct pollfd pfds[3];
 	int ret;
 
@@ -341,6 +350,7 @@ TEST(poll_poll, poll_nfds_zero)
 
 TEST(poll_poll, poll_return_zero_on_timeout)
 {
+	TEST_IGNORE_MESSAGE("no posixsrv, todo: make it conditional");
 	struct pollfd pfd;
 	int ret;
 
@@ -360,6 +370,7 @@ TEST(poll_poll, poll_return_zero_on_timeout)
 
 TEST(poll_poll, poll_revents_cleared_if_no_event)
 {
+	TEST_IGNORE_MESSAGE("no posixsrv, todo: make it conditional");
 	struct pollfd pfd;
 	int ret;
 
@@ -379,6 +390,7 @@ TEST(poll_poll, poll_revents_cleared_if_no_event)
 
 TEST(poll_poll, poll_pollout_pipe_writable)
 {
+	TEST_IGNORE_MESSAGE("no posixsrv, todo: make it conditional");
 	struct pollfd pfd;
 	int ret;
 

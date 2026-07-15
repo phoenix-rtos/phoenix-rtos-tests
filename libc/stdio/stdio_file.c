@@ -1865,6 +1865,7 @@ TEST(stdio_fgetpos, fgetpos_espipe)
 	fpos_t pos;
 
 	/* fgetpos shall fail with ESPIPE on a pipe */
+	TEST_IGNORE_MESSAGE("no posixsrv, todo: make it conditional");
 	ret = pipe(fd);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
@@ -2039,6 +2040,7 @@ TEST(stdio_fsetpos, fsetpos_espipe)
 	fpos_t pos;
 
 	/* fsetpos shall fail with ESPIPE on a pipe */
+	TEST_IGNORE_MESSAGE("no posixsrv, todo: make it conditional");
 	ret = pipe(fd);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
