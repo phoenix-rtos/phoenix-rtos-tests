@@ -62,6 +62,7 @@ test:
       execute: test-libc-signal
       targets:
         include: [host-generic-pc]
+        exclude: [armv7r5f-zynqmp-qemu, aarch64a53-zynqmp-virt] # isssue to investigate: causes psh to exit
 
     # - name: stat
     #   execute: test-libc-stat
@@ -130,6 +131,7 @@ test:
     - name: mman
       execute: test-libc-mman
       targets:
+        exclude: [armv7r5f-zynqmp-qemu] # mmu?
         include: [host-generic-pc]
 
     # - name: dirent

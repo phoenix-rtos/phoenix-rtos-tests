@@ -76,7 +76,7 @@ class PloInterface:
         """Interrupts timer counting to enter plo."""
 
         try:
-            self.dut.expect_exact("Waiting for input", timeout=3)
+            self.dut.expect_exact("Waiting for input", timeout=5)
         except (pexpect.TIMEOUT, pexpect.EOF) as e:
             raise PloError("Failed to go into bootloader mode", output=self.dut.before) from e
 

@@ -317,6 +317,9 @@ TEST(misc_umask, umask_affects_mkfifo)
 
 	prev = umask(027);
 
+#if defined(__TARGET_ARMV7R5F) || defined(__TARGET_AARCH64A53)
+	TEST_IGNORE_MESSAGE("no fs");
+#endif
 	ret = mkfifo(UMASK_TEST_FIFO, 0666);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
@@ -343,6 +346,9 @@ TEST(misc_umask, umask_inherited_by_fork)
 
 	prev = umask(0135);
 
+#if defined(__TARGET_ARMV7R5F) || defined(__TARGET_AARCH64A53)
+	TEST_IGNORE_MESSAGE("no mmu");
+#endif
 	pid = fork();
 	TEST_ASSERT_NOT_EQUAL_INT(-1, pid);
 

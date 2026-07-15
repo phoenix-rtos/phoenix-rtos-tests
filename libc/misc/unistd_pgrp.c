@@ -102,7 +102,7 @@ TEST(unistd_getpgid, getpgid_child_inherits)
 	pid_t parentPgid = getpgid(0);
 	pid_t pid;
 
-	pid = fork();
+	pid = vfork();
 	TEST_ASSERT_NOT_EQUAL_INT(-1, (int)pid);
 
 	if (pid == 0) {
@@ -169,7 +169,7 @@ TEST(unistd_getpgrp, getpgrp_child_inherits)
 	pid_t parentPgrp = getpgrp();
 	pid_t pid;
 
-	pid = fork();
+	pid = vfork();
 	TEST_ASSERT_NOT_EQUAL_INT(-1, (int)pid);
 
 	if (pid == 0) {
@@ -257,7 +257,7 @@ TEST(unistd_getsid, getsid_child_same_session)
 	pid_t parentSid = getsid(0);
 	pid_t pid;
 
-	pid = fork();
+	pid = vfork();
 	TEST_ASSERT_NOT_EQUAL_INT(-1, (int)pid);
 
 	if (pid == 0) {
@@ -305,7 +305,7 @@ TEST(unistd_setpgrp, setpgrp_returns_pgid)
 	/* Run in child to avoid modifying the parent's session/group */
 	pid_t pid;
 
-	pid = fork();
+	pid = vfork();
 	TEST_ASSERT_NOT_EQUAL_INT(-1, (int)pid);
 
 	if (pid == 0) {
@@ -333,7 +333,7 @@ TEST(unistd_setpgrp, setpgrp_sets_pgid_to_pid)
 	 *  to the process ID of the calling process" (if not session leader) */
 	pid_t pid;
 
-	pid = fork();
+	pid = vfork();
 	TEST_ASSERT_NOT_EQUAL_INT(-1, (int)pid);
 
 	if (pid == 0) {
@@ -356,7 +356,7 @@ TEST(unistd_setpgrp, setpgrp_session_leader_no_effect)
 	/* "setpgrp() has no effect when the calling process is a session leader." */
 	pid_t pid;
 
-	pid = fork();
+	pid = vfork();
 	TEST_ASSERT_NOT_EQUAL_INT(-1, (int)pid);
 
 	if (pid == 0) {
