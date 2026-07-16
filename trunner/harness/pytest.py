@@ -241,7 +241,7 @@ class PytestBridgePlugin:
             if fixture in self._broken_fixtures:
                 pytest.fail(f"{self._common_fast_fail_str} {fixture}", pytrace=False)
 
-    @pytest.hookimpl(wrapper=True)
+    @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_makereport(self, item: Function, call: pytest.CallInfo) -> Generator[None, Any, TestReport]:
         """Post-process PyTest's report making
 
