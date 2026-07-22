@@ -150,7 +150,10 @@ TEST(pthread_mutex_prioceiling, getprioceiling_einval_prio_none)
 	ret = pthread_mutexattr_init(&mattr);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
-	/* Default protocol is PTHREAD_PRIO_NONE */
+	/* POSIX-DEVIATION: Default protocol is PTHREAD_PRIO_INHERIT in Phoenix, hence the setprotocol */
+	ret = pthread_mutexattr_setprotocol(&mattr, PTHREAD_PRIO_NONE);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+
 	ret = pthread_mutex_init(&mtx, &mattr);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
@@ -186,7 +189,8 @@ TEST(pthread_mutex_prioceiling, getprioceiling_protect)
 	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
-	maxPrio = sched_get_priority_max(SCHED_FIFO);
+	/* POSIX-DEVIATION: Kernel has SCHED_RR only */
+	maxPrio = sched_get_priority_max(SCHED_RR);
 	TEST_ASSERT_TRUE(maxPrio >= 0);
 
 	ret = pthread_mutexattr_setprioceiling(&mattr, maxPrio);
@@ -229,8 +233,9 @@ TEST(pthread_mutex_prioceiling, setprioceiling_changes_ceiling)
 	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
-	maxPrio = sched_get_priority_max(SCHED_FIFO);
-	minPrio = sched_get_priority_min(SCHED_FIFO);
+	/* POSIX-DEVIATION: Kernel has SCHED_RR only */
+	maxPrio = sched_get_priority_max(SCHED_RR);
+	minPrio = sched_get_priority_min(SCHED_RR);
 	TEST_ASSERT_TRUE(maxPrio >= minPrio);
 
 	ret = pthread_mutexattr_setprioceiling(&mattr, maxPrio);
@@ -262,10 +267,18 @@ TEST(pthread_mutex_prioceiling, setprioceiling_einval_prio_none)
 	TEST_IGNORE_MESSAGE("pthread_mutex_setprioceiling is not implemented");
 #else
 	pthread_mutex_t mtx;
+	pthread_mutexattr_t mattr;
 	int oldCeiling;
 	int ret;
 
-	ret = pthread_mutex_init(&mtx, NULL);
+	ret = pthread_mutexattr_init(&mattr);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+
+	/* POSIX-DEVIATION: Default protocol is PTHREAD_PRIO_INHERIT in Phoenix, hence the setprotocol */
+	ret = pthread_mutexattr_setprotocol(&mattr, PTHREAD_PRIO_NONE);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+
+	ret = pthread_mutex_init(&mtx, &mattr);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	ret = pthread_mutex_setprioceiling(&mtx, 1, &oldCeiling);

@@ -94,6 +94,10 @@ TEST(pthread_sched, setschedparam_sched_other)
 	int minPrio;
 	int ret;
 
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("SCHED_OTHER not supported");
+#endif
+
 	minPrio = sched_get_priority_min(SCHED_OTHER);
 	TEST_ASSERT_TRUE(minPrio >= 0);
 
@@ -128,6 +132,10 @@ TEST(pthread_sched, setschedparam_sched_fifo)
 	int origPolicy;
 	int minPrio;
 	int ret;
+
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("SCHED_FIFO not supported");
+#endif
 
 	/* Save original */
 	ret = pthread_getschedparam(pthread_self(), &origPolicy, &origParam);
