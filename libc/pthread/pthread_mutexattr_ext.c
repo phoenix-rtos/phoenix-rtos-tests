@@ -59,7 +59,8 @@ TEST(pthread_mutexattr_prioceiling, get_after_set)
 	ret = pthread_mutexattr_init(&mattr);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
-	maxPrio = sched_get_priority_max(SCHED_FIFO);
+	/* POSIX-DEVIATION: prioceiling based on SCHED_RR */
+	maxPrio = sched_get_priority_max(SCHED_RR);
 	TEST_ASSERT_TRUE(maxPrio >= 0);
 
 	ret = pthread_mutexattr_setprioceiling(&mattr, maxPrio);
@@ -92,7 +93,8 @@ TEST(pthread_mutexattr_prioceiling, set_min_priority)
 	ret = pthread_mutexattr_init(&mattr);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
-	minPrio = sched_get_priority_min(SCHED_FIFO);
+	/* POSIX-DEVIATION: prioceiling based on SCHED_RR */
+	minPrio = sched_get_priority_min(SCHED_RR);
 	TEST_ASSERT_TRUE(minPrio >= 0);
 
 	ret = pthread_mutexattr_setprioceiling(&mattr, minPrio);
@@ -126,8 +128,9 @@ TEST(pthread_mutexattr_prioceiling, roundtrip_multiple)
 	ret = pthread_mutexattr_init(&mattr);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
-	minPrio = sched_get_priority_min(SCHED_FIFO);
-	maxPrio = sched_get_priority_max(SCHED_FIFO);
+	/* POSIX-DEVIATION: prioceiling based on SCHED_RR */
+	minPrio = sched_get_priority_min(SCHED_RR);
+	maxPrio = sched_get_priority_max(SCHED_RR);
 
 	ret = pthread_mutexattr_setprioceiling(&mattr, maxPrio);
 	if (ret == EINVAL || ret == EPERM) {
@@ -187,7 +190,11 @@ TEST(pthread_mutexattr_protocol, get_default_prio_none)
 
 	ret = pthread_mutexattr_getprotocol(&mattr, &protocol);
 	TEST_ASSERT_EQUAL_INT(0, ret);
-	TEST_ASSERT_EQUAL_INT(PTHREAD_PRIO_NONE, protocol);
+	/*
+	 * POSIX-DEVIATION: POSIX says that mutexes should have PTHREAD_PRIO_NONE by
+	 * default. Phoenix has PTHREAD_PRIO_INHERIT instead.
+	 */
+	TEST_ASSERT_EQUAL_INT(PTHREAD_PRIO_INHERIT, protocol);
 
 	pthread_mutexattr_destroy(&mattr);
 #endif
@@ -387,6 +394,9 @@ TEST(pthread_mutexattr_pshared, set_shared)
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	ret = pthread_mutexattr_setpshared(&mattr, PTHREAD_PROCESS_SHARED);
+	if (ret == ENOTSUP) {
+		TEST_IGNORE_MESSAGE("PTHREAD_PROCESS_SHARED not supported");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	ret = pthread_mutexattr_getpshared(&mattr, &pshared);
