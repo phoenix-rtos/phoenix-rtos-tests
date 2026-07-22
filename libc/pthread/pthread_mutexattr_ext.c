@@ -27,6 +27,7 @@
 #include <sched.h>
 
 #include "unity_fixture.h"
+#include "libc_features.h"
 
 
 /* ===== pthread_mutexattr_prioceiling group ===== */
@@ -48,7 +49,7 @@ TEST_TEAR_DOWN(pthread_mutexattr_prioceiling)
 /* pthread_mutexattr_getprioceiling: returns value after set */
 TEST(pthread_mutexattr_prioceiling, get_after_set)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_MUTEXATTR_GETPRIOCEILING
 	TEST_IGNORE_MESSAGE("pthread_mutexattr_get/setprioceiling is not implemented");
 #else
 	pthread_mutexattr_t mattr;
@@ -82,7 +83,7 @@ TEST(pthread_mutexattr_prioceiling, get_after_set)
 /* pthread_mutexattr_setprioceiling: set min priority */
 TEST(pthread_mutexattr_prioceiling, set_min_priority)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_MUTEXATTR_GETPRIOCEILING
 	TEST_IGNORE_MESSAGE("pthread_mutexattr_get/setprioceiling is not implemented");
 #else
 	pthread_mutexattr_t mattr;
@@ -116,7 +117,7 @@ TEST(pthread_mutexattr_prioceiling, set_min_priority)
 /* pthread_mutexattr_setprioceiling: roundtrip multiple values */
 TEST(pthread_mutexattr_prioceiling, roundtrip_multiple)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_MUTEXATTR_GETPRIOCEILING
 	TEST_IGNORE_MESSAGE("pthread_mutexattr_get/setprioceiling is not implemented");
 #else
 	pthread_mutexattr_t mattr;
@@ -178,7 +179,7 @@ TEST_TEAR_DOWN(pthread_mutexattr_protocol)
 /* pthread_mutexattr_getprotocol: default is PTHREAD_PRIO_NONE */
 TEST(pthread_mutexattr_protocol, get_default_prio_none)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_MUTEXATTR_GETPROTOCOL
 	TEST_IGNORE_MESSAGE("pthread_mutexattr_get/setprotocol is not implemented");
 #else
 	pthread_mutexattr_t mattr;
@@ -204,7 +205,7 @@ TEST(pthread_mutexattr_protocol, get_default_prio_none)
 /* pthread_mutexattr_setprotocol: set PTHREAD_PRIO_NONE */
 TEST(pthread_mutexattr_protocol, set_prio_none)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_MUTEXATTR_GETPROTOCOL
 	TEST_IGNORE_MESSAGE("pthread_mutexattr_get/setprotocol is not implemented");
 #else
 	pthread_mutexattr_t mattr;
@@ -229,7 +230,7 @@ TEST(pthread_mutexattr_protocol, set_prio_none)
 /* pthread_mutexattr_setprotocol: set PTHREAD_PRIO_INHERIT */
 TEST(pthread_mutexattr_protocol, set_prio_inherit)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_MUTEXATTR_GETPROTOCOL
 	TEST_IGNORE_MESSAGE("pthread_mutexattr_get/setprotocol is not implemented");
 #else
 	pthread_mutexattr_t mattr;
@@ -258,7 +259,7 @@ TEST(pthread_mutexattr_protocol, set_prio_inherit)
 /* pthread_mutexattr_setprotocol: set PTHREAD_PRIO_PROTECT */
 TEST(pthread_mutexattr_protocol, set_prio_protect)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_MUTEXATTR_GETPROTOCOL
 	TEST_IGNORE_MESSAGE("pthread_mutexattr_get/setprotocol is not implemented");
 #else
 	pthread_mutexattr_t mattr;
@@ -287,7 +288,7 @@ TEST(pthread_mutexattr_protocol, set_prio_protect)
 /* pthread_mutexattr_setprotocol: ENOTSUP for invalid value */
 TEST(pthread_mutexattr_protocol, set_invalid_enotsup)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_MUTEXATTR_SETPROTOCOL
 	TEST_IGNORE_MESSAGE("pthread_mutexattr_setprotocol is not implemented");
 #else
 	pthread_mutexattr_t mattr;
@@ -336,7 +337,7 @@ TEST_TEAR_DOWN(pthread_mutexattr_pshared)
 /* pthread_mutexattr_getpshared: default is PTHREAD_PROCESS_PRIVATE */
 TEST(pthread_mutexattr_pshared, get_default_private)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_MUTEXATTR_GETPSHARED
 	TEST_IGNORE_MESSAGE("pthread_mutexattr_get/setpshared is not implemented");
 #else
 	pthread_mutexattr_t mattr;
@@ -358,7 +359,7 @@ TEST(pthread_mutexattr_pshared, get_default_private)
 /* pthread_mutexattr_setpshared: set PTHREAD_PROCESS_PRIVATE */
 TEST(pthread_mutexattr_pshared, set_private)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_MUTEXATTR_GETPSHARED
 	TEST_IGNORE_MESSAGE("pthread_mutexattr_get/setpshared is not implemented");
 #else
 	pthread_mutexattr_t mattr;
@@ -383,7 +384,7 @@ TEST(pthread_mutexattr_pshared, set_private)
 /* pthread_mutexattr_setpshared: set PTHREAD_PROCESS_SHARED */
 TEST(pthread_mutexattr_pshared, set_shared)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_MUTEXATTR_GETPSHARED
 	TEST_IGNORE_MESSAGE("pthread_mutexattr_get/setpshared is not implemented");
 #else
 	pthread_mutexattr_t mattr;
@@ -411,7 +412,7 @@ TEST(pthread_mutexattr_pshared, set_shared)
 /* pthread_mutexattr_setpshared: EINVAL for invalid value */
 TEST(pthread_mutexattr_pshared, set_invalid_einval)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_MUTEXATTR_SETPSHARED
 	TEST_IGNORE_MESSAGE("pthread_mutexattr_setpshared is not implemented");
 #else
 	pthread_mutexattr_t mattr;
@@ -459,7 +460,7 @@ TEST_TEAR_DOWN(pthread_mutexattr_robust)
 /* pthread_mutexattr_getrobust: default is PTHREAD_MUTEX_STALLED */
 TEST(pthread_mutexattr_robust, get_default_stalled)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_MUTEXATTR_GETROBUST
 	TEST_IGNORE_MESSAGE("pthread_mutexattr_get/setrobust is not implemented");
 #else
 	pthread_mutexattr_t mattr;
@@ -481,7 +482,7 @@ TEST(pthread_mutexattr_robust, get_default_stalled)
 /* pthread_mutexattr_setrobust: set PTHREAD_MUTEX_ROBUST */
 TEST(pthread_mutexattr_robust, set_robust)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_MUTEXATTR_GETROBUST
 	TEST_IGNORE_MESSAGE("pthread_mutexattr_get/setrobust is not implemented");
 #else
 	pthread_mutexattr_t mattr;
@@ -506,7 +507,7 @@ TEST(pthread_mutexattr_robust, set_robust)
 /* pthread_mutexattr_setrobust: set PTHREAD_MUTEX_STALLED */
 TEST(pthread_mutexattr_robust, set_stalled)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_MUTEXATTR_GETROBUST
 	TEST_IGNORE_MESSAGE("pthread_mutexattr_get/setrobust is not implemented");
 #else
 	pthread_mutexattr_t mattr;
@@ -534,7 +535,7 @@ TEST(pthread_mutexattr_robust, set_stalled)
 /* pthread_mutexattr_setrobust: EINVAL for invalid value */
 TEST(pthread_mutexattr_robust, set_invalid_einval)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_MUTEXATTR_SETROBUST
 	TEST_IGNORE_MESSAGE("pthread_mutexattr_setrobust is not implemented");
 #else
 	pthread_mutexattr_t mattr;
@@ -557,7 +558,7 @@ TEST(pthread_mutexattr_robust, set_invalid_einval)
 /* pthread_mutexattr_setrobust: robust attr usable with mutex_init */
 TEST(pthread_mutexattr_robust, robust_usable_with_mutex_init)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_MUTEXATTR_SETROBUST
 	TEST_IGNORE_MESSAGE("pthread_mutexattr_setrobust is not implemented");
 #else
 	pthread_mutexattr_t mattr;

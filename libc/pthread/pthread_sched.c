@@ -24,6 +24,7 @@
 #include <time.h>
 
 #include "unity_fixture.h"
+#include "libc_features.h"
 
 
 /* ===== pthread_sched group ===== */
@@ -45,7 +46,7 @@ TEST_TEAR_DOWN(pthread_sched)
 /* pthread_getschedparam: returns 0 and valid policy for self */
 TEST(pthread_sched, getschedparam_self)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_GETSCHEDPARAM
 	TEST_IGNORE_MESSAGE("pthread_getschedparam is not implemented");
 #else
 	struct sched_param param;
@@ -62,7 +63,7 @@ TEST(pthread_sched, getschedparam_self)
 /* pthread_getschedparam: priority within valid range */
 TEST(pthread_sched, getschedparam_priority_in_range)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_GETSCHEDPARAM
 	TEST_IGNORE_MESSAGE("pthread_getschedparam is not implemented");
 #else
 	struct sched_param param;
@@ -86,7 +87,7 @@ TEST(pthread_sched, getschedparam_priority_in_range)
 /* pthread_setschedparam: set SCHED_OTHER with min priority */
 TEST(pthread_sched, setschedparam_sched_other)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_SETSCHEDPARAM
 	TEST_IGNORE_MESSAGE("pthread_setschedparam/getschedparam is not implemented");
 #else
 	struct sched_param param;
@@ -123,7 +124,7 @@ TEST(pthread_sched, setschedparam_sched_other)
 /* pthread_setschedparam: set SCHED_FIFO */
 TEST(pthread_sched, setschedparam_sched_fifo)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_SETSCHEDPARAM
 	TEST_IGNORE_MESSAGE("pthread_setschedparam/getschedparam is not implemented");
 #else
 	struct sched_param param;
@@ -169,7 +170,7 @@ TEST(pthread_sched, setschedparam_sched_fifo)
 /* pthread_setschedparam: set SCHED_RR */
 TEST(pthread_sched, setschedparam_sched_rr)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_SETSCHEDPARAM
 	TEST_IGNORE_MESSAGE("pthread_setschedparam/getschedparam is not implemented");
 #else
 	struct sched_param param;
@@ -211,7 +212,7 @@ TEST(pthread_sched, setschedparam_sched_rr)
 /* pthread_setschedparam: EINVAL for invalid policy */
 TEST(pthread_sched, setschedparam_invalid_policy)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_SETSCHEDPARAM
 	TEST_IGNORE_MESSAGE("pthread_setschedparam is not implemented");
 #else
 	struct sched_param param;
@@ -228,7 +229,7 @@ TEST(pthread_sched, setschedparam_invalid_policy)
 /* pthread_setschedprio: set priority of current thread */
 TEST(pthread_sched, setschedprio_self)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_SETSCHEDPRIO
 	TEST_IGNORE_MESSAGE("pthread_setschedprio/getschedparam is not implemented");
 #else
 	struct sched_param param;
@@ -260,7 +261,7 @@ TEST(pthread_sched, setschedprio_self)
 /* pthread_setschedprio: EINVAL for out-of-range priority */
 TEST(pthread_sched, setschedprio_invalid_einval)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_SETSCHEDPRIO
 	TEST_IGNORE_MESSAGE("pthread_setschedprio is not implemented");
 #else
 	int ret;
@@ -274,7 +275,7 @@ TEST(pthread_sched, setschedprio_invalid_einval)
 /* pthread_setschedparam: roundtrip preserves priority */
 TEST(pthread_sched, setschedparam_roundtrip)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_SETSCHEDPARAM
 	TEST_IGNORE_MESSAGE("pthread_setschedparam/getschedparam is not implemented");
 #else
 	struct sched_param param;
@@ -341,7 +342,7 @@ TEST_TEAR_DOWN(pthread_getcpuclockid)
 /* pthread_getcpuclockid: returns 0 for current thread */
 TEST(pthread_getcpuclockid, self_success)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_GETCPUCLOCKID
 	TEST_IGNORE_MESSAGE("pthread_getcpuclockid is not implemented");
 #else
 	clockid_t clkId;
@@ -359,7 +360,7 @@ TEST(pthread_getcpuclockid, self_success)
 /* pthread_getcpuclockid: returned clock is usable with clock_gettime */
 TEST(pthread_getcpuclockid, clock_usable)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_GETCPUCLOCKID
 	TEST_IGNORE_MESSAGE("pthread_getcpuclockid is not implemented");
 #else
 	clockid_t clkId;
@@ -384,7 +385,7 @@ TEST(pthread_getcpuclockid, clock_usable)
 /* pthread_getcpuclockid: clock advances with CPU work */
 TEST(pthread_getcpuclockid, clock_advances)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_GETCPUCLOCKID
 	TEST_IGNORE_MESSAGE("pthread_getcpuclockid is not implemented");
 #else
 	clockid_t clkId;
@@ -417,7 +418,7 @@ TEST(pthread_getcpuclockid, clock_advances)
 }
 
 
-#ifndef __phoenix__
+#ifdef HAS_PTHREAD_GETCPUCLOCKID
 static void *cpuClockThread(void *arg)
 {
 	clockid_t *clkId = (clockid_t *)arg;
@@ -437,7 +438,7 @@ static void *cpuClockThread(void *arg)
 /* pthread_getcpuclockid: get clock for another thread */
 TEST(pthread_getcpuclockid, other_thread)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_GETCPUCLOCKID
 	TEST_IGNORE_MESSAGE("pthread_getcpuclockid is not implemented");
 #else
 	pthread_t thr;
