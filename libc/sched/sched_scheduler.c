@@ -220,6 +220,10 @@ TEST(sched_scheduler, setscheduler_sched_other)
 	int ret;
 	int minPrio;
 
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#1639 issue - phoenix limitation");
+#endif
+
 	minPrio = sched_get_priority_min(SCHED_OTHER);
 	TEST_ASSERT_GREATER_THAN_INT(-1, minPrio);
 
@@ -241,6 +245,10 @@ TEST(sched_scheduler, setscheduler_returns_former_policy)
 	int ret;
 	int currentPolicy;
 	int minPrio;
+
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#1639 issue - phoenix limitation");
+#endif
 
 	currentPolicy = sched_getscheduler(0);
 	TEST_ASSERT_GREATER_THAN_INT(-1, currentPolicy);
@@ -273,12 +281,12 @@ TEST(sched_scheduler, setscheduler_einval_invalid_priority)
 	int ret;
 	int maxPrio;
 
-	maxPrio = sched_get_priority_max(SCHED_OTHER);
+	maxPrio = sched_get_priority_max(SCHED_RR);
 	TEST_ASSERT_GREATER_THAN_INT(-1, maxPrio);
 
 	param.sched_priority = maxPrio + 100;
 	errno = 0;
-	ret = sched_setscheduler(0, SCHED_OTHER, &param);
+	ret = sched_setscheduler(0, SCHED_RR, &param);
 	TEST_ASSERT_EQUAL_INT(-1, ret);
 	TEST_ASSERT_EQUAL_INT(EINVAL, errno);
 }
@@ -291,7 +299,7 @@ TEST(sched_scheduler, setscheduler_esrch_invalid_pid)
 
 	param.sched_priority = 0;
 	errno = 0;
-	ret = sched_setscheduler(99999, SCHED_OTHER, &param);
+	ret = sched_setscheduler(99999, SCHED_RR, &param);
 	TEST_ASSERT_EQUAL_INT(-1, ret);
 	TEST_ASSERT_EQUAL_INT(ESRCH, errno);
 }
