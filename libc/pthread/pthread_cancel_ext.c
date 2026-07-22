@@ -21,6 +21,7 @@
 #include <unistd.h>
 
 #include "unity_fixture.h"
+#include "libc_features.h"
 
 
 TEST_GROUP(pthread_cancel_type);
@@ -33,7 +34,7 @@ TEST_SETUP(pthread_cancel_type)
 
 TEST_TEAR_DOWN(pthread_cancel_type)
 {
-#ifndef __phoenix__
+#ifdef HAS_PTHREAD_SETCANCELTYPE
 	int oldtype;
 	/* Restore default cancel type */
 	pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, &oldtype);
@@ -44,7 +45,7 @@ TEST_TEAR_DOWN(pthread_cancel_type)
 /* pthread_setcanceltype: shall return 0 and store old type */
 TEST(pthread_cancel_type, setcanceltype_returns_oldtype)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_SETCANCELTYPE
 	TEST_IGNORE_MESSAGE("pthread_setcanceltype is not implemented");
 #else
 	int oldtype;
@@ -65,7 +66,7 @@ TEST(pthread_cancel_type, setcanceltype_returns_oldtype)
 /* pthread_setcanceltype: set PTHREAD_CANCEL_DEFERRED */
 TEST(pthread_cancel_type, setcanceltype_deferred)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_SETCANCELTYPE
 	TEST_IGNORE_MESSAGE("pthread_setcanceltype is not implemented");
 #else
 	int oldtype;
@@ -84,7 +85,7 @@ TEST(pthread_cancel_type, setcanceltype_deferred)
 /* pthread_setcanceltype: set PTHREAD_CANCEL_ASYNCHRONOUS */
 TEST(pthread_cancel_type, setcanceltype_asynchronous)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_SETCANCELTYPE
 	TEST_IGNORE_MESSAGE("pthread_setcanceltype is not implemented");
 #else
 	int oldtype;
@@ -100,7 +101,7 @@ TEST(pthread_cancel_type, setcanceltype_asynchronous)
 /* pthread_setcanceltype: NULL oldtype pointer is valid */
 TEST(pthread_cancel_type, setcanceltype_null_oldtype)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_SETCANCELTYPE
 	TEST_IGNORE_MESSAGE("pthread_setcanceltype is not implemented");
 #else
 	int ret;
@@ -115,7 +116,7 @@ TEST(pthread_cancel_type, setcanceltype_null_oldtype)
 
 
 /* pthread_testcancel: no effect when cancellation is disabled */
-#ifndef __phoenix__
+#ifdef HAS_PTHREAD_TESTCANCEL
 static void *test_testcancelDisabledThread(void *arg)
 {
 	int *reached = (int *)arg;
@@ -135,7 +136,7 @@ static void *test_testcancelDisabledThread(void *arg)
 
 TEST(pthread_cancel_type, testcancel_no_effect_when_disabled)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_TESTCANCEL
 	TEST_IGNORE_MESSAGE("pthread_testcancel is not implemented");
 #else
 	pthread_t thread;
@@ -154,7 +155,7 @@ TEST(pthread_cancel_type, testcancel_no_effect_when_disabled)
 
 
 /* pthread_testcancel: creates cancellation point (thread cancelled at testcancel) */
-#ifndef __phoenix__
+#ifdef HAS_PTHREAD_TESTCANCEL
 static void *test_testcancelPointThread(void *arg)
 {
 	int *beforeCancel = (int *)arg;
@@ -173,7 +174,7 @@ static void *test_testcancelPointThread(void *arg)
 
 TEST(pthread_cancel_type, testcancel_creates_cancellation_point)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_TESTCANCEL
 	TEST_IGNORE_MESSAGE("pthread_testcancel is not implemented");
 #else
 	pthread_t thread;
@@ -206,7 +207,7 @@ TEST(pthread_cancel_type, testcancel_creates_cancellation_point)
 
 
 /* pthread_testcancel: thread without pending cancel continues normally */
-#ifndef __phoenix__
+#ifdef HAS_PTHREAD_TESTCANCEL
 static void *test_testcancelNoPendingThread(void *arg)
 {
 	int *completed = (int *)arg;
@@ -224,7 +225,7 @@ static void *test_testcancelNoPendingThread(void *arg)
 
 TEST(pthread_cancel_type, testcancel_no_pending_continues)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_TESTCANCEL
 	TEST_IGNORE_MESSAGE("pthread_testcancel is not implemented");
 #else
 	pthread_t thread;
@@ -245,7 +246,7 @@ TEST(pthread_cancel_type, testcancel_no_pending_continues)
 
 
 /* pthread_setcanceltype: default for new threads is PTHREAD_CANCEL_DEFERRED */
-#ifndef __phoenix__
+#ifdef HAS_PTHREAD_SETCANCELTYPE
 static void *test_defaultTypeThread(void *arg)
 {
 	int *type = (int *)arg;
@@ -261,7 +262,7 @@ static void *test_defaultTypeThread(void *arg)
 
 TEST(pthread_cancel_type, default_type_is_deferred)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_SETCANCELTYPE
 	TEST_IGNORE_MESSAGE("pthread_setcanceltype is not implemented");
 #else
 	pthread_t thread;

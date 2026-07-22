@@ -30,9 +30,10 @@
 #include <unistd.h>
 
 #include "unity_fixture.h"
+#include "libc_features.h"
 
 
-#ifndef __phoenix__
+#ifdef HAS_PTHREAD_RWLOCK_RDLOCK
 static struct {
 	pthread_rwlock_t rwl;
 } test_common;
@@ -44,7 +45,7 @@ TEST_GROUP(pthread_rwlock);
 
 TEST_SETUP(pthread_rwlock)
 {
-#ifndef __phoenix__
+#ifdef HAS_PTHREAD_RWLOCK_RDLOCK
 	int ret;
 
 	ret = pthread_rwlock_init(&test_common.rwl, NULL);
@@ -55,7 +56,7 @@ TEST_SETUP(pthread_rwlock)
 
 TEST_TEAR_DOWN(pthread_rwlock)
 {
-#ifndef __phoenix__
+#ifdef HAS_PTHREAD_RWLOCK_RDLOCK
 	pthread_rwlock_destroy(&test_common.rwl);
 #endif
 }
@@ -64,7 +65,7 @@ TEST_TEAR_DOWN(pthread_rwlock)
 /* pthread_rwlock_init: init returns 0 with NULL attr */
 TEST(pthread_rwlock, init_default)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_RWLOCK_RDLOCK
 	TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
 #else
 	pthread_rwlock_t rwl;
@@ -81,7 +82,7 @@ TEST(pthread_rwlock, init_default)
 /* pthread_rwlock_destroy: destroy returns 0 */
 TEST(pthread_rwlock, destroy_initialized)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_RWLOCK_RDLOCK
 	TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
 #else
 	pthread_rwlock_t rwl;
@@ -99,7 +100,7 @@ TEST(pthread_rwlock, destroy_initialized)
 /* pthread_rwlock_rdlock: acquire read lock on unlocked rwlock */
 TEST(pthread_rwlock, rdlock_unlocked)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_RWLOCK_RDLOCK
 	TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
 #else
 	int ret;
@@ -116,7 +117,7 @@ TEST(pthread_rwlock, rdlock_unlocked)
 /* pthread_rwlock_rdlock: multiple readers allowed */
 TEST(pthread_rwlock, rdlock_multiple_readers)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_RWLOCK_RDLOCK
 	TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
 #else
 	int ret;
@@ -139,7 +140,7 @@ TEST(pthread_rwlock, rdlock_multiple_readers)
 /* pthread_rwlock_wrlock: acquire write lock on unlocked rwlock */
 TEST(pthread_rwlock, wrlock_unlocked)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_RWLOCK_RDLOCK
 	TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
 #else
 	int ret;
@@ -156,7 +157,7 @@ TEST(pthread_rwlock, wrlock_unlocked)
 /* pthread_rwlock_tryrdlock: success on unlocked rwlock */
 TEST(pthread_rwlock, tryrdlock_unlocked)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_RWLOCK_RDLOCK
 	TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
 #else
 	int ret;
@@ -173,7 +174,7 @@ TEST(pthread_rwlock, tryrdlock_unlocked)
 /* pthread_rwlock_tryrdlock: success when read-locked (multiple readers) */
 TEST(pthread_rwlock, tryrdlock_while_rdlocked)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_RWLOCK_RDLOCK
 	TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
 #else
 	int ret;
@@ -196,7 +197,7 @@ TEST(pthread_rwlock, tryrdlock_while_rdlocked)
 /* pthread_rwlock_tryrdlock: EBUSY when write-locked */
 TEST(pthread_rwlock, tryrdlock_while_wrlocked)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_RWLOCK_RDLOCK
 	TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
 #else
 	int ret;
@@ -216,7 +217,7 @@ TEST(pthread_rwlock, tryrdlock_while_wrlocked)
 /* pthread_rwlock_trywrlock: success on unlocked rwlock */
 TEST(pthread_rwlock, trywrlock_unlocked)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_RWLOCK_RDLOCK
 	TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
 #else
 	int ret;
@@ -233,7 +234,7 @@ TEST(pthread_rwlock, trywrlock_unlocked)
 /* pthread_rwlock_trywrlock: EBUSY when read-locked */
 TEST(pthread_rwlock, trywrlock_while_rdlocked)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_RWLOCK_RDLOCK
 	TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
 #else
 	int ret;
@@ -253,7 +254,7 @@ TEST(pthread_rwlock, trywrlock_while_rdlocked)
 /* pthread_rwlock_trywrlock: EBUSY when write-locked */
 TEST(pthread_rwlock, trywrlock_while_wrlocked)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_RWLOCK_RDLOCK
 	TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
 #else
 	int ret;
@@ -273,7 +274,7 @@ TEST(pthread_rwlock, trywrlock_while_wrlocked)
 /* pthread_rwlock_unlock: unlock after rdlock */
 TEST(pthread_rwlock, unlock_after_rdlock)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_RWLOCK_RDLOCK
 	TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
 #else
 	int ret;
@@ -297,7 +298,7 @@ TEST(pthread_rwlock, unlock_after_rdlock)
 /* pthread_rwlock_unlock: unlock after wrlock */
 TEST(pthread_rwlock, unlock_after_wrlock)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_RWLOCK_RDLOCK
 	TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
 #else
 	int ret;
@@ -321,7 +322,7 @@ TEST(pthread_rwlock, unlock_after_wrlock)
 /* pthread_rwlock_timedrdlock: success on unlocked rwlock */
 TEST(pthread_rwlock, timedrdlock_unlocked)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_RWLOCK_TIMEDRDLOCK
 	TEST_IGNORE_MESSAGE("pthread_rwlock_timedrdlock/timedwrlock is not implemented");
 #else
 	struct timespec ts;
@@ -342,7 +343,7 @@ TEST(pthread_rwlock, timedrdlock_unlocked)
 /* pthread_rwlock_timedrdlock: success when already read-locked (multiple readers) */
 TEST(pthread_rwlock, timedrdlock_while_rdlocked)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_RWLOCK_TIMEDRDLOCK
 	TEST_IGNORE_MESSAGE("pthread_rwlock_timedrdlock/timedwrlock is not implemented");
 #else
 	struct timespec ts;
@@ -366,7 +367,7 @@ TEST(pthread_rwlock, timedrdlock_while_rdlocked)
 }
 
 
-#ifndef __phoenix__
+#ifdef HAS_PTHREAD_RWLOCK_TIMEDRDLOCK
 static void *writerHoldThread(void *arg)
 {
 	pthread_rwlock_t *rwl = (pthread_rwlock_t *)arg;
@@ -385,7 +386,7 @@ static void *writerHoldThread(void *arg)
 /* pthread_rwlock_timedrdlock: ETIMEDOUT when write-locked by another thread */
 TEST(pthread_rwlock, timedrdlock_timeout)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_RWLOCK_TIMEDRDLOCK
 	TEST_IGNORE_MESSAGE("pthread_rwlock_timedrdlock/timedwrlock is not implemented");
 #else
 	struct timespec ts;
@@ -414,7 +415,7 @@ TEST(pthread_rwlock, timedrdlock_timeout)
 /* pthread_rwlock_timedwrlock: success on unlocked rwlock */
 TEST(pthread_rwlock, timedwrlock_unlocked)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_RWLOCK_TIMEDRDLOCK
 	TEST_IGNORE_MESSAGE("pthread_rwlock_timedrdlock/timedwrlock is not implemented");
 #else
 	struct timespec ts;
@@ -435,7 +436,7 @@ TEST(pthread_rwlock, timedwrlock_unlocked)
 /* pthread_rwlock_timedwrlock: ETIMEDOUT when read-locked */
 TEST(pthread_rwlock, timedwrlock_timeout_rdlocked)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_RWLOCK_TIMEDRDLOCK
 	TEST_IGNORE_MESSAGE("pthread_rwlock_timedrdlock/timedwrlock is not implemented");
 #else
 	struct timespec ts;
@@ -459,7 +460,7 @@ TEST(pthread_rwlock, timedwrlock_timeout_rdlocked)
 /* pthread_rwlock_timedwrlock: ETIMEDOUT when write-locked by another thread */
 TEST(pthread_rwlock, timedwrlock_timeout_wrlocked)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_RWLOCK_TIMEDRDLOCK
 	TEST_IGNORE_MESSAGE("pthread_rwlock_timedrdlock/timedwrlock is not implemented");
 #else
 	struct timespec ts;
@@ -487,7 +488,7 @@ TEST(pthread_rwlock, timedwrlock_timeout_wrlocked)
 /* pthread_rwlock_timedrdlock: EINVAL for invalid timespec */
 TEST(pthread_rwlock, timedrdlock_einval)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_RWLOCK_TIMEDRDLOCK
 	TEST_IGNORE_MESSAGE("pthread_rwlock_timedrdlock/timedwrlock is not implemented");
 #else
 	struct timespec ts;
@@ -510,7 +511,7 @@ TEST(pthread_rwlock, timedrdlock_einval)
 /* pthread_rwlock_timedwrlock: EINVAL for invalid timespec */
 TEST(pthread_rwlock, timedwrlock_einval)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_RWLOCK_TIMEDRDLOCK
 	TEST_IGNORE_MESSAGE("pthread_rwlock_timedrdlock/timedwrlock is not implemented");
 #else
 	struct timespec ts;
@@ -530,7 +531,7 @@ TEST(pthread_rwlock, timedwrlock_einval)
 }
 
 
-#ifndef __phoenix__
+#ifdef HAS_PTHREAD_RWLOCK_TIMEDRDLOCK
 static void *writerThread(void *arg)
 {
 	pthread_rwlock_t *rwl = (pthread_rwlock_t *)arg;
@@ -552,7 +553,7 @@ static void *writerThread(void *arg)
 /* pthread_rwlock_timedrdlock: succeeds after writer releases */
 TEST(pthread_rwlock, timedrdlock_waits_for_writer)
 {
-#ifdef __phoenix__
+#ifndef HAS_PTHREAD_RWLOCK_TIMEDRDLOCK
 	TEST_IGNORE_MESSAGE("pthread_rwlock_timedrdlock/timedwrlock is not implemented");
 #else
 	pthread_t thr;
