@@ -40,6 +40,10 @@ TEST(sched_get_priority, max_sched_fifo)
 #else
 	int ret;
 
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#1639 issue - phoenix limitation");
+#endif
+
 	errno = 0;
 	ret = sched_get_priority_max(SCHED_FIFO);
 	TEST_ASSERT_GREATER_THAN_INT(-1, ret);
@@ -65,6 +69,9 @@ TEST(sched_get_priority, max_sched_other)
 	TEST_IGNORE_MESSAGE("#1686 issue");
 #else
 	int ret;
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#1639 issue - phoenix limitation");
+#endif
 
 	errno = 0;
 	ret = sched_get_priority_max(SCHED_OTHER);
@@ -80,6 +87,9 @@ TEST(sched_get_priority, min_sched_fifo)
 	TEST_IGNORE_MESSAGE("#1686 issue");
 #else
 	int ret;
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#1639 issue - phoenix limitation");
+#endif
 
 	errno = 0;
 	ret = sched_get_priority_min(SCHED_FIFO);
@@ -106,6 +116,9 @@ TEST(sched_get_priority, min_sched_other)
 	TEST_IGNORE_MESSAGE("#1686 issue");
 #else
 	int ret;
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#1639 issue - phoenix limitation");
+#endif
 
 	errno = 0;
 	ret = sched_get_priority_min(SCHED_OTHER);
@@ -122,11 +135,13 @@ TEST(sched_get_priority, max_ge_min_all_policies)
 #else
 	int maxVal, minVal;
 
+#ifndef __phoenix__
 	maxVal = sched_get_priority_max(SCHED_FIFO);
 	minVal = sched_get_priority_min(SCHED_FIFO);
 	TEST_ASSERT_GREATER_THAN_INT(-1, maxVal);
 	TEST_ASSERT_GREATER_THAN_INT(-1, minVal);
 	TEST_ASSERT_TRUE(maxVal >= minVal);
+#endif
 
 	maxVal = sched_get_priority_max(SCHED_RR);
 	minVal = sched_get_priority_min(SCHED_RR);
@@ -134,6 +149,7 @@ TEST(sched_get_priority, max_ge_min_all_policies)
 	TEST_ASSERT_GREATER_THAN_INT(-1, minVal);
 	TEST_ASSERT_TRUE(maxVal >= minVal);
 
+#ifndef __phoenix__
 	maxVal = sched_get_priority_max(SCHED_OTHER);
 	minVal = sched_get_priority_min(SCHED_OTHER);
 	TEST_ASSERT_GREATER_THAN_INT(-1, maxVal);
@@ -145,9 +161,6 @@ TEST(sched_get_priority, max_ge_min_all_policies)
 
 TEST(sched_get_priority, einval_invalid_policy)
 {
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1652 issue");
-#else
 	int ret;
 	/* Test sched_get_priority_max with invalid policy */
 	errno = 0;
@@ -171,7 +184,6 @@ TEST(sched_get_priority, einval_invalid_policy)
 	ret = sched_get_priority_min(9999);
 	TEST_ASSERT_EQUAL_INT(-1, ret);
 	TEST_ASSERT_EQUAL_INT(EINVAL, errno);
-#endif
 }
 
 
