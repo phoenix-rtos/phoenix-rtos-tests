@@ -65,7 +65,7 @@ class STM32N6STLinkGdbServerHarness(IntermediateHarness):
 
     def __call__(self, result: TestResult) -> TestResult:
 
-        with OpenocdGdbServer(interface="stlink", target=STM32N6Target.openocd_config_file).run():
+        with OpenocdGdbServer(interface="stlink-dap", target=STM32N6Target.openocd_config_file).run():
             self.harness(result)
 
         return self.next_harness(result)
@@ -148,7 +148,7 @@ class STM32N6Target(TargetBase):
     def flash_dut(self, host_log: TextIO):
         try:
             self.rebooter(hard=True, flash=True)
-            with OpenocdGdbServer(interface="stlink", target=self.openocd_config_file, host_log=host_log).run():
+            with OpenocdGdbServer(interface="stlink-dap", target=self.openocd_config_file, host_log=host_log).run():
                 gdb = GdbInteractive(port=self.gdb_port, cwd=self.boot_dir())
                 with gdb.run():
                     plo = PloInterface(self.dut)
