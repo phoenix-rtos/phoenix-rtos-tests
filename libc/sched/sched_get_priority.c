@@ -130,9 +130,6 @@ TEST(sched_get_priority, min_sched_other)
 
 TEST(sched_get_priority, max_ge_min_all_policies)
 {
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1686 issue");
-#else
 	int maxVal, minVal;
 
 #ifndef __phoenix__
