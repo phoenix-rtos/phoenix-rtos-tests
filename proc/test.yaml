@@ -4,6 +4,10 @@ test:
           type: unity
           execute: test_thread_rand
 
+        - name: test_kill
+          type: unity
+          execute: test_kill
+
         - name: test_priority
           load:
             - app: test_priority
