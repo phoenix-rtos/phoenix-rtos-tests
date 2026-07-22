@@ -113,3 +113,7 @@ test:
       targets:
         include: [host-generic-pc]
 
+    - name: socket
+      execute: test-libc-socket
+      targets:
+        value: [host-generic-pc, ia32-generic-qemu]
