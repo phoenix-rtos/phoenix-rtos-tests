@@ -198,3 +198,8 @@ test:
       execute: test-libc-inet
       targets:
         include: [host-generic-pc]
+
+    - name: libgen
+      execute: test-libc-libgen
+      targets:
+        include: [host-generic-pc]
