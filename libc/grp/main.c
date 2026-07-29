@@ -7,6 +7,11 @@
  * TESTED:
  *    - getgrgid()
  *    - getgrnam()
+ *    - getgrgid_r()
+ *    - getgrnam_r()
+ *    - getgrent()
+ *    - setgrent()
+ *    - endgrent()
  *
  * Copyright 2026 Phoenix Systems
  * Author: Damian Loewnau
@@ -26,6 +31,9 @@ void runner(void)
 {
 	RUN_TEST_GROUP(grp_getgrgid);
 	RUN_TEST_GROUP(grp_getgrnam);
+	RUN_TEST_GROUP(grp_getgrent);
+	RUN_TEST_GROUP(grp_getgrnam_r);
+	RUN_TEST_GROUP(grp_getgrgid_r);
 }
 
 int main(int argc, char *argv[])
