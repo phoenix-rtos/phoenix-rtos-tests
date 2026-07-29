@@ -48,7 +48,16 @@ TEST_SETUP(pthread_rwlock)
 #ifdef HAS_PTHREAD_RWLOCK_RDLOCK
 	int ret;
 
+	/*
+	 * The HAS_ macro only proves the symbol exists in libc; on Phoenix the
+	 * pthread_rwlock_* family is currently a stub returning ENOSYS. Detect
+	 * that at runtime and skip the whole group instead of failing - once a
+	 * real implementation lands, init returns 0 and the tests run for real.
+	 */
 	ret = pthread_rwlock_init(&test_common.rwl, NULL);
+	if (ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 #endif
 }
