@@ -209,3 +209,8 @@ test:
       execute: test-libc-libgen
       targets:
         include: [host-generic-pc]
+
+    - name: crypt
+      execute: test-libc-crypt
+      targets:
+        include: [host-generic-pc]
