@@ -19,6 +19,7 @@
  *    - mkfifoat()
  *    - sync()
  *    - utimensat()
+ *    - mknod()
  *
  * Copyright 2026 Phoenix Systems
  * Author: Damian Loewnau
@@ -48,6 +49,7 @@ void runner(void)
 	RUN_TEST_GROUP(fileops_fdatasync);
 	RUN_TEST_GROUP(fileops_lockf);
 	RUN_TEST_GROUP(fileops_sync);
+	RUN_TEST_GROUP(fileops_mknod);
 }
 
 int main(int argc, char *argv[])
