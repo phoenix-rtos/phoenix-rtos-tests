@@ -24,6 +24,7 @@ void runner(void)
 {
 	RUN_TEST_GROUP(mman_mmap);
 	RUN_TEST_GROUP(mman_munmap);
+	RUN_TEST_GROUP(mman_mprotect);
 }
 
 
