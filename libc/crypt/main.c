@@ -3,18 +3,12 @@
  *
  * POSIX.1-2017 standard library functions tests
  * HEADER:
- *    - <grp.h>
- * TESTED:
- *    - getgrgid()
- *    - getgrnam()
- *    - getgrgid_r()
- *    - getgrnam_r()
- *    - getgrent()
- *    - setgrent()
- *    - endgrent()
+ *    - <unistd.h>
+ *
+ * Main entry point.
  *
  * Copyright 2026 Phoenix Systems
- * Author: Damian Loewnau
+ * Author: Lukasz Kruszynski
  *
  * This file is part of Phoenix-RTOS.
  *
@@ -25,16 +19,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+
 #include "unity_fixture.h"
 
+/* no need for forward declarations, RUN_TEST_GROUP does it by itself */
 void runner(void)
 {
-	RUN_TEST_GROUP(grp_getgrgid);
-	RUN_TEST_GROUP(grp_getgrnam);
-	RUN_TEST_GROUP(grp_getgrent);
-	RUN_TEST_GROUP(grp_getgrnam_r);
-	RUN_TEST_GROUP(grp_getgrgid_r);
+	RUN_TEST_GROUP(crypt);
 }
+
 
 int main(int argc, char *argv[])
 {

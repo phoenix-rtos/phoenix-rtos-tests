@@ -63,3 +63,13 @@ $(eval $(call add_test_libc,uio))
 $(eval $(call add_test_libc,termios))
 $(eval $(call add_test_libc,proc))
 $(eval $(call add_test_libc,fileops))
+$(eval $(call add_test_libc,inet))
+$(eval $(call add_test_libc,libgen))
+
+# crypt() is provided by libphoenix on Phoenix targets, but on host-generic-pc it
+# comes from the system's libcrypt and must be linked explicitly.
+CRYPT_LDFLAGS :=
+ifeq ($(TARGET_FAMILY),host)
+CRYPT_LDFLAGS := -lcrypt
+endif
+$(eval $(call add_test_libc,crypt,$(CRYPT_LDFLAGS)))
