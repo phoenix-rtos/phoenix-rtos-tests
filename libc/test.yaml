@@ -193,3 +193,18 @@ test:
       execute: test-libc-fileops
       targets:
         include: [host-generic-pc]
+
+    - name: inet
+      execute: test-libc-inet
+      targets:
+        include: [host-generic-pc]
+
+    - name: libgen
+      execute: test-libc-libgen
+      targets:
+        include: [host-generic-pc]
+
+    - name: crypt
+      execute: test-libc-crypt
+      targets:
+        include: [host-generic-pc]
