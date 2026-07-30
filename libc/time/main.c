@@ -33,6 +33,11 @@ void runner(void)
 	RUN_TEST_GROUP(time_timer_settime);
 	RUN_TEST_GROUP(time_timer_gettime);
 	RUN_TEST_GROUP(time_timer_getoverrun);
+	RUN_TEST_GROUP(time_gettimeofday);
+	RUN_TEST_GROUP(time_gmtime_r);
+	RUN_TEST_GROUP(time_localtime_r);
+	RUN_TEST_GROUP(time_asctime_r);
+	RUN_TEST_GROUP(time_ctime_r);
 }
 
 
