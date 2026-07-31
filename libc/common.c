@@ -17,7 +17,9 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <errno.h>
 #include <fcntl.h>
+#include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 
@@ -59,4 +61,48 @@ int _read_file(const char *path, char *buf, size_t bufsz)
 
 	close(fd);
 	return ret;
+}
+
+
+int libc_createDirIfMissing(const char *path)
+{
+	struct stat buffer;
+
+	if (stat(path, &buffer) == 0) {
+		return 0;
+	}
+
+	if (errno != ENOENT) {
+		fprintf(stderr, "stat() on %s directory failed: %s\n", path, strerror(errno));
+		return -1;
+	}
+
+	if (mkdir(path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0) {
+		fprintf(stderr, "Creating %s directory by mkdir failed: %s\n", path, strerror(errno));
+		return -1;
+	}
+
+	return 0;
+}
+
+
+int libc_createFileIfMissing(const char *path, const char *data)
+{
+	struct stat buffer;
+
+	if (stat(path, &buffer) == 0) {
+		return 0;
+	}
+
+	if (errno != ENOENT) {
+		fprintf(stderr, "stat() on %s file failed: %s\n", path, strerror(errno));
+		return -1;
+	}
+
+	if (_create_file(path, data) != 0) {
+		fprintf(stderr, "Creating %s file failed: %s\n", path, strerror(errno));
+		return -1;
+	}
+
+	return 0;
 }

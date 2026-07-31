@@ -41,50 +41,6 @@ void runner(void)
 }
 
 
-/* crete directory unless it exists */
-static int libc_createDirIfMissing(const char *path)
-{
-	struct stat buffer;
-
-	if (stat(path, &buffer) != 0) {
-		if (errno == ENOENT) {
-			if (mkdir(path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0) {
-				fprintf(stderr, "Creating %s directory by mkdir failed: %s\n", path, strerror(errno));
-				return -1;
-			}
-		}
-		else {
-			fprintf(stderr, "stat() on %s directory failed: %s\n", path, strerror(errno));
-			return -1;
-		}
-	}
-
-	return 0;
-}
-
-
-/* crete file with optional data (may be NULL) unless it exists */
-static int libc_createFileIfMissing(const char *path, const char *charData)
-{
-	struct stat buffer;
-
-	if (stat(path, &buffer) != 0) {
-		if (errno == ENOENT) {
-			if (_create_file(path, charData) != 0) {
-				fprintf(stderr, "Creating %s file failed: %s\n", path, strerror(errno));
-				return -1;
-			}
-		}
-		else {
-			fprintf(stderr, "stat() on %s file failed: %s\n", path, strerror(errno));
-			return -1;
-		}
-	}
-
-	return 0;
-}
-
-
 int main(int argc, char *argv[])
 {
 	const char *var = "POSIXLY_CORRECT";

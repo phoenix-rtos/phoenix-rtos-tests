@@ -75,4 +75,12 @@ int _read_file(const char *path, char *buf, size_t bufsz);
 	} while (0)
 
 
+/* create directory unless it already exists, returns 0 on success, -1 on failure */
+int libc_createDirIfMissing(const char *path);
+
+
+/* create file with optional data (may be NULL) unless it already exists, returns 0 on success, -1 on failure */
+int libc_createFileIfMissing(const char *path, const char *data);
+
+
 #endif /* _TEST_LIBC_COMMON_H */
