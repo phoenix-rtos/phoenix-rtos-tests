@@ -1,0 +1,24 @@
+libc/misc/stat.c
+  s_71302b791c91ac::t_d5d8b4792d0bc3 495,503-504
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "cce9a7267909d7313f3e67ab30ec5f7e6979dd26",
+  "prompts": {},
+  "humans": {
+    "h_9f2d068a164dcf": {
+      "author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  },
+  "sessions": {
+    "s_71302b791c91ac": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "b4f4e282-ce83-4330-ad79-88f822291ef9",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  }
+}

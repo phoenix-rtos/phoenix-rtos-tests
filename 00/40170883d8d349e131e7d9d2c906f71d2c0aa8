@@ -1,0 +1,60 @@
+libc/socket/main.c
+  h_9f2d068a164dcf 8-12,39-40,44-46
+libc/socket/recv.c
+  s_201accb1d9ccd8::t_e498987df65c29 1-235,240,242-281
+  h_9f2d068a164dcf 236-239,241
+libc/socket/coverage.md
+  s_201accb1d9ccd8::t_ea51e15cace8db 151-272
+libc/Makefile
+  h_9f2d068a164dcf 48
+libc/test.yaml
+  s_a7ea12e74321a6::t_df9ef7772b2fe4 92,97,100,102,95,105,107,110,6,10,16,18,21,23,26,28,31,33,36,38,41,43,46,48,51,53,56,58,61,63,66,76,79,81,84,87,90
+  s_a7ea12e74321a6::t_f23f4d0ed3ed1e 101,91
+  h_9f2d068a164dcf 93,111,7-9,11-15,17,19-20,22,24-25,27,29-30,32,34-35,37,39-40,42,44-45,47,49-50,52,54-55,57,59-60,62,64-65,67-75,77-78,80,82-83,85-86
+  s_201accb1d9ccd8::t_07e0f28106d349 88-89
+libc/socket/recvmsg.c
+  s_201accb1d9ccd8::t_1ff538fb4357a1 1-31,36-360,365,367-408,412-493
+  s_201accb1d9ccd8::t_79768619ffab88 32-35
+  h_9f2d068a164dcf 361-364,366,410
+  s_201accb1d9ccd8::t_501ec6519e875b 409,411
+libc/socket/recvfrom.c
+  s_201accb1d9ccd8::t_1986488136984a 1-259,264,266-350
+  h_9f2d068a164dcf 260-263,265
+libc/socket/listen.c
+  s_201accb1d9ccd8::t_f9d887a9f6ec65 1-29,34-165,169-228,232-254,258-276
+  s_201accb1d9ccd8::t_8ad637fca34acf 30-33
+  h_9f2d068a164dcf 166-168,229-231,255-257
+libc/socket/getsockopt.c
+  s_201accb1d9ccd8::t_0ed934ab14f2ec 1-51,55-75,79-98,102-141,145-165,169-189,193-255,257-273,277-296,300-321,325-344,348-394
+  h_9f2d068a164dcf 52-54,76-78,99-101,142-144,166-168,190-192,256,274-276,297-299,322-324
+  s_201accb1d9ccd8::t_8ea5a333143fd7 345-347
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "0040170883d8d349e131e7d9d2c906f71d2c0aa8",
+  "prompts": {},
+  "humans": {
+    "h_9f2d068a164dcf": {
+      "author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  },
+  "sessions": {
+    "s_201accb1d9ccd8": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "41154c4c-1acb-48db-8c19-cf3868ae82ca",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    },
+    "s_a7ea12e74321a6": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "c7011d54-bc44-417d-ad99-6003e983fdc5",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  }
+}

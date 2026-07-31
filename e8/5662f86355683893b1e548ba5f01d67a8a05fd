@@ -1,0 +1,22 @@
+libc/dirent/readdir.c
+  h_9f2d068a164dcf 200
+libc/dirent/opendir.c
+  h_9f2d068a164dcf 87,166-167,171,177,301-302,342-345
+libc/dirent/dirent_helper_functions.h
+  h_9f2d068a164dcf 8-9,24,27-68
+libc/dirent/closedir.c
+  h_9f2d068a164dcf 50,59,68,71,76,91,106,108,111-115,118-121,123
+libc/dirent/rewinddir.c
+  h_9f2d068a164dcf 78,95
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "e85662f86355683893b1e548ba5f01d67a8a05fd",
+  "prompts": {},
+  "humans": {
+    "h_9f2d068a164dcf": {
+      "author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  }
+}

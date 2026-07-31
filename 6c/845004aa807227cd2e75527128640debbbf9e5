@@ -1,0 +1,49 @@
+libc/fileops/fileops_dir.c
+  s_7c42b9db9215ce::t_4eaaaa49cd52cf 288
+  s_7c42b9db9215ce::t_a2f25e3bd3795d 536
+  h_9f2d068a164dcf 49-50,146,148,155-156,287,289,296-297,412,414,420,535,537
+  s_7c42b9db9215ce::t_5403bd4d14305f 147
+  s_7c42b9db9215ce::t_4caa073c1fc598 413
+libc/Makefile
+  h_9f2d068a164dcf 64-65
+libc/sem/sem_named.c
+  s_7c42b9db9215ce::t_db4eccb5535daa 266,268
+libc/test.yaml
+  h_9f2d068a164dcf 4-32,39-171
+libc/sched/sched_scheduler.c
+  s_7c42b9db9215ce::t_0cb38f1ffbca1d 309,311
+  s_7c42b9db9215ce::t_ac6eac8fee8eb4 157,159
+  s_7c42b9db9215ce::t_03cd0878ec4c5b 415,417
+unity/unity_fixture.h
+  h_9f2d068a164dcf 55-68
+libc/termios/termios.c
+  s_7c42b9db9215ce::t_4d9972b132cde0 276-278
+  h_9f2d068a164dcf 48,66-68,158-159
+libc/proc/proc_fexecve.c
+  s_7c42b9db9215ce::t_c25cafdb949897 275-277
+  h_9f2d068a164dcf 29
+libc/proc/proc_basic.c
+  s_7c42b9db9215ce::t_a83f056927f757 375-377
+  h_9f2d068a164dcf 281-282
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "6c845004aa807227cd2e75527128640debbbf9e5",
+  "prompts": {},
+  "humans": {
+    "h_9f2d068a164dcf": {
+      "author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  },
+  "sessions": {
+    "s_7c42b9db9215ce": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6d708fed-5712-4bdf-9cd7-b99b6a15d208",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  }
+}

@@ -1,0 +1,14 @@
+trunner/target/host.py
+  h_9f2d068a164dcf 4-5,37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "455d56fc5fb46c79233037f2d49ab2acee4f37c7",
+  "prompts": {},
+  "humans": {
+    "h_9f2d068a164dcf": {
+      "author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  }
+}

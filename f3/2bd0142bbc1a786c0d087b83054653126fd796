@@ -1,0 +1,26 @@
+libc/socket/recvmsg.c
+  h_9f2d068a164dcf 148,330,334,376,389-390,421-422,442,446,449,452,456,460,463,469,473-474,476-477,479
+libc/socket/sendto.c
+  h_9f2d068a164dcf 63
+libc/socket/send.c
+  h_9f2d068a164dcf 141
+libc/socket/listen.c
+  h_9f2d068a164dcf 228
+libc/socket/socketpair.c
+  h_9f2d068a164dcf 292-295,297,302,310,315-316,323,325-326,328
+libc/socket/setsockopt.c
+  h_9f2d068a164dcf 258,262,289
+libc/socket/sendmsg.c
+  h_9f2d068a164dcf 55,277,458-460
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "f32bd0142bbc1a786c0d087b83054653126fd796",
+  "prompts": {},
+  "humans": {
+    "h_9f2d068a164dcf": {
+      "author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  }
+}
