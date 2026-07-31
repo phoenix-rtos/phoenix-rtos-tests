@@ -23,7 +23,7 @@
 #include <arpa/inet.h>
 #include <errno.h>
 
-#include <libgrspw.h>
+#include <libgrspw-srv.h>
 #include <unity_fixture.h>
 
 #define TEST_SPW_ID0 id_spw0
