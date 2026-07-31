@@ -31,7 +31,7 @@
 #endif
 
 #include <grlib-multi.h>
-#include <libgrspw.h>
+#include <libgrspw-srv.h>
 
 #include <unity_fixture.h>
 
