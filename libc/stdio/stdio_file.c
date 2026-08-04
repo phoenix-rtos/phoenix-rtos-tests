@@ -44,6 +44,7 @@
 #include <unity_fixture.h>
 
 
+#define STDIO_TEST_DIRNAME  "stdio_file_testdir"
 #define STDIO_TEST_FILENAME "stdio_file_test"
 #define BUF_SIZE            20
 #define BUF2_SIZE           8
@@ -670,14 +671,17 @@ TEST(stdio_fileseek, seek_fseek_feof)
 {
 	char buf[strlen(teststr) + 1];
 
-	/* fseek does not clear F_EOF flag on error */
 	filep = fopen(STDIO_TEST_FILENAME, "r");
 	TEST_ASSERT_NOT_NULL(filep);
 	{
 		TEST_ASSERT_EQUAL_INT(strlen(teststr), fread(buf, 1, sizeof(buf), filep));
 		TEST_ASSERT_EQUAL_INT(1, feof(filep));
-		TEST_ASSERT_EQUAL_INT(-1, fseek(filep, SEEK_CUR, 10));
+		/* fseek does not clear F_EOF flag on error */
+		TEST_ASSERT_EQUAL_INT(-1, fseek(filep, 0, (SEEK_SET + SEEK_CUR + SEEK_END) /* invalid whence */));
 		TEST_ASSERT_EQUAL_INT(1, feof(filep));
+		/* fseek clears F_EOF if successful */
+		TEST_ASSERT_EQUAL_INT(0, fseek(filep, 0, SEEK_SET));
+		TEST_ASSERT_EQUAL_INT(0, feof(filep));
 	}
 	assert_fclosed(&filep);
 }
@@ -695,7 +699,7 @@ TEST(stdio_fileseek, seek_fseek_ferror)
 		close(fileno(filep));
 
 		TEST_ASSERT_EQUAL_INT(0, ferror(filep));
-		TEST_ASSERT_EQUAL_INT(-1, fseek(filep, SEEK_CUR, 0));
+		TEST_ASSERT_EQUAL_INT(-1, fseek(filep, 0, SEEK_CUR));
 		TEST_ASSERT_EQUAL_INT(1, ferror(filep));
 	}
 	/* fclose(filep); */
@@ -886,6 +890,7 @@ TEST_TEAR_DOWN(stdio_fileop)
 
 	/* remove the testfile even if some test cases failed */
 	remove(STDIO_TEST_FILENAME);
+	remove(STDIO_TEST_DIRNAME);
 }
 
 
@@ -926,9 +931,9 @@ TEST(stdio_fileop, fileop_remove)
 	TEST_ASSERT_NULL(filep);
 
 	/* mkdir() a directory and remove() it */
-	TEST_ASSERT_EQUAL_INT(0, mkdir("stdio_file_testdir", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH));
-	TEST_ASSERT_EQUAL_INT(0, access("stdio_file_testdir", F_OK));
-	TEST_ASSERT_EQUAL_INT(0, remove("stdio_file_testdir"));
+	TEST_ASSERT_EQUAL_INT(0, mkdir(STDIO_TEST_DIRNAME, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH));
+	TEST_ASSERT_EQUAL_INT(0, access(STDIO_TEST_DIRNAME, F_OK));
+	TEST_ASSERT_EQUAL_INT(0, remove(STDIO_TEST_DIRNAME));
 }
 
 
@@ -974,9 +979,13 @@ TEST_GROUP_RUNNER(stdio_fileop)
 {
 	RUN_TEST_CASE(stdio_fileop, fileop_fileno);
 	RUN_TEST_CASE(stdio_fileop, fileop_feof);
+	RUN_TEST_CASE(stdio_fileop, fileop_remove);
 	RUN_TEST_CASE(stdio_fileop, fileop_ferror);
 	RUN_TEST_CASE(stdio_fileop, fileop_clearerr);
 }
+
+
+static char buf2[BUFSIZ];
 
 
 /*
@@ -1012,8 +1021,6 @@ TEST_TEAR_DOWN(stdio_bufs)
 
 TEST(stdio_bufs, setbuf_basic)
 {
-	char buf2[BUFSIZ];
-
 	/* after setbuf() read from file before and after flush */
 	setbuf(filep, buf2);
 	fputc('a', filep);
@@ -1739,7 +1746,7 @@ TEST(stdio_fflush, stdio_fflush_socket)
 
 	err = fflush(filep[0]);
 	TEST_ASSERT_EQUAL_INT(0, err);
-	TEST_ASSERT_EQUAL_INT(0, ferror(filep[1]));
+	TEST_ASSERT_EQUAL_INT(0, ferror(filep[0]));
 
 	fclose(filep[1]);
 	fclose(filep[0]);
