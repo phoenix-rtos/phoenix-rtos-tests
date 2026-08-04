@@ -45,6 +45,7 @@ TEST_GROUP(fcntl_open);
 
 TEST_SETUP(fcntl_open)
 {
+	mkdir("/tmp", 0777);
 	unlink(OPEN_TEST_FILE);
 	unlink(OPEN_TEST_FILE2);
 	unlink(OPEN_TEST_SYMLINK);
@@ -502,6 +503,11 @@ TEST(fcntl_open, open_nonblock_fifo_rdonly)
 	int ret;
 
 	ret = mkfifo(OPEN_TEST_FIFO, 0644);
+#ifdef __TARGET_AARCH64A53
+	if (ret != 0) {
+		TEST_IGNORE_MESSAGE("no posixsrv");
+	}
+#endif
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	/* O_NONBLOCK + O_RDONLY on FIFO shall return without delay */
@@ -516,6 +522,11 @@ TEST(fcntl_open, open_nonblock_fifo_wronly_enxio)
 	int ret;
 
 	ret = mkfifo(OPEN_TEST_FIFO, 0644);
+#ifdef __TARGET_AARCH64A53
+	if (ret != 0) {
+		TEST_IGNORE_MESSAGE("no posixsrv");
+	}
+#endif
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	/* O_NONBLOCK + O_WRONLY on FIFO with no reader shall fail with ENXIO */

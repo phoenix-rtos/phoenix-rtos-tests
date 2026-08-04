@@ -31,6 +31,7 @@
 #include <string.h>
 #include <errno.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 
 #include "unity_fixture.h"
 
@@ -90,6 +91,7 @@ TEST_GROUP(termios_tcdrain);
 
 TEST_SETUP(termios_tcdrain)
 {
+	mkdir("/tmp", 0777);
 	test_common.masterFd = -1;
 	test_common.slaveFd = -1;
 	test_common.fileFd = -1;

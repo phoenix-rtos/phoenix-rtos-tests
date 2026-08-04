@@ -89,6 +89,9 @@ TEST(inet_if, if_nametoindex_unknown_is_zero)
 
 TEST(inet_if, if_indextoname_unknown_fails)
 {
+#ifdef __TARGET_AARCH64A53
+	TEST_IGNORE_MESSAGE("if_indextoname sets incorrect errno");
+#endif
 	char name[IF_NAMESIZE];
 
 	/* A non-existent interface index shall fail with NULL and errno ENXIO. */

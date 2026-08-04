@@ -52,6 +52,7 @@ TEST_GROUP(poll_poll);
 
 TEST_SETUP(poll_poll)
 {
+	mkdir("/tmp", 0777);
 	unlink(POLL_TEST_FILE);
 	unlink(POLL_TEST_FIFO);
 
@@ -102,6 +103,9 @@ TEST(poll_poll, poll_regular_file_pollin_pollout)
 
 TEST(poll_poll, poll_timeout_zero_returns_immediately)
 {
+#if defined(__TARGET_ARMV7R5F) || defined(__TARGET_AARCH64A53)
+	TEST_IGNORE_MESSAGE("no posixsrv");
+#endif
 	struct pollfd pfd;
 	struct timespec t0, t1;
 	long elapsed;
@@ -130,6 +134,9 @@ TEST(poll_poll, poll_timeout_zero_returns_immediately)
 
 TEST(poll_poll, poll_timeout_expires)
 {
+#if defined(__TARGET_ARMV7R5F) || defined(__TARGET_AARCH64A53)
+	TEST_IGNORE_MESSAGE("no posixsrv");
+#endif
 	struct pollfd pfd;
 	struct timespec t0, t1;
 	long elapsed;
@@ -160,6 +167,9 @@ TEST(poll_poll, poll_timeout_expires)
 
 TEST(poll_poll, poll_returns_count_of_ready_fds)
 {
+#if defined(__TARGET_ARMV7R5F) || defined(__TARGET_AARCH64A53)
+	TEST_IGNORE_MESSAGE("no posixsrv");
+#endif
 	struct pollfd pfds[2];
 	int ret;
 
@@ -184,6 +194,9 @@ TEST(poll_poll, poll_returns_count_of_ready_fds)
 
 TEST(poll_poll, poll_pipe_readable_after_write)
 {
+#if defined(__TARGET_ARMV7R5F) || defined(__TARGET_AARCH64A53)
+	TEST_IGNORE_MESSAGE("no posixsrv");
+#endif
 	struct pollfd pfd;
 	const char data = 'x';
 	ssize_t n;
@@ -207,6 +220,9 @@ TEST(poll_poll, poll_pipe_readable_after_write)
 
 TEST(poll_poll, poll_pipe_hangup_on_writer_close)
 {
+#if defined(__TARGET_ARMV7R5F) || defined(__TARGET_AARCH64A53)
+	TEST_IGNORE_MESSAGE("no posixsrv");
+#endif
 	struct pollfd pfd;
 	int ret;
 
@@ -261,6 +277,9 @@ TEST(poll_poll, poll_invalid_fd_pollnval)
 
 TEST(poll_poll, poll_pollerr_pollhup_not_in_events)
 {
+#if defined(__TARGET_ARMV7R5F) || defined(__TARGET_AARCH64A53)
+	TEST_IGNORE_MESSAGE("no posixsrv");
+#endif
 	struct pollfd pfd;
 	int ret;
 
@@ -341,6 +360,9 @@ TEST(poll_poll, poll_nfds_zero)
 
 TEST(poll_poll, poll_return_zero_on_timeout)
 {
+#if defined(__TARGET_ARMV7R5F) || defined(__TARGET_AARCH64A53)
+	TEST_IGNORE_MESSAGE("no posixsrv");
+#endif
 	struct pollfd pfd;
 	int ret;
 
@@ -360,6 +382,9 @@ TEST(poll_poll, poll_return_zero_on_timeout)
 
 TEST(poll_poll, poll_revents_cleared_if_no_event)
 {
+#if defined(__TARGET_ARMV7R5F) || defined(__TARGET_AARCH64A53)
+	TEST_IGNORE_MESSAGE("no posixsrv");
+#endif
 	struct pollfd pfd;
 	int ret;
 
@@ -379,6 +404,9 @@ TEST(poll_poll, poll_revents_cleared_if_no_event)
 
 TEST(poll_poll, poll_pollout_pipe_writable)
 {
+#if defined(__TARGET_ARMV7R5F) || defined(__TARGET_AARCH64A53)
+	TEST_IGNORE_MESSAGE("no posixsrv");
+#endif
 	struct pollfd pfd;
 	int ret;
 
