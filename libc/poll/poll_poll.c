@@ -52,6 +52,7 @@ TEST_GROUP(poll_poll);
 
 TEST_SETUP(poll_poll)
 {
+	mkdir("/tmp", 0777);
 	unlink(POLL_TEST_FILE);
 	unlink(POLL_TEST_FIFO);
 

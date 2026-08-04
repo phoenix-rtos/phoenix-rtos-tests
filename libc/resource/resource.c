@@ -24,6 +24,7 @@
 #include <sys/resource.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <stdio.h>
 
 #include "unity_fixture.h"
 

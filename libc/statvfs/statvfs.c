@@ -38,6 +38,7 @@ TEST_GROUP(statvfs_statvfs);
 
 TEST_SETUP(statvfs_statvfs)
 {
+	mkdir("/tmp", 0777);
 	unlink(STATVFS_TEST_FILE);
 	unlink(STATVFS_SYMLINK);
 	unlink(STATVFS_LOOP_LINK_A);

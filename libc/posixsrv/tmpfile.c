@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/stat.h>
 
 #include "unity_fixture.h"
 
@@ -36,6 +37,7 @@ TEST_GROUP(tmpfile);
 
 TEST_SETUP(tmpfile)
 {
+	mkdir("/tmp", 0777);
 }
 
 

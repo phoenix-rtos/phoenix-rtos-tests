@@ -17,6 +17,7 @@
  */
 
 #include <sys/uio.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
@@ -38,6 +39,7 @@ TEST_GROUP(uio_writev);
 
 TEST_SETUP(uio_writev)
 {
+	mkdir("/tmp", 0777);
 	unlink(UIO_TEST_FILE);
 	test_common.fd = open(UIO_TEST_FILE, O_RDWR | O_CREAT | O_TRUNC, 0666);
 	TEST_ASSERT_TRUE(test_common.fd >= 0);
@@ -241,6 +243,7 @@ TEST_GROUP(uio_readv);
 
 TEST_SETUP(uio_readv)
 {
+	mkdir("/tmp", 0777);
 	unlink(UIO_TEST_FILE);
 	test_common.fd = open(UIO_TEST_FILE, O_RDWR | O_CREAT | O_TRUNC, 0666);
 	TEST_ASSERT_TRUE(test_common.fd >= 0);

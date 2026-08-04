@@ -4,6 +4,8 @@ test:
   targets:
     value:
     - armv7r5f-zynqmp-qemu
+    - armv7r5f-zynqmp-som
+    - aarch64a53-zynqmp-virt
   tests:
   - name: basics.0prelim
     load:
