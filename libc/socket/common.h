@@ -29,7 +29,7 @@
 #define TRANSFER_LOOP_CNT  50
 #define CONNECTED_LOOP_CNT 10
 #ifdef __phoenix__
-#define DATA_SIZE _PAGE_SIZE - sizeof(ssize_t)
+#define DATA_SIZE (_PAGE_SIZE / 2)
 #else
 #define DATA_SIZE 10000
 #endif
