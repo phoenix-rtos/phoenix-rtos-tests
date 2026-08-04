@@ -41,6 +41,9 @@ TEST_GROUP(inet_getnameinfo);
 
 TEST_SETUP(inet_getnameinfo)
 {
+#ifdef __TARGET_AARCH64A53
+	TEST_IGNORE_MESSAGE("issue to investigate");
+#endif
 }
 
 

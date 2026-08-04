@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include "unity_fixture.h"
@@ -36,6 +37,12 @@ TEST_GROUP(pwd_getpwent);
 TEST_SETUP(pwd_getpwent)
 {
 	endpwent();
+	if (mkdir("/etc", 0775) == 0) {
+		FILE *filep = fopen("/etc/passwd", "w");
+		const char passwd[] = "root:0B1ANiYi45IhxkfmUW155/GBd4IRE=:0:0:root:/:/bin/sh\n";
+		fwrite(passwd, sizeof(char), sizeof(passwd), filep);
+		fclose(filep);
+	}
 }
 
 TEST_TEAR_DOWN(pwd_getpwent)

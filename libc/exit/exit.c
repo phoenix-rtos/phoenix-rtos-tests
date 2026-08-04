@@ -561,6 +561,9 @@ TEST(unistd_exit, unblock_thread_waitpid)
 
 TEST(unistd_exit, close_streams)
 {
+#ifdef __TARGET_AARCH64A53
+	TEST_IGNORE_MESSAGE("no posixsrv");
+#endif
 	/*
 	 * Open pipe, when child exits one side of pipe should be closed,
 	 * so that call to write should fail.
@@ -597,6 +600,9 @@ TEST(unistd_exit, orphaned_child)
 {
 #ifndef phoenix
 	TEST_IGNORE_MESSAGE("Lack of init system in docker container");
+#endif
+#ifdef __TARGET_AARCH64A53
+	TEST_IGNORE_MESSAGE("no posixsrv");
 #endif
 	/* Test if parent _exit affect child process */
 	pid_t pid;
@@ -677,6 +683,9 @@ TEST(unistd_exit, new_parent_id)
 {
 #ifndef phoenix
 	TEST_IGNORE_MESSAGE("Lack of init system in docker container");
+#endif
+#ifdef __TARGET_AARCH64A53
+	TEST_IGNORE_MESSAGE("no posixsrv");
 #endif
 	/* Test that child acquire new parent ID */
 	pid_t pid;
@@ -806,6 +815,9 @@ TEST(unistd_exit, SIGCHLD_sent)
 
 TEST(unistd_exit, per_thread_data_destructors)
 {
+#ifdef __TARGET_AARCH64A53
+	TEST_IGNORE_MESSAGE("no posixsrv");
+#endif
 	/* Test that per thread data destructors are not invoked */
 	pid_t pid;
 	int ret;

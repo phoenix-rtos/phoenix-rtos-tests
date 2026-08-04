@@ -1865,6 +1865,9 @@ TEST(stdio_fgetpos, fgetpos_espipe)
 	fpos_t pos;
 
 	/* fgetpos shall fail with ESPIPE on a pipe */
+#if defined(__TARGET_ARMV7R5F) || defined(__TARGET_AARCH64A53)
+	TEST_IGNORE_MESSAGE("no posixsrv");
+#endif
 	ret = pipe(fd);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
@@ -2039,6 +2042,9 @@ TEST(stdio_fsetpos, fsetpos_espipe)
 	fpos_t pos;
 
 	/* fsetpos shall fail with ESPIPE on a pipe */
+#if defined(__TARGET_ARMV7R5F) || defined(__TARGET_AARCH64A53)
+	TEST_IGNORE_MESSAGE("no posixsrv");
+#endif
 	ret = pipe(fd);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 

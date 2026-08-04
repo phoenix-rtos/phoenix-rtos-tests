@@ -43,6 +43,7 @@ TEST_GROUP(fileops_fchown);
 
 TEST_SETUP(fileops_fchown)
 {
+	mkdir("/tmp", 0777);
 	test_common.fd = -1;
 	unlink(MISC_TEST_FILE);
 	test_common.fd = open(MISC_TEST_FILE, O_RDWR | O_CREAT | O_TRUNC, 0644);

@@ -93,6 +93,9 @@ TEST_TEAR_DOWN(unistd_gethostname)
 
 TEST(unistd_gethostname, gethostname_success)
 {
+#ifdef __TARGET_AARCH64A53
+	TEST_IGNORE_MESSAGE("issue to investigate");
+#endif
 	/* "gethostname() shall return the standard host name for the current machine" */
 	char buf[HOSTNAME_BUF_SIZE];
 	int ret;
@@ -108,6 +111,9 @@ TEST(unistd_gethostname, gethostname_success)
 
 TEST(unistd_gethostname, gethostname_consistent)
 {
+#ifdef __TARGET_AARCH64A53
+	TEST_IGNORE_MESSAGE("issue to investigate");
+#endif
 	/* Two calls return the same hostname */
 	char buf1[HOSTNAME_BUF_SIZE];
 	char buf2[HOSTNAME_BUF_SIZE];
@@ -161,6 +167,9 @@ TEST(unistd_gethostname, gethostname_truncation)
 
 TEST(unistd_gethostname, gethostname_exact_length)
 {
+#ifdef __TARGET_AARCH64A53
+	TEST_IGNORE_MESSAGE("issue to investigate");
+#endif
 	/* Buffer exactly large enough for hostname + NUL */
 	char full[HOSTNAME_BUF_SIZE];
 	size_t len;

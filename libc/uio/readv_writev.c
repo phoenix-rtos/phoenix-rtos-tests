@@ -17,6 +17,7 @@
  */
 
 #include <sys/uio.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
@@ -38,6 +39,7 @@ TEST_GROUP(uio_writev);
 
 TEST_SETUP(uio_writev)
 {
+	mkdir("/tmp", 0777);
 	unlink(UIO_TEST_FILE);
 	test_common.fd = open(UIO_TEST_FILE, O_RDWR | O_CREAT | O_TRUNC, 0666);
 	TEST_ASSERT_TRUE(test_common.fd >= 0);
@@ -230,6 +232,9 @@ TEST(uio_writev, writev_fills_areas_in_order)
 
 TEST(uio_writev, writev_pipe_atomicity)
 {
+#if defined(__TARGET_ARMV7R5F) || defined(__TARGET_AARCH64A53)
+	TEST_IGNORE_MESSAGE("no posixsrv");
+#endif
 	ssize_t ret;
 	int pipeFds[2];
 	const char data1[] = "aaa";
@@ -278,6 +283,7 @@ TEST_GROUP(uio_readv);
 
 TEST_SETUP(uio_readv)
 {
+	mkdir("/tmp", 0777);
 	unlink(UIO_TEST_FILE);
 	test_common.fd = open(UIO_TEST_FILE, O_RDWR | O_CREAT | O_TRUNC, 0666);
 	TEST_ASSERT_TRUE(test_common.fd >= 0);
@@ -509,6 +515,9 @@ TEST(uio_readv, readv_zero_len_iov)
 
 TEST(uio_readv, readv_pipe)
 {
+#if defined(__TARGET_ARMV7R5F) || defined(__TARGET_AARCH64A53)
+	TEST_IGNORE_MESSAGE("no posixsrv");
+#endif
 	ssize_t ret;
 	int pipeFds[2];
 	const char data[] = "pipedata";

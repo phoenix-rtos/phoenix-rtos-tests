@@ -83,6 +83,9 @@ TEST(proc_fork, fork_returns_child_pid_to_parent)
 
 TEST(proc_fork, fork_child_has_unique_pid)
 {
+#ifdef __TARGET_AARCH64A53
+	TEST_IGNORE_MESSAGE("no posixsv");
+#endif
 	pid_t parentPid;
 	pid_t childPid;
 	int pipeFds[2];
@@ -124,6 +127,9 @@ TEST(proc_fork, fork_child_has_unique_pid)
 
 TEST(proc_fork, fork_child_has_different_parent_pid)
 {
+#ifdef __TARGET_AARCH64A53
+	TEST_IGNORE_MESSAGE("no posixsv");
+#endif
 	pid_t parentPid;
 	pid_t childPid;
 	int pipeFds[2];
@@ -163,6 +169,9 @@ TEST(proc_fork, fork_child_has_different_parent_pid)
 
 TEST(proc_fork, fork_child_inherits_fd)
 {
+#ifdef __TARGET_AARCH64A53
+	TEST_IGNORE_MESSAGE("no posixsv");
+#endif
 	pid_t childPid;
 	int pipeFds[2];
 	int ret;
@@ -263,6 +272,9 @@ TEST(proc_fork, fork_child_pending_signals_empty)
 
 TEST(proc_fork, fork_child_alarm_cleared)
 {
+#ifdef __TARGET_AARCH64A53
+	TEST_IGNORE_MESSAGE("no posixsv");
+#endif
 	pid_t childPid;
 	int pipeFds[2];
 	int ret;

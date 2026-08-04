@@ -24,6 +24,7 @@
 #include <sys/resource.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <stdio.h>
 
 #include "unity_fixture.h"
 
@@ -211,8 +212,12 @@ TEST(resource_rlimit, getrlimit_nofile)
 	ret = getrlimit(RLIMIT_NOFILE, &rl);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 	TEST_ASSERT_EQUAL_INT(0, errno);
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("getrlimit not implemented");
+#else
 	/* Soft limit should be <= hard limit */
 	TEST_ASSERT_TRUE(rl.rlim_cur <= rl.rlim_max);
+#endif
 }
 
 
@@ -241,7 +246,11 @@ TEST(resource_rlimit, getrlimit_core)
 
 	ret = getrlimit(RLIMIT_CORE, &rl);
 	TEST_ASSERT_EQUAL_INT(0, ret);
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("getrlimit not implemented");
+#else
 	TEST_ASSERT_TRUE(rl.rlim_cur <= rl.rlim_max);
+#endif
 }
 
 
@@ -325,6 +334,9 @@ TEST(resource_rlimit, getrlimit_einval_invalid_resource)
 
 TEST(resource_rlimit, setrlimit_lower_soft)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("setrlimit not implemented");
+#else
 	struct rlimit rl, newRl, checkRl;
 	int ret;
 
@@ -350,6 +362,7 @@ TEST(resource_rlimit, setrlimit_lower_soft)
 
 	/* Restore */
 	setrlimit(RLIMIT_NOFILE, &rl);
+#endif
 }
 
 

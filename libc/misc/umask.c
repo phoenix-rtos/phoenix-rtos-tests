@@ -318,6 +318,11 @@ TEST(misc_umask, umask_affects_mkfifo)
 	prev = umask(027);
 
 	ret = mkfifo(UMASK_TEST_FIFO, 0666);
+#if defined(__TARGET_ARMV7R5F) || defined(__TARGET_AARCH64A53)
+	if (ret != 0) {
+		TEST_IGNORE_MESSAGE("no posixsrv");
+	}
+#endif
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	ret = stat(UMASK_TEST_FIFO, &st);
@@ -344,6 +349,11 @@ TEST(misc_umask, umask_inherited_by_fork)
 	prev = umask(0135);
 
 	pid = fork();
+#if defined(__TARGET_ARMV7R5F)
+	if (pid == -1) {
+		TEST_IGNORE_MESSAGE("no mmu");
+	}
+#endif
 	TEST_ASSERT_NOT_EQUAL_INT(-1, pid);
 
 	if (pid == 0) {

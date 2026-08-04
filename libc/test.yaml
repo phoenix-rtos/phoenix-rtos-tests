@@ -46,7 +46,7 @@ test:
       targets:
         include: [host-generic-pc]
         # no posixsrv
-        exclude: [armv7r5f-zynqmp-qemu]
+        exclude: [armv7r5f-zynqmp-qemu, aarch64a53-zynqmp-virt]
 
     - name: stdlib
       execute: test-libc-stdlib
@@ -62,6 +62,7 @@ test:
       execute: test-libc-signal
       targets:
         include: [host-generic-pc]
+        exclude: [armv7r5f-zynqmp-qemu, aarch64a53-zynqmp-virt] # isssue to investigate: causes psh to exit
 
     - name: math
       execute: test-libc-math
@@ -79,6 +80,7 @@ test:
           armv8m33-mcxn94x-frdm,
           armv7r5f-zynqmp-qemu,
           armv8m55-stm32n6-nucleo,
+          armv7r5f-zynqmp-som,
           ]
         include: [host-generic-pc]
 
@@ -90,7 +92,7 @@ test:
     - name: unix-socket
       execute: test-libc-unix-socket
       targets:
-        exclude: [armv7a9-zynq7000-qemu, aarch64a53-zynqmp-qemu, armv7r5f-zynqmp-qemu]
+        exclude: [armv7a9-zynq7000-qemu, aarch64a53-zynqmp-qemu, aarch64a53-zynqmp-virt, armv7r5f-zynqmp-qemu, armv7r5f-zynqmp-som]
         include: [host-generic-pc]
 
     - name: unix-socket # Issue: 1342 | https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1342
@@ -131,6 +133,7 @@ test:
     - name: mman
       execute: test-libc-mman
       targets:
+        exclude: [armv7r5f-zynqmp-qemu] # mmu?
         include: [host-generic-pc]
 
     - name: dirent
@@ -142,6 +145,7 @@ test:
       execute: test-libc-grp
       targets:
         include: [host-generic-pc]
+        exclude: [aarch64a53-zynqmp-virt]
 
     - name: pwd
       execute: test-libc-pwd

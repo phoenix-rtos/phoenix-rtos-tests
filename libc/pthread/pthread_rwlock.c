@@ -55,7 +55,7 @@ TEST_SETUP(pthread_rwlock)
 	 * real implementation lands, init returns 0 and the tests run for real.
 	 */
 	ret = pthread_rwlock_init(&test_common.rwl, NULL);
-	if (ret == ENOSYS) {
+	if(ret == ENOSYS) {
 		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
 	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
@@ -81,6 +81,9 @@ TEST(pthread_rwlock, init_default)
 	int ret;
 
 	ret = pthread_rwlock_init(&rwl, NULL);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	pthread_rwlock_destroy(&rwl);
@@ -98,9 +101,15 @@ TEST(pthread_rwlock, destroy_initialized)
 	int ret;
 
 	ret = pthread_rwlock_init(&rwl, NULL);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	ret = pthread_rwlock_destroy(&rwl);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 #endif
 }
@@ -115,9 +124,15 @@ TEST(pthread_rwlock, rdlock_unlocked)
 	int ret;
 
 	ret = pthread_rwlock_rdlock(&test_common.rwl);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	ret = pthread_rwlock_unlock(&test_common.rwl);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 #endif
 }
@@ -132,15 +147,27 @@ TEST(pthread_rwlock, rdlock_multiple_readers)
 	int ret;
 
 	ret = pthread_rwlock_rdlock(&test_common.rwl);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	ret = pthread_rwlock_rdlock(&test_common.rwl);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	ret = pthread_rwlock_unlock(&test_common.rwl);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	ret = pthread_rwlock_unlock(&test_common.rwl);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 #endif
 }
@@ -155,9 +182,15 @@ TEST(pthread_rwlock, wrlock_unlocked)
 	int ret;
 
 	ret = pthread_rwlock_wrlock(&test_common.rwl);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	ret = pthread_rwlock_unlock(&test_common.rwl);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 #endif
 }
@@ -172,9 +205,15 @@ TEST(pthread_rwlock, tryrdlock_unlocked)
 	int ret;
 
 	ret = pthread_rwlock_tryrdlock(&test_common.rwl);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	ret = pthread_rwlock_unlock(&test_common.rwl);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 #endif
 }
@@ -189,15 +228,27 @@ TEST(pthread_rwlock, tryrdlock_while_rdlocked)
 	int ret;
 
 	ret = pthread_rwlock_rdlock(&test_common.rwl);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	ret = pthread_rwlock_tryrdlock(&test_common.rwl);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	ret = pthread_rwlock_unlock(&test_common.rwl);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	ret = pthread_rwlock_unlock(&test_common.rwl);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 #endif
 }
@@ -212,12 +263,21 @@ TEST(pthread_rwlock, tryrdlock_while_wrlocked)
 	int ret;
 
 	ret = pthread_rwlock_wrlock(&test_common.rwl);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	ret = pthread_rwlock_tryrdlock(&test_common.rwl);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(EBUSY, ret);
 
 	ret = pthread_rwlock_unlock(&test_common.rwl);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 #endif
 }
@@ -232,9 +292,15 @@ TEST(pthread_rwlock, trywrlock_unlocked)
 	int ret;
 
 	ret = pthread_rwlock_trywrlock(&test_common.rwl);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	ret = pthread_rwlock_unlock(&test_common.rwl);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 #endif
 }
@@ -249,12 +315,21 @@ TEST(pthread_rwlock, trywrlock_while_rdlocked)
 	int ret;
 
 	ret = pthread_rwlock_rdlock(&test_common.rwl);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	ret = pthread_rwlock_trywrlock(&test_common.rwl);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(EBUSY, ret);
 
 	ret = pthread_rwlock_unlock(&test_common.rwl);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 #endif
 }
@@ -269,12 +344,21 @@ TEST(pthread_rwlock, trywrlock_while_wrlocked)
 	int ret;
 
 	ret = pthread_rwlock_wrlock(&test_common.rwl);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	ret = pthread_rwlock_trywrlock(&test_common.rwl);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(EBUSY, ret);
 
 	ret = pthread_rwlock_unlock(&test_common.rwl);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 #endif
 }
@@ -289,16 +373,28 @@ TEST(pthread_rwlock, unlock_after_rdlock)
 	int ret;
 
 	ret = pthread_rwlock_rdlock(&test_common.rwl);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	ret = pthread_rwlock_unlock(&test_common.rwl);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	/* Verify unlocked by acquiring write lock */
 	ret = pthread_rwlock_trywrlock(&test_common.rwl);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	ret = pthread_rwlock_unlock(&test_common.rwl);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 #endif
 }
@@ -313,16 +409,28 @@ TEST(pthread_rwlock, unlock_after_wrlock)
 	int ret;
 
 	ret = pthread_rwlock_wrlock(&test_common.rwl);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	ret = pthread_rwlock_unlock(&test_common.rwl);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	/* Verify unlocked by acquiring read lock */
 	ret = pthread_rwlock_tryrdlock(&test_common.rwl);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	ret = pthread_rwlock_unlock(&test_common.rwl);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 #endif
 }
@@ -341,9 +449,15 @@ TEST(pthread_rwlock, timedrdlock_unlocked)
 	ts.tv_sec += 1;
 
 	ret = pthread_rwlock_timedrdlock(&test_common.rwl, &ts);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	ret = pthread_rwlock_unlock(&test_common.rwl);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 #endif
 }
@@ -359,18 +473,30 @@ TEST(pthread_rwlock, timedrdlock_while_rdlocked)
 	int ret;
 
 	ret = pthread_rwlock_rdlock(&test_common.rwl);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	clock_gettime(CLOCK_REALTIME, &ts);
 	ts.tv_sec += 1;
 
 	ret = pthread_rwlock_timedrdlock(&test_common.rwl, &ts);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	ret = pthread_rwlock_unlock(&test_common.rwl);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	ret = pthread_rwlock_unlock(&test_common.rwl);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 #endif
 }
@@ -403,6 +529,9 @@ TEST(pthread_rwlock, timedrdlock_timeout)
 	int ret;
 
 	ret = pthread_create(&thr, NULL, writerHoldThread, &test_common.rwl);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	/* Let thread acquire wrlock */
@@ -413,6 +542,9 @@ TEST(pthread_rwlock, timedrdlock_timeout)
 	ts.tv_sec -= 1;
 
 	ret = pthread_rwlock_timedrdlock(&test_common.rwl, &ts);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(ETIMEDOUT, ret);
 
 	pthread_cancel(thr);
@@ -434,9 +566,15 @@ TEST(pthread_rwlock, timedwrlock_unlocked)
 	ts.tv_sec += 1;
 
 	ret = pthread_rwlock_timedwrlock(&test_common.rwl, &ts);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	ret = pthread_rwlock_unlock(&test_common.rwl);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 #endif
 }
@@ -452,15 +590,24 @@ TEST(pthread_rwlock, timedwrlock_timeout_rdlocked)
 	int ret;
 
 	ret = pthread_rwlock_rdlock(&test_common.rwl);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	clock_gettime(CLOCK_REALTIME, &ts);
 	ts.tv_sec -= 1;
 
 	ret = pthread_rwlock_timedwrlock(&test_common.rwl, &ts);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(ETIMEDOUT, ret);
 
 	ret = pthread_rwlock_unlock(&test_common.rwl);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 #endif
 }
@@ -477,6 +624,9 @@ TEST(pthread_rwlock, timedwrlock_timeout_wrlocked)
 	int ret;
 
 	ret = pthread_create(&thr, NULL, writerHoldThread, &test_common.rwl);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	/* Let thread acquire wrlock */
@@ -486,6 +636,9 @@ TEST(pthread_rwlock, timedwrlock_timeout_wrlocked)
 	ts.tv_sec -= 1;
 
 	ret = pthread_rwlock_timedwrlock(&test_common.rwl, &ts);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(ETIMEDOUT, ret);
 
 	pthread_cancel(thr);
@@ -507,11 +660,17 @@ TEST(pthread_rwlock, timedrdlock_einval)
 	ts.tv_nsec = -1;
 
 	ret = pthread_rwlock_timedrdlock(&test_common.rwl, &ts);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(EINVAL, ret);
 
 	ts.tv_nsec = 1000000000L;
 
 	ret = pthread_rwlock_timedrdlock(&test_common.rwl, &ts);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(EINVAL, ret);
 #endif
 }
@@ -530,11 +689,17 @@ TEST(pthread_rwlock, timedwrlock_einval)
 	ts.tv_nsec = -1;
 
 	ret = pthread_rwlock_timedwrlock(&test_common.rwl, &ts);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(EINVAL, ret);
 
 	ts.tv_nsec = 1000000000L;
 
 	ret = pthread_rwlock_timedwrlock(&test_common.rwl, &ts);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(EINVAL, ret);
 #endif
 }
@@ -547,11 +712,17 @@ static void *writerThread(void *arg)
 	int ret;
 
 	ret = pthread_rwlock_wrlock(rwl);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	usleep(50000);
 
 	ret = pthread_rwlock_unlock(rwl);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	return NULL;
@@ -571,6 +742,9 @@ TEST(pthread_rwlock, timedrdlock_waits_for_writer)
 
 	/* Writer thread acquires and holds the lock briefly */
 	ret = pthread_create(&thr, NULL, writerThread, &test_common.rwl);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	/* Give writer time to acquire */
@@ -581,9 +755,15 @@ TEST(pthread_rwlock, timedrdlock_waits_for_writer)
 
 	/* This will block until the writer releases (~50ms) */
 	ret = pthread_rwlock_timedrdlock(&test_common.rwl, &ts);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	ret = pthread_rwlock_unlock(&test_common.rwl);
+	if(ret == ENOSYS) {
+		TEST_IGNORE_MESSAGE("pthread_rwlock is not implemented (ENOSYS)");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	pthread_join(thr, NULL);
