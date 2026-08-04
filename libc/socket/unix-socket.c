@@ -994,6 +994,7 @@ static void unix_poll(int type)
 	struct pollfd fds[2];
 	struct timespec ts[2];
 	int rv, ms;
+	const int datalen = sizeof(data) / 2; /* send less data not to overflow the kernel buffer */
 
 	fds[0].fd = 11111;
 	fds[1].fd = 22222;
@@ -1002,9 +1003,9 @@ static void unix_poll(int type)
 	fds[0].revents = 0;
 	fds[1].revents = 0;
 	rv = poll(fds, 2, 0);
-	TEST_ASSERT(rv == 2);
-	TEST_ASSERT(fds[0].revents == POLLNVAL);
-	TEST_ASSERT(fds[1].revents == POLLNVAL);
+	TEST_ASSERT_EQUAL(2, rv);
+	TEST_ASSERT_EQUAL(POLLNVAL, fds[0].revents);
+	TEST_ASSERT_EQUAL(POLLNVAL, fds[1].revents);
 
 	if (socketpair(AF_UNIX, type, 0, fd) < 0)
 		FAIL("socketpair");
@@ -1020,9 +1021,9 @@ static void unix_poll(int type)
 	rv = poll(fds, 2, 300);
 	clock_gettime(CLOCK_REALTIME, &ts[1]);
 	ms = MS_BETWEEN(ts[0], ts[1]);
-	TEST_ASSERT(rv == 0);
-	TEST_ASSERT(fds[0].revents == 0);
-	TEST_ASSERT(fds[1].revents == 0);
+	TEST_ASSERT_EQUAL(0, rv);
+	TEST_ASSERT_EQUAL(0, fds[0].revents);
+	TEST_ASSERT_EQUAL(0, fds[1].revents);
 	TEST_ASSERT_LESS_THAN(300 + pollTimeoutDelay, ms);
 	TEST_ASSERT_GREATER_THAN(290, ms);
 
@@ -1034,13 +1035,13 @@ static void unix_poll(int type)
 	rv = poll(fds, 2, 1000);
 	clock_gettime(CLOCK_REALTIME, &ts[1]);
 	ms = MS_BETWEEN(ts[0], ts[1]);
-	TEST_ASSERT(rv == 2);
-	TEST_ASSERT(fds[0].revents == POLLOUT);
-	TEST_ASSERT(fds[1].revents == POLLOUT);
+	TEST_ASSERT_EQUAL(2, rv);
+	TEST_ASSERT_EQUAL(POLLOUT, fds[0].revents);
+	TEST_ASSERT_EQUAL(POLLOUT, fds[1].revents);
 	TEST_ASSERT_LESS_THAN(5, ms);
 
-	send(fd[0], data, sizeof(data), 0);
-	send(fd[1], data, sizeof(data), 0);
+	TEST_ASSERT_EQUAL(datalen, send(fd[0], data, datalen, 0));
+	TEST_ASSERT_EQUAL(datalen, send(fd[1], data, datalen, 0));
 
 	clock_gettime(CLOCK_REALTIME, &ts[0]);
 	fds[0].events = POLLIN;
@@ -1050,9 +1051,9 @@ static void unix_poll(int type)
 	rv = poll(fds, 2, 1000);
 	clock_gettime(CLOCK_REALTIME, &ts[1]);
 	ms = MS_BETWEEN(ts[0], ts[1]);
-	TEST_ASSERT(rv == 2);
-	TEST_ASSERT(fds[0].revents == POLLIN);
-	TEST_ASSERT(fds[1].revents == POLLIN);
+	TEST_ASSERT_EQUAL(2, rv);
+	TEST_ASSERT_EQUAL(POLLIN, fds[0].revents);
+	TEST_ASSERT_EQUAL(POLLIN, fds[1].revents);
 	TEST_ASSERT_LESS_THAN(5, ms);
 
 	close(fd[0]);
