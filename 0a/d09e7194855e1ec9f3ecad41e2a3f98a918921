@@ -1,0 +1,14 @@
+sys/cond/cond.c
+  h_fc26ad17182140 220,223-226,283,304,327,352,374,397,419,563,599,641,684,732
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.20",
+  "base_commit_sha": "0ad09e7194855e1ec9f3ecad41e2a3f98a918921",
+  "prompts": {},
+  "humans": {
+    "h_fc26ad17182140": {
+      "author": "Lukasz Leczkowski <lukasz.leczkowski@phoenix-rtos.com>"
+    }
+  }
+}
