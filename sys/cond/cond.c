@@ -217,8 +217,12 @@ TEST_TEAR_DOWN(condvar_invalid_params)
 TEST(condvar_invalid_params, invalid_attr)
 {
 	handle_t cond;
-	struct condAttr attr = { .clock = -1 };
+	struct condAttr attr = { .clock = -1, .type = PH_COND_NORMAL };
 
+	TEST_ASSERT_EQUAL_INT(-EINVAL, condCreateWithAttr(&cond, &attr));
+
+	attr.clock = PH_CLOCK_RELATIVE;
+	attr.type = -1;
 	TEST_ASSERT_EQUAL_INT(-EINVAL, condCreateWithAttr(&cond, &attr));
 }
 
@@ -276,7 +280,7 @@ TEST(condvar_signal, relative_no_timeout)
 {
 	handle_t tid;
 	signal_thread_args_t args = { .delay = 0, .id = 0 };
-	struct condAttr attr = { .clock = PH_CLOCK_RELATIVE };
+	struct condAttr attr = { .clock = PH_CLOCK_RELATIVE, .type = PH_COND_NORMAL };
 
 	TEST_ASSERT_EQUAL_INT(0, condCreateWithAttr(&common.cond, &attr));
 
@@ -297,7 +301,7 @@ TEST(condvar_signal, monotonic_no_timeout)
 	handle_t tid;
 	time_t timeout;
 	signal_thread_args_t args = { .delay = 0, .id = 0 };
-	struct condAttr attr = { .clock = PH_CLOCK_MONOTONIC };
+	struct condAttr attr = { .clock = PH_CLOCK_MONOTONIC, .type = PH_COND_NORMAL };
 
 	TEST_ASSERT_EQUAL_INT(0, condCreateWithAttr(&common.cond, &attr));
 
@@ -320,7 +324,7 @@ TEST(condvar_signal, realtime_no_timeout)
 	handle_t tid;
 	time_t timeout, offs;
 	signal_thread_args_t args = { .delay = 0, .id = 0 };
-	struct condAttr attr = { .clock = PH_CLOCK_REALTIME };
+	struct condAttr attr = { .clock = PH_CLOCK_REALTIME, .type = PH_COND_NORMAL };
 
 	TEST_ASSERT_EQUAL_INT(0, settime(50000));
 	TEST_ASSERT_EQUAL_INT(0, condCreateWithAttr(&common.cond, &attr));
@@ -345,7 +349,7 @@ TEST(condvar_signal, monotonic_timeout)
 	handle_t tid;
 	time_t timeout;
 	signal_thread_args_t args = { .delay = 2000, .id = 0 };
-	struct condAttr attr = { .clock = PH_CLOCK_MONOTONIC };
+	struct condAttr attr = { .clock = PH_CLOCK_MONOTONIC, .type = PH_COND_NORMAL };
 
 	TEST_ASSERT_EQUAL_INT(0, condCreateWithAttr(&common.cond, &attr));
 
@@ -367,7 +371,7 @@ TEST(condvar_signal, realtime_timeout)
 	handle_t tid;
 	time_t timeout, offs;
 	signal_thread_args_t args = { .delay = 2000, .id = 0 };
-	struct condAttr attr = { .clock = PH_CLOCK_REALTIME };
+	struct condAttr attr = { .clock = PH_CLOCK_REALTIME, .type = PH_COND_NORMAL };
 
 	TEST_ASSERT_EQUAL_INT(0, settime(50000));
 	TEST_ASSERT_EQUAL_INT(0, condCreateWithAttr(&common.cond, &attr));
@@ -390,7 +394,7 @@ TEST(condvar_signal, monotonic_past_time)
 	handle_t tid;
 	time_t timeout;
 	signal_thread_args_t args = { .delay = 0, .id = 0 };
-	struct condAttr attr = { .clock = PH_CLOCK_MONOTONIC };
+	struct condAttr attr = { .clock = PH_CLOCK_MONOTONIC, .type = PH_COND_NORMAL };
 
 	TEST_ASSERT_EQUAL_INT(0, condCreateWithAttr(&common.cond, &attr));
 
@@ -412,7 +416,7 @@ TEST(condvar_signal, realtime_past_time)
 	handle_t tid;
 	time_t timeout, offs;
 	signal_thread_args_t args = { .delay = 0, .id = 0 };
-	struct condAttr attr = { .clock = PH_CLOCK_REALTIME };
+	struct condAttr attr = { .clock = PH_CLOCK_REALTIME, .type = PH_COND_NORMAL };
 
 	TEST_ASSERT_EQUAL_INT(0, settime(50000));
 	TEST_ASSERT_EQUAL_INT(0, condCreateWithAttr(&common.cond, &attr));
@@ -556,7 +560,7 @@ TEST(condvar_broadcast, relative_no_timeout)
 	handle_t tid1, tid2;
 	worker_thread_args_t args1 = { .timeout = timeout, .id = 0, .thrCount = thrCount };
 	worker_thread_args_t args2 = { .timeout = timeout, .id = 1, .thrCount = thrCount };
-	struct condAttr attr = { .clock = PH_CLOCK_RELATIVE };
+	struct condAttr attr = { .clock = PH_CLOCK_RELATIVE, .type = PH_COND_NORMAL };
 
 	TEST_ASSERT_EQUAL_INT(0, condCreateWithAttr(&common.cond, &attr));
 
@@ -592,7 +596,7 @@ TEST(condvar_broadcast, monotonic_no_timeout)
 	time_t timeout;
 	worker_thread_args_t args1 = { .id = 0, .thrCount = thrCount };
 	worker_thread_args_t args2 = { .id = 1, .thrCount = thrCount };
-	struct condAttr attr = { .clock = PH_CLOCK_MONOTONIC };
+	struct condAttr attr = { .clock = PH_CLOCK_MONOTONIC, .type = PH_COND_NORMAL };
 
 	TEST_ASSERT_EQUAL_INT(0, condCreateWithAttr(&common.cond, &attr));
 
@@ -634,7 +638,7 @@ TEST(condvar_broadcast, realtime_no_timeout)
 	time_t timeout, offs;
 	worker_thread_args_t args1 = { .id = 0, .thrCount = thrCount };
 	worker_thread_args_t args2 = { .id = 1, .thrCount = thrCount };
-	struct condAttr attr = { .clock = PH_CLOCK_REALTIME };
+	struct condAttr attr = { .clock = PH_CLOCK_REALTIME, .type = PH_COND_NORMAL };
 
 	TEST_ASSERT_EQUAL_INT(0, settime(50000));
 	TEST_ASSERT_EQUAL_INT(0, condCreateWithAttr(&common.cond, &attr));
@@ -677,7 +681,7 @@ TEST(condvar_broadcast, monotonic_timeout)
 	time_t timeout;
 	worker_thread_args_t args1 = { .id = 0, .thrCount = thrCount };
 	worker_thread_args_t args2 = { .id = 1, .thrCount = thrCount };
-	struct condAttr attr = { .clock = PH_CLOCK_MONOTONIC };
+	struct condAttr attr = { .clock = PH_CLOCK_MONOTONIC, .type = PH_COND_NORMAL };
 	struct timespec wait = { .tv_sec = 0, .tv_nsec = 2000 * 1000 }, rem;
 
 	TEST_ASSERT_EQUAL_INT(0, condCreateWithAttr(&common.cond, &attr));
@@ -725,7 +729,7 @@ TEST(condvar_broadcast, realtime_timeout)
 	time_t timeout, offs;
 	worker_thread_args_t args1 = { .id = 0, .thrCount = thrCount };
 	worker_thread_args_t args2 = { .id = 1, .thrCount = thrCount };
-	struct condAttr attr = { .clock = PH_CLOCK_REALTIME };
+	struct condAttr attr = { .clock = PH_CLOCK_REALTIME, .type = PH_COND_NORMAL };
 	struct timespec wait = { .tv_sec = 0, .tv_nsec = 2000 * 1000 }, rem;
 
 	TEST_ASSERT_EQUAL_INT(0, settime(50000));
