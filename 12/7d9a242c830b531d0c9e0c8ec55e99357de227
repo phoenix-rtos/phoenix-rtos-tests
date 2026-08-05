@@ -1,0 +1,132 @@
+libc/mman/main.c
+  s_6f621003389cc2::t_717d30506f3ae8 27
+libc/Makefile
+  s_6f621003389cc2::t_df36ec78510b39 67-75
+  s_d7512a5d946c01::t_59a0a3c061855a 66
+libc/grp/grp_ent.c
+  s_6f621003389cc2::t_4b4bf61c6c5641 1-284
+libc/string/main.c
+  s_d7512a5d946c01::t_5443d364123569 48-49
+libc/inet/inet_proto.c
+  s_6f621003389cc2::t_95ce62d9c8c1f9 1-158,160-185
+  s_6f621003389cc2::t_ecc4993035ba65 159
+libc/stdlib/main.c
+  s_d7512a5d946c01::t_7c20b6623e1779 30-32
+  s_6f621003389cc2::t_a0e3e2c8baaeeb 33
+libc/coverage_additions.md
+  s_6f621003389cc2::t_d63944f0d2b8df 1-197
+libc/stdlib/stdlib_random.c
+  s_d7512a5d946c01::t_c92f7fdc2415a9 135
+  s_d7512a5d946c01::t_3d38ac39541298 1-116,118-134,136-166
+  s_d7512a5d946c01::t_8e8d5aeceea0e1 117
+libc/stdlib/stdlib_ptsname.c
+  s_8cccc428cbf624::t_4ab7ba57163a7a 26-27,29,34-44,75,90,94-95
+  s_d7512a5d946c01::t_ea19d8ce92983a 1-25,28,30-33,45-74,81-89,91-93,96-102
+  s_8cccc428cbf624::t_a954e1f2c9c0dc 76-80
+libc/libgen/main.c
+  s_6f621003389cc2::t_5f52d0573fdb15 1-43
+libc/grp/main.c
+  s_6f621003389cc2::t_d4b0ae4de31657 10-14
+  s_6f621003389cc2::t_4539f60f1691fb 34-36
+libc/inet/main.c
+  s_d7512a5d946c01::t_6577a015415ad9 1-33,37-43
+  s_6f621003389cc2::t_5e73e642033825 34-36
+libc/fileops/fileops_mknod.c
+  s_6f621003389cc2::t_7d698c0f8e9e70 1-90,92-139,141-215
+  h_9f2d068a164dcf 91,140
+libc/inet/inet_names.c
+  s_d7512a5d946c01::t_5671db0da963d6 1-20,22-151
+  s_8cccc428cbf624::t_476c246d7edaa0 21
+libc/time/time_reentrant.c
+  s_6f621003389cc2::t_72882d3a182370 1-204,206-250,252-284
+  h_9f2d068a164dcf 205,251
+libc/inet/inet_getaddrinfo.c
+  s_6f621003389cc2::t_d2c36fac258360 238-249
+  s_6f621003389cc2::t_8c7624ace75376 34-36
+  s_87e946baa94e54::t_34b92e7808daa4 215
+  s_87e946baa94e54::t_b5ddbbcb2f2396 214,216,223
+  s_6f621003389cc2::t_07b31faeda9377 1-33,37-71,73-94,96-213,217-222,224-237,250-315,317-319
+  s_6f621003389cc2::t_7f1caf9673fe09 316
+  s_6f621003389cc2::t_73f62e20d44251 72
+  s_87e946baa94e54::t_e52b5e07eab2b3 95
+libc/crypt/crypt.c
+  s_6f621003389cc2::t_da32d458a231c2 1-136
+libc/string/string_casecmp.c
+  s_d7512a5d946c01::t_508bf0c8dd5371 1-109
+libc/crypt/main.c
+  s_6f621003389cc2::t_dedeb443d6df71 1-42
+libc/string/string_ffs.c
+  s_d7512a5d946c01::t_18b12d50ad3182 1-84
+libc/libgen/libgen.c
+  s_6f621003389cc2::t_0afc72e3b6040b 1-191
+libc/coverage.md
+  s_d7512a5d946c01::t_30caa18638fb52 129-286
+libc/fileops/main.c
+  s_6f621003389cc2::t_ce0e33d10b4bd2 22
+  s_6f621003389cc2::t_83014826b44e4c 52
+libc/mman/mman_mprotect.c
+  h_9f2d068a164dcf 164
+  s_6f621003389cc2::t_06bef6aa628bf5 1-163,165-235
+libc/time/main.c
+  s_6f621003389cc2::t_a60f3a313df866 36-40
+libc/time/gettimeofday.c
+  s_6f621003389cc2::t_70822ae0841f38 1-102
+libc/inet/inet_conv.c
+  s_d7512a5d946c01::t_cc67678b1e76c7 1-329
+libc/inet/inet_getnameinfo.c
+  s_87e946baa94e54::t_326cacc8467525 116,134
+  s_87e946baa94e54::t_9da1ffa5f30f9b 115,117,126
+  s_6f621003389cc2::t_dccabd7ab42e80 1-114,118-125,127-132,136-143,145-170
+  s_87e946baa94e54::t_94628493f37795 133,135,144
+libc/test.yaml
+  s_d7512a5d946c01::t_fb541f4e9c2cd8 196-200
+  s_87e946baa94e54::t_ed161cae198a99 202-205,207-210
+  s_6f621003389cc2::t_dabaa7c03ce611 201,206
+libc/stdlib/stdlib_unlockpt.c
+  s_6f621003389cc2::t_aefa3d3490d831 1-118
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "127d9a242c830b531d0c9e0c8ec55e99357de227",
+  "prompts": {},
+  "humans": {
+    "h_9f2d068a164dcf": {
+      "author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  },
+  "sessions": {
+    "s_6f621003389cc2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3900439c-6bef-4170-9050-527101eba4ea",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    },
+    "s_87e946baa94e54": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5eb25887-bed8-4f70-af9f-d972155d0df2",
+        "model": "claude-opus-5"
+      },
+      "human_author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    },
+    "s_8cccc428cbf624": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "da1fea67-46ac-4463-b8a1-4949df003924",
+        "model": "claude-opus-5"
+      },
+      "human_author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    },
+    "s_d7512a5d946c01": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6b193026-a936-4be1-b9c0-69e7c0561cf0",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  }
+}
