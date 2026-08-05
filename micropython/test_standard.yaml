@@ -1469,7 +1469,6 @@ test:
       execute: test_micropython extmod/vfs_fat_more.py
     - name: extmod.vfs_fat_mtime
       execute: test_micropython extmod/vfs_fat_mtime.py
-      ignore: True # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1390
     - name: extmod.vfs_fat_oldproto
       execute: test_micropython extmod/vfs_fat_oldproto.py
     - name: extmod.vfs_fat_ramdisklarge
@@ -1488,7 +1487,6 @@ test:
       execute: test_micropython extmod/vfs_lfs_mount.py
     - name: extmod.vfs_lfs_mtime
       execute: test_micropython extmod/vfs_lfs_mtime.py
-      ignore: True # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1390
     - name: extmod.vfs_lfs
       execute: test_micropython extmod/vfs_lfs.py
     - name: extmod.vfs_lfs_superblock
