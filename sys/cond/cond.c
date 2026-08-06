@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 #include <sys/threads.h>
 #include <sys/time.h>
 
@@ -264,6 +265,61 @@ TEST(condvar_signal, default_no_timeout)
 	TEST_ASSERT_EQUAL_INT(0, beginthreadex(signal_thread, 4, common.stack[0], sizeof(common.stack[0]), &args, &tid));
 
 	TEST_ASSERT_EQUAL_INT(0, condWait(common.cond, common.mutex, SIGNAL_TEST_TIMEOUT));
+	TEST_ASSERT_EQUAL_INT(1, common.counter);
+	TEST_ASSERT_EQUAL_INT(0, mutexUnlock(common.mutex));
+
+	TEST_ASSERT_EQUAL_INT(tid, threadJoin(tid, 0));
+	TEST_ASSERT_EQUAL_INT(0, common.thrErrors[0]);
+}
+
+
+/* used in sticky_wait_release only */
+static void lockSleepThread(void *arg)
+{
+	if (mutexLock(common.mutex) < 0) {
+		common.thrErrors[0]++;
+		endthread();
+	}
+
+	usleep(10000);
+	common.counter++;
+
+	if (mutexUnlock(common.mutex) < 0) {
+		common.thrErrors[0]++;
+	}
+	endthread();
+}
+
+
+/* ensure that condWait releases lock even if it does not enter wait queue (sticky cond) */
+TEST(condvar_signal, sticky_wait_release)
+{
+	handle_t tid;
+	TEST_ASSERT_EQUAL_INT(0, condCreate(&common.cond));
+
+	TEST_ASSERT_EQUAL_INT(0, mutexLock(common.mutex));
+
+	/* start lockSleepThread with lower priority than self (higher prio value) */
+	int selfPrio = priority(-1);
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, selfPrio);
+	TEST_ASSERT_LESS_THAN_INT(7, selfPrio);
+	TEST_ASSERT_EQUAL_INT(0, beginthreadex(lockSleepThread, selfPrio + 1, common.stack[0], sizeof(common.stack[0]), NULL, &tid));
+
+	usleep(100000); /* make sure lockSleepThread had time to enter queue in mutexLock */
+
+	TEST_ASSERT_EQUAL_INT(0, condSignal(common.cond));
+	TEST_ASSERT_EQUAL_INT(0, common.counter);
+
+	/*
+	 * `condWait` is expected to do following:
+	 * - unlock mutex (pass ownership to queued lockSleepThread)
+	 * - consume sticky cond (without waiting)
+	 * - lock mutex (wait for lockSleepThread to unlock)
+	 *
+	 * Using smallest timeout - sticky wakeup will never timeout
+	 */
+	TEST_ASSERT_EQUAL_INT(0, condWait(common.cond, common.mutex, 1));
+
 	TEST_ASSERT_EQUAL_INT(1, common.counter);
 	TEST_ASSERT_EQUAL_INT(0, mutexUnlock(common.mutex));
 
@@ -782,6 +838,7 @@ TEST_GROUP_RUNNER(condvar_signal)
 {
 	RUN_TEST_CASE(condvar_signal, default_no_timeout);
 	RUN_TEST_CASE(condvar_signal, relative_no_timeout);
+	RUN_TEST_CASE(condvar_signal, sticky_wait_release);
 	RUN_TEST_CASE(condvar_signal, monotonic_no_timeout);
 	RUN_TEST_CASE(condvar_signal, realtime_no_timeout);
 	RUN_TEST_CASE(condvar_signal, monotonic_timeout);
