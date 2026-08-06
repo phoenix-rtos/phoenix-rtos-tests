@@ -1,0 +1,193 @@
+# This file should contain all necessary functions for interactions between our target/board and DejaGNU.
+
+# Execute a "program" with pargs on the board.
+proc qemu_exec { boardname program pargs args } {
+   set tmp_sim [board_info $boardname sim]
+
+   set timeout 300
+
+   # Execute the system on qemu.
+   set id [spawn $tmp_sim]
+
+   if { $id == 0 } {
+      return [list -1 "qemu_exec: spawn error"]
+   }
+
+   # Collect the initial output not related with tests from the system.
+   set begining_output ""
+   expect {
+      "(psh)%" {
+         set begining_output $expect_out(buffer)
+      }
+      timeout {
+         exec kill $id
+         close
+         wait
+         return [list -1 "qemu_exec: timeout"]
+      }
+   }
+
+   # Execute the command on the system.
+   set command "/usr/bin/$program $pargs"
+   send -- "$command\r"
+
+   # Collect the program output.
+   set program_output ""
+   expect {
+      "(psh)%" {
+         set program_output $expect_out(buffer)
+      }
+      timeout {
+         exec kill $id
+         close
+         wait
+         return [list -1 "qemu_exec: timeout"]
+      }
+   }
+
+   set tmp_output $program_output
+
+   # Check the program status to determine if the test passed.
+
+   send -- "echo $?\r"
+   expect {
+      "(psh)%" {
+         set echo_output "$expect_out(buffer)"
+      }
+   }
+   
+   set status 0
+   regexp -- {[0-9]+} $echo_output status
+
+
+   set output ""
+   regsub -all {\r+\x1B\[0J\(psh\)%} "$program_output" "" program_output
+   regsub -- "***=$command\r" $program_output "" program_output
+   regsub -- "***=$command\r" $program_output "" output
+
+   verbose "output is $output"
+   verbose "status $status"
+
+   # The spawned program will work very long that's why we have to kill it.
+   # Moreover, expect function implicitly calls close after meeting EOF. To kill
+   # ptmx (using by spawn) we have to explicitly do the close function.
+   exec kill $id
+   close
+   wait
+
+   return [list $status "$output"]
+}
+
+# Spawn the program on qemu
+proc qemu_spawn { dest commandline args } {
+   set tmp_sim [board_info $dest sim]
+   set timeout 300
+
+   # Execute the system on qemu.
+   set id [spawn $tmp_sim]
+
+   if { $id == 0 } {
+      return [list -1 "qemu_spawn: spawn error"]
+   }
+
+   # Collect the initial output not related with tests from the system.
+   set begining_output ""
+   expect {
+      "(psh)%" {
+         set begining_output $expect_out(buffer)
+      }
+      timeout {
+         exec kill $id
+         close
+         wait
+         return [list -1 "qemu_spawn: timeout"]
+      }
+   }
+
+   send -- "$commandline\r"
+   set program_output ""
+
+   global board_info
+   set board_info($dest,fileid) $spawn_id
+   return $spawn_id
+}
+
+# Here the name of this function is tricky. This function sends
+# files to the target.
+proc upload_qemu { dest file destfile } {
+   global phoenix_rtos_system_files
+
+   if { $destfile == [file tail $destfile] } {
+      verbose "File download to root for phoenix-rots" 2
+      set destfile "$phoenix_rtos_system_files/_fs/$dest/root/$destfile"
+   }
+
+   set status [catch "exec cp $file $destfile" output]
+
+   if { $status != 0 } {
+      verbose "upload_qemu failed: $output" 2
+      return ""
+   }
+
+   return $destfile
+}
+
+
+# Send a object files to the target and execute them with pargs (program arguments).
+proc qemu_load { dest prog args } {
+   global phoenix_rtos_system_files
+   set name_without [file tail [file rootname $prog]]
+
+   #
+   # Send the binary to system.
+   #
+   upload_qemu $dest $prog "$phoenix_rtos_system_files/_fs/$dest/root/usr/bin/$name_without"
+
+   # Change a current dir to the system dir.
+   set old_path [pwd]
+   set result [catch {cd $phoenix_rtos_system_files}]
+
+   # Rebuild the image of the system in order to include the sent file.
+   set result [catch {exec phoenix-rtos-build/build.sh image} x] 
+   verbose "Bilding image result $result" 3
+   verbose "$x" 3
+
+   # Return to the old path.
+   set result [catch {cd $old_path}]
+
+   if { [llength $args] > 0 } {
+      set parg [lindex $args 0]
+   } else {
+      set parg ""
+   }
+
+   #
+   # Execute the program with pargs.
+   #
+   set status [qemu_exec $dest $name_without $parg]
+
+   set output [lindex $status 1]
+	set status [lindex $status 0]
+
+   verbose "Executed $prog, status $status" 2
+   if { ![string match "" $output] } {
+      verbose -log -- "$output" 2
+   }
+   
+   # Tests are based on checking whether the status of program was zero or not.
+   if { $status == 0 } {
+      set result "pass"
+   } else {
+      set result "fail"
+   }
+
+   # Delete binary finy from phoenix fs
+   set status [catch "exec rm $phoenix_rtos_system_files/_fs/$dest/root/usr/bin/$name_without" x]
+
+   return [list $result $output]
+}
+
+
+# Set "protocol" - prefix before using functions to interact with the target.
+# All possible functions are written in /usr/share/dejagnu/config/README.
+set_board_info protocol  "qemu"
