@@ -210,9 +210,6 @@ TEST(socket_api_shutdown, einval_invalid_how)
 
 	errno = 0;
 	ret = shutdown(sv[0], 42);
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1634 issue");
-#endif
 	TEST_ASSERT_EQUAL_INT(-1, ret);
 	TEST_ASSERT_EQUAL_INT(EINVAL, errno);
 }
@@ -316,10 +313,11 @@ TEST(socket_api_shutdown, dgram_shutdown_rdwr)
 
 	/* Shutdown SOCK_DGRAM for both read and write */
 	ret = shutdown(sv[0], SHUT_RDWR);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+
 #ifdef __phoenix__
 	TEST_IGNORE_MESSAGE("#1634 issue");
 #endif
-	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	/* Sending on shutdown socket should fail */
 	errno = 0;
