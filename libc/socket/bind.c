@@ -189,12 +189,7 @@ TEST(socket_api_bind, bind_eaddrinuse)
 	errno = 0;
 	ret = bind(test_common.fd2, (struct sockaddr *)&addr, sizeof(addr));
 	TEST_ASSERT_EQUAL_INT(-1, ret);
-#ifdef __phoenix__
-	/* https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1667 */
-	TEST_IGNORE_MESSAGE("#1667 issue");
-#else
 	TEST_ASSERT_EQUAL_INT(EADDRINUSE, errno);
-#endif
 }
 
 
@@ -220,12 +215,7 @@ TEST(socket_api_bind, bind_eaddrinuse_symlink)
 	errno = 0;
 	ret = bind(test_common.fd, (struct sockaddr *)&addr, sizeof(addr));
 	TEST_ASSERT_EQUAL_INT(-1, ret);
-#ifdef __phoenix__
-	/* https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1667 */
-	TEST_IGNORE_MESSAGE("#1667 issue");
-#else
 	TEST_ASSERT_EQUAL_INT(EADDRINUSE, errno);
-#endif
 }
 
 
@@ -274,12 +264,7 @@ TEST(socket_api_bind, bind_enoent_missing_dir)
 	errno = 0;
 	ret = bind(test_common.fd, (struct sockaddr *)&addr, sizeof(addr));
 	TEST_ASSERT_EQUAL_INT(-1, ret);
-#ifdef __phoenix__
-	/* https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1668 */
-	TEST_IGNORE_MESSAGE("#1668 issue");
-#else
 	TEST_ASSERT_EQUAL_INT(ENOENT, errno);
-#endif
 }
 
 
