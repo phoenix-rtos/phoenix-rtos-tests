@@ -134,6 +134,9 @@ TEST(pthread_rwlockattr, setpshared_shared)
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	ret = pthread_rwlockattr_setpshared(&attr, PTHREAD_PROCESS_SHARED);
+	if (ret == ENOTSUP) {
+		TEST_IGNORE_MESSAGE("PTHREAD_PROCESS_SHARED not supported");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	ret = pthread_rwlockattr_getpshared(&attr, &pshared);
@@ -182,6 +185,9 @@ TEST(pthread_rwlockattr, setpshared_roundtrip)
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	ret = pthread_rwlockattr_setpshared(&attr, PTHREAD_PROCESS_SHARED);
+	if (ret == ENOTSUP) {
+		TEST_IGNORE_MESSAGE("PTHREAD_PROCESS_SHARED not supported");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	ret = pthread_rwlockattr_setpshared(&attr, PTHREAD_PROCESS_PRIVATE);
