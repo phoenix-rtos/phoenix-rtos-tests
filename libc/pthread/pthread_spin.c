@@ -83,6 +83,9 @@ TEST(pthread_spin, init_shared)
 	int ret;
 
 	ret = pthread_spin_init(&spin, PTHREAD_PROCESS_SHARED);
+	if (ret == ENOTSUP) {
+		TEST_IGNORE_MESSAGE("PTHREAD_PROCESS_SHARED not supported");
+	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	pthread_spin_destroy(&spin);
