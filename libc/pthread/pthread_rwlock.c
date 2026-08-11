@@ -503,6 +503,13 @@ TEST(pthread_rwlock, timedrdlock_einval)
 	struct timespec ts;
 	int ret;
 
+	/*
+	 * obtain wrlock beforehand - POSIX doesn't require the implementation to
+	 * validate the timespec if the lock can be acquired immediately
+	 */
+	ret = pthread_rwlock_wrlock(&test_common.rwl);
+	TEST_ASSERT_EQUAL_INT(EOK, ret);
+
 	ts.tv_sec = 0;
 	ts.tv_nsec = -1;
 
@@ -525,6 +532,10 @@ TEST(pthread_rwlock, timedwrlock_einval)
 #else
 	struct timespec ts;
 	int ret;
+
+	/* see note in timedrdlock_einval */
+	ret = pthread_rwlock_wrlock(&test_common.rwl);
+	TEST_ASSERT_EQUAL_INT(EOK, ret);
 
 	ts.tv_sec = 0;
 	ts.tv_nsec = -1;
