@@ -12,5 +12,6 @@ test:
                 armv7r5f-zynqmp-qemu,
                 armv8m55-stm32n6-nucleo,
                 armv7r5f-zynqmp-som,
-                aarch64a53-zynqmp-virt # no filesystem with binary to execute
+                aarch64a53-zynqmp-virt, # no filesystem with binary to execute
+                aarch64a53-zynqmp-zcu104 # no filesystem with binary to execute
                 ]
