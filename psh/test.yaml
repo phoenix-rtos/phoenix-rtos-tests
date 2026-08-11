@@ -25,7 +25,8 @@ test:
                 armv7r5f-zynqmp-som,
                 armv8m33-mcxn94x-frdm,
                 armv8m55-stm32n6-nucleo,
-                aarch64a53-zynqmp-virt
+                aarch64a53-zynqmp-virt,
+                aarch64a53-zynqmp-zcu104
                 ]
 
         - name: echo
@@ -80,6 +81,7 @@ test:
                 armv8m33-mcxn94x-frdm,
                 armv7r5f-zynqmp-som,
                 aarch64a53-zynqmp-virt,
+                aarch64a53-zynqmp-zcu104,
                 armv8m55-stm32n6-nucleo
                 ]
 
@@ -98,6 +100,7 @@ test:
                 armv8m33-mcxn94x-frdm,
                 armv7r5f-zynqmp-som,
                 aarch64a53-zynqmp-virt,
+                aarch64a53-zynqmp-zcu104,
                 armv8m55-stm32n6-nucleo
                 ]
 
@@ -109,6 +112,7 @@ test:
               exclude: [
                 aarch64a53-zynqmp-qemu,
                 aarch64a53-zynqmp-virt,
+                aarch64a53-zynqmp-zcu104,
                 armv7m7-imxrt106x-evk,
                 armv7m7-imxrt117x-evk,
                 armv7m4-stm32l4x6-nucleo,
