@@ -15,8 +15,11 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <errno.h>
 
-#define MICROPYTHON_BIN "/bin/micropython "
+#define MICROPYTHON_BIN "/bin/micropython"
 #define PATH_TO_TESTS   "/usr/test/micropython/"
 
 #define CMDLINE_PREFIX     "# cmdline: "
@@ -25,27 +28,15 @@
 /* Only in this directory there are tests for UPyth options */
 #define DIR_WITH_OPT_TESTS "cmdline"
 
+/* micropython + options + script path + NULL */
+#define MAX_UPYTH_ARGS 32
+
 static char const *PROG_NAME;
 
 
 void upyth_errMsg(const char *msg)
 {
 	fprintf(stderr, "Error: %s - %s\n", PROG_NAME, msg);
-}
-
-
-char *upyth_concat(char *str1, const char *str2)
-{
-	int len;
-	char *res;
-
-	len = strlen(str1) + strlen(str2) + 1;
-	res = realloc(str1, sizeof(char) * len);
-	if (res != NULL) {
-		strcat(res, str2);
-	}
-
-	return res;
 }
 
 
@@ -97,20 +88,94 @@ int upyth_optionsGet(const char *path, char **options)
 	/* Removing new line character for result */
 	newLine = strchr(*options, '\n');
 	if (newLine != NULL) {
-		*newLine = ' ';
+		*newLine = '\0';
 	}
 
-	/* Changing the last character to ' ' */
-	/* This ensures us that the last char is ' ' and we can safely concatenate this string with the path to the test */
-	(*options)[optionsLen - 1] = ' ';
+	/* Drop trailing spaces left after stripping the newline */
+	optionsLen = (int)strlen(*options);
+	while (optionsLen > 0 && (*options)[optionsLen - 1] == ' ') {
+		(*options)[--optionsLen] = '\0';
+	}
 
 	return EXIT_SUCCESS;
 }
 
 
+/* Build argv for execv from optional space-separated options and the script path.
+ * optionsBuf ownership stays with the caller; tokens point into it (strtok mutates it).
+ */
+static int upyth_buildArgv(char *optionsBuf, char *testfile, char **argv, int argvMax)
+{
+	int argc = 0;
+	char *tok;
+
+	if (argvMax < 3) {
+		return -1;
+	}
+
+	argv[argc++] = (char *)MICROPYTHON_BIN;
+
+	if (optionsBuf != NULL && optionsBuf[0] != '\0') {
+		tok = strtok(optionsBuf, " \t");
+		while (tok != NULL) {
+			if (argc >= argvMax - 2) {
+				upyth_errMsg("Too many micropython options");
+				return -1;
+			}
+			argv[argc++] = tok;
+			tok = strtok(NULL, " \t");
+		}
+	}
+
+	argv[argc++] = testfile;
+	argv[argc] = NULL;
+
+	return argc;
+}
+
+
+/* Run micropython via fork+execv so no /bin/sh (or busybox) is required. */
+static int upyth_run(char *optionsBuf, char *testfile)
+{
+	char *argv[MAX_UPYTH_ARGS];
+	pid_t pid;
+	int status;
+	int argc;
+
+	argc = upyth_buildArgv(optionsBuf, testfile, argv, MAX_UPYTH_ARGS);
+	if (argc < 0) {
+		return EXIT_FAILURE;
+	}
+
+	pid = fork();
+	if (pid < 0) {
+		upyth_errMsg("fork() failed while starting micropython");
+		return EXIT_FAILURE;
+	}
+
+	if (pid == 0) {
+		execv(MICROPYTHON_BIN, argv);
+		fprintf(stderr, "Error: %s - execv(%s) failed: %s\n", PROG_NAME, MICROPYTHON_BIN, strerror(errno));
+		_exit(127);
+	}
+
+	if (waitpid(pid, &status, 0) < 0) {
+		upyth_errMsg("waitpid() failed while running micropython");
+		return EXIT_FAILURE;
+	}
+
+	if (!WIFEXITED(status)) {
+		upyth_errMsg("micropython terminated abnormally");
+		return EXIT_FAILURE;
+	}
+
+	return WEXITSTATUS(status);
+}
+
+
 int main(int argc, char **argv)
 {
-	char *cmd, *options, *testfile, *tmp;
+	char *options, *testfile, *tmp;
 	int res;
 
 	PROG_NAME = argv[0];
@@ -156,47 +221,18 @@ int main(int argc, char **argv)
 
 	printf("Running test: %s%s\n", PATH_TO_TESTS, argv[1]);
 
-	cmd = strdup(MICROPYTHON_BIN);
-	if (cmd == NULL) {
-		upyth_errMsg("Strdup error");
-		return EXIT_FAILURE;
-	}
-
 	/* Some tests needs additional options to run. */
 	/* In these tests first line in file contains "# cmdline: " and after needed options. */
 	/* All of them are stored in DIR_WITH_OPT_TESTS */
 	if (upyth_optionsGet(testfile, &options) != 0) {
-		free(cmd);
 		return EXIT_FAILURE;
 	}
 
-	if (options != NULL) {
-		tmp = upyth_concat(cmd, options);
-		free(options);
-		if (tmp == NULL) {
-			free(cmd);
-			upyth_errMsg("Realloc error");
-			return EXIT_FAILURE;
-		}
-		cmd = tmp;
-	}
+	res = upyth_run(options, testfile);
+	free(options);
 
-	tmp = upyth_concat(cmd, testfile);
-	if (tmp == NULL) {
-		free(cmd);
-		upyth_errMsg("Realloc error");
-		return EXIT_FAILURE;
-	}
-	cmd = tmp;
-
-	res = system(cmd);
-	free(cmd);
-	if (res == 1) {
-		upyth_errMsg("There was an error during execution micropython test. It is possible that there is no BusyBox on system.");
-		return EXIT_FAILURE;
-	}
-	else if (res != 0) {
-		upyth_errMsg("There was an error caused by function system() (not micropython test)");
+	if (res != 0) {
+		upyth_errMsg("There was an error during execution micropython test");
 		return EXIT_FAILURE;
 	}
 
