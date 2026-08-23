@@ -91,9 +91,13 @@ int upyth_optionsGet(const char *path, char **options)
 		*newLine = '\0';
 	}
 
-	/* Drop trailing spaces left after stripping the newline */
+	/* Drop trailing whitespace left after stripping the newline (incl. CR/tab) */
 	optionsLen = (int)strlen(*options);
-	while (optionsLen > 0 && (*options)[optionsLen - 1] == ' ') {
+	while (optionsLen > 0) {
+		char c = (*options)[optionsLen - 1];
+		if (c != ' ' && c != '\t' && c != '\r') {
+			break;
+		}
 		(*options)[--optionsLen] = '\0';
 	}
 
@@ -159,13 +163,21 @@ static int upyth_run(char *optionsBuf, char *testfile)
 		_exit(127);
 	}
 
-	if (waitpid(pid, &status, 0) < 0) {
-		upyth_errMsg("waitpid() failed while running micropython");
-		return EXIT_FAILURE;
+	while (waitpid(pid, &status, 0) < 0) {
+		if (errno != EINTR) {
+			upyth_errMsg("waitpid() failed while running micropython");
+			return EXIT_FAILURE;
+		}
 	}
 
 	if (!WIFEXITED(status)) {
-		upyth_errMsg("micropython terminated abnormally");
+		if (WIFSIGNALED(status)) {
+			char msg[64];
+			snprintf(msg, sizeof(msg), "micropython terminated by signal %d", WTERMSIG(status));
+			upyth_errMsg(msg);
+		} else {
+			upyth_errMsg("micropython terminated abnormally");
+		}
 		return EXIT_FAILURE;
 	}
 
