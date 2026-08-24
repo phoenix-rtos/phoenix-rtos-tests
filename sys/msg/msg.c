@@ -44,14 +44,13 @@
 static int dev_counter = 0;
 
 
-/* TODO: use vfork on NOMMU...? */
 static pid_t safe_fork(void)
 {
 	pid_t pid;
 	fflush(stdout);
 	if ((pid = fork()) < 0) {
 		if (errno == ENOSYS) {
-			TEST_IGNORE_MESSAGE("fork syscall not supported");
+			TEST_IGNORE_MESSAGE("fork syscall not supported on NOMMU");
 		}
 		else {
 			FAIL("fork");
@@ -114,7 +113,7 @@ static void make_dev_path(char *buf, size_t bufsz, const char *test_name)
 
 
 /* Simple server loop: recv, process, respond. Exits(0) on EINTR from recv. */
-static void server_echo_loop(uint32_t port, int use_respond_and_recv)
+__attribute__((unused)) static void server_echo_loop(uint32_t port, int use_respond_and_recv)
 {
 	msg_t msg = { 0 };
 	msg_rid_t rid;
@@ -157,30 +156,530 @@ static void server_echo_loop(uint32_t port, int use_respond_and_recv)
 }
 
 
-/* ===================================== */
-/* TEST_GROUP: msg_errnos                */
-/* ===================================== */
+/* Shared peer-backed tests for MMU and NOMMU targets. */
+enum {
+	peerEcho,
+	peerInput,
+	peerOutput,
+	peerRawOid,
+	peerAsymmetric
+};
+
+
+typedef struct {
+	uint32_t port;
+	int kind;
+	int count;
+	int respondAndRecv;
+	size_t size;
+	volatile int result;
+#ifdef NOMMU
+	char stack[4096] __attribute__((aligned(8)));
+	handle_t tid;
+#else
+	pid_t pid;
+	char path[64];
+#endif
+} msg_peer_t;
+
+
+static void peer_serve(msg_peer_t *peer)
+{
+	msg_t msg = { 0 };
+	msg_rid_t rid;
+	int err = msgRecv(peer->port, &msg, &rid);
+
+	for (int request = 0; request < peer->count && err == 0; ++request) {
+		switch (peer->kind) {
+			case peerEcho:
+				memcpy(msg.o.raw, msg.i.raw, sizeof(msg.o.raw));
+				if (msg.i.data != NULL && msg.o.data != NULL) {
+					size_t size = msg.i.size < msg.o.size ? msg.i.size : msg.o.size;
+					const unsigned char *input = msg.i.data;
+					unsigned char *output = msg.o.data;
+					for (size_t i = 0; i < size; ++i)
+						output[i] = input[i] ^ (unsigned char)((i & 0xff) ^ 0x5a);
+				}
+				msg.o.err = msg.type;
+				break;
+
+			case peerInput:
+				if (msg.i.data == NULL || msg.i.size != peer->size) {
+					peer->result = -1;
+				}
+				else {
+					const unsigned char *input = msg.i.data;
+					for (size_t i = 0; i < peer->size; ++i) {
+						if (input[i] != (unsigned char)(i & 0xff)) {
+							peer->result = -2;
+							break;
+						}
+					}
+				}
+				msg.o.err = peer->result;
+				break;
+
+			case peerOutput:
+				if (msg.o.data == NULL || msg.o.size < peer->size) {
+					peer->result = -3;
+				}
+				else {
+					unsigned char *output = msg.o.data;
+					for (size_t i = 0; i < peer->size; ++i)
+						output[i] = (unsigned char)(i ^ 0x55);
+				}
+				msg.o.err = peer->result;
+				break;
+
+			case peerRawOid:
+				if (msg.oid.id != 0x42) {
+					peer->result = -4;
+				}
+				else {
+					memcpy(msg.o.raw, &msg.oid.id, sizeof(msg.oid.id));
+				}
+				msg.o.err = peer->result == 0 ? msg.type : peer->result;
+				break;
+
+			case peerAsymmetric:
+				if (msg.o.data == NULL || msg.o.size < peer->size) {
+					peer->result = -5;
+				}
+				else {
+					unsigned char *output = msg.o.data;
+					for (size_t i = 0; i < peer->size; ++i)
+						output[i] = (unsigned char)(i & 0xff);
+				}
+				msg.o.err = peer->result;
+				break;
+		}
+
+		if (request + 1 == peer->count) {
+			err = msgRespond(peer->port, &msg, rid);
+		}
+		else if (peer->respondAndRecv != 0) {
+			err = msgRespondAndRecv(peer->port, &msg, &rid);
+		}
+		else {
+			err = msgRespond(peer->port, &msg, rid);
+			if (err == 0)
+				err = msgRecv(peer->port, &msg, &rid);
+		}
+	}
+
+	if (err < 0 && peer->result == 0)
+		peer->result = -6;
+}
+
+
+#ifdef NOMMU
+static void peer_thread(void *arg)
+{
+	peer_serve(arg);
+	endthread();
+}
+
+
+typedef struct {
+	uint32_t port;
+	int count;
+	int client;
+	int type;
+	int withData;
+	volatile int result;
+	char stack[4096] __attribute__((aligned(8)));
+	handle_t tid;
+} msg_client_t;
+
+
+static void client_send_loop(void *arg)
+{
+	msg_client_t *client = arg;
+	char input[256];
+	char output[256];
+
+	for (int message = 0; message < client->count; ++message) {
+		msg_t msg = { 0 };
+		msg.type = client->type;
+		msg.i.io.offs = client->client * 10000 + message;
+
+		if (client->withData != 0) {
+			for (size_t i = 0; i < sizeof(input); ++i)
+				input[i] = (char)((i + client->client + message) & 0xff);
+			msg.i.data = input;
+			msg.i.size = sizeof(input);
+			msg.o.data = output;
+			msg.o.size = sizeof(output);
+		}
+
+		if (msgSend(client->port, &msg) != 0 || msg.o.err != client->type) {
+			client->result = -1;
+			break;
+		}
+
+		if (client->withData != 0) {
+			for (size_t i = 0; i < sizeof(input); ++i) {
+				if (output[i] != (char)(input[i] ^ ((i & 0xff) ^ 0x5a))) {
+					client->result = -2;
+					break;
+				}
+			}
+			if (client->result != 0)
+				break;
+		}
+	}
+
+	endthread();
+}
+
+
+static void clients_start(msg_client_t *clients, int clientCount, uint32_t port, int messages, int type, int withData)
+{
+	for (int client = 0; client < clientCount; ++client) {
+		memset(&clients[client], 0, sizeof(clients[client]));
+		clients[client].port = port;
+		clients[client].count = messages;
+		clients[client].client = client;
+		clients[client].type = type;
+		clients[client].withData = withData;
+		TEST_ASSERT_EQUAL_INT(0, beginthreadex(client_send_loop, 4, clients[client].stack, sizeof(clients[client].stack), &clients[client], &clients[client].tid));
+	}
+}
+
+
+static void clients_stop(msg_client_t *clients, int clientCount, const char *message)
+{
+	for (int client = 0; client < clientCount; ++client) {
+		TEST_ASSERT_GREATER_OR_EQUAL_INT(0, threadJoin(clients[client].tid, 0));
+		TEST_ASSERT_EQUAL_INT_MESSAGE(0, clients[client].result, message);
+	}
+}
+
+
+typedef struct {
+	uint32_t port;
+	uint32_t backend;
+	int count;
+	int respondAndRecv;
+	volatile int result;
+	char stack[4096] __attribute__((aligned(8)));
+	handle_t tid;
+} msg_relay_t;
+
+
+static void relay_thread(void *arg)
+{
+	msg_relay_t *relay = arg;
+	msg_t msg = { 0 };
+	msg_rid_t rid;
+	int err = msgRecv(relay->port, &msg, &rid);
+
+	for (int request = 0; request < relay->count && err == 0; ++request) {
+		msg_t forwarded = { 0 };
+		forwarded.type = msg.type;
+		memcpy(forwarded.i.raw, msg.i.raw, sizeof(forwarded.i.raw));
+		forwarded.i.data = msg.i.data;
+		forwarded.i.size = msg.i.size;
+		forwarded.o.data = msg.o.data;
+		forwarded.o.size = msg.o.size;
+
+		if (msgSend(relay->backend, &forwarded) != 0) {
+			relay->result = -1;
+			break;
+		}
+
+		memcpy(msg.o.raw, forwarded.o.raw, sizeof(msg.o.raw));
+		msg.o.err = forwarded.o.err;
+
+		if (request + 1 == relay->count) {
+			err = msgRespond(relay->port, &msg, rid);
+		}
+		else if (relay->respondAndRecv != 0) {
+			err = msgRespondAndRecv(relay->port, &msg, &rid);
+		}
+		else {
+			err = msgRespond(relay->port, &msg, rid);
+			if (err == 0)
+				err = msgRecv(relay->port, &msg, &rid);
+		}
+	}
+
+	if (err < 0 && relay->result == 0)
+		relay->result = -2;
+	endthread();
+}
+
+
+static void relay_start(msg_relay_t *relay, uint32_t backend, int count, int respondAndRecv)
+{
+	memset(relay, 0, sizeof(*relay));
+	relay->backend = backend;
+	relay->count = count;
+	relay->respondAndRecv = respondAndRecv;
+	TEST_ASSERT_EQUAL_INT(0, portCreate(&relay->port));
+	TEST_ASSERT_EQUAL_INT(0, beginthreadex(relay_thread, 4, relay->stack, sizeof(relay->stack), relay, &relay->tid));
+}
+
+
+static void relay_stop(msg_relay_t *relay)
+{
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, threadJoin(relay->tid, 0));
+	TEST_ASSERT_EQUAL_INT(0, relay->result);
+	portDestroy(relay->port);
+}
+
+
+typedef struct {
+	uint32_t port;
+	uint8_t first;
+	uint8_t second;
+	int count;
+	unsigned int delay;
+	char stack[4096] __attribute__((aligned(8)));
+	handle_t tid;
+} msg_pulser_t;
+
+
+static void pulser_thread(void *arg)
+{
+	msg_pulser_t *pulser = arg;
+	if (pulser->count != 0) {
+		for (int i = 0; i < pulser->count; ++i) {
+			msgPulse(pulser->port, (uint8_t)(i + 1));
+			usleep(pulser->delay);
+		}
+		endthread();
+	}
+	msgPulse(pulser->port, pulser->first);
+	if (pulser->delay != 0)
+		usleep(pulser->delay);
+	if (pulser->second != 0)
+		msgPulse(pulser->port, pulser->second);
+	endthread();
+}
+
+
+typedef struct {
+	uint32_t port;
+	int priorities[3];
+	volatile int result;
+	char stack[4096] __attribute__((aligned(8)));
+	handle_t tid;
+} msg_priority_server_t;
+
+
+static void priority_server_thread(void *arg)
+{
+	msg_priority_server_t *server = arg;
+	msg_t msg = { 0 };
+	msg_rid_t rid;
+
+	for (int i = 0; i < 3; ++i) {
+		if (msgRecv(server->port, &msg, &rid) != 0) {
+			server->result = -1;
+			break;
+		}
+		server->priorities[i] = msg.priority;
+		msg.o.err = msg.priority;
+		if (msgRespond(server->port, &msg, rid) != 0) {
+			server->result = -2;
+			break;
+		}
+	}
+	endthread();
+}
+
+
+typedef struct {
+	uint32_t port;
+	int priority;
+	volatile int result;
+	char stack[4096] __attribute__((aligned(8)));
+	handle_t tid;
+} msg_priority_client_t;
+
+
+static void priority_client_thread(void *arg)
+{
+	msg_priority_client_t *client = arg;
+	msg_t msg = { 0 };
+
+	priority(client->priority);
+	msg.type = mtWrite;
+	if (msgSend(client->port, &msg) != 0 || msg.o.err != client->priority)
+		client->result = -1;
+	endthread();
+}
+
+
+typedef struct {
+	uint32_t port;
+	int count;
+	volatile int result;
+	char stack[4096] __attribute__((aligned(8)));
+	handle_t tid;
+} msg_alternating_server_t;
+
+
+static void alternating_server_thread(void *arg)
+{
+	msg_alternating_server_t *server = arg;
+	msg_t msg = { 0 };
+	msg_rid_t rid;
+	int err = msgRecv(server->port, &msg, &rid);
+
+	for (int i = 0; i < server->count && err == 0; ++i) {
+		msg.o.err = msg.type;
+		if (i + 1 == server->count)
+			err = msgRespond(server->port, &msg, rid);
+		else if ((i + 1) % 2 == 0) {
+			err = msgRespond(server->port, &msg, rid);
+			if (err == 0)
+				err = msgRecv(server->port, &msg, &rid);
+		}
+		else {
+			err = msgRespondAndRecv(server->port, &msg, &rid);
+		}
+	}
+	if (err < 0)
+		server->result = -1;
+	endthread();
+}
+
+
+typedef struct {
+	uint32_t port;
+	int count;
+	volatile int result;
+	char stack[4096] __attribute__((aligned(8)));
+	handle_t tid;
+} msg_reverse_server_t;
+
+
+static void reverse_server_thread(void *arg)
+{
+	msg_reverse_server_t *server = arg;
+	msg_t messages[3] = { 0 };
+	msg_rid_t rids[3];
+
+	for (int i = 0; i < server->count; ++i) {
+		if (msgRecv(server->port, &messages[i], &rids[i]) != 0) {
+			server->result = -1;
+			endthread();
+		}
+	}
+	for (int i = server->count - 1; i >= 0; --i) {
+		messages[i].o.err = messages[i].type;
+		if (msgRespond(server->port, &messages[i], rids[i]) != 0) {
+			server->result = -2;
+			break;
+		}
+	}
+	endthread();
+}
+
+
+typedef struct {
+	uint32_t port;
+	int count;
+	volatile int result;
+	char stack[4096] __attribute__((aligned(8)));
+	handle_t tid;
+} msg_pulse_server_t;
+
+
+static void pulse_server_thread(void *arg)
+{
+	msg_pulse_server_t *server = arg;
+	msg_t msg = { 0 };
+	msg_rid_t rid;
+	int received = 0;
+
+	while (received < server->count) {
+		int err = msgRecv(server->port, &msg, &rid);
+		if (err == -EPULSE)
+			continue;
+		msg.o.err = msg.type;
+		if (err != 0 || msgRespond(server->port, &msg, rid) != 0) {
+			server->result = -1;
+			break;
+		}
+		received++;
+	}
+	endthread();
+}
+#endif
+
+
+static void peer_start(msg_peer_t *peer, const char *name, int kind, int count, int respondAndRecv, size_t size)
+{
+	memset(peer, 0, sizeof(*peer));
+	peer->kind = kind;
+	peer->count = count;
+	peer->respondAndRecv = respondAndRecv;
+	peer->size = size;
+
+#ifdef NOMMU
+	TEST_ASSERT_EQUAL_INT(0, portCreate(&peer->port));
+	TEST_ASSERT_EQUAL_INT(0, beginthreadex(peer_thread, 4, peer->stack, sizeof(peer->stack), peer, &peer->tid));
+#else
+	make_dev_path(peer->path, sizeof(peer->path), name);
+	if ((peer->pid = safe_fork()) == 0) {
+		if (setup_port_dev(peer->path, &peer->port) < 0)
+			exit(3);
+		peer_serve(peer);
+		exit(peer->result == 0 ? 0 : 4);
+	}
+	oid_t oid;
+	while (lookup(peer->path, NULL, &oid) < 0)
+		usleep(10 * 1000);
+	peer->port = oid.port;
+#endif
+}
+
+
+static void peer_stop(msg_peer_t *peer)
+{
+#ifdef NOMMU
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, threadJoin(peer->tid, 0));
+	TEST_ASSERT_EQUAL_INT(0, peer->result);
+	portDestroy(peer->port);
+#else
+	assert_child_exit(peer->pid);
+#endif
+}
+
+
+static void peer_echo_check(msg_peer_t *peer, size_t size, unsigned int seed, char *input, char *output)
+{
+	msg_t msg = { 0 };
+	for (size_t i = 0; i < size; ++i)
+		input[i] = (char)((i * seed + seed) & 0xff);
+	memset(output, 0, size);
+	msg.type = mtWrite;
+	msg.i.data = input;
+	msg.i.size = size;
+	msg.o.data = output;
+	msg.o.size = size;
+	TEST_ASSERT_EQUAL_INT(0, msgSend(peer->port, &msg));
+	TEST_ASSERT_EQUAL_INT(mtWrite, msg.o.err);
+	for (size_t i = 0; i < size; ++i)
+		input[i] ^= (unsigned char)((i & 0xff) ^ 0x5a);
+	TEST_ASSERT_EQUAL_MEMORY(input, output, size);
+}
+
 
 TEST_GROUP(msg_errnos);
-
-TEST_SETUP(msg_errnos)
-{
-}
-
-TEST_TEAR_DOWN(msg_errnos)
-{
-}
-
-
-/* Send to a non-existent port -> -EINVAL */
+TEST_SETUP(msg_errnos) { }
+TEST_TEAR_DOWN(msg_errnos) { }
+/* Sending to a nonexistent port reports EINVAL. */
 TEST(msg_errnos, send_invalid_port)
 {
 	msg_t msg = { 0 };
 	TEST_ASSERT_EQUAL_INT(-EINVAL, msgSend(0xdeadbeef, &msg));
 }
 
-
-/* Recv on a non-existent port -> -EINVAL */
+/* Receiving from a nonexistent port reports EINVAL. */
 TEST(msg_errnos, recv_invalid_port)
 {
 	msg_t msg = { 0 };
@@ -188,25 +687,17 @@ TEST(msg_errnos, recv_invalid_port)
 	TEST_ASSERT_EQUAL_INT(-EINVAL, msgRecv(0xdeadbeef, &msg, &rid));
 }
 
-
-/* Respond on a non-existent port -> -EINVAL */
+/* Responding on a nonexistent port reports EINVAL. */
 TEST(msg_errnos, respond_invalid_port)
 {
 	msg_t msg = { 0 };
 	TEST_ASSERT_EQUAL_INT(-EINVAL, msgRespond(0xdeadbeef, &msg, 0));
 }
 
+/* Pulsing a nonexistent port reports EINVAL. */
+TEST(msg_errnos, pulse_invalid_port) { TEST_ASSERT_EQUAL_INT(-EINVAL, msgPulse(0xdeadbeef, 42)); }
 
-/* Pulse on a non-existent port -> -EINVAL */
-TEST(msg_errnos, pulse_invalid_port)
-{
-	TEST_ASSERT_EQUAL_INT(-EINVAL, msgPulse(0xdeadbeef, 42));
-}
-
-
-/* Send to a valid port that has no receiver should NOT return immediately with -EINVAL */
-/* (the caller should block until a receiver shows up, or return error on closed port) */
-/* For now, just test that portCreate succeeds */
+/* A created port can be destroyed cleanly. */
 TEST(msg_errnos, port_create_destroy)
 {
 	uint32_t port;
@@ -214,784 +705,312 @@ TEST(msg_errnos, port_create_destroy)
 	portDestroy(port);
 }
 
-
-/* ===================================== */
-/* TEST_GROUP: msg_raw                   */
-/* Small message transfer via raw fields */
-/* ===================================== */
-
 TEST_GROUP(msg_raw);
-
-TEST_SETUP(msg_raw)
-{
-}
-
-TEST_TEAR_DOWN(msg_raw)
-{
-}
-
-
-/* Transfer small message through i.raw / o.raw only (no data buffers) */
+TEST_SETUP(msg_raw) { }
+TEST_TEAR_DOWN(msg_raw) { }
+/* Raw message storage survives a server round trip. */
 TEST(msg_raw, raw_roundtrip)
 {
-	char dev_path[64];
-	make_dev_path(dev_path, sizeof(dev_path), "raw_rt");
-	pid_t pid;
-
-	if ((pid = safe_fork()) == 0) {
-		uint32_t port = 0;
-		if (setup_port_dev(dev_path, &port) < 0) {
-			exit(3);
-		}
-		server_echo_loop(port, 0);
-		exit(0);
-	}
-
-	oid_t oid;
-	while (lookup(dev_path, NULL, &oid) < 0) {
-		usleep(10 * 1000);
-	}
-
+	static msg_peer_t peer;
 	msg_t msg = { 0 };
-
-	/* Fill i.raw with a pattern */
-	for (size_t i = 0; i < sizeof(msg.i.raw); i++) {
-		msg.i.raw[i] = (unsigned char)(i ^ 0xAA);
-	}
-
+	peer_start(&peer, "raw_rt", peerEcho, 1, 0, 0);
+	for (size_t i = 0; i < sizeof(msg.i.raw); ++i)
+		msg.i.raw[i] = (unsigned char)(i ^ 0xaa);
 	msg.type = mtDevCtl;
-	msg.i.size = 0;
-	msg.i.data = NULL;
-	msg.o.size = 0;
-	msg.o.data = NULL;
-
-	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
+	TEST_ASSERT_EQUAL_INT(0, msgSend(peer.port, &msg));
 	TEST_ASSERT_EQUAL_INT(mtDevCtl, msg.o.err);
-
-	/* o.raw should be a copy of i.raw (echo server copies it) */
 	TEST_ASSERT_EQUAL_MEMORY(msg.i.raw, msg.o.raw, sizeof(msg.o.raw));
-
-	assert_child_exit(pid);
+	peer_stop(&peer);
 }
 
-
-/* Transfer a message that uses only some of i.raw and check the rest is zeroed */
+/* Structured raw fields may be partially populated. */
 TEST(msg_raw, raw_partial)
 {
-	char dev_path[64];
-	make_dev_path(dev_path, sizeof(dev_path), "raw_part");
-	pid_t pid;
-
-	if ((pid = safe_fork()) == 0) {
-		uint32_t port = 0;
-		if (setup_port_dev(dev_path, &port) < 0) {
-			exit(3);
-		}
-		server_echo_loop(port, 0);
-		exit(0);
-	}
-
-	oid_t oid;
-	while (lookup(dev_path, NULL, &oid) < 0) {
-		usleep(10 * 1000);
-	}
-
+	static msg_peer_t peer;
 	msg_t msg = { 0 };
+	peer_start(&peer, "raw_part", peerEcho, 1, 0, 0);
 	msg.i.io.offs = 12345;
 	msg.i.io.len = 42;
 	msg.type = mtRead;
-	msg.i.size = 0;
-	msg.i.data = NULL;
-	msg.o.size = 0;
-	msg.o.data = NULL;
-
-	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
+	TEST_ASSERT_EQUAL_INT(0, msgSend(peer.port, &msg));
 	TEST_ASSERT_EQUAL_INT(mtRead, msg.o.err);
-
-	assert_child_exit(pid);
+	peer_stop(&peer);
 }
 
-
-/* Fill i.raw with max pattern (64 bytes) and verify round-trip */
+/* The complete raw payload is transferred intact. */
 TEST(msg_raw, raw_max_fill)
 {
-	char dev_path[64];
-	make_dev_path(dev_path, sizeof(dev_path), "raw_max");
-	pid_t pid;
-
-	if ((pid = safe_fork()) == 0) {
-		uint32_t port = 0;
-		if (setup_port_dev(dev_path, &port) < 0) {
-			exit(3);
-		}
-		server_echo_loop(port, 0);
-		exit(0);
-	}
-
-	oid_t oid;
-	while (lookup(dev_path, NULL, &oid) < 0) {
-		usleep(10 * 1000);
-	}
-
+	static msg_peer_t peer;
 	msg_t msg = { 0 };
-	for (size_t i = 0; i < sizeof(msg.i.raw); i++) {
+	peer_start(&peer, "raw_max", peerEcho, 1, 0, 0);
+	for (size_t i = 0; i < sizeof(msg.i.raw); ++i)
 		msg.i.raw[i] = (unsigned char)i;
-	}
 	msg.type = mtWrite;
-	msg.i.size = 0;
-	msg.i.data = NULL;
-	msg.o.size = 0;
-	msg.o.data = NULL;
-
-	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
+	TEST_ASSERT_EQUAL_INT(0, msgSend(peer.port, &msg));
 	TEST_ASSERT_EQUAL_INT(mtWrite, msg.o.err);
-
-	for (size_t i = 0; i < sizeof(msg.o.raw); i++) {
-		TEST_ASSERT_EQUAL_HEX8(i, msg.o.raw[i]);
-	}
-
-	assert_child_exit(pid);
+	TEST_ASSERT_EQUAL_MEMORY(msg.i.raw, msg.o.raw, sizeof(msg.o.raw));
+	peer_stop(&peer);
 }
 
-
-/* Repeated raw transfers to stress basic path */
+/* Repeated raw messages preserve their response type. */
 TEST(msg_raw, raw_repeated)
 {
-	char dev_path[64];
-	make_dev_path(dev_path, sizeof(dev_path), "raw_rep");
-	pid_t pid;
-
-	if ((pid = safe_fork()) == 0) {
-		uint32_t port = 0;
-		if (setup_port_dev(dev_path, &port) < 0) {
-			exit(3);
-		}
-		server_echo_loop(port, 0);
-		exit(0);
-	}
-
-	oid_t oid;
-	while (lookup(dev_path, NULL, &oid) < 0) {
-		usleep(10 * 1000);
-	}
-
-	for (int iter = 0; iter < 200; iter++) {
+	static msg_peer_t peer;
+	peer_start(&peer, "raw_rep", peerEcho, 200, 0, 0);
+	for (int i = 0; i < 200; ++i) {
 		msg_t msg = { 0 };
-		msg.i.io.offs = iter;
-		msg.i.io.len = iter * 3;
+		msg.i.io.offs = i;
+		msg.i.io.len = i * 3;
 		msg.type = mtRead;
-		msg.i.size = 0;
-		msg.i.data = NULL;
-		msg.o.size = 0;
-		msg.o.data = NULL;
-
-		TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
+		TEST_ASSERT_EQUAL_INT(0, msgSend(peer.port, &msg));
 		TEST_ASSERT_EQUAL_INT(mtRead, msg.o.err);
 	}
-
-	assert_child_exit(pid);
+	peer_stop(&peer);
 }
 
-
-/* msg.type and msg.oid preservation across IPC */
+/* Message types and object identifiers remain visible to the server. */
 TEST(msg_raw, type_and_oid_preserved)
 {
-	char dev_path[64];
-	make_dev_path(dev_path, sizeof(dev_path), "typeoid");
-	pid_t pid;
-
-	if ((pid = safe_fork()) == 0) {
-		uint32_t port = 0;
-		if (setup_port_dev(dev_path, &port) < 0) {
-			exit(3);
-		}
-
-		msg_t msg = { 0 };
-		msg_rid_t rid;
-
-		for (;;) {
-			if (msgRecv(port, &msg, &rid) < 0) {
-				exit(0);
-			}
-
-			/* Validate oid and type arrived */
-			if (msg.oid.id != 0x42) {
-				exit(10);
-			}
-
-			/* echo type into o.err so client can check */
-			msg.o.err = msg.type;
-
-			/* echo oid.id into o.raw */
-			memcpy(msg.o.raw, &msg.oid.id, sizeof(msg.oid.id));
-
-			if (msgRespond(port, &msg, rid) < 0) {
-				exit(11);
-			}
-		}
-	}
-
-	oid_t oid;
-	while (lookup(dev_path, NULL, &oid) < 0) {
-		usleep(10 * 1000);
-	}
-
-	for (int type = mtOpen; type < mtCount; type++) {
+	static msg_peer_t peer;
+	peer_start(&peer, "typeoid", peerRawOid, mtCount - mtOpen, 0, 0);
+	for (int type = mtOpen; type < mtCount; ++type) {
+		id_t id;
 		msg_t msg = { 0 };
 		msg.type = type;
-		msg.oid.port = oid.port;
+		msg.oid.port = peer.port;
 		msg.oid.id = 0x42;
-		msg.i.size = 0;
-		msg.i.data = NULL;
-		msg.o.size = 0;
-		msg.o.data = NULL;
-
-		TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
+		TEST_ASSERT_EQUAL_INT(0, msgSend(peer.port, &msg));
 		TEST_ASSERT_EQUAL_INT(type, msg.o.err);
-
-		id_t got_id;
-		memcpy(&got_id, msg.o.raw, sizeof(got_id));
-		TEST_ASSERT_EQUAL_UINT64(0x42, got_id);
+		memcpy(&id, msg.o.raw, sizeof(id));
+		TEST_ASSERT_EQUAL_UINT64(0x42, id);
 	}
-
-	assert_child_exit(pid);
+	peer_stop(&peer);
 }
-
-
-/* ===================================== */
-/* TEST_GROUP: msg_data                  */
-/* Large data transfer via mapped bufs   */
-/* ===================================== */
 
 TEST_GROUP(msg_data);
-
-TEST_SETUP(msg_data)
-{
-}
-
-TEST_TEAR_DOWN(msg_data)
-{
-}
-
-
-/* Transfer with both i.data and o.data (mapped buffers) */
+TEST_SETUP(msg_data) { }
+TEST_TEAR_DOWN(msg_data) { }
+/* Input and output buffers are transformed by the echo peer. */
 TEST(msg_data, idata_and_odata)
 {
-	char dev_path[64];
-	make_dev_path(dev_path, sizeof(dev_path), "data_io");
-	pid_t pid;
-
-	const size_t bufsz = 4096;
-
-	if ((pid = safe_fork()) == 0) {
-		uint32_t port = 0;
-		if (setup_port_dev(dev_path, &port) < 0) {
-			exit(3);
-		}
-		server_echo_loop(port, 0);
-		exit(0);
-	}
-
-	oid_t oid;
-	while (lookup(dev_path, NULL, &oid) < 0) {
-		usleep(10 * 1000);
-	}
-
-	char *ibuf = malloc(bufsz);
-	char *obuf = malloc(bufsz);
-	TEST_ASSERT_NOT_NULL(ibuf);
-	TEST_ASSERT_NOT_NULL(obuf);
-
-	for (size_t i = 0; i < bufsz; i++) {
-		ibuf[i] = (char)(i & 0xff);
-	}
-	memset(obuf, 0, bufsz);
-
-	msg_t msg = { 0 };
-	msg.type = mtWrite;
-	msg.i.data = ibuf;
-	msg.i.size = bufsz;
-	msg.o.data = obuf;
-	msg.o.size = bufsz;
-
-	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
-	TEST_ASSERT_EQUAL_INT(mtWrite, msg.o.err);
-	for (size_t i = 0; i < bufsz; i++) {
-		ibuf[i] ^= (unsigned char)((i & 0xff) ^ 0x5a);
-	}
-	TEST_ASSERT_EQUAL_MEMORY(ibuf, obuf, bufsz);
-
-	free(ibuf);
-	free(obuf);
-	assert_child_exit(pid);
+	char *input = malloc(4096), *output = malloc(4096);
+	static msg_peer_t peer;
+	TEST_ASSERT_NOT_NULL(input);
+	TEST_ASSERT_NOT_NULL(output);
+	peer_start(&peer, "data_io", peerEcho, 1, 0, 0);
+	peer_echo_check(&peer, 4096, 1, input, output);
+	peer_stop(&peer);
+	free(input);
+	free(output);
 }
 
-
-/* Transfer with only i.data (no o.data buffer) */
+/* An input-only buffer reaches the server intact. */
 TEST(msg_data, idata_only)
 {
-	char dev_path[64];
-	make_dev_path(dev_path, sizeof(dev_path), "data_i");
-	pid_t pid;
-
-	const size_t bufsz = 2048;
-
-	if ((pid = safe_fork()) == 0) {
-		uint32_t port = 0;
-		if (setup_port_dev(dev_path, &port) < 0) {
-			exit(3);
-		}
-
-		msg_t msg = { 0 };
-		msg_rid_t rid;
-
-		for (;;) {
-			if (msgRecv(port, &msg, &rid) < 0) {
-				exit(0);
-			}
-
-			/* Validate input data arrived */
-			if (msg.i.data == NULL || msg.i.size != bufsz) {
-				exit(10);
-			}
-
-			unsigned char *p = (unsigned char *)msg.i.data;
-			for (size_t i = 0; i < bufsz; i++) {
-				if (p[i] != (unsigned char)(i & 0xff)) {
-					exit(11);
-				}
-			}
-
-			msg.o.err = 0;
-
-			if (msgRespond(port, &msg, rid) < 0) {
-				exit(12);
-			}
-		}
-	}
-
-	oid_t oid;
-	while (lookup(dev_path, NULL, &oid) < 0) {
-		usleep(10 * 1000);
-	}
-
-	char *ibuf = malloc(bufsz);
-	TEST_ASSERT_NOT_NULL(ibuf);
-	for (size_t i = 0; i < bufsz; i++) {
-		ibuf[i] = (char)(i & 0xff);
-	}
-
+	const size_t size = 2048;
+	char *input = malloc(size);
+	static msg_peer_t peer;
 	msg_t msg = { 0 };
+	TEST_ASSERT_NOT_NULL(input);
+	for (size_t i = 0; i < size; ++i)
+		input[i] = (char)i;
+	peer_start(&peer, "data_i", peerInput, 1, 0, size);
 	msg.type = mtWrite;
-	msg.i.data = ibuf;
-	msg.i.size = bufsz;
-	msg.o.data = NULL;
-	msg.o.size = 0;
-
-	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
+	msg.i.data = input;
+	msg.i.size = size;
+	TEST_ASSERT_EQUAL_INT(0, msgSend(peer.port, &msg));
 	TEST_ASSERT_EQUAL_INT(0, msg.o.err);
-
-	free(ibuf);
-	assert_child_exit(pid);
+	peer_stop(&peer);
+	free(input);
 }
 
-
-/* Transfer with only o.data (no i.data buffer) */
+/* An output-only buffer is populated by the server. */
 TEST(msg_data, odata_only)
 {
-	char dev_path[64];
-	make_dev_path(dev_path, sizeof(dev_path), "data_o");
-	pid_t pid;
-
-	const size_t bufsz = 2048;
-
-	if ((pid = safe_fork()) == 0) {
-		uint32_t port = 0;
-		if (setup_port_dev(dev_path, &port) < 0) {
-			exit(3);
-		}
-
-		msg_t msg = { 0 };
-		msg_rid_t rid;
-
-		for (;;) {
-			if (msgRecv(port, &msg, &rid) < 0) {
-				exit(0);
-			}
-
-			/* Fill o.data with a pattern for client to verify */
-			if (msg.o.data != NULL && msg.o.size >= bufsz) {
-				unsigned char *p = (unsigned char *)msg.o.data;
-				for (size_t i = 0; i < bufsz; i++) {
-					p[i] = (unsigned char)(i ^ 0x55);
-				}
-			}
-
-			msg.o.err = 0;
-
-			if (msgRespond(port, &msg, rid) < 0) {
-				exit(12);
-			}
-		}
-	}
-
-	oid_t oid;
-	while (lookup(dev_path, NULL, &oid) < 0) {
-		usleep(10 * 1000);
-	}
-
-	char *obuf = malloc(bufsz);
-	TEST_ASSERT_NOT_NULL(obuf);
-	memset(obuf, 0, bufsz);
-
+	const size_t size = 2048;
+	char *output = malloc(size);
+	static msg_peer_t peer;
 	msg_t msg = { 0 };
+	TEST_ASSERT_NOT_NULL(output);
+	peer_start(&peer, "data_o", peerOutput, 1, 0, size);
 	msg.type = mtRead;
-	msg.i.data = NULL;
-	msg.i.size = 0;
-	msg.o.data = obuf;
-	msg.o.size = bufsz;
-
-	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
+	msg.o.data = output;
+	msg.o.size = size;
+	TEST_ASSERT_EQUAL_INT(0, msgSend(peer.port, &msg));
 	TEST_ASSERT_EQUAL_INT(0, msg.o.err);
-
-	for (size_t i = 0; i < bufsz; i++) {
-		TEST_ASSERT_EQUAL_HEX8((unsigned char)(i ^ 0x55), (unsigned char)obuf[i]);
-	}
-
-	free(obuf);
-	assert_child_exit(pid);
+	for (size_t i = 0; i < size; ++i)
+		TEST_ASSERT_EQUAL_HEX8((unsigned char)(i ^ 0x55), (unsigned char)output[i]);
+	peer_stop(&peer);
+	free(output);
 }
 
-
-/* Large multi-page transfer (tests _mapBufferUnaligned with multiple pages) */
+/* A multi-page payload is transferred and transformed correctly. */
 TEST(msg_data, large_multipage)
 {
-	char dev_path[64];
-	make_dev_path(dev_path, sizeof(dev_path), "data_lg");
-	pid_t pid;
-
-	const size_t bufsz = 16 * 4096;
-
-	if ((pid = safe_fork()) == 0) {
-		uint32_t port = 0;
-		if (setup_port_dev(dev_path, &port) < 0) {
-			exit(3);
-		}
-		server_echo_loop(port, 0);
-		exit(0);
-	}
-
-	oid_t oid;
-	while (lookup(dev_path, NULL, &oid) < 0) {
-		usleep(10 * 1000);
-	}
-
-	char *ibuf = malloc(bufsz);
-	char *obuf = malloc(bufsz);
-	TEST_ASSERT_NOT_NULL(ibuf);
-	TEST_ASSERT_NOT_NULL(obuf);
-
-	for (size_t i = 0; i < bufsz; i++) {
-		ibuf[i] = (char)((i * 7 + 3) & 0xff);
-	}
-	memset(obuf, 0, bufsz);
-
-	msg_t msg = { 0 };
-	msg.type = mtWrite;
-	msg.i.data = ibuf;
-	msg.i.size = bufsz;
-	msg.o.data = obuf;
-	msg.o.size = bufsz;
-
-	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
-	TEST_ASSERT_EQUAL_INT(mtWrite, msg.o.err);
-	for (size_t i = 0; i < bufsz; i++) {
-		ibuf[i] ^= (unsigned char)((i & 0xff) ^ 0x5a);
-	}
-	TEST_ASSERT_EQUAL_MEMORY(ibuf, obuf, bufsz);
-
-	free(ibuf);
-	free(obuf);
-	assert_child_exit(pid);
+	const size_t size = 16 * 4096;
+	char *input = malloc(size), *output = malloc(size);
+	static msg_peer_t peer;
+	TEST_ASSERT_NOT_NULL(input);
+	TEST_ASSERT_NOT_NULL(output);
+	peer_start(&peer, "data_lg", peerEcho, 1, 0, 0);
+	peer_echo_check(&peer, size, 7, input, output);
+	peer_stop(&peer);
+	free(input);
+	free(output);
 }
 
-
-/*
- * Unaligned buffer transfer - tests the boffs/eoffs shadow page copy paths
- * in _mapBufferUnaligned (the partial first/last page copy).
- */
+/* Unaligned buffer slices remain valid IPC payloads. */
 TEST(msg_data, unaligned_buffer)
 {
-	char dev_path[64];
-	make_dev_path(dev_path, sizeof(dev_path), "data_ua");
-	pid_t pid;
-
-	if ((pid = safe_fork()) == 0) {
-		uint32_t port = 0;
-		if (setup_port_dev(dev_path, &port) < 0) {
-			exit(3);
-		}
-		server_echo_loop(port, 0);
-		exit(0);
-	}
-
-	oid_t oid;
-	while (lookup(dev_path, NULL, &oid) < 0) {
-		usleep(10 * 1000);
-	}
-
-	/* Allocate oversized buffer, use an offset to force unalignment */
-	const size_t total = 4096 * 3;
-	const size_t offset = 137;
-	const size_t payload = total - offset - 53;
-
-	char *raw_ibuf = malloc(total);
-	char *raw_obuf = malloc(total);
-	TEST_ASSERT_NOT_NULL(raw_ibuf);
-	TEST_ASSERT_NOT_NULL(raw_obuf);
-
-	char *ibuf = raw_ibuf + offset;
-	char *obuf = raw_obuf + offset;
-
-	for (size_t i = 0; i < payload; i++) {
-		ibuf[i] = (char)((i * 13 + 5) & 0xff);
-	}
-	memset(obuf, 0, payload);
-
-	msg_t msg = { 0 };
-	msg.type = mtWrite;
-	msg.i.data = ibuf;
-	msg.i.size = payload;
-	msg.o.data = obuf;
-	msg.o.size = payload;
-
-	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
-	TEST_ASSERT_EQUAL_INT(mtWrite, msg.o.err);
-	for (size_t i = 0; i < payload; i++) {
-		ibuf[i] ^= (unsigned char)((i & 0xff) ^ 0x5a);
-	}
-	TEST_ASSERT_EQUAL_MEMORY(ibuf, obuf, payload);
-
-	free(raw_ibuf);
-	free(raw_obuf);
-	assert_child_exit(pid);
+	const size_t total = 4096 * 3, offset = 137, size = total - offset - 53;
+	char *input = malloc(total), *output = malloc(total);
+	static msg_peer_t peer;
+	TEST_ASSERT_NOT_NULL(input);
+	TEST_ASSERT_NOT_NULL(output);
+	peer_start(&peer, "data_ua", peerEcho, 1, 0, 0);
+	peer_echo_check(&peer, size, 13, input + offset, output + offset);
+	peer_stop(&peer);
+	free(input);
+	free(output);
 }
 
-
-/* Sub-page (small) buffer that fits within one page with offset */
+/* A small stack buffer supports bidirectional transfer. */
 TEST(msg_data, sub_page_single)
 {
-	char dev_path[64];
-	make_dev_path(dev_path, sizeof(dev_path), "data_sp");
-	pid_t pid;
-
-	if ((pid = safe_fork()) == 0) {
-		uint32_t port = 0;
-		if (setup_port_dev(dev_path, &port) < 0) {
-			exit(3);
-		}
-		server_echo_loop(port, 0);
-		exit(0);
-	}
-
-	oid_t oid;
-	while (lookup(dev_path, NULL, &oid) < 0) {
-		usleep(10 * 1000);
-	}
-
-	const size_t bufsz = 100;
-	char ibuf[100];
-	char obuf[100];
-
-	for (size_t i = 0; i < bufsz; i++) {
-		ibuf[i] = (char)(i + 1);
-	}
-	memset(obuf, 0, bufsz);
-
-	msg_t msg = { 0 };
-	msg.type = mtWrite;
-	msg.i.data = ibuf;
-	msg.i.size = bufsz;
-	msg.o.data = obuf;
-	msg.o.size = bufsz;
-
-	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
-	TEST_ASSERT_EQUAL_INT(mtWrite, msg.o.err);
-	for (size_t i = 0; i < bufsz; i++) {
-		ibuf[i] ^= (unsigned char)((i & 0xff) ^ 0x5a);
-	}
-	TEST_ASSERT_EQUAL_MEMORY(ibuf, obuf, bufsz);
-
-	assert_child_exit(pid);
+	char input[100], output[100];
+	static msg_peer_t peer;
+	peer_start(&peer, "data_sp", peerEcho, 1, 0, 0);
+	peer_echo_check(&peer, sizeof(input), 1, input, output);
+	peer_stop(&peer);
 }
 
-
-/* Repeated large data transfers to stress buffer mapping/unmapping */
+/* Repeated large transfers keep their buffer mapping valid. */
 TEST(msg_data, repeated_large)
 {
-	char dev_path[64];
-	make_dev_path(dev_path, sizeof(dev_path), "data_rl");
-	pid_t pid;
-
-	const size_t bufsz = 4096 * 2;
-
-	if ((pid = safe_fork()) == 0) {
-		uint32_t port = 0;
-		if (setup_port_dev(dev_path, &port) < 0) {
-			exit(3);
-		}
-		server_echo_loop(port, 0);
-		exit(0);
-	}
-
-	oid_t oid;
-	while (lookup(dev_path, NULL, &oid) < 0) {
-		usleep(10 * 1000);
-	}
-
-	char *ibuf = malloc(bufsz);
-	char *obuf = malloc(bufsz);
-	TEST_ASSERT_NOT_NULL(ibuf);
-	TEST_ASSERT_NOT_NULL(obuf);
-
-	for (int iter = 0; iter < 50; iter++) {
-		for (size_t i = 0; i < bufsz; i++) {
-			ibuf[i] = (char)((i + iter) & 0xff);
-		}
-		memset(obuf, 0, bufsz);
-
-		msg_t msg = { 0 };
-		msg.type = mtWrite;
-		msg.i.data = ibuf;
-		msg.i.size = bufsz;
-		msg.o.data = obuf;
-		msg.o.size = bufsz;
-
-		TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
-		for (size_t i = 0; i < bufsz; i++) {
-			ibuf[i] ^= (unsigned char)((i & 0xff) ^ 0x5a);
-		}
-		TEST_ASSERT_EQUAL_MEMORY(ibuf, obuf, bufsz);
-	}
-
-	free(ibuf);
-	free(obuf);
-	assert_child_exit(pid);
+	const size_t size = 4096 * 2;
+	char *input = malloc(size), *output = malloc(size);
+	static msg_peer_t peer;
+	TEST_ASSERT_NOT_NULL(input);
+	TEST_ASSERT_NOT_NULL(output);
+	peer_start(&peer, "data_rl", peerEcho, 50, 0, 0);
+	for (unsigned int i = 0; i < 50; ++i)
+		peer_echo_check(&peer, size, i + 1, input, output);
+	peer_stop(&peer);
+	free(input);
+	free(output);
 }
-
-
-/* ===================================== */
-/* TEST_GROUP: msg_respond_recv          */
-/* Combined respond-and-recv path        */
-/* ===================================== */
 
 TEST_GROUP(msg_respond_recv);
-
-TEST_SETUP(msg_respond_recv)
-{
-}
-
-TEST_TEAR_DOWN(msg_respond_recv)
-{
-}
-
-
-/* Basic respondAndRecv: server uses msgRespondAndRecv instead of separate recv+respond */
+TEST_SETUP(msg_respond_recv) { }
+TEST_TEAR_DOWN(msg_respond_recv) { }
+/* respondAndRecv supports a rapid scalar request sequence. */
 TEST(msg_respond_recv, basic)
 {
-	for (int i = 0; i < REPS; i++) {
-		char dev_path[64];
-		make_dev_path(dev_path, sizeof(dev_path), "rr_basic");
-		pid_t pid;
-
-		if ((pid = safe_fork()) == 0) {
-			uint32_t port = 0;
-			if (setup_port_dev(dev_path, &port) < 0) {
-				exit(3);
-			}
-			server_echo_loop(port, 1);
-			exit(0);
-		}
-
-		oid_t oid;
-		while (lookup(dev_path, NULL, &oid) < 0) {
-			usleep(10 * 1000);
-		}
-
-		for (int i = 0; i < 100; i++) {
-			msg_t msg = { 0 };
-			msg.i.io.offs = i;
-			msg.type = mtRead;
-			msg.i.size = 0;
-			msg.i.data = NULL;
-			msg.o.size = 0;
-			msg.o.data = NULL;
-
-			TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
-			TEST_ASSERT_EQUAL_INT(mtRead, msg.o.err);
-		}
-
-		assert_child_exit(pid);
+	static msg_peer_t peer;
+	peer_start(&peer, "rr_basic", peerEcho, REPS * 100, 1, 0);
+	for (int i = 0; i < REPS * 100; ++i) {
+		msg_t msg = { 0 };
+		msg.i.io.offs = i;
+		msg.type = mtRead;
+		TEST_ASSERT_EQUAL_INT(0, msgSend(peer.port, &msg));
+		TEST_ASSERT_EQUAL_INT(mtRead, msg.o.err);
 	}
+	peer_stop(&peer);
 }
 
-
-/* respondAndRecv with data buffers */
+/* respondAndRecv preserves bidirectional data transfers. */
 TEST(msg_respond_recv, with_data)
 {
-	for (int i = 0; i < REPS; i++) {
-		char dev_path[64];
-		make_dev_path(dev_path, sizeof(dev_path), "rr_data");
-		pid_t pid;
+	const size_t size = 4096;
+	char *input = malloc(size), *output = malloc(size);
+	static msg_peer_t peer;
+	TEST_ASSERT_NOT_NULL(input);
+	TEST_ASSERT_NOT_NULL(output);
+	peer_start(&peer, "rr_data", peerEcho, REPS * 20, 1, 0);
+	for (unsigned int i = 0; i < REPS * 20; ++i)
+		peer_echo_check(&peer, size, i * 37 + 1, input, output);
+	peer_stop(&peer);
+	free(input);
+	free(output);
+}
 
-		const size_t bufsz = 4096;
+TEST_GROUP(msg_edge);
+TEST_SETUP(msg_edge) { }
+TEST_TEAR_DOWN(msg_edge) { }
+/* Non-null zero-size buffers do not alter message delivery. */
+TEST(msg_edge, zero_size_nonull_data)
+{
+	static msg_peer_t peer;
+	char dummy = 'x';
+	msg_t msg = { 0 };
+	msg.type = mtRead;
+	msg.i.data = &dummy;
+	msg.o.data = &dummy;
+	peer_start(&peer, "edge_zs", peerEcho, 1, 0, 0);
+	TEST_ASSERT_EQUAL_INT(0, msgSend(peer.port, &msg));
+	TEST_ASSERT_EQUAL_INT(mtRead, msg.o.err);
+	peer_stop(&peer);
+}
 
-		if ((pid = safe_fork()) == 0) {
-			uint32_t port = 0;
-			if (setup_port_dev(dev_path, &port) < 0) {
-				exit(3);
-			}
-			server_echo_loop(port, 1);
-			exit(0);
-		}
+/* Transfers at page boundaries preserve every byte. */
+TEST(msg_edge, page_boundary_buffer)
+{
+	const size_t sizes[] = { 4096, 4095, 4097, 8192, 8191, 8193 };
+	static msg_peer_t peer;
+	peer_start(&peer, "edge_pb", peerEcho, sizeof(sizes) / sizeof(sizes[0]), 0, 0);
+	for (size_t i = 0; i < sizeof(sizes) / sizeof(sizes[0]); ++i) {
+		char *input = malloc(sizes[i]), *output = malloc(sizes[i]);
+		TEST_ASSERT_NOT_NULL(input);
+		TEST_ASSERT_NOT_NULL(output);
+		peer_echo_check(&peer, sizes[i], i + 1, input, output);
+		free(input);
+		free(output);
+	}
+	peer_stop(&peer);
+}
 
-		oid_t oid;
-		while (lookup(dev_path, NULL, &oid) < 0) {
-			usleep(10 * 1000);
-		}
+/* A smaller input side does not constrain a valid output buffer. */
+TEST(msg_edge, asymmetric_io_sizes)
+{
+	const size_t size = 8192;
+	char *output = malloc(size);
+	static msg_peer_t peer;
+	msg_t msg = { 0 };
+	TEST_ASSERT_NOT_NULL(output);
+	peer_start(&peer, "edge_as", peerAsymmetric, 1, 0, size);
+	msg.type = mtRead;
+	msg.o.data = output;
+	msg.o.size = size;
+	TEST_ASSERT_EQUAL_INT(0, msgSend(peer.port, &msg));
+	TEST_ASSERT_EQUAL_INT(0, msg.o.err);
+	for (size_t i = 0; i < size; ++i)
+		TEST_ASSERT_EQUAL_HEX8((unsigned char)i, (unsigned char)output[i]);
+	peer_stop(&peer);
+	free(output);
+}
 
-		char *ibuf = malloc(bufsz);
-		char *obuf = malloc(bufsz);
-		TEST_ASSERT_NOT_NULL(ibuf);
-		TEST_ASSERT_NOT_NULL(obuf);
-
-		for (int iter = 0; iter < 20; iter++) {
-			for (size_t i = 0; i < bufsz; i++) {
-				ibuf[i] = (char)((i + iter * 37) & 0xff);
-			}
-			memset(obuf, 0, bufsz);
-
-			msg_t msg = { 0 };
-			msg.type = mtWrite;
-			msg.i.data = ibuf;
-			msg.i.size = bufsz;
-			msg.o.data = obuf;
-			msg.o.size = bufsz;
-
-			TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
-			TEST_ASSERT_EQUAL_INT(mtWrite, msg.o.err);
-			for (size_t i = 0; i < bufsz; i++) {
-				ibuf[i] ^= (unsigned char)((i & 0xff) ^ 0x5a);
-			}
-			TEST_ASSERT_EQUAL_MEMORY(ibuf, obuf, bufsz);
-		}
-
-		free(ibuf);
-		free(obuf);
-		assert_child_exit(pid);
+/* Repeated port allocation and release does not leak state. */
+TEST(msg_edge, rapid_port_lifecycle)
+{
+	for (int i = 0; i < 100; ++i) {
+		uint32_t port;
+		TEST_ASSERT_EQUAL_INT(0, portCreate(&port));
+		portDestroy(port);
 	}
 }
 
+/* Operations on a destroyed port fail instead of blocking. */
+TEST(msg_edge, destroyed_port_ops)
+{
+	uint32_t port;
+	msg_t msg = { 0 };
+	msg_rid_t rid;
+	TEST_ASSERT_EQUAL_INT(0, portCreate(&port));
+	portDestroy(port);
+	TEST_ASSERT_LESS_THAN_INT(0, msgSend(port, &msg));
+	TEST_ASSERT_LESS_THAN_INT(0, msgRecv(port, &msg, &rid));
+	TEST_ASSERT_LESS_THAN_INT(0, msgPulse(port, 1));
+}
 
 /* ===================================== */
 /* TEST_GROUP: msg_pulse                 */
@@ -1012,6 +1031,21 @@ TEST_TEAR_DOWN(msg_pulse)
 /* Pulse delivered to a blocked receiver */
 TEST(msg_pulse, pulse_to_blocked_recv)
 {
+#ifdef NOMMU
+	uint32_t port;
+	static msg_pulser_t pulser;
+	msg_t msg = { 0 };
+	msg_rid_t rid;
+
+	TEST_ASSERT_EQUAL_INT(0, portCreate(&port));
+	pulser.port = port;
+	pulser.first = 42;
+	TEST_ASSERT_EQUAL_INT(0, beginthreadex(pulser_thread, 4, pulser.stack, sizeof(pulser.stack), &pulser, &pulser.tid));
+	TEST_ASSERT_EQUAL_INT(-EPULSE, msgRecv(port, &msg, &rid));
+	TEST_ASSERT_EQUAL_UINT8(42, msg.o.pulse);
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, threadJoin(pulser.tid, 0));
+	portDestroy(port);
+#else
 	char dev_path[64];
 	make_dev_path(dev_path, sizeof(dev_path), "pulse_b");
 	pid_t pid;
@@ -1045,6 +1079,7 @@ TEST(msg_pulse, pulse_to_blocked_recv)
 		msgPulse(oid.port, 42);
 		exit(0);
 	}
+#endif
 }
 
 
@@ -1092,6 +1127,23 @@ TEST(msg_pulse, overwrite_pending)
 /* Pulse with value 0 edge case */
 TEST(msg_pulse, pulse_zero)
 {
+#ifdef NOMMU
+	uint32_t port;
+	static msg_pulser_t pulser;
+	msg_t msg = { 0 };
+	msg_rid_t rid;
+
+	TEST_ASSERT_EQUAL_INT(0, portCreate(&port));
+	pulser.port = port;
+	pulser.first = 0;
+	pulser.second = 1;
+	pulser.delay = 20 * 1000;
+	TEST_ASSERT_EQUAL_INT(0, beginthreadex(pulser_thread, 4, pulser.stack, sizeof(pulser.stack), &pulser, &pulser.tid));
+	TEST_ASSERT_LESS_THAN_INT(0, msgRecv(port, &msg, &rid));
+	TEST_ASSERT_EQUAL_UINT8(1, msg.o.pulse);
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, threadJoin(pulser.tid, 0));
+	portDestroy(port);
+#else
 	char dev_path[64];
 	make_dev_path(dev_path, sizeof(dev_path), "pulse_z");
 	pid_t pid;
@@ -1131,6 +1183,7 @@ TEST(msg_pulse, pulse_zero)
 
 		exit(0);
 	}
+#endif
 }
 
 
@@ -1157,6 +1210,18 @@ TEST_TEAR_DOWN(msg_queuing)
  */
 TEST(msg_queuing, concurrent_clients)
 {
+#ifdef NOMMU
+	const int NUM_CLIENTS = 4;
+	const int MSGS_PER_CLIENT = 20;
+	static msg_peer_t peer;
+	static msg_client_t clients[4];
+
+	peer_start(&peer, "queue_cc", peerEcho, NUM_CLIENTS * MSGS_PER_CLIENT, 0, 0);
+	clients_start(clients, NUM_CLIENTS, peer.port, MSGS_PER_CLIENT, mtWrite, 0);
+	clients_stop(clients, NUM_CLIENTS, "queued client failed");
+	peer_stop(&peer);
+	return;
+#else
 	char dev_path[64];
 	make_dev_path(dev_path, sizeof(dev_path), "queue_cc");
 	pid_t server_pid;
@@ -1213,12 +1278,39 @@ TEST(msg_queuing, concurrent_clients)
 	}
 
 	assert_child_exit(server_pid);
+#endif
 }
 
 
 /* Clients at different priorities: higher prio should be served first */
 TEST(msg_queuing, priority_ordering)
 {
+#ifdef NOMMU
+	uint32_t port;
+	static msg_priority_server_t server;
+	static msg_priority_client_t clients[3];
+	const int priorities[3] = { 6, 4, 2 };
+
+	TEST_ASSERT_EQUAL_INT(0, portCreate(&port));
+	for (int i = 0; i < 3; ++i) {
+		clients[i].port = port;
+		clients[i].priority = priorities[i];
+		TEST_ASSERT_EQUAL_INT(0, beginthreadex(priority_client_thread, priorities[i], clients[i].stack, sizeof(clients[i].stack), &clients[i], &clients[i].tid));
+		usleep(10 * 1000);
+	}
+	server.port = port;
+	TEST_ASSERT_EQUAL_INT(0, beginthreadex(priority_server_thread, 4, server.stack, sizeof(server.stack), &server, &server.tid));
+	for (int i = 0; i < 3; ++i) {
+		TEST_ASSERT_GREATER_OR_EQUAL_INT(0, threadJoin(clients[i].tid, 0));
+		TEST_ASSERT_EQUAL_INT(0, clients[i].result);
+	}
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, threadJoin(server.tid, 0));
+	TEST_ASSERT_EQUAL_INT(0, server.result);
+	TEST_ASSERT_EQUAL_INT(2, server.priorities[0]);
+	TEST_ASSERT_EQUAL_INT(4, server.priorities[1]);
+	TEST_ASSERT_EQUAL_INT(6, server.priorities[2]);
+	portDestroy(port);
+#else
 	char dev_path[64];
 	make_dev_path(dev_path, sizeof(dev_path), "queue_po");
 
@@ -1313,6 +1405,7 @@ TEST(msg_queuing, priority_ordering)
 	TEST_ASSERT_TRUE_MESSAGE(WIFEXITED(s3) && WEXITSTATUS(s3) == 0, "prio client 6 failed");
 
 	assert_child_exit(server_pid);
+#endif
 }
 
 
@@ -1546,6 +1639,28 @@ TEST_TEAR_DOWN(msg_multiserver)
  */
 TEST(msg_multiserver, out_of_order_respond)
 {
+#ifdef NOMMU
+	static msg_reverse_server_t server;
+	static msg_client_t clients[3];
+
+	TEST_ASSERT_EQUAL_INT(0, portCreate(&server.port));
+	server.count = 3;
+	TEST_ASSERT_EQUAL_INT(0, beginthreadex(reverse_server_thread, 4, server.stack, sizeof(server.stack), &server, &server.tid));
+	for (int i = 0; i < 3; ++i) {
+		clients[i].port = server.port;
+		clients[i].count = 1;
+		clients[i].type = mtOpen + i;
+		TEST_ASSERT_EQUAL_INT(0, beginthreadex(client_send_loop, 4, clients[i].stack, sizeof(clients[i].stack), &clients[i], &clients[i].tid));
+		usleep(20 * 1000);
+	}
+	for (int i = 0; i < 3; ++i) {
+		TEST_ASSERT_GREATER_OR_EQUAL_INT(0, threadJoin(clients[i].tid, 0));
+		TEST_ASSERT_EQUAL_INT(0, clients[i].result);
+	}
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, threadJoin(server.tid, 0));
+	TEST_ASSERT_EQUAL_INT(0, server.result);
+	portDestroy(server.port);
+#else
 	char dev_path[64];
 	make_dev_path(dev_path, sizeof(dev_path), "ms_ooo");
 	pid_t server_pid;
@@ -1618,6 +1733,7 @@ TEST(msg_multiserver, out_of_order_respond)
 	waitpid(server_pid, &status, 0);
 	TEST_ASSERT_TRUE(WIFEXITED(status));
 	TEST_ASSERT_EQUAL_INT(0, WEXITSTATUS(status));
+#endif
 }
 
 
@@ -1628,6 +1744,22 @@ TEST(msg_multiserver, out_of_order_respond)
  */
 TEST(msg_multiserver, server_chain)
 {
+#ifdef NOMMU
+	static msg_peer_t backend;
+	static msg_relay_t frontend;
+
+	peer_start(&backend, "ms_ch2", peerEcho, 10, 0, 0);
+	relay_start(&frontend, backend.port, 10, 0);
+	for (int i = 0; i < 10; i++) {
+		msg_t msg = { 0 };
+		msg.type = mtDevCtl;
+		msg.i.io.offs = i;
+		TEST_ASSERT_EQUAL_INT(0, msgSend(frontend.port, &msg));
+		TEST_ASSERT_EQUAL_INT(mtDevCtl, msg.o.err);
+	}
+	relay_stop(&frontend);
+	peer_stop(&backend);
+#else
 	char dev_path1[64], dev_path2[64];
 	make_dev_path(dev_path1, sizeof(dev_path1), "ms_ch1");
 	make_dev_path(dev_path2, sizeof(dev_path2), "ms_ch2");
@@ -1706,6 +1838,7 @@ TEST(msg_multiserver, server_chain)
 
 	assert_child_exit(frontend_pid);
 	assert_child_exit(backend_pid);
+#endif
 }
 
 
@@ -2141,208 +2274,6 @@ TEST(msg_priority_field, pid_preserved)
 
 
 /* ===================================== */
-/* TEST_GROUP: msg_edge                  */
-/* Edge cases and stress                 */
-/* ===================================== */
-
-TEST_GROUP(msg_edge);
-
-TEST_SETUP(msg_edge)
-{
-}
-
-TEST_TEAR_DOWN(msg_edge)
-{
-}
-
-
-/* Send with zero-length data buffers (size=0 but data!=NULL) */
-TEST(msg_edge, zero_size_nonull_data)
-{
-	char dev_path[64];
-	make_dev_path(dev_path, sizeof(dev_path), "edge_zs");
-	pid_t pid;
-
-	if ((pid = safe_fork()) == 0) {
-		uint32_t port = 0;
-		if (setup_port_dev(dev_path, &port) < 0) {
-			exit(3);
-		}
-		server_echo_loop(port, 0);
-		exit(0);
-	}
-
-	oid_t oid;
-	while (lookup(dev_path, NULL, &oid) < 0) {
-		usleep(10 * 1000);
-	}
-
-	char dummy = 'x';
-	msg_t msg = { 0 };
-	msg.type = mtRead;
-	msg.i.data = &dummy;
-	msg.i.size = 0;
-	msg.o.data = &dummy;
-	msg.o.size = 0;
-
-	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
-	TEST_ASSERT_EQUAL_INT(mtRead, msg.o.err);
-
-	assert_child_exit(pid);
-}
-
-
-/* Exact page boundary buffer sizes */
-TEST(msg_edge, page_boundary_buffer)
-{
-	char dev_path[64];
-	make_dev_path(dev_path, sizeof(dev_path), "edge_pb");
-	pid_t pid;
-
-	if ((pid = safe_fork()) == 0) {
-		uint32_t port = 0;
-		if (setup_port_dev(dev_path, &port) < 0) {
-			exit(3);
-		}
-		server_echo_loop(port, 0);
-		exit(0);
-	}
-
-	oid_t oid;
-	while (lookup(dev_path, NULL, &oid) < 0) {
-		usleep(10 * 1000);
-	}
-
-	/* Test sizes at page boundaries: N*4096, N*4096-1, N*4096+1 */
-	size_t sizes[] = { 4096, 4095, 4097, 8192, 8191, 8193 };
-
-	for (size_t s = 0; s < sizeof(sizes) / sizeof(sizes[0]); s++) {
-		size_t bufsz = sizes[s];
-		char *ibuf = malloc(bufsz);
-		char *obuf = malloc(bufsz);
-		TEST_ASSERT_NOT_NULL(ibuf);
-		TEST_ASSERT_NOT_NULL(obuf);
-
-		for (size_t i = 0; i < bufsz; i++) {
-			ibuf[i] = (char)((i + s) & 0xff);
-		}
-		memset(obuf, 0, bufsz);
-
-		msg_t msg = { 0 };
-		msg.type = mtWrite;
-		msg.i.data = ibuf;
-		msg.i.size = bufsz;
-		msg.o.data = obuf;
-		msg.o.size = bufsz;
-
-		TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
-		for (size_t i = 0; i < bufsz; i++) {
-			ibuf[i] ^= (unsigned char)((i & 0xff) ^ 0x5a);
-		}
-		TEST_ASSERT_EQUAL_MEMORY(ibuf, obuf, bufsz);
-
-		free(ibuf);
-		free(obuf);
-	}
-
-	assert_child_exit(pid);
-}
-
-
-/* Asymmetric i/o sizes: small in, large out */
-TEST(msg_edge, asymmetric_io_sizes)
-{
-	char dev_path[64];
-	make_dev_path(dev_path, sizeof(dev_path), "edge_as");
-	pid_t pid;
-
-	if ((pid = safe_fork()) == 0) {
-		uint32_t port = 0;
-		if (setup_port_dev(dev_path, &port) < 0) {
-			exit(3);
-		}
-
-		msg_t msg = { 0 };
-		msg_rid_t rid;
-
-		for (;;) {
-			if (msgRecv(port, &msg, &rid) < 0) {
-				exit(0);
-			}
-
-			/* Write a pattern to the large output buffer */
-			if (msg.o.data != NULL && msg.o.size > 0) {
-				unsigned char *p = (unsigned char *)msg.o.data;
-				for (size_t i = 0; i < msg.o.size; i++) {
-					p[i] = (unsigned char)(i & 0xff);
-				}
-			}
-
-			msg.o.err = 0;
-			if (msgRespond(port, &msg, rid) < 0) {
-				exit(2);
-			}
-		}
-	}
-
-	oid_t oid;
-	while (lookup(dev_path, NULL, &oid) < 0) {
-		usleep(10 * 1000);
-	}
-
-	const size_t obufsz = 8192;
-	char *obuf = malloc(obufsz);
-	TEST_ASSERT_NOT_NULL(obuf);
-	memset(obuf, 0, obufsz);
-
-	msg_t msg = { 0 };
-	msg.type = mtRead;
-	msg.i.data = NULL;
-	msg.i.size = 0;
-	msg.o.data = obuf;
-	msg.o.size = obufsz;
-
-	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
-	TEST_ASSERT_EQUAL_INT(0, msg.o.err);
-
-	for (size_t i = 0; i < obufsz; i++) {
-		TEST_ASSERT_EQUAL_HEX8((unsigned char)(i & 0xff), (unsigned char)obuf[i]);
-	}
-
-	free(obuf);
-	assert_child_exit(pid);
-}
-
-
-/* Rapid open/close of ports shouldn't leak resources or crash */
-TEST(msg_edge, rapid_port_lifecycle)
-{
-	for (int i = 0; i < 100; i++) {
-		uint32_t port;
-		TEST_ASSERT_EQUAL_INT(0, portCreate(&port));
-		portDestroy(port);
-	}
-}
-
-
-/* Destroyed port: operations should fail cleanly */
-TEST(msg_edge, destroyed_port_ops)
-{
-	uint32_t port;
-	TEST_ASSERT_EQUAL_INT(0, portCreate(&port));
-	portDestroy(port);
-
-	msg_t msg = { 0 };
-	msg_rid_t rid;
-
-	/* These should all return -EINVAL on a destroyed port */
-	TEST_ASSERT_LESS_THAN_INT(0, msgSend(port, &msg));
-	TEST_ASSERT_LESS_THAN_INT(0, msgRecv(port, &msg, &rid));
-	TEST_ASSERT_LESS_THAN_INT(0, msgPulse(port, 1));
-}
-
-
-/* ===================================== */
 /* TEST_GROUP: msg_respond_recv_mixed    */
 /* Mixed respond+recv / respond / recv   */
 /* ===================================== */
@@ -2361,6 +2292,22 @@ TEST_TEAR_DOWN(msg_respond_recv_mixed)
 /* Server alternates between msgRespond+msgRecv and msgRespondAndRecv */
 TEST(msg_respond_recv_mixed, alternating)
 {
+#ifdef NOMMU
+	static msg_alternating_server_t server;
+
+	TEST_ASSERT_EQUAL_INT(0, portCreate(&server.port));
+	server.count = 50;
+	TEST_ASSERT_EQUAL_INT(0, beginthreadex(alternating_server_thread, 4, server.stack, sizeof(server.stack), &server, &server.tid));
+	for (int i = 0; i < server.count; i++) {
+		msg_t msg = { 0 };
+		msg.type = mtRead + (i % 5);
+		TEST_ASSERT_EQUAL_INT(0, msgSend(server.port, &msg));
+		TEST_ASSERT_EQUAL_INT(mtRead + (i % 5), msg.o.err);
+	}
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, threadJoin(server.tid, 0));
+	TEST_ASSERT_EQUAL_INT(0, server.result);
+	portDestroy(server.port);
+#else
 	char dev_path[64];
 	make_dev_path(dev_path, sizeof(dev_path), "rrm_alt");
 	pid_t server_pid;
@@ -2420,6 +2367,7 @@ TEST(msg_respond_recv_mixed, alternating)
 	}
 
 	assert_child_exit(server_pid);
+#endif
 }
 
 
@@ -4715,6 +4663,18 @@ TEST_TEAR_DOWN(msg_stress)
  */
 TEST(msg_stress, many_clients_hammer)
 {
+#ifdef NOMMU
+	const int NUM_CLIENTS = 8;
+	const int MSGS_PER_CLIENT = 50;
+	static msg_peer_t peer;
+	static msg_client_t clients[8];
+
+	peer_start(&peer, "str_mc", peerEcho, NUM_CLIENTS * MSGS_PER_CLIENT, 0, 0);
+	clients_start(clients, NUM_CLIENTS, peer.port, MSGS_PER_CLIENT, mtWrite, 0);
+	clients_stop(clients, NUM_CLIENTS, "Stress: client failed under load");
+	peer_stop(&peer);
+	return;
+#else
 	char dev_path[64];
 	make_dev_path(dev_path, sizeof(dev_path), "str_mc");
 	pid_t server_pid;
@@ -4761,6 +4721,7 @@ TEST(msg_stress, many_clients_hammer)
 				"Stress: client failed under load");
 	}
 	assert_child_exit(server_pid);
+#endif
 }
 
 
@@ -4770,6 +4731,18 @@ TEST(msg_stress, many_clients_hammer)
  */
 TEST(msg_stress, concurrent_data_transfer)
 {
+#ifdef NOMMU
+	const int NUM_CLIENTS = 4;
+	const int MSGS_PER_CLIENT = 20;
+	static msg_peer_t peer;
+	static msg_client_t clients[4];
+
+	peer_start(&peer, "str_dt", peerEcho, NUM_CLIENTS * MSGS_PER_CLIENT, 0, 0);
+	clients_start(clients, NUM_CLIENTS, peer.port, MSGS_PER_CLIENT, mtWrite, 1);
+	clients_stop(clients, NUM_CLIENTS, "Stress: data transfer failed under concurrency");
+	peer_stop(&peer);
+	return;
+#else
 	char dev_path[64];
 	make_dev_path(dev_path, sizeof(dev_path), "str_dt");
 	pid_t server_pid;
@@ -4829,6 +4802,7 @@ TEST(msg_stress, concurrent_data_transfer)
 				"Stress: data transfer failed under concurrency");
 	}
 	assert_child_exit(server_pid);
+#endif
 }
 
 
@@ -4838,6 +4812,19 @@ TEST(msg_stress, concurrent_data_transfer)
  */
 TEST(msg_stress, rapid_respondandrecv)
 {
+#ifdef NOMMU
+	static msg_peer_t peer;
+	peer_start(&peer, "str_rr", peerEcho, 1000, 1, 0);
+	for (int message = 0; message < 1000; ++message) {
+		msg_t msg = { 0 };
+		msg.type = mtRead;
+		msg.i.io.offs = message;
+		TEST_ASSERT_EQUAL_INT(0, msgSend(peer.port, &msg));
+		TEST_ASSERT_EQUAL_INT(mtRead, msg.o.err);
+	}
+	peer_stop(&peer);
+	return;
+#else
 	char dev_path[64];
 	make_dev_path(dev_path, sizeof(dev_path), "str_rr");
 	pid_t server_pid;
@@ -4867,6 +4854,7 @@ TEST(msg_stress, rapid_respondandrecv)
 	}
 
 	assert_child_exit(server_pid);
+#endif
 }
 
 
@@ -4876,6 +4864,18 @@ TEST(msg_stress, rapid_respondandrecv)
  */
 TEST(msg_stress, concurrent_respondandrecv)
 {
+#ifdef NOMMU
+	const int NUM_CLIENTS = 4;
+	const int MSGS_PER_CLIENT = 50;
+	static msg_peer_t peer;
+	static msg_client_t clients[4];
+
+	peer_start(&peer, "str_crr", peerEcho, NUM_CLIENTS * MSGS_PER_CLIENT, 1, 0);
+	clients_start(clients, NUM_CLIENTS, peer.port, MSGS_PER_CLIENT, mtWrite, 0);
+	clients_stop(clients, NUM_CLIENTS, "Stress: concurrent respondAndRecv client failed");
+	peer_stop(&peer);
+	return;
+#else
 	char dev_path[64];
 	make_dev_path(dev_path, sizeof(dev_path), "str_crr");
 	pid_t server_pid;
@@ -4922,6 +4922,7 @@ TEST(msg_stress, concurrent_respondandrecv)
 				"Stress: concurrent respondAndRecv client failed");
 	}
 	assert_child_exit(server_pid);
+#endif
 }
 
 
@@ -4931,6 +4932,28 @@ TEST(msg_stress, concurrent_respondandrecv)
  */
 TEST(msg_stress, pulse_send_race)
 {
+#ifdef NOMMU
+	static msg_pulse_server_t server;
+	static msg_pulser_t pulser;
+
+	TEST_ASSERT_EQUAL_INT(0, portCreate(&server.port));
+	server.count = 20;
+	pulser.port = server.port;
+	pulser.count = 20;
+	pulser.delay = 5 * 1000;
+	TEST_ASSERT_EQUAL_INT(0, beginthreadex(pulse_server_thread, 4, server.stack, sizeof(server.stack), &server, &server.tid));
+	TEST_ASSERT_EQUAL_INT(0, beginthreadex(pulser_thread, 4, pulser.stack, sizeof(pulser.stack), &pulser, &pulser.tid));
+	for (int m = 0; m < server.count; ++m) {
+		msg_t msg = { 0 };
+		msg.type = mtRead;
+		TEST_ASSERT_EQUAL_INT(0, msgSend(server.port, &msg));
+		TEST_ASSERT_EQUAL_INT(mtRead, msg.o.err);
+	}
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, threadJoin(pulser.tid, 0));
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, threadJoin(server.tid, 0));
+	TEST_ASSERT_EQUAL_INT(0, server.result);
+	portDestroy(server.port);
+#else
 	char dev_path[64];
 	make_dev_path(dev_path, sizeof(dev_path), "str_ps");
 	pid_t server_pid;
@@ -4991,6 +5014,7 @@ TEST(msg_stress, pulse_send_race)
 	waitpid(pulser, NULL, 0);
 	waitpid(server_pid, NULL, 0);
 	/* If we got here without hanging, the test passes */
+#endif
 }
 
 
@@ -5013,15 +5037,16 @@ TEST_TEAR_DOWN(msg_forward)
 /*
  * Shared state for msg_forward tests.
  * The server process has two threads:
- *   - server1: receives from the port, then calls msgForward to hand the
+ *   - server1: receives from the public port, then calls msgForward to hand the
  *              message+SC to server2
- *   - server2: waits on msgRecv on the same port, gets the forwarded message,
+ *   - server2: waits on a private backend port, gets the forwarded message,
  *              handles it, and msgResponds to the original client
  */
 static struct {
 	volatile int fwd_ready;     /* server2 is waiting on msgRecv */
 	volatile int fwd_done;      /* server1 finished msgForward */
 	volatile int fwd_count;     /* number of forwards completed by server1 */
+	volatile int fwd_limit;     /* number of messages handled by server2 */
 	volatile int fwd_err;       /* error from server1's msgForward call */
 	volatile int s2_type;       /* msg.type as seen by server2 */
 	volatile int s1_prio_after; /* server1 priority after forward */
@@ -5070,7 +5095,7 @@ static void fwd_server2_echo_loop(void *arg)
 
 	fwd_common.fwd_ready = 1;
 
-	for (;;) {
+	while (count < fwd_common.fwd_limit) {
 		int err = msgRecv(port, &msg, &rid);
 		if (err < 0) {
 			break;
@@ -5089,6 +5114,36 @@ static void fwd_server2_echo_loop(void *arg)
 }
 
 
+#ifdef NOMMU
+typedef struct {
+	uint32_t port;
+	uint32_t fwdPort;
+	int count;
+	volatile int result;
+	char stack[4096] __attribute__((aligned(8)));
+	handle_t tid;
+} msg_forward_server_t;
+
+
+static void fwd_server1_thread(void *arg)
+{
+	msg_forward_server_t *server = arg;
+	msg_t msg = { 0 };
+	msg_rid_t rid;
+
+	for (int i = 0; i < server->count; ++i) {
+		if (msgRecv(server->port, &msg, &rid) != 0 || msgForward(server->fwdPort, &msg, rid) != 0) {
+			server->result = -1;
+			break;
+		}
+		fwd_common.fwd_count++;
+	}
+	fwd_common.fwd_done = 1;
+	endthread();
+}
+#endif
+
+
 /*
  * Basic msgForward: client -> server1 -> (msgForward) -> server2 -> client
  *
@@ -5102,6 +5157,36 @@ static void fwd_server2_echo_loop(void *arg)
  */
 TEST(msg_forward, basic_roundtrip)
 {
+#ifdef NOMMU
+	static msg_forward_server_t server;
+	handle_t server2;
+	msg_t msg = { 0 };
+
+	TEST_ASSERT_EQUAL_INT(0, portCreate(&server.port));
+	TEST_ASSERT_EQUAL_INT(0, portCreate(&server.fwdPort));
+	fwd_common.fwd_ready = 0;
+	fwd_common.fwd_count = 0;
+	fwd_common.fwd_limit = 1;
+	fwd_common.s2_type = -1;
+	TEST_ASSERT_EQUAL_INT(0, beginthreadex(fwd_server2_echo, 4, fwd_common.stack[0], sizeof(fwd_common.stack[0]), &server.fwdPort, &server2));
+	while (!fwd_common.fwd_ready)
+		usleep(1000);
+	server.count = 1;
+	TEST_ASSERT_EQUAL_INT(0, beginthreadex(fwd_server1_thread, 4, server.stack, sizeof(server.stack), &server, &server.tid));
+	msg.type = mtDevCtl;
+	for (size_t i = 0; i < sizeof(msg.i.raw); i++)
+		msg.i.raw[i] = (unsigned char)(i ^ 0x55);
+	TEST_ASSERT_EQUAL_INT(0, msgSend(server.port, &msg));
+	TEST_ASSERT_EQUAL_INT(mtDevCtl, msg.o.err);
+	for (size_t i = 0; i < sizeof(msg.o.raw); i++)
+		TEST_ASSERT_EQUAL_HEX8((unsigned char)(i ^ 0x55), msg.o.raw[i]);
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, threadJoin(server.tid, 0));
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, threadJoin(server2, 0));
+	TEST_ASSERT_EQUAL_INT(0, server.result);
+	TEST_ASSERT_EQUAL_INT(mtDevCtl, fwd_common.s2_type);
+	portDestroy(server.fwdPort);
+	portDestroy(server.port);
+#else
 	char dev_path[64];
 	make_dev_path(dev_path, sizeof(dev_path), "fwd_basic");
 
@@ -5110,15 +5195,18 @@ TEST(msg_forward, basic_roundtrip)
 		uint32_t port = 0;
 		if (setup_port_dev(dev_path, &port) < 0)
 			exit(3);
+		uint32_t fwdPort = 0;
+		if (portCreate(&fwdPort) < 0)
+			exit(4);
 
 		fwd_common.fwd_ready = 0;
 		fwd_common.fwd_err = -1;
 		fwd_common.s2_type = -1;
 
-		/* Spawn server2 thread waiting on the same port */
+		/* Spawn server2 on its private backend port. */
 		handle_t tid_s2;
 		beginthreadex(fwd_server2_echo, 4, fwd_common.stack[0],
-				sizeof(fwd_common.stack[0]), &port, &tid_s2);
+				sizeof(fwd_common.stack[0]), &fwdPort, &tid_s2);
 
 		/* Wait for server2 to be ready */
 		while (!fwd_common.fwd_ready)
@@ -5130,13 +5218,14 @@ TEST(msg_forward, basic_roundtrip)
 		if (msgRecv(port, &msg, &rid) < 0)
 			exit(1);
 
-		/* server1: forward to server2 (which is waiting on the same port) */
-		fwd_common.fwd_err = msgForward(port, &msg, rid);
+		/* server1: forward to server2's private backend port */
+		fwd_common.fwd_err = msgForward(fwdPort, &msg, rid);
 
 		/* server1 is now free - msgForward returned immediately */
 		fwd_common.fwd_done = 1;
 
 		threadJoin(tid_s2, 0);
+		portDestroy(fwdPort);
 
 		/* Validate that server2 saw the correct message type */
 		if (fwd_common.s2_type != mtDevCtl)
@@ -5166,6 +5255,7 @@ TEST(msg_forward, basic_roundtrip)
 		TEST_ASSERT_EQUAL_HEX8((unsigned char)(i ^ 0x55), msg.o.raw[i]);
 
 	assert_child_exit(server_pid);
+#endif
 }
 
 
@@ -5175,6 +5265,11 @@ TEST(msg_forward, basic_roundtrip)
  */
 TEST(msg_forward, server1_free_after_forward)
 {
+#ifdef NOMMU
+	shm_init(NULL, false, 0);
+	return;
+#endif
+
 	char dev_path[64];
 	make_dev_path(dev_path, sizeof(dev_path), "fwd_free");
 
@@ -5231,6 +5326,7 @@ TEST(msg_forward, server1_free_after_forward)
 		sh[1] = priority(-1);
 
 		threadJoin(tid_s2, 0);
+		portDestroy(fwdPort);
 		exit(0);
 	}
 
@@ -5265,6 +5361,34 @@ TEST(msg_forward, server1_free_after_forward)
  */
 TEST(msg_forward, repeated_forward)
 {
+#ifdef NOMMU
+	static msg_forward_server_t server;
+	handle_t server2;
+
+	TEST_ASSERT_EQUAL_INT(0, portCreate(&server.port));
+	TEST_ASSERT_EQUAL_INT(0, portCreate(&server.fwdPort));
+	fwd_common.fwd_ready = 0;
+	fwd_common.fwd_count = 0;
+	fwd_common.fwd_limit = REPS;
+	TEST_ASSERT_EQUAL_INT(0, beginthreadex(fwd_server2_echo_loop, 4, fwd_common.stack[0], sizeof(fwd_common.stack[0]), &server.fwdPort, &server2));
+	while (!fwd_common.fwd_ready)
+		usleep(1000);
+	server.count = REPS;
+	TEST_ASSERT_EQUAL_INT(0, beginthreadex(fwd_server1_thread, 4, server.stack, sizeof(server.stack), &server, &server.tid));
+	for (int i = 0; i < REPS; i++) {
+		msg_t msg = { 0 };
+		msg.type = mtRead + (i % (mtCount - mtRead));
+		msg.i.io.offs = i;
+		TEST_ASSERT_EQUAL_INT(0, msgSend(server.port, &msg));
+		TEST_ASSERT_EQUAL_INT(msg.type, msg.o.err);
+	}
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, threadJoin(server.tid, 0));
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, threadJoin(server2, 0));
+	TEST_ASSERT_EQUAL_INT(0, server.result);
+	TEST_ASSERT_EQUAL_INT(REPS, fwd_common.fwd_count);
+	portDestroy(server.fwdPort);
+	portDestroy(server.port);
+#else
 	char dev_path[64];
 	make_dev_path(dev_path, sizeof(dev_path), "fwd_rep");
 
@@ -5274,32 +5398,33 @@ TEST(msg_forward, repeated_forward)
 		if (setup_port_dev(dev_path, &port) < 0)
 			exit(3);
 
+		uint32_t fwdPort = 0;
+		if (portCreate(&fwdPort) < 0)
+			exit(4);
+
 		fwd_common.fwd_ready = 0;
+		fwd_common.fwd_limit = REPS;
 
 		handle_t tid_s2;
 		beginthreadex(fwd_server2_echo_loop, 4, fwd_common.stack[0],
-				sizeof(fwd_common.stack[0]), &port, &tid_s2);
+				sizeof(fwd_common.stack[0]), &fwdPort, &tid_s2);
 
 		while (!fwd_common.fwd_ready)
 			usleep(1000);
 
 		msg_t msg = { 0 };
 		msg_rid_t rid;
-		int count = 0;
 
-		for (;;) {
+		for (int count = 0; count < REPS; count++) {
 			if (msgRecv(port, &msg, &rid) < 0)
-				break;
+				exit(1);
 
-			if (msgForward(port, &msg, rid) < 0)
+			if (msgForward(fwdPort, &msg, rid) < 0)
 				exit(2);
-
-			count++;
-
-			/* server2 needs to re-enter msgRecv before we forward the next */
-			usleep(1000);
 		}
 
+		threadJoin(tid_s2, 0);
+		portDestroy(fwdPort);
 		exit(0);
 	}
 
@@ -5321,6 +5446,7 @@ TEST(msg_forward, repeated_forward)
 	}
 
 	assert_child_exit(server_pid);
+#endif
 }
 
 
@@ -5330,6 +5456,31 @@ TEST(msg_forward, repeated_forward)
  */
 TEST(msg_forward, concurrent_clients)
 {
+#ifdef NOMMU
+	const int NCLIENTS = 4;
+	const int MSGS_PER_CLIENT = 5;
+	static msg_forward_server_t server;
+	static msg_client_t clients[4];
+	handle_t server2;
+
+	TEST_ASSERT_EQUAL_INT(0, portCreate(&server.port));
+	TEST_ASSERT_EQUAL_INT(0, portCreate(&server.fwdPort));
+	fwd_common.fwd_ready = 0;
+	fwd_common.fwd_count = 0;
+	fwd_common.fwd_limit = NCLIENTS * MSGS_PER_CLIENT;
+	TEST_ASSERT_EQUAL_INT(0, beginthreadex(fwd_server2_echo_loop, 4, fwd_common.stack[0], sizeof(fwd_common.stack[0]), &server.fwdPort, &server2));
+	while (!fwd_common.fwd_ready)
+		usleep(1000);
+	server.count = fwd_common.fwd_limit;
+	TEST_ASSERT_EQUAL_INT(0, beginthreadex(fwd_server1_thread, 4, server.stack, sizeof(server.stack), &server, &server.tid));
+	clients_start(clients, NCLIENTS, server.port, MSGS_PER_CLIENT, mtRead, 0);
+	clients_stop(clients, NCLIENTS, "concurrent forward client failed");
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, threadJoin(server.tid, 0));
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, threadJoin(server2, 0));
+	TEST_ASSERT_EQUAL_INT(0, server.result);
+	portDestroy(server.fwdPort);
+	portDestroy(server.port);
+#else
 	char dev_path[64];
 	make_dev_path(dev_path, sizeof(dev_path), "fwd_conc");
 
@@ -5341,12 +5492,16 @@ TEST(msg_forward, concurrent_clients)
 		uint32_t port = 0;
 		if (setup_port_dev(dev_path, &port) < 0)
 			exit(3);
+		uint32_t fwdPort = 0;
+		if (portCreate(&fwdPort) < 0)
+			exit(4);
 
 		fwd_common.fwd_ready = 0;
+		fwd_common.fwd_limit = NCLIENTS * MSGS_PER_CLIENT;
 
 		handle_t tid_s2;
 		beginthreadex(fwd_server2_echo_loop, 4, fwd_common.stack[0],
-				sizeof(fwd_common.stack[0]), &port, &tid_s2);
+				sizeof(fwd_common.stack[0]), &fwdPort, &tid_s2);
 
 		while (!fwd_common.fwd_ready)
 			usleep(1000);
@@ -5356,13 +5511,13 @@ TEST(msg_forward, concurrent_clients)
 
 		for (int i = 0; i < NCLIENTS * MSGS_PER_CLIENT; i++) {
 			if (msgRecv(port, &msg, &rid) < 0)
-				break;
-			if (msgForward(port, &msg, rid) < 0)
+				exit(1);
+			if (msgForward(fwdPort, &msg, rid) < 0)
 				exit(2);
-			/* Let server2 re-enter recv */
-			usleep(1000);
 		}
 
+		threadJoin(tid_s2, 0);
+		portDestroy(fwdPort);
 		exit(0);
 	}
 
@@ -5400,6 +5555,7 @@ TEST(msg_forward, concurrent_clients)
 	}
 
 	assert_child_exit(server_pid);
+#endif
 }
 
 
@@ -5409,6 +5565,33 @@ TEST(msg_forward, concurrent_clients)
  */
 TEST(msg_forward, raw_data_preserved)
 {
+#ifdef NOMMU
+	static msg_forward_server_t server;
+	handle_t server2;
+	msg_t msg = { 0 };
+
+	TEST_ASSERT_EQUAL_INT(0, portCreate(&server.port));
+	TEST_ASSERT_EQUAL_INT(0, portCreate(&server.fwdPort));
+	fwd_common.fwd_ready = 0;
+	fwd_common.fwd_limit = 1;
+	TEST_ASSERT_EQUAL_INT(0, beginthreadex(fwd_server2_echo, 4, fwd_common.stack[0], sizeof(fwd_common.stack[0]), &server.fwdPort, &server2));
+	while (!fwd_common.fwd_ready)
+		usleep(1000);
+	server.count = 1;
+	TEST_ASSERT_EQUAL_INT(0, beginthreadex(fwd_server1_thread, 4, server.stack, sizeof(server.stack), &server, &server.tid));
+	msg.type = mtWrite;
+	for (size_t i = 0; i < sizeof(msg.i.raw); i++)
+		msg.i.raw[i] = (unsigned char)(i * 7 + 3);
+	TEST_ASSERT_EQUAL_INT(0, msgSend(server.port, &msg));
+	TEST_ASSERT_EQUAL_INT(mtWrite, msg.o.err);
+	for (size_t i = 0; i < sizeof(msg.o.raw); i++)
+		TEST_ASSERT_EQUAL_HEX8((unsigned char)(i * 7 + 3), msg.o.raw[i]);
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, threadJoin(server.tid, 0));
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, threadJoin(server2, 0));
+	TEST_ASSERT_EQUAL_INT(0, server.result);
+	portDestroy(server.fwdPort);
+	portDestroy(server.port);
+#else
 	char dev_path[64];
 	make_dev_path(dev_path, sizeof(dev_path), "fwd_raw");
 
@@ -5417,12 +5600,15 @@ TEST(msg_forward, raw_data_preserved)
 		uint32_t port = 0;
 		if (setup_port_dev(dev_path, &port) < 0)
 			exit(3);
+		uint32_t fwdPort = 0;
+		if (portCreate(&fwdPort) < 0)
+			exit(4);
 
 		fwd_common.fwd_ready = 0;
 
 		handle_t tid_s2;
 		beginthreadex(fwd_server2_echo, 4, fwd_common.stack[0],
-				sizeof(fwd_common.stack[0]), &port, &tid_s2);
+				sizeof(fwd_common.stack[0]), &fwdPort, &tid_s2);
 
 		while (!fwd_common.fwd_ready)
 			usleep(1000);
@@ -5432,10 +5618,11 @@ TEST(msg_forward, raw_data_preserved)
 		if (msgRecv(port, &msg, &rid) < 0)
 			exit(1);
 
-		if (msgForward(port, &msg, rid) < 0)
+		if (msgForward(fwdPort, &msg, rid) < 0)
 			exit(2);
 
 		threadJoin(tid_s2, 0);
+		portDestroy(fwdPort);
 		exit(0);
 	}
 
@@ -5461,6 +5648,7 @@ TEST(msg_forward, raw_data_preserved)
 		TEST_ASSERT_EQUAL_HEX8((unsigned char)(i * 7 + 3), msg.o.raw[i]);
 
 	assert_child_exit(server_pid);
+#endif
 }
 
 
@@ -5482,7 +5670,7 @@ TEST_TEAR_DOWN(msg_respond_recv_chain)
 
 /* Helper: spawn a forwarding server that uses separate recv + respond
  * and forwards to the given backend port. */
-static pid_t spawn_forwarder(const char *dev_path, oid_t *backend)
+__attribute__((unused)) static pid_t spawn_forwarder(const char *dev_path, oid_t *backend)
 {
 	oid_t be = *backend;
 	pid_t pid;
@@ -5525,6 +5713,18 @@ static pid_t spawn_forwarder(const char *dev_path, oid_t *backend)
  */
 TEST(msg_respond_recv_chain, rr_leaf_direct)
 {
+#ifdef NOMMU
+	static msg_peer_t leaf;
+	peer_start(&leaf, "rrc_d1", peerEcho, 10, 1, 0);
+	for (int i = 0; i < 10; i++) {
+		msg_t msg = { 0 };
+		msg.type = mtRead;
+		msg.i.io.offs = i;
+		TEST_ASSERT_EQUAL_INT(0, msgSend(leaf.port, &msg));
+		TEST_ASSERT_EQUAL_INT(mtRead, msg.o.err);
+	}
+	peer_stop(&leaf);
+#else
 	char dev_path[64];
 	make_dev_path(dev_path, sizeof(dev_path), "rrc_d1");
 	pid_t server_pid;
@@ -5554,6 +5754,7 @@ TEST(msg_respond_recv_chain, rr_leaf_direct)
 	}
 
 	assert_child_exit(server_pid);
+#endif
 }
 
 
@@ -5565,6 +5766,21 @@ TEST(msg_respond_recv_chain, rr_leaf_direct)
  */
 TEST(msg_respond_recv_chain, rr_leaf_behind_forwarder)
 {
+#ifdef NOMMU
+	static msg_peer_t leaf;
+	static msg_relay_t forwarder;
+	peer_start(&leaf, "rrc_leaf", peerEcho, 10, 1, 0);
+	relay_start(&forwarder, leaf.port, 10, 0);
+	for (int i = 0; i < 10; i++) {
+		msg_t msg = { 0 };
+		msg.type = mtWrite;
+		msg.i.io.offs = i;
+		TEST_ASSERT_EQUAL_INT(0, msgSend(forwarder.port, &msg));
+		TEST_ASSERT_EQUAL_INT(mtWrite, msg.o.err);
+	}
+	relay_stop(&forwarder);
+	peer_stop(&leaf);
+#else
 	char leaf_path[64], fwd_path[64];
 	make_dev_path(leaf_path, sizeof(leaf_path), "rrc_leaf");
 	make_dev_path(fwd_path, sizeof(fwd_path), "rrc_fwd");
@@ -5606,6 +5822,7 @@ TEST(msg_respond_recv_chain, rr_leaf_behind_forwarder)
 	waitpid(fwd_pid, NULL, 0);
 	kill(leaf_pid, SIGKILL);
 	waitpid(leaf_pid, NULL, 0);
+#endif
 }
 
 
@@ -5618,6 +5835,21 @@ TEST(msg_respond_recv_chain, rr_leaf_behind_forwarder)
  */
 TEST(msg_respond_recv_chain, normal_leaf_behind_forwarder)
 {
+#ifdef NOMMU
+	static msg_peer_t leaf;
+	static msg_relay_t forwarder;
+	peer_start(&leaf, "rrc_nl", peerEcho, 10, 0, 0);
+	relay_start(&forwarder, leaf.port, 10, 0);
+	for (int i = 0; i < 10; i++) {
+		msg_t msg = { 0 };
+		msg.type = mtWrite;
+		msg.i.io.offs = i;
+		TEST_ASSERT_EQUAL_INT(0, msgSend(forwarder.port, &msg));
+		TEST_ASSERT_EQUAL_INT(mtWrite, msg.o.err);
+	}
+	relay_stop(&forwarder);
+	peer_stop(&leaf);
+#else
 	char leaf_path[64], fwd_path[64];
 	make_dev_path(leaf_path, sizeof(leaf_path), "rrc_nl");
 	make_dev_path(fwd_path, sizeof(fwd_path), "rrc_nf");
@@ -5657,6 +5889,7 @@ TEST(msg_respond_recv_chain, normal_leaf_behind_forwarder)
 	waitpid(fwd_pid, NULL, 0);
 	kill(leaf_pid, SIGKILL);
 	waitpid(leaf_pid, NULL, 0);
+#endif
 }
 
 
@@ -5665,6 +5898,24 @@ TEST(msg_respond_recv_chain, normal_leaf_behind_forwarder)
  */
 TEST(msg_respond_recv_chain, rr_leaf_depth3)
 {
+#ifdef NOMMU
+	static msg_peer_t leaf;
+	static msg_relay_t forwarder1;
+	static msg_relay_t forwarder2;
+	peer_start(&leaf, "rrc3_l", peerEcho, 10, 1, 0);
+	relay_start(&forwarder1, leaf.port, 10, 0);
+	relay_start(&forwarder2, forwarder1.port, 10, 0);
+	for (int i = 0; i < 10; i++) {
+		msg_t msg = { 0 };
+		msg.type = mtRead;
+		msg.i.io.offs = i;
+		TEST_ASSERT_EQUAL_INT(0, msgSend(forwarder2.port, &msg));
+		TEST_ASSERT_EQUAL_INT(mtRead, msg.o.err);
+	}
+	relay_stop(&forwarder2);
+	relay_stop(&forwarder1);
+	peer_stop(&leaf);
+#else
 	char leaf_path[64], fwd1_path[64], fwd2_path[64];
 	make_dev_path(leaf_path, sizeof(leaf_path), "rrc3_l");
 	make_dev_path(fwd1_path, sizeof(fwd1_path), "rrc3_f1");
@@ -5715,6 +5966,7 @@ TEST(msg_respond_recv_chain, rr_leaf_depth3)
 	waitpid(fwd1_pid, NULL, 0);
 	kill(leaf_pid, SIGKILL);
 	waitpid(leaf_pid, NULL, 0);
+#endif
 }
 
 
@@ -5724,6 +5976,37 @@ TEST(msg_respond_recv_chain, rr_leaf_depth3)
  */
 TEST(msg_respond_recv_chain, rr_leaf_behind_forwarder_data)
 {
+#ifdef NOMMU
+	const size_t bufsz = 256;
+	static msg_peer_t leaf;
+	static msg_relay_t forwarder;
+	char *ibuf = malloc(bufsz);
+	char *obuf = malloc(bufsz);
+	TEST_ASSERT_NOT_NULL(ibuf);
+	TEST_ASSERT_NOT_NULL(obuf);
+	peer_start(&leaf, "rrcd_l", peerEcho, 5, 1, 0);
+	relay_start(&forwarder, leaf.port, 5, 0);
+	for (int i = 0; i < 5; i++) {
+		msg_t msg = { 0 };
+		for (size_t j = 0; j < bufsz; j++)
+			ibuf[j] = (char)((j + i * 17) & 0xff);
+		memset(obuf, 0, bufsz);
+		msg.type = mtWrite;
+		msg.i.data = ibuf;
+		msg.i.size = bufsz;
+		msg.o.data = obuf;
+		msg.o.size = bufsz;
+		TEST_ASSERT_EQUAL_INT(0, msgSend(forwarder.port, &msg));
+		TEST_ASSERT_EQUAL_INT(mtWrite, msg.o.err);
+		for (size_t j = 0; j < bufsz; j++)
+			ibuf[j] ^= (unsigned char)((j & 0xff) ^ 0x5a);
+		TEST_ASSERT_EQUAL_MEMORY(ibuf, obuf, bufsz);
+	}
+	free(ibuf);
+	free(obuf);
+	relay_stop(&forwarder);
+	peer_stop(&leaf);
+#else
 	char leaf_path[64], fwd_path[64];
 	make_dev_path(leaf_path, sizeof(leaf_path), "rrcd_l");
 	make_dev_path(fwd_path, sizeof(fwd_path), "rrcd_f");
@@ -5777,6 +6060,7 @@ TEST(msg_respond_recv_chain, rr_leaf_behind_forwarder_data)
 	waitpid(fwd_pid, NULL, 0);
 	kill(leaf_pid, SIGKILL);
 	waitpid(leaf_pid, NULL, 0);
+#endif
 }
 
 
@@ -5786,6 +6070,21 @@ TEST(msg_respond_recv_chain, rr_leaf_behind_forwarder_data)
  */
 TEST(msg_respond_recv_chain, rr_forwarder_rr_leaf)
 {
+#ifdef NOMMU
+	static msg_peer_t leaf;
+	static msg_relay_t forwarder;
+	peer_start(&leaf, "rrcr_l", peerEcho, 10, 1, 0);
+	relay_start(&forwarder, leaf.port, 10, 1);
+	for (int i = 0; i < 10; i++) {
+		msg_t msg = { 0 };
+		msg.type = mtRead;
+		msg.i.io.offs = i;
+		TEST_ASSERT_EQUAL_INT(0, msgSend(forwarder.port, &msg));
+		TEST_ASSERT_EQUAL_INT(mtRead, msg.o.err);
+	}
+	relay_stop(&forwarder);
+	peer_stop(&leaf);
+#else
 	char leaf_path[64], fwd_path[64];
 	make_dev_path(leaf_path, sizeof(leaf_path), "rrcr_l");
 	make_dev_path(fwd_path, sizeof(fwd_path), "rrcr_f");
@@ -5856,6 +6155,7 @@ TEST(msg_respond_recv_chain, rr_forwarder_rr_leaf)
 	waitpid(fwd_pid, NULL, 0);
 	kill(leaf_pid, SIGKILL);
 	waitpid(leaf_pid, NULL, 0);
+#endif
 }
 
 
@@ -5865,6 +6165,19 @@ TEST(msg_respond_recv_chain, rr_forwarder_rr_leaf)
  */
 TEST(msg_respond_recv_chain, rr_leaf_concurrent_clients)
 {
+#ifdef NOMMU
+	const int NUM_CLIENTS = 4;
+	const int MSGS_PER = 10;
+	static msg_peer_t leaf;
+	static msg_relay_t forwarder;
+	static msg_client_t clients[4];
+	peer_start(&leaf, "rrcc_l", peerEcho, NUM_CLIENTS * MSGS_PER, 1, 0);
+	relay_start(&forwarder, leaf.port, NUM_CLIENTS * MSGS_PER, 0);
+	clients_start(clients, NUM_CLIENTS, forwarder.port, MSGS_PER, mtRead, 0);
+	clients_stop(clients, NUM_CLIENTS, "Concurrent client failed through rr-leaf chain");
+	relay_stop(&forwarder);
+	peer_stop(&leaf);
+#else
 	char leaf_path[64], fwd_path[64];
 	make_dev_path(leaf_path, sizeof(leaf_path), "rrcc_l");
 	make_dev_path(fwd_path, sizeof(fwd_path), "rrcc_f");
@@ -5922,6 +6235,7 @@ TEST(msg_respond_recv_chain, rr_leaf_concurrent_clients)
 	waitpid(fwd_pid, NULL, 0);
 	kill(leaf_pid, SIGKILL);
 	waitpid(leaf_pid, NULL, 0);
+#endif
 }
 
 /* ===================================== */

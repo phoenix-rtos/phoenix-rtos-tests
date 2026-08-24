@@ -18,9 +18,17 @@
 #include <fcntl.h>
 #include <assert.h>
 
+#ifdef NOMMU
+#include <unity_fixture.h>
+#endif
+
 
 static inline char *shm_init(char *path, bool creat, int bufsz)
 {
+#ifdef NOMMU
+	TEST_IGNORE_MESSAGE("shm_utils.h not supported on NOMMU");
+	return NULL;
+#else
 	int ret;
 	int flags = O_RDWR;
 
@@ -61,6 +69,7 @@ static inline char *shm_init(char *path, bool creat, int bufsz)
 	}
 
 	return v;
+#endif
 }
 
 #endif
