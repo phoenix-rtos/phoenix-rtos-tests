@@ -272,8 +272,18 @@ static void peer_serve(msg_peer_t *peer)
 }
 
 
-#ifdef NOMMU
-static void peer_thread(void *arg)
+typedef struct {
+	uint32_t port;
+	uint8_t first;
+	uint8_t second;
+	int count;
+	unsigned int delay;
+	char stack[4096] __attribute__((aligned(8)));
+	handle_t tid;
+} msg_pulser_t;
+
+
+__attribute__((unused)) static void peer_thread(void *arg)
 {
 	peer_serve(arg);
 	endthread();
@@ -333,7 +343,7 @@ static void client_send_loop(void *arg)
 }
 
 
-static void clients_start(msg_client_t *clients, int clientCount, uint32_t port, int messages, int type, int withData)
+__attribute__((unused)) static void clients_start(msg_client_t *clients, int clientCount, uint32_t port, int messages, int type, int withData)
 {
 	for (int client = 0; client < clientCount; ++client) {
 		memset(&clients[client], 0, sizeof(clients[client]));
@@ -347,7 +357,7 @@ static void clients_start(msg_client_t *clients, int clientCount, uint32_t port,
 }
 
 
-static void clients_stop(msg_client_t *clients, int clientCount, const char *message)
+__attribute__((unused)) static void clients_stop(msg_client_t *clients, int clientCount, const char *message)
 {
 	for (int client = 0; client < clientCount; ++client) {
 		TEST_ASSERT_GREATER_OR_EQUAL_INT(0, threadJoin(clients[client].tid, 0));
@@ -410,7 +420,7 @@ static void relay_thread(void *arg)
 }
 
 
-static void relay_start(msg_relay_t *relay, uint32_t backend, int count, int respondAndRecv)
+__attribute__((unused)) static void relay_start(msg_relay_t *relay, uint32_t backend, int count, int respondAndRecv)
 {
 	memset(relay, 0, sizeof(*relay));
 	relay->backend = backend;
@@ -421,23 +431,12 @@ static void relay_start(msg_relay_t *relay, uint32_t backend, int count, int res
 }
 
 
-static void relay_stop(msg_relay_t *relay)
+__attribute__((unused)) static void relay_stop(msg_relay_t *relay)
 {
 	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, threadJoin(relay->tid, 0));
 	TEST_ASSERT_EQUAL_INT(0, relay->result);
 	portDestroy(relay->port);
 }
-
-
-typedef struct {
-	uint32_t port;
-	uint8_t first;
-	uint8_t second;
-	int count;
-	unsigned int delay;
-	char stack[4096] __attribute__((aligned(8)));
-	handle_t tid;
-} msg_pulser_t;
 
 
 static void pulser_thread(void *arg)
@@ -468,7 +467,7 @@ typedef struct {
 } msg_priority_server_t;
 
 
-static void priority_server_thread(void *arg)
+__attribute__((unused)) static void priority_server_thread(void *arg)
 {
 	msg_priority_server_t *server = arg;
 	msg_t msg = { 0 };
@@ -499,7 +498,7 @@ typedef struct {
 } msg_priority_client_t;
 
 
-static void priority_client_thread(void *arg)
+__attribute__((unused)) static void priority_client_thread(void *arg)
 {
 	msg_priority_client_t *client = arg;
 	msg_t msg = { 0 };
@@ -521,7 +520,7 @@ typedef struct {
 } msg_alternating_server_t;
 
 
-static void alternating_server_thread(void *arg)
+__attribute__((unused)) static void alternating_server_thread(void *arg)
 {
 	msg_alternating_server_t *server = arg;
 	msg_t msg = { 0 };
@@ -556,7 +555,7 @@ typedef struct {
 } msg_reverse_server_t;
 
 
-static void reverse_server_thread(void *arg)
+__attribute__((unused)) static void reverse_server_thread(void *arg)
 {
 	msg_reverse_server_t *server = arg;
 	msg_t messages[3] = { 0 };
@@ -588,7 +587,7 @@ typedef struct {
 } msg_pulse_server_t;
 
 
-static void pulse_server_thread(void *arg)
+__attribute__((unused)) static void pulse_server_thread(void *arg)
 {
 	msg_pulse_server_t *server = arg;
 	msg_t msg = { 0 };
@@ -608,7 +607,6 @@ static void pulse_server_thread(void *arg)
 	}
 	endthread();
 }
-#endif
 
 
 static void peer_start(msg_peer_t *peer, const char *name, int kind, int count, int respondAndRecv, size_t size)
@@ -1031,7 +1029,6 @@ TEST_TEAR_DOWN(msg_pulse)
 /* Pulse delivered to a blocked receiver */
 TEST(msg_pulse, pulse_to_blocked_recv)
 {
-#ifdef NOMMU
 	uint32_t port;
 	static msg_pulser_t pulser;
 	msg_t msg = { 0 };
@@ -1045,41 +1042,6 @@ TEST(msg_pulse, pulse_to_blocked_recv)
 	TEST_ASSERT_EQUAL_UINT8(42, msg.o.pulse);
 	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, threadJoin(pulser.tid, 0));
 	portDestroy(port);
-#else
-	char dev_path[64];
-	make_dev_path(dev_path, sizeof(dev_path), "pulse_b");
-	pid_t pid;
-
-	if ((pid = safe_fork()) != 0) {
-		/* parent = server */
-		uint32_t port = 0;
-		TEST_ASSERT_GREATER_OR_EQUAL_INT(0, setup_port_dev(dev_path, &port));
-
-		msg_t msg = { 0 };
-		msg_rid_t rid;
-
-		int err = msgRecv(port, &msg, &rid);
-		/* Expect pulse return */
-		TEST_ASSERT_EQUAL_INT(-EPULSE, err);
-		TEST_ASSERT_EQUAL_UINT8(42, msg.o.pulse);
-
-		if (waitpid(pid, NULL, 0) < 0) {
-			FAIL("waitpid");
-		}
-	}
-	else {
-		/* child = pulse sender */
-		oid_t oid;
-		while (lookup(dev_path, NULL, &oid) < 0) {
-			usleep(10 * 1000);
-		}
-		/* give server time to enter msgRecv */
-		usleep(100 * 1000);
-
-		msgPulse(oid.port, 42);
-		exit(0);
-	}
-#endif
 }
 
 
@@ -1127,7 +1089,6 @@ TEST(msg_pulse, overwrite_pending)
 /* Pulse with value 0 edge case */
 TEST(msg_pulse, pulse_zero)
 {
-#ifdef NOMMU
 	uint32_t port;
 	static msg_pulser_t pulser;
 	msg_t msg = { 0 };
@@ -1139,51 +1100,10 @@ TEST(msg_pulse, pulse_zero)
 	pulser.second = 1;
 	pulser.delay = 20 * 1000;
 	TEST_ASSERT_EQUAL_INT(0, beginthreadex(pulser_thread, 4, pulser.stack, sizeof(pulser.stack), &pulser, &pulser.tid));
-	TEST_ASSERT_LESS_THAN_INT(0, msgRecv(port, &msg, &rid));
-	TEST_ASSERT_EQUAL_UINT8(1, msg.o.pulse);
+	TEST_ASSERT_EQUAL_INT(-EPULSE, msgRecv(port, &msg, &rid));
+	TEST_ASSERT_EQUAL_UINT8(0, msg.o.pulse);
 	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, threadJoin(pulser.tid, 0));
 	portDestroy(port);
-#else
-	char dev_path[64];
-	make_dev_path(dev_path, sizeof(dev_path), "pulse_z");
-	pid_t pid;
-
-	if ((pid = safe_fork()) != 0) {
-		uint32_t port = 0;
-		TEST_ASSERT_GREATER_OR_EQUAL_INT(0, setup_port_dev(dev_path, &port));
-
-		/* Send pulse 0 - this should still be delivered as a pulse, not confused with "no pulse" */
-		/* Note: in current impl, pulse=0 means no pulse on the port, so this tests that edge case */
-		usleep(100 * 1000);
-		/* child will send pulse(0) to us */
-		msg_t msg = { 0 };
-		msg_rid_t rid;
-
-		int err = msgRecv(port, &msg, &rid);
-		/* With pulse=0 stored, recv sees p->pulse == 0 -> won't return with pulse.
-		 * It will block. The child will then send a non-zero pulse to unblock. */
-		TEST_ASSERT_LESS_THAN_INT(0, err);
-		TEST_ASSERT_EQUAL_UINT8(1, msg.o.pulse);
-
-		if (waitpid(pid, NULL, 0) < 0) {
-			FAIL("waitpid");
-		}
-	}
-	else {
-		oid_t oid;
-		while (lookup(dev_path, NULL, &oid) < 0) {
-			usleep(10 * 1000);
-		}
-		/* pulse(0) won't actually be seen because port treats pulse==0 as "no pulse" */
-		msgPulse(oid.port, 0);
-
-		usleep(200 * 1000);
-		/* now send a real pulse to unblock the server */
-		msgPulse(oid.port, 1);
-
-		exit(0);
-	}
-#endif
 }
 
 
@@ -1210,7 +1130,6 @@ TEST_TEAR_DOWN(msg_queuing)
  */
 TEST(msg_queuing, concurrent_clients)
 {
-#ifdef NOMMU
 	const int NUM_CLIENTS = 4;
 	const int MSGS_PER_CLIENT = 20;
 	static msg_peer_t peer;
@@ -1221,71 +1140,12 @@ TEST(msg_queuing, concurrent_clients)
 	clients_stop(clients, NUM_CLIENTS, "queued client failed");
 	peer_stop(&peer);
 	return;
-#else
-	char dev_path[64];
-	make_dev_path(dev_path, sizeof(dev_path), "queue_cc");
-	pid_t server_pid;
-
-	const int NUM_CLIENTS = 4;
-	const int MSGS_PER_CLIENT = 20;
-
-	if ((server_pid = safe_fork()) == 0) {
-		uint32_t port = 0;
-		if (setup_port_dev(dev_path, &port) < 0) {
-			exit(3);
-		}
-		server_echo_loop(port, 0);
-		exit(0);
-	}
-
-	oid_t oid;
-	while (lookup(dev_path, NULL, &oid) < 0) {
-		usleep(10 * 1000);
-	}
-
-	pid_t clients[NUM_CLIENTS];
-
-	for (int c = 0; c < NUM_CLIENTS; c++) {
-		if ((clients[c] = safe_fork()) == 0) {
-			for (int m = 0; m < MSGS_PER_CLIENT; m++) {
-				msg_t msg = { 0 };
-				msg.type = mtWrite;
-				msg.i.io.offs = c * 1000 + m;
-				msg.i.size = 0;
-				msg.i.data = NULL;
-				msg.o.size = 0;
-				msg.o.data = NULL;
-
-				if (msgSend(oid.port, &msg) != 0) {
-					exit(1);
-				}
-
-				if (msg.o.err != mtWrite) {
-					exit(2);
-				}
-			}
-			exit(0);
-		}
-	}
-
-	/* Wait for all clients to finish */
-	for (int c = 0; c < NUM_CLIENTS; c++) {
-		int status;
-		waitpid(clients[c], &status, 0);
-		if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
-			TEST_FAIL_MESSAGE("client exited with error");
-		}
-	}
-
-	assert_child_exit(server_pid);
-#endif
 }
 
 
 /* Clients at different priorities: higher prio should be served first */
 TEST(msg_queuing, priority_ordering)
 {
-#ifdef NOMMU
 	uint32_t port;
 	static msg_priority_server_t server;
 	static msg_priority_client_t clients[3];
@@ -1310,102 +1170,6 @@ TEST(msg_queuing, priority_ordering)
 	TEST_ASSERT_EQUAL_INT(4, server.priorities[1]);
 	TEST_ASSERT_EQUAL_INT(6, server.priorities[2]);
 	portDestroy(port);
-#else
-	char dev_path[64];
-	make_dev_path(dev_path, sizeof(dev_path), "queue_po");
-
-	pid_t server_pid;
-
-	if ((server_pid = safe_fork()) == 0) {
-		uint32_t port = 0;
-		if (setup_port_dev(dev_path, &port) < 0) {
-			exit(3);
-		}
-
-		msg_t msg = { 0 };
-		msg_rid_t rid;
-		for (int i = 0; i < 3; i++) {
-			if (msgRecv(port, &msg, &rid) < 0) {
-				exit(1);
-			}
-
-			msg.o.err = (int)msg.priority;
-
-			if (msgRespond(port, &msg, rid) < 0) {
-				exit(2);
-			}
-		}
-
-		/* Don't exit with error on ordering - let parent assert */
-		exit(0);
-	}
-
-	oid_t oid;
-	while (lookup(dev_path, NULL, &oid) < 0) {
-		usleep(10 * 1000);
-	}
-
-	/* Spawn 3 clients at different priorities */
-	pid_t c1, c2, c3;
-
-	if ((c3 = safe_fork()) == 0) {
-		/* lowest prio (highest number) fires first to get queued */
-		priority(6);
-		msg_t msg = { 0 };
-		msg.type = mtWrite;
-		msg.i.size = 0;
-		msg.i.data = NULL;
-		msg.o.size = 0;
-		msg.o.data = NULL;
-		if (msgSend(oid.port, &msg) != 0) {
-			exit(1);
-		}
-		exit(0);
-	}
-
-	usleep(10 * 1000);
-
-	if ((c2 = safe_fork()) == 0) {
-		priority(4);
-		msg_t msg = { 0 };
-		msg.type = mtWrite;
-		msg.i.size = 0;
-		msg.i.data = NULL;
-		msg.o.size = 0;
-		msg.o.data = NULL;
-		if (msgSend(oid.port, &msg) != 0) {
-			exit(1);
-		}
-		exit(0);
-	}
-
-	usleep(10 * 1000);
-
-	if ((c1 = safe_fork()) == 0) {
-		priority(2);
-		msg_t msg = { 0 };
-		msg.type = mtWrite;
-		msg.i.size = 0;
-		msg.i.data = NULL;
-		msg.o.size = 0;
-		msg.o.data = NULL;
-		if (msgSend(oid.port, &msg) != 0) {
-			exit(1);
-		}
-		exit(0);
-	}
-
-	int s1, s2, s3;
-	waitpid(c1, &s1, 0);
-	waitpid(c2, &s2, 0);
-	waitpid(c3, &s3, 0);
-
-	TEST_ASSERT_TRUE_MESSAGE(WIFEXITED(s1) && WEXITSTATUS(s1) == 0, "prio client 2 failed");
-	TEST_ASSERT_TRUE_MESSAGE(WIFEXITED(s2) && WEXITSTATUS(s2) == 0, "prio client 4 failed");
-	TEST_ASSERT_TRUE_MESSAGE(WIFEXITED(s3) && WEXITSTATUS(s3) == 0, "prio client 6 failed");
-
-	assert_child_exit(server_pid);
-#endif
 }
 
 
@@ -1639,7 +1403,6 @@ TEST_TEAR_DOWN(msg_multiserver)
  */
 TEST(msg_multiserver, out_of_order_respond)
 {
-#ifdef NOMMU
 	static msg_reverse_server_t server;
 	static msg_client_t clients[3];
 
@@ -1660,91 +1423,15 @@ TEST(msg_multiserver, out_of_order_respond)
 	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, threadJoin(server.tid, 0));
 	TEST_ASSERT_EQUAL_INT(0, server.result);
 	portDestroy(server.port);
-#else
-	char dev_path[64];
-	make_dev_path(dev_path, sizeof(dev_path), "ms_ooo");
-	pid_t server_pid;
-
-	const int N = 3;
-
-	if ((server_pid = safe_fork()) == 0) {
-		uint32_t port = 0;
-		if (setup_port_dev(dev_path, &port) < 0) {
-			exit(3);
-		}
-
-		msg_t msgs[N];
-		msg_rid_t rids[N];
-
-		/* Receive N messages */
-		for (int i = 0; i < N; i++) {
-			memset(&msgs[i], 0, sizeof(msg_t));
-			if (msgRecv(port, &msgs[i], &rids[i]) < 0) {
-				exit(1);
-			}
-		}
-
-		/* Respond in reverse order */
-		for (int i = N - 1; i >= 0; i--) {
-			msgs[i].o.err = msgs[i].type;
-			if (msgRespond(port, &msgs[i], rids[i]) < 0) {
-				exit(2);
-			}
-		}
-
-		exit(0);
-	}
-
-	oid_t oid;
-	while (lookup(dev_path, NULL, &oid) < 0) {
-		usleep(10 * 1000);
-	}
-
-	pid_t clients[N];
-
-	for (int i = 0; i < N; i++) {
-		if ((clients[i] = safe_fork()) == 0) {
-			msg_t msg = { 0 };
-			msg.type = mtOpen + i;
-			msg.i.size = 0;
-			msg.i.data = NULL;
-			msg.o.size = 0;
-			msg.o.data = NULL;
-
-			if (msgSend(oid.port, &msg) != 0) {
-				exit(1);
-			}
-			if (msg.o.err != mtOpen + i) {
-				exit(2);
-			}
-			exit(0);
-		}
-		usleep(20 * 1000);
-	}
-
-	for (int i = 0; i < N; i++) {
-		int status;
-		waitpid(clients[i], &status, 0);
-		TEST_ASSERT_TRUE_MESSAGE(WIFEXITED(status) && WEXITSTATUS(status) == 0,
-				"out-of-order respond: client failed");
-	}
-
-	int status;
-	waitpid(server_pid, &status, 0);
-	TEST_ASSERT_TRUE(WIFEXITED(status));
-	TEST_ASSERT_EQUAL_INT(0, WEXITSTATUS(status));
-#endif
 }
 
 
 /*
- * Server thread receives from one port and forwards to another (chain).
- * Tests that the receiving thread doesn't need to be the same as the
- * responding thread (commented in proc_respond: "see: p-r-corelibs/libstorage").
+ * Server thread receives from one port and forwards to another (chain) without
+ * the use of msgForward().
  */
 TEST(msg_multiserver, server_chain)
 {
-#ifdef NOMMU
 	static msg_peer_t backend;
 	static msg_relay_t frontend;
 
@@ -1759,86 +1446,6 @@ TEST(msg_multiserver, server_chain)
 	}
 	relay_stop(&frontend);
 	peer_stop(&backend);
-#else
-	char dev_path1[64], dev_path2[64];
-	make_dev_path(dev_path1, sizeof(dev_path1), "ms_ch1");
-	make_dev_path(dev_path2, sizeof(dev_path2), "ms_ch2");
-	pid_t backend_pid, frontend_pid;
-
-	/* Backend server: simple echo */
-	if ((backend_pid = safe_fork()) == 0) {
-		uint32_t port = 0;
-		if (setup_port_dev(dev_path2, &port) < 0) {
-			exit(3);
-		}
-		server_echo_loop(port, 0);
-		exit(0);
-	}
-
-	/* Frontend server: receives, forwards to backend, responds to original caller */
-	if ((frontend_pid = safe_fork()) == 0) {
-		uint32_t port = 0;
-		if (setup_port_dev(dev_path1, &port) < 0) {
-			exit(3);
-		}
-
-		oid_t backend_oid;
-		while (lookup(dev_path2, NULL, &backend_oid) < 0) {
-			usleep(10 * 1000);
-		}
-
-		msg_t msg = { 0 };
-		msg_rid_t rid;
-
-		for (;;) {
-			if (msgRecv(port, &msg, &rid) < 0) {
-				exit(0);
-			}
-
-			/* Forward to backend */
-			msg_t fwd = { 0 };
-			fwd.type = msg.type;
-			memcpy(fwd.i.raw, msg.i.raw, sizeof(fwd.i.raw));
-			fwd.i.size = 0;
-			fwd.i.data = NULL;
-			fwd.o.size = 0;
-			fwd.o.data = NULL;
-
-			if (msgSend(backend_oid.port, &fwd) != 0) {
-				exit(4);
-			}
-
-			/* Relay response */
-			memcpy(msg.o.raw, fwd.o.raw, sizeof(msg.o.raw));
-			msg.o.err = fwd.o.err;
-
-			if (msgRespond(port, &msg, rid) < 0) {
-				exit(5);
-			}
-		}
-	}
-
-	oid_t oid;
-	while (lookup(dev_path1, NULL, &oid) < 0) {
-		usleep(10 * 1000);
-	}
-
-	for (int i = 0; i < 10; i++) {
-		msg_t msg = { 0 };
-		msg.type = mtDevCtl;
-		msg.i.io.offs = i;
-		msg.i.size = 0;
-		msg.i.data = NULL;
-		msg.o.size = 0;
-		msg.o.data = NULL;
-
-		TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
-		TEST_ASSERT_EQUAL_INT(mtDevCtl, msg.o.err);
-	}
-
-	assert_child_exit(frontend_pid);
-	assert_child_exit(backend_pid);
-#endif
 }
 
 
@@ -4812,7 +4419,6 @@ TEST(msg_stress, concurrent_data_transfer)
  */
 TEST(msg_stress, rapid_respondandrecv)
 {
-#ifdef NOMMU
 	static msg_peer_t peer;
 	peer_start(&peer, "str_rr", peerEcho, 1000, 1, 0);
 	for (int message = 0; message < 1000; ++message) {
@@ -4823,38 +4429,6 @@ TEST(msg_stress, rapid_respondandrecv)
 		TEST_ASSERT_EQUAL_INT(mtRead, msg.o.err);
 	}
 	peer_stop(&peer);
-	return;
-#else
-	char dev_path[64];
-	make_dev_path(dev_path, sizeof(dev_path), "str_rr");
-	pid_t server_pid;
-
-	if ((server_pid = safe_fork()) == 0) {
-		uint32_t port = 0;
-		if (setup_port_dev(dev_path, &port) < 0)
-			exit(3);
-		server_echo_loop(port, 1);
-		exit(0);
-	}
-
-	oid_t oid;
-	while (lookup(dev_path, NULL, &oid) < 0)
-		usleep(10 * 1000);
-
-	for (int m = 0; m < 1000; m++) {
-		msg_t msg = { 0 };
-		msg.type = mtRead;
-		msg.i.io.offs = m;
-		msg.i.size = 0;
-		msg.i.data = NULL;
-		msg.o.size = 0;
-		msg.o.data = NULL;
-		TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
-		TEST_ASSERT_EQUAL_INT(mtRead, msg.o.err);
-	}
-
-	assert_child_exit(server_pid);
-#endif
 }
 
 
@@ -4864,7 +4438,6 @@ TEST(msg_stress, rapid_respondandrecv)
  */
 TEST(msg_stress, concurrent_respondandrecv)
 {
-#ifdef NOMMU
 	const int NUM_CLIENTS = 4;
 	const int MSGS_PER_CLIENT = 50;
 	static msg_peer_t peer;
@@ -4874,55 +4447,6 @@ TEST(msg_stress, concurrent_respondandrecv)
 	clients_start(clients, NUM_CLIENTS, peer.port, MSGS_PER_CLIENT, mtWrite, 0);
 	clients_stop(clients, NUM_CLIENTS, "Stress: concurrent respondAndRecv client failed");
 	peer_stop(&peer);
-	return;
-#else
-	char dev_path[64];
-	make_dev_path(dev_path, sizeof(dev_path), "str_crr");
-	pid_t server_pid;
-
-	const int NUM_CLIENTS = 4;
-	const int MSGS_PER_CLIENT = 50;
-
-	if ((server_pid = safe_fork()) == 0) {
-		uint32_t port = 0;
-		if (setup_port_dev(dev_path, &port) < 0)
-			exit(3);
-		server_echo_loop(port, 1);
-		exit(0);
-	}
-
-	oid_t oid;
-	while (lookup(dev_path, NULL, &oid) < 0)
-		usleep(10 * 1000);
-
-	pid_t clients[NUM_CLIENTS];
-	for (int c = 0; c < NUM_CLIENTS; c++) {
-		if ((clients[c] = safe_fork()) == 0) {
-			for (int m = 0; m < MSGS_PER_CLIENT; m++) {
-				msg_t msg = { 0 };
-				msg.type = mtWrite;
-				msg.i.io.offs = c * 10000 + m;
-				msg.i.size = 0;
-				msg.i.data = NULL;
-				msg.o.size = 0;
-				msg.o.data = NULL;
-				if (msgSend(oid.port, &msg) != 0)
-					exit(1);
-				if (msg.o.err != mtWrite)
-					exit(2);
-			}
-			exit(0);
-		}
-	}
-
-	for (int c = 0; c < NUM_CLIENTS; c++) {
-		int status;
-		waitpid(clients[c], &status, 0);
-		TEST_ASSERT_EQUAL_INT_MESSAGE(0, WEXITSTATUS(status),
-				"Stress: concurrent respondAndRecv client failed");
-	}
-	assert_child_exit(server_pid);
-#endif
 }
 
 
@@ -4932,7 +4456,6 @@ TEST(msg_stress, concurrent_respondandrecv)
  */
 TEST(msg_stress, pulse_send_race)
 {
-#ifdef NOMMU
 	static msg_pulse_server_t server;
 	static msg_pulser_t pulser;
 
@@ -4953,68 +4476,6 @@ TEST(msg_stress, pulse_send_race)
 	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, threadJoin(server.tid, 0));
 	TEST_ASSERT_EQUAL_INT(0, server.result);
 	portDestroy(server.port);
-#else
-	char dev_path[64];
-	make_dev_path(dev_path, sizeof(dev_path), "str_ps");
-	pid_t server_pid;
-
-	if ((server_pid = safe_fork()) == 0) {
-		uint32_t port = 0;
-		if (setup_port_dev(dev_path, &port) < 0)
-			exit(3);
-
-		msg_t msg = { 0 };
-		msg_rid_t rid;
-		int count = 0;
-
-		for (;;) {
-			int err = msgRecv(port, &msg, &rid);
-			if (err == -EPULSE) {
-				/* got pulse, loop */
-				continue;
-			}
-			if (err < 0) {
-				exit(0);
-			}
-			msg.o.err = msg.type;
-			if (msgRespond(port, &msg, rid) < 0)
-				exit(2);
-			count++;
-			if (count >= 20)
-				exit(0);
-		}
-	}
-
-	oid_t oid;
-	while (lookup(dev_path, NULL, &oid) < 0)
-		usleep(10 * 1000);
-
-	/* Pulser */
-	pid_t pulser;
-	if ((pulser = safe_fork()) == 0) {
-		for (int i = 0; i < 20; i++) {
-			msgPulse(oid.port, (uint8_t)(i + 1));
-			usleep(5 * 1000);
-		}
-		exit(0);
-	}
-
-	/* Sender */
-	for (int m = 0; m < 20; m++) {
-		msg_t msg = { 0 };
-		msg.type = mtRead;
-		msg.i.size = 0;
-		msg.i.data = NULL;
-		msg.o.size = 0;
-		msg.o.data = NULL;
-		/* Ignoring errors here - the server may exit mid-test */
-		msgSend(oid.port, &msg);
-	}
-
-	waitpid(pulser, NULL, 0);
-	waitpid(server_pid, NULL, 0);
-	/* If we got here without hanging, the test passes */
-#endif
 }
 
 
