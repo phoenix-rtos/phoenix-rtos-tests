@@ -5926,649 +5926,395 @@ TEST(msg_respond_recv_chain, rr_leaf_concurrent_clients)
 
 /* ===================================== */
 /* TEST_GROUP: msg_xfer_types            */
-/* Verify all _classifyMsgXfer paths:    */
-/*   none:   size == 0                   */
-/*   extra:  fits in recv's IPC buffer   */
-/*   borrow: data lives in caller's IPC  */
-/*   map:    fallback mapped transfer    */
+/* Exercise transfer classification on   */
+/* both MMU and NOMMU targets. Servers   */
+/* run as threads, so no fork is needed. */
 /* ===================================== */
 
 TEST_GROUP(msg_xfer_types);
 
+
 TEST_SETUP(msg_xfer_types)
 {
 }
+
 
 TEST_TEAR_DOWN(msg_xfer_types)
 {
 }
 
 
-/* Shared state for intra-process thread tests (borrow path) */
+enum {
+	xtServerNone,
+	xtServerInput,
+	xtServerOutput,
+	xtServerBorrowOutput,
+	xtServerEcho
+};
+
+
 static struct {
 	char stack[4096] __attribute__((aligned(8)));
-	volatile int result;
 	uint32_t port;
-	size_t sz;
-} xt_borrow_state;
+	size_t size;
+	size_t ipcSize;
+	int kind;
+	volatile int result;
+} xtState;
 
 
-/* Server thread for xfer_borrow_in: receives a message and verifies i.data contents */
-static void xt_borrow_in_server(void *arg)
+static void xt_server(void *arg)
 {
-	(void)arg;
 	msg_t msg = { 0 };
 	msg_rid_t rid;
+	int result = 0;
 
-	if (msgRecv(xt_borrow_state.port, &msg, &rid) < 0) {
-		xt_borrow_state.result = -1;
-		endthread();
-	}
-
-	if (msg.i.data == NULL || msg.i.size != xt_borrow_state.sz) {
-		xt_borrow_state.result = -2;
-	}
-	else {
-		int ok = 1;
-		const unsigned char *p = (const unsigned char *)msg.i.data;
-		for (size_t i = 0; ok != 0 && i < xt_borrow_state.sz; i++) {
-			if (p[i] != (unsigned char)(i & 0xff)) {
-				ok = 0;
-			}
-		}
-		xt_borrow_state.result = (ok != 0) ? 1 : -3;
-	}
-
-	msg.o.err = 0;
-	msgRespond(xt_borrow_state.port, &msg, rid);
-	endthread();
-}
-
-
-/* Server thread for xfer_borrow_out: writes a pattern into msg.o.data */
-static void xt_borrow_out_server(void *arg)
-{
 	(void)arg;
-	msg_t msg = { 0 };
-	msg_rid_t rid;
 
-	if (msgRecv(xt_borrow_state.port, &msg, &rid) < 0) {
-		xt_borrow_state.result = -1;
+	if (xtState.ipcSize != 0 && msgSetup(xtState.ipcSize) == NULL) {
+		xtState.result = -1;
 		endthread();
 	}
 
-	if (msg.o.data == NULL || msg.o.size < xt_borrow_state.sz) {
-		xt_borrow_state.result = -2;
-		msg.o.err = -1;
-		msgRespond(xt_borrow_state.port, &msg, rid);
+	if (msgRecv(xtState.port, &msg, &rid) < 0) {
+		xtState.result = -2;
 		endthread();
 	}
 
-	unsigned char *p = (unsigned char *)msg.o.data;
-	for (size_t i = 0; i < xt_borrow_state.sz; i++) {
-		p[i] = (unsigned char)((i * 3 + 7) & 0xff);
-	}
-	xt_borrow_state.result = 1;
-	msg.o.err = 0;
-	msgRespond(xt_borrow_state.port, &msg, rid);
-	endthread();
-}
+	switch (xtState.kind) {
+		case xtServerNone:
+			if (msg.i.size != 0 || msg.i.data != NULL || msg.o.size != 0 || msg.o.data != NULL)
+				result = -3;
+			break;
 
-
-/*
- * msg_xfer_none: size == 0 on both sides → msg_xfer_none path.
- * Both client and server have IPC buffers; zero-size messages must not crash.
- */
-TEST(msg_xfer_types, xfer_none)
-{
-	char dev_path[64];
-	make_dev_path(dev_path, sizeof(dev_path), "xt_none");
-	pid_t pid;
-
-	if ((pid = safe_fork()) == 0) {
-		uint32_t port = 0;
-		if (setup_port_dev(dev_path, &port) < 0) {
-			exit(3);
-		}
-		if (msgSetup(2 * _PAGE_SIZE) == NULL) {
-			exit(4);
-		}
-		msg_t msg = { 0 };
-		msg_rid_t rid;
-		if (msgRecv(port, &msg, &rid) < 0) {
-			exit(1);
-		}
-		if (msg.i.size != 0 || msg.i.data != NULL || msg.o.size != 0 || msg.o.data != NULL) {
-			exit(10);
-		}
-		msg.o.err = 0;
-		if (msgRespond(port, &msg, rid) < 0) {
-			exit(2);
-		}
-		exit(0);
-	}
-
-	oid_t oid;
-	while (lookup(dev_path, NULL, &oid) < 0) {
-		usleep(10 * 1000);
-	}
-
-	void *ipc_buf = msgSetup(2 * _PAGE_SIZE);
-	TEST_ASSERT_NOT_NULL(ipc_buf);
-
-	msg_t msg = { 0 };
-	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
-	TEST_ASSERT_EQUAL_INT(0, msg.o.err);
-
-	assert_child_exit(pid);
-}
-
-
-/*
- * msg_xfer_extra (in only): i.size fits in receiver's IPC buffer → msg_xfer_extra.
- * Kernel pre-copies i.data into recv->ipc.kw; server sees msg.i.data = recv->ipc.w.
- * Condition: i.size + 0 <= recv->ipc.size
- */
-TEST(msg_xfer_types, xfer_extra_in)
-{
-	char dev_path[64];
-	make_dev_path(dev_path, sizeof(dev_path), "xt_extra_i");
-	pid_t pid;
-
-	const size_t bufsz = 512;
-
-	if ((pid = safe_fork()) == 0) {
-		uint32_t port = 0;
-		if (setup_port_dev(dev_path, &port) < 0) {
-			exit(3);
-		}
-		/* Large IPC buffer enables msg_xfer_extra for client's i.data */
-		if (msgSetup(2 * _PAGE_SIZE) == NULL) {
-			exit(4);
-		}
-		msg_t msg = { 0 };
-		msg_rid_t rid;
-		for (;;) {
-			if (msgRecv(port, &msg, &rid) < 0) {
-				exit(0);
+		case xtServerInput:
+			if (msg.i.data == NULL || msg.i.size != xtState.size) {
+				result = -4;
 			}
-			if (msg.i.data == NULL || msg.i.size != bufsz) {
-				msg.o.err = -1;
-				msgRespond(port, &msg, rid);
-				exit(10);
-			}
-			const unsigned char *p = (const unsigned char *)msg.i.data;
-			for (size_t i = 0; i < bufsz; i++) {
-				if (p[i] != (unsigned char)(i & 0xff)) {
-					msg.o.err = -2;
-					msgRespond(port, &msg, rid);
-					exit(11);
+			else {
+				const unsigned char *data = msg.i.data;
+				for (size_t i = 0; i < xtState.size; ++i) {
+					if (data[i] != (unsigned char)(i & 0xff)) {
+						result = -5;
+						break;
+					}
 				}
 			}
-			msg.o.err = 0;
-			if (msgRespond(port, &msg, rid) < 0) {
-				exit(2);
+			break;
+
+		case xtServerOutput:
+		case xtServerBorrowOutput:
+			if (msg.o.data == NULL || msg.o.size < xtState.size) {
+				result = -6;
 			}
-		}
+			else {
+				unsigned char *data = msg.o.data;
+				for (size_t i = 0; i < xtState.size; ++i) {
+					data[i] = xtState.kind == xtServerOutput ?
+							(unsigned char)((i ^ 0xa5) & 0xff) :
+							(unsigned char)((i * 3 + 7) & 0xff);
+				}
+			}
+			break;
+
+		case xtServerEcho:
+			if (msg.i.data != NULL && msg.o.data != NULL) {
+				size_t size = msg.i.size < msg.o.size ? msg.i.size : msg.o.size;
+				const unsigned char *input = msg.i.data;
+				unsigned char *output = msg.o.data;
+				for (size_t i = 0; i < size; ++i)
+					output[i] = input[i] ^ (unsigned char)((i & 0xff) ^ 0x5a);
+			}
+			break;
 	}
 
-	oid_t oid;
-	while (lookup(dev_path, NULL, &oid) < 0) {
-		usleep(10 * 1000);
-	}
+	msg.o.err = (result == 0 && xtState.kind == xtServerEcho) ? msg.type : result;
+	if (msgRespond(xtState.port, &msg, rid) < 0 && result == 0)
+		result = -7;
 
-	/* Client uses a malloc'd buffer (not inside any IPC buffer region) */
-	char *ibuf = malloc(bufsz);
-	TEST_ASSERT_NOT_NULL(ibuf);
-	for (size_t i = 0; i < bufsz; i++) {
-		ibuf[i] = (char)(i & 0xff);
-	}
-
-	msg_t msg = { 0 };
-	msg.i.data = ibuf;
-	msg.i.size = bufsz;
-
-	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
-	TEST_ASSERT_EQUAL_INT(0, msg.o.err);
-
-	free(ibuf);
-	assert_child_exit(pid);
+	xtState.result = result;
+	endthread();
 }
 
 
-/*
- * msg_xfer_extra (out only): o.size fits in receiver's IPC buffer → msg_xfer_extra for out.
- * Server writes into recv->ipc.w; kernel copies recv->ipc.kw back to caller's o.data.
- * Condition: o.size + 0 <= recv->ipc.size (inPlan is none, extraUsed = 0)
- */
+static int xt_start(uint32_t port, int kind, size_t size, size_t ipcSize)
+{
+	xtState.port = port;
+	xtState.kind = kind;
+	xtState.size = size;
+	xtState.ipcSize = ipcSize;
+	xtState.result = 0;
+
+	return beginthread(xt_server, 4, xtState.stack, sizeof(xtState.stack), NULL);
+}
+
+
+static void xt_join(void)
+{
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, threadJoin(-1, 0));
+	TEST_ASSERT_EQUAL_INT(0, xtState.result);
+}
+
+
+/* Zero-length transfers use the none classification. */
+TEST(msg_xfer_types, xfer_none)
+{
+	uint32_t port;
+	msg_t msg = { 0 };
+
+	TEST_ASSERT_EQUAL_INT(0, portCreate(&port));
+	TEST_ASSERT_EQUAL_INT(0, xt_start(port, xtServerNone, 0, 2 * _PAGE_SIZE));
+	TEST_ASSERT_NOT_NULL(msgSetup(2 * _PAGE_SIZE));
+	TEST_ASSERT_EQUAL_INT(0, msgSend(port, &msg));
+	TEST_ASSERT_EQUAL_INT(0, msg.o.err);
+	xt_join();
+	portDestroy(port);
+}
+
+
+/* Input fitting the receiver IPC buffer uses the extra classification. */
+TEST(msg_xfer_types, xfer_extra_in)
+{
+	const size_t size = 512;
+	uint32_t port;
+	char *input = malloc(size);
+	msg_t msg = { 0 };
+
+	TEST_ASSERT_NOT_NULL(input);
+	for (size_t i = 0; i < size; ++i)
+		input[i] = (char)(i & 0xff);
+
+	TEST_ASSERT_EQUAL_INT(0, portCreate(&port));
+	TEST_ASSERT_EQUAL_INT(0, xt_start(port, xtServerInput, size, 2 * _PAGE_SIZE));
+	msg.i.data = input;
+	msg.i.size = size;
+	TEST_ASSERT_EQUAL_INT(0, msgSend(port, &msg));
+	TEST_ASSERT_EQUAL_INT(0, msg.o.err);
+	xt_join();
+	portDestroy(port);
+	free(input);
+}
+
+
+/* Output fitting the receiver IPC buffer uses the extra classification. */
 TEST(msg_xfer_types, xfer_extra_out)
 {
-	char dev_path[64];
-	make_dev_path(dev_path, sizeof(dev_path), "xt_extra_o");
-	pid_t pid;
-
-	const size_t bufsz = 512;
-
-	if ((pid = safe_fork()) == 0) {
-		uint32_t port = 0;
-		if (setup_port_dev(dev_path, &port) < 0) {
-			exit(3);
-		}
-		if (msgSetup(2 * _PAGE_SIZE) == NULL) {
-			exit(4);
-		}
-		msg_t msg = { 0 };
-		msg_rid_t rid;
-		for (;;) {
-			if (msgRecv(port, &msg, &rid) < 0) {
-				exit(0);
-			}
-			if (msg.o.data == NULL || msg.o.size < bufsz) {
-				msg.o.err = -1;
-				msgRespond(port, &msg, rid);
-				exit(10);
-			}
-			unsigned char *p = (unsigned char *)msg.o.data;
-			for (size_t i = 0; i < bufsz; i++) {
-				p[i] = (unsigned char)((i ^ 0xa5) & 0xff);
-			}
-			msg.o.err = 0;
-			if (msgRespond(port, &msg, rid) < 0) {
-				exit(2);
-			}
-		}
-	}
-
-	oid_t oid;
-	while (lookup(dev_path, NULL, &oid) < 0) {
-		usleep(10 * 1000);
-	}
-
-	char *obuf = malloc(bufsz);
-	TEST_ASSERT_NOT_NULL(obuf);
-	memset(obuf, 0, bufsz);
-
+	const size_t size = 512;
+	uint32_t port;
+	char *output = malloc(size);
 	msg_t msg = { 0 };
-	msg.o.data = obuf;
-	msg.o.size = bufsz;
 
-	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
+	TEST_ASSERT_NOT_NULL(output);
+	memset(output, 0, size);
+	TEST_ASSERT_EQUAL_INT(0, portCreate(&port));
+	TEST_ASSERT_EQUAL_INT(0, xt_start(port, xtServerOutput, size, 2 * _PAGE_SIZE));
+	msg.o.data = output;
+	msg.o.size = size;
+	TEST_ASSERT_EQUAL_INT(0, msgSend(port, &msg));
 	TEST_ASSERT_EQUAL_INT(0, msg.o.err);
-
-	for (size_t i = 0; i < bufsz; i++) {
-		TEST_ASSERT_EQUAL_HEX8((unsigned char)((i ^ 0xa5) & 0xff), (unsigned char)obuf[i]);
-	}
-
-	free(obuf);
-	assert_child_exit(pid);
+	for (size_t i = 0; i < size; ++i)
+		TEST_ASSERT_EQUAL_HEX8((unsigned char)((i ^ 0xa5) & 0xff), (unsigned char)output[i]);
+	xt_join();
+	portDestroy(port);
+	free(output);
 }
 
 
-/*
- * msg_xfer_extra (in and out): both i.size and o.size fit in receiver's IPC buffer.
- * Kernel pre-copies i.data; server echoes to o.data; kernel copies o back to caller.
- * Condition: i.size + o.size <= recv->ipc.size
- *
- * NOTE: _threads_copyMsgBufResponse always copies from recv->ipc.kw[0], ignoring outPlan.ofs.
- * When both in and out are extra, outPlan.ofs == i.size (server's o.data starts at kw[i.size]),
- * but copy-back reads kw[0..o.size] = the pre-copied in-data area. The server XOR-transforms
- * the data (writes at kw[i.size]), but copy-back delivers kw[0..o.size] = the original i.data.
- * The assertion therefore checks that obuf == original ibuf: copy-back delivers the pre-copied
- * in-data, NOT the server's transformed output. This documents the copy-back offset bug.
- */
+/* Combined input and output fit in the receiver IPC buffer. */
 TEST(msg_xfer_types, xfer_extra_in_and_out)
 {
-	char dev_path[64];
-	make_dev_path(dev_path, sizeof(dev_path), "xt_extra_io");
-	pid_t pid;
-
-	const size_t bufsz = 512;
-
-	if ((pid = safe_fork()) == 0) {
-		uint32_t port = 0;
-		if (setup_port_dev(dev_path, &port) < 0) {
-			exit(3);
-		}
-		/* IPC buffer large enough for i.size + o.size (512 + 512 = 1024 <= 4*PAGE) */
-		if (msgSetup(4 * _PAGE_SIZE) == NULL) {
-			exit(4);
-		}
-		server_echo_loop(port, 0);
-		exit(0);
-	}
-
-	oid_t oid;
-	while (lookup(dev_path, NULL, &oid) < 0) {
-		usleep(10 * 1000);
-	}
-
-	char *ibuf = malloc(bufsz);
-	char *obuf = malloc(bufsz);
-	TEST_ASSERT_NOT_NULL(ibuf);
-	TEST_ASSERT_NOT_NULL(obuf);
-
-	for (size_t i = 0; i < bufsz; i++) {
-		ibuf[i] = (char)(i & 0xff);
-	}
-	memset(obuf, 0, bufsz);
-
+	const size_t size = 512;
+	uint32_t port;
+	char *input = malloc(size);
+	char *output = malloc(size);
 	msg_t msg = { 0 };
+
+	TEST_ASSERT_NOT_NULL(input);
+	TEST_ASSERT_NOT_NULL(output);
+	for (size_t i = 0; i < size; ++i)
+		input[i] = (char)(i & 0xff);
+	memset(output, 0, size);
+
+	TEST_ASSERT_EQUAL_INT(0, portCreate(&port));
+	TEST_ASSERT_EQUAL_INT(0, xt_start(port, xtServerEcho, 0, 4 * _PAGE_SIZE));
 	msg.type = mtWrite;
-	msg.i.data = ibuf;
-	msg.i.size = bufsz;
-	msg.o.data = obuf;
-	msg.o.size = bufsz;
-
-	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
+	msg.i.data = input;
+	msg.i.size = size;
+	msg.o.data = output;
+	msg.o.size = size;
+	TEST_ASSERT_EQUAL_INT(0, msgSend(port, &msg));
 	TEST_ASSERT_EQUAL_INT(mtWrite, msg.o.err);
-	for (size_t j = 0; j < bufsz; j++)
-		ibuf[j] ^= (unsigned char)((j & 0xff) ^ 0x5a);
-	TEST_ASSERT_EQUAL_MEMORY(ibuf, obuf, bufsz);
-
-	free(ibuf);
-	free(obuf);
-	assert_child_exit(pid);
+	for (size_t i = 0; i < size; ++i)
+		input[i] ^= (unsigned char)((i & 0xff) ^ 0x5a);
+	TEST_ASSERT_EQUAL_MEMORY(input, output, size);
+	xt_join();
+	portDestroy(port);
+	free(input);
+	free(output);
 }
 
 
-/*
- * msg_xfer_borrow (in): i.data lives inside caller's IPC buffer → msg_xfer_borrow.
- * Kernel maps caller's IPC pages into receiver's space; receiver reads via caller->ipc.w.
- * Uses intra-process threads (same address space) so caller->ipc.w is directly accessible.
- * Condition: i.size <= caller->ipc.size && i.data ∈ [caller->ipc.w, caller->ipc.w+size)
- *            && i.size > recv->ipc.size (server has no IPC buf → extra path skipped)
- */
+/* IPC-buffer input is borrowed directly by a receiver without an IPC buffer. */
 TEST(msg_xfer_types, xfer_borrow_in)
 {
-	const size_t bufsz = 512;
-
+	const size_t size = 512;
 	uint32_t port;
-	TEST_ASSERT_EQUAL_INT(0, portCreate(&port));
-
-	xt_borrow_state.port = port;
-	xt_borrow_state.sz = bufsz;
-	xt_borrow_state.result = 0;
-
-	/* Client: set up IPC buffer; i.data will point into it → triggers borrow */
-	void *ipc_buf = msgSetup(2 * _PAGE_SIZE);
-	TEST_ASSERT_NOT_NULL(ipc_buf);
-
-	unsigned char *ibuf = (unsigned char *)ipc_buf;
-	for (size_t i = 0; i < bufsz; i++) {
-		ibuf[i] = (unsigned char)(i & 0xff);
-	}
-
-	/* Server thread in the same process, no msgSetup → recv->ipc.size = 0 → extra fails → borrow */
-	handle_t tid;
-	beginthreadex(xt_borrow_in_server, 4, xt_borrow_state.stack,
-			sizeof(xt_borrow_state.stack), NULL, &tid);
-
+	unsigned char *input;
 	msg_t msg = { 0 };
-	msg.i.data = ipc_buf; /* i.data inside caller's IPC buf → msg_xfer_borrow */
-	msg.i.size = bufsz;
 
+	TEST_ASSERT_EQUAL_INT(0, portCreate(&port));
+	input = msgSetup(2 * _PAGE_SIZE);
+	TEST_ASSERT_NOT_NULL(input);
+	for (size_t i = 0; i < size; ++i)
+		input[i] = (unsigned char)(i & 0xff);
+	TEST_ASSERT_EQUAL_INT(0, xt_start(port, xtServerInput, size, 0));
+	msg.i.data = input;
+	msg.i.size = size;
 	TEST_ASSERT_EQUAL_INT(0, msgSend(port, &msg));
 	TEST_ASSERT_EQUAL_INT(0, msg.o.err);
-	TEST_ASSERT_EQUAL_INT_MESSAGE(1, xt_borrow_state.result,
-			"borrow_in: server should see correct i.data via borrowed IPC mapping");
-
-	threadJoin(tid, 0);
+	xt_join();
 	portDestroy(port);
 }
 
 
-/*
- * msg_xfer_borrow (out): o.data lives inside caller's IPC buffer → msg_xfer_borrow for out.
- * Receiver writes directly to the mapped region; writes are visible to caller immediately
- * (same address space → same physical memory at the same VA).
- * Condition: o.size <= caller->ipc.size && o.data ∈ [caller->ipc.w, caller->ipc.w+size)
- *            && o.size > recv->ipc.size (server has no IPC buf → extra path skipped)
- */
+/* IPC-buffer output is borrowed directly by a receiver without an IPC buffer. */
 TEST(msg_xfer_types, xfer_borrow_out)
 {
-	const size_t bufsz = 512;
-
+	const size_t size = 512;
 	uint32_t port;
-	TEST_ASSERT_EQUAL_INT(0, portCreate(&port));
-
-	xt_borrow_state.port = port;
-	xt_borrow_state.sz = bufsz;
-	xt_borrow_state.result = 0;
-
-	void *ipc_buf = msgSetup(2 * _PAGE_SIZE);
-	TEST_ASSERT_NOT_NULL(ipc_buf);
-	memset(ipc_buf, 0, bufsz);
-
-	handle_t tid;
-	beginthreadex(xt_borrow_out_server, 4, xt_borrow_state.stack,
-			sizeof(xt_borrow_state.stack), NULL, &tid);
-
+	unsigned char *output;
 	msg_t msg = { 0 };
-	msg.o.data = ipc_buf; /* o.data inside caller's IPC buf → msg_xfer_borrow */
-	msg.o.size = bufsz;
 
+	TEST_ASSERT_EQUAL_INT(0, portCreate(&port));
+	output = msgSetup(2 * _PAGE_SIZE);
+	TEST_ASSERT_NOT_NULL(output);
+	memset(output, 0, size);
+	TEST_ASSERT_EQUAL_INT(0, xt_start(port, xtServerBorrowOutput, size, 0));
+	msg.o.data = output;
+	msg.o.size = size;
 	TEST_ASSERT_EQUAL_INT(0, msgSend(port, &msg));
 	TEST_ASSERT_EQUAL_INT(0, msg.o.err);
-	TEST_ASSERT_EQUAL_INT_MESSAGE(1, xt_borrow_state.result,
-			"borrow_out: server should have written to borrowed IPC buf");
-
-	const unsigned char *obuf = (const unsigned char *)ipc_buf;
-	for (size_t i = 0; i < bufsz; i++) {
-		TEST_ASSERT_EQUAL_HEX8((unsigned char)((i * 3 + 7) & 0xff), obuf[i]);
-	}
-
-	threadJoin(tid, 0);
+	for (size_t i = 0; i < size; ++i)
+		TEST_ASSERT_EQUAL_HEX8((unsigned char)((i * 3 + 7) & 0xff), output[i]);
+	xt_join();
 	portDestroy(port);
 }
 
 
-/*
- * msg_xfer_borrow (in, non-zero offset): i.data points one page into the caller's IPC buffer.
- * _classifyMsgXfer computes plan.ofs = PAGE_SIZE; _setupMsgSide gives receiver
- * caller->ipc.w + PAGE_SIZE. Same-process threads share the address space, so the receiver
- * can access the offset pointer directly.
- */
+/* Borrowed input supports an offset within the caller IPC buffer. */
 TEST(msg_xfer_types, xfer_borrow_in_offset)
 {
-	const size_t bufsz = 512;
-	const size_t offset = _PAGE_SIZE;
-
+	const size_t size = 512;
 	uint32_t port;
-	TEST_ASSERT_EQUAL_INT(0, portCreate(&port));
-
-	xt_borrow_state.port = port;
-	xt_borrow_state.sz = bufsz;
-	xt_borrow_state.result = 0;
-
-	/* Allocate a 2-page IPC buffer; write the test pattern at offset PAGE_SIZE */
-	void *ipc_buf = msgSetup(2 * _PAGE_SIZE);
-	TEST_ASSERT_NOT_NULL(ipc_buf);
-
-	unsigned char *ibuf = (unsigned char *)ipc_buf + offset;
-	for (size_t i = 0; i < bufsz; i++) {
-		ibuf[i] = (unsigned char)(i & 0xff);
-	}
-
-	handle_t tid;
-	beginthreadex(xt_borrow_in_server, 4, xt_borrow_state.stack,
-			sizeof(xt_borrow_state.stack), NULL, &tid);
-
+	unsigned char *ipcBuffer;
+	unsigned char *input;
 	msg_t msg = { 0 };
-	msg.i.data = (unsigned char *)ipc_buf + offset; /* non-zero offset → plan.ofs = PAGE_SIZE */
-	msg.i.size = bufsz;
 
+	TEST_ASSERT_EQUAL_INT(0, portCreate(&port));
+	ipcBuffer = msgSetup(2 * _PAGE_SIZE);
+	TEST_ASSERT_NOT_NULL(ipcBuffer);
+	input = ipcBuffer + _PAGE_SIZE;
+	for (size_t i = 0; i < size; ++i)
+		input[i] = (unsigned char)(i & 0xff);
+	TEST_ASSERT_EQUAL_INT(0, xt_start(port, xtServerInput, size, 0));
+	msg.i.data = input;
+	msg.i.size = size;
 	TEST_ASSERT_EQUAL_INT(0, msgSend(port, &msg));
 	TEST_ASSERT_EQUAL_INT(0, msg.o.err);
-	TEST_ASSERT_EQUAL_INT_MESSAGE(1, xt_borrow_state.result,
-			"borrow_in_offset: server should see correct i.data at non-zero IPC buf offset");
-
-	threadJoin(tid, 0);
+	xt_join();
 	portDestroy(port);
 }
 
 
-/*
- * msg_xfer_borrow (out, non-zero offset): o.data points one page into the caller's IPC buffer.
- * Server writes to caller->ipc.w + PAGE_SIZE; caller reads the result from the same address.
- */
+/* Borrowed output supports an offset within the caller IPC buffer. */
 TEST(msg_xfer_types, xfer_borrow_out_offset)
 {
-	const size_t bufsz = 512;
-	const size_t offset = _PAGE_SIZE;
-
+	const size_t size = 512;
 	uint32_t port;
-	TEST_ASSERT_EQUAL_INT(0, portCreate(&port));
-
-	xt_borrow_state.port = port;
-	xt_borrow_state.sz = bufsz;
-	xt_borrow_state.result = 0;
-
-	void *ipc_buf = msgSetup(2 * _PAGE_SIZE);
-	TEST_ASSERT_NOT_NULL(ipc_buf);
-	memset((unsigned char *)ipc_buf + offset, 0, bufsz);
-
-	handle_t tid;
-	beginthreadex(xt_borrow_out_server, 4, xt_borrow_state.stack,
-			sizeof(xt_borrow_state.stack), NULL, &tid);
-
+	unsigned char *ipcBuffer;
+	unsigned char *output;
 	msg_t msg = { 0 };
-	msg.o.data = (unsigned char *)ipc_buf + offset; /* non-zero offset → plan.ofs = PAGE_SIZE */
-	msg.o.size = bufsz;
 
+	TEST_ASSERT_EQUAL_INT(0, portCreate(&port));
+	ipcBuffer = msgSetup(2 * _PAGE_SIZE);
+	TEST_ASSERT_NOT_NULL(ipcBuffer);
+	output = ipcBuffer + _PAGE_SIZE;
+	memset(output, 0, size);
+	TEST_ASSERT_EQUAL_INT(0, xt_start(port, xtServerBorrowOutput, size, 0));
+	msg.o.data = output;
+	msg.o.size = size;
 	TEST_ASSERT_EQUAL_INT(0, msgSend(port, &msg));
 	TEST_ASSERT_EQUAL_INT(0, msg.o.err);
-	TEST_ASSERT_EQUAL_INT_MESSAGE(1, xt_borrow_state.result,
-			"borrow_out_offset: server should have written to IPC buf at non-zero offset");
-
-	const unsigned char *obuf = (const unsigned char *)ipc_buf + offset;
-	for (size_t i = 0; i < bufsz; i++) {
-		TEST_ASSERT_EQUAL_HEX8((unsigned char)((i * 3 + 7) & 0xff), obuf[i]);
-	}
-
-	threadJoin(tid, 0);
+	for (size_t i = 0; i < size; ++i)
+		TEST_ASSERT_EQUAL_HEX8((unsigned char)((i * 3 + 7) & 0xff), output[i]);
+	xt_join();
 	portDestroy(port);
 }
 
 
-/*
- * msg_xfer_map (explicit): neither side has an IPC buffer, malloc'd buffers → msg_xfer_map.
- * Kernel creates a dedicated shared mapping via _xferMapBuf.
- * Condition: size > recv->ipc.size (0) && data not inside caller->ipc.w (NULL) → map
- */
+/* Heap-backed data uses the mapped-transfer fallback with no receiver IPC buffer. */
 TEST(msg_xfer_types, xfer_map)
 {
-	char dev_path[64];
-	make_dev_path(dev_path, sizeof(dev_path), "xt_map");
-	pid_t pid;
-
-	const size_t bufsz = 4096;
-
-	if ((pid = safe_fork()) == 0) {
-		uint32_t port = 0;
-		if (setup_port_dev(dev_path, &port) < 0) {
-			exit(3);
-		}
-		/* No msgSetup → recv->ipc.size = 0 → extra fails → map path */
-		server_echo_loop(port, 0);
-		exit(0);
-	}
-
-	oid_t oid;
-	while (lookup(dev_path, NULL, &oid) < 0) {
-		usleep(10 * 1000);
-	}
-
-	char *ibuf = malloc(bufsz);
-	char *obuf = malloc(bufsz);
-	TEST_ASSERT_NOT_NULL(ibuf);
-	TEST_ASSERT_NOT_NULL(obuf);
-
-	for (size_t i = 0; i < bufsz; i++) {
-		ibuf[i] = (char)((i * 7 + 1) & 0xff);
-	}
-	memset(obuf, 0, bufsz);
-
+	const size_t size = _PAGE_SIZE;
+	uint32_t port;
+	char *input = malloc(size);
+	char *output = malloc(size);
 	msg_t msg = { 0 };
+
+	TEST_ASSERT_NOT_NULL(input);
+	TEST_ASSERT_NOT_NULL(output);
+	for (size_t i = 0; i < size; ++i)
+		input[i] = (char)((i * 7 + 1) & 0xff);
+	memset(output, 0, size);
+	TEST_ASSERT_EQUAL_INT(0, portCreate(&port));
+	TEST_ASSERT_EQUAL_INT(0, xt_start(port, xtServerEcho, 0, 0));
 	msg.type = mtWrite;
-	msg.i.data = ibuf;
-	msg.i.size = bufsz;
-	msg.o.data = obuf;
-	msg.o.size = bufsz;
-
-	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
+	msg.i.data = input;
+	msg.i.size = size;
+	msg.o.data = output;
+	msg.o.size = size;
+	TEST_ASSERT_EQUAL_INT(0, msgSend(port, &msg));
 	TEST_ASSERT_EQUAL_INT(mtWrite, msg.o.err);
-	for (size_t i = 0; i < bufsz; i++) {
-		ibuf[i] ^= (unsigned char)((i & 0xff) ^ 0x5a);
-	}
-	TEST_ASSERT_EQUAL_MEMORY(ibuf, obuf, bufsz);
-
-	free(ibuf);
-	free(obuf);
-	assert_child_exit(pid);
+	for (size_t i = 0; i < size; ++i)
+		input[i] ^= (unsigned char)((i & 0xff) ^ 0x5a);
+	TEST_ASSERT_EQUAL_MEMORY(input, output, size);
+	xt_join();
+	portDestroy(port);
+	free(input);
+	free(output);
 }
 
 
-/*
- * msg_xfer_map (forced by recv IPC buf too small): receiver has an IPC buffer, but the
- * payload is larger → extra fails; data is not in caller's IPC (malloc'd) → borrow fails
- * → map fallback. Verifies map path is taken even when recv has a (small) IPC buf.
- * Condition: i.size > recv->ipc.size && i.data not in caller's IPC region → map
- */
+/* Heap-backed data maps when it is larger than the receiver IPC buffer. */
 TEST(msg_xfer_types, xfer_map_recv_ipcbuf_too_small)
 {
-	char dev_path[64];
-	make_dev_path(dev_path, sizeof(dev_path), "xt_map_sm");
-	pid_t pid;
-
-	/* payload (2 pages) larger than server's IPC buf (1 page) → extra fails → map */
-	const size_t bufsz = 2 * _PAGE_SIZE;
-	const size_t srv_ipc_sz = _PAGE_SIZE;
-
-	if ((pid = safe_fork()) == 0) {
-		uint32_t port = 0;
-		if (setup_port_dev(dev_path, &port) < 0) {
-			exit(3);
-		}
-		/* Small IPC buf: payload won't fit → extra fails; client data not in client IPC → map */
-		if (msgSetup(srv_ipc_sz) == NULL) {
-			exit(4);
-		}
-		server_echo_loop(port, 0);
-		exit(0);
-	}
-
-	oid_t oid;
-	while (lookup(dev_path, NULL, &oid) < 0) {
-		usleep(10 * 1000);
-	}
-
-	char *ibuf = malloc(bufsz);
-	char *obuf = malloc(bufsz);
-	TEST_ASSERT_NOT_NULL(ibuf);
-	TEST_ASSERT_NOT_NULL(obuf);
-
-	for (size_t i = 0; i < bufsz; i++) {
-		ibuf[i] = (char)((i * 5 + 3) & 0xff);
-	}
-	memset(obuf, 0, bufsz);
-
+	const size_t size = 2 * _PAGE_SIZE;
+	uint32_t port;
+	char *input = malloc(size);
+	char *output = malloc(size);
 	msg_t msg = { 0 };
+
+	TEST_ASSERT_NOT_NULL(input);
+	TEST_ASSERT_NOT_NULL(output);
+	for (size_t i = 0; i < size; ++i)
+		input[i] = (char)((i * 5 + 3) & 0xff);
+	memset(output, 0, size);
+	TEST_ASSERT_EQUAL_INT(0, portCreate(&port));
+	TEST_ASSERT_EQUAL_INT(0, xt_start(port, xtServerEcho, 0, _PAGE_SIZE));
 	msg.type = mtWrite;
-	msg.i.data = ibuf;
-	msg.i.size = bufsz;
-	msg.o.data = obuf;
-	msg.o.size = bufsz;
-
-	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
+	msg.i.data = input;
+	msg.i.size = size;
+	msg.o.data = output;
+	msg.o.size = size;
+	TEST_ASSERT_EQUAL_INT(0, msgSend(port, &msg));
 	TEST_ASSERT_EQUAL_INT(mtWrite, msg.o.err);
-	for (size_t i = 0; i < bufsz; i++) {
-		ibuf[i] ^= (unsigned char)((i & 0xff) ^ 0x5a);
-	}
-	TEST_ASSERT_EQUAL_MEMORY(ibuf, obuf, bufsz);
-
-	free(ibuf);
-	free(obuf);
-	assert_child_exit(pid);
+	for (size_t i = 0; i < size; ++i)
+		input[i] ^= (unsigned char)((i & 0xff) ^ 0x5a);
+	TEST_ASSERT_EQUAL_MEMORY(input, output, size);
+	xt_join();
+	portDestroy(port);
+	free(input);
+	free(output);
 }
 
 
