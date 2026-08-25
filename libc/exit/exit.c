@@ -85,7 +85,7 @@
 
 
 static struct {
-	volatile int test_handlerFlag;
+	volatile sig_atomic_t test_handlerFlag;
 	volatile int test_threadWait;
 	void (*test_exitPtr)(int status);
 } test_common;
@@ -102,12 +102,27 @@ struct test_ThreadArgs {
 /* SIGCHLD signal handler */
 static void test_sigchldHandler(int signum)
 {
-	struct sigaction sa;
+	struct sigaction sa = { 0 };
 
 	sa.sa_handler = SIG_DFL;  // Set the handler to default action
 	sigemptyset(&sa.sa_mask);
 	sa.sa_flags = 0;
-	TEST_ASSERT_EQUAL_INT(0, sigaction(SIGCHLD, &sa, NULL));
+	sigaction(SIGCHLD, &sa, NULL);
+
+	/* Change value of variable to confirm that handler has been invoked */
+	test_common.test_handlerFlag = TEST_EXIT_DUMMY_VAL;
+}
+
+
+/* SIGPIPE signal handler */
+static void test_sigpipeHandler(int signum)
+{
+	struct sigaction sa = { 0 };
+
+	sa.sa_handler = SIG_DFL;  // Set the handler to default action
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = 0;
+	sigaction(SIGPIPE, &sa, NULL);
 
 	/* Change value of variable to confirm that handler has been invoked */
 	test_common.test_handlerFlag = TEST_EXIT_DUMMY_VAL;
@@ -116,7 +131,7 @@ static void test_sigchldHandler(int signum)
 
 static void test_sigusrHandler(int signum)
 {
-	struct sigaction sa;
+	struct sigaction sa = { 0 };
 
 	sa.sa_handler = SIG_IGN;
 	sigemptyset(&sa.sa_mask);
@@ -133,7 +148,7 @@ static void test_dummyHandler(int signum)
 
 static void test_threadExitHandler(int signum)
 {
-	struct sigaction sa;
+	struct sigaction sa = { 0 };
 
 	sa.sa_handler = SIG_IGN;
 	sigemptyset(&sa.sa_mask);
@@ -172,7 +187,7 @@ static void *test_threadWait(void *args)
 {
 	int status;
 	struct test_ThreadArgs *threadArgs = (struct test_ThreadArgs *)args;
-	struct sigaction sa;
+	struct sigaction sa = { 0 };
 
 	/* Set handler for force exit from the thread in case of stuck in wait() or waitpid() */
 	sa.sa_handler = test_threadExitHandler;
@@ -192,7 +207,7 @@ static void *test_threadWaitpid(void *args)
 {
 	int status;
 	struct test_ThreadArgs *threadArgs = (struct test_ThreadArgs *)args;
-	struct sigaction sa;
+	struct sigaction sa = { 0 };
 
 	/* Set handler for force exit from the thread in case of stuck in wait() or waitpid() */
 	sa.sa_handler = test_threadExitHandler;
@@ -385,7 +400,7 @@ TEST(unistd_exit, unblock_thread_wait)
 	/* Check if only one waiting thread (wait()) is unblocked after child terminates */
 	pid_t pid;
 	pthread_t tid1, tid2;
-	struct sigaction sa;
+	struct sigaction sa = { 0 };
 
 	sa.sa_handler = SIG_IGN;
 	sigemptyset(&sa.sa_mask);
@@ -396,7 +411,7 @@ TEST(unistd_exit, unblock_thread_wait)
 	TEST_ASSERT_GREATER_OR_EQUAL(0, pid);
 	/* child */
 	if (pid == 0) {
-		struct sigaction sa;
+		struct sigaction sa = { 0 };
 
 		sa.sa_handler = test_dummyHandler;
 		sigemptyset(&sa.sa_mask);
@@ -475,7 +490,7 @@ TEST(unistd_exit, unblock_thread_waitpid)
 	/* Check if only one waiting thread (waitpid()) is unblocked after child terminates */
 	pid_t pid;
 	pthread_t tid1, tid2;
-	struct sigaction sa;
+	struct sigaction sa = { 0 };
 
 	sa.sa_handler = SIG_IGN;
 	sigemptyset(&sa.sa_mask);
@@ -486,7 +501,7 @@ TEST(unistd_exit, unblock_thread_waitpid)
 	TEST_ASSERT_GREATER_OR_EQUAL(0, pid);
 	/* child */
 	if (pid == 0) {
-		struct sigaction sa;
+		struct sigaction sa = { 0 };
 
 		sa.sa_handler = test_dummyHandler;
 		sigemptyset(&sa.sa_mask);
@@ -578,6 +593,15 @@ TEST(unistd_exit, close_streams)
 	/* parent */
 	else {
 		int status, ret;
+		struct sigaction sa = { 0 };
+
+		sa.sa_handler = test_sigpipeHandler;
+		TEST_ASSERT_EQUAL_INT(0, sigemptyset(&sa.sa_mask));
+		sa.sa_flags = 0;
+		TEST_ASSERT_EQUAL_INT(0, sigaction(SIGPIPE, &sa, NULL));
+
+		/* Check handlerFlag has initial value */
+		TEST_ASSERT_EQUAL_INT(0, test_common.test_handlerFlag);
 
 		ret = wait(&status);
 		TEST_ASSERT_EQUAL_INT(pid, ret);
@@ -588,6 +612,7 @@ TEST(unistd_exit, close_streams)
 		ret = write(pipefd[1], TEST_EXIT_STR, sizeof(TEST_EXIT_STR));
 		TEST_ASSERT_EQUAL_INT(-1, ret);
 		TEST_ASSERT_EQUAL_INT(EPIPE, errno);
+		TEST_ASSERT_EQUAL_INT(TEST_EXIT_DUMMY_VAL, test_common.test_handlerFlag);
 		close(pipefd[1]); /* close write pipe end */
 	}
 }
@@ -601,7 +626,7 @@ TEST(unistd_exit, orphaned_child)
 	/* Test if parent _exit affect child process */
 	pid_t pid;
 	int pipefd[2];
-	struct sigaction sa;
+	struct sigaction sa = { 0 };
 
 	sa.sa_handler = test_dummyHandler;
 	sigemptyset(&sa.sa_mask);
@@ -681,7 +706,7 @@ TEST(unistd_exit, new_parent_id)
 	/* Test that child acquire new parent ID */
 	pid_t pid;
 	int pipefd[2];
-	struct sigaction sa;
+	struct sigaction sa = { 0 };
 
 	sa.sa_handler = test_dummyHandler;
 	sigemptyset(&sa.sa_mask);
@@ -765,7 +790,7 @@ TEST(unistd_exit, SIGCHLD_sent)
 {
 	/* Test that SIGCHILD signal is sent after child exits */
 	pid_t pid;
-	struct sigaction sa;
+	struct sigaction sa = { 0 };
 
 	sa.sa_handler = test_sigchldHandler;
 	TEST_ASSERT_EQUAL_INT(0, sigemptyset(&sa.sa_mask));
@@ -924,7 +949,7 @@ TEST(unistd_exit, no_handler)
 	TEST_ASSERT_GREATER_OR_EQUAL(0, pid);
 	/* child */
 	if (pid == 0) {
-		struct sigaction sa;
+		struct sigaction sa = { 0 };
 
 		sa.sa_handler = test_sigusrHandler;
 		TEST_ASSERT_EQUAL_INT(0, sigemptyset(&sa.sa_mask));
