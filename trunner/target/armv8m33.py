@@ -6,6 +6,7 @@ from trunner.dut import Dut, SerialDut
 from trunner.host import Host
 from trunner.harness import (
     PloHarness,
+    PloInterface,
     PloRamSyspageLoader,
     ShellHarness,
     TestStartRunningHarness,
@@ -29,12 +30,13 @@ class ARMv8M33Rebooter(Rebooter):
             self._reboot_dut_gpio(hard=hard)
         else:
             self._reboot_by_debugger()
+            self.dut.clear_buffer()
 
     def _reboot_by_debugger(self):
         PyocdProcess(target="mcxn947").reset()
 
 
-class MCXN947SyspageLoader(PloRamSyspageLoader):
+class MCXN947SyspageLoader(PloRamSyspageLoader, PloInterface):
     """Loads app binaries and file blobs into RAM via pyocd and registers them with PLO on MCXN947."""
 
     source_device = "ramdev"
@@ -60,9 +62,12 @@ class MCXN947SyspageLoader(PloRamSyspageLoader):
         apps_offset = offset
         for app in self.apps:
             path = self.app_host_dir / Path(app.file)
-            PyocdProcess(target="mcxn947", extra_args=["--format=bin", "--no-reset"], cwd=self.app_host_dir).load(
-                load_file=app.file, load_offset=self.ram_addr + offset
-            )
+            # In this approach, pyocd remember last used configuration with connection after flashing sequence
+            PyocdProcess(
+                target="mcxn947",
+                extra_args=["--format=bin", "--no-reset", "-Oconnect_mode=halt", "-Oenable_multicore_debug=True"],
+                cwd=self.app_host_dir,
+            ).load(load_file=app.file, load_offset=self.ram_addr + offset)
             offset += self._aligned_size(path)
 
         files_offset = offset
@@ -74,6 +79,8 @@ class MCXN947SyspageLoader(PloRamSyspageLoader):
 
             offset += self._aligned_size(path)
 
+        self.enter_bootloader()
+
         self._register_apps_in_plo(apps_offset, self.app_host_dir)
         self._register_files_in_plo(files_offset)
 
@@ -84,9 +91,15 @@ class MCXN94xTarget(TargetBase):
     image_file = "phoenix.disk"
 
     def __init__(self, host: Host, port: Optional[str] = None, baudrate: int = 115200):
+        self.host = host
         if port is None:
-            # Try to find USB-Serial controller
-            port = find_port("MCU-LINK")
+            # When using hard reboot (rpi), an external uart converter is used to not loose output.
+            # NOTE: For standalone testing, a connection error may occur, usually setting reset_type to
+            # emulated in flash_dut helps, but in the worst case scenario it may require excessive steps.
+            if self.host.has_gpio():
+                port = find_port(r"USB.{,8}Serial")
+            else:
+                port = find_port("MCU-link")
 
         self.dut = SerialDut(port, baudrate, encoding="utf-8", codec_errors="ignore")
         self.rebooter = ARMv8M33Rebooter(host, self.dut)
@@ -98,8 +111,20 @@ class MCXN94xTarget(TargetBase):
 
     def flash_dut(self, host_log: TextIO):
         try:
+            # For consistent testing without any error we're using full power down sequence
+            if self.host.has_gpio():
+                self.rebooter(hard=True)
+
             PyocdProcess(
-                target="mcxn947", extra_args=["--format=bin", "--erase=chip"], host_log=host_log, cwd=self.boot_dir()
+                cwd=self.boot_dir(),
+                host_log=host_log,
+                extra_args=[
+                    "-e=auto",
+                    "--format=bin",
+                    "-Oconnect_mode=halt",
+                    "-Oenable_multicore_debug=True",
+                ],
+                target="mcxn947",
             ).load(load_file=self.image_file)
 
         except FileNotFoundError as e:

@@ -113,3 +113,8 @@ armv8m55-stm32n6-nucleo:
   nnet_test: [2, 160]
   sha-test: [2, 3]
   linear_alg-mid-100x100-sp: [2, 8]
+
+armv8m33-mcxn94x-frdm:
+  core: [2, 92]
+  linear_alg-mid-100x100-sp: [2, 802]
+  nnet_test: [2, 4588]
