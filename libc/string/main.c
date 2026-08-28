@@ -33,6 +33,7 @@ void runner(void)
 	RUN_TEST_GROUP(string_strlcpy);
 	RUN_TEST_GROUP(string_strlcat);
 	RUN_TEST_GROUP(string_errsign);
+	RUN_TEST_GROUP(string_perror);
 	RUN_TEST_GROUP(signal_psignal);
 	RUN_TEST_GROUP(string_cat);
 	RUN_TEST_GROUP(string_dup);
