@@ -1803,6 +1803,740 @@ TEST(test_unix_socket, send_clear_peer_closed)
 }
 
 
+/*
+ * shutdown() must not destroy the socket: the write side is closed, the read
+ * side keeps working and whatever was queued before the shutdown is still
+ * delivered.
+ */
+static void unix_shutdown_wr(int type)
+{
+	int fd[2];
+	ssize_t n;
+
+	signal(SIGPIPE, sighandler);
+
+	if (socketpair(AF_UNIX, type, 0, fd) < 0) {
+		FAIL("socketpair");
+	}
+
+	n = send(fd[0], data, 16, 0);
+	TEST_ASSERT_EQUAL_INT(16, n);
+
+	TEST_ASSERT_EQUAL_INT(0, shutdown(fd[0], SHUT_WR));
+
+	/* the descriptor is still valid, but writing to it fails */
+	got_epipe = 0;
+	errno = 0;
+	n = send(fd[0], data, 16, 0);
+	TEST_ASSERT_EQUAL_INT(-1, n);
+	TEST_ASSERT_EQUAL_INT(EPIPE, errno);
+#ifdef __phoenix__
+	TEST_ASSERT_EQUAL_INT(1, got_epipe);
+#else
+	TEST_ASSERT_EQUAL_INT(type == SOCK_STREAM ? 1 : 0, got_epipe);
+#endif
+
+	/* the peer drains what was queued before the shutdown, then sees EOS */
+	n = recv(fd[1], buf, sizeof(buf), 0);
+	TEST_ASSERT_EQUAL_INT(16, n);
+	n = recv(fd[1], buf, sizeof(buf), 0);
+	TEST_ASSERT_EQUAL_INT(0, n);
+
+	/* the other direction is unaffected */
+	n = send(fd[1], data, 8, 0);
+	TEST_ASSERT_EQUAL_INT(8, n);
+	n = recv(fd[0], buf, sizeof(buf), 0);
+	TEST_ASSERT_EQUAL_INT(8, n);
+
+	close(fd[0]);
+	close(fd[1]);
+
+	signal(SIGPIPE, SIG_DFL);
+}
+
+
+static void unix_shutdown_rd(int type)
+{
+	int fd[2];
+	ssize_t n;
+
+	signal(SIGPIPE, sighandler);
+
+	if (socketpair(AF_UNIX, type, 0, fd) < 0) {
+		FAIL("socketpair");
+	}
+
+	n = send(fd[1], data, 16, 0);
+	TEST_ASSERT_EQUAL_INT(16, n);
+
+	TEST_ASSERT_EQUAL_INT(0, shutdown(fd[0], SHUT_RD));
+
+	/* data received before the shutdown is still delivered */
+	n = recv(fd[0], buf, sizeof(buf), 0);
+	TEST_ASSERT_EQUAL_INT(16, n);
+	n = recv(fd[0], buf, sizeof(buf), 0);
+	TEST_ASSERT_EQUAL_INT(0, n);
+
+	/* the peer cannot write to a socket that will never be read again */
+	got_epipe = 0;
+	errno = 0;
+	n = send(fd[1], data, 16, 0);
+	TEST_ASSERT_EQUAL_INT(-1, n);
+	TEST_ASSERT_EQUAL_INT(EPIPE, errno);
+#ifdef __phoenix__
+	TEST_ASSERT_EQUAL_INT(1, got_epipe);
+#else
+	TEST_ASSERT_EQUAL_INT(type == SOCK_STREAM ? 1 : 0, got_epipe);
+#endif
+
+	/* our own write side still works */
+	n = send(fd[0], data, 8, 0);
+	TEST_ASSERT_EQUAL_INT(8, n);
+	n = recv(fd[1], buf, sizeof(buf), 0);
+	TEST_ASSERT_EQUAL_INT(8, n);
+
+	close(fd[0]);
+	close(fd[1]);
+
+	signal(SIGPIPE, SIG_DFL);
+}
+
+
+TEST(test_unix_socket, shutdown_half_close)
+{
+	unix_shutdown_wr(SOCK_STREAM);
+	unix_shutdown_wr(SOCK_SEQPACKET);
+	unix_shutdown_rd(SOCK_STREAM);
+	unix_shutdown_rd(SOCK_SEQPACKET);
+}
+
+
+TEST(test_unix_socket, shutdown_errnos)
+{
+	int fd[2], err;
+
+	fd[0] = socket(AF_UNIX, SOCK_STREAM, 0);
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fd[0]);
+
+	errno = 0;
+	err = shutdown(fd[0], SHUT_RDWR);
+#ifdef __phoenix__
+	TEST_ASSERT_EQUAL_INT(-1, err);
+	TEST_ASSERT_EQUAL_INT(ENOTCONN, errno);
+#else
+	TEST_ASSERT_EQUAL_INT(0, err);
+	TEST_ASSERT_EQUAL_INT(0, errno);
+#endif
+
+	close(fd[0]);
+
+	if (socketpair(AF_UNIX, SOCK_STREAM, 0, fd) < 0) {
+		FAIL("socketpair");
+	}
+
+	errno = 0;
+	err = shutdown(fd[0], 12345);
+	TEST_ASSERT_EQUAL_INT(-1, err);
+	TEST_ASSERT_EQUAL_INT(EINVAL, errno);
+
+	/* the socket has to survive both failures */
+	TEST_ASSERT_EQUAL_INT(4, send(fd[0], data, 4, 0));
+	TEST_ASSERT_EQUAL_INT(4, recv(fd[1], buf, sizeof(buf), 0));
+
+	close(fd[0]);
+	close(fd[1]);
+}
+
+
+/*
+ * A thread blocked in recv() has to be woken when the peer disappears,
+ * and one blocked in send() has to be woken with EPIPE.
+ */
+static void unix_recv_blocked_peer_close(int type)
+{
+	int fd[2], status;
+	pid_t pid;
+	ssize_t n;
+
+	if (socketpair(AF_UNIX, type, 0, fd) < 0) {
+		FAIL("socketpair");
+	}
+
+	pid = safe_fork();
+
+	if (pid != 0) {
+		close(fd[1]);
+
+		/* blocks until the child drops the last reference to the peer */
+		n = recv(fd[0], buf, sizeof(buf), 0);
+		TEST_ASSERT_EQUAL_INT(0, n);
+
+		if (waitpid(pid, &status, 0) < 0) {
+			FAIL("waitpid");
+		}
+
+		TEST_ASSERT(WIFEXITED(status));
+		TEST_ASSERT_EQUAL_INT(0, WEXITSTATUS(status));
+
+		close(fd[0]);
+	}
+	else {
+		close(fd[0]);
+		usleep(100 * 1000);
+		close(fd[1]);
+		exit(0);
+	}
+}
+
+
+TEST(test_unix_socket, recv_blocked_peer_close)
+{
+	unix_recv_blocked_peer_close(SOCK_STREAM);
+	unix_recv_blocked_peer_close(SOCK_SEQPACKET);
+}
+
+
+TEST(test_unix_socket, send_blocked_peer_close)
+{
+	int fd[2], status;
+	pid_t pid;
+	ssize_t n;
+
+	signal(SIGPIPE, sighandler);
+
+	if (socketpair(AF_UNIX, SOCK_STREAM, 0, fd) < 0) {
+		FAIL("socketpair");
+	}
+
+	pid = safe_fork();
+
+	if (pid != 0) {
+		close(fd[1]);
+
+		/* fill the peer's buffer, then block waiting for room */
+		got_epipe = 0;
+		errno = 0;
+		do {
+			n = send(fd[0], data, sizeof(data), 0);
+		} while (n > 0);
+
+		TEST_ASSERT_EQUAL_INT(-1, n);
+#ifdef __phoenix__
+		TEST_ASSERT_EQUAL_INT(EPIPE, errno);
+		TEST_ASSERT_EQUAL_INT(1, got_epipe);
+#else
+		TEST_ASSERT_EQUAL_INT(ECONNRESET, errno);
+		TEST_ASSERT_EQUAL_INT(0, got_epipe);
+#endif
+
+		if (waitpid(pid, &status, 0) < 0) {
+			FAIL("waitpid");
+		}
+
+		TEST_ASSERT(WIFEXITED(status));
+		TEST_ASSERT_EQUAL_INT(0, WEXITSTATUS(status));
+
+		close(fd[0]);
+	}
+	else {
+		close(fd[0]);
+		usleep(100 * 1000);
+		close(fd[1]);
+		exit(0);
+	}
+
+	signal(SIGPIPE, SIG_DFL);
+}
+
+
+/*
+ * Two readers blocked on one socket must both be woken - a single wake-up per
+ * message leaves one of them asleep with data queued.
+ */
+TEST(test_unix_socket, two_blocked_readers)
+{
+	int fd[2], i, status;
+	pid_t pid[2];
+
+	if (socketpair(AF_UNIX, SOCK_STREAM, 0, fd) < 0) {
+		FAIL("socketpair");
+	}
+
+	for (i = 0; i < 2; ++i) {
+		pid[i] = safe_fork();
+		if (pid[i] == 0) {
+			char c;
+			CHILD_ASSERT(recv(fd[0], &c, 1, 0) == 1);
+			exit(0);
+		}
+	}
+
+	/* let both children block in recv() */
+	usleep(200 * 1000);
+
+	TEST_ASSERT_EQUAL_INT(2, send(fd[1], data, 2, 0));
+
+	for (i = 0; i < 2; ++i) {
+		if (waitpid(pid[i], &status, 0) < 0) {
+			FAIL("waitpid");
+		}
+		TEST_ASSERT(WIFEXITED(status));
+		TEST_ASSERT_EQUAL_INT(0, WEXITSTATUS(status));
+	}
+
+	close(fd[0]);
+	close(fd[1]);
+}
+
+
+/*
+ * A non-blocking connect() that is closed before it is accepted used to leave
+ * the closed socket on the listener's queue.
+ */
+static void unix_connect_abort(int type)
+{
+	int named, fd, conn, status, i;
+	pid_t pid;
+	const char *socket_name = "/tmp/test_connect_abort";
+
+	if ((named = unix_named_socket(type, socket_name)) < 0) {
+		FAIL("unix_named_socket");
+	}
+
+	if (listen(named, 4) < 0) {
+		FAIL("listen");
+	}
+
+	if (set_nonblock(named, 1) < 0) {
+		FAIL("set_nonblock");
+	}
+
+	pid = safe_fork();
+
+	if (pid == 0) {
+		close(named);
+
+		for (i = 0; i < 64; ++i) {
+			fd = socket(AF_UNIX, type, 0);
+			CHILD_ASSERT(fd >= 0);
+			CHILD_ASSERT(set_nonblock(fd, 1) == 0);
+			/* refused when the queue is full, in progress otherwise */
+			(void)connect_to_named(fd, socket_name);
+			CHILD_ASSERT(close(fd) == 0);
+		}
+
+		exit(0);
+	}
+
+	do {
+		conn = accept(named, NULL, NULL);
+		if (conn >= 0) {
+			close(conn);
+		}
+		else {
+			TEST_ASSERT(errno == EWOULDBLOCK || errno == EAGAIN);
+			usleep(1000);
+		}
+	} while (waitpid(pid, &status, WNOHANG) == 0);
+
+	/* drain whatever is left queued */
+	while ((conn = accept(named, NULL, NULL)) >= 0) {
+		close(conn);
+	}
+
+	TEST_ASSERT(WIFEXITED(status));
+	TEST_ASSERT_EQUAL_INT(0, WEXITSTATUS(status));
+
+	close(named);
+	unlink(socket_name);
+}
+
+
+TEST(test_unix_socket, connect_abort)
+{
+	unix_connect_abort(SOCK_STREAM);
+	unix_connect_abort(SOCK_SEQPACKET);
+}
+
+
+/* MSG_PEEK must not consume a datagram */
+static void unix_dgram_peek(int type)
+{
+	int fd[2];
+	ssize_t n;
+
+	if (socketpair(AF_UNIX, type, 0, fd) < 0) {
+		FAIL("socketpair");
+	}
+
+	TEST_ASSERT_EQUAL_INT(16, send(fd[0], data, 16, 0));
+	TEST_ASSERT_EQUAL_INT(32, send(fd[0], data, 32, 0));
+
+	/* the first record, twice, without consuming it */
+	memset(buf, 0, 64);
+	n = recv(fd[1], buf, sizeof(buf), MSG_PEEK);
+	TEST_ASSERT_EQUAL_INT(16, n);
+	TEST_ASSERT_EQUAL_INT(0, memcmp(buf, data, 16));
+
+	memset(buf, 0, 64);
+	n = recv(fd[1], buf, sizeof(buf), MSG_PEEK);
+	TEST_ASSERT_EQUAL_INT(16, n);
+	TEST_ASSERT_EQUAL_INT(0, memcmp(buf, data, 16));
+
+	/* a truncated peek does not consume the record either */
+	n = recv(fd[1], buf, 8, MSG_PEEK);
+	TEST_ASSERT_EQUAL_INT(8, n);
+
+	n = recv(fd[1], buf, sizeof(buf), 0);
+	TEST_ASSERT_EQUAL_INT(16, n);
+	n = recv(fd[1], buf, sizeof(buf), 0);
+	TEST_ASSERT_EQUAL_INT(32, n);
+
+	close(fd[0]);
+	close(fd[1]);
+}
+
+
+TEST(test_unix_socket, dgram_msg_peek)
+{
+	unix_dgram_peek(SOCK_DGRAM);
+	unix_dgram_peek(SOCK_SEQPACKET);
+}
+
+
+/*
+ * A datagram socket's receive channel is shared by every sender, so nothing a
+ * connected sender does to its own write side may disturb it: neither
+ * shutdown(SHUT_WR) nor close() may stop the receiver from reading or another
+ * sender from sending.
+ */
+static void unix_dgram_sender_isolation(int doClose)
+{
+	const char *name = "/tmp/test_dgram_iso";
+	struct sockaddr_un addr = { 0 };
+	int srv, cli, other;
+	ssize_t n;
+
+	srv = unix_named_socket(SOCK_DGRAM, name);
+	if (srv < 0) {
+		FAIL("unix_named_socket");
+	}
+
+	cli = socket(AF_UNIX, SOCK_DGRAM, 0);
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, cli);
+	TEST_ASSERT_EQUAL_INT(0, connect_to_named(cli, name));
+
+	other = socket(AF_UNIX, SOCK_DGRAM, 0);
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, other);
+
+	if (doClose != 0) {
+		TEST_ASSERT_EQUAL_INT(0, close(cli));
+	}
+	else {
+		TEST_ASSERT_EQUAL_INT(0, shutdown(cli, SHUT_WR));
+
+		/* the sender's own write side is closed */
+		errno = 0;
+		n = send(cli, data, 4, MSG_NOSIGNAL);
+		TEST_ASSERT_EQUAL_INT(-1, n);
+		TEST_ASSERT_EQUAL_INT(EPIPE, errno);
+	}
+
+	/* an unrelated sender is unaffected */
+	addr.sun_family = AF_UNIX;
+	strcpy(addr.sun_path, name);
+	n = sendto(other, data, 4, MSG_NOSIGNAL, (struct sockaddr *)&addr, SUN_LEN(&addr));
+	TEST_ASSERT_EQUAL_INT(4, n);
+
+	/* and the receiver still gets the datagram instead of end-of-stream */
+	n = recv(srv, buf, sizeof(buf), 0);
+	TEST_ASSERT_EQUAL_INT(4, n);
+
+	if (doClose == 0) {
+		close(cli);
+	}
+	close(other);
+	close(srv);
+	unlink(name);
+}
+
+
+TEST(test_unix_socket, dgram_sender_isolation)
+{
+	unix_dgram_sender_isolation(0);
+	unix_dgram_sender_isolation(1);
+}
+
+
+/*
+ * poll() across the half-close states. POLLHUP is a hangup of the whole
+ * connection, so it takes both directions: a socket that is only half closed
+ * keeps working in the direction that is left, and since POLLHUP cannot be
+ * masked out, reporting it early would have event loops tear down usable
+ * connections. POLLOUT, on the other hand, is reported whenever there is room
+ * in the buffer even once the connection is shut - the write then fails with
+ * EPIPE instead of blocking, which is what keeps a poll loop from getting
+ * stuck. Both match Linux.
+ */
+static void unix_poll_expect(int fd, short expected, const char *what)
+{
+	struct pollfd pfd;
+	char msg[96];
+	int rv;
+
+	pfd.fd = fd;
+	pfd.events = POLLIN | POLLOUT | POLLPRI;
+	pfd.revents = 0;
+
+	rv = poll(&pfd, 1, 0);
+
+	snprintf(msg, sizeof(msg), "%s: revents 0x%x, expected 0x%x", what,
+			(unsigned int)pfd.revents, (unsigned int)expected);
+	TEST_ASSERT_EQUAL_INT_MESSAGE(expected, pfd.revents, msg);
+	TEST_ASSERT_EQUAL_INT_MESSAGE((expected != 0) ? 1 : 0, rv, msg);
+}
+
+
+static void unix_poll_shutdown(int type)
+{
+	const short out = POLLOUT;
+	const short inOut = POLLIN | POLLOUT;
+	const short inOutHup = POLLIN | POLLOUT | POLLHUP;
+	/* a datagram socket is unaffected by what its peer shuts down or closes */
+	const short peerRd = (type != SOCK_DGRAM) ? inOut : out;
+	const short peerClosed = (type != SOCK_DGRAM) ? inOutHup : out;
+	int fd[2];
+
+	if (socketpair(AF_UNIX, type, 0, fd) < 0) {
+		FAIL("socketpair");
+	}
+	unix_poll_expect(fd[0], out, "connected and idle");
+	close(fd[0]);
+	close(fd[1]);
+
+	/* our own half-closes: neither alone is a hangup */
+	if (socketpair(AF_UNIX, type, 0, fd) < 0) {
+		FAIL("socketpair");
+	}
+	TEST_ASSERT_EQUAL_INT(0, shutdown(fd[0], SHUT_RD));
+	unix_poll_expect(fd[0], inOut, "our SHUT_RD");
+	close(fd[0]);
+	close(fd[1]);
+
+	if (socketpair(AF_UNIX, type, 0, fd) < 0) {
+		FAIL("socketpair");
+	}
+	TEST_ASSERT_EQUAL_INT(0, shutdown(fd[0], SHUT_WR));
+	unix_poll_expect(fd[0], out, "our SHUT_WR");
+	close(fd[0]);
+	close(fd[1]);
+
+	/* both directions gone - now it is a hangup */
+	if (socketpair(AF_UNIX, type, 0, fd) < 0) {
+		FAIL("socketpair");
+	}
+	TEST_ASSERT_EQUAL_INT(0, shutdown(fd[0], SHUT_RDWR));
+	unix_poll_expect(fd[0], inOutHup, "our SHUT_RDWR");
+	close(fd[0]);
+	close(fd[1]);
+
+	/* the same, reached one direction at a time */
+	if (socketpair(AF_UNIX, type, 0, fd) < 0) {
+		FAIL("socketpair");
+	}
+	TEST_ASSERT_EQUAL_INT(0, shutdown(fd[0], SHUT_WR));
+	unix_poll_expect(fd[0], out, "our SHUT_WR, then SHUT_RD");
+	TEST_ASSERT_EQUAL_INT(0, shutdown(fd[0], SHUT_RD));
+	unix_poll_expect(fd[0], inOutHup, "our SHUT_WR and SHUT_RD");
+	close(fd[0]);
+	close(fd[1]);
+
+	/* the peer's half-closes */
+	if (socketpair(AF_UNIX, type, 0, fd) < 0) {
+		FAIL("socketpair");
+	}
+	TEST_ASSERT_EQUAL_INT(0, shutdown(fd[1], SHUT_WR));
+	unix_poll_expect(fd[0], peerRd, "peer SHUT_WR");
+	close(fd[0]);
+	close(fd[1]);
+
+	if (socketpair(AF_UNIX, type, 0, fd) < 0) {
+		FAIL("socketpair");
+	}
+	TEST_ASSERT_EQUAL_INT(0, shutdown(fd[1], SHUT_RD));
+	unix_poll_expect(fd[0], out, "peer SHUT_RD");
+	close(fd[0]);
+	close(fd[1]);
+
+	/* the peer going away closes both directions at once */
+	if (socketpair(AF_UNIX, type, 0, fd) < 0) {
+		FAIL("socketpair");
+	}
+	close(fd[1]);
+	unix_poll_expect(fd[0], peerClosed, "peer close");
+	close(fd[0]);
+
+	/* data already queued stays readable across a read-side shutdown */
+	if (socketpair(AF_UNIX, type, 0, fd) < 0) {
+		FAIL("socketpair");
+	}
+	TEST_ASSERT_EQUAL_INT(4, send(fd[1], data, 4, 0));
+	unix_poll_expect(fd[0], inOut, "data queued");
+	TEST_ASSERT_EQUAL_INT(0, shutdown(fd[0], SHUT_RD));
+	unix_poll_expect(fd[0], inOut, "data queued, our SHUT_RD");
+	close(fd[0]);
+	close(fd[1]);
+}
+
+
+TEST(test_unix_socket, poll_shutdown)
+{
+	unix_poll_shutdown(SOCK_STREAM);
+	unix_poll_shutdown(SOCK_SEQPACKET);
+	unix_poll_shutdown(SOCK_DGRAM);
+}
+
+
+/*
+ * A socket shut down for writing must still report POLLOUT, so that a poll loop
+ * is woken to discover the EPIPE rather than waiting for room that no longer
+ * matters.
+ */
+static void unix_poll_shut_wr_writable(int type)
+{
+	int fd[2];
+	ssize_t n;
+
+	signal(SIGPIPE, SIG_IGN);
+
+	if (socketpair(AF_UNIX, type, 0, fd) < 0) {
+		FAIL("socketpair");
+	}
+
+	TEST_ASSERT_EQUAL_INT(0, shutdown(fd[0], SHUT_WR));
+	unix_poll_expect(fd[0], POLLOUT, "POLLOUT after our SHUT_WR");
+
+	errno = 0;
+	n = send(fd[0], data, 4, 0);
+	TEST_ASSERT_EQUAL_INT(-1, n);
+	TEST_ASSERT_EQUAL_INT(EPIPE, errno);
+
+	close(fd[0]);
+	close(fd[1]);
+
+	/* and the same once the peer has stopped reading */
+	if (socketpair(AF_UNIX, type, 0, fd) < 0) {
+		FAIL("socketpair");
+	}
+
+	TEST_ASSERT_EQUAL_INT(0, shutdown(fd[1], SHUT_RD));
+	unix_poll_expect(fd[0], POLLOUT, "POLLOUT after peer SHUT_RD");
+
+	errno = 0;
+	n = send(fd[0], data, 4, 0);
+	TEST_ASSERT_EQUAL_INT(-1, n);
+#ifdef __phoenix__
+	TEST_ASSERT_EQUAL_INT((type != SOCK_DGRAM) ? EPIPE : ECONNREFUSED, errno);
+#else
+	TEST_ASSERT_EQUAL_INT(EPIPE, errno);
+#endif
+
+	close(fd[0]);
+	close(fd[1]);
+
+	signal(SIGPIPE, SIG_DFL);
+}
+
+
+TEST(test_unix_socket, poll_shut_wr_writable)
+{
+	unix_poll_shut_wr_writable(SOCK_STREAM);
+	unix_poll_shut_wr_writable(SOCK_SEQPACKET);
+	unix_poll_shut_wr_writable(SOCK_DGRAM);
+}
+
+
+/*
+ * The same once there is no room left. A shut direction is reported writable
+ * even with a full buffer, so that the poll loop is woken to collect the EPIPE
+ * instead of waiting for room that nobody is going to make.
+ */
+static void unix_poll_full_shut_writable(int type, int peerShutRd)
+{
+	const char *tn = (type == SOCK_STREAM) ? "stream" : ((type == SOCK_SEQPACKET) ? "seqpacket" : "dgram");
+	char what[64];
+	int fd[2];
+	ssize_t n;
+	size_t filled = 0;
+	int expected;
+
+	signal(SIGPIPE, SIG_IGN);
+
+	if (socketpair(AF_UNIX, type, 0, fd) < 0) {
+		FAIL("socketpair");
+	}
+
+	/* fill the transmit buffer, then top it up until not even one byte fits */
+	do {
+		n = send(fd[0], data, DATA_SIZE, MSG_DONTWAIT);
+		filled += (n > 0) ? (size_t)n : 0;
+		if (filled > (8u << 20)) {
+			FAIL("the transmit buffer does not fill up");
+		}
+	} while (n > 0);
+
+	do {
+		n = send(fd[0], data, 1, MSG_DONTWAIT);
+	} while (n > 0);
+
+	snprintf(what, sizeof(what), "%s, transmit buffer full", tn);
+	unix_poll_expect(fd[0], 0, what);
+
+	if (peerShutRd == 0) {
+		TEST_ASSERT_EQUAL_INT(0, shutdown(fd[0], SHUT_WR));
+		expected = EPIPE;
+	}
+	else {
+		TEST_ASSERT_EQUAL_INT(0, shutdown(fd[1], SHUT_RD));
+#ifdef __phoenix__
+		expected = (type != SOCK_DGRAM) ? EPIPE : ECONNREFUSED;
+#else
+		/* a full datagram socket reports the lack of room before the peer */
+		expected = (type != SOCK_DGRAM) ? EPIPE : EAGAIN;
+#endif
+	}
+
+	snprintf(what, sizeof(what), "%s, full buffer, %s", tn, (peerShutRd == 0) ? "our SHUT_WR" : "peer SHUT_RD");
+#ifdef __phoenix__
+	unix_poll_expect(fd[0], POLLOUT, what);
+#else
+	unix_poll_expect(fd[0], 0, what);
+#endif
+
+	errno = 0;
+	n = send(fd[0], data, 4, MSG_DONTWAIT);
+	TEST_ASSERT_EQUAL_INT(-1, n);
+	TEST_ASSERT_EQUAL_INT(expected, errno);
+
+	close(fd[0]);
+	close(fd[1]);
+
+	signal(SIGPIPE, SIG_DFL);
+}
+
+
+TEST(test_unix_socket, poll_full_shut_writable)
+{
+	unix_poll_full_shut_writable(SOCK_STREAM, 0);
+	unix_poll_full_shut_writable(SOCK_SEQPACKET, 0);
+	unix_poll_full_shut_writable(SOCK_DGRAM, 0);
+
+	unix_poll_full_shut_writable(SOCK_STREAM, 1);
+	unix_poll_full_shut_writable(SOCK_SEQPACKET, 1);
+	unix_poll_full_shut_writable(SOCK_DGRAM, 1);
+}
+
+
 TEST_GROUP_RUNNER(test_unix_socket)
 {
 	RUN_TEST_CASE(test_unix_socket, zero_len_send);
@@ -1821,6 +2555,9 @@ TEST_GROUP_RUNNER(test_unix_socket)
 	RUN_TEST_CASE(test_unix_socket, recv_after_close);
 	RUN_TEST_CASE(test_unix_socket, connect_after_close);
 	RUN_TEST_CASE(test_unix_socket, poll);
+	RUN_TEST_CASE(test_unix_socket, poll_shutdown);
+	RUN_TEST_CASE(test_unix_socket, poll_shut_wr_writable);
+	RUN_TEST_CASE(test_unix_socket, poll_full_shut_writable);
 	RUN_TEST_CASE(test_unix_socket, recv_msg_peek);
 	RUN_TEST_CASE(test_unix_socket, accept_connect_errnos);
 	RUN_TEST_CASE(test_unix_socket, accept_connect_async);
@@ -1830,6 +2567,14 @@ TEST_GROUP_RUNNER(test_unix_socket)
 	RUN_TEST_CASE(test_unix_socket, wrong_port);
 	RUN_TEST_CASE(test_unix_socket, wrong_type);
 	RUN_TEST_CASE(test_unix_socket, send_clear_peer_closed);
+	RUN_TEST_CASE(test_unix_socket, shutdown_half_close);
+	RUN_TEST_CASE(test_unix_socket, shutdown_errnos);
+	RUN_TEST_CASE(test_unix_socket, recv_blocked_peer_close);
+	RUN_TEST_CASE(test_unix_socket, send_blocked_peer_close);
+	RUN_TEST_CASE(test_unix_socket, two_blocked_readers);
+	RUN_TEST_CASE(test_unix_socket, connect_abort);
+	RUN_TEST_CASE(test_unix_socket, dgram_msg_peek);
+	RUN_TEST_CASE(test_unix_socket, dgram_sender_isolation);
 }
 
 void runner(void)
