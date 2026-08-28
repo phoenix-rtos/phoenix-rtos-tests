@@ -1,0 +1,18 @@
+# This file is responsible to set the "sim" variable for the qemu-simualtor
+
+proc setup_qemu {dir_for_scripts script_name} {
+    set path_sim "$dir_for_scripts/$script_name"
+
+    if { ![file exists "$path_sim"] } {
+        puts "\033\[1;31mbasic-qemu.exp: the file of simulator doesn't exist! \033\[0m"
+        exit 1
+    }
+
+    set_board_info sim "$path_sim"
+
+    global board
+    verbose "Using simulator [board_info $board sim]\n"
+}
+
+# It is important to indicate that we use any simulator
+set_board_info is_simulator 1
