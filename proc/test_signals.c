@@ -38,9 +38,9 @@ void signaler(void)
 	signalMask(0xffff, 0xffff);
 
 	for (;;) {
-		signalPost(pid, -1, 1 + rand_r(&seed) % 31);
+		sys_tkill(pid, -1, 1 + rand_r(&seed) % 31);
 		usleep(rand_r(&seed) % (50 * 1000));
-		signalPost(ppid, -1, 1 + rand_r(&seed) % 31);
+		sys_tkill(ppid, -1, 1 + rand_r(&seed) % 31);
 		usleep(rand_r(&seed) % (50 * 1000));
 	}
 }
