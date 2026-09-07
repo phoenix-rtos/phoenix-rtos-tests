@@ -1618,18 +1618,30 @@ static void unix_wrong_family(int type)
 	errno = 0;
 	err = bind(fd[1], (struct sockaddr *)&addr, SUN_LEN(&addr));
 	TEST_ASSERT_EQUAL_INT(-1, err);
+#ifdef __phoenix__
+	TEST_ASSERT_EQUAL_INT(EAFNOSUPPORT, errno);
+#else
 	TEST_ASSERT_EQUAL_INT(EINVAL, errno);
+#endif
 
 	errno = 0;
 	err = connect(fd[1], (struct sockaddr *)&addr, SUN_LEN(&addr));
 	TEST_ASSERT_EQUAL_INT(-1, err);
+#ifdef __phoenix__
+	TEST_ASSERT_EQUAL_INT(EAFNOSUPPORT, errno);
+#else
 	TEST_ASSERT_EQUAL_INT(EINVAL, errno);
+#endif
 
 	if (type == SOCK_DGRAM) {
 		errno = 0;
 		err = sendto(fd[1], "data", 4, 0, (struct sockaddr *)&addr, SUN_LEN(&addr));
 		TEST_ASSERT_EQUAL_INT(-1, err);
+#ifdef __phoenix__
+		TEST_ASSERT_EQUAL_INT(EAFNOSUPPORT, errno);
+#else
 		TEST_ASSERT_EQUAL_INT(EINVAL, errno);
+#endif
 	}
 
 	close(fd[0]);
