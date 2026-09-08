@@ -314,7 +314,6 @@ class PyocdProcess:
             return
         self.proc.close(force=True)
         self.output = self.host_log.getvalue()
-        self.host_log.close()
 
         if self.proc.exitstatus != 0:
             status = self.proc.exitstatus
