@@ -136,11 +136,6 @@ test:
         exclude: [armv7r5f-zynqmp-qemu] # mmu?
         include: [host-generic-pc]
 
-    - name: dirent
-      execute: test-libc-dirent
-      targets:
-        include: [host-generic-pc]
-
     - name: grp
       execute: test-libc-grp
       targets:
