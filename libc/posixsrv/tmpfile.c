@@ -15,12 +15,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "unity_fixture.h"
 
+#define ARRAYLEN(arr) (sizeof(arr) / sizeof(arr[0]))
 
-static FILE *filep, *fileps[16];
+
+static FILE *filep, *fileps[12];
+static char buf[1 << ARRAYLEN(fileps)];
 
 
 static void assert_fclosed(FILE **fp)
@@ -46,7 +51,7 @@ TEST_TEAR_DOWN(tmpfile)
 		filep = NULL;
 	}
 
-	for (int i = 0; i < sizeof(fileps) / sizeof(fileps[0]); i++) {
+	for (int i = 0; i < ARRAYLEN(fileps); i++) {
 		if (fileps[i] != NULL) {
 			fclose(fileps[i]);
 			fileps[i] = NULL;
@@ -83,7 +88,7 @@ TEST(tmpfile, binary)
 	filep = tmpfile();
 	TEST_ASSERT_NOT_NULL(filep);
 
-	for (i = 0; i < sizeof(out) / sizeof(out[0]); ++i) {
+	for (i = 0; i < ARRAYLEN(out); ++i) {
 		out[i] = (unsigned char)i;
 	}
 
@@ -103,9 +108,8 @@ TEST(tmpfile, multiple)
 	char text[32];
 	char buf[32];
 	int i;
-	const int times = sizeof(fileps) / sizeof(fileps[0]);
 
-	for (i = 0; i < times; ++i) {
+	for (i = 0; i < ARRAYLEN(fileps); ++i) {
 		fileps[i] = tmpfile();
 		TEST_ASSERT_NOT_NULL(fileps[i]);
 
@@ -115,7 +119,7 @@ TEST(tmpfile, multiple)
 		TEST_ASSERT_EQUAL(0, fflush(fileps[i]));
 	}
 
-	for (i = 0; i < times; ++i) {
+	for (i = 0; i < ARRAYLEN(fileps); ++i) {
 		memset(buf, 0, sizeof(buf));
 
 		rewind(fileps[i]);
@@ -130,9 +134,55 @@ TEST(tmpfile, multiple)
 }
 
 
+static void makeText(char *buf, size_t len)
+{
+	for (int i = 0; i < len; i++) {
+		buf[i] = i & 0xff;
+	}
+}
+
+
+TEST(tmpfile, fstat)
+{
+	int fd, i;
+	struct stat stbuf;
+	time_t now = time(NULL);
+	char rbuf[sizeof(buf)];
+	size_t buflen;
+
+	srand(now);
+
+	for (i = 0; i < ARRAYLEN(fileps); i++) {
+		fileps[i] = tmpfile();
+		TEST_ASSERT_NOT_NULL(fileps[i]);
+		fd = fileno(fileps[i]);
+
+		buflen = sizeof(buf);
+		makeText(buf, 1 << i);
+
+		TEST_ASSERT_EQUAL(buflen, fwrite(buf, 1, buflen, fileps[i]));
+		TEST_ASSERT_EQUAL(0, fflush(fileps[i]));
+		rewind(fileps[i]);
+
+		TEST_ASSERT_EQUAL(0, fstat(fd, &stbuf));
+		TEST_ASSERT_GREATER_OR_EQUAL(now, stbuf.st_atime);
+		TEST_ASSERT_GREATER_OR_EQUAL(now, stbuf.st_mtime);
+		TEST_ASSERT_GREATER_OR_EQUAL(now, stbuf.st_ctime);
+		TEST_ASSERT_EQUAL(buflen, stbuf.st_size);
+		TEST_ASSERT(S_ISREG(stbuf.st_mode));
+		TEST_ASSERT_EQUAL(0600, stbuf.st_mode & 0600); /* owner has to have at least RW permissions */
+
+		TEST_ASSERT_EQUAL(buflen, fread(rbuf, 1, sizeof(rbuf), fileps[i]));
+
+		assert_fclosed(&fileps[i]);
+	}
+}
+
+
 TEST_GROUP_RUNNER(tmpfile)
 {
 	RUN_TEST_CASE(tmpfile, basic);
 	RUN_TEST_CASE(tmpfile, binary);
 	RUN_TEST_CASE(tmpfile, multiple);
+	RUN_TEST_CASE(tmpfile, fstat);
 }
