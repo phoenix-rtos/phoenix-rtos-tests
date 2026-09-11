@@ -11,4 +11,4 @@ test:
       execute: test-sys-perf
       targets:
           # Excluded due to: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1587
-          exclude: [armv7r5f-zynqmp-qemu, armv8m55-stm32n6-nucleo]
+          exclude: [armv7r5f-zynqmp-qemu, armv8m55-stm32n6-nucleo, armv8m33-mcxn94x-frdm]
