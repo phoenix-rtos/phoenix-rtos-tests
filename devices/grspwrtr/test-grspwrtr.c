@@ -18,12 +18,14 @@
 #include <sys/msg.h>
 #include <sys/types.h>
 #include <sys/platform.h>
+#include <errno.h>
 
 
 #include <grspwrtr.h>
 #include <unity_fixture.h>
 
-#define TEST_SPWRTR_PATH0 "/dev/spwrtr0"
+#define TEST_SPWRTR_PATH0    "/dev/spwrtr0"
+#define TEST_SPWRTR_IDIVISOR 0x13u
 
 
 /* helper functions */
@@ -151,10 +153,119 @@ TEST(test_spwrtr, spwrtrSetMapping)
 }
 
 
+TEST(test_spwrtr, spwrtrGetClkdiv)
+{
+	struct {
+		uint8_t port;
+		uint8_t expected;
+	} tests[] = {
+		{
+			.port = 1u,
+			.expected = TEST_SPWRTR_IDIVISOR,
+		},
+		{
+			.port = 2u,
+			.expected = TEST_SPWRTR_IDIVISOR,
+		},
+	};
+
+
+	oid_t oid = test_getOid(TEST_SPWRTR_PATH0);
+	msg_t msg = {
+		.type = mtDevCtl,
+		.i = { .data = NULL, .size = 0 },
+		.o = { .data = NULL, .size = 0 },
+		.oid.id = 0,
+		.oid.port = oid.port,
+	};
+	spwrtr_t *ictl = (spwrtr_t *)msg.i.raw;
+
+	for (size_t i = 0; i < sizeof(tests) / sizeof(tests[0]); i++) {
+		char info[19];
+		snprintf(info, 19, "Test nr %zu failed", i);
+
+		ictl->type = spwrtr_clkdiv_get;
+		ictl->task.clkdiv.port = tests[i].port;
+
+		TEST_ASSERT_EQUAL_INT_MESSAGE(0, msgSend(oid.port, &msg), info);
+		TEST_ASSERT_EQUAL_INT_MESSAGE(0, msg.o.err, info);
+
+		spwrtr_o_t *octl = (spwrtr_o_t *)msg.o.raw;
+		TEST_ASSERT_EQUAL_UINT_MESSAGE(tests[i].expected, octl->val, info);
+	}
+}
+
+
+TEST(test_spwrtr, spwrtrSetClkdiv)
+{
+	struct {
+		uint8_t port;
+		uint8_t div;
+		int expected;
+	} tests[] = {
+		{
+			.port = 1u,
+			.div = 0x14u,
+			.expected = 0,
+		},
+		{
+			.port = 2u,
+			.div = 0x14u,
+			.expected = 0,
+		},
+		{
+			.port = 0u,
+			.div = 0x14u,
+			.expected = -EINVAL,
+		},
+		{ .port = SPWRTR_SPW_CNT + 1,
+			.div = 0x14u,
+			.expected = -EINVAL }
+	};
+
+
+	oid_t oid = test_getOid(TEST_SPWRTR_PATH0);
+	msg_t msg = {
+		.type = mtDevCtl,
+		.i = { .data = NULL, .size = 0 },
+		.o = { .data = NULL, .size = 0 },
+		.oid.id = 0,
+		.oid.port = oid.port,
+	};
+	spwrtr_t *ictl = (spwrtr_t *)msg.i.raw;
+
+	for (size_t i = 0; i < sizeof(tests) / sizeof(tests[0]); i++) {
+		char info[19];
+		snprintf(info, 19, "Test nr %zu failed", i);
+
+		ictl->type = spwrtr_clkdiv_set;
+		ictl->task.clkdiv.port = tests[i].port;
+		ictl->task.clkdiv.div = tests[i].div;
+
+		TEST_ASSERT_EQUAL_INT_MESSAGE(0, msgSend(oid.port, &msg), info);
+		TEST_ASSERT_EQUAL_INT_MESSAGE(tests[i].expected, msg.o.err, info);
+
+		/* check if clkdiv was set clkdiv get */
+		if (tests[i].expected == 0) {
+			ictl->type = spwrtr_clkdiv_get;
+			ictl->task.clkdiv.port = tests[i].port;
+
+			TEST_ASSERT_EQUAL_INT_MESSAGE(0, msgSend(oid.port, &msg), info);
+			TEST_ASSERT_EQUAL_INT_MESSAGE(0, msg.o.err, info);
+
+			spwrtr_o_t *octl = (spwrtr_o_t *)msg.o.raw;
+			TEST_ASSERT_EQUAL_UINT_MESSAGE(tests[i].div, octl->val, info);
+		}
+	}
+}
+
+
 TEST_GROUP_RUNNER(test_spwrtr)
 {
 	RUN_TEST_CASE(test_spwrtr, spwrtrGetMapping);
 	RUN_TEST_CASE(test_spwrtr, spwrtrSetMapping);
+	RUN_TEST_CASE(test_spwrtr, spwrtrGetClkdiv);
+	RUN_TEST_CASE(test_spwrtr, spwrtrSetClkdiv);
 }
 
 
