@@ -560,16 +560,12 @@ TEST(signal_pending, killpg_einval_invalid_signal)
 
 TEST(signal_pending, killpg_esrch_invalid_pgrp)
 {
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1659 issue");
-#else
 	int ret;
 
 	errno = 0;
 	ret = killpg(99999, SIGUSR1);
 	TEST_ASSERT_EQUAL_INT(-1, ret);
 	TEST_ASSERT_EQUAL_INT(ESRCH, errno);
-#endif
 }
 
 
