@@ -184,8 +184,9 @@ TEST(pthread_sched, setschedparam_sched_rr)
 	ret = pthread_getschedparam(pthread_self(), &origPolicy, &origParam);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
+	errno = 0;
 	minPrio = sched_get_priority_min(SCHED_RR);
-	TEST_ASSERT_TRUE(minPrio >= 0);
+	TEST_ASSERT_EQUAL_INT(0, errno);
 
 	param.sched_priority = minPrio;
 

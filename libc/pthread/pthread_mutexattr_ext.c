@@ -95,8 +95,9 @@ TEST(pthread_mutexattr_prioceiling, set_min_priority)
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	/* POSIX-DEVIATION: prioceiling based on SCHED_RR */
+	errno = 0;
 	minPrio = sched_get_priority_min(SCHED_RR);
-	TEST_ASSERT_TRUE(minPrio >= 0);
+	TEST_ASSERT_EQUAL_INT(0, errno);
 
 	ret = pthread_mutexattr_setprioceiling(&mattr, minPrio);
 	if (ret == EINVAL || ret == EPERM) {
