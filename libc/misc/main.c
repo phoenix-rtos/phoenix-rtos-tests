@@ -46,7 +46,10 @@ void runner(void)
 	RUN_TEST_GROUP(unistd_getpgrp);
 	RUN_TEST_GROUP(unistd_getsid);
 	RUN_TEST_GROUP(unistd_setpgrp);
+	RUN_TEST_GROUP(unistd_setpgid);
+	RUN_TEST_GROUP(unistd_setsid);
 	RUN_TEST_GROUP(unistd_fsync);
+	RUN_TEST_GROUP(sys_procExists);
 #ifdef __phoenix__
 	/* tests libphoenix internal functions */
 	RUN_TEST_GROUP(unistd_file_safe);

@@ -9,6 +9,9 @@ test:
           # ensure no other binaries are loaded from the previous tests during the psh tests
           reboot: True
 
+        - name: relaunch
+          harness: test-relaunch.py
+
         - name: auth
           harness: test-auth.py
 
