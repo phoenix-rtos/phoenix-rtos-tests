@@ -23,6 +23,7 @@
 void runner(void)
 {
 	RUN_TEST_GROUP(test_pthread_cond);
+	RUN_TEST_GROUP(pthread_cond_clockwait);
 	RUN_TEST_GROUP(test_pthread_cleanup);
 	RUN_TEST_GROUP(pthread_attr);
 	RUN_TEST_GROUP(pthread_attr_guardsize);
