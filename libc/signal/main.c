@@ -29,6 +29,7 @@ void runner(void)
 	RUN_TEST_GROUP(signal_sigaction);
 	RUN_TEST_GROUP(signal_raise);
 	RUN_TEST_GROUP(signal_pending);
+	RUN_TEST_GROUP(signal_killgroup);
 }
 
 
