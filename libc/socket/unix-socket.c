@@ -2537,6 +2537,54 @@ TEST(test_unix_socket, poll_full_shut_writable)
 }
 
 
+TEST(test_unix_socket, af_unspec)
+{
+	int dgramfd1, dgramfd2, streamfd;
+	struct sockaddr unspec = { .sa_family = AF_UNSPEC };
+	struct sockaddr_un unaddr = { .sun_family = AF_UNIX, .sun_path = "/tmp/tmp.sock" };
+	unlink("/tmp/tmp.sock");
+
+	dgramfd1 = socket(AF_UNIX, SOCK_DGRAM, 0);
+	TEST_ASSERT_GREATER_OR_EQUAL(0, dgramfd1);
+	dgramfd2 = socket(AF_UNIX, SOCK_DGRAM, 0);
+	TEST_ASSERT_GREATER_OR_EQUAL(0, dgramfd2);
+	streamfd = socket(AF_UNIX, SOCK_STREAM, 0);
+	TEST_ASSERT_GREATER_OR_EQUAL(0, streamfd);
+
+	TEST_ASSERT_EQUAL(0, bind(dgramfd2, (const struct sockaddr *)&unaddr, SUN_LEN(&unaddr)));
+
+	/* 1) connect(AF_UNSPEC) should not error on unconnected SOCK_DGRAM socket */
+	TEST_ASSERT_EQUAL(0, connect(dgramfd1, &unspec, sizeof(unspec)));
+
+	/* 2) connected SOCK_DGRAM socket should be disconnected */
+	TEST_ASSERT_EQUAL(0, connect(dgramfd1, (const struct sockaddr *)&unaddr, SUN_LEN(&unaddr)));
+	TEST_ASSERT_EQUAL(1, send(dgramfd1, "s", 1, 0));
+	TEST_ASSERT_EQUAL(0, connect(dgramfd1, &unspec, sizeof(unspec)));
+	errno = 0;
+	TEST_ASSERT_EQUAL(-1, send(dgramfd1, "s", 1, 0));
+	TEST_ASSERT_EQUAL(ENOTCONN, errno);
+
+	/* 3) disconnected socket should be able to be reconnected */
+	TEST_ASSERT_EQUAL(0, connect(dgramfd1, (const struct sockaddr *)&unaddr, SUN_LEN(&unaddr)));
+	TEST_ASSERT_EQUAL(1, send(dgramfd1, "s", 1, 0));
+
+	/* 4) AF_UNSPEC should be usable on SOCK_DGRAM sockets only */
+	errno = 0;
+	TEST_ASSERT_EQUAL(-1, connect(streamfd, &unspec, sizeof(unspec)));
+#ifdef __phoenix__
+	TEST_ASSERT_EQUAL(EAFNOSUPPORT, errno);
+#else
+	/* Linux treats this case as EINVAL */
+	TEST_ASSERT_EQUAL(EINVAL, errno);
+#endif
+
+	close(dgramfd1);
+	close(dgramfd2);
+	close(streamfd);
+	unlink("/tmp/tmp.sock");
+}
+
+
 TEST_GROUP_RUNNER(test_unix_socket)
 {
 	RUN_TEST_CASE(test_unix_socket, zero_len_send);
@@ -2562,6 +2610,7 @@ TEST_GROUP_RUNNER(test_unix_socket)
 	RUN_TEST_CASE(test_unix_socket, accept_connect_errnos);
 	RUN_TEST_CASE(test_unix_socket, accept_connect_async);
 	RUN_TEST_CASE(test_unix_socket, accept_connect_liveness);
+	RUN_TEST_CASE(test_unix_socket, af_unspec);
 	RUN_TEST_CASE(test_unix_socket, flags);
 	RUN_TEST_CASE(test_unix_socket, wrong_family);
 	RUN_TEST_CASE(test_unix_socket, wrong_port);
