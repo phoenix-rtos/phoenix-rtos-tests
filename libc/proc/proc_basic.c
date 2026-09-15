@@ -31,6 +31,7 @@
 #include <time.h>
 
 #include "unity_fixture.h"
+#include "libc_features.h"
 
 static struct {
 	volatile sig_atomic_t sigReceived;
@@ -262,8 +263,7 @@ TEST_GROUP_RUNNER(proc_sleep)
 }
 
 
-#ifndef __phoenix__
-
+#ifdef HAS_NICE
 TEST_GROUP(proc_nice);
 
 TEST_SETUP(proc_nice) { }
