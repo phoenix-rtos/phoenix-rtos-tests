@@ -40,3 +40,19 @@
 | SA_ONSTACK: "signal shall be delivered on alternate stack" | — | not tested: requires sigaltstack() which is XSI extension |
 | SA_RESTART: "interruptible functions interrupted by this signal shall restart" | — | not tested: requires reliable timing of signal delivery during blocking call; inherently racy |
 | SA_NOCLDWAIT: zombie avoidance for SIGCHLD | — | not tested: XSI extension |
+
+# Coverage: `kill()` group forms
+
+| Requirement (POSIX verbatim) | Test case | Status |
+|---|---|---|
+| "If sig is 0 (the null signal), error checking is performed but no signal is actually sent" | `signal_killgroup.kill_zero_signal_checks_own_group` | covered |
+| "If pid is 0, sig shall be sent to all processes ... whose process group ID is equal to the process group ID of the sender" | `signal_killgroup.kill_zero_reaches_whole_own_group` | covered |
+| The pid == 0 form reaches only the caller's group | `signal_killgroup.kill_zero_does_not_leave_own_group` | covered |
+| killpg: "If pgrp is 0, killpg() shall send the signal to the calling process's process group" | `signal_killgroup.killpg_zero_signal_checks_own_group` | covered |
+| "If pid is -1, sig shall be sent to all processes ... for which the process has permission to send that signal" | `signal_killgroup.kill_broadcast_null_signal_permitted` | partial: only with signal 0. Sending a real signal to every process would take down the drivers and the shell, so it is not exercised. Note that signal 0 also cannot detect the kernel's current reading of pid == -1, which signals the caller's session rather than every process (see the FIXME in `posix_tkill()`). |
+| "If pid is negative, but not -1, sig shall be sent to all processes ... whose process group ID is equal to the absolute value of pid" | `signal_killgroup.kill_negative_pid_reaches_named_group` | covered |
+| "[ESRCH] No process or process group can be found corresponding to that specified by pid" | `signal_killgroup.kill_esrch_unused_group` | covered |
+| killpg: "shall send the signal ... to a process group" | `signal_killgroup.killpg_reaches_named_group` | covered |
+| killpg: "[ESRCH] No process can be found in the process group specified by pgrp" | `signal_killgroup.killpg_esrch_unused_group` | covered |
+| killpg: "[EINVAL] The value of the pgrp argument is not a valid process group ID" | `signal_killgroup.killpg_einval_negative_pgrp` | covered |
+| killpg: "shall send the signal ... to the process group specified by pgrp" for pgrp 1 | — | not tested: `killpg(1, sig)` maps to `kill(-1, sig)`, which the kernel reads as the caller's whole session (see the FIXME in `posix_tkill()` and the OS-LIMITATION on `killpg()`). glibc has the same ambiguity, so no portable case can pin it down, and exercising it would kill the test runner. |

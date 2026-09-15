@@ -102,3 +102,11 @@
 | "There shall be no return from a successful exec" (on failure, returns -1) | `proc_fexecve.fexecve_ebadf` | covered |
 | [EBADF]: "fd is not a valid file descriptor" | `proc_fexecve.fexecve_ebadf` | covered |
 | [EACCES]: "The new process image file is not a regular file and the implementation does not support execution of files of its type" / file is not executable | `proc_fexecve.fexecve_eacces_not_executable` | covered |
+
+# Coverage: `waitpid()` process-group forms
+
+| Requirement (POSIX verbatim) | Test case | Status |
+|---|---|---|
+| "If pid is 0, status is requested for any child process whose process group ID is equal to that of the calling process" | `proc_waitpid_group.waitpid_pgid_zero_is_own_group_only` | covered |
+| "If pid is less than (pid_t)-1, status is requested for any child process whose process group ID is equal to the absolute value of pid" | `proc_waitpid_group.waitpid_negative_pgid_reaps_named_group` | covered |
+| "[ECHILD] The process specified by pid does not exist or is not a child of the calling process" | `proc_waitpid_group.waitpid_echild_unused_group`, `proc_waitpid_group.waitpid_pgid_zero_is_own_group_only` | covered |

@@ -8,6 +8,7 @@
  * TESTED:
  *    - fork()
  *    - waitid()
+ *    - waitpid() (the process-group forms)
  *
  * Copyright 2026 Phoenix Systems
  * Author: Damian Loewnau
@@ -309,6 +310,147 @@ TEST_GROUP_RUNNER(proc_fork)
 	RUN_TEST_CASE(proc_fork, fork_child_inherits_fd);
 	RUN_TEST_CASE(proc_fork, fork_child_pending_signals_empty);
 	RUN_TEST_CASE(proc_fork, fork_child_alarm_cleared);
+}
+
+
+/* ========================================================================= */
+/* waitpid, process-group forms */
+/* ========================================================================= */
+
+TEST_GROUP(proc_waitpid_group);
+
+
+TEST_SETUP(proc_waitpid_group)
+{
+}
+
+
+TEST_TEAR_DOWN(proc_waitpid_group)
+{
+}
+
+
+/* A process group id that is very unlikely to be in use */
+#define WAITPID_UNUSED_PGID 2000000
+
+
+/*
+ * Forks a child that puts itself in a group of its own and exits at once with
+ * 'code'. Returns once the child is a zombie, so that the waitpid() under test
+ * has something to reap without having to block. Returns -1 on failure.
+ */
+static pid_t startExitedChildInOwnGroup(int code)
+{
+	int ready[2];
+	pid_t pid;
+	char c;
+
+	if (pipe(ready) < 0) {
+		return -1;
+	}
+
+	pid = fork();
+	if (pid < 0) {
+		(void)close(ready[0]);
+		(void)close(ready[1]);
+		return -1;
+	}
+
+	if (pid == 0) {
+		(void)close(ready[0]);
+		if (setpgid(0, 0) != 0) {
+			_exit(120);
+		}
+		if (write(ready[1], "r", 1) != 1) {
+			_exit(121);
+		}
+		_exit(code);
+	}
+
+	(void)close(ready[1]);
+
+	if (read(ready[0], &c, sizeof(c)) != (ssize_t)sizeof(c)) {
+		(void)close(ready[0]);
+		(void)waitpid(pid, NULL, 0);
+		return -1;
+	}
+
+	/* The child's copy of the pipe is closed as the kernel tears it down, so
+	 * EOF here means it has exited and is waiting to be reaped */
+	while (read(ready[0], &c, sizeof(c)) > 0) {
+	}
+	(void)close(ready[0]);
+
+	return pid;
+}
+
+
+TEST(proc_waitpid_group, waitpid_pgid_zero_is_own_group_only)
+{
+	/* "If pid is 0, status is requested for any child process whose process
+	 * group ID is equal to that of the calling process."
+	 *
+	 * The only child here is in a group of its own and has already exited, so
+	 * it is not eligible: waitpid(0) must report that there is nothing to wait
+	 * for rather than reap it. */
+	pid_t child;
+	int status = 0;
+
+	child = startExitedChildInOwnGroup(11);
+	TEST_ASSERT_NOT_EQUAL_INT(-1, (int)child);
+	TEST_ASSERT_NOT_EQUAL_INT((int)getpgrp(), (int)child);
+
+	errno = 0;
+	TEST_ASSERT_EQUAL_INT(-1, (int)waitpid(0, &status, WNOHANG));
+	TEST_ASSERT_EQUAL_INT(ECHILD, errno);
+
+	/* Still reapable by pid, so the call above really did decline it */
+	TEST_ASSERT_EQUAL_INT((int)child, (int)waitpid(child, &status, 0));
+	TEST_ASSERT_TRUE(WIFEXITED(status));
+	TEST_ASSERT_EQUAL_INT(11, WEXITSTATUS(status));
+}
+
+
+TEST(proc_waitpid_group, waitpid_negative_pgid_reaps_named_group)
+{
+	/* "If pid is less than (pid_t)-1, status is requested for any child process
+	 * whose process group ID is equal to the absolute value of pid." */
+	pid_t child;
+	int status = 0;
+
+	child = startExitedChildInOwnGroup(12);
+	TEST_ASSERT_NOT_EQUAL_INT(-1, (int)child);
+
+	TEST_ASSERT_EQUAL_INT((int)child, (int)waitpid(-child, &status, 0));
+	TEST_ASSERT_TRUE(WIFEXITED(status));
+	TEST_ASSERT_EQUAL_INT(12, WEXITSTATUS(status));
+}
+
+
+TEST(proc_waitpid_group, waitpid_echild_unused_group)
+{
+	/* "[ECHILD] The process specified by pid does not exist or is not a child
+	 * of the calling process" - a group none of our children is in. */
+	pid_t child;
+	int status = 0;
+
+	child = startExitedChildInOwnGroup(13);
+	TEST_ASSERT_NOT_EQUAL_INT(-1, (int)child);
+	TEST_ASSERT_NOT_EQUAL_INT(WAITPID_UNUSED_PGID, (int)child);
+
+	errno = 0;
+	TEST_ASSERT_EQUAL_INT(-1, (int)waitpid(-WAITPID_UNUSED_PGID, &status, WNOHANG));
+	TEST_ASSERT_EQUAL_INT(ECHILD, errno);
+
+	TEST_ASSERT_EQUAL_INT((int)child, (int)waitpid(child, &status, 0));
+}
+
+
+TEST_GROUP_RUNNER(proc_waitpid_group)
+{
+	RUN_TEST_CASE(proc_waitpid_group, waitpid_pgid_zero_is_own_group_only);
+	RUN_TEST_CASE(proc_waitpid_group, waitpid_negative_pgid_reaps_named_group);
+	RUN_TEST_CASE(proc_waitpid_group, waitpid_echild_unused_group);
 }
 
 

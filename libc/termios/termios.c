@@ -22,7 +22,8 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#define _XOPEN_SOURCE 600
+/* _GNU_SOURCE, not _XOPEN_SOURCE: ptsname_r() is a glibc extension */
+#define _GNU_SOURCE
 
 #include <termios.h>
 #include <unistd.h>
