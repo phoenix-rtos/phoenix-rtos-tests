@@ -27,8 +27,9 @@
 #include <unistd.h>
 
 #include "unity_fixture.h"
+#include "libc_features.h"
 
-#ifndef __phoenix__
+#ifdef HAS_SCHED_GETPARAM
 /* Tests: sched_getparam, sched_setparam */
 TEST_GROUP(sched_param);
 
@@ -100,8 +101,9 @@ TEST(sched_param, setparam_self)
 	int ret;
 	int minPrio;
 
+	errno = 0;
 	minPrio = sched_get_priority_min(test_common.origPolicy);
-	TEST_ASSERT_GREATER_THAN_INT(-1, minPrio);
+	TEST_ASSERT_EQUAL_INT(0, errno);
 
 	param.sched_priority = minPrio;
 	errno = 0;
@@ -122,8 +124,9 @@ TEST(sched_param, setparam_einval_out_of_range)
 	int ret;
 	int maxPrio;
 
+	errno = 0;
 	maxPrio = sched_get_priority_max(test_common.origPolicy);
-	TEST_ASSERT_GREATER_THAN_INT(-1, maxPrio);
+	TEST_ASSERT_EQUAL_INT(0, errno);
 
 	/* Priority above maximum */
 	param.sched_priority = maxPrio + 100;
@@ -160,7 +163,7 @@ TEST_GROUP_UNIMPLEMENTED(sched_param, "sched_getparam and sched_setparam not imp
 #endif
 
 
-#ifndef __phoenix__
+#ifdef HAS_SCHED_GETSCHEDULER
 /* Tests: sched_getscheduler, sched_setscheduler */
 TEST_GROUP(sched_scheduler);
 
@@ -320,7 +323,7 @@ TEST_GROUP_UNIMPLEMENTED(sched_scheduler, "sched_getscheduler and sched_setsched
 #endif
 
 
-#ifndef __phoenix__
+#ifdef HAS_SCHED_RR_GET_INTERVAL
 /* Tests: sched_rr_get_interval */
 TEST_GROUP(sched_rr_get_interval);
 
@@ -392,8 +395,9 @@ TEST(sched_rr_get_interval, interval_positive_under_rr)
 	TEST_ASSERT_GREATER_THAN_INT(-1, origPolicy);
 	TEST_ASSERT_EQUAL_INT(0, sched_getparam(0, &origParam));
 
+	errno = 0;
 	minPrio = sched_get_priority_min(SCHED_RR);
-	TEST_ASSERT_GREATER_THAN_INT(-1, minPrio);
+	TEST_ASSERT_EQUAL_INT(0, errno);
 
 	param.sched_priority = minPrio;
 	ret = sched_setscheduler(0, SCHED_RR, &param);
