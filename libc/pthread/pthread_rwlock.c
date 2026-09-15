@@ -14,6 +14,8 @@
  *    - pthread_rwlock_wrlock()
  *    - pthread_rwlock_timedrdlock()
  *    - pthread_rwlock_timedwrlock()
+ *    - pthread_rwlock_clockrdlock()
+ *    - pthread_rwlock_clockwrlock()
  *
  * Copyright 2026 Phoenix Systems
  * Author: Damian Loewnau
@@ -23,6 +25,9 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+/* pthread_rwlock_clockrdlock()/pthread_rwlock_clockwrlock() are GNU extensions on glibc hosts */
+#define _GNU_SOURCE
+
 #include <pthread.h>
 #include <errno.h>
 #include <string.h>
@@ -31,6 +36,10 @@
 
 #include "unity_fixture.h"
 #include "libc_features.h"
+
+
+/* An arbitrary clock id that is not a valid timeout clock (CLOCK_PROCESS_CPUTIME_ID is not defined on Phoenix) */
+#define TEST_INVALID_CLOCK ((clockid_t)1234)
 
 
 #ifdef HAS_PTHREAD_RWLOCK_RDLOCK
@@ -508,7 +517,7 @@ TEST(pthread_rwlock, timedrdlock_einval)
 	 * validate the timespec if the lock can be acquired immediately
 	 */
 	ret = pthread_rwlock_wrlock(&test_common.rwl);
-	TEST_ASSERT_EQUAL_INT(EOK, ret);
+	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	ts.tv_sec = 0;
 	ts.tv_nsec = -1;
@@ -535,7 +544,7 @@ TEST(pthread_rwlock, timedwrlock_einval)
 
 	/* see note in timedrdlock_einval */
 	ret = pthread_rwlock_wrlock(&test_common.rwl);
-	TEST_ASSERT_EQUAL_INT(EOK, ret);
+	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	ts.tv_sec = 0;
 	ts.tv_nsec = -1;
@@ -602,6 +611,457 @@ TEST(pthread_rwlock, timedrdlock_waits_for_writer)
 }
 
 
+#ifdef HAS_PTHREAD_RWLOCK_CLOCKRDLOCK
+static void clockGetAbstime(clockid_t clockId, struct timespec *ts, long offsetMs)
+{
+	int ret;
+
+	ret = clock_gettime(clockId, ts);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+
+	ts->tv_sec += offsetMs / 1000;
+	ts->tv_nsec += (offsetMs % 1000) * 1000000L;
+	while (ts->tv_nsec >= 1000000000L) {
+		ts->tv_sec++;
+		ts->tv_nsec -= 1000000000L;
+	}
+}
+
+
+static long clockElapsedMs(clockid_t clockId, const struct timespec *start)
+{
+	struct timespec now;
+	int ret;
+
+	ret = clock_gettime(clockId, &now);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+
+	return (now.tv_sec - start->tv_sec) * 1000L + (now.tv_nsec - start->tv_nsec) / 1000000L;
+}
+
+
+/* Holds the write lock until cancelled */
+static void *clockWriterHoldThread(void *arg)
+{
+	pthread_rwlock_t *rwl = (pthread_rwlock_t *)arg;
+
+	pthread_rwlock_wrlock(rwl);
+	while (1) {
+		usleep(10000);
+		pthread_testcancel();
+	}
+	return NULL;
+}
+
+
+/* Holds the write lock for a short while and releases it */
+static void *clockWriterThread(void *arg)
+{
+	pthread_rwlock_t *rwl = (pthread_rwlock_t *)arg;
+
+	pthread_rwlock_wrlock(rwl);
+	usleep(50000);
+	pthread_rwlock_unlock(rwl);
+
+	return NULL;
+}
+#endif
+
+
+/* pthread_rwlock_clockrdlock: success on unlocked rwlock with a CLOCK_REALTIME deadline */
+TEST(pthread_rwlock, clockrdlock_unlocked)
+{
+#ifndef HAS_PTHREAD_RWLOCK_CLOCKRDLOCK
+	TEST_IGNORE_MESSAGE("pthread_rwlock_clockrdlock/clockwrlock is not implemented");
+#else
+	struct timespec ts;
+	int ret;
+
+	clockGetAbstime(CLOCK_REALTIME, &ts, 1000);
+
+	ret = pthread_rwlock_clockrdlock(&test_common.rwl, CLOCK_REALTIME, &ts);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+
+	ret = pthread_rwlock_unlock(&test_common.rwl);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+#endif
+}
+
+
+/* pthread_rwlock_clockrdlock: success on unlocked rwlock with a CLOCK_MONOTONIC deadline */
+TEST(pthread_rwlock, clockrdlock_monotonic_unlocked)
+{
+#ifndef HAS_PTHREAD_RWLOCK_CLOCKRDLOCK
+	TEST_IGNORE_MESSAGE("pthread_rwlock_clockrdlock/clockwrlock is not implemented");
+#else
+	struct timespec ts;
+	int ret;
+
+	clockGetAbstime(CLOCK_MONOTONIC, &ts, 1000);
+
+	ret = pthread_rwlock_clockrdlock(&test_common.rwl, CLOCK_MONOTONIC, &ts);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+
+	ret = pthread_rwlock_unlock(&test_common.rwl);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+#endif
+}
+
+
+/* pthread_rwlock_clockrdlock: success when already read-locked (multiple readers) */
+TEST(pthread_rwlock, clockrdlock_while_rdlocked)
+{
+#ifndef HAS_PTHREAD_RWLOCK_CLOCKRDLOCK
+	TEST_IGNORE_MESSAGE("pthread_rwlock_clockrdlock/clockwrlock is not implemented");
+#else
+	struct timespec ts;
+	int ret;
+
+	ret = pthread_rwlock_rdlock(&test_common.rwl);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+
+	clockGetAbstime(CLOCK_MONOTONIC, &ts, 1000);
+
+	ret = pthread_rwlock_clockrdlock(&test_common.rwl, CLOCK_MONOTONIC, &ts);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+
+	ret = pthread_rwlock_unlock(&test_common.rwl);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+
+	ret = pthread_rwlock_unlock(&test_common.rwl);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+#endif
+}
+
+
+/* pthread_rwlock_clockrdlock: ETIMEDOUT not earlier than the CLOCK_MONOTONIC deadline */
+TEST(pthread_rwlock, clockrdlock_timeout_monotonic)
+{
+#ifndef HAS_PTHREAD_RWLOCK_CLOCKRDLOCK
+	TEST_IGNORE_MESSAGE("pthread_rwlock_clockrdlock/clockwrlock is not implemented");
+#else
+	struct timespec start, ts;
+	pthread_t thr;
+	int ret;
+
+	ret = pthread_create(&thr, NULL, clockWriterHoldThread, &test_common.rwl);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+
+	/* Let thread acquire wrlock */
+	usleep(20000);
+
+	ret = clock_gettime(CLOCK_MONOTONIC, &start);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+
+	clockGetAbstime(CLOCK_MONOTONIC, &ts, 100);
+
+	ret = pthread_rwlock_clockrdlock(&test_common.rwl, CLOCK_MONOTONIC, &ts);
+	TEST_ASSERT_EQUAL_INT(ETIMEDOUT, ret);
+
+	/* The call must not give up before the deadline */
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(90, clockElapsedMs(CLOCK_MONOTONIC, &start));
+
+	pthread_cancel(thr);
+	pthread_join(thr, NULL);
+#endif
+}
+
+
+/* pthread_rwlock_clockrdlock: ETIMEDOUT when the deadline has already passed */
+TEST(pthread_rwlock, clockrdlock_timeout_in_past)
+{
+#ifndef HAS_PTHREAD_RWLOCK_CLOCKRDLOCK
+	TEST_IGNORE_MESSAGE("pthread_rwlock_clockrdlock/clockwrlock is not implemented");
+#else
+	struct timespec ts;
+	pthread_t thr;
+	int ret;
+
+	ret = pthread_create(&thr, NULL, clockWriterHoldThread, &test_common.rwl);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+
+	/* Let thread acquire wrlock */
+	usleep(20000);
+
+	clock_gettime(CLOCK_MONOTONIC, &ts);
+	ts.tv_sec -= 1;
+
+	ret = pthread_rwlock_clockrdlock(&test_common.rwl, CLOCK_MONOTONIC, &ts);
+	TEST_ASSERT_EQUAL_INT(ETIMEDOUT, ret);
+
+	clock_gettime(CLOCK_REALTIME, &ts);
+	ts.tv_sec -= 1;
+
+	ret = pthread_rwlock_clockrdlock(&test_common.rwl, CLOCK_REALTIME, &ts);
+	TEST_ASSERT_EQUAL_INT(ETIMEDOUT, ret);
+
+	pthread_cancel(thr);
+	pthread_join(thr, NULL);
+#endif
+}
+
+
+/* pthread_rwlock_clockrdlock: succeeds after the writer releases the lock */
+TEST(pthread_rwlock, clockrdlock_waits_for_writer)
+{
+#ifndef HAS_PTHREAD_RWLOCK_CLOCKRDLOCK
+	TEST_IGNORE_MESSAGE("pthread_rwlock_clockrdlock/clockwrlock is not implemented");
+#else
+	struct timespec ts;
+	pthread_t thr;
+	int ret;
+
+	ret = pthread_create(&thr, NULL, clockWriterThread, &test_common.rwl);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+
+	/* Give writer time to acquire */
+	usleep(10000);
+
+	clockGetAbstime(CLOCK_MONOTONIC, &ts, 2000);
+
+	/* This will block until the writer releases (~50ms) */
+	ret = pthread_rwlock_clockrdlock(&test_common.rwl, CLOCK_MONOTONIC, &ts);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+
+	ret = pthread_rwlock_unlock(&test_common.rwl);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+
+	pthread_join(thr, NULL);
+#endif
+}
+
+
+/* pthread_rwlock_clockrdlock: EINVAL for invalid timespec */
+TEST(pthread_rwlock, clockrdlock_einval_nsec)
+{
+#ifndef HAS_PTHREAD_RWLOCK_CLOCKRDLOCK
+	TEST_IGNORE_MESSAGE("pthread_rwlock_clockrdlock/clockwrlock is not implemented");
+#else
+	struct timespec ts;
+	int ret;
+
+	/* see note in timedrdlock_einval */
+	ret = pthread_rwlock_wrlock(&test_common.rwl);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+
+	clockGetAbstime(CLOCK_MONOTONIC, &ts, 100);
+	ts.tv_nsec = -1;
+
+	ret = pthread_rwlock_clockrdlock(&test_common.rwl, CLOCK_MONOTONIC, &ts);
+	TEST_ASSERT_EQUAL_INT(EINVAL, ret);
+
+	clockGetAbstime(CLOCK_MONOTONIC, &ts, 100);
+	ts.tv_nsec = 1000000000L;
+
+	ret = pthread_rwlock_clockrdlock(&test_common.rwl, CLOCK_MONOTONIC, &ts);
+	TEST_ASSERT_EQUAL_INT(EINVAL, ret);
+#endif
+}
+
+
+/* pthread_rwlock_clockrdlock: EINVAL for a clock that cannot be used for timeouts */
+TEST(pthread_rwlock, clockrdlock_einval_clock)
+{
+#ifndef HAS_PTHREAD_RWLOCK_CLOCKRDLOCK
+	TEST_IGNORE_MESSAGE("pthread_rwlock_clockrdlock/clockwrlock is not implemented");
+#else
+	struct timespec ts;
+	int ret;
+
+	/* see note in timedrdlock_einval */
+	ret = pthread_rwlock_wrlock(&test_common.rwl);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+
+	clockGetAbstime(CLOCK_REALTIME, &ts, 100);
+
+	ret = pthread_rwlock_clockrdlock(&test_common.rwl, TEST_INVALID_CLOCK, &ts);
+	TEST_ASSERT_EQUAL_INT(EINVAL, ret);
+#endif
+}
+
+
+/* pthread_rwlock_clockwrlock: success on unlocked rwlock with a CLOCK_REALTIME deadline */
+TEST(pthread_rwlock, clockwrlock_unlocked)
+{
+#ifndef HAS_PTHREAD_RWLOCK_CLOCKRDLOCK
+	TEST_IGNORE_MESSAGE("pthread_rwlock_clockrdlock/clockwrlock is not implemented");
+#else
+	struct timespec ts;
+	int ret;
+
+	clockGetAbstime(CLOCK_REALTIME, &ts, 1000);
+
+	ret = pthread_rwlock_clockwrlock(&test_common.rwl, CLOCK_REALTIME, &ts);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+
+	ret = pthread_rwlock_unlock(&test_common.rwl);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+#endif
+}
+
+
+/* pthread_rwlock_clockwrlock: success on unlocked rwlock with a CLOCK_MONOTONIC deadline */
+TEST(pthread_rwlock, clockwrlock_monotonic_unlocked)
+{
+#ifndef HAS_PTHREAD_RWLOCK_CLOCKRDLOCK
+	TEST_IGNORE_MESSAGE("pthread_rwlock_clockrdlock/clockwrlock is not implemented");
+#else
+	struct timespec ts;
+	int ret;
+
+	clockGetAbstime(CLOCK_MONOTONIC, &ts, 1000);
+
+	ret = pthread_rwlock_clockwrlock(&test_common.rwl, CLOCK_MONOTONIC, &ts);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+
+	ret = pthread_rwlock_unlock(&test_common.rwl);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+#endif
+}
+
+
+/* pthread_rwlock_clockwrlock: ETIMEDOUT not earlier than the CLOCK_MONOTONIC deadline when read-locked */
+TEST(pthread_rwlock, clockwrlock_timeout_monotonic_rdlocked)
+{
+#ifndef HAS_PTHREAD_RWLOCK_CLOCKRDLOCK
+	TEST_IGNORE_MESSAGE("pthread_rwlock_clockrdlock/clockwrlock is not implemented");
+#else
+	struct timespec start, ts;
+	int ret;
+
+	ret = pthread_rwlock_rdlock(&test_common.rwl);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+
+	ret = clock_gettime(CLOCK_MONOTONIC, &start);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+
+	clockGetAbstime(CLOCK_MONOTONIC, &ts, 100);
+
+	ret = pthread_rwlock_clockwrlock(&test_common.rwl, CLOCK_MONOTONIC, &ts);
+	TEST_ASSERT_EQUAL_INT(ETIMEDOUT, ret);
+
+	/* The call must not give up before the deadline */
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(90, clockElapsedMs(CLOCK_MONOTONIC, &start));
+
+	ret = pthread_rwlock_unlock(&test_common.rwl);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+#endif
+}
+
+
+/* pthread_rwlock_clockwrlock: ETIMEDOUT when the deadline has already passed */
+TEST(pthread_rwlock, clockwrlock_timeout_in_past)
+{
+#ifndef HAS_PTHREAD_RWLOCK_CLOCKRDLOCK
+	TEST_IGNORE_MESSAGE("pthread_rwlock_clockrdlock/clockwrlock is not implemented");
+#else
+	struct timespec ts;
+	pthread_t thr;
+	int ret;
+
+	ret = pthread_create(&thr, NULL, clockWriterHoldThread, &test_common.rwl);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+
+	/* Let thread acquire wrlock */
+	usleep(20000);
+
+	clock_gettime(CLOCK_MONOTONIC, &ts);
+	ts.tv_sec -= 1;
+
+	ret = pthread_rwlock_clockwrlock(&test_common.rwl, CLOCK_MONOTONIC, &ts);
+	TEST_ASSERT_EQUAL_INT(ETIMEDOUT, ret);
+
+	clock_gettime(CLOCK_REALTIME, &ts);
+	ts.tv_sec -= 1;
+
+	ret = pthread_rwlock_clockwrlock(&test_common.rwl, CLOCK_REALTIME, &ts);
+	TEST_ASSERT_EQUAL_INT(ETIMEDOUT, ret);
+
+	pthread_cancel(thr);
+	pthread_join(thr, NULL);
+#endif
+}
+
+
+/* pthread_rwlock_clockwrlock: succeeds after the writer releases the lock */
+TEST(pthread_rwlock, clockwrlock_waits_for_writer)
+{
+#ifndef HAS_PTHREAD_RWLOCK_CLOCKRDLOCK
+	TEST_IGNORE_MESSAGE("pthread_rwlock_clockrdlock/clockwrlock is not implemented");
+#else
+	struct timespec ts;
+	pthread_t thr;
+	int ret;
+
+	ret = pthread_create(&thr, NULL, clockWriterThread, &test_common.rwl);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+
+	/* Give writer time to acquire */
+	usleep(10000);
+
+	clockGetAbstime(CLOCK_MONOTONIC, &ts, 2000);
+
+	/* This will block until the writer releases (~50ms) */
+	ret = pthread_rwlock_clockwrlock(&test_common.rwl, CLOCK_MONOTONIC, &ts);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+
+	ret = pthread_rwlock_unlock(&test_common.rwl);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+
+	pthread_join(thr, NULL);
+#endif
+}
+
+
+/* pthread_rwlock_clockwrlock: EINVAL for invalid timespec */
+TEST(pthread_rwlock, clockwrlock_einval_nsec)
+{
+#ifndef HAS_PTHREAD_RWLOCK_CLOCKRDLOCK
+	TEST_IGNORE_MESSAGE("pthread_rwlock_clockrdlock/clockwrlock is not implemented");
+#else
+	struct timespec ts;
+	int ret;
+
+	/* see note in timedrdlock_einval */
+	ret = pthread_rwlock_wrlock(&test_common.rwl);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+
+	clockGetAbstime(CLOCK_MONOTONIC, &ts, 100);
+	ts.tv_nsec = -1;
+
+	ret = pthread_rwlock_clockwrlock(&test_common.rwl, CLOCK_MONOTONIC, &ts);
+	TEST_ASSERT_EQUAL_INT(EINVAL, ret);
+
+	clockGetAbstime(CLOCK_MONOTONIC, &ts, 100);
+	ts.tv_nsec = 1000000000L;
+
+	ret = pthread_rwlock_clockwrlock(&test_common.rwl, CLOCK_MONOTONIC, &ts);
+	TEST_ASSERT_EQUAL_INT(EINVAL, ret);
+#endif
+}
+
+
+/* pthread_rwlock_clockwrlock: EINVAL for a clock that cannot be used for timeouts */
+TEST(pthread_rwlock, clockwrlock_einval_clock)
+{
+#ifndef HAS_PTHREAD_RWLOCK_CLOCKRDLOCK
+	TEST_IGNORE_MESSAGE("pthread_rwlock_clockrdlock/clockwrlock is not implemented");
+#else
+	struct timespec ts;
+	int ret;
+
+	/* see note in timedrdlock_einval */
+	ret = pthread_rwlock_wrlock(&test_common.rwl);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+
+	clockGetAbstime(CLOCK_REALTIME, &ts, 100);
+
+	ret = pthread_rwlock_clockwrlock(&test_common.rwl, TEST_INVALID_CLOCK, &ts);
+	TEST_ASSERT_EQUAL_INT(EINVAL, ret);
+#endif
+}
+
+
 TEST_GROUP_RUNNER(pthread_rwlock)
 {
 	RUN_TEST_CASE(pthread_rwlock, init_default);
@@ -626,4 +1086,19 @@ TEST_GROUP_RUNNER(pthread_rwlock)
 	RUN_TEST_CASE(pthread_rwlock, timedrdlock_einval);
 	RUN_TEST_CASE(pthread_rwlock, timedwrlock_einval);
 	RUN_TEST_CASE(pthread_rwlock, timedrdlock_waits_for_writer);
+	RUN_TEST_CASE(pthread_rwlock, clockrdlock_unlocked);
+	RUN_TEST_CASE(pthread_rwlock, clockrdlock_monotonic_unlocked);
+	RUN_TEST_CASE(pthread_rwlock, clockrdlock_while_rdlocked);
+	RUN_TEST_CASE(pthread_rwlock, clockrdlock_timeout_monotonic);
+	RUN_TEST_CASE(pthread_rwlock, clockrdlock_timeout_in_past);
+	RUN_TEST_CASE(pthread_rwlock, clockrdlock_waits_for_writer);
+	RUN_TEST_CASE(pthread_rwlock, clockrdlock_einval_nsec);
+	RUN_TEST_CASE(pthread_rwlock, clockrdlock_einval_clock);
+	RUN_TEST_CASE(pthread_rwlock, clockwrlock_unlocked);
+	RUN_TEST_CASE(pthread_rwlock, clockwrlock_monotonic_unlocked);
+	RUN_TEST_CASE(pthread_rwlock, clockwrlock_timeout_monotonic_rdlocked);
+	RUN_TEST_CASE(pthread_rwlock, clockwrlock_timeout_in_past);
+	RUN_TEST_CASE(pthread_rwlock, clockwrlock_waits_for_writer);
+	RUN_TEST_CASE(pthread_rwlock, clockwrlock_einval_nsec);
+	RUN_TEST_CASE(pthread_rwlock, clockwrlock_einval_clock);
 }
