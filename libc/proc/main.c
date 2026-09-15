@@ -41,6 +41,7 @@ void runner(void)
 	RUN_TEST_GROUP(proc_setsid);
 	RUN_TEST_GROUP(proc_times);
 	RUN_TEST_GROUP(proc_fork);
+	RUN_TEST_GROUP(proc_waitpid_group);
 	RUN_TEST_GROUP(proc_waitid);
 	RUN_TEST_GROUP(proc_fexecve);
 }

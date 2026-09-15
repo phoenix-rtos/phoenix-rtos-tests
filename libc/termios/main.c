@@ -37,6 +37,7 @@ void runner(void)
 	RUN_TEST_GROUP(termios_tcsetattr);
 	RUN_TEST_GROUP(termios_tcgetpgrp);
 	RUN_TEST_GROUP(termios_tcsetpgrp);
+	RUN_TEST_GROUP(termios_ctty);
 }
 
 int main(int argc, char *argv[])
