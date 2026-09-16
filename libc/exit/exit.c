@@ -1209,6 +1209,8 @@ void runner(void)
 	RUN_TEST_GROUP(unistd_exit);
 	RUN_TEST_GROUP(unistd_Exit);
 	RUN_TEST_GROUP(stdlib_exit);
+	RUN_TEST_GROUP(stdlib_at_quick_exit);
+	RUN_TEST_GROUP(stdlib_quick_exit);
 }
 
 
