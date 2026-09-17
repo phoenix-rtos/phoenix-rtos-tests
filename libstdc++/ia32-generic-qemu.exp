@@ -1,0 +1,22 @@
+# We need this for the setup_qemu function and to use simulator
+load_board_description "basic-qemu"
+
+global target_triplet
+set_board_info compiler "${target_triplet}-gcc"
+
+# Choose the simulator script
+global phoenix_rtos_system_files
+setup_qemu "$phoenix_rtos_system_files/scripts" "ia32-generic-qemu-test.sh"
+
+# Load qemu functions needed to communicate with the target
+load_generic_config "qemu"
+
+# Without the linker script
+set_board_info ldscript "";
+
+set_board_info multitop "$objdir/../../."
+
+set_board_info needs_status_wrapper ""
+
+# We can't pass arguments to programs
+set_board_info noargs 1
