@@ -1615,6 +1615,12 @@ static void unix_wrong_family(int type)
 	addr.sun_family = AF_INET;
 	snprintf(addr.sun_path, sizeof(addr.sun_path), "%s", socket_name);
 
+	/*
+	 * POSIX-DEVIATION (host, not Phoenix): POSIX requires EAFNOSUPPORT for an address
+	 * that is not valid for the socket's address family, which is what Phoenix returns.
+	 * Linux reports EINVAL instead, so the expected errno below is split per target.
+	 */
+
 	errno = 0;
 	err = bind(fd[1], (struct sockaddr *)&addr, SUN_LEN(&addr));
 	TEST_ASSERT_EQUAL_INT(-1, err);
