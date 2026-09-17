@@ -192,11 +192,15 @@ TEST(pthread_mutexattr_protocol, get_default_prio_none)
 
 	ret = pthread_mutexattr_getprotocol(&mattr, &protocol);
 	TEST_ASSERT_EQUAL_INT(0, ret);
+#ifdef __phoenix__
 	/*
 	 * POSIX-DEVIATION: POSIX says that mutexes should have PTHREAD_PRIO_NONE by
 	 * default. Phoenix has PTHREAD_PRIO_INHERIT instead.
 	 */
 	TEST_ASSERT_EQUAL_INT(PTHREAD_PRIO_INHERIT, protocol);
+#else
+	TEST_ASSERT_EQUAL_INT(PTHREAD_PRIO_NONE, protocol);
+#endif
 
 	pthread_mutexattr_destroy(&mattr);
 #endif
