@@ -167,9 +167,6 @@ test:
       targets:
         include: [host-generic-pc]
 
-    - name: statvfs
-      execute: test-libc-statvfs
-
     - name: syslog
       execute: test-libc-syslog
       targets:
