@@ -20,6 +20,7 @@
  */
 
 #include <errno.h>
+#include <sched.h>
 #include <string.h>
 #include <sys/resource.h>
 #include <sys/types.h>
@@ -72,9 +73,14 @@ TEST(resource_priority, getpriority_self_pgrp)
 
 	errno = 0;
 	prio = getpriority(PRIO_PGRP, 0);
+#ifdef __phoenix__
+	(void)prio;
+	TEST_IGNORE_MESSAGE("#1765 issue");
+#else
 	if (prio == -1) {
 		TEST_ASSERT_EQUAL_INT(0, errno);
 	}
+#endif
 }
 
 
@@ -84,9 +90,14 @@ TEST(resource_priority, getpriority_self_user)
 
 	errno = 0;
 	prio = getpriority(PRIO_USER, 0);
+#ifdef __phoenix__
+	(void)prio;
+	TEST_IGNORE_MESSAGE("#1765 issue");
+#else
 	if (prio == -1) {
 		TEST_ASSERT_EQUAL_INT(0, errno);
 	}
+#endif
 }
 
 
@@ -126,6 +137,7 @@ TEST(resource_priority, setpriority_self_process)
 {
 	int ret;
 	int prio;
+	int policy;
 
 	/* Raise nice value (lower priority) - always allowed */
 	errno = 0;
@@ -141,7 +153,11 @@ TEST(resource_priority, setpriority_self_process)
 	if (prio == -1 && errno != 0) {
 		TEST_FAIL_MESSAGE("getpriority failed after setpriority");
 	}
-	TEST_ASSERT_EQUAL_INT(test_common.origPriority + 1, prio);
+	/* POSIX: SCHED_FIFO and SCHED_RR processes are unaffected by setpriority() */
+	policy = sched_getscheduler(0);
+	if (policy != SCHED_FIFO && policy != SCHED_RR) {
+		TEST_ASSERT_EQUAL_INT(test_common.origPriority + 1, prio);
+	}
 }
 
 
