@@ -107,13 +107,8 @@ TEST(resource_priority, getpriority_einval_bad_which)
 
 	errno = 0;
 	prio = getpriority(-1, 0);
-#ifdef __phoenix__
-	(void)prio;
-	TEST_IGNORE_MESSAGE("#1688 issue");
-#else
 	TEST_ASSERT_EQUAL_INT(-1, prio);
 	TEST_ASSERT_EQUAL_INT(EINVAL, errno);
-#endif
 }
 
 
@@ -123,13 +118,8 @@ TEST(resource_priority, getpriority_esrch_invalid_pid)
 
 	errno = 0;
 	prio = getpriority(PRIO_PROCESS, 99999);
-#ifdef __phoenix__
-	(void)prio;
-	TEST_IGNORE_MESSAGE("#1688 issue");
-#else
 	TEST_ASSERT_EQUAL_INT(-1, prio);
 	TEST_ASSERT_EQUAL_INT(ESRCH, errno);
-#endif
 }
 
 
@@ -167,13 +157,8 @@ TEST(resource_priority, setpriority_einval_bad_which)
 
 	errno = 0;
 	ret = setpriority(-1, 0, 0);
-#ifdef __phoenix__
-	(void)ret;
-	TEST_IGNORE_MESSAGE("#1688 issue");
-#else
 	TEST_ASSERT_EQUAL_INT(-1, ret);
 	TEST_ASSERT_EQUAL_INT(EINVAL, errno);
-#endif
 }
 
 
@@ -183,13 +168,8 @@ TEST(resource_priority, setpriority_esrch_invalid_pid)
 
 	errno = 0;
 	ret = setpriority(PRIO_PROCESS, 99999, 0);
-#ifdef __phoenix__
-	(void)ret;
-	TEST_IGNORE_MESSAGE("#1688 issue");
-#else
 	TEST_ASSERT_EQUAL_INT(-1, ret);
 	TEST_ASSERT_EQUAL_INT(ESRCH, errno);
-#endif
 }
 
 
