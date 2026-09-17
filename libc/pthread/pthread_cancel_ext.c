@@ -162,10 +162,12 @@ static void *test_testcancelPointThread(void *arg)
 
 	*beforeCancel = 1;
 
-	/* This is the cancellation point */
-	pthread_testcancel();
+	/* Stay alive until the cancel request is consumed by the cancellation point */
+	while (1) {
+		pthread_testcancel();
+		usleep(10000);
+	}
 
-	/* Should not reach here if cancel was pending */
 	*beforeCancel = 2;
 	return NULL;
 }
@@ -194,14 +196,9 @@ TEST(pthread_cancel_type, testcancel_creates_cancellation_point)
 	ret = pthread_join(thread, &retval);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
-	/*
-	 * The thread should have been cancelled at pthread_testcancel().
-	 * state should be 1 (set before testcancel), not 2.
-	 * However, there's a race: if cancel arrives before testcancel is reached,
-	 * state could be 1. If cancel arrives after thread returns naturally, state=2.
-	 * We accept both 1 and 2 as valid due to scheduling.
-	 */
-	TEST_ASSERT_TRUE(state >= 1);
+	/* The thread loops forever, so it can only have ended by being cancelled */
+	TEST_ASSERT_EQUAL_PTR(PTHREAD_CANCELED, retval);
+	TEST_ASSERT_EQUAL_INT(1, state);
 #endif
 }
 
