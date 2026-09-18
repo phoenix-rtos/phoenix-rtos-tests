@@ -83,6 +83,10 @@ TEST_GROUP(unistd_gethostname);
 
 TEST_SETUP(unistd_gethostname)
 {
+#ifdef __phoenix__
+	const char hostname[] = "HOSTNAME";
+	sethostname(hostname, sizeof(hostname));
+#endif
 }
 
 
