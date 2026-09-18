@@ -153,9 +153,6 @@ TEST(libgen_basename, returns_final_component)
 	for (i = 0; i < sizeof(cases) / sizeof(cases[0]); i++) {
 		test_checkBasename(cases[i].in, cases[i].out);
 	}
-
-	/* TEMPORARY: deliberate failure used to verify CI failure notifications - revert me */
-	TEST_FAIL_MESSAGE("deliberate failure - CI notification test");
 }
 
 
