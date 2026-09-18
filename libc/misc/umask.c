@@ -56,12 +56,7 @@ TEST(misc_umask, umask_returns_previous_value)
 
 	/* Set a different mask; should return the one we just set */
 	curr = umask(077);
-#ifdef __phoenix__
-	(void)curr;
-	TEST_IGNORE_MESSAGE("#1633 issue");
-#else
 	TEST_ASSERT_EQUAL_INT(022, (curr & 0777));
-#endif
 
 	/* Restore */
 	umask(prev);
@@ -88,12 +83,7 @@ TEST(misc_umask, umask_set_all_permission_bits)
 	prev = umask(0777);
 
 	ret = umask(prev);
-#ifdef __phoenix__
-	(void)ret;
-	TEST_IGNORE_MESSAGE("#2 issue");
-#else
 	TEST_ASSERT_EQUAL_INT(0777, (ret & 0777));
-#endif
 }
 
 
@@ -110,13 +100,8 @@ TEST(misc_umask, umask_only_permission_bits_used)
 	prev = umask(07777);
 
 	ret = umask(prev);
-#ifdef __phoenix__
-	(void)ret;
-	TEST_IGNORE_MESSAGE("#2 issue");
-#else
 	/* The permission bits portion must be 0777 */
 	TEST_ASSERT_EQUAL_INT(0777, (ret & 0777));
-#endif
 }
 
 
@@ -133,16 +118,11 @@ TEST(misc_umask, umask_roundtrip_preserves_mask)
 	orig = umask(0123);
 	/* orig holds previous mask; now restore it */
 	restored = umask(orig);
-#ifdef __phoenix__
-	(void)restored;
-	TEST_IGNORE_MESSAGE("#2 issue");
-#else
 	TEST_ASSERT_EQUAL_INT(0123, (restored & 0777));
 
 	/* Verify the mask is truly back to orig */
 	restored = umask(orig);
 	TEST_ASSERT_EQUAL_INT((orig & 0777), (restored & 0777));
-#endif
 }
 
 
@@ -162,12 +142,8 @@ TEST(misc_umask, umask_affects_open_creat)
 	ret = stat(UMASK_TEST_FILE, &st);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1628 issue");
-#else
 	/* 0666 & ~077 = 0600 */
 	TEST_ASSERT_EQUAL_INT(0600, (st.st_mode & 0777));
-#endif
 
 	umask(prev);
 }
@@ -210,12 +186,8 @@ TEST(misc_umask, umask_affects_mkdir)
 	ret = stat(UMASK_TEST_DIR, &st);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1628 issue");
-#else
 	/* 0777 & ~027 = 0750 */
 	TEST_ASSERT_EQUAL_INT(0750, (st.st_mode & 0777));
-#endif
 
 	umask(prev);
 }
@@ -238,12 +210,8 @@ TEST(misc_umask, umask_clears_bits_in_mode)
 	ret = stat(UMASK_TEST_FILE, &st);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1628 issue");
-#else
 	/* 0666 & ~027 = 0640 */
 	TEST_ASSERT_EQUAL_INT(0640, (st.st_mode & 0777));
-#endif
 
 	umask(prev);
 }
@@ -275,11 +243,6 @@ TEST(misc_umask, umask_individual_bits)
 	/* Test each individual permission bit */
 	prev = umask(S_IRUSR);
 	ret = umask(S_IWUSR);
-#ifdef __phoenix__
-	(void)prev;
-	(void)ret;
-	TEST_IGNORE_MESSAGE("#2 issue");
-#else
 	TEST_ASSERT_EQUAL_INT(S_IRUSR, (ret & 0777));
 
 	ret = umask(S_IXUSR);
@@ -305,7 +268,6 @@ TEST(misc_umask, umask_individual_bits)
 
 	ret = umask(prev);
 	TEST_ASSERT_EQUAL_INT(S_IXOTH, (ret & 0777));
-#endif
 }
 
 
@@ -323,13 +285,9 @@ TEST(misc_umask, umask_affects_mkfifo)
 	ret = stat(UMASK_TEST_FIFO, &st);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1628 issue");
-#else
 	/* 0666 & ~027 = 0640 */
 	TEST_ASSERT_EQUAL_INT(0640, (st.st_mode & 0777));
 	TEST_ASSERT_TRUE(S_ISFIFO(st.st_mode));
-#endif
 
 	umask(prev);
 }
@@ -355,11 +313,7 @@ TEST(misc_umask, umask_inherited_by_fork)
 	/* Parent: wait for child and check exit status */
 	TEST_ASSERT_EQUAL_INT(pid, waitpid(pid, &status, 0));
 	TEST_ASSERT_TRUE(WIFEXITED(status));
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#2 issue");
-#else
 	TEST_ASSERT_EQUAL_INT(0, WEXITSTATUS(status));
-#endif
 
 	umask(prev);
 }
