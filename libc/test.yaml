@@ -46,7 +46,7 @@ test:
       targets:
         include: [host-generic-pc]
         # no posixsrv
-        exclude: [armv7r5f-zynqmp-qemu, armv8m33-mcxn94x-frdm]
+        exclude: [armv7r5f-zynqmp-qemu, armv8m33-mcxn94x-frdm, armv8m33-mcxn94x-frdm_cpu1 ]
 
     - name: stdlib
       execute: test-libc-stdlib
@@ -77,6 +77,7 @@ test:
           armv7m7-imxrt117x-evk,
           armv7m4-stm32l4x6-nucleo,
           armv8m33-mcxn94x-frdm,
+          armv8m33-mcxn94x-frdm_cpu1,
           armv7r5f-zynqmp-qemu,
           armv8m55-stm32n6-nucleo,
           ]
@@ -120,4 +121,4 @@ test:
         # statvfs()/fstatvfs() forward an mtStat request to the fs server owning
         # the path; only dummyfs/ext2/jffs2 implement statfs. On these targets the
         # root/tmp filesystem is flash-backed (no statfs handler)
-        exclude: [armv7m4-stm32l4x6-nucleo, armv8m55-stm32n6-nucleo, armv8m33-mcxn94x-frdm]
+        exclude: [armv7m4-stm32l4x6-nucleo, armv8m55-stm32n6-nucleo, armv8m33-mcxn94x-frdm, armv8m33-mcxn94x-frdm_cpu1]
