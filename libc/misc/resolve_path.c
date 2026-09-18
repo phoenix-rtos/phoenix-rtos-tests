@@ -24,6 +24,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/statvfs.h>
 #include <fcntl.h>
 
 #include <unity_fixture.h>
@@ -158,21 +159,56 @@ TEST(resolve_path, realpath_errno)
 }
 
 
-/* FIXME: this will fail due to not respecting NAME_MAX */
-IGNORE_TEST(resolve_path, realpath_max_path)
+TEST(resolve_path, realpath_max_path)
 {
-	const char *tmp_prefix = "/tmp/";
+	const char *tmp_prefix = "/tmp";
+	const char *dir_entry = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+	size_t dir_len = strlen(dir_entry);
 	char path[PATH_MAX]; /* note: PATH_MAX includes \0 */
+	size_t current_len;
 
-	memset(path, 'a', sizeof(path));
+	memset(path, 0, PATH_MAX);
 	memcpy(path, tmp_prefix, strlen(tmp_prefix));
-	path[sizeof(path) - 1] = 0;
-	printf("path: %s\n", path);
+
+	/* create nested dirs */
+	while (1) {
+		current_len = strlen(path);
+
+		/* 50 is an arbitrary value for filename length */
+		if (current_len + dir_len + 50 > PATH_MAX) {
+			break;
+		}
+
+		strcat(path, "/");
+		strcat(path, dir_entry);
+		int ret = mkdir(path, 0775);
+		TEST_ASSERT_EQUAL_INT(0, ret);
+	}
+
+	/* create a file */
+	strcat(path, "/");
+	size_t file_len = PATH_MAX - strlen(path);
+	memset(path + strlen(path), 'b', file_len);
+	path[PATH_MAX - 1] = '\0';
 
 	create_file(path, NULL);
 
 	check_and_free_str(path, realpath(path, NULL));
-	/* FIXME: unlink */
+
+	/* remove nested dirs */
+	TEST_ASSERT_EQUAL_INT(0, unlink(path));
+	current_len = strlen(path);
+	path[current_len - file_len + 1] = '\0';
+
+	while (1) {
+		current_len = strlen(path);
+		if (current_len == strlen(tmp_prefix) + 1) {
+			break;
+		}
+
+		TEST_ASSERT_EQUAL_INT(0, rmdir(path));
+		path[current_len - dir_len - 1] = '\0';
+	}
 }
 
 
