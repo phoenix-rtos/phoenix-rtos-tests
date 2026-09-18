@@ -24,6 +24,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/statvfs.h>
 #include <fcntl.h>
 
 #include <unity_fixture.h>
@@ -158,21 +159,26 @@ TEST(resolve_path, realpath_errno)
 }
 
 
-/* FIXME: this will fail due to not respecting NAME_MAX */
-IGNORE_TEST(resolve_path, realpath_max_path)
+TEST(resolve_path, realpath_max_path)
 {
 	const char *tmp_prefix = "/tmp/";
 	char path[PATH_MAX]; /* note: PATH_MAX includes \0 */
+	struct statvfs buf;
 
-	memset(path, 'a', sizeof(path));
+	TEST_ASSERT_EQUAL_INT(0, statvfs(tmp_prefix, &buf));
+	buf.f_namemax += (unsigned long)strlen(tmp_prefix);
+	if (buf.f_namemax > PATH_MAX - 1) {
+		buf.f_namemax = PATH_MAX - 1;
+	}
+	memset(path, 'a', buf.f_namemax);
 	memcpy(path, tmp_prefix, strlen(tmp_prefix));
-	path[sizeof(path) - 1] = 0;
-	printf("path: %s\n", path);
+	path[buf.f_namemax] = '\0';
 
 	create_file(path, NULL);
 
 	check_and_free_str(path, realpath(path, NULL));
-	/* FIXME: unlink */
+
+	unlink(path);
 }
 
 
