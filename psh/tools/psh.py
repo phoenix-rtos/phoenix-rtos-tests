@@ -131,7 +131,7 @@ def get_exit_code(pexpect_proc):
     assert pexpect_proc.expect([rf"(\d+?){EOL}", pexpect.TIMEOUT, pexpect.EOF]) == 0, msg
 
     exit_code = int(pexpect_proc.match.group(1))
-    assert_prompt(pexpect_proc)
+    assert_prompt(pexpect_proc, msg="Prompt not seen after 'echo $?'")
 
     return exit_code
 
@@ -178,12 +178,14 @@ def uptime(pexpect_proc):
 
 def date(pexpect_proc):
     """Returns the system date in a datetime object"""
-    _send(pexpect_proc, "date +%Y:%m:%d:%H:%M:%S")
+    date_cmd = "date +%Y:%m:%d:%H:%M:%S"
+
+    _send(pexpect_proc, date_cmd)
     pexpect_proc.expect(rf"(?P<year>\d+):(?P<month>\d+):(?P<day>\d+):(?P<hour>\d+):(?P<min>\d+):(?P<sec>\d+){EOL}")
 
     m = pexpect_proc.match
 
-    assert_prompt(pexpect_proc)
+    assert_prompt(pexpect_proc, msg=f"Prompt not seen after '{date_cmd}'")
     return datetime(*map(int, m.groups()))
 
 
@@ -275,7 +277,7 @@ def init(pexpect_proc):
     exec_cmd = _get_exec_cmd("psh")
     pexpect_proc.sendline(exec_cmd)
     pexpect_proc.expect(rf"{exec_cmd}(\r+)\n")
-    assert_prompt(pexpect_proc)
+    assert_prompt(pexpect_proc, msg="Initial prompt not found")
 
 
 def deinit(pexpect_proc):
