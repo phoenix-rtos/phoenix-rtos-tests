@@ -20,6 +20,10 @@
  *    - sync()
  *    - utimensat()
  *    - mknod()
+ *    - readlink()
+ *    - readlinkat()
+ *    - symlinkat()
+ *    - unlinkat()
  *
  * Copyright 2026 Phoenix Systems
  * Author: Damian Loewnau
@@ -50,6 +54,10 @@ void runner(void)
 	RUN_TEST_GROUP(fileops_lockf);
 	RUN_TEST_GROUP(fileops_sync);
 	RUN_TEST_GROUP(fileops_mknod);
+	RUN_TEST_GROUP(fileops_readlink);
+	RUN_TEST_GROUP(fileops_readlinkat);
+	RUN_TEST_GROUP(fileops_symlinkat);
+	RUN_TEST_GROUP(fileops_unlinkat);
 }
 
 int main(int argc, char *argv[])
