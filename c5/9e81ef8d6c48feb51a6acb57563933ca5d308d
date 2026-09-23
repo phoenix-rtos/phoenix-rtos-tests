@@ -1,0 +1,34 @@
+libc/Makefile
+  s_b87312b9498761::t_24a61b1d31f88d 52
+  s_96b8de41e6d915::t_55764269be95cd 54
+  h_3689a52f3dab5f 58
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "c59e81ef8d6c48feb51a6acb57563933ca5d308d",
+  "prompts": {},
+  "humans": {
+    "h_3689a52f3dab5f": {
+      "author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    }
+  },
+  "sessions": {
+    "s_96b8de41e6d915": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "602e68e2-f361-4eab-a829-a196b5bf8617",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": null
+    },
+    "s_b87312b9498761": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "d62509e7-89b1-4e5b-9aa1-8b794f366be8",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    }
+  }
+}

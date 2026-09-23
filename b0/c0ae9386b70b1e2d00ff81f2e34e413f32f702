@@ -1,0 +1,81 @@
+libc/sched/main.c
+  s_58080563270877::t_abadda25403129 30-32
+libc/resource/resource.c
+  s_58080563270877::t_aff011022cd8bc 1-481
+libc/test.yaml
+  s_c4ed1a39607954::t_c506ef36afbaf7 130
+  s_96b8de41e6d915::t_3fedc2d6d5f87c 131-134
+  s_58080563270877::t_5370a55ab0e92a 136-140
+  s_58080563270877::t_d02470a046f491 141-145
+  s_58080563270877::t_976ccc7d44a57f 146-149
+libc/signal/main.c
+  s_58080563270877::t_fa3fed812def74 28-29
+libc/stdlib/stdlib_system.c
+  s_58080563270877::t_720afb9aae89d0 1-120
+libc/sched/sched_scheduler.c
+  s_58080563270877::t_5fb875040debb4 1-23,25-409
+  s_58080563270877::t_1f52ecaa45a729 24
+libc/signal/signal_misc.c
+  s_58080563270877::t_b74f392af8065e 1-203,208-210,223-496,498,500,502-520,525-526,531-684
+  s_58080563270877::t_46b4def753e95d 204,206-207,211-222
+libc/pwd/pwd_getpw.c
+  s_58080563270877::t_7b56b21bdd5d2c 1-395
+libc/pwd/main.c
+  s_58080563270877::t_74e1aae9170884 1-45
+libc/sem/main.c
+  s_58080563270877::t_eadc1b00493930 1-49
+libc/resource/main.c
+  s_58080563270877::t_48ace68decf98e 1-45
+libc/sem/sem_unnamed.c
+  s_58080563270877::t_4a319f48cdf2e3 1-384
+libc/stdlib/main.c
+  s_58080563270877::t_b4572590b124ee 29
+libc/sem/sem_named.c
+  s_58080563270877::t_a7e06d9c3d7130 1-266
+libc/stdio/stdio_misc.c
+  s_58080563270877::t_3cade50afb2d9d 1-535
+libc/stdio/main.c
+  s_58080563270877::t_5041a3be0512dc 35-38
+libc/new_coverage.md
+  s_58080563270877::t_66ddc23d847c05 1-168
+libc/Makefile
+  s_96b8de41e6d915::t_55764269be95cd 53
+  h_3689a52f3dab5f 54-57
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "b0c0ae9386b70b1e2d00ff81f2e34e413f32f702",
+  "prompts": {},
+  "humans": {
+    "h_3689a52f3dab5f": {
+      "author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    }
+  },
+  "sessions": {
+    "s_58080563270877": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "9d7c4a7b-1f1f-4ca4-b4c5-ac18b420f21a",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    },
+    "s_96b8de41e6d915": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "602e68e2-f361-4eab-a829-a196b5bf8617",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    },
+    "s_c4ed1a39607954": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "adc92c26-79bb-4f89-9f7c-b96ea1eacabe",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    }
+  }
+}

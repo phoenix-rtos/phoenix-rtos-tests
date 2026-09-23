@@ -1,0 +1,14 @@
+trunner/config.py
+  h_02b407815a79bd 93-94,316
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "86528d9b4cdfbb6fd203f9898ee8e62e3c3751fb",
+  "prompts": {},
+  "humans": {
+    "h_02b407815a79bd": {
+      "author": "Łukasz Kruszyński <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  }
+}

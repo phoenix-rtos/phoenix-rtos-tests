@@ -1,0 +1,12 @@
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "c37452a019cc87865ab41c77a9dbc4e51241fd3f",
+  "prompts": {},
+  "humans": {
+    "h_9f2d068a164dcf": {
+      "author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  }
+}

@@ -1,0 +1,14 @@
+libc/Makefile
+  h_3689a52f3dab5f 49
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "83097da8b1078b7f5c0be715cedea58748bf7bf5",
+  "prompts": {},
+  "humans": {
+    "h_3689a52f3dab5f": {
+      "author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    }
+  }
+}

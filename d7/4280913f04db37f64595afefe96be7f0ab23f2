@@ -1,0 +1,14 @@
+libc/Makefile
+  h_9f2d068a164dcf 51
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "d74280913f04db37f64595afefe96be7f0ab23f2",
+  "prompts": {},
+  "humans": {
+    "h_9f2d068a164dcf": {
+      "author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  }
+}

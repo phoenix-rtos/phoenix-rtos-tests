@@ -1,0 +1,43 @@
+libc/socket/send.c
+  h_9f2d068a164dcf 96-98,166-168,249-251,302-304
+libc/socket/sendmsg.c
+  h_9f2d068a164dcf 309-311,382-384,398-400,501-503,563-565,673,675
+libc/socket/socketpair.c
+  s_a7ea12e74321a6::t_7334fe210cb9a5 230
+  s_a7ea12e74321a6::t_cdbb8ce3fd914f 284
+  h_9f2d068a164dcf 257-259,283,285
+libc/socket/sendto.c
+  h_9f2d068a164dcf 136-138,204-206,218-220,222-223,284-286,288-289,302-304
+libc/socket/setsockopt.c
+  s_a7ea12e74321a6::t_c9e94ecdd42131 450-451
+  h_9f2d068a164dcf 40-42,68-70,120-122,147-149,177-179,206-208,233-235,313-315,334-336,368-370,479-481,506-508
+  s_a7ea12e74321a6::t_760279098d4722 441-445
+libc/Makefile
+  h_9f2d068a164dcf 48
+libc/test.yaml
+  s_a7ea12e74321a6::t_f23f4d0ed3ed1e 4-101,104,106,108-111
+  s_a7ea12e74321a6::t_df9ef7772b2fe4 103,105,107
+libc/socket/shutdown.c
+  h_9f2d068a164dcf 43-45,76-78,94-96,211-213,253-256,267-269,290,323-325
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "d295a53f5520c3fd2c75e225ab08fef3fa2251d8",
+  "prompts": {},
+  "humans": {
+    "h_9f2d068a164dcf": {
+      "author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  },
+  "sessions": {
+    "s_a7ea12e74321a6": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "c7011d54-bc44-417d-ad99-6003e983fdc5",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  }
+}

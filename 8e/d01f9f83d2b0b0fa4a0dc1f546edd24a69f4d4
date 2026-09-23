@@ -1,0 +1,14 @@
+trunner/harness/pytest.py
+  h_9f2d068a164dcf 62,266-267
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "8ed01f9f83d2b0b0fa4a0dc1f546edd24a69f4d4",
+  "prompts": {},
+  "humans": {
+    "h_9f2d068a164dcf": {
+      "author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  }
+}

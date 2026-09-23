@@ -1,0 +1,18 @@
+libc/statvfs/statvfs.c
+  h_9f2d068a164dcf 182,184-198,234,237,243-259,348
+libc/statvfs/main.c
+  h_9f2d068a164dcf 23,28-48,64-68
+libc/test.yaml
+  h_9f2d068a164dcf 120
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "5c2b064578e8b926360eb22445367359f0f9c4a0",
+  "prompts": {},
+  "humans": {
+    "h_9f2d068a164dcf": {
+      "author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  }
+}

@@ -1,0 +1,43 @@
+libc/test.yaml
+  h_9f2d068a164dcf 92
+  s_839ffa95c902aa::t_a2332ff0bae02a 102-106
+libc/syslog/main.c
+  s_839ffa95c902aa::t_5989535ab07165 1-10,12,14-32,34-45
+  h_9f2d068a164dcf 11,13,33
+libc/syslog/closelog.c
+  s_839ffa95c902aa::t_aef15d7b7e8d2c 1-133
+libc/syslog/openlog.c
+  s_839ffa95c902aa::t_0038749ece84c9 1-10,12-258
+  h_9f2d068a164dcf 11
+libc/Makefile
+  s_839ffa95c902aa::t_b06ae8c9bc7141 49
+libc/syslog/syslog.c
+  s_839ffa95c902aa::t_a5fa5afe82299e 1-10,12-134,136,139-177,179-181
+  h_9f2d068a164dcf 11
+  s_839ffa95c902aa::t_e8c1061a26642d 135,137-138
+  s_839ffa95c902aa::t_1c9af592bc7be6 178
+libc/syslog/setlogmask.c
+  s_839ffa95c902aa::t_16aad89b3a8ed9 1-10,12-198
+  h_9f2d068a164dcf 11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "35513c8aa6e1a39b3edbfed2c97fd709edb01be6",
+  "prompts": {},
+  "humans": {
+    "h_9f2d068a164dcf": {
+      "author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  },
+  "sessions": {
+    "s_839ffa95c902aa": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "f601179e-4d2b-46a2-8849-75f9a1d8cf5c",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  }
+}

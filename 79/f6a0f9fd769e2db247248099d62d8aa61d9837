@@ -1,0 +1,59 @@
+libc/Makefile
+  h_3689a52f3dab5f 49
+  s_7999b3b93fa5f5::t_64de96a3e15d6b 50
+  s_b87312b9498761::t_24a61b1d31f88d 51-52
+libc/coverage.md
+  s_b87312b9498761::t_f0ef6958288633 1-128
+libc/mman/main.c
+  s_b87312b9498761::t_e85e8dc3ea0cd3 1-8,10-40
+  h_3689a52f3dab5f 9
+libc/stdio/main.c
+  s_b87312b9498761::t_a5ee4164c2c7bb 33-34
+libc/stdio/stdio_file.c
+  s_b87312b9498761::t_5446e7c534d0d5 16
+  s_b87312b9498761::t_f8e9cf8d0be68e 1802-2095
+libc/dirent/main.c
+  s_b87312b9498761::t_bbac2b78be2006 1-8,10-40
+  h_3689a52f3dab5f 9
+libc/stdlib/main.c
+  s_b87312b9498761::t_47c0d9b893b757 27-28
+libc/mman/mman_mmap.c
+  s_b87312b9498761::t_f0d002227ad79c 1-11,13-401
+  h_3689a52f3dab5f 12
+libc/dirent/dirent_dir.c
+  s_b87312b9498761::t_e7f76d07c18d05 1-12,14-26,28-308,310-323,325-342,345-360,362-374,376-384,388-395,397-401,403-407,409-414,416-451
+  h_3689a52f3dab5f 13,309,324,343-344,361,375,385-387,396,402,408,415
+  s_b87312b9498761::t_d4854cc6bfc65b 27
+libc/stdlib/stdlib_mktemp.c
+  s_b87312b9498761::t_2224613008e1a9 1-11,13-384
+  h_3689a52f3dab5f 12
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "79f6a0f9fd769e2db247248099d62d8aa61d9837",
+  "prompts": {},
+  "humans": {
+    "h_3689a52f3dab5f": {
+      "author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    }
+  },
+  "sessions": {
+    "s_7999b3b93fa5f5": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "db198862-76ea-4f4a-85b4-264ecf685b35",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    },
+    "s_b87312b9498761": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "d62509e7-89b1-4e5b-9aa1-8b794f366be8",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    }
+  }
+}

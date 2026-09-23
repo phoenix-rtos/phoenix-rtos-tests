@@ -1,0 +1,20 @@
+libc/socket/main.c
+  h_9f2d068a164dcf 1-69
+libc/test.yaml
+  h_9f2d068a164dcf 92,102-106
+libc/Makefile
+  h_9f2d068a164dcf 48
+libc/socket/sockatmark.c
+  h_9f2d068a164dcf 1-130
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "1b6a2fe29fccdd6b79ab8b32466774cb4e0c4b9f",
+  "prompts": {},
+  "humans": {
+    "h_9f2d068a164dcf": {
+      "author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  }
+}

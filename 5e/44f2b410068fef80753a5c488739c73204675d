@@ -1,0 +1,132 @@
+libc/pwd/pwd_getpw.c
+  s_9573c32ed6bea5::t_b49d5da4983240 179,232,339
+  s_9573c32ed6bea5::t_e6c3d9213dc305 74-77,79
+  s_9573c32ed6bea5::t_673317aaac6741 78
+libc/termios/termios.c
+  s_8885c1e5812954::t_6f785b438dd21d 442-444,446
+  s_8885c1e5812954::t_23874dfd4bc543 142-144,146
+  s_8885c1e5812954::t_b43be6bff86681 622-624,626
+  s_8885c1e5812954::t_a20f5895ced5b8 377-379,381
+  s_8885c1e5812954::t_fd00532fe3faaf 715-717,719
+  s_8885c1e5812954::t_30cad38e178642 791-793,795
+libc/sched/sched_get_priority.c
+  s_00d584caa49345::t_a61d00c3f890bb 142
+  s_00d584caa49345::t_de58f22c7a71ff 105-107,114
+  s_00d584caa49345::t_fcd64305367ef6 38-40,47
+  s_00d584caa49345::t_b42eeaab006f66 64-66,73
+  s_00d584caa49345::t_6fed0ceb871a0e 79-81,88
+  s_00d584caa49345::t_50e22c92229e1c 120-122
+libc/dirent/dirent_dirfd.c
+  h_9f2d068a164dcf 201-204
+libc/fcntl/fcntl_cmd.c
+  s_421ba867f76e37::t_fdb6a78335e2d8 279-281,283
+  s_421ba867f76e37::t_541514700cc17c 378-380,382
+libc/time/clock_nanosleep.c
+  s_48cd7e7d508579::t_ed0eb0128e8752 129-131
+  s_48cd7e7d508579::t_1087a627df286e 137
+  s_48cd7e7d508579::t_ea067a431e2d0b 208-219,230-238
+  s_48cd7e7d508579::t_7f5b81f830133a 344-376,379-380,386-388,398
+  s_48cd7e7d508579::t_d7f2d2469b0059 377-378,381-385
+  s_48cd7e7d508579::t_2e588b8d9c3c39 27-31
+libc/sem/sem_unnamed.c
+  h_9f2d068a164dcf 387
+libc/dirent/dirent_scandir.c
+  s_15e1cc89ff7321::t_4b24f70bf9aa08 308-311
+libc/coverage_new_functions.md
+  s_48cd7e7d508579::t_955dbebcce48f3 218-219
+libc/test.yaml
+  s_b8c4dbb416db4e::t_a43d43f07563a3 167-171
+libc/time/clock_gettime.c
+  h_9f2d068a164dcf 215,236,290
+  s_48cd7e7d508579::t_cda3902d5b1c25 214,216
+  s_48cd7e7d508579::t_46df09b2d9caa3 235,237
+  s_48cd7e7d508579::t_c4a4c3e22857cc 289,291,294
+  s_48cd7e7d508579::t_997fb7cd5f8e50 227
+  s_48cd7e7d508579::t_04bbed9e1d5d7c 248
+libc/resource/resource.c
+  s_b8c4dbb416db4e::t_733580476caad6 171
+  s_b8c4dbb416db4e::t_227c0267fd86d8 99,101-102,105
+  s_b8c4dbb416db4e::t_3a16281b71a6cd 115,117-118,121
+  s_b8c4dbb416db4e::t_e3fa9afaafb7f4 315
+  s_b8c4dbb416db4e::t_66b842614d2b7e 371-373,376
+  s_b8c4dbb416db4e::t_892658d2d76921 499
+  s_b8c4dbb416db4e::t_5965b59e0a9d5d 226-228,232
+  s_b8c4dbb416db4e::t_d943a3479add30 116
+  s_b8c4dbb416db4e::t_15f6dfa5b1c6cd 498,500-501,504
+  s_b8c4dbb416db4e::t_78a4fd32bce9ae 100
+  s_b8c4dbb416db4e::t_1a9e170e4c204c 154,156-157,160
+  s_b8c4dbb416db4e::t_dcecd6553b8d61 389,391-392,395
+  s_b8c4dbb416db4e::t_d07851faa94cea 155
+  s_b8c4dbb416db4e::t_c909deacbd166e 390
+  s_b8c4dbb416db4e::t_d89a828ac10db5 314,316-317,320
+  s_b8c4dbb416db4e::t_0307d4e3b5f762 170,172-173,176
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "5e44f2b410068fef80753a5c488739c73204675d",
+  "prompts": {},
+  "humans": {
+    "h_9f2d068a164dcf": {
+      "author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  },
+  "sessions": {
+    "s_00d584caa49345": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9afdb848-d5a4-4b8c-a0c9-6a6937cb809f",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    },
+    "s_15e1cc89ff7321": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ca6fe0aa-9b2f-4397-941d-53a8e9841d66",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    },
+    "s_421ba867f76e37": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9956aff0-2410-4f13-bb8d-870134519bb1",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    },
+    "s_48cd7e7d508579": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "bb67f02c-4ca7-48a5-b9fc-b23a9c55fe37",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    },
+    "s_8885c1e5812954": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "317d99c3-ed47-42e3-808b-94684137746e",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    },
+    "s_9573c32ed6bea5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "37f58093-476f-4ba8-a671-fb497e0f0851",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    },
+    "s_b8c4dbb416db4e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2281f3ae-47fb-4034-a157-e914a271e9a3",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  }
+}

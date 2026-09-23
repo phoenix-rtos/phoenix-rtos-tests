@@ -1,0 +1,29 @@
+libc/stat/stat_errors.c
+  h_3689a52f3dab5f 109-111,124,131-133,150
+libc/test.yaml
+  s_e0d55f7953dd06::t_d89bbe2b93232f 4-57,64-67
+  s_e0d55f7953dd06::t_30754d4ea7272b 69-96,98-106
+libc/stat/fstat.c
+  s_e0d55f7953dd06::t_f0f522a4d8a5d3 136
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "98ae5d1e61f94850bb7d54d95a1774114a520899",
+  "prompts": {},
+  "humans": {
+    "h_3689a52f3dab5f": {
+      "author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    }
+  },
+  "sessions": {
+    "s_e0d55f7953dd06": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "7b7aaf10-cbdd-49d9-a788-2156a92a496e",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    }
+  }
+}
