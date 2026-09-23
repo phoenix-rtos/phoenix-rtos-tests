@@ -3,7 +3,7 @@
  *
  * POSIX.1-2017 standard library functions tests
  *
- * Shared helpers for *at() function tests (directory fd + cwd handling)
+ * Shared helpers for fileops tests (directory fd + cwd handling, timestamp waits)
  *
  * Copyright 2026 Phoenix Systems
  * Author: Damian Loewnau
@@ -15,8 +15,14 @@
 
 #include <fcntl.h>
 #include <unistd.h>
+#include <stdint.h>
+#include <time.h>
 
 #include "fileops_at.h"
+#include "unity_fixture.h"
+
+#define TEST_WAIT_NS    10000000L
+#define TEST_WAIT_TRIES 300
 
 
 void test_atInit(test_atCtx_t *ctx)
@@ -28,7 +34,7 @@ void test_atInit(test_atCtx_t *ctx)
 
 int test_atOpenDir(test_atCtx_t *ctx, const char *dir)
 {
-	ctx->dirFd = open(dir, O_RDONLY | O_DIRECTORY);
+	ctx->dirFd = open(dir, O_RDONLY);
 	return ctx->dirFd;
 }
 
@@ -61,7 +67,7 @@ int test_atRelease(test_atCtx_t *ctx)
 
 int test_atClosedFd(const char *dir)
 {
-	const int fd = open(dir, O_RDONLY | O_DIRECTORY);
+	const int fd = open(dir, O_RDONLY);
 
 	if (fd < 0) {
 		return -1;
@@ -70,4 +76,17 @@ int test_atClosedFd(const char *dir)
 		return -1;
 	}
 	return fd;
+}
+
+
+void test_waitNextSecond(time_t t)
+{
+	const struct timespec delay = { 0, TEST_WAIT_NS };
+	int tries = 0;
+
+	while ((time(NULL) <= t) && (tries < TEST_WAIT_TRIES)) {
+		(void)nanosleep(&delay, NULL);
+		tries++;
+	}
+	TEST_ASSERT_GREATER_THAN_INT64((int64_t)t, (int64_t)time(NULL));
 }

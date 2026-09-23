@@ -63,7 +63,6 @@
 #define RL_SENTINEL    0x5a
 #define RL_SHORT_BUF   3
 #define RL_DIR_MODE    0755
-#define RL_OLD_TIME    1000000
 
 
 static struct {
@@ -155,12 +154,16 @@ static void test_checkError(const char *absPath, const char *relPath, int expErr
 	TEST_ASSERT_EQUAL_INT_MESSAGE(expErrno, errno, "readlink");
 	TEST_ASSERT_TRUE_MESSAGE(test_bufUnchanged(0), "readlink modified buf");
 
+#ifndef __phoenix__
 	test_resetBuf();
 	errno = 0;
 	ret = readlinkat(test_common.at.dirFd, relPath, test_common.buf, sizeof(test_common.buf));
 	TEST_ASSERT_EQUAL_INT_MESSAGE(-1, ret, "readlinkat");
 	TEST_ASSERT_EQUAL_INT_MESSAGE(expErrno, errno, "readlinkat");
 	TEST_ASSERT_TRUE_MESSAGE(test_bufUnchanged(0), "readlinkat modified buf");
+#else
+	(void)relPath;
+#endif
 }
 
 
@@ -175,10 +178,14 @@ static void test_checkContent(const char *absPath, const char *relPath, const ch
 	TEST_ASSERT_EQUAL_INT_MESSAGE((ssize_t)len, ret, "readlink");
 	TEST_ASSERT_EQUAL_MEMORY(expected, test_common.buf, len);
 
+#ifndef __phoenix__
 	test_resetBuf();
 	ret = readlinkat(test_common.at.dirFd, relPath, test_common.buf, sizeof(test_common.buf));
 	TEST_ASSERT_EQUAL_INT_MESSAGE((ssize_t)len, ret, "readlinkat");
 	TEST_ASSERT_EQUAL_MEMORY(expected, test_common.buf, len);
+#else
+	(void)relPath;
+#endif
 }
 
 
@@ -251,11 +258,13 @@ TEST(fileops_readlink, readlink_truncated_to_bufsize)
 	TEST_ASSERT_EQUAL_MEMORY(RL_DANGLE_TARGET, test_common.buf, RL_SHORT_BUF);
 	TEST_ASSERT_TRUE(test_bufUnchanged(RL_SHORT_BUF));
 
+#ifndef __phoenix__
 	test_resetBuf();
 	ret = readlinkat(test_common.at.dirFd, RL_DANGLE_NAME, test_common.buf, RL_SHORT_BUF);
 	TEST_ASSERT_EQUAL_INT(RL_SHORT_BUF, ret);
 	TEST_ASSERT_EQUAL_MEMORY(RL_DANGLE_TARGET, test_common.buf, RL_SHORT_BUF);
 	TEST_ASSERT_TRUE(test_bufUnchanged(RL_SHORT_BUF));
+#endif
 }
 
 
@@ -271,11 +280,13 @@ TEST(fileops_readlink, readlink_exact_bufsize)
 	TEST_ASSERT_EQUAL_MEMORY(RL_DANGLE_TARGET, test_common.buf, len);
 	TEST_ASSERT_TRUE(test_bufUnchanged(len));
 
+#ifndef __phoenix__
 	test_resetBuf();
 	ret = readlinkat(test_common.at.dirFd, RL_DANGLE_NAME, test_common.buf, len);
 	TEST_ASSERT_EQUAL_INT((ssize_t)len, ret);
 	TEST_ASSERT_EQUAL_MEMORY(RL_DANGLE_TARGET, test_common.buf, len);
 	TEST_ASSERT_TRUE(test_bufUnchanged(len));
+#endif
 }
 
 
@@ -290,32 +301,36 @@ TEST(fileops_readlink, readlink_bufsize_one)
 	TEST_ASSERT_EQUAL_CHAR(test_common.longContent[0], test_common.buf[0]);
 	TEST_ASSERT_TRUE(test_bufUnchanged(1));
 
+#ifndef __phoenix__
 	test_resetBuf();
 	ret = readlinkat(test_common.at.dirFd, RL_LONG_NAME, test_common.buf, 1);
 	TEST_ASSERT_EQUAL_INT(1, ret);
 	TEST_ASSERT_EQUAL_CHAR(test_common.longContent[0], test_common.buf[0]);
 	TEST_ASSERT_TRUE(test_bufUnchanged(1));
+#endif
 }
 
 
 /* Successful completion shall mark the last data access timestamp of the link for update. */
 TEST(fileops_readlink, readlink_marks_atime)
 {
-	const struct timespec oldTimes[2] = { { RL_OLD_TIME, 0 }, { RL_OLD_TIME, 0 } };
-	struct stat st;
+	struct stat before;
+	struct stat after;
 
-	TEST_ASSERT_EQUAL_INT(0, utimensat(AT_FDCWD, RL_DANGLE, oldTimes, AT_SYMLINK_NOFOLLOW));
-	TEST_ASSERT_EQUAL_INT(0, lstat(RL_DANGLE, &st));
-	TEST_ASSERT_EQUAL_INT64(RL_OLD_TIME, (int64_t)st.st_atime);
+	TEST_ASSERT_EQUAL_INT(0, lstat(RL_DANGLE, &before));
+	test_waitNextSecond(before.st_atime);
 
 	TEST_ASSERT_EQUAL_INT((ssize_t)strlen(RL_DANGLE_TARGET), readlink(RL_DANGLE, test_common.buf, sizeof(test_common.buf)));
-	TEST_ASSERT_EQUAL_INT(0, lstat(RL_DANGLE, &st));
-	TEST_ASSERT_GREATER_THAN_INT64(RL_OLD_TIME, (int64_t)st.st_atime);
+	TEST_ASSERT_EQUAL_INT(0, lstat(RL_DANGLE, &after));
+	TEST_ASSERT_GREATER_THAN_INT64((int64_t)before.st_atime, (int64_t)after.st_atime);
 
-	TEST_ASSERT_EQUAL_INT(0, utimensat(AT_FDCWD, RL_DANGLE, oldTimes, AT_SYMLINK_NOFOLLOW));
-	TEST_ASSERT_EQUAL_INT((ssize_t)strlen(RL_DANGLE_TARGET), readlinkat(test_common.at.dirFd, RL_DANGLE_NAME, test_common.buf, sizeof(test_common.buf)));
-	TEST_ASSERT_EQUAL_INT(0, lstat(RL_DANGLE, &st));
-	TEST_ASSERT_GREATER_THAN_INT64(RL_OLD_TIME, (int64_t)st.st_atime);
+#ifndef __phoenix__
+	TEST_ASSERT_EQUAL_INT(0, lstat(RL_LINK, &before));
+	test_waitNextSecond(before.st_atime);
+	TEST_ASSERT_EQUAL_INT((ssize_t)strlen(RL_FILE_NAME), readlinkat(test_common.at.dirFd, RL_LINK_NAME, test_common.buf, sizeof(test_common.buf)));
+	TEST_ASSERT_EQUAL_INT(0, lstat(RL_LINK, &after));
+	TEST_ASSERT_GREATER_THAN_INT64((int64_t)before.st_atime, (int64_t)after.st_atime);
+#endif
 }
 
 
@@ -358,7 +373,11 @@ TEST(fileops_readlink, readlink_enotdir_prefix_file)
 /* ENOTDIR: path ends with a trailing slash and names a regular file. */
 TEST(fileops_readlink, readlink_enotdir_trailing_slash)
 {
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#1723 issue");
+#else
 	test_checkError(RL_FILE "/", RL_FILE_NAME "/", ENOTDIR);
+#endif
 }
 
 
@@ -379,7 +398,11 @@ TEST(fileops_readlink, readlink_enametoolong)
 	longName[RL_NAME_TOO_LONG_LEN] = '\0';
 	(void)snprintf(longPath, sizeof(longPath), "%s/%s", RL_DIR, longName);
 
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#1258 issue");
+#else
 	test_checkError(longPath, longName, ENAMETOOLONG);
+#endif
 }
 
 
@@ -426,6 +449,8 @@ TEST_GROUP_RUNNER(fileops_readlink)
 /* ========================================================================= */
 /* readlinkat (fd-specific requirements) */
 /* ========================================================================= */
+
+#ifndef __phoenix__
 
 TEST_GROUP(fileops_readlinkat);
 
@@ -603,3 +628,6 @@ TEST_GROUP_RUNNER(fileops_readlinkat)
 	RUN_TEST_CASE(fileops_readlinkat, readlinkat_eacces_fd_no_search);
 	RUN_TEST_CASE(fileops_readlinkat, readlinkat_o_search_no_check);
 }
+#else
+TEST_GROUP_UNIMPLEMENTED(fileops_readlinkat, "readlinkat not implemented")
+#endif

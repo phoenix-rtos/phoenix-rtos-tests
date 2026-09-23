@@ -153,6 +153,8 @@
 
 ## readlink(), readlinkat()
 
+readlinkat() is not implemented on Phoenix-RTOS: the `fileops_readlinkat` group and the readlinkat() halves of `fileops_readlink` tests run on host only.
+
 | Requirement (POSIX verbatim) | Test case | Status |
 |---|---|---|
 | "shall place the contents of the symbolic link referred to by path in the buffer buf which has size bufsize" | `fileops_readlink.readlink_content_file_target` | covered |
@@ -167,11 +169,11 @@
 | [EINVAL]: "The path argument names a file that is not a symbolic link" | `fileops_readlink.readlink_einval_regular_file` | covered |
 | [EIO]: "An I/O error occurred while reading from the file system" | — | not tested: cannot be triggered using POSIX interfaces |
 | [ELOOP]: "A loop exists in symbolic links encountered during resolution of the path argument" | `fileops_readlink.readlink_eloop` | covered |
-| [ENAMETOOLONG]: "The length of a component of a pathname is longer than {NAME_MAX}" | `fileops_readlink.readlink_enametoolong` | covered |
+| [ENAMETOOLONG]: "The length of a component of a pathname is longer than {NAME_MAX}" | `fileops_readlink.readlink_enametoolong` | covered (skipped on Phoenix-RTOS: #1258) |
 | [ENOENT]: "A component of path does not name an existing file" | `fileops_readlink.readlink_enoent_missing` | covered |
 | [ENOENT]: "... or path is an empty string" | `fileops_readlink.readlink_enoent_empty_path` | covered |
 | [ENOTDIR]: "A component of the path prefix names an existing file that is neither a directory nor a symbolic link to a directory" | `fileops_readlink.readlink_enotdir_prefix_file` | covered |
-| [ENOTDIR]: "... ends with one or more trailing <slash> characters and the last pathname component names an existing file that is neither a directory nor a symbolic link to a directory" | `fileops_readlink.readlink_enotdir_trailing_slash` | covered |
+| [ENOTDIR]: "... ends with one or more trailing <slash> characters and the last pathname component names an existing file that is neither a directory nor a symbolic link to a directory" | `fileops_readlink.readlink_enotdir_trailing_slash` | covered (skipped on Phoenix-RTOS: #1723) |
 | readlinkat: "the symbolic link whose content is read is relative to the directory associated with the file descriptor fd instead of the current working directory" | `fileops_readlinkat.readlinkat_relative_to_fd` | covered |
 | readlinkat: equivalent to readlink() except for relative paths (absolute path ignores fd) | `fileops_readlinkat.readlinkat_absolute_ignores_fd` | covered |
 | "If the access mode ... is not O_SEARCH, the function shall check whether directory searches are permitted using the current permissions of the directory underlying the file descriptor" | `fileops_readlinkat.readlinkat_eacces_fd_no_search` | covered (ignored when run as root) |
@@ -182,6 +184,8 @@
 | readlinkat [ENOTDIR]: "path ... not an absolute path and fd is a file descriptor associated with a non-directory file" | `fileops_readlinkat.readlinkat_enotdir_fd_not_dir` | covered |
 
 ## symlinkat()
+
+symlinkat() is not implemented on Phoenix-RTOS: the whole group runs on host only.
 
 | Requirement (POSIX verbatim) | Test case | Status |
 |---|---|---|
@@ -219,6 +223,8 @@
 | symlinkat [ENOTDIR]: "path2 ... not an absolute path and fd is a file descriptor associated with a non-directory file" | `fileops_symlinkat.symlinkat_enotdir_fd_not_dir` | covered |
 
 ## unlinkat()
+
+unlinkat() is not implemented on Phoenix-RTOS: the whole group runs on host only.
 
 | Requirement (POSIX verbatim) | Test case | Status |
 |---|---|---|

@@ -32,6 +32,8 @@
 #include "fileops_at.h"
 #include "unity_fixture.h"
 
+#ifndef __phoenix__
+
 #define LN_DIR          "/tmp/test_fileops_link"
 #define LN_FILE_NAME    "file"
 #define LN_SUBDIR_NAME  "sub"
@@ -79,8 +81,6 @@
 #define LN_NOX_DIR_MODE 0666
 #define LN_OLD_TIME     1000000
 #define LN_BUF_SIZE     512
-#define LN_WAIT_NS      10000000L
-#define LN_WAIT_TRIES   300
 
 
 static struct {
@@ -173,20 +173,6 @@ static void test_checkLink(const char *path, const char *expected)
 	ret = readlink(path, test_common.buf, sizeof(test_common.buf));
 	TEST_ASSERT_EQUAL_INT((ssize_t)strlen(expected), ret);
 	TEST_ASSERT_EQUAL_MEMORY(expected, test_common.buf, strlen(expected));
-}
-
-
-/* Busy-waits (with short sleeps) until the wall clock passes second t. */
-static void test_waitNextSecond(time_t t)
-{
-	const struct timespec delay = { 0, LN_WAIT_NS };
-	int tries = 0;
-
-	while ((time(NULL) <= t) && (tries < LN_WAIT_TRIES)) {
-		(void)nanosleep(&delay, NULL);
-		tries++;
-	}
-	TEST_ASSERT_GREATER_THAN_INT64((int64_t)t, (int64_t)time(NULL));
 }
 
 
@@ -913,3 +899,8 @@ TEST_GROUP_RUNNER(fileops_unlinkat)
 	RUN_TEST_CASE(fileops_unlinkat, unlinkat_ebadf);
 	RUN_TEST_CASE(fileops_unlinkat, unlinkat_enotdir_fd_not_dir);
 }
+
+#else
+TEST_GROUP_UNIMPLEMENTED(fileops_symlinkat, "symlinkat not implemented")
+TEST_GROUP_UNIMPLEMENTED(fileops_unlinkat, "unlinkat not implemented")
+#endif
