@@ -3,3 +3,5 @@ test:
   tests:
     - name: unit
       execute: test-libalgo
+      targets:
+        include: [host-generic-pc]
