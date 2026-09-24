@@ -14,3 +14,4 @@ test:
           reboot: True
           load:
           - app: rh_msg_latency
+          - app: rh_msg_latency_send
