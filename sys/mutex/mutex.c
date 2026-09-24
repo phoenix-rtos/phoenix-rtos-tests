@@ -19,6 +19,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/threads.h>
+#include <phoenix/syscalls.h>
 
 #include <unity_fixture.h>
 
@@ -59,7 +60,8 @@ TEST(mutex_invalid_params, invalid_attr)
 
 TEST(mutex_invalid_params, invalid_mutex)
 {
-	TEST_ASSERT_EQUAL_INT(-EINVAL, mutexLock(-1));
+	/* calling syscall directly here to avoid triggering asserts in libphoenix */
+	TEST_ASSERT_EQUAL_INT(-EINVAL, phMutexLock(-1));
 	TEST_ASSERT_EQUAL_INT(-EINVAL, mutexUnlock(-1));
 	TEST_ASSERT_EQUAL_INT(-EINVAL, resourceDestroy(-1));
 }
