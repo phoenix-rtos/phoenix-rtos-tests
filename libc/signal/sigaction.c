@@ -643,9 +643,7 @@ TEST(signal_sigaction, sigkill_sigstop_not_in_sa_mask)
 {
 	struct sigaction sa;
 	int ret;
-#ifndef __phoenix__
 	sigset_t local;
-#endif
 
 	test_common_handlerCalled = 0;
 
@@ -663,13 +661,9 @@ TEST(signal_sigaction, sigkill_sigstop_not_in_sa_mask)
 	TEST_ASSERT_EQUAL_INT(1, test_common_handlerCalled);
 
 	/* SIGKILL and SIGSTOP should not actually be blocked in the handler */
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1653 issue");
-#else
 	local = test_common_handlerMask;
 	TEST_ASSERT_EQUAL_INT(0, sigismember(&local, SIGKILL));
 	TEST_ASSERT_EQUAL_INT(0, sigismember(&local, SIGSTOP));
-#endif
 }
 
 
