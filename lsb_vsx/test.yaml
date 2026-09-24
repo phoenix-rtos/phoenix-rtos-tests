@@ -720,10 +720,9 @@ test:
             testcase_count: 6
           ignore: True
 
-          # 2, 7: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1432
           # 3: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
         - name: T.i_ctty
-          execute: run-test /tset/POSIX.os/devclass/i_ctty/T.i_ctty{1,4-6,8-10}
+          execute: run-test /tset/POSIX.os/devclass/i_ctty/T.i_ctty{1-2,4-10}
           kwargs:
             testcase_count: 10
 
@@ -1165,10 +1164,9 @@ test:
             testcase_count: 13
           ignore: True
 
-          # 3: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1432
           # 6: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1458
         - name: T.setsid
-          execute: run-test /tset/POSIX.os/procenv/setsid/T.setsid{1-2,4-5}
+          execute: run-test /tset/POSIX.os/procenv/setsid/T.setsid{1-5}
           kwargs:
             testcase_count: 6
 
@@ -1221,18 +1219,16 @@ test:
             testcase_count: 2
 
           # 2: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1235
-          # 3: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1448
           # 7, 8, 9, 10: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
         - name: T.exit
-          execute: run-test /tset/ANSI.os/genuts/exit/T.exit{1,4-6,11-12}
+          execute: run-test /tset/ANSI.os/genuts/exit/T.exit{1,3-6,11-12}
           kwargs:
             testcase_count: 12
 
           # 2: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1235
-          # 3: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1448
           # 7, 8, 9, 10: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
         - name: T._exit
-          execute: run-test /tset/POSIX.os/procprim/_exit/T._exit{1,4-6,11-12}
+          execute: run-test /tset/POSIX.os/procprim/_exit/T._exit{1,3-6,11-12}
           kwargs:
             testcase_count: 12
 
@@ -1243,91 +1239,79 @@ test:
 
           # 15, 16, 29, 30, 34: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1458
           # 21: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1235
-          # 23: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1464
           # 25, 26, 42: system does not support users or groups; only root exists
           # 27, 28: system doesn't support special mode bits like S_ISUID and S_ISGID (VSX_SET_ID_MODES_SUPP)
           # 32: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1403
           # 35, 36: no permission verification in the system
           # 37: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1462
           # 38: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1258
-          # 40: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1463
         - name: T.execv
-          execute: run-test /tset/POSIX.os/procprim/exec/T.execv{1-14,17-20,22,24,31,33,39,41,43-50}
+          execute: run-test /tset/POSIX.os/procprim/exec/T.execv{1-14,17-20,22-24,31,33,39-41,43-50}
           kwargs:
             testcase_count: 50
 
           # 15, 16, 29, 30, 34: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1458
           # 21: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1235
-          # 23: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1464
           # 25, 26, 42: system does not support users or groups; only root exists
           # 27, 28: system doesn't support special mode bits like S_ISUID and S_ISGID (VSX_SET_ID_MODES_SUPP)
           # 32: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1403
           # 35, 36: no permission verification in the system
           # 37: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1462
           # 38: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1258
-          # 40: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1463
         - name: T.execve
-          execute: run-test /tset/POSIX.os/procprim/exec/T.execve{1-14,17-20,22,24,31,33,39,41,43-50}
+          execute: run-test /tset/POSIX.os/procprim/exec/T.execve{1-14,17-20,22-24,31,33,39-41,43-50}
           kwargs:
             testcase_count: 50
 
           # 15, 16, 29, 30, 34: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1458
           # 21: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1235
-          # 23: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1464
           # 25, 26: system does not support users or groups; only root exists
           # 27, 28: system doesn't support special mode bits like S_ISUID and S_ISGID (VSX_SET_ID_MODES_SUPP)
           # 32: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1403
           # 35, 36: no permission verification in the system
           # 37: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1462
           # 38: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1258
-          # 40: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1463
         - name: T.execvp
-          execute: run-test /tset/POSIX.os/procprim/exec/T.execvp{1-14,17-20,22,24,31,33,39,41-50}
+          execute: run-test /tset/POSIX.os/procprim/exec/T.execvp{1-14,17-20,22-24,31,33,39-50}
           kwargs:
             testcase_count: 50
 
           # 15, 16, 29, 30, 34: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1458
           # 21: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1235
-          # 23: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1464
           # 25, 26, 42: system does not support users or groups; only root exists
           # 27, 28: system doesn't support special mode bits like S_ISUID and S_ISGID (VSX_SET_ID_MODES_SUPP)
           # 32: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1403
           # 35, 36: no permission verification in the system
           # 37: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1462
           # 38: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1258
-          # 40: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1463
         - name: T.execl
-          execute: run-test /tset/POSIX.os/procprim/exec/T.execl{1-14,17-20,22,24,31,33,39,41,43-50}
+          execute: run-test /tset/POSIX.os/procprim/exec/T.execl{1-14,17-20,22-24,31,33,39-41,43-50}
           kwargs:
             testcase_count: 50
 
           # 15, 16, 29, 30, 34: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1458
           # 21: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1235
-          # 23: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1464
           # 25, 26, 42: system does not support users or groups; only root exists
           # 27, 28: system doesn't support special mode bits like S_ISUID and S_ISGID (VSX_SET_ID_MODES_SUPP)
           # 32: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1403
           # 35, 36: no permission verification in the system
           # 37: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1462
           # 38: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1258
-          # 40: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1463
         - name: T.execle
-          execute: run-test /tset/POSIX.os/procprim/exec/T.execle{1-14,17-20,22,24,31,33,39,41,43-50}
+          execute: run-test /tset/POSIX.os/procprim/exec/T.execle{1-14,17-20,22-24,31,33,39-41,43-50}
           kwargs:
             testcase_count: 50
 
           # 15, 16, 29, 30, 34: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1458
           # 21: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1235
-          # 23: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1464
           # 25, 26: system does not support users or groups; only root exists
           # 27, 28: system doesn't support special mode bits like S_ISUID and S_ISGID (VSX_SET_ID_MODES_SUPP)
           # 32: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1403
           # 35, 36: no permission verification in the system
           # 37: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1462
           # 38: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1258
-          # 40: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1463
         - name: T.execlp
-          execute: run-test /tset/POSIX.os/procprim/exec/T.execlp{1-14,17-20,22,24,31,33,39,41-50}
+          execute: run-test /tset/POSIX.os/procprim/exec/T.execlp{1-14,17-20,22-24,31,33,39-50}
           kwargs:
             testcase_count: 50
 
@@ -1338,20 +1322,17 @@ test:
           # 12: system doesn't support saved set-user-ID and set-group-ID
           # 13, 21: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1458
           # 16: umask() is a stub
-          # 17: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1456
         - name: T.fork
-          execute: run-test /tset/POSIX.os/procprim/fork/T.fork{1-4,6,9-10,14-15,18-20}
+          execute: run-test /tset/POSIX.os/procprim/fork/T.fork{1-4,6,9-10,14-15,17-20}
           kwargs:
             testcase_count: 21
 
           # 1: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1233
-          # 2: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1432
           # 4, 5, 6, 7, 8, 15: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1403
           # 9: kill() doesn't support 0 and -1 pid values
           # 12, 16, 17: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
-          # 14: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1453
         - name: T.kill
-          execute: run-test /tset/POSIX.os/procprim/kill/T.kill{3,10-11,13,18}
+          execute: run-test /tset/POSIX.os/procprim/kill/T.kill{2-3,10-11,13-14,18}
           kwargs:
             testcase_count: 18
 
@@ -1428,19 +1409,17 @@ test:
           kwargs:
             testcase_count: 1
 
-          # 7: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1448
           # 8, 9: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1233
           # 10: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
         - name: T.wait
-          execute: run-test /tset/POSIX.os/procprim/wait/T.wait{1-6,11-12}
+          execute: run-test /tset/POSIX.os/procprim/wait/T.wait{1-7,11-12}
           kwargs:
             testcase_count: 12
 
           # 8, 15, 16, 17: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
-          # 12: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1448
           # 13, 14: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1233
         - name: T.waitpid
-          execute: run-test /tset/POSIX.os/procprim/waitpid/T.waitpid{1-7,9-11,18-24}
+          execute: run-test /tset/POSIX.os/procprim/waitpid/T.waitpid{1-7,9-12,18-24}
           kwargs:
             testcase_count: 24
 
