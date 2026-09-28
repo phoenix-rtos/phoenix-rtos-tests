@@ -126,15 +126,11 @@ TEST(time_clock_nanosleep, clock_nanosleep_absolute_success)
 TEST(time_clock_nanosleep, clock_nanosleep_realtime)
 {
 	/* clock_nanosleep with CLOCK_REALTIME (relative) is equivalent to nanosleep */
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1685 issue");
-#else
 	const struct timespec rqtp = { 0, SLEEP_10MS_NS };
 	int ret;
 
 	ret = clock_nanosleep(CLOCK_REALTIME, 0, &rqtp, NULL);
 	TEST_ASSERT_EQUAL_INT(0, ret);
-#endif
 }
 
 

@@ -115,9 +115,6 @@ TEST_TEAR_DOWN(time_clock_getres) {}
 
 TEST(time_clock_getres, getres_realtime)
 {
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("clock_getres is not implemented");
-#else
 	struct timespec res;
 	int ret;
 
@@ -128,15 +125,11 @@ TEST(time_clock_getres, getres_realtime)
 	TEST_ASSERT_TRUE(res.tv_nsec < NSEC_PER_SEC);
 	/* Resolution should be at most 1 second */
 	TEST_ASSERT_TRUE(res.tv_sec == 0 || (res.tv_sec == 1 && res.tv_nsec == 0));
-#endif
 }
 
 
 TEST(time_clock_getres, getres_monotonic)
 {
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("clock_getres is not implemented");
-#else
 	struct timespec res;
 	int ret;
 
@@ -145,29 +138,21 @@ TEST(time_clock_getres, getres_monotonic)
 	TEST_ASSERT_TRUE(res.tv_sec >= 0);
 	TEST_ASSERT_TRUE(res.tv_nsec >= 0);
 	TEST_ASSERT_TRUE(res.tv_nsec < NSEC_PER_SEC);
-#endif
 }
 
 
 TEST(time_clock_getres, getres_null_res_ptr)
 {
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("clock_getres is not implemented");
-#else
 	int ret;
 
 	/* Passing NULL for res is allowed — no resolution stored */
 	ret = clock_getres(CLOCK_REALTIME, NULL);
 	TEST_ASSERT_EQUAL_INT(0, ret);
-#endif
 }
 
 
 TEST(time_clock_getres, getres_einval_bad_clockid)
 {
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("clock_getres is not implemented");
-#else
 	struct timespec res;
 	int ret;
 
@@ -175,7 +160,6 @@ TEST(time_clock_getres, getres_einval_bad_clockid)
 	ret = clock_getres((clockid_t)-99, &res);
 	TEST_ASSERT_EQUAL_INT(-1, ret);
 	TEST_ASSERT_EQUAL_INT(EINVAL, errno);
-#endif
 }
 
 
