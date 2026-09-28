@@ -828,7 +828,6 @@ test:
             testcase_count: 39
           ignore: True
 
-          # 3: umask() is a stub
           # 4, 5, 8: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1403
           # 7: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1408
           # 9, 10: no permission verification in the system
@@ -836,7 +835,7 @@ test:
           # 14: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1462
           # 18: no device to be mounted (VSX_ROFS)
         - name: T.mkdir
-          execute: run-test /tset/POSIX.os/files/mkdir/T.mkdir{1-2,6,11-12,15-17,19-27}
+          execute: run-test /tset/POSIX.os/files/mkdir/T.mkdir{1-3,6,11-12,15-17,19-27}
           kwargs:
             testcase_count: 27
 
@@ -921,13 +920,12 @@ test:
           kwargs:
             testcase_count: 31
 
-          # 3: umask() is a stub
           # 4, 5, 7: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1403
           # 6: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1408
           # 8, 9: no permission verification in the system
           # 16: no device to be mounted (VSX_ROFS)
         - name: T.mkfifo
-          execute: run-test /tset/POSIX.os/files/mkfifo/T.mkfifo{1-2,10,13-15,17}
+          execute: run-test /tset/POSIX.os/files/mkfifo/T.mkfifo{1-3,10,13-15,17}
           kwargs:
             testcase_count: 17
 
@@ -1005,12 +1003,10 @@ test:
           kwargs:
             testcase_count: 17
 
-          # umask() is a stub
         - name: T.umask
-          execute: run-test /tset/POSIX.os/files/umask/T.umask
+          execute: run-test /tset/POSIX.os/files/umask/T.umask{1-3}
           kwargs:
             testcase_count: 3
-          ignore: True
 
           # 6: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1443
           # 7, 20: no device to be mounted (VSX_ROFS, VSX_MOUNT_DEV)
@@ -1337,10 +1333,9 @@ test:
           # 11: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1403
           # 12: system doesn't support saved set-user-ID and set-group-ID
           # 13, 21: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1458
-          # 16: umask() is a stub
           # 17: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1456
         - name: T.fork
-          execute: run-test /tset/POSIX.os/procprim/fork/T.fork{1-4,6,9-10,14-15,18-20}
+          execute: run-test /tset/POSIX.os/procprim/fork/T.fork{1-4,6,9-10,14-16,18-20}
           kwargs:
             testcase_count: 21
 
