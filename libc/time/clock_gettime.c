@@ -203,9 +203,6 @@ TEST(time_clock_settime, clock_settime_einval_invalid_clock)
 TEST(time_clock_settime, clock_settime_einval_negative_nsec)
 {
 	/* "EINVAL: The tp argument specified a nanosecond value less than zero" */
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1683 issue");
-#else
 	struct timespec tp;
 	int ret;
 
@@ -216,7 +213,6 @@ TEST(time_clock_settime, clock_settime_einval_negative_nsec)
 	ret = clock_settime(CLOCK_REALTIME, &tp);
 	TEST_ASSERT_EQUAL_INT(-1, ret);
 	TEST_ASSERT_EQUAL_INT(EINVAL, errno);
-#endif
 }
 
 
@@ -224,9 +220,6 @@ TEST(time_clock_settime, clock_settime_einval_nsec_too_large)
 {
 	/* "EINVAL: The tp argument specified a nanosecond value ...
 	 *  greater than or equal to 1000 million." */
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1683 issue");
-#else
 	struct timespec tp;
 	int ret;
 
@@ -237,7 +230,6 @@ TEST(time_clock_settime, clock_settime_einval_nsec_too_large)
 	ret = clock_settime(CLOCK_REALTIME, &tp);
 	TEST_ASSERT_EQUAL_INT(-1, ret);
 	TEST_ASSERT_EQUAL_INT(EINVAL, errno);
-#endif
 }
 
 
@@ -278,12 +270,8 @@ TEST(time_clock_settime, clock_settime_realtime_success)
 	ret = clock_gettime(CLOCK_REALTIME, &readBack);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1684 issue");
-#else
 	/* Allow 1 second tolerance */
 	TEST_ASSERT_INT_WITHIN(1, (int)tp.tv_sec, (int)readBack.tv_sec);
-#endif
 }
 
 
