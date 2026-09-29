@@ -1344,12 +1344,12 @@ test:
 
           # 1: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1233
           # 2: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1432
-          # 4, 5, 6, 7, 8, 15: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1403
           # 9: kill() doesn't support 0 and -1 pid values
           # 12, 16, 17: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
           # 14: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1453
+          # 15: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1775
         - name: T.kill
-          execute: run-test /tset/POSIX.os/procprim/kill/T.kill{3,10-11,13,18}
+          execute: run-test /tset/POSIX.os/procprim/kill/T.kill{3-8,10-11,13,18}
           kwargs:
             testcase_count: 18
 
