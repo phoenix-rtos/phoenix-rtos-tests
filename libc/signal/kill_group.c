@@ -169,9 +169,22 @@ TEST(signal_killgroup, kill_broadcast_null_signal_permitted)
 {
 	/* "If pid is -1, sig shall be sent to all processes ... for which the
 	 * process has permission to send that signal." With sig 0 this only
-	 * confirms that at least one such process exists. */
+	 * confirms that at least one such process exists.
+	 *
+	 * A child is started first so that one is guaranteed to exist: a broadcast
+	 * need not count the caller itself, nor the init process, among the
+	 * processes it reaches, so a test runner that is the only other process
+	 * around would otherwise be told that there is nothing to signal. */
+	pid_t child;
+
+	child = startGroupMember(0);
+	TEST_ASSERT_NOT_EQUAL_INT(-1, (int)child);
+
 	errno = 0;
 	TEST_ASSERT_EQUAL_INT(0, kill(-1, 0));
+
+	TEST_ASSERT_EQUAL_INT(0, kill(child, SIGKILL));
+	assertKilledBy(child, SIGKILL, "the broadcast probe child survived SIGKILL");
 }
 
 
