@@ -656,10 +656,6 @@ TEST(stdio_ftell, position_after_character_pushed_back)
 
 TEST(stdio_ftell, position_after_append_after_rewind)
 {
-/* disabled because of issue #1403: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1403 */
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1403 issue");
-#endif
 	size_t len;
 
 	test_common.filename = "test_stdio_ftell_append";
