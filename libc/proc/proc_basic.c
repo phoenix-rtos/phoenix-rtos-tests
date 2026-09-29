@@ -518,15 +518,10 @@ TEST(proc_times, times_fills_structure)
 	TEST_ASSERT_TRUE(ret != (clock_t)-1);
 
 	/* After times(), user and system times should be non-negative */
-#ifdef __phoenix__
-	/* #1692 issue unpublished */
-	TEST_IGNORE_MESSAGE("times not implemented");
-#else
 	TEST_ASSERT_TRUE(buf.tms_utime >= 0);
 	TEST_ASSERT_TRUE(buf.tms_stime >= 0);
 	TEST_ASSERT_TRUE(buf.tms_cutime >= 0);
 	TEST_ASSERT_TRUE(buf.tms_cstime >= 0);
-#endif
 }
 
 
@@ -572,12 +567,7 @@ TEST(proc_times, times_user_time_increases_with_work)
 	TEST_ASSERT_TRUE(ret != (clock_t)-1);
 
 	/* User time should have increased */
-#ifdef __phoenix__
-	/* #1692 issue unpublished */
-	TEST_IGNORE_MESSAGE("times not implemented");
-#else
 	TEST_ASSERT_TRUE(buf2.tms_utime >= buf1.tms_utime);
-#endif
 }
 
 
@@ -613,12 +603,7 @@ TEST(proc_times, times_child_times_from_waited_child)
 	TEST_ASSERT_TRUE(ret != (clock_t)-1);
 
 	/* After waiting for child, cutime should include child's user time */
-#ifdef __phoenix__
-	/* #1692 issue unpublished */
-	TEST_IGNORE_MESSAGE("times not implemented");
-#else
 	TEST_ASSERT_TRUE(buf2.tms_cutime >= buf1.tms_cutime);
-#endif
 }
 
 
