@@ -42,38 +42,27 @@ TEST_TEAR_DOWN(time_clock_getcpuclockid) {}
 
 TEST(time_clock_getcpuclockid, getcpuclockid_self)
 {
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("clock_getcpuclockid is not implemented");
-#else
 	clockid_t clk;
 	int ret;
 
 	/* pid 0 means the calling process */
 	ret = clock_getcpuclockid(0, &clk);
 	TEST_ASSERT_EQUAL_INT(0, ret);
-#endif
 }
 
 
 TEST(time_clock_getcpuclockid, getcpuclockid_own_pid)
 {
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("clock_getcpuclockid is not implemented");
-#else
 	clockid_t clk;
 	int ret;
 
 	ret = clock_getcpuclockid(getpid(), &clk);
 	TEST_ASSERT_EQUAL_INT(0, ret);
-#endif
 }
 
 
 TEST(time_clock_getcpuclockid, getcpuclockid_can_be_used_with_gettime)
 {
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("clock_getcpuclockid is not implemented");
-#else
 	clockid_t clk;
 	struct timespec tp;
 	int ret;
@@ -86,7 +75,6 @@ TEST(time_clock_getcpuclockid, getcpuclockid_can_be_used_with_gettime)
 	TEST_ASSERT_TRUE(tp.tv_sec >= 0);
 	TEST_ASSERT_TRUE(tp.tv_nsec >= 0);
 	TEST_ASSERT_TRUE(tp.tv_nsec < NSEC_PER_SEC);
-#endif
 }
 
 

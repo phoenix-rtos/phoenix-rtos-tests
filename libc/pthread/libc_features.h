@@ -62,6 +62,7 @@
 #define HAS_PTHREAD_EQUAL                    1
 #define HAS_PTHREAD_EXIT                     1
 #define HAS_PTHREAD_FIND                     1
+#define HAS_PTHREAD_GETCPUCLOCKID            1
 #define HAS_PTHREAD_GETSCHEDPARAM            1
 #define HAS_PTHREAD_GETSPECIFIC              1
 #define HAS_PTHREAD_JOIN                     1
