@@ -4,6 +4,10 @@ test:
           type: unity
           execute: test_thread_rand
 
+        - name: test_cputime
+          type: unity
+          execute: test_cputime
+
         - name: test_priority
           load:
             - app: test_priority
