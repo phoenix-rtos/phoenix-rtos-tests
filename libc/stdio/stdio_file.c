@@ -1739,6 +1739,11 @@ TEST(stdio_fflush, stdio_fflush_socket)
 	TEST_ASSERT_EQUAL_INT(0, err);
 	TEST_ASSERT_EQUAL_INT(0, ferror(filep[1]));
 
+	/* the read buffer of a non-seekable stream cannot be flushed, so it must survive fflush() */
+	n = fread(buf, 1, 5, filep[0]);
+	TEST_ASSERT_EQUAL_INT(5, n);
+	TEST_ASSERT_EQUAL_MEMORY("56789", buf, 5);
+
 	fclose(filep[1]);
 	fclose(filep[0]);
 }
@@ -1794,8 +1799,30 @@ TEST(stdio_fflush, stdio_fflush_eagain)
 }
 
 
+TEST(stdio_fflush, stdio_fflush_input_syncs_offset)
+{
+	FILE *f;
+
+	f = fopen(STDIO_TEST_FILENAME, "w");
+	TEST_ASSERT_NOT_NULL(f);
+	TEST_ASSERT_NOT_EQUAL_INT(EOF, fputs("0123456789", f));
+	TEST_ASSERT_EQUAL_INT(0, fclose(f));
+
+	f = fopen(STDIO_TEST_FILENAME, "r");
+	TEST_ASSERT_NOT_NULL(f);
+	TEST_ASSERT_EQUAL_INT('0', fgetc(f));
+
+	/* POSIX: fflush() on a seekable input stream sets the fd offset to the stream position */
+	TEST_ASSERT_EQUAL_INT(0, fflush(f));
+	TEST_ASSERT_EQUAL_INT64((int64_t)1, (int64_t)lseek(fileno(f), 0, SEEK_CUR));
+
+	TEST_ASSERT_EQUAL_INT(0, fclose(f));
+}
+
+
 TEST_GROUP_RUNNER(stdio_fflush)
 {
 	RUN_TEST_CASE(stdio_fflush, stdio_fflush_socket);
 	RUN_TEST_CASE(stdio_fflush, stdio_fflush_eagain);
+	RUN_TEST_CASE(stdio_fflush, stdio_fflush_input_syncs_offset);
 }

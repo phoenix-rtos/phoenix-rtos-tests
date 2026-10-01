@@ -674,6 +674,26 @@ TEST(stdio_ftell, position_after_append_after_rewind)
 	TEST_ASSERT_EQUAL_INT32(0, (int32_t)ftell(test_common.f));
 	TEST_ASSERT_NOT_EQUAL_INT(EOF, fputc('A', test_common.f));
 	TEST_ASSERT_EQUAL_INT64((int64_t)len + 1, (int64_t)ftell(test_common.f));
+
+	/* f was not flushed, so fAux shouldn't see the changes yet */
+	test_common.fAux = fopen(test_common.filename, "a+");
+	TEST_ASSERT_NOT_NULL(test_common.fAux);
+	TEST_ASSERT_EQUAL_INT64((int64_t)0, (int64_t)fseek(test_common.fAux, 0, SEEK_END));
+	TEST_ASSERT_EQUAL_INT64((int64_t)len, (int64_t)ftell(test_common.fAux));
+
+	/* fseek(f) flushes the stream, so fAux should now see the changes */
+	TEST_ASSERT_EQUAL_INT64((int64_t)0, (int64_t)fseek(test_common.f, 0, SEEK_SET));
+	TEST_ASSERT_EQUAL_INT64((int64_t)0, (int64_t)ftell(test_common.f));
+	TEST_ASSERT_EQUAL_INT64((int64_t)0, (int64_t)fseek(test_common.fAux, 0, SEEK_END));
+	TEST_ASSERT_EQUAL_INT64((int64_t)len + 1, (int64_t)ftell(test_common.fAux));
+
+	/* write should advance fAux to the end */
+	TEST_ASSERT_NOT_EQUAL_INT(EOF, fputc('A', test_common.f));
+	TEST_ASSERT_EQUAL_INT64((int64_t)len + 2, (int64_t)ftell(test_common.f));
+	TEST_ASSERT_EQUAL_INT(0, fflush(test_common.f));
+	TEST_ASSERT_NOT_EQUAL_INT(EOF, fputc('A', test_common.fAux));
+	TEST_ASSERT_EQUAL_INT64((int64_t)len + 3, (int64_t)ftell(test_common.fAux));
+	TEST_ASSERT_EQUAL_INT64((int64_t)len + 2, (int64_t)ftell(test_common.f));
 }
 
 
