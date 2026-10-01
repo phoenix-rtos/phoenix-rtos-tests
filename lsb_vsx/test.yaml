@@ -740,11 +740,10 @@ test:
             testcase_count: 11
           ignore: True
 
-          # 3, 4, 6: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1429
           # 7, 8: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1401
           # 9: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1433
         - name: T.i_noncanon
-          execute: run-test /tset/POSIX.os/devclass/i_noncanon/T.i_noncanon{1-2,5,10-15}
+          execute: run-test /tset/POSIX.os/devclass/i_noncanon/T.i_noncanon{1-6,10-15}
           kwargs:
             testcase_count: 15
 
