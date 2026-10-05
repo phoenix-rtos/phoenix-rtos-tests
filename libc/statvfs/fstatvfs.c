@@ -159,11 +159,7 @@ TEST(statvfs_fstatvfs, fstatvfs_ebadf_invalid_fd)
 	errno = 0;
 	ret = fstatvfs(-1, &buf);
 	TEST_ASSERT_EQUAL_INT(-1, ret);
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1632 issue");
-#else
 	TEST_ASSERT_EQUAL_INT(EBADF, errno);
-#endif
 }
 
 
