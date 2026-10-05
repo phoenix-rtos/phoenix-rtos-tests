@@ -73,14 +73,9 @@ TEST(resource_priority, getpriority_self_pgrp)
 
 	errno = 0;
 	prio = getpriority(PRIO_PGRP, 0);
-#ifdef __phoenix__
-	(void)prio;
-	TEST_IGNORE_MESSAGE("#1765 issue");
-#else
 	if (prio == -1) {
 		TEST_ASSERT_EQUAL_INT(0, errno);
 	}
-#endif
 }
 
 
@@ -90,14 +85,9 @@ TEST(resource_priority, getpriority_self_user)
 
 	errno = 0;
 	prio = getpriority(PRIO_USER, 0);
-#ifdef __phoenix__
-	(void)prio;
-	TEST_IGNORE_MESSAGE("#1765 issue");
-#else
 	if (prio == -1) {
 		TEST_ASSERT_EQUAL_INT(0, errno);
 	}
-#endif
 }
 
 
