@@ -1,0 +1,18 @@
+libc/Makefile
+  h_3689a52f3dab5f 50
+libc/poll/poll.c
+  h_3689a52f3dab5f 1-434
+libc/test.yaml
+  h_3689a52f3dab5f 109-113
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "20d064dac9f7debe39dedc7bdb5f9f00f7f88105",
+  "prompts": {},
+  "humans": {
+    "h_3689a52f3dab5f": {
+      "author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    }
+  }
+}

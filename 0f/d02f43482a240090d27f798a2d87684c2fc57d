@@ -1,0 +1,59 @@
+libc/socket/getsockopt.c
+  h_9f2d068a164dcf 52-54,76-78,99-101,142-144,166-168,190-192,256,274-276,297-299,322-324
+  s_201accb1d9ccd8::t_0ed934ab14f2ec 1-51,55-75,79-98,102-141,145-165,169-189,193-255,257-273,277-296,300-321,325-344,348-394
+  s_201accb1d9ccd8::t_8ea5a333143fd7 345-347
+libc/socket/recv.c
+  h_9f2d068a164dcf 236-239,241
+  s_201accb1d9ccd8::t_e498987df65c29 1-235,240,242-281
+libc/Makefile
+  h_9f2d068a164dcf 48
+libc/test.yaml
+  h_9f2d068a164dcf 4-8,11-52,54-87,90-91
+  s_063795a4010d70::t_86d1563ba9de21 9-10,53
+  s_201accb1d9ccd8::t_07e0f28106d349 88-89
+libc/socket/main.c
+  h_9f2d068a164dcf 8-12,39-40,44-46
+libc/socket/listen.c
+  s_201accb1d9ccd8::t_f9d887a9f6ec65 1-29,34-165,169-228,232-254,258-276
+  h_9f2d068a164dcf 166-168,229-231,255-257
+  s_201accb1d9ccd8::t_8ad637fca34acf 30-33
+libc/socket/recvmsg.c
+  s_201accb1d9ccd8::t_1ff538fb4357a1 1-31,36-360,365,367-408,412-493
+  s_201accb1d9ccd8::t_501ec6519e875b 409,411
+  s_201accb1d9ccd8::t_79768619ffab88 32-35
+  h_9f2d068a164dcf 361-364,366,410
+libc/socket/recvfrom.c
+  h_9f2d068a164dcf 260-263,265
+  s_201accb1d9ccd8::t_1986488136984a 1-259,264,266-350
+libc/socket/coverage.md
+  s_201accb1d9ccd8::t_ea51e15cace8db 151-272
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "0fd02f43482a240090d27f798a2d87684c2fc57d",
+  "prompts": {},
+  "humans": {
+    "h_9f2d068a164dcf": {
+      "author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  },
+  "sessions": {
+    "s_063795a4010d70": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "0befbbbd-2c73-42eb-bce2-a1a64d7b585e",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    },
+    "s_201accb1d9ccd8": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "41154c4c-1acb-48db-8c19-cf3868ae82ca",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  }
+}

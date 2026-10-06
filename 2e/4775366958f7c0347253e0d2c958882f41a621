@@ -1,0 +1,76 @@
+libc/grp/main.c
+  s_96b8de41e6d915::t_b174f8e9d6b24c 1-41
+libc/grp/grp.c
+  s_96b8de41e6d915::t_eb6acb46a44fae 1-290
+libc/pthread/pthread_sched.c
+  s_96b8de41e6d915::t_63be2b47a69654 1-411
+libc/test.yaml
+  s_c4ed1a39607954::t_c506ef36afbaf7 130
+  s_96b8de41e6d915::t_3fedc2d6d5f87c 131-134
+libc/fcntl/fcntl_cmd.c
+  s_96b8de41e6d915::t_22c9f51c5c320a 1-446
+libc/pthread/pthread_attr_ext.c
+  s_96b8de41e6d915::t_748b9e01f93644 1-495
+libc/dirent/dirent_scandir.c
+  s_96b8de41e6d915::t_13f34da8da24c2 1-306
+libc/pthread/main.c
+  s_96b8de41e6d915::t_4b2a4e21f416be 28-31,33-35,37-40,45,49-53
+libc/pthread/pthread_rwlock.c
+  s_96b8de41e6d915::t_9679bed2a59a65 458,465-466,469-471,475
+  s_96b8de41e6d915::t_e27506eb0b55f1 303-317,321,324,327-329,337-338
+  s_96b8de41e6d915::t_5dfe74d36133a4 1-302,318-320,322-323,325-326,330-336,339-378,380-382,384-385,387-388,392-397,400-457,459-464,467-468,472-474,476-510
+  s_96b8de41e6d915::t_a68228ae49ef1f 379,383,386,389-391,398-399
+libc/fcntl/main.c
+  s_96b8de41e6d915::t_f80875b11cdd6d 29-30
+libc/pthread/pthread_rwlockattr.c
+  s_96b8de41e6d915::t_55163714e4fc01 1-207
+libc/pthread/pthread_spin.c
+  s_96b8de41e6d915::t_7ce2304a156886 194,230
+  s_96b8de41e6d915::t_a1e423defae10e 1-193,195-229,231-253
+libc/pthread/pthread_cancel_ext.c
+  s_96b8de41e6d915::t_e087ad741627b0 1-250
+libc/Makefile
+  h_3689a52f3dab5f 54
+  s_96b8de41e6d915::t_55764269be95cd 53
+libc/dirent/main.c
+  s_96b8de41e6d915::t_ea5b43f0587c70 27-28
+libc/dirent/dirent_dirfd.c
+  s_96b8de41e6d915::t_22057d99ab3ba2 75-76,98
+  s_96b8de41e6d915::t_ebf164b0336c7f 1-21,23-74,77-97,99-199
+  s_96b8de41e6d915::t_8e60bc13865cbf 22
+libc/pthread/pthread_mutex_ext.c
+  s_96b8de41e6d915::t_f3291a0ac1feee 1-536
+libc/pthread/pthread_mutexattr_ext.c
+  s_96b8de41e6d915::t_1ba4589bc5562d 1-517
+libc/fcntl/openat.c
+  s_96b8de41e6d915::t_243711e9b7fa5b 1-351
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "2e4775366958f7c0347253e0d2c958882f41a621",
+  "prompts": {},
+  "humans": {
+    "h_3689a52f3dab5f": {
+      "author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    }
+  },
+  "sessions": {
+    "s_96b8de41e6d915": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "602e68e2-f361-4eab-a829-a196b5bf8617",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": null
+    },
+    "s_c4ed1a39607954": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "adc92c26-79bb-4f89-9f7c-b96ea1eacabe",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    }
+  }
+}

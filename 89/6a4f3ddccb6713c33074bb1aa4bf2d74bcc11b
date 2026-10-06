@@ -1,0 +1,39 @@
+libc/Makefile
+  h_3689a52f3dab5f 49
+libc/fcntl/creat.c
+  s_45250d352c6aa0::t_95e79e4816dd83 1-10,12-25,27-223
+  h_3689a52f3dab5f 11,26
+libc/fcntl/main.c
+  s_45250d352c6aa0::t_b9a8fd0f98b9e9 1-11,13-41
+libc/fcntl/open.c
+  s_45250d352c6aa0::t_b602dee14788d3 1-10,12-25,27-559
+  h_3689a52f3dab5f 11,26
+libc/fcntl/coverage.md
+  s_45250d352c6aa0::t_9afa64d8d6f4ca 1-86
+libc/poll/poll_poll.c
+  s_45250d352c6aa0::t_923716dec039c9 1-10,12-27,29-415
+  h_3689a52f3dab5f 11,28
+libc/poll/main.c
+  s_45250d352c6aa0::t_caa6721c0f8034 1-12,14-42
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "896a4f3ddccb6713c33074bb1aa4bf2d74bcc11b",
+  "prompts": {},
+  "humans": {
+    "h_3689a52f3dab5f": {
+      "author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    }
+  },
+  "sessions": {
+    "s_45250d352c6aa0": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "0b97eb56-7746-4397-afd2-1f7e266c8824",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": null
+    }
+  }
+}

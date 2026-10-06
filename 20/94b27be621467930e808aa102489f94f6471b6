@@ -1,0 +1,24 @@
+libc/signal/sigaction.c
+  s_c24278c9d12371::t_b3b1b643598902 1-824,830-866
+  s_c24278c9d12371::t_89cd9299ad1910 825-829
+libc/signal/main.c
+  s_c24278c9d12371::t_0ef5dba496d91e 27
+libc/signal/coverage.md
+  s_c24278c9d12371::t_067d5ccd610615 1-42
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "2094b27be621467930e808aa102489f94f6471b6",
+  "prompts": {},
+  "sessions": {
+    "s_c24278c9d12371": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "b512f1c2-4348-4342-a325-f7e23450c880",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    }
+  }
+}

@@ -1,0 +1,64 @@
+libc/Makefile
+  s_b87312b9498761::t_24a61b1d31f88d 52
+  s_96b8de41e6d915::t_55764269be95cd 54
+  h_3689a52f3dab5f 58
+libc/test.yaml
+  s_58080563270877::t_976ccc7d44a57f 119,122-124,127-129,152,137-139,142-144,147-149,153,168,170,173,175,198-199,183-185,188-190,193-195,200,203-204
+  h_3689a52f3dab5f 120-121,130-131,135-136,140-141,186-187,196-197,201-202
+  s_c4ed1a39607954::t_c506ef36afbaf7 125,145,191
+  s_96b8de41e6d915::t_3fedc2d6d5f87c 126,146,192
+  s_7999b3b93fa5f5::t_13bc45962759e5 181-182
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "ead12b7e37b40f3770e445b7224e20f11c13bd63",
+  "prompts": {},
+  "humans": {
+    "h_3689a52f3dab5f": {
+      "author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    }
+  },
+  "sessions": {
+    "s_58080563270877": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "9d7c4a7b-1f1f-4ca4-b4c5-ac18b420f21a",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    },
+    "s_7999b3b93fa5f5": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "db198862-76ea-4f4a-85b4-264ecf685b35",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    },
+    "s_96b8de41e6d915": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "602e68e2-f361-4eab-a829-a196b5bf8617",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": null
+    },
+    "s_b87312b9498761": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "d62509e7-89b1-4e5b-9aa1-8b794f366be8",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    },
+    "s_c4ed1a39607954": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "adc92c26-79bb-4f89-9f7c-b96ea1eacabe",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    }
+  }
+}

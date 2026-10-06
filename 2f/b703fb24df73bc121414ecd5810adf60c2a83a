@@ -1,0 +1,18 @@
+libc/test.yaml
+  h_9f2d068a164dcf 29-32,66-69,89-92,115-118,120-123,130-131,133,135-138,140-143,145-148,150-153,158-159,163-164
+libc/misc/unistd_host.c
+  h_9f2d068a164dcf 96
+libc/Makefile
+  h_9f2d068a164dcf 44,63-65
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "2fb703fb24df73bc121414ecd5810adf60c2a83a",
+  "prompts": {},
+  "humans": {
+    "h_9f2d068a164dcf": {
+      "author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  }
+}

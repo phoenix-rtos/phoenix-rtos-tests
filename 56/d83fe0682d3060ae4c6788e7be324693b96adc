@@ -1,0 +1,33 @@
+libc/statvfs/main.c
+  s_1a4eb9a689c72d::t_bcd6a94e615bf7 1-43
+libc/statvfs/fstatvfs.c
+  s_1a4eb9a689c72d::t_7182522a5c8c8a 1-205
+libc/statvfs/statvfs.c
+  h_9f2d068a164dcf 32-35,43-47,55-59,255-299,313-314
+libc/Makefile
+  s_1a4eb9a689c72d::t_e6c8e669c1ea99 49
+libc/test.yaml
+  s_1a4eb9a689c72d::t_088fec4e3cec9b 102-106
+  h_9f2d068a164dcf 92
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "56d83fe0682d3060ae4c6788e7be324693b96adc",
+  "prompts": {},
+  "humans": {
+    "h_9f2d068a164dcf": {
+      "author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  },
+  "sessions": {
+    "s_1a4eb9a689c72d": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "87a44af0-5ef9-4c38-a28f-28c83605b394",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  }
+}

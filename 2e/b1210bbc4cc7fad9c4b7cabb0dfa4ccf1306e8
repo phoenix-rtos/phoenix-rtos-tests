@@ -1,0 +1,43 @@
+libc/fcntl/creat.c
+  h_3689a52f3dab5f 26
+  s_45250d352c6aa0::t_95e79e4816dd83 1-25,27-223
+libc/poll/poll_poll.c
+  h_3689a52f3dab5f 28
+  s_45250d352c6aa0::t_923716dec039c9 1-27,29-415
+libc/poll/main.c
+  s_45250d352c6aa0::t_caa6721c0f8034 1-42
+libc/fcntl/open.c
+  s_45250d352c6aa0::t_b602dee14788d3 1-25,27-559
+  h_3689a52f3dab5f 26
+libc/fcntl/main.c
+  s_45250d352c6aa0::t_b9a8fd0f98b9e9 1-41
+libc/Makefile
+  s_45250d352c6aa0::t_240206b0da01d2 50
+  s_45250d352c6aa0::t_759fc4f60548e0 39
+libc/test.yaml
+  h_3689a52f3dab5f 59-63
+  s_45250d352c6aa0::t_5034bb42db857d 107-116
+libc/fcntl/coverage.md
+  s_45250d352c6aa0::t_9afa64d8d6f4ca 1-86
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "2eb1210bbc4cc7fad9c4b7cabb0dfa4ccf1306e8",
+  "prompts": {},
+  "humans": {
+    "h_3689a52f3dab5f": {
+      "author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    }
+  },
+  "sessions": {
+    "s_45250d352c6aa0": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "0b97eb56-7746-4397-afd2-1f7e266c8824",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    }
+  }
+}

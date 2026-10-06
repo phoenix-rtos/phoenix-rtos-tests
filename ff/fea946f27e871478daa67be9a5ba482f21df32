@@ -1,0 +1,16 @@
+libc/dirent/rewinddir.c
+  h_9f2d068a164dcf 210,212,214,216-218,221-223,225-229,231-233,235-236
+libc/test.yaml
+  h_9f2d068a164dcf 4-9,11-101
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "fffea946f27e871478daa67be9a5ba482f21df32",
+  "prompts": {},
+  "humans": {
+    "h_9f2d068a164dcf": {
+      "author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  }
+}

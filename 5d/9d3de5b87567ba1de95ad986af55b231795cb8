@@ -1,0 +1,32 @@
+libc/test.yaml
+  h_9f2d068a164dcf 99
+  s_f5c0cb18eb64e9::t_0931bba1f1b690 113
+libc/statvfs/statvfs.c
+  s_f5c0cb18eb64e9::t_3da1d375e2f93f 127-128
+  s_f5c0cb18eb64e9::t_66a346e42f6022 37-61
+  s_f5c0cb18eb64e9::t_f11a735fada503 161-162
+  s_f5c0cb18eb64e9::t_06a7b05bb6d98d 94-95
+  s_f5c0cb18eb64e9::t_4121fbd9ffe3ee 264-265
+  s_f5c0cb18eb64e9::t_525ecc42dd8870 228-229
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "5d9d3de5b87567ba1de95ad986af55b231795cb8",
+  "prompts": {},
+  "humans": {
+    "h_9f2d068a164dcf": {
+      "author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  },
+  "sessions": {
+    "s_f5c0cb18eb64e9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "eef9d64e-65b6-45d8-926b-ded74fb6ff6a",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  }
+}

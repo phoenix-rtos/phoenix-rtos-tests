@@ -1,0 +1,24 @@
+libc/stdlib/stdlib_mktemp.c
+  s_b1c2fe7d3980ca::t_11d18918dc593f 238-240,242
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "1216a92fe4156f51932acf327ae2a51ff8fac4af",
+  "prompts": {},
+  "humans": {
+    "h_3689a52f3dab5f": {
+      "author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    }
+  },
+  "sessions": {
+    "s_b1c2fe7d3980ca": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "c0a7d685-e91c-4164-b7db-40fdfd4103c7",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    }
+  }
+}

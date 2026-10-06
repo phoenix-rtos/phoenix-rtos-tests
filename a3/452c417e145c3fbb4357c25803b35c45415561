@@ -1,0 +1,24 @@
+libc/pthread/pthread_rwlock.c
+  s_4c466f30151d33::t_cc6169c99f9cfa 51-56,58-60
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "a3452c417e145c3fbb4357c25803b35c45415561",
+  "prompts": {},
+  "humans": {
+    "h_9f2d068a164dcf": {
+      "author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  },
+  "sessions": {
+    "s_4c466f30151d33": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1a5d3f01-1184-4a70-aba2-b4892dedfa0a",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  }
+}

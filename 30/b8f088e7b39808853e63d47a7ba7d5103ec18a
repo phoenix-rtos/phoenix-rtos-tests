@@ -1,0 +1,52 @@
+libc/pthread/pthread_cancel.c
+  s_6fe029b321f101::t_633ef586229e1d 1-178,182,184-253
+  s_db8552e67248b1::t_fba68ab6e6e9ee 179,181,183
+  h_3689a52f3dab5f 180
+libc/pthread/pthread_mutex.c
+  s_6fe029b321f101::t_4c99b07a1e4c21 1-28,30-331,335-342,344-660
+  s_6fe029b321f101::t_60e4fb886edddd 29
+  s_db8552e67248b1::t_9fc441f601ee57 332,334,343
+  h_3689a52f3dab5f 333
+libc/pthread/pthread_key.c
+  s_6fe029b321f101::t_d75a36899eb964 1-50,54-55,57-72,76-77,79-109,113-114,116-256,260-261,263-335,339-340,342-381,385-386,388-426,430-431,433-485
+  s_db8552e67248b1::t_ee0d7a1e331828 51,53,56,73,75,78,110,112,115,257,259,262,336,338,341,382,384,387,427,429,432
+  h_3689a52f3dab5f 52,74,111,258,337,383,428
+libc/pthread/pthread_attr.c
+  s_6fe029b321f101::t_2e38a06fa31d34 1-125,130-135,137-151,156-164,166-223,228-233,235-270,275-280,282-419,423,425-464,470-478,480-537
+  s_db8552e67248b1::t_86debec192a59b 126,129,136,152,155,165,224,227,234,271,274,281,420,422,424,465,469,479
+  h_3689a52f3dab5f 127-128,153-154,225-226,272-273,421,466-468
+libc/pthread/pthread_lifecycle.c
+  s_6fe029b321f101::t_33ceb7e77fbdea 1-236,241-250,252-410
+  s_db8552e67248b1::t_9df1a36f4b8906 237,240,251
+  s_db8552e67248b1::t_60272ba989383c 238
+  h_3689a52f3dab5f 239
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "30b8f088e7b39808853e63d47a7ba7d5103ec18a",
+  "prompts": {},
+  "humans": {
+    "h_3689a52f3dab5f": {
+      "author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    }
+  },
+  "sessions": {
+    "s_6fe029b321f101": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "463bbdb8-bdca-4ef0-92ae-cbdee1a269a9",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    },
+    "s_db8552e67248b1": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "5396a0c8-d9e4-47b2-8708-9fa745cd61a6",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    }
+  }
+}

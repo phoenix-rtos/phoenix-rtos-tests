@@ -1,0 +1,15 @@
+libc/socket/sendmsg.c
+  h_9f2d068a164dcf 381,383
+libc/test.yaml
+  h_9f2d068a164dcf 4-9,11-101
+libc/socket/sendto.c
+  h_9f2d068a164dcf 135,137
+libc/socket/socketpair.c
+  h_9f2d068a164dcf 228,230
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "ad65acad860800227fa3a3cd25ce58b866504571",
+  "prompts": {}
+}
