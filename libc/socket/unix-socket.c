@@ -2942,6 +2942,221 @@ TEST(test_unix_socket, getsockname_errnos)
 }
 
 
+/*
+ * recvfrom() reports the name the datagram was sent under. A sender with no
+ * name of its own is reported by leaving the length at zero rather than by an
+ * empty address, and a connected socket - whatever its type - reports nothing
+ * at all. All of it as Linux does.
+ */
+
+
+static int unix_sendto_named(int fd, const void *buf, size_t len, const char *name)
+{
+	struct sockaddr_un addr = { 0 };
+
+	addr.sun_family = AF_UNIX;
+	strcpy(addr.sun_path, name);
+
+	return (int)sendto(fd, buf, len, 0, (struct sockaddr *)&addr, SUN_LEN(&addr));
+}
+
+
+static void unix_src_expect(int fd, int flags, const char *path, const char *what)
+{
+	struct sockaddr_un addr;
+	socklen_t len = sizeof(addr);
+	socklen_t expected = (path != NULL) ? (UNIX_ADDR_HDR + (socklen_t)strlen(path) + 1u) : 0u;
+	char msg[128];
+	char data[8];
+	ssize_t n;
+
+	memset(&addr, 0xAA, sizeof(addr));
+	errno = 0;
+	n = recvfrom(fd, data, sizeof(data), flags, (struct sockaddr *)&addr, &len);
+	if (n < 0) {
+		snprintf(msg, sizeof(msg), "%s: recvfrom: %s", what, strerror(errno));
+		FAIL(msg);
+	}
+
+	snprintf(msg, sizeof(msg), "%s: source length %u, expected %u", what, (unsigned int)len, (unsigned int)expected);
+	TEST_ASSERT_EQUAL_INT_MESSAGE(expected, len, msg);
+
+	if (path != NULL) {
+		snprintf(msg, sizeof(msg), "%s: source family", what);
+		TEST_ASSERT_EQUAL_INT_MESSAGE(AF_UNIX, addr.sun_family, msg);
+
+		snprintf(msg, sizeof(msg), "%s: source path", what);
+		TEST_ASSERT_EQUAL_STRING_MESSAGE(path, addr.sun_path, msg);
+	}
+}
+
+
+TEST(test_unix_socket, recvfrom_src_addr)
+{
+	const char *rpath = "/tmp/test_recvfrom_src";
+	const char *spath = "/tmp/test_recvfrom_src_sender";
+	const char *gpath = "/tmp/test_recvfrom_src_gone";
+	int r, named, nameless, gone;
+
+	r = unix_named_socket(SOCK_DGRAM, rpath);
+	named = unix_named_socket(SOCK_DGRAM, spath);
+	if ((r < 0) || (named < 0)) {
+		FAIL("unix_named_socket");
+	}
+
+	nameless = socket(AF_UNIX, SOCK_DGRAM, 0);
+	if (nameless < 0) {
+		FAIL("socket");
+	}
+
+	TEST_ASSERT_EQUAL_INT(1, unix_sendto_named(named, "a", 1, rpath));
+	unix_src_expect(r, 0, spath, "datagram from a named sender");
+
+	TEST_ASSERT_EQUAL_INT(1, unix_sendto_named(nameless, "b", 1, rpath));
+	unix_src_expect(r, 0, NULL, "datagram from a nameless sender");
+
+	/* a peek reports the source and leaves the datagram where it is */
+	TEST_ASSERT_EQUAL_INT(1, unix_sendto_named(named, "c", 1, rpath));
+	unix_src_expect(r, MSG_PEEK, spath, "peeked datagram");
+	unix_src_expect(r, 0, spath, "the same datagram, taken");
+
+	/* the name outlives the sender and its directory entry */
+	gone = unix_named_socket(SOCK_DGRAM, gpath);
+	if (gone < 0) {
+		FAIL("unix_named_socket");
+	}
+	TEST_ASSERT_EQUAL_INT(1, unix_sendto_named(gone, "d", 1, rpath));
+	close(gone);
+	TEST_ASSERT_EQUAL_INT(0, unlink(gpath));
+	unix_src_expect(r, 0, gpath, "sender closed before the datagram was read");
+
+	/* a connected sender is reported the same way, send() and all */
+	TEST_ASSERT_EQUAL_INT(0, connect_to_named(named, rpath));
+	TEST_ASSERT_EQUAL_INT(1, send(named, "e", 1, 0));
+	unix_src_expect(r, 0, spath, "datagram from a connected named sender");
+
+	/* the datagrams queue up in order, each with the name it was sent under */
+	TEST_ASSERT_EQUAL_INT(1, unix_sendto_named(nameless, "f", 1, rpath));
+	TEST_ASSERT_EQUAL_INT(1, send(named, "g", 1, 0));
+	TEST_ASSERT_EQUAL_INT(1, unix_sendto_named(nameless, "h", 1, rpath));
+	unix_src_expect(r, 0, NULL, "first of three, nameless");
+	unix_src_expect(r, 0, spath, "second of three, named");
+	unix_src_expect(r, 0, NULL, "third of three, nameless");
+
+	close(nameless);
+	close(named);
+	close(r);
+	TEST_ASSERT_EQUAL_INT(0, unlink(spath));
+	TEST_ASSERT_EQUAL_INT(0, unlink(rpath));
+}
+
+
+TEST(test_unix_socket, recvfrom_src_addr_truncation)
+{
+	const char *rpath = "/tmp/test_recvfrom_src";
+	const char *spath = "/tmp/test_recvfrom_src_sender";
+	socklen_t full = UNIX_ADDR_HDR + (socklen_t)strlen("/tmp/test_recvfrom_src_sender") + 1u;
+	_Alignas(struct sockaddr_un) unsigned char addr[sizeof(struct sockaddr_un)];
+	socklen_t len;
+	char data[8];
+	int r, s;
+
+	r = unix_named_socket(SOCK_DGRAM, rpath);
+	s = unix_named_socket(SOCK_DGRAM, spath);
+	if ((r < 0) || (s < 0)) {
+		FAIL("unix_named_socket");
+	}
+
+	/* room for four characters of the path: the length before truncation is reported */
+	TEST_ASSERT_EQUAL_INT(1, unix_sendto_named(s, "a", 1, rpath));
+	memset(addr, 0xAA, sizeof(addr));
+	len = UNIX_ADDR_HDR + 4u;
+	TEST_ASSERT_EQUAL_INT(1, recvfrom(r, data, sizeof(data), 0, (struct sockaddr *)addr, &len));
+	TEST_ASSERT_EQUAL_INT(full, len);
+	TEST_ASSERT_EQUAL_INT(0, memcmp(addr + UNIX_ADDR_HDR, spath, 4));
+	TEST_ASSERT_EQUAL_UINT8(0xAA, addr[UNIX_ADDR_HDR + 4u]);
+
+	/* no room at all */
+	TEST_ASSERT_EQUAL_INT(1, unix_sendto_named(s, "b", 1, rpath));
+	memset(addr, 0xAA, sizeof(addr));
+	len = 0;
+	TEST_ASSERT_EQUAL_INT(1, recvfrom(r, data, sizeof(data), 0, (struct sockaddr *)addr, &len));
+	TEST_ASSERT_EQUAL_INT(full, len);
+	TEST_ASSERT_EQUAL_UINT8(0xAA, addr[0]);
+
+	close(s);
+	close(r);
+	TEST_ASSERT_EQUAL_INT(0, unlink(spath));
+	TEST_ASSERT_EQUAL_INT(0, unlink(rpath));
+}
+
+
+TEST(test_unix_socket, recvmsg_msg_name)
+{
+	const char *rpath = "/tmp/test_recvfrom_src";
+	const char *spath = "/tmp/test_recvfrom_src_sender";
+	struct sockaddr_un addr;
+	struct msghdr msg = { 0 };
+	struct iovec iov;
+	char data[8];
+	int r, s;
+
+	r = unix_named_socket(SOCK_DGRAM, rpath);
+	s = unix_named_socket(SOCK_DGRAM, spath);
+	if ((r < 0) || (s < 0)) {
+		FAIL("unix_named_socket");
+	}
+
+	TEST_ASSERT_EQUAL_INT(1, unix_sendto_named(s, "a", 1, rpath));
+
+	memset(&addr, 0xAA, sizeof(addr));
+	iov.iov_base = data;
+	iov.iov_len = sizeof(data);
+	msg.msg_name = &addr;
+	msg.msg_namelen = sizeof(addr);
+	msg.msg_iov = &iov;
+	msg.msg_iovlen = 1;
+
+	TEST_ASSERT_EQUAL_INT(1, recvmsg(r, &msg, 0));
+	TEST_ASSERT_EQUAL_INT(UNIX_ADDR_HDR + strlen(spath) + 1u, msg.msg_namelen);
+	TEST_ASSERT_EQUAL_INT(AF_UNIX, addr.sun_family);
+	TEST_ASSERT_EQUAL_STRING(spath, addr.sun_path);
+
+	close(s);
+	close(r);
+	TEST_ASSERT_EQUAL_INT(0, unlink(spath));
+	TEST_ASSERT_EQUAL_INT(0, unlink(rpath));
+}
+
+
+static void unix_src_connected(int type)
+{
+	const char *tn = (type == SOCK_STREAM) ? "stream" : ((type == SOCK_SEQPACKET) ? "seqpacket" : "dgram");
+	char what[64];
+	int fd[2];
+
+	if (socketpair(AF_UNIX, type, 0, fd) < 0) {
+		FAIL("socketpair");
+	}
+
+	TEST_ASSERT_EQUAL_INT(1, send(fd[0], "a", 1, 0));
+
+	snprintf(what, sizeof(what), "%s socketpair, both ends nameless", tn);
+	unix_src_expect(fd[1], 0, NULL, what);
+
+	close(fd[0]);
+	close(fd[1]);
+}
+
+
+TEST(test_unix_socket, recvfrom_src_addr_connected)
+{
+	unix_src_connected(SOCK_STREAM);
+	unix_src_connected(SOCK_SEQPACKET);
+	unix_src_connected(SOCK_DGRAM);
+}
+
+
 TEST_GROUP_RUNNER(test_unix_socket)
 {
 	RUN_TEST_CASE(test_unix_socket, zero_len_send);
@@ -2987,6 +3202,10 @@ TEST_GROUP_RUNNER(test_unix_socket)
 	RUN_TEST_CASE(test_unix_socket, getsockname_dgram_connected);
 	RUN_TEST_CASE(test_unix_socket, getsockname_truncation);
 	RUN_TEST_CASE(test_unix_socket, getsockname_errnos);
+	RUN_TEST_CASE(test_unix_socket, recvfrom_src_addr);
+	RUN_TEST_CASE(test_unix_socket, recvfrom_src_addr_truncation);
+	RUN_TEST_CASE(test_unix_socket, recvmsg_msg_name);
+	RUN_TEST_CASE(test_unix_socket, recvfrom_src_addr_connected);
 }
 
 void runner(void)
