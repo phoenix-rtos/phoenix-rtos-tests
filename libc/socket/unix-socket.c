@@ -14,6 +14,7 @@
  */
 
 #include <string.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -2585,6 +2586,362 @@ TEST(test_unix_socket, af_unspec)
 }
 
 
+/*
+ * getsockname()/getpeername(). The address of a UNIX socket is the path it was
+ * bound to, reported with its terminating null, so a bound socket answers with
+ * sizeof(sa_family_t) + strlen(path) + 1 bytes and a socket that was never
+ * given a name answers with the family alone. POSIX 1003.1g asks for the
+ * length before truncation, so `len` comes back as the length the address
+ * really has, whatever the caller's buffer could take.
+ */
+#define UNIX_ADDR_HDR ((socklen_t)offsetof(struct sockaddr_un, sun_path))
+
+
+static void unix_name_expect(int fd, int peer, const char *path, const char *what)
+{
+	struct sockaddr_un addr;
+	socklen_t len = sizeof(addr);
+	socklen_t expected = UNIX_ADDR_HDR + ((path != NULL) ? (socklen_t)strlen(path) + 1u : 0u);
+	char msg[128];
+	int rv;
+
+	memset(&addr, 0xAA, sizeof(addr));
+	errno = 0;
+	rv = peer ? getpeername(fd, (struct sockaddr *)&addr, &len) : getsockname(fd, (struct sockaddr *)&addr, &len);
+	if (rv < 0) {
+		snprintf(msg, sizeof(msg), "%s: %s", what, strerror(errno));
+		FAIL(msg);
+	}
+
+	snprintf(msg, sizeof(msg), "%s: length %u, expected %u", what, (unsigned int)len, (unsigned int)expected);
+	TEST_ASSERT_EQUAL_INT_MESSAGE(expected, len, msg);
+
+	snprintf(msg, sizeof(msg), "%s: family", what);
+	TEST_ASSERT_EQUAL_INT_MESSAGE(AF_UNIX, addr.sun_family, msg);
+
+	if (path != NULL) {
+		snprintf(msg, sizeof(msg), "%s: path", what);
+		TEST_ASSERT_EQUAL_STRING_MESSAGE(path, addr.sun_path, msg);
+	}
+}
+
+
+static void unix_name_expect_error(int fd, int peer, int expected, const char *what)
+{
+	struct sockaddr_un addr;
+	socklen_t len = sizeof(addr);
+	char msg[128];
+	int rv;
+
+	memset(&addr, 0xAA, sizeof(addr));
+	errno = 0;
+	rv = peer ? getpeername(fd, (struct sockaddr *)&addr, &len) : getsockname(fd, (struct sockaddr *)&addr, &len);
+
+	snprintf(msg, sizeof(msg), "%s: returned %d, errno %d", what, rv, errno);
+	TEST_ASSERT_EQUAL_INT_MESSAGE(-1, rv, msg);
+	TEST_ASSERT_EQUAL_INT_MESSAGE(expected, errno, msg);
+}
+
+
+static void unix_name_unnamed(int type)
+{
+	const char *tn = (type == SOCK_STREAM) ? "stream" : ((type == SOCK_SEQPACKET) ? "seqpacket" : "dgram");
+	char what[64];
+	int fd[2];
+
+	fd[0] = socket(AF_UNIX, type, 0);
+	if (fd[0] < 0) {
+		FAIL("socket");
+	}
+
+	snprintf(what, sizeof(what), "%s, fresh socket, getsockname", tn);
+	unix_name_expect(fd[0], 0, NULL, what);
+
+	snprintf(what, sizeof(what), "%s, fresh socket, getpeername", tn);
+	unix_name_expect_error(fd[0], 1, ENOTCONN, what);
+
+	close(fd[0]);
+
+	/* a socketpair is connected, but neither end has a name */
+	if (socketpair(AF_UNIX, type, 0, fd) < 0) {
+		FAIL("socketpair");
+	}
+
+	snprintf(what, sizeof(what), "%s, socketpair, getsockname", tn);
+	unix_name_expect(fd[0], 0, NULL, what);
+
+	snprintf(what, sizeof(what), "%s, socketpair, getpeername", tn);
+	unix_name_expect(fd[0], 1, NULL, what);
+
+	close(fd[0]);
+	close(fd[1]);
+}
+
+
+TEST(test_unix_socket, getsockname_unnamed)
+{
+	unix_name_unnamed(SOCK_STREAM);
+	unix_name_unnamed(SOCK_SEQPACKET);
+	unix_name_unnamed(SOCK_DGRAM);
+}
+
+
+static void unix_name_bound(int type)
+{
+	const char *path = "/tmp/test_getsockname";
+	const char *other = "/tmp/test_getsockname_2";
+	const char *tn = (type == SOCK_STREAM) ? "stream" : ((type == SOCK_SEQPACKET) ? "seqpacket" : "dgram");
+	struct sockaddr_un addr = { 0 };
+	char what[64];
+	int fd;
+
+	fd = unix_named_socket(type, path);
+	if (fd < 0) {
+		FAIL("unix_named_socket");
+	}
+
+	snprintf(what, sizeof(what), "%s, bound, getsockname", tn);
+	unix_name_expect(fd, 0, path, what);
+
+	snprintf(what, sizeof(what), "%s, bound, getpeername", tn);
+	unix_name_expect_error(fd, 1, ENOTCONN, what);
+
+	/* a socket has one name and keeps it: a second bind() is refused */
+	addr.sun_family = AF_UNIX;
+	strcpy(addr.sun_path, other);
+	errno = 0;
+	TEST_ASSERT_EQUAL_INT(-1, bind(fd, (struct sockaddr *)&addr, SUN_LEN(&addr)));
+	TEST_ASSERT_EQUAL_INT(EINVAL, errno);
+
+	/* the name is the socket's own, not the directory entry's */
+	TEST_ASSERT_EQUAL_INT(0, unlink(path));
+
+	snprintf(what, sizeof(what), "%s, bound, getsockname after unlink", tn);
+	unix_name_expect(fd, 0, path, what);
+
+	close(fd);
+}
+
+
+TEST(test_unix_socket, getsockname_bound)
+{
+	unix_name_bound(SOCK_STREAM);
+	unix_name_bound(SOCK_SEQPACKET);
+	unix_name_bound(SOCK_DGRAM);
+}
+
+
+static void unix_name_connected(int type, int bindClient)
+{
+	const char *path = "/tmp/test_getsockname";
+	const char *cpath = "/tmp/test_getsockname_client";
+	const char *other = "/tmp/test_getsockname_2";
+	const char *tn = (type == SOCK_STREAM) ? "stream" : "seqpacket";
+	const char *peer = (bindClient != 0) ? cpath : NULL;
+	struct sockaddr_un addr;
+	socklen_t len = sizeof(addr);
+	char what[80];
+	int ls, cl, ns;
+
+	ls = unix_named_socket(type, path);
+	if (ls < 0) {
+		FAIL("unix_named_socket");
+	}
+	TEST_ASSERT_EQUAL_INT(0, listen(ls, 1));
+
+	if (bindClient != 0) {
+		cl = unix_named_socket(type, cpath);
+		if (cl < 0) {
+			FAIL("unix_named_socket");
+		}
+	}
+	else {
+		cl = socket(AF_UNIX, type, 0);
+		if (cl < 0) {
+			FAIL("socket");
+		}
+	}
+
+	/*
+	 * A blocking connect() waits for the accept() that only comes below, so the
+	 * client is made non-blocking first: Phoenix leaves the attempt in progress,
+	 * Linux takes it at once.
+	 */
+	if (set_nonblock(cl, 1) < 0) {
+		FAIL("set_nonblock");
+	}
+
+	errno = 0;
+	if ((connect_to_named(cl, path) < 0) && (errno != EINPROGRESS)) {
+		FAIL("connect");
+	}
+
+	/* accept() answers with the address the new socket's getpeername() would */
+	memset(&addr, 0xAA, sizeof(addr));
+	ns = accept(ls, (struct sockaddr *)&addr, &len);
+	if (ns < 0) {
+		FAIL("accept");
+	}
+
+	snprintf(what, sizeof(what), "%s, %s client, accept() address length",
+			tn, (bindClient != 0) ? "bound" : "unnamed");
+	TEST_ASSERT_EQUAL_INT_MESSAGE(UNIX_ADDR_HDR + ((peer != NULL) ? strlen(peer) + 1u : 0u), len, what);
+	TEST_ASSERT_EQUAL_INT_MESSAGE(AF_UNIX, addr.sun_family, what);
+	if (peer != NULL) {
+		TEST_ASSERT_EQUAL_STRING_MESSAGE(peer, addr.sun_path, what);
+	}
+
+	snprintf(what, sizeof(what), "%s, client getpeername", tn);
+	unix_name_expect(cl, 1, path, what);
+
+	snprintf(what, sizeof(what), "%s, client getsockname", tn);
+	unix_name_expect(cl, 0, peer, what);
+
+	/* the connection is named after the socket it was accepted on */
+	snprintf(what, sizeof(what), "%s, accepted getsockname", tn);
+	unix_name_expect(ns, 0, path, what);
+
+	snprintf(what, sizeof(what), "%s, accepted getpeername", tn);
+	unix_name_expect(ns, 1, peer, what);
+
+	snprintf(what, sizeof(what), "%s, listener getsockname", tn);
+	unix_name_expect(ls, 0, path, what);
+
+	/* an accepted socket already has a name, so it cannot be bound */
+	memset(&addr, 0, sizeof(addr));
+	addr.sun_family = AF_UNIX;
+	strcpy(addr.sun_path, other);
+	errno = 0;
+	TEST_ASSERT_EQUAL_INT(-1, bind(ns, (struct sockaddr *)&addr, SUN_LEN(&addr)));
+	TEST_ASSERT_EQUAL_INT(EINVAL, errno);
+
+	/* both names outlive the listener and its directory entry */
+	close(ls);
+	TEST_ASSERT_EQUAL_INT(0, unlink(path));
+
+	snprintf(what, sizeof(what), "%s, accepted getsockname after listener close", tn);
+	unix_name_expect(ns, 0, path, what);
+
+	snprintf(what, sizeof(what), "%s, client getpeername after listener close", tn);
+	unix_name_expect(cl, 1, path, what);
+
+	/* and the peer's name is still there once the peer itself is gone */
+	close(cl);
+
+	snprintf(what, sizeof(what), "%s, accepted getpeername after client close", tn);
+	unix_name_expect(ns, 1, peer, what);
+
+	close(ns);
+
+	if (bindClient != 0) {
+		TEST_ASSERT_EQUAL_INT(0, unlink(cpath));
+	}
+}
+
+
+TEST(test_unix_socket, getsockname_connected)
+{
+	unix_name_connected(SOCK_STREAM, 0);
+	unix_name_connected(SOCK_SEQPACKET, 0);
+
+	unix_name_connected(SOCK_STREAM, 1);
+	unix_name_connected(SOCK_SEQPACKET, 1);
+}
+
+
+TEST(test_unix_socket, getsockname_dgram_connected)
+{
+	const char *path = "/tmp/test_getsockname";
+	struct sockaddr addr = { 0 };
+	int fd, target;
+
+	target = unix_named_socket(SOCK_DGRAM, path);
+	if (target < 0) {
+		FAIL("unix_named_socket");
+	}
+
+	fd = socket(AF_UNIX, SOCK_DGRAM, 0);
+	if (fd < 0) {
+		FAIL("socket");
+	}
+
+	TEST_ASSERT_EQUAL_INT(0, connect_to_named(fd, path));
+
+	unix_name_expect(fd, 1, path, "dgram, connected, getpeername");
+	unix_name_expect(fd, 0, NULL, "dgram, connected, getsockname");
+
+	/* the target of a datagram socket is not connected to anything itself */
+	unix_name_expect_error(target, 1, ENOTCONN, "dgram, target, getpeername");
+
+	/* AF_UNSPEC takes the connection away, and the peer's name with it */
+	addr.sa_family = AF_UNSPEC;
+	TEST_ASSERT_EQUAL_INT(0, connect(fd, &addr, sizeof(addr)));
+	unix_name_expect_error(fd, 1, ENOTCONN, "dgram, after AF_UNSPEC, getpeername");
+
+	/* and a new connect() brings it back */
+	TEST_ASSERT_EQUAL_INT(0, connect_to_named(fd, path));
+	unix_name_expect(fd, 1, path, "dgram, reconnected, getpeername");
+
+	close(fd);
+	close(target);
+	TEST_ASSERT_EQUAL_INT(0, unlink(path));
+}
+
+
+TEST(test_unix_socket, getsockname_truncation)
+{
+	const char *path = "/tmp/test_getsockname";
+	socklen_t full = UNIX_ADDR_HDR + (socklen_t)strlen(path) + 1u;
+	_Alignas(struct sockaddr_un) unsigned char buf[sizeof(struct sockaddr_un)];
+	socklen_t len;
+	int fd;
+
+	fd = unix_named_socket(SOCK_STREAM, path);
+	if (fd < 0) {
+		FAIL("unix_named_socket");
+	}
+
+	/* room for four characters of the path: the rest is dropped, not reported short */
+	memset(buf, 0xAA, sizeof(buf));
+	len = UNIX_ADDR_HDR + 4u;
+	TEST_ASSERT_EQUAL_INT(0, getsockname(fd, (struct sockaddr *)buf, &len));
+	TEST_ASSERT_EQUAL_INT(full, len);
+	TEST_ASSERT_EQUAL_INT(0, memcmp(buf + UNIX_ADDR_HDR, path, 4));
+	TEST_ASSERT_EQUAL_UINT8(0xAA, buf[UNIX_ADDR_HDR + 4u]);
+
+	/* no room at all: nothing is stored, the length is still the real one */
+	memset(buf, 0xAA, sizeof(buf));
+	len = 0;
+	TEST_ASSERT_EQUAL_INT(0, getsockname(fd, (struct sockaddr *)buf, &len));
+	TEST_ASSERT_EQUAL_INT(full, len);
+	TEST_ASSERT_EQUAL_UINT8(0xAA, buf[0]);
+
+	close(fd);
+	TEST_ASSERT_EQUAL_INT(0, unlink(path));
+}
+
+
+TEST(test_unix_socket, getsockname_errnos)
+{
+	const char *path = "/tmp/test_getsockname_file";
+	int fd;
+
+	unix_name_expect_error(BAD_FD, 0, EBADF, "getsockname, bad descriptor");
+	unix_name_expect_error(BAD_FD, 1, EBADF, "getpeername, bad descriptor");
+
+	fd = open(path, O_CREAT | O_RDWR, 0666);
+	if (fd < 0) {
+		FAIL("open");
+	}
+
+	unix_name_expect_error(fd, 0, ENOTSOCK, "getsockname, regular file");
+	unix_name_expect_error(fd, 1, ENOTSOCK, "getpeername, regular file");
+
+	close(fd);
+	TEST_ASSERT_EQUAL_INT(0, unlink(path));
+}
+
+
 TEST_GROUP_RUNNER(test_unix_socket)
 {
 	RUN_TEST_CASE(test_unix_socket, zero_len_send);
@@ -2624,6 +2981,12 @@ TEST_GROUP_RUNNER(test_unix_socket)
 	RUN_TEST_CASE(test_unix_socket, connect_abort);
 	RUN_TEST_CASE(test_unix_socket, dgram_msg_peek);
 	RUN_TEST_CASE(test_unix_socket, dgram_sender_isolation);
+	RUN_TEST_CASE(test_unix_socket, getsockname_unnamed);
+	RUN_TEST_CASE(test_unix_socket, getsockname_bound);
+	RUN_TEST_CASE(test_unix_socket, getsockname_connected);
+	RUN_TEST_CASE(test_unix_socket, getsockname_dgram_connected);
+	RUN_TEST_CASE(test_unix_socket, getsockname_truncation);
+	RUN_TEST_CASE(test_unix_socket, getsockname_errnos);
 }
 
 void runner(void)
