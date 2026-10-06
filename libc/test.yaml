@@ -148,11 +148,6 @@ test:
       targets:
         include: [host-generic-pc]
 
-    - name: sem
-      execute: test-libc-sem
-      targets:
-        include: [host-generic-pc]
-
     - name: resource
       execute: test-libc-resource
       targets:

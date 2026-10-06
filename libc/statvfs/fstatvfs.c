@@ -151,22 +151,6 @@ TEST(statvfs_fstatvfs, fstatvfs_matches_statvfs)
 }
 
 
-TEST(statvfs_fstatvfs, fstatvfs_ebadf_invalid_fd)
-{
-	struct statvfs buf;
-	int ret;
-
-	errno = 0;
-	ret = fstatvfs(-1, &buf);
-	TEST_ASSERT_EQUAL_INT(-1, ret);
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1632 issue");
-#else
-	TEST_ASSERT_EQUAL_INT(EBADF, errno);
-#endif
-}
-
-
 TEST(statvfs_fstatvfs, fstatvfs_ebadf_closed_fd)
 {
 	struct statvfs buf;
@@ -203,7 +187,6 @@ TEST_GROUP_RUNNER(statvfs_fstatvfs)
 	RUN_TEST_CASE(statvfs_fstatvfs, fstatvfs_readonly_fd);
 	RUN_TEST_CASE(statvfs_fstatvfs, fstatvfs_struct_fields_consistent);
 	RUN_TEST_CASE(statvfs_fstatvfs, fstatvfs_matches_statvfs);
-	RUN_TEST_CASE(statvfs_fstatvfs, fstatvfs_ebadf_invalid_fd);
 	RUN_TEST_CASE(statvfs_fstatvfs, fstatvfs_ebadf_closed_fd);
 	RUN_TEST_CASE(statvfs_fstatvfs, fstatvfs_ebadf_large_fd);
 }

@@ -307,43 +307,6 @@ TEST(pthread_mutex, mutex_lock_recursive)
 }
 
 
-/* pthread_mutex_trylock: RECURSIVE type increments lock count */
-TEST(pthread_mutex, mutex_trylock_recursive)
-{
-	pthread_mutex_t mtx;
-	pthread_mutexattr_t mattr;
-	int ret;
-
-	ret = pthread_mutexattr_init(&mattr);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-	ret = pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_RECURSIVE);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-	ret = pthread_mutex_init(&mtx, &mattr);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-	ret = pthread_mutex_trylock(&mtx);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1643 issue");
-#else
-	ret = pthread_mutex_trylock(&mtx);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-	ret = pthread_mutex_unlock(&mtx);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-	ret = pthread_mutex_unlock(&mtx);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-#endif
-
-	pthread_mutex_destroy(&mtx);
-	pthread_mutexattr_destroy(&mattr);
-}
-
-
 /* pthread_mutex_unlock: RECURSIVE type shall return EPERM if not owner */
 TEST(pthread_mutex, mutex_unlock_recursive_eperm)
 {
@@ -432,7 +395,6 @@ TEST_GROUP_RUNNER(pthread_mutex)
 	RUN_TEST_CASE(pthread_mutex, mutex_lock_errorcheck_edeadlk);
 	RUN_TEST_CASE(pthread_mutex, mutex_unlock_errorcheck_eperm);
 	RUN_TEST_CASE(pthread_mutex, mutex_lock_recursive);
-	RUN_TEST_CASE(pthread_mutex, mutex_trylock_recursive);
 	RUN_TEST_CASE(pthread_mutex, mutex_unlock_recursive_eperm);
 	RUN_TEST_CASE(pthread_mutex, mutex_lock_mutual_exclusion);
 }

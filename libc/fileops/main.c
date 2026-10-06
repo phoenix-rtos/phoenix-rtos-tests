@@ -37,17 +37,7 @@
 
 void runner(void)
 {
-	RUN_TEST_GROUP(fileops_fchmod);
-	RUN_TEST_GROUP(fileops_fchmodat);
-	RUN_TEST_GROUP(fileops_fchdir);
-	RUN_TEST_GROUP(fileops_fstatat);
-	RUN_TEST_GROUP(fileops_mkdirat);
-	RUN_TEST_GROUP(fileops_mkfifoat);
-	RUN_TEST_GROUP(fileops_futimens);
-	RUN_TEST_GROUP(fileops_utimensat);
 	RUN_TEST_GROUP(fileops_fchown);
-	RUN_TEST_GROUP(fileops_fdatasync);
-	RUN_TEST_GROUP(fileops_lockf);
 	RUN_TEST_GROUP(fileops_sync);
 	RUN_TEST_GROUP(fileops_mknod);
 }

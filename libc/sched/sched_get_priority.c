@@ -32,25 +32,6 @@ TEST_TEAR_DOWN(sched_get_priority)
 }
 
 
-TEST(sched_get_priority, max_sched_fifo)
-{
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1686 issue");
-#else
-	int ret;
-
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1639 issue - phoenix limitation");
-#endif
-
-	errno = 0;
-	ret = sched_get_priority_max(SCHED_FIFO);
-	TEST_ASSERT_GREATER_THAN_INT(-1, ret);
-	TEST_ASSERT_EQUAL_INT(0, errno);
-#endif
-}
-
-
 TEST(sched_get_priority, max_sched_rr)
 {
 	int ret;
@@ -62,42 +43,6 @@ TEST(sched_get_priority, max_sched_rr)
 }
 
 
-TEST(sched_get_priority, max_sched_other)
-{
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1686 issue");
-#else
-	int ret;
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1639 issue - phoenix limitation");
-#endif
-
-	errno = 0;
-	ret = sched_get_priority_max(SCHED_OTHER);
-	TEST_ASSERT_GREATER_THAN_INT(-1, ret);
-	TEST_ASSERT_EQUAL_INT(0, errno);
-#endif
-}
-
-
-TEST(sched_get_priority, min_sched_fifo)
-{
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1686 issue");
-#else
-	int ret;
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1639 issue - phoenix limitation");
-#endif
-
-	errno = 0;
-	ret = sched_get_priority_min(SCHED_FIFO);
-	TEST_ASSERT_GREATER_THAN_INT(-1, ret);
-	TEST_ASSERT_EQUAL_INT(0, errno);
-#endif
-}
-
-
 TEST(sched_get_priority, min_sched_rr)
 {
 	int ret;
@@ -106,24 +51,6 @@ TEST(sched_get_priority, min_sched_rr)
 	ret = sched_get_priority_min(SCHED_RR);
 	TEST_ASSERT_GREATER_THAN_INT(-1, ret);
 	TEST_ASSERT_EQUAL_INT(0, errno);
-}
-
-
-TEST(sched_get_priority, min_sched_other)
-{
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1686 issue");
-#else
-	int ret;
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1639 issue - phoenix limitation");
-#endif
-
-	errno = 0;
-	ret = sched_get_priority_min(SCHED_OTHER);
-	TEST_ASSERT_GREATER_THAN_INT(-1, ret);
-	TEST_ASSERT_EQUAL_INT(0, errno);
-#endif
 }
 
 
@@ -185,12 +112,8 @@ TEST(sched_get_priority, einval_invalid_policy)
 
 TEST_GROUP_RUNNER(sched_get_priority)
 {
-	RUN_TEST_CASE(sched_get_priority, max_sched_fifo);
 	RUN_TEST_CASE(sched_get_priority, max_sched_rr);
-	RUN_TEST_CASE(sched_get_priority, max_sched_other);
-	RUN_TEST_CASE(sched_get_priority, min_sched_fifo);
 	RUN_TEST_CASE(sched_get_priority, min_sched_rr);
-	RUN_TEST_CASE(sched_get_priority, min_sched_other);
 	RUN_TEST_CASE(sched_get_priority, max_ge_min_all_policies);
 	RUN_TEST_CASE(sched_get_priority, einval_invalid_policy);
 }

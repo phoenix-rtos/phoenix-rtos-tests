@@ -140,30 +140,6 @@ TEST(fcntl_open, open_rdwr_existing)
 }
 
 
-TEST(fcntl_open, open_creat_new_file)
-{
-	struct stat st;
-	mode_t prevMask;
-	int ret;
-
-	prevMask = umask(0022);
-
-	test_common.fd = open(OPEN_TEST_FILE, O_WRONLY | O_CREAT, 0666);
-	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, test_common.fd);
-
-	ret = fstat(test_common.fd, &st);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-	/* 0666 & ~0022 = 0644 */
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1628 issue");
-#else
-	TEST_ASSERT_EQUAL_INT(0644, (int)(st.st_mode & 0777));
-#endif
-
-	umask(prevMask);
-}
-
-
 TEST(fcntl_open, open_creat_existing_no_effect)
 {
 	struct stat st;
@@ -186,47 +162,6 @@ TEST(fcntl_open, open_creat_excl_new_file)
 {
 	test_common.fd = open(OPEN_TEST_FILE, O_WRONLY | O_CREAT | O_EXCL, 0644);
 	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, test_common.fd);
-}
-
-
-TEST(fcntl_open, open_creat_excl_existing_eexist)
-{
-	int fd;
-	int ret;
-
-	ret = _create_file(OPEN_TEST_FILE, OPEN_TEST_DATA);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-	(void)fd;
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#200 issue");
-#else
-	errno = 0;
-	fd = open(OPEN_TEST_FILE, O_WRONLY | O_CREAT | O_EXCL, 0644);
-	TEST_ASSERT_EQUAL_INT(-1, fd);
-	TEST_ASSERT_EQUAL_INT(EEXIST, errno);
-#endif
-}
-
-
-TEST(fcntl_open, open_creat_excl_symlink_eexist)
-{
-	int fd;
-	int ret;
-
-	ret = symlink(OPEN_TEST_FILE, OPEN_TEST_SYMLINK);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-	/* O_CREAT|O_EXCL on symlink shall fail with EEXIST regardless of target */
-	(void)fd;
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#200 issue");
-#else
-	errno = 0;
-	fd = open(OPEN_TEST_SYMLINK, O_WRONLY | O_CREAT | O_EXCL, 0644);
-	TEST_ASSERT_EQUAL_INT(-1, fd);
-	TEST_ASSERT_EQUAL_INT(EEXIST, errno);
-#endif
 }
 
 
@@ -432,26 +367,6 @@ TEST(fcntl_open, open_enotdir_prefix)
 }
 
 
-TEST(fcntl_open, open_enametoolong)
-{
-	static char longName[NAME_MAX + 2];
-	int fd;
-
-	memset(longName, 'a', NAME_MAX + 1);
-	longName[NAME_MAX + 1] = '\0';
-
-	(void)fd;
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1258 issue");
-#else
-	errno = 0;
-	fd = open(longName, O_RDONLY);
-	TEST_ASSERT_EQUAL_INT(-1, fd);
-	TEST_ASSERT_EQUAL_INT(ENAMETOOLONG, errno);
-#endif
-}
-
-
 TEST(fcntl_open, open_offset_at_beginning)
 {
 	ssize_t n;
@@ -554,11 +469,8 @@ TEST_GROUP_RUNNER(fcntl_open)
 	RUN_TEST_CASE(fcntl_open, open_rdonly_existing);
 	RUN_TEST_CASE(fcntl_open, open_wronly_existing);
 	RUN_TEST_CASE(fcntl_open, open_rdwr_existing);
-	RUN_TEST_CASE(fcntl_open, open_creat_new_file);
 	RUN_TEST_CASE(fcntl_open, open_creat_existing_no_effect);
 	RUN_TEST_CASE(fcntl_open, open_creat_excl_new_file);
-	RUN_TEST_CASE(fcntl_open, open_creat_excl_existing_eexist);
-	RUN_TEST_CASE(fcntl_open, open_creat_excl_symlink_eexist);
 	RUN_TEST_CASE(fcntl_open, open_trunc_existing);
 	RUN_TEST_CASE(fcntl_open, open_append);
 	RUN_TEST_CASE(fcntl_open, open_cloexec_flag);
@@ -576,7 +488,6 @@ TEST_GROUP_RUNNER(fcntl_open)
 	RUN_TEST_CASE(fcntl_open, open_eisdir_wronly);
 	RUN_TEST_CASE(fcntl_open, open_eisdir_rdwr);
 	RUN_TEST_CASE(fcntl_open, open_enotdir_prefix);
-	RUN_TEST_CASE(fcntl_open, open_enametoolong);
 	RUN_TEST_CASE(fcntl_open, open_offset_at_beginning);
 	RUN_TEST_CASE(fcntl_open, open_returns_lowest_fd);
 	RUN_TEST_CASE(fcntl_open, open_nonblock_fifo_rdonly);

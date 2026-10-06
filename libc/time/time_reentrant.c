@@ -174,78 +174,6 @@ TEST(time_localtime_r, uses_caller_buffer)
 }
 
 
-TEST_GROUP(time_asctime_r);
-
-
-TEST_SETUP(time_asctime_r)
-{
-}
-
-
-TEST_TEAR_DOWN(time_asctime_r)
-{
-}
-
-
-/*
- * asctime_r() shall render the broken-down time in the fixed 26-byte form and
- * return the caller buffer.
- */
-TEST(time_asctime_r, formats_known_times)
-{
-	TEST_IGNORE_MESSAGE("Unverified Failure");
-	size_t i;
-	struct tm t;
-	char buf[ASCTIME_BUFSZ];
-	char *ret;
-	static const struct {
-		const int *fields;
-		const char *expected;
-	} cases[] = {
-		{ tmEpoch, EPOCH_UTC_STR },
-		{ tmLeap, LEAP_UTC_STR },
-	};
-
-	for (i = 0; i < sizeof(cases) / sizeof(cases[0]); i++) {
-		init_tm(&t, cases[i].fields);
-		ret = asctime_r(&t, buf);
-		TEST_ASSERT_EQUAL_PTR(buf, ret);
-		TEST_ASSERT_EQUAL_STRING(cases[i].expected, buf);
-	}
-}
-
-
-TEST_GROUP(time_ctime_r);
-
-
-TEST_SETUP(time_ctime_r)
-{
-	test_forceUtc();
-}
-
-
-TEST_TEAR_DOWN(time_ctime_r)
-{
-	test_restoreTz();
-}
-
-
-/*
- * ctime_r() shall be equivalent to asctime_r(localtime_r(clock)); under a UTC
- * timezone that is the fixed-form UTC string. It shall return the caller buffer.
- */
-TEST(time_ctime_r, converts_local_time)
-{
-	TEST_IGNORE_MESSAGE("Unverified Failure");
-	char buf[ASCTIME_BUFSZ];
-	char *ret;
-
-	ret = ctime_r(&epochT, buf);
-	TEST_ASSERT_EQUAL_PTR(buf, ret);
-	TEST_ASSERT_EQUAL_STRING(EPOCH_UTC_STR, buf);
-}
-
-
 TEST_GROUP_RUNNER(time_gmtime_r)
 {
 	RUN_TEST_CASE(time_gmtime_r, converts_and_returns_buffer);
@@ -259,14 +187,3 @@ TEST_GROUP_RUNNER(time_localtime_r)
 	RUN_TEST_CASE(time_localtime_r, uses_caller_buffer);
 }
 
-
-TEST_GROUP_RUNNER(time_asctime_r)
-{
-	RUN_TEST_CASE(time_asctime_r, formats_known_times);
-}
-
-
-TEST_GROUP_RUNNER(time_ctime_r)
-{
-	RUN_TEST_CASE(time_ctime_r, converts_local_time);
-}

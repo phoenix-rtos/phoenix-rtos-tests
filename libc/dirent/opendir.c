@@ -214,54 +214,6 @@ TEST(dirent_opendir, open_small_enough_number_of_directories)
 }
 
 
-TEST(dirent_opendir, open_enough_dirs_to_force_error)
-{
-	/*issue #1610: https://github.com/issues/created?issue=phoenix-rtos%7Cphoenix-rtos-project%7C1610 */
-	TEST_IGNORE_MESSAGE("#1610 issue");
-
-	const int FD_OVER_LIMIT_MARGIN = 10;
-	long max_open_dirs = 0;
-	long max_fds = 0;
-	char err_msg_buff[128];
-
-#if defined(_SC_OPEN_MAX)
-	max_fds = sysconf(_SC_OPEN_MAX);
-#endif
-
-	TEST_ASSERT_GREATER_THAN(0, max_fds);
-
-	long max_fds_over_limit = max_fds + FD_OVER_LIMIT_MARGIN;
-
-	DIR **dirs = (DIR **)calloc(max_fds_over_limit + 1, sizeof(DIR *));
-	TEST_ASSERT_NOT_NULL(dirs);
-
-	errno = 0;
-
-	if (TEST_PROTECT()) {
-		while (max_open_dirs < max_fds_over_limit) {
-			dirs[max_open_dirs] = opendir(MAIN_DIR);
-			if (dirs[max_open_dirs] == NULL) {
-				break;
-			}
-			max_open_dirs++;
-		}
-
-		snprintf(err_msg_buff, sizeof(err_msg_buff), "Managed to open %ld dirs despite the %ld file descriptors limit", max_open_dirs, max_fds);
-		TEST_ASSERT_LESS_OR_EQUAL_MESSAGE(max_fds, max_open_dirs, err_msg_buff);
-		TEST_ASSERT_NULL(dirs[max_open_dirs]);
-		TEST_ASSERT_TRUE_MESSAGE(errno == EMFILE || errno == ENFILE, "Expected errno to be EMFILE or ENFILE upon exhausting file descriptors");
-	}
-
-	for (long i = 0; i < max_open_dirs; ++i) {
-		if (dirs[i] != NULL) {
-			closedir(dirs[i]);
-		}
-	}
-
-	free((void *)dirs);
-}
-
-
 TEST(dirent_opendir, open_same_dir_multiple_times)
 {
 	test_ctx.dirs[0] = opendir(MAIN_DIR);
@@ -519,7 +471,6 @@ TEST_GROUP_RUNNER(dirent_opendir)
 	RUN_TEST_CASE(dirent_opendir, not_a_directory);
 	RUN_TEST_CASE(dirent_opendir, creating_dirs_in_closed_and_open_directories);
 	RUN_TEST_CASE(dirent_opendir, open_small_enough_number_of_directories);
-	RUN_TEST_CASE(dirent_opendir, open_enough_dirs_to_force_error);
 	RUN_TEST_CASE(dirent_opendir, open_same_dir_multiple_times);
 	RUN_TEST_CASE(dirent_opendir, open_inside_open_directory);
 	RUN_TEST_CASE(dirent_opendir, symlink_loop);

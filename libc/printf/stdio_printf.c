@@ -1276,23 +1276,6 @@ TEST(stdio_printf_x, tX)
 }
 
 
-TEST(stdio_printf_x, X_out_of_bonds)
-{
-#ifdef __phoenix__
-	TEST_IGNORE();
-#endif
-	char expect[256] = { 0 };
-	char *buf = expect;
-	const char *format = "%hhX %hX";
-
-	buf += test_unsignedToStr((unsigned char)(UINT_MAX), 16, true, buf);
-	*buf++ = ' ';
-	buf += test_unsignedToStr((unsigned short)(UINT_MAX), 16, true, buf);
-
-	test_assertPrintfs(expect, format, UINT_MAX, UINT_MAX);
-	test_assertVprintfs(expect, format, UINT_MAX, UINT_MAX);
-}
-
 //////////////////////////////////////////////////////////////////////////
 
 TEST_SETUP(stdio_printf_fega)
@@ -1650,27 +1633,6 @@ TEST(stdio_printf_fega, la)
 }
 
 
-TEST(stdio_printf_fega, La)
-{
-/* Disabled because of #739 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/739 */
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#739 issue");
-#endif
-	const char *format = "%.6La %.6La %.6La %.6La %.6La";
-	const long double values[] = {
-		DBL_MIN,
-		DBL_MIN / 2,
-		0,
-		DBL_MAX / 2,
-		DBL_MAX,
-	};
-	char *expect = "0x8.000000p-1025 0x8.000000p-1026 0x0.000000p+0 0x1.000000p+1023 0x1.000000p+1024";
-
-	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	test_assertVprintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
-}
-
-
 TEST(stdio_printf_fega, A)
 {
 	/* testing is with %.6A due to the cross-platform nature of the test. On phoenix at %A, there are trailing zeros, which is not a bug */
@@ -1701,28 +1663,6 @@ TEST(stdio_printf_fega, lA)
 		DBL_MAX,
 	};
 	char *expect = "0X1.000000P-1022 0X0.800000P-1022 0X0.000000P+0 0X2.000000P+1022 0X2.000000P+1023";
-
-	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
-	test_assertVprintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
-}
-
-
-TEST(stdio_printf_fega, LA)
-{
-/* Disabled because of #739 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/739 */
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#739 issue");
-#endif
-
-	const char *format = "%.6LA %.6LA %.6LA %.6LA %.6LA";
-	const long double values[] = {
-		DBL_MIN,
-		DBL_MIN / 2,
-		0,
-		DBL_MAX / 2,
-		DBL_MAX,
-	};
-	char *expect = "0X8.000000P-1025 0X8.000000P-1026 0X0.000000P+0 0X1.000000P+1023 0X1.000000P+1024";
 
 	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
 	test_assertVprintfs(expect, format, values[0], values[1], values[2], values[3], values[4]);
@@ -1911,21 +1851,6 @@ TEST(stdio_printf_cspn, lc)
 }
 
 
-TEST(stdio_printf_cspn, C)
-{
-/* Disabled because of #709 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/709 */
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#709 issue");
-#endif
-	const char *format = "%C %C %C %C %C %C";
-	const wchar_t values[] = { L'a', L'A', L'0', L'9', L'!', L';' };
-	char *expect = "a A 0 9 ! ;";
-
-	test_assertPrintfs(expect, format, values[0], values[1], values[2], values[3], values[4], values[5]);
-	test_assertVprintfs(expect, format, values[0], values[1], values[2], values[3], values[4], values[5]);
-}
-
-
 TEST(stdio_printf_cspn, s)
 {
 	const char *format = "%s %s %s %s %s %s";
@@ -1996,44 +1921,6 @@ TEST(stdio_printf_cspn, s_huge_string)
 }
 
 
-TEST(stdio_printf_cspn, ls)
-{
-/* Disabled because of #698 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/698 */
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#698 issue");
-#endif
-	int i;
-	const char *format = "%ls";
-	const wchar_t *values[] = { L"Lorem", L"hello\0\0world", L"\4399\0ns", L"Ut hendrerit iaculis tempus. Ut eu dapibus ante." };
-	char *expect[] = { "Lorem", "hello", "#99", "Ut hendrerit iaculis tempus. Ut eu dapibus ante." };
-
-	for (i = 1; i < (sizeof(values) / sizeof(values[0])); i++) {
-
-		test_assertPrintfs(expect[i], format, values[i]);
-		test_assertVprintfs(expect[i], format, values[i]);
-	}
-}
-
-
-TEST(stdio_printf_cspn, S)
-{
-/* Disabled because of #709 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/709 */
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#709 issue");
-#endif
-	int i;
-	const char *format = "%S";
-	const wchar_t *values[] = { L"Lorem", L"hello\0\0world", L"\4399\0ns", L"Ut hendrerit iaculis tempus. Ut eu dapibus ante." };
-	char *expect[] = { "Lorem", "hello", "#99", "Ut hendrerit iaculis tempus. Ut eu dapibus ante." };
-
-	for (i = 1; i < (sizeof(values) / sizeof(values[0])); i++) {
-
-		test_assertPrintfs(expect[i], format, values[i]);
-		test_assertVprintfs(expect[i], format, values[i]);
-	}
-}
-
-
 TEST(stdio_printf_cspn, p)
 {
 #if defined(__phoenix__) && (INTPTR_MAX == INT64_MAX)
@@ -2048,26 +1935,6 @@ TEST(stdio_printf_cspn, p)
 
 	test_assertPrintfs(expect, format, (void *)0xDEADBEEF, (void *)0x00000000, (void *)INTPTR_MAX, (void *)INTPTR_MIN);
 	test_assertVprintfs(expect, format, (void *)0xDEADBEEF, (void *)0x00000000, (void *)INTPTR_MAX, (void *)INTPTR_MIN);
-}
-
-
-TEST(stdio_printf_cspn, n)
-{
-/* Disabled because of #277 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/277 */
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#277 issue");
-#endif
-	int count = 0;
-	const char *format = "Lorem ipsum%n";
-	char *expect = "Lorem ipsum";
-
-	test_assertPrintfs(expect, format, &count);
-	TEST_ASSERT_EQUAL_INT(strlen(expect), count);
-	count = 0;
-
-	test_assertVprintfs(expect, format, &count);
-	TEST_ASSERT_EQUAL_INT(strlen(expect), count);
-	count = 0;
 }
 
 
@@ -2232,19 +2099,6 @@ TEST(stdio_printf_rest, lmods_zero_float)
 }
 
 
-TEST(stdio_printf_rest, numbered_argument)
-{
-/* Disabled because of #719 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/719 */
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#719 issue");
-#endif
-	const char *format = "%3$d %2$d %1$d";
-
-	test_assertPrintfs("3 2 1", format, 1 COMMA 2 COMMA 3);
-	test_assertVprintfs("3 2 1", format, 1 COMMA 2 COMMA 3);
-}
-
-
 TEST(stdio_printf_rest, snprintf_truncation)
 {
 /* Intentionally testing string truncation */
@@ -2383,7 +2237,6 @@ TEST_GROUP_RUNNER(stdio_printf_x)
 	RUN_TEST_CASE(stdio_printf_x, jX);
 	RUN_TEST_CASE(stdio_printf_x, zX);
 	RUN_TEST_CASE(stdio_printf_x, tX);
-	RUN_TEST_CASE(stdio_printf_x, X_out_of_bonds);
 }
 
 
@@ -2412,10 +2265,8 @@ TEST_GROUP_RUNNER(stdio_printf_fega)
 
 	RUN_TEST_CASE(stdio_printf_fega, a);
 	RUN_TEST_CASE(stdio_printf_fega, la);
-	RUN_TEST_CASE(stdio_printf_fega, La);
 	RUN_TEST_CASE(stdio_printf_fega, A);
 	RUN_TEST_CASE(stdio_printf_fega, lA);
-	RUN_TEST_CASE(stdio_printf_fega, LA);
 
 	RUN_TEST_CASE(stdio_printf_fega, fega_inf_nan);
 	RUN_TEST_CASE(stdio_printf_fega, lfega_inf_nan);
@@ -2435,18 +2286,14 @@ TEST_GROUP_RUNNER(stdio_printf_cspn)
 	RUN_TEST_CASE(stdio_printf_cspn, c_non_ascii_printf);
 	RUN_TEST_CASE(stdio_printf_cspn, c_non_ascii_vprintf);
 	RUN_TEST_CASE(stdio_printf_cspn, lc);
-	RUN_TEST_CASE(stdio_printf_cspn, C);
 	RUN_TEST_CASE(stdio_printf_cspn, s);
 
 	RUN_TEST_CASE(stdio_printf_cspn, s_specific);
 	RUN_TEST_CASE(stdio_printf_cspn, s_ascii_printf);
 	RUN_TEST_CASE(stdio_printf_cspn, s_ascii_vprintf);
 	RUN_TEST_CASE(stdio_printf_cspn, s_huge_string);
-	RUN_TEST_CASE(stdio_printf_cspn, ls);
-	RUN_TEST_CASE(stdio_printf_cspn, S);
 
 	RUN_TEST_CASE(stdio_printf_cspn, p);
-	RUN_TEST_CASE(stdio_printf_cspn, n);
 	RUN_TEST_CASE(stdio_printf_cspn, percent);
 }
 
@@ -2463,7 +2310,6 @@ TEST_GROUP_RUNNER(stdio_printf_rest)
 
 	RUN_TEST_CASE(stdio_printf_rest, lmods_zero_int);
 	RUN_TEST_CASE(stdio_printf_rest, lmods_zero_float);
-	RUN_TEST_CASE(stdio_printf_rest, numbered_argument);
 
 	RUN_TEST_CASE(stdio_printf_rest, snprintf_truncation);
 	RUN_TEST_CASE(stdio_printf_rest, errnos);

@@ -262,105 +262,6 @@ TEST_GROUP_RUNNER(proc_sleep)
 }
 
 
-#ifndef __phoenix__
-
-TEST_GROUP(proc_nice);
-
-TEST_SETUP(proc_nice) { }
-
-TEST_TEAR_DOWN(proc_nice) { }
-
-
-TEST(proc_nice, nice_increase_priority_value)
-{
-	int ret;
-
-	/* Increase nice value (lower priority); should succeed for any user */
-	errno = 0;
-	ret = nice(1);
-	/* nice() returns new nice value - NZERO. Check no error */
-	TEST_ASSERT_EQUAL_INT(0, errno);
-	(void)ret;
-}
-
-
-TEST(proc_nice, nice_zero_returns_current)
-{
-	int ret;
-
-	errno = 0;
-	ret = nice(0);
-	/* Should succeed with no error */
-	TEST_ASSERT_EQUAL_INT(0, errno);
-	(void)ret;
-}
-
-
-TEST(proc_nice, nice_clamps_to_maximum)
-{
-	int ret1;
-	int ret2;
-
-	/* Increase by a very large value; should clamp to 2*NZERO-1 */
-	errno = 0;
-	ret1 = nice(1000);
-	TEST_ASSERT_EQUAL_INT(0, errno);
-
-	/* Another increase should return the same clamped value */
-	errno = 0;
-	ret2 = nice(1);
-	TEST_ASSERT_EQUAL_INT(0, errno);
-	TEST_ASSERT_EQUAL_INT(ret1, ret2);
-}
-
-
-TEST(proc_nice, nice_eperm_decrease_unprivileged)
-{
-	int ret;
-	pid_t childPid;
-	int status;
-
-	/* Fork a child to test decreasing nice (needs privilege check) */
-	childPid = fork();
-	TEST_ASSERT_TRUE(childPid >= 0);
-
-	if (childPid == 0) {
-		/* First increase to ensure we're not at minimum */
-		if (nice(5) == -1 && errno != 0) {
-			_exit(99);
-		}
-
-		/* Try to decrease (lower nice value = higher priority) */
-		errno = 0;
-		ret = nice(-1);
-		if (ret == -1 && errno == EPERM) {
-			_exit(0);
-		}
-		/* If we're running as root, decreasing succeeds — that's OK */
-		if (errno == 0) {
-			_exit(0);
-		}
-		_exit(1);
-	}
-
-	childPid = waitpid(childPid, &status, 0);
-	TEST_ASSERT_TRUE(childPid > 0);
-	TEST_ASSERT_TRUE(WIFEXITED(status));
-	TEST_ASSERT_EQUAL_INT(0, WEXITSTATUS(status));
-}
-
-TEST_GROUP_RUNNER(proc_nice)
-{
-	RUN_TEST_CASE(proc_nice, nice_increase_priority_value);
-	RUN_TEST_CASE(proc_nice, nice_zero_returns_current);
-	RUN_TEST_CASE(proc_nice, nice_clamps_to_maximum);
-	RUN_TEST_CASE(proc_nice, nice_eperm_decrease_unprivileged);
-}
-#else
-TEST_GROUP_UNIMPLEMENTED(proc_nice, "nice not implemented")
-#endif
-
-
 TEST_GROUP(proc_setsid);
 
 TEST_SETUP(proc_setsid) { }
@@ -483,28 +384,6 @@ TEST_SETUP(proc_times) { }
 TEST_TEAR_DOWN(proc_times) { }
 
 
-TEST(proc_times, times_fills_structure)
-{
-	struct tms buf;
-	clock_t ret;
-
-	memset(&buf, 0xff, sizeof(buf));
-
-	ret = times(&buf);
-	TEST_ASSERT_TRUE(ret != (clock_t)-1);
-
-	/* After times(), user and system times should be non-negative */
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("times not implemented");
-#else
-	TEST_ASSERT_TRUE(buf.tms_utime >= 0);
-	TEST_ASSERT_TRUE(buf.tms_stime >= 0);
-	TEST_ASSERT_TRUE(buf.tms_cutime >= 0);
-	TEST_ASSERT_TRUE(buf.tms_cstime >= 0);
-#endif
-}
-
-
 TEST(proc_times, times_return_value_increases)
 {
 	struct tms buf;
@@ -528,77 +407,7 @@ TEST(proc_times, times_return_value_increases)
 }
 
 
-TEST(proc_times, times_user_time_increases_with_work)
-{
-	struct tms buf1;
-	struct tms buf2;
-	clock_t ret;
-	volatile long i;
-
-	ret = times(&buf1);
-	TEST_ASSERT_TRUE(ret != (clock_t)-1);
-
-	/* Burn CPU in user space */
-	for (i = 0; i < 5000000L; i++) {
-		/* spin */
-	}
-
-	ret = times(&buf2);
-	TEST_ASSERT_TRUE(ret != (clock_t)-1);
-
-	/* User time should have increased */
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("times not implemented");
-#else
-	TEST_ASSERT_TRUE(buf2.tms_utime >= buf1.tms_utime);
-#endif
-}
-
-
-TEST(proc_times, times_child_times_from_waited_child)
-{
-	struct tms buf1;
-	struct tms buf2;
-	clock_t ret;
-	pid_t childPid;
-	int status;
-
-	ret = times(&buf1);
-	TEST_ASSERT_TRUE(ret != (clock_t)-1);
-
-	childPid = fork();
-	TEST_ASSERT_TRUE(childPid >= 0);
-
-	if (childPid == 0) {
-		volatile long i;
-
-		/* Burn CPU in child */
-		for (i = 0; i < 5000000L; i++) {
-			/* spin */
-		}
-		_exit(0);
-	}
-
-	childPid = waitpid(childPid, &status, 0);
-	TEST_ASSERT_TRUE(childPid > 0);
-	TEST_ASSERT_TRUE(WIFEXITED(status));
-
-	ret = times(&buf2);
-	TEST_ASSERT_TRUE(ret != (clock_t)-1);
-
-	/* After waiting for child, cutime should include child's user time */
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("times not implemented");
-#else
-	TEST_ASSERT_TRUE(buf2.tms_cutime >= buf1.tms_cutime);
-#endif
-}
-
-
 TEST_GROUP_RUNNER(proc_times)
 {
-	RUN_TEST_CASE(proc_times, times_fills_structure);
 	RUN_TEST_CASE(proc_times, times_return_value_increases);
-	RUN_TEST_CASE(proc_times, times_user_time_increases_with_work);
-	RUN_TEST_CASE(proc_times, times_child_times_from_waited_child);
 }

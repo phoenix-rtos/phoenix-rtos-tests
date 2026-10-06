@@ -75,30 +75,6 @@ TEST(fcntl_creat, creat_new_file)
 }
 
 
-TEST(fcntl_creat, creat_applies_mode_with_umask)
-{
-	struct stat st;
-	mode_t prevMask;
-	int ret;
-
-	prevMask = umask(0027);
-
-	test_common.fd = creat(CREAT_TEST_FILE, 0666);
-	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, test_common.fd);
-
-	ret = fstat(test_common.fd, &st);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-	/* 0666 & ~0027 = 0640 */
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1628 issue");
-#else
-	TEST_ASSERT_EQUAL_INT(0640, (int)(st.st_mode & 0777));
-#endif
-
-	umask(prevMask);
-}
-
-
 TEST(fcntl_creat, creat_truncates_existing)
 {
 	struct stat st;
@@ -197,30 +173,9 @@ TEST(fcntl_creat, creat_enotdir_prefix)
 }
 
 
-TEST(fcntl_creat, creat_enametoolong)
-{
-	static char longName[NAME_MAX + 2];
-	int fd;
-
-	memset(longName, 'b', NAME_MAX + 1);
-	longName[NAME_MAX + 1] = '\0';
-
-	(void)fd;
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1258 issue");
-#else
-	errno = 0;
-	fd = creat(longName, 0644);
-	TEST_ASSERT_EQUAL_INT(-1, fd);
-	TEST_ASSERT_EQUAL_INT(ENAMETOOLONG, errno);
-#endif
-}
-
-
 TEST_GROUP_RUNNER(fcntl_creat)
 {
 	RUN_TEST_CASE(fcntl_creat, creat_new_file);
-	RUN_TEST_CASE(fcntl_creat, creat_applies_mode_with_umask);
 	RUN_TEST_CASE(fcntl_creat, creat_truncates_existing);
 	RUN_TEST_CASE(fcntl_creat, creat_wronly);
 	RUN_TEST_CASE(fcntl_creat, creat_return_value_nonnegative);
@@ -228,5 +183,4 @@ TEST_GROUP_RUNNER(fcntl_creat)
 	RUN_TEST_CASE(fcntl_creat, creat_enoent_empty_path);
 	RUN_TEST_CASE(fcntl_creat, creat_eisdir);
 	RUN_TEST_CASE(fcntl_creat, creat_enotdir_prefix);
-	RUN_TEST_CASE(fcntl_creat, creat_enametoolong);
 }

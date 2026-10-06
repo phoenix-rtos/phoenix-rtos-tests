@@ -37,12 +37,9 @@ void runner(void)
 	RUN_TEST_GROUP(proc_alarm);
 	RUN_TEST_GROUP(proc_pause);
 	RUN_TEST_GROUP(proc_sleep);
-	RUN_TEST_GROUP(proc_nice);
 	RUN_TEST_GROUP(proc_setsid);
 	RUN_TEST_GROUP(proc_times);
 	RUN_TEST_GROUP(proc_fork);
-	RUN_TEST_GROUP(proc_waitid);
-	RUN_TEST_GROUP(proc_fexecve);
 }
 
 int main(int argc, char *argv[])

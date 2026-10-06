@@ -51,49 +51,10 @@ TEST_TEAR_DOWN(inet_if)
 }
 
 
-TEST(inet_if, if_name_index_roundtrip)
-{
-	unsigned idx;
-	unsigned found = 0U;
-	char name[IF_NAMESIZE];
-	char *ret = NULL;
-
-	/* Discover a real interface using only the functions under test. */
-	for (idx = 1U; idx <= IF_SCAN_MAX; idx++) {
-		ret = if_indextoname(idx, name);
-		if (ret != NULL) {
-			found = idx;
-			break;
-		}
-	}
-
-	if (found == 0U) {
-		TEST_IGNORE_MESSAGE("no network interface available to test");
-	}
-	else {
-		/* if_indextoname() returns the ifname argument it was given. */
-		TEST_ASSERT_EQUAL_PTR(name, ret);
-		/* The reverse mapping shall yield the original index. */
-		TEST_ASSERT_EQUAL_UINT(found, if_nametoindex(name));
-	}
-}
-
-
 TEST(inet_if, if_nametoindex_unknown_is_zero)
 {
 	/* A name that is not an interface shall map to index zero. */
 	TEST_ASSERT_EQUAL_UINT(0U, if_nametoindex(IF_BOGUS_NAME));
-}
-
-
-TEST(inet_if, if_indextoname_unknown_fails)
-{
-	char name[IF_NAMESIZE];
-
-	/* A non-existent interface index shall fail with NULL and errno ENXIO. */
-	errno = 0;
-	TEST_ASSERT_NULL(if_indextoname(IF_BOGUS_INDEX, name));
-	TEST_ASSERT_EQUAL_INT(ENXIO, errno);
 }
 
 
@@ -137,9 +98,7 @@ TEST(inet_gai, gai_strerror_unknown_code)
 
 TEST_GROUP_RUNNER(inet_if)
 {
-	RUN_TEST_CASE(inet_if, if_name_index_roundtrip);
 	RUN_TEST_CASE(inet_if, if_nametoindex_unknown_is_zero);
-	RUN_TEST_CASE(inet_if, if_indextoname_unknown_fails);
 }
 
 

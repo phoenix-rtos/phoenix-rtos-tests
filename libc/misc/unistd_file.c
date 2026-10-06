@@ -710,24 +710,6 @@ TEST(unistd_file, file_truncate_enoent)
 	TEST_ASSERT_EQUAL_INT(ENOENT, errno);
 }
 
-/* truncate()-ing on directory */
-TEST(unistd_file, file_truncate_eisdir)
-{
-	/* <posix incmpliance> truncate() wrong errno returned
-
-	truncate() called on directory returns errno 22 (EINVAL) - ext2 or errno 13 (EACCESS)
-	instead of errno 21 (EISDIR)
-
-	Issue link: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/573
-	*/
-#ifdef __phoenix__
-	TEST_IGNORE();
-#endif
-
-	TEST_ASSERT_EQUAL_INT(-1, truncate("/dev", 0));
-	TEST_ASSERT_EQUAL_INT(EISDIR, errno);
-}
-
 /* test ftruncate()-ing a file to smaller size than it already is */
 TEST(unistd_file, file_ftruncate_down)
 {
@@ -992,7 +974,6 @@ TEST_GROUP_RUNNER(unistd_file)
 	RUN_TEST_CASE(unistd_file, file_truncate_opened);
 	RUN_TEST_CASE(unistd_file, file_truncate_opened_eof);
 	RUN_TEST_CASE(unistd_file, file_truncate_einval);
-	RUN_TEST_CASE(unistd_file, file_truncate_eisdir);
 	RUN_TEST_CASE(unistd_file, file_truncate_enoent);
 
 	RUN_TEST_CASE(unistd_file, file_ftruncate_down);

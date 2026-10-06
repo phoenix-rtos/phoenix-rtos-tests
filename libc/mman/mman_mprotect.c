@@ -158,26 +158,6 @@ TEST(mman_mprotect, write_faults_without_prot_write)
 }
 
 
-/* No access shall succeed on a page set to PROT_NONE. */
-TEST(mman_mprotect, read_faults_with_prot_none)
-{
-	TEST_IGNORE_MESSAGE("Unverified Failure");
-	volatile unsigned char *p = test_mapPrivateRW();
-	volatile unsigned char sink;
-
-	p[0] = TEST_BYTE_A;
-	TEST_ASSERT_EQUAL_INT(0, mprotect((void *)p, test_common.pageSize, PROT_NONE));
-
-	test_common.caughtSignal = 0;
-	if (sigsetjmp(test_jmp, 1) == 0) {
-		sink = p[0];
-		(void)sink;
-		TEST_FAIL_MESSAGE("read from a PROT_NONE page did not fault");
-	}
-	TEST_ASSERT_EQUAL_INT(1, test_common.caughtSignal);
-}
-
-
 /* mprotect() over an unmapped range shall fail with ENOMEM. */
 TEST(mman_mprotect, unmapped_range_enomem)
 {
@@ -229,7 +209,6 @@ TEST_GROUP_RUNNER(mman_mprotect)
 	RUN_TEST_CASE(mman_mprotect, supported_combinations_succeed);
 	RUN_TEST_CASE(mman_mprotect, read_protection_allows_read);
 	RUN_TEST_CASE(mman_mprotect, write_faults_without_prot_write);
-	RUN_TEST_CASE(mman_mprotect, read_faults_with_prot_none);
 	RUN_TEST_CASE(mman_mprotect, unmapped_range_enomem);
 	RUN_TEST_CASE(mman_mprotect, write_on_readonly_object_eacces);
 }

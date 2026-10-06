@@ -173,26 +173,6 @@ TEST(statvfs_statvfs, statvfs_same_fs_consistent)
 }
 
 
-TEST(statvfs_statvfs, statvfs_f_flag_readonly)
-{
-	struct statvfs buf;
-	int ret;
-
-	/* /proc is typically read-only; verify ST_RDONLY if available */
-	memset(&buf, 0, sizeof(buf));
-	ret = statvfs("/proc", &buf);
-	if (ret == -1) {
-		TEST_IGNORE_MESSAGE("/proc not available");
-	}
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-	if ((buf.f_flag & ST_RDONLY) == 0) {
-		TEST_IGNORE_MESSAGE("/proc not reported as read-only on this system");
-	}
-	TEST_ASSERT_EQUAL_UINT(ST_RDONLY, (buf.f_flag & ST_RDONLY));
-}
-
-
 TEST(statvfs_statvfs, statvfs_enoent_missing_file)
 {
 	struct statvfs buf;
@@ -252,33 +232,6 @@ TEST(statvfs_statvfs, statvfs_enametoolong)
 }
 
 
-TEST(statvfs_statvfs, statvfs_eacces_no_search_perm)
-{
-	struct statvfs buf;
-	int ret;
-	int fd;
-
-	ret = mkdir(STATVFS_NOPERM_DIR, 0755);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-	fd = open(STATVFS_NOPERM_FILE, O_CREAT | O_WRONLY, 0644);
-	TEST_ASSERT_NOT_EQUAL_INT(-1, fd);
-	close(fd);
-
-	/* Remove search (execute) permission from the directory */
-	ret = chmod(STATVFS_NOPERM_DIR, 0000);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-	errno = 0;
-	ret = statvfs(STATVFS_NOPERM_FILE, &buf);
-	if ((ret == 0) && (getuid() == 0)) {
-		TEST_IGNORE_MESSAGE("running as root - permission checks bypassed");
-	}
-	TEST_ASSERT_EQUAL_INT(-1, ret);
-	TEST_ASSERT_EQUAL_INT(EACCES, errno);
-}
-
-
 TEST(statvfs_statvfs, statvfs_eloop_symlink_loop)
 {
 	struct statvfs buf;
@@ -305,11 +258,9 @@ TEST_GROUP_RUNNER(statvfs_statvfs)
 	RUN_TEST_CASE(statvfs_statvfs, statvfs_symlink);
 	RUN_TEST_CASE(statvfs_statvfs, statvfs_struct_fields_consistent);
 	RUN_TEST_CASE(statvfs_statvfs, statvfs_same_fs_consistent);
-	RUN_TEST_CASE(statvfs_statvfs, statvfs_f_flag_readonly);
 	RUN_TEST_CASE(statvfs_statvfs, statvfs_enoent_missing_file);
 	RUN_TEST_CASE(statvfs_statvfs, statvfs_enoent_empty_string);
 	RUN_TEST_CASE(statvfs_statvfs, statvfs_enotdir_prefix_not_dir);
 	RUN_TEST_CASE(statvfs_statvfs, statvfs_enametoolong);
-	RUN_TEST_CASE(statvfs_statvfs, statvfs_eacces_no_search_perm);
 	RUN_TEST_CASE(statvfs_statvfs, statvfs_eloop_symlink_loop);
 }

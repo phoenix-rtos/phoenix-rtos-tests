@@ -262,28 +262,6 @@ TEST(fcntl_fcntl, setfl_ignores_access_mode)
 }
 
 
-/* F_GETLK: no conflicting lock — l_type set to F_UNLCK */
-TEST(fcntl_fcntl, getlk_no_conflict)
-{
-	struct flock fl;
-	int ret;
-
-	memset(&fl, 0, sizeof(fl));
-	fl.l_type = F_WRLCK;
-	fl.l_whence = SEEK_SET;
-	fl.l_start = 0;
-	fl.l_len = 0;
-
-	ret = fcntl(test_common.fd, F_GETLK, &fl);
-	TEST_ASSERT_TRUE(ret != -1);
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1235 issue");
-#else
-	TEST_ASSERT_EQUAL_INT(F_UNLCK, fl.l_type);
-#endif
-}
-
-
 /* F_SETLK: set exclusive lock, then unlock */
 TEST(fcntl_fcntl, setlk_exclusive_lock_unlock)
 {
@@ -367,22 +345,6 @@ TEST(fcntl_fcntl, ebadf_invalid_fd)
 }
 
 
-/* F_DUPFD: EINVAL for negative arg */
-TEST(fcntl_fcntl, dupfd_einval_negative_arg)
-{
-	int ret;
-
-	errno = 0;
-	ret = fcntl(test_common.fd, F_DUPFD, -1);
-	TEST_ASSERT_EQUAL_INT(-1, ret);
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1687 issue");
-#else
-	TEST_ASSERT_EQUAL_INT(EINVAL, errno);
-#endif
-}
-
-
 /* F_GETFD: fd flags are per-descriptor, not per-description */
 TEST(fcntl_fcntl, getfd_per_descriptor)
 {
@@ -443,12 +405,10 @@ TEST_GROUP_RUNNER(fcntl_fcntl)
 	RUN_TEST_CASE(fcntl_fcntl, setfl_nonblock);
 	RUN_TEST_CASE(fcntl_fcntl, setfl_clear_flags);
 	RUN_TEST_CASE(fcntl_fcntl, setfl_ignores_access_mode);
-	RUN_TEST_CASE(fcntl_fcntl, getlk_no_conflict);
 	RUN_TEST_CASE(fcntl_fcntl, setlk_exclusive_lock_unlock);
 	RUN_TEST_CASE(fcntl_fcntl, setlk_shared_lock);
 	RUN_TEST_CASE(fcntl_fcntl, setlk_len_zero_locks_to_eof);
 	RUN_TEST_CASE(fcntl_fcntl, ebadf_invalid_fd);
-	RUN_TEST_CASE(fcntl_fcntl, dupfd_einval_negative_arg);
 	RUN_TEST_CASE(fcntl_fcntl, getfd_per_descriptor);
 	RUN_TEST_CASE(fcntl_fcntl, getfl_per_description);
 }

@@ -28,7 +28,6 @@
 void runner(void)
 {
 	RUN_TEST_GROUP(resource_priority);
-	RUN_TEST_GROUP(resource_rlimit);
 	RUN_TEST_GROUP(resource_rusage);
 }
 

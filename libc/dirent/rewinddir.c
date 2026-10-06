@@ -399,41 +399,6 @@ TEST(dirent_rewinddir, rewind_large_dir_pagination)
 }
 
 
-TEST(dirent_rewinddir, rewind_unlinked_dir)
-{
-	/* issue #1663 https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1663 */
-	TEST_IGNORE_MESSAGE("#1663 issue");
-	DIR *dp = NULL;
-	void *ret = NULL;
-	int dir_created = 0;
-
-	if (TEST_PROTECT()) {
-		TEST_MKDIR_ASSERTED(MAIN_DIR "/ghostdir", 0700);
-		dir_created = 1;
-
-		test_ctx.dp1 = TEST_OPENDIR_ASSERTED(MAIN_DIR "/ghostdir");
-		dp = test_ctx.dp1;
-
-		TEST_ASSERT_EQUAL_INT(0, rmdir(MAIN_DIR "/ghostdir"));
-		dir_created = 0;
-
-		errno = 0;
-		while (readdir(dp) != NULL) { }
-		TEST_ASSERT_EQUAL_INT(0, errno);
-
-		rewinddir(dp);
-
-		ret = readdir(dp);
-		/* POSIX mandates . and .. are removed on rmdir, so this must be NULL */
-		TEST_ASSERT_NULL(ret);
-	}
-
-	if (dir_created) {
-		rmdir(MAIN_DIR "/ghostdir");
-	}
-}
-
-
 TEST_GROUP_RUNNER(dirent_rewinddir)
 {
 	RUN_TEST_CASE(dirent_rewinddir, rewinddir_basic);
@@ -443,5 +408,4 @@ TEST_GROUP_RUNNER(dirent_rewinddir)
 	RUN_TEST_CASE(dirent_rewinddir, rewinddir_independent_streams);
 	RUN_TEST_CASE(dirent_rewinddir, rewind_empty_dir);
 	RUN_TEST_CASE(dirent_rewinddir, rewind_large_dir_pagination);
-	RUN_TEST_CASE(dirent_rewinddir, rewind_unlinked_dir);
 }

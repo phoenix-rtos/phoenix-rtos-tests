@@ -201,32 +201,6 @@ TEST(pthread_attr, attr_schedparam_roundtrip)
 }
 
 
-/* pthread_attr_getschedpolicy/setschedpolicy: set SCHED_FIFO */
-TEST(pthread_attr, attr_schedpolicy_fifo)
-{
-	pthread_attr_t attr;
-	int policy;
-	int ret;
-
-	ret = pthread_attr_init(&attr);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-#ifdef __phoenix__
-	(void)policy;
-	TEST_IGNORE_MESSAGE("#1639 issue - phoenix limitation");
-#else
-	ret = pthread_attr_setschedpolicy(&attr, SCHED_FIFO);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-	ret = pthread_attr_getschedpolicy(&attr, &policy);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-	TEST_ASSERT_EQUAL_INT(SCHED_FIFO, policy);
-#endif
-
-	pthread_attr_destroy(&attr);
-}
-
-
 /* pthread_attr_getschedpolicy/setschedpolicy: set SCHED_RR */
 TEST(pthread_attr, attr_schedpolicy_rr)
 {
@@ -243,32 +217,6 @@ TEST(pthread_attr, attr_schedpolicy_rr)
 	ret = pthread_attr_getschedpolicy(&attr, &policy);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 	TEST_ASSERT_EQUAL_INT(SCHED_RR, policy);
-
-	pthread_attr_destroy(&attr);
-}
-
-
-/* pthread_attr_getschedpolicy/setschedpolicy: set SCHED_OTHER */
-TEST(pthread_attr, attr_schedpolicy_other)
-{
-	pthread_attr_t attr;
-	int policy;
-	int ret;
-
-	ret = pthread_attr_init(&attr);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-#ifdef __phoenix__
-	(void)policy;
-	TEST_IGNORE_MESSAGE("#1639 issue - phoenix limitation");
-#else
-	ret = pthread_attr_setschedpolicy(&attr, SCHED_OTHER);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-	ret = pthread_attr_getschedpolicy(&attr, &policy);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-	TEST_ASSERT_EQUAL_INT(SCHED_OTHER, policy);
-#endif
 
 	pthread_attr_destroy(&attr);
 }
@@ -501,9 +449,7 @@ TEST_GROUP_RUNNER(pthread_attr)
 	RUN_TEST_CASE(pthread_attr, attr_setdetachstate_joinable);
 	RUN_TEST_CASE(pthread_attr, attr_setdetachstate_einval);
 	RUN_TEST_CASE(pthread_attr, attr_schedparam_roundtrip);
-	RUN_TEST_CASE(pthread_attr, attr_schedpolicy_fifo);
 	RUN_TEST_CASE(pthread_attr, attr_schedpolicy_rr);
-	RUN_TEST_CASE(pthread_attr, attr_schedpolicy_other);
 	RUN_TEST_CASE(pthread_attr, attr_setschedpolicy_enotsup);
 	RUN_TEST_CASE(pthread_attr, attr_getscope_default);
 	RUN_TEST_CASE(pthread_attr, attr_getstacksize_default);

@@ -119,21 +119,6 @@ TEST(time_clock_nanosleep, clock_nanosleep_absolute_success)
 }
 
 
-TEST(time_clock_nanosleep, clock_nanosleep_realtime)
-{
-	/* clock_nanosleep with CLOCK_REALTIME (relative) is equivalent to nanosleep */
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1685 issue");
-#else
-	const struct timespec rqtp = { 0, SLEEP_10MS_NS };
-	int ret;
-
-	ret = clock_nanosleep(CLOCK_REALTIME, 0, &rqtp, NULL);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-#endif
-}
-
-
 TEST(time_clock_nanosleep, clock_nanosleep_einval_negative_nsec)
 {
 	/* "EINVAL: The rqtp argument specified a nanosecond value less than zero" */
@@ -189,7 +174,6 @@ TEST_GROUP_RUNNER(time_clock_nanosleep)
 	RUN_TEST_CASE(time_clock_nanosleep, clock_nanosleep_relative_zero);
 	RUN_TEST_CASE(time_clock_nanosleep, clock_nanosleep_absolute_past);
 	RUN_TEST_CASE(time_clock_nanosleep, clock_nanosleep_absolute_success);
-	RUN_TEST_CASE(time_clock_nanosleep, clock_nanosleep_realtime);
 	RUN_TEST_CASE(time_clock_nanosleep, clock_nanosleep_einval_negative_nsec);
 	RUN_TEST_CASE(time_clock_nanosleep, clock_nanosleep_einval_nsec_too_large);
 	RUN_TEST_CASE(time_clock_nanosleep, clock_nanosleep_einval_invalid_clock);

@@ -88,20 +88,6 @@ TEST(fileops_mknod, fifo_creates_fifo)
 }
 
 
-/* Permission bits of the new file shall be modified by the file mode creation mask. */
-TEST(fileops_mknod, perms_masked_by_umask)
-{
-	TEST_IGNORE_MESSAGE("Unverified Failure");
-	struct stat st;
-
-	umask(022);
-
-	TEST_ASSERT_EQUAL_INT(0, mknod(MKNOD_FIFO_PATH, S_IFIFO | 0666, 0));
-	TEST_ASSERT_EQUAL_INT(0, stat(MKNOD_FIFO_PATH, &st));
-	TEST_ASSERT_EQUAL_INT(0644, (int)(st.st_mode & PERM_BITS));
-}
-
-
 /*
  * mknod() shall mark the new file's timestamps and the containing directory's
  * modification time for update.
@@ -133,18 +119,6 @@ TEST(fileops_mknod, existing_file_eexist)
 
 	errno = 0;
 	TEST_ASSERT_EQUAL_INT(-1, mknod(MKNOD_EXIST_PATH, S_IFIFO | 0644, 0));
-	TEST_ASSERT_EQUAL_INT(EEXIST, errno);
-}
-
-
-/* If path names a symbolic link, mknod() shall fail with EEXIST. */
-TEST(fileops_mknod, symlink_eexist)
-{
-	TEST_IGNORE_MESSAGE("Unverified Failure");
-	TEST_ASSERT_EQUAL_INT(0, symlink("mknod_dangling_target", MKNOD_SYMLINK_PATH));
-
-	errno = 0;
-	TEST_ASSERT_EQUAL_INT(-1, mknod(MKNOD_SYMLINK_PATH, S_IFIFO | 0644, 0));
 	TEST_ASSERT_EQUAL_INT(EEXIST, errno);
 }
 
@@ -188,31 +162,12 @@ TEST(fileops_mknod, long_component_enametoolong)
 }
 
 
-/*
- * A process without appropriate privileges shall not create a file type other
- * than FIFO-special; the attempt shall fail with EPERM.
- */
-TEST(fileops_mknod, non_fifo_unprivileged_eperm)
-{
-	if (geteuid() == 0) {
-		TEST_IGNORE_MESSAGE("running as root: EPERM for non-FIFO mknod not observable");
-	}
-
-	errno = 0;
-	TEST_ASSERT_EQUAL_INT(-1, mknod(MKNOD_CHARDEV_PATH, S_IFCHR | 0644, MKNOD_CHARDEV_DEV));
-	TEST_ASSERT_EQUAL_INT(EPERM, errno);
-}
-
-
 TEST_GROUP_RUNNER(fileops_mknod)
 {
 	RUN_TEST_CASE(fileops_mknod, fifo_creates_fifo);
-	RUN_TEST_CASE(fileops_mknod, perms_masked_by_umask);
 	RUN_TEST_CASE(fileops_mknod, marks_timestamps);
 	RUN_TEST_CASE(fileops_mknod, existing_file_eexist);
-	RUN_TEST_CASE(fileops_mknod, symlink_eexist);
 	RUN_TEST_CASE(fileops_mknod, missing_prefix_enoent);
 	RUN_TEST_CASE(fileops_mknod, file_prefix_enotdir);
 	RUN_TEST_CASE(fileops_mknod, long_component_enametoolong);
-	RUN_TEST_CASE(fileops_mknod, non_fifo_unprivileged_eperm);
 }

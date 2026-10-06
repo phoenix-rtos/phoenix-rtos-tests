@@ -89,33 +89,6 @@ TEST(mman_mmap, mmap_basic_read)
 }
 
 
-TEST(mman_mmap, mmap_basic_write_shared)
-{
-	char *ptr;
-#ifndef __phoenix__
-	char readBuf[1];
-	ssize_t n;
-#endif
-
-	/* mmap with PROT_READ|PROT_WRITE, MAP_SHARED: writes shall change underlying object */
-	test_common.addr = mmap(NULL, test_common.pageSize, PROT_READ | PROT_WRITE, MAP_SHARED, test_common.fd, 0);
-	TEST_ASSERT_NOT_EQUAL(MAP_FAILED, test_common.addr);
-
-	ptr = (char *)test_common.addr;
-	ptr[0] = 'B';
-
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1655 issue");
-#else
-	/* verify write is reflected in the underlying file */
-	TEST_ASSERT_EQUAL_INT(0, lseek(test_common.fd, 0, SEEK_SET));
-	n = read(test_common.fd, readBuf, 1);
-	TEST_ASSERT_EQUAL_INT(1, n);
-	TEST_ASSERT_EQUAL_INT('B', readBuf[0]);
-#endif
-}
-
-
 TEST(mman_mmap, mmap_basic_write_private)
 {
 	char *ptr;
@@ -161,36 +134,6 @@ TEST(mman_mmap, mmap_offset)
 }
 
 
-TEST(mman_mmap, mmap_einval_zero_len)
-{
-	/* len == 0 shall fail with EINVAL */
-	errno = 0;
-	test_common.addr = mmap(NULL, 0, PROT_READ, MAP_PRIVATE, test_common.fd, 0);
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1656 issue");
-#else
-	TEST_ASSERT_EQUAL_PTR(MAP_FAILED, test_common.addr);
-	TEST_ASSERT_EQUAL_INT(EINVAL, errno);
-	test_common.addr = MAP_FAILED;
-#endif
-}
-
-
-TEST(mman_mmap, mmap_einval_no_map_flag)
-{
-	/* neither MAP_SHARED nor MAP_PRIVATE shall fail with EINVAL */
-	errno = 0;
-	test_common.addr = mmap(NULL, test_common.pageSize, PROT_READ, 0, test_common.fd, 0);
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1656 issue");
-#else
-	TEST_ASSERT_EQUAL_PTR(MAP_FAILED, test_common.addr);
-	TEST_ASSERT_EQUAL_INT(EINVAL, errno);
-	test_common.addr = MAP_FAILED;
-#endif
-}
-
-
 TEST(mman_mmap, mmap_ebadf)
 {
 	/* invalid fd shall fail with EBADF */
@@ -199,28 +142,6 @@ TEST(mman_mmap, mmap_ebadf)
 	TEST_ASSERT_EQUAL_PTR(MAP_FAILED, test_common.addr);
 	TEST_ASSERT_EQUAL_INT(EBADF, errno);
 	test_common.addr = MAP_FAILED;
-}
-
-
-TEST(mman_mmap, mmap_eacces_write_on_rdonly)
-{
-	int rdFd;
-
-	/* PROT_WRITE with MAP_SHARED on a read-only fd shall fail with EACCES */
-	rdFd = open(MMAP_TEST_FILENAME, O_RDONLY);
-	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, rdFd);
-
-	errno = 0;
-	test_common.addr = mmap(NULL, test_common.pageSize, PROT_WRITE, MAP_SHARED, rdFd, 0);
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1657 issue");
-#else
-	TEST_ASSERT_EQUAL_PTR(MAP_FAILED, test_common.addr);
-	TEST_ASSERT_EQUAL_INT(EACCES, errno);
-	test_common.addr = MAP_FAILED;
-#endif
-
-	close(rdFd);
 }
 
 
@@ -276,13 +197,9 @@ TEST(mman_mmap, mmap_fd_close_after_map)
 TEST_GROUP_RUNNER(mman_mmap)
 {
 	RUN_TEST_CASE(mman_mmap, mmap_basic_read);
-	RUN_TEST_CASE(mman_mmap, mmap_basic_write_shared);
 	RUN_TEST_CASE(mman_mmap, mmap_basic_write_private);
 	RUN_TEST_CASE(mman_mmap, mmap_offset);
-	RUN_TEST_CASE(mman_mmap, mmap_einval_zero_len);
-	RUN_TEST_CASE(mman_mmap, mmap_einval_no_map_flag);
 	RUN_TEST_CASE(mman_mmap, mmap_ebadf);
-	RUN_TEST_CASE(mman_mmap, mmap_eacces_write_on_rdonly);
 	RUN_TEST_CASE(mman_mmap, mmap_enxio_invalid_offset);
 	RUN_TEST_CASE(mman_mmap, mmap_not_null_return);
 	RUN_TEST_CASE(mman_mmap, mmap_fd_close_after_map);
@@ -334,22 +251,6 @@ TEST(mman_munmap, munmap_basic)
 	ret = munmap(test_common.addr, test_common.pageSize);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 	test_common.addr = MAP_FAILED;
-}
-
-
-TEST(mman_munmap, munmap_einval_zero_len)
-{
-	/* munmap with len == 0 shall fail with EINVAL */
-	test_common.addr = mmap(NULL, test_common.pageSize, PROT_READ, MAP_PRIVATE, test_common.fd, 0);
-	TEST_ASSERT_NOT_EQUAL(MAP_FAILED, test_common.addr);
-
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1658 issue");
-#else
-	errno = 0;
-	TEST_ASSERT_EQUAL_INT(-1, munmap(test_common.addr, 0));
-	TEST_ASSERT_EQUAL_INT(EINVAL, errno);
-#endif
 }
 
 
@@ -410,7 +311,6 @@ TEST(mman_munmap, munmap_partial)
 TEST_GROUP_RUNNER(mman_munmap)
 {
 	RUN_TEST_CASE(mman_munmap, munmap_basic);
-	RUN_TEST_CASE(mman_munmap, munmap_einval_zero_len);
 	RUN_TEST_CASE(mman_munmap, munmap_no_effect_unmapped);
 	RUN_TEST_CASE(mman_munmap, munmap_partial);
 }

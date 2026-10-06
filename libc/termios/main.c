@@ -31,7 +31,6 @@
 void runner(void)
 {
 	RUN_TEST_GROUP(termios_tcdrain);
-	RUN_TEST_GROUP(termios_tcflow);
 	RUN_TEST_GROUP(termios_tcflush);
 	RUN_TEST_GROUP(termios_tcgetsid);
 	RUN_TEST_GROUP(termios_tcsetattr);

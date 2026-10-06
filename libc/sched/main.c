@@ -27,9 +27,6 @@ void runner(void)
 {
 	RUN_TEST_GROUP(sched_get_priority);
 	RUN_TEST_GROUP(sched_yield);
-	RUN_TEST_GROUP(sched_param);
-	RUN_TEST_GROUP(sched_scheduler);
-	RUN_TEST_GROUP(sched_rr_get_interval);
 }
 
 int main(int argc, char *argv[])

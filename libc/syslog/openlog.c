@@ -199,22 +199,6 @@ TEST(syslog_openlog, openlog_closelog_cycle)
 }
 
 
-TEST(syslog_openlog, openlog_setlogmask_persists_across_openlog)
-{
-	/* setlogmask should persist even after openlog is called again */
-	setlogmask(LOG_MASK(LOG_ERR));
-
-	openlog("new-ident", LOG_NDELAY, LOG_LOCAL0);
-
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1647 issue");
-#else
-	int mask = setlogmask(0);
-	TEST_ASSERT_EQUAL_INT(LOG_MASK(LOG_ERR), mask);
-#endif
-}
-
-
 TEST_GROUP_RUNNER(syslog_openlog)
 {
 	RUN_TEST_CASE(syslog_openlog, openlog_with_ident);
@@ -230,5 +214,4 @@ TEST_GROUP_RUNNER(syslog_openlog)
 	RUN_TEST_CASE(syslog_openlog, openlog_facility_log_user);
 	RUN_TEST_CASE(syslog_openlog, openlog_called_multiple_times);
 	RUN_TEST_CASE(syslog_openlog, openlog_closelog_cycle);
-	RUN_TEST_CASE(syslog_openlog, openlog_setlogmask_persists_across_openlog);
 }

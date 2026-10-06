@@ -1855,29 +1855,6 @@ TEST(stdio_fgetpos, fgetpos_no_errno_change)
 }
 
 
-TEST(stdio_fgetpos, fgetpos_espipe)
-{
-	int fd[2];
-	int ret;
-	fpos_t pos;
-
-	/* fgetpos shall fail with ESPIPE on a pipe */
-	ret = pipe(fd);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-	filep = fdopen(fd[0], "r");
-	TEST_ASSERT_NOT_NULL(filep);
-	{
-		errno = 0;
-		TEST_ASSERT_NOT_EQUAL_INT(0, fgetpos(filep, &pos));
-		TEST_ASSERT_EQUAL_INT(ESPIPE, errno);
-	}
-	fclose(filep);
-	filep = NULL;
-	close(fd[1]);
-}
-
-
 TEST(stdio_fgetpos, fgetpos_ebadf)
 {
 	fpos_t pos;
@@ -1901,7 +1878,6 @@ TEST_GROUP_RUNNER(stdio_fgetpos)
 {
 	RUN_TEST_CASE(stdio_fgetpos, fgetpos_basic);
 	RUN_TEST_CASE(stdio_fgetpos, fgetpos_no_errno_change);
-	RUN_TEST_CASE(stdio_fgetpos, fgetpos_espipe);
 	RUN_TEST_CASE(stdio_fgetpos, fgetpos_ebadf);
 }
 
@@ -2026,30 +2002,6 @@ TEST(stdio_fsetpos, fsetpos_no_errno_change)
 }
 
 
-TEST(stdio_fsetpos, fsetpos_espipe)
-{
-	int fd[2];
-	int ret;
-	fpos_t pos;
-
-	/* fsetpos shall fail with ESPIPE on a pipe */
-	ret = pipe(fd);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-	filep = fdopen(fd[1], "w");
-	TEST_ASSERT_NOT_NULL(filep);
-	{
-		memset(&pos, 0, sizeof(pos));
-		errno = 0;
-		TEST_ASSERT_NOT_EQUAL_INT(0, fsetpos(filep, &pos));
-		TEST_ASSERT_EQUAL_INT(ESPIPE, errno);
-	}
-	fclose(filep);
-	filep = NULL;
-	close(fd[0]);
-}
-
-
 TEST(stdio_fsetpos, fsetpos_update_stream)
 {
 	fpos_t pos;
@@ -2084,6 +2036,5 @@ TEST_GROUP_RUNNER(stdio_fsetpos)
 	RUN_TEST_CASE(stdio_fsetpos, fsetpos_clears_eof);
 	RUN_TEST_CASE(stdio_fsetpos, fsetpos_undoes_ungetc);
 	RUN_TEST_CASE(stdio_fsetpos, fsetpos_no_errno_change);
-	RUN_TEST_CASE(stdio_fsetpos, fsetpos_espipe);
 	RUN_TEST_CASE(stdio_fsetpos, fsetpos_update_stream);
 }

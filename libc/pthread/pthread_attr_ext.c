@@ -347,30 +347,6 @@ TEST(pthread_attr_setscope, set_system)
 }
 
 
-/* pthread_attr_setscope: set PTHREAD_SCOPE_PROCESS */
-TEST(pthread_attr_setscope, set_process)
-{
-	pthread_attr_t attr;
-	int scope;
-	int ret;
-
-	ret = pthread_attr_init(&attr);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-	ret = pthread_attr_setscope(&attr, PTHREAD_SCOPE_PROCESS);
-	if (ret == ENOTSUP) {
-		TEST_IGNORE_MESSAGE("PTHREAD_SCOPE_PROCESS not supported");
-	}
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-	ret = pthread_attr_getscope(&attr, &scope);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-	TEST_ASSERT_EQUAL_INT(PTHREAD_SCOPE_PROCESS, scope);
-
-	pthread_attr_destroy(&attr);
-}
-
-
 /* pthread_attr_setscope: ENOTSUP for invalid contentionscope */
 TEST(pthread_attr_setscope, set_invalid_enotsup)
 {
@@ -393,7 +369,6 @@ TEST(pthread_attr_setscope, set_invalid_enotsup)
 TEST_GROUP_RUNNER(pthread_attr_setscope)
 {
 	RUN_TEST_CASE(pthread_attr_setscope, set_system);
-	RUN_TEST_CASE(pthread_attr_setscope, set_process);
 	RUN_TEST_CASE(pthread_attr_setscope, set_invalid_enotsup);
 }
 

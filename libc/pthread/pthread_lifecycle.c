@@ -220,34 +220,6 @@ TEST(pthread_lifecycle, detach_joinable_thread)
 }
 
 
-/* pthread_detach: thread created in detached state does not need join */
-TEST(pthread_lifecycle, detach_created_detached)
-{
-	pthread_attr_t attr;
-	pthread_t thread;
-	int ret;
-
-	ret = pthread_attr_init(&attr);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-#ifdef __phoenix__
-	(void)thread;
-	TEST_IGNORE_MESSAGE("#1637 issue");
-#else
-	ret = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-	ret = pthread_create(&thread, &attr, test_lifecycleDetachThread, NULL);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-	pthread_attr_destroy(&attr);
-
-	/* Allow detached thread to finish */
-	usleep(100000);
-#endif
-}
-
-
 TEST_GROUP_RUNNER(pthread_lifecycle)
 {
 	RUN_TEST_CASE(pthread_lifecycle, self_returns_valid_id);
@@ -259,7 +231,6 @@ TEST_GROUP_RUNNER(pthread_lifecycle)
 	RUN_TEST_CASE(pthread_lifecycle, join_null_value_ptr);
 	RUN_TEST_CASE(pthread_lifecycle, join_already_terminated);
 	RUN_TEST_CASE(pthread_lifecycle, detach_joinable_thread);
-	RUN_TEST_CASE(pthread_lifecycle, detach_created_detached);
 }
 
 

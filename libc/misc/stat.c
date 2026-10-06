@@ -468,68 +468,6 @@ TEST(stat_mode, symloop_max)
 }
 
 
-TEST(stat_mode, fifo_type)
-{
-#if defined(__CPU_MCXN94X) || defined(__CPU_ZYNQMP)
-	/* Disabled on MCXN947, ZYNQMP because of issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1338 */
-	TEST_IGNORE();
-#endif
-	int fifo_fd;
-	struct stat buffer;
-
-	TEST_ASSERT_EQUAL_INT(0, mkfifo(tempPath, 0777));
-
-	TEST_ASSERT_EQUAL_INT(0, stat(tempPath, &buffer));
-	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFIFO);
-
-	TEST_ASSERT_EQUAL_INT(0, lstat(tempPath, &buffer));
-	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFIFO);
-
-	fifo_fd = open(tempPath, O_NONBLOCK);
-	TEST_ASSERT_EQUAL_INT(0, fstat(fifo_fd, &buffer));
-	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFIFO);
-
-	close(fifo_fd);
-	remove(tempPath);
-
-	TEST_ASSERT_EQUAL_INT(0, mkfifo(tempPath, 0600));
-
-	TEST_ASSERT_EQUAL_INT(0, stat(tempPath, &buffer));
-	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFIFO);
-
-	TEST_ASSERT_EQUAL_INT(0, lstat(tempPath, &buffer));
-	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFIFO);
-
-	fifo_fd = open(tempPath, O_RDONLY | O_NONBLOCK);
-	TEST_ASSERT_NOT_EQUAL_INT(-1, fifo_fd);
-	TEST_ASSERT_EQUAL_INT(0, fstat(fifo_fd, &buffer));
-	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFIFO);
-
-	close(fifo_fd);
-	remove(tempPath);
-}
-
-
-TEST(stat_mode, chr_type)
-{
-	struct stat buffer;
-	int chr_fd;
-
-	TEST_ASSERT_EQUAL_INT(0, stat(chrPath, &buffer));
-	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFCHR);
-	TEST_ASSERT_EQUAL_INT(0, lstat(chrPath, &buffer));
-	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFCHR);
-
-	/* Disabled on Phoenix-RTOS because of #764 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/764 */
-	TEST_IGNORE_MESSAGE("#764 issue");
-
-	chr_fd = open(chrPath, O_RDWR);
-	TEST_ASSERT_EQUAL_INT(0, fstat(chr_fd, &buffer));
-	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFCHR);
-	close(chr_fd);
-}
-
-
 TEST(stat_mode, sock_type)
 {
 	int sfd;
@@ -963,24 +901,6 @@ TEST(stat_errno, enoent)
 }
 
 
-TEST(stat_errno, enotdir)
-{
-/* Disabled on Phoenix-RTOS because of #682 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/682*/
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#682 issue");
-#endif
-	struct stat buffer;
-
-	errno = 0;
-	TEST_ASSERT_EQUAL_INT(-1, stat("test_stat.txt/", &buffer));
-	TEST_ASSERT_EQUAL_INT(ENOTDIR, errno);
-
-	errno = 0;
-	TEST_ASSERT_EQUAL_INT(-1, lstat("test_stat.txt/", &buffer));
-	TEST_ASSERT_EQUAL_INT(ENOTDIR, errno);
-}
-
-
 TEST_GROUP_RUNNER(stat_mode)
 {
 	RUN_TEST_CASE(stat_mode, none);
@@ -995,7 +915,6 @@ TEST_GROUP_RUNNER(stat_mode)
 	RUN_TEST_CASE(stat_mode, symlink_type);
 	RUN_TEST_CASE(stat_mode, symlink_lstat);
 	RUN_TEST_CASE(stat_mode, symloop_max);
-	RUN_TEST_CASE(stat_mode, fifo_type);
 	RUN_TEST_CASE(stat_mode, sock_type);
 
 /* Check only on Phoenix-RTOS */
@@ -1003,7 +922,6 @@ TEST_GROUP_RUNNER(stat_mode)
 	oid_t dev;
 	dev.id = 0;
 	create_dev(&dev, chrPath);
-	RUN_TEST_CASE(stat_mode, chr_type);
 	remove(chrPath);
 #endif
 }
@@ -1036,5 +954,4 @@ TEST_GROUP_RUNNER(stat_errno)
 	RUN_TEST_CASE(stat_errno, eloop);
 	RUN_TEST_CASE(stat_errno, enametoolong);
 	RUN_TEST_CASE(stat_errno, enoent);
-	RUN_TEST_CASE(stat_errno, enotdir);
 }

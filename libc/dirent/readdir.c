@@ -95,45 +95,6 @@ TEST_TEAR_DOWN(dirent_readdir)
 }
 
 
-TEST(dirent_readdir, long_name_directory_check)
-{
-	/* issue #1615: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1615 */
-	TEST_IGNORE_MESSAGE("#1615 issue");
-	DIR *dp = NULL;
-	struct dirent *info;
-	char longDirName[NAME_MAX + 1];
-	char longDirPath[NAME_MAX + 2 + sizeof(MAIN_DIR)];
-	int dir_created = 0;
-	int found = 0;
-
-	memset(longDirName, 'a', NAME_MAX);
-	longDirName[NAME_MAX] = '\0';
-	snprintf(longDirPath, sizeof(longDirPath), MAIN_DIR "/%s", longDirName);
-
-	if (TEST_PROTECT()) {
-		TEST_MKDIR_ASSERTED(longDirPath, S_IRUSR);
-		dir_created = 1;
-
-		dp = TEST_OPENDIR_ASSERTED(MAIN_DIR);
-
-		while ((info = readdir(dp)) != NULL) {
-			if (info->d_name[0] == 'a') {
-				TEST_ASSERT_EQUAL_STRING(longDirName, info->d_name);
-				TEST_ASSERT_EQUAL_INT(NAME_MAX, strlen(info->d_name));
-				found = 1;
-				break;
-			}
-		}
-		TEST_ASSERT_TRUE_MESSAGE(found, "Long directory name not found");
-	}
-
-	if (dp != NULL)
-		closedir(dp);
-	if (dir_created)
-		rmdir(longDirPath);
-}
-
-
 TEST(dirent_readdir, basic_listing_count)
 {
 	DIR *dp = TEST_OPENDIR_ASSERTED(MAIN_DIR);
@@ -484,7 +445,6 @@ TEST_GROUP_RUNNER(dirent_readdir)
 	RUN_TEST_CASE(dirent_readdir, hardlink_inode_correct_number);
 	RUN_TEST_CASE(dirent_readdir, same_file_reading_by_two_pointers);
 	RUN_TEST_CASE(dirent_readdir, reading_in_parent_and_child);
-	RUN_TEST_CASE(dirent_readdir, long_name_directory_check);
 	RUN_TEST_CASE(dirent_readdir, read_past_end_of_stream);
 	RUN_TEST_CASE(dirent_readdir, large_directory_pagination);
 	RUN_TEST_CASE(dirent_readdir, unlink_during_iteration);

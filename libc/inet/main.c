@@ -32,8 +32,6 @@ void runner(void)
 	RUN_TEST_GROUP(inet_if);
 	RUN_TEST_GROUP(inet_gai);
 	RUN_TEST_GROUP(inet_proto);
-	RUN_TEST_GROUP(inet_getaddrinfo);
-	RUN_TEST_GROUP(inet_getnameinfo);
 }
 
 

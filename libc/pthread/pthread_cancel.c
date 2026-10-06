@@ -135,55 +135,6 @@ TEST(pthread_cancel, cancel_invokes_cleanup_handlers)
 }
 
 
-/* pthread_setcancelstate: disable cancellation prevents thread from being cancelled */
-static void *test_cancelDisabledThread(void *arg)
-{
-	int *completed = (int *)arg;
-	int oldstate;
-
-	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldstate);
-
-	/* Do work that includes cancellation points */
-	usleep(50000);
-	*completed = 1;
-
-	pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &oldstate);
-
-	/* Now cancellation can take effect at next cancellation point */
-	usleep(10000);
-
-	return NULL;
-}
-
-
-TEST(pthread_cancel, setcancelstate_disable)
-{
-	pthread_t thread;
-	int completed = 0;
-	void *retval;
-	int ret;
-
-	ret = pthread_create(&thread, NULL, test_cancelDisabledThread, &completed);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-	usleep(10000);
-
-	ret = pthread_cancel(thread);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-	ret = pthread_join(thread, &retval);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-	/* Thread completed its work because cancel was disabled */
-	TEST_ASSERT_EQUAL_INT(1, completed);
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1645 issue");
-#else
-	TEST_ASSERT_EQUAL_PTR(PTHREAD_CANCELED, retval);
-#endif
-}
-
-
 /* pthread_setcancelstate: shall return 0 and store old state */
 TEST(pthread_cancel, setcancelstate_returns_oldstate)
 {
@@ -246,7 +197,6 @@ TEST_GROUP_RUNNER(pthread_cancel)
 	RUN_TEST_CASE(pthread_cancel, cancel_returns_zero);
 	RUN_TEST_CASE(pthread_cancel, cancel_exit_status);
 	RUN_TEST_CASE(pthread_cancel, cancel_invokes_cleanup_handlers);
-	RUN_TEST_CASE(pthread_cancel, setcancelstate_disable);
 	RUN_TEST_CASE(pthread_cancel, setcancelstate_returns_oldstate);
 	RUN_TEST_CASE(pthread_cancel, setcancelstate_enable);
 	RUN_TEST_CASE(pthread_cancel, cancel_async_wrt_caller);

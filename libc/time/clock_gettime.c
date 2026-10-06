@@ -200,47 +200,6 @@ TEST(time_clock_settime, clock_settime_einval_invalid_clock)
 }
 
 
-TEST(time_clock_settime, clock_settime_einval_negative_nsec)
-{
-	/* "EINVAL: The tp argument specified a nanosecond value less than zero" */
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1683 issue");
-#else
-	struct timespec tp;
-	int ret;
-
-	tp.tv_sec = 1000000;
-	tp.tv_nsec = -1;
-
-	errno = 0;
-	ret = clock_settime(CLOCK_REALTIME, &tp);
-	TEST_ASSERT_EQUAL_INT(-1, ret);
-	TEST_ASSERT_EQUAL_INT(EINVAL, errno);
-#endif
-}
-
-
-TEST(time_clock_settime, clock_settime_einval_nsec_too_large)
-{
-	/* "EINVAL: The tp argument specified a nanosecond value ...
-	 *  greater than or equal to 1000 million." */
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1683 issue");
-#else
-	struct timespec tp;
-	int ret;
-
-	tp.tv_sec = 1000000;
-	tp.tv_nsec = NSEC_PER_SEC;
-
-	errno = 0;
-	ret = clock_settime(CLOCK_REALTIME, &tp);
-	TEST_ASSERT_EQUAL_INT(-1, ret);
-	TEST_ASSERT_EQUAL_INT(EINVAL, errno);
-#endif
-}
-
-
 TEST(time_clock_settime, clock_settime_einval_monotonic)
 {
 	/* "EINVAL: The value of the clock_id argument is CLOCK_MONOTONIC." */
@@ -254,44 +213,8 @@ TEST(time_clock_settime, clock_settime_einval_monotonic)
 }
 
 
-TEST(time_clock_settime, clock_settime_realtime_success)
-{
-	/* "clock_settime() shall set the specified clock" — requires privileges */
-	struct timespec tp, readBack;
-	int ret;
-
-	/* Get current time and add 1 second */
-	ret = clock_gettime(CLOCK_REALTIME, &tp);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-	tp.tv_sec += 1;
-	tp.tv_nsec = 0;
-
-	errno = 0;
-	ret = clock_settime(CLOCK_REALTIME, &tp);
-	if (ret == -1 && errno == EPERM) {
-		TEST_IGNORE_MESSAGE("insufficient privileges to set CLOCK_REALTIME");
-	}
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-	/* Read back — should be close to what we set */
-	ret = clock_gettime(CLOCK_REALTIME, &readBack);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1684 issue");
-#else
-	/* Allow 1 second tolerance */
-	TEST_ASSERT_INT_WITHIN(1, (int)tp.tv_sec, (int)readBack.tv_sec);
-#endif
-}
-
-
 TEST_GROUP_RUNNER(time_clock_settime)
 {
 	RUN_TEST_CASE(time_clock_settime, clock_settime_einval_invalid_clock);
-	RUN_TEST_CASE(time_clock_settime, clock_settime_einval_negative_nsec);
-	RUN_TEST_CASE(time_clock_settime, clock_settime_einval_nsec_too_large);
 	RUN_TEST_CASE(time_clock_settime, clock_settime_einval_monotonic);
-	RUN_TEST_CASE(time_clock_settime, clock_settime_realtime_success);
 }

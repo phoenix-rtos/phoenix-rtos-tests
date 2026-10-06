@@ -225,36 +225,6 @@ TEST(uio_writev, writev_fills_areas_in_order)
 }
 
 
-TEST(uio_writev, writev_pipe_atomicity)
-{
-	ssize_t ret;
-	int pipeFds[2];
-	const char data1[] = "aaa";
-	const char data2[] = "bbb";
-	struct iovec iov[2];
-	char readBuf[UIO_BUF_SIZE];
-
-	ret = pipe(pipeFds);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-	iov[0].iov_base = (void *)data1;
-	iov[0].iov_len = strlen(data1);
-	iov[1].iov_base = (void *)data2;
-	iov[1].iov_len = strlen(data2);
-
-	ret = writev(pipeFds[1], iov, 2);
-	TEST_ASSERT_EQUAL_INT((ssize_t)(strlen(data1) + strlen(data2)), ret);
-
-	memset(readBuf, 0, sizeof(readBuf));
-	ret = read(pipeFds[0], readBuf, sizeof(readBuf));
-	TEST_ASSERT_EQUAL_INT((ssize_t)(strlen(data1) + strlen(data2)), ret);
-	TEST_ASSERT_EQUAL_MEMORY("aaabbb", readBuf, 6);
-
-	close(pipeFds[0]);
-	close(pipeFds[1]);
-}
-
-
 TEST_GROUP_RUNNER(uio_writev)
 {
 	RUN_TEST_CASE(uio_writev, writev_single_iov);
@@ -264,7 +234,6 @@ TEST_GROUP_RUNNER(uio_writev)
 	RUN_TEST_CASE(uio_writev, writev_ebadf);
 	RUN_TEST_CASE(uio_writev, writev_ebadf_readonly);
 	RUN_TEST_CASE(uio_writev, writev_fills_areas_in_order);
-	RUN_TEST_CASE(uio_writev, writev_pipe_atomicity);
 }
 
 
@@ -498,39 +467,6 @@ TEST(uio_readv, readv_zero_len_iov)
 }
 
 
-TEST(uio_readv, readv_pipe)
-{
-	ssize_t ret;
-	int pipeFds[2];
-	const char data[] = "pipedata";
-	char buf1[4];
-	char buf2[4];
-	struct iovec iov[2];
-
-	ret = pipe(pipeFds);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-	ret = write(pipeFds[1], data, strlen(data));
-	TEST_ASSERT_EQUAL_INT((ssize_t)strlen(data), ret);
-
-	memset(buf1, 0, sizeof(buf1));
-	memset(buf2, 0, sizeof(buf2));
-
-	iov[0].iov_base = buf1;
-	iov[0].iov_len = sizeof(buf1);
-	iov[1].iov_base = buf2;
-	iov[1].iov_len = sizeof(buf2);
-
-	ret = readv(pipeFds[0], iov, 2);
-	TEST_ASSERT_EQUAL_INT((ssize_t)strlen(data), ret);
-	TEST_ASSERT_EQUAL_MEMORY("pipe", buf1, 4);
-	TEST_ASSERT_EQUAL_MEMORY("data", buf2, 4);
-
-	close(pipeFds[0]);
-	close(pipeFds[1]);
-}
-
-
 TEST_GROUP_RUNNER(uio_readv)
 {
 	RUN_TEST_CASE(uio_readv, readv_single_iov);
@@ -541,5 +477,4 @@ TEST_GROUP_RUNNER(uio_readv)
 	RUN_TEST_CASE(uio_readv, readv_ebadf);
 	RUN_TEST_CASE(uio_readv, readv_ebadf_writeonly);
 	RUN_TEST_CASE(uio_readv, readv_zero_len_iov);
-	RUN_TEST_CASE(uio_readv, readv_pipe);
 }

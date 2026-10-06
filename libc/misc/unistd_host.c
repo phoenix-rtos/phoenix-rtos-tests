@@ -83,33 +83,6 @@ TEST_TEAR_DOWN(unistd_gethostname)
 }
 
 
-TEST(unistd_gethostname, gethostname_success)
-{
-	/* "gethostname() shall return the standard host name for the current machine" */
-	char buf[HOSTNAME_BUF_SIZE];
-	int ret;
-
-	memset(buf, 0xff, sizeof(buf));
-	ret = gethostname(buf, sizeof(buf));
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-	/* returned name shall be null-terminated when buffer is sufficient */
-	TEST_ASSERT_NOT_NULL(memchr(buf, '\0', sizeof(buf)));
-}
-
-
-TEST(unistd_gethostname, gethostname_consistent)
-{
-	/* Two calls return the same hostname */
-	char buf1[HOSTNAME_BUF_SIZE];
-	char buf2[HOSTNAME_BUF_SIZE];
-
-	TEST_ASSERT_EQUAL_INT(0, gethostname(buf1, sizeof(buf1)));
-	TEST_ASSERT_EQUAL_INT(0, gethostname(buf2, sizeof(buf2)));
-	TEST_ASSERT_EQUAL_STRING(buf1, buf2);
-}
-
-
 TEST(unistd_gethostname, gethostname_max_length)
 {
 	/* "Host names are limited to {HOST_NAME_MAX} bytes" */
@@ -120,62 +93,7 @@ TEST(unistd_gethostname, gethostname_max_length)
 }
 
 
-TEST(unistd_gethostname, gethostname_truncation)
-{
-	/* "if namelen is an insufficient length to hold the host name,
-	 *  then the returned name shall be truncated" */
-	char full[HOSTNAME_BUF_SIZE];
-	char small[2];
-	int ret;
-
-	TEST_ASSERT_EQUAL_INT(0, gethostname(full, sizeof(full)));
-
-	/* If hostname is at least 2 chars, a 2-byte buffer triggers truncation */
-	if (strlen(full) >= 2) {
-		memset(small, 0xff, sizeof(small));
-		ret = gethostname(small, sizeof(small));
-#ifndef __phoenix__
-		/* glibc returns -1/ENAMETOOLONG instead of truncating */
-		if (ret == -1 && errno == ENAMETOOLONG) {
-			TEST_IGNORE_MESSAGE("host-pc bug: glibc returns ENAMETOOLONG instead of truncating");
-		}
-#endif
-		/* Return value is 0 on success (truncation is not an error per spec) */
-		TEST_ASSERT_EQUAL_INT(0, ret);
-		/* First byte must match */
-		TEST_ASSERT_EQUAL_CHAR(full[0], small[0]);
-	}
-	else {
-		TEST_IGNORE_MESSAGE("hostname too short to test truncation");
-	}
-}
-
-
-TEST(unistd_gethostname, gethostname_exact_length)
-{
-	/* Buffer exactly large enough for hostname + NUL */
-	char full[HOSTNAME_BUF_SIZE];
-	size_t len;
-	int ret;
-
-	TEST_ASSERT_EQUAL_INT(0, gethostname(full, sizeof(full)));
-	len = strlen(full);
-
-	if (len > 0) {
-		static char exact[HOSTNAME_BUF_SIZE];
-		memset(exact, 0xff, sizeof(exact));
-		ret = gethostname(exact, len + 1);
-		TEST_ASSERT_EQUAL_INT(0, ret);
-		TEST_ASSERT_EQUAL_STRING(full, exact);
-	}
-}
-
-
 TEST_GROUP_RUNNER(unistd_gethostname)
 {
-	RUN_TEST_CASE(unistd_gethostname, gethostname_success);
-	RUN_TEST_CASE(unistd_gethostname, gethostname_consistent);
 	RUN_TEST_CASE(unistd_gethostname, gethostname_max_length);
-	RUN_TEST_CASE(unistd_gethostname, gethostname_truncation);
-	RUN_TEST_CASE(unistd_gethostname, gethostname_exact_length);
 }

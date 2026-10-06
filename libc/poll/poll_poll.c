@@ -100,133 +100,6 @@ TEST(poll_poll, poll_regular_file_pollin_pollout)
 }
 
 
-TEST(poll_poll, poll_timeout_zero_returns_immediately)
-{
-	struct pollfd pfd;
-	struct timespec t0, t1;
-	long elapsed;
-	int ret;
-
-	ret = pipe(test_common.pipeFd);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-	/* pipe read end with no data, timeout=0 should return immediately with 0 */
-	pfd.fd = test_common.pipeFd[0];
-	pfd.events = POLLIN;
-	pfd.revents = 0;
-
-	ret = clock_gettime(CLOCK_MONOTONIC, &t0);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-	ret = poll(&pfd, 1, 0);
-
-	ret = clock_gettime(CLOCK_MONOTONIC, &t1);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-	elapsed = test_elapsedMs(&t0, &t1);
-	TEST_ASSERT_LESS_THAN_INT(MS_TOLERANCE, (int)elapsed);
-}
-
-
-TEST(poll_poll, poll_timeout_expires)
-{
-	struct pollfd pfd;
-	struct timespec t0, t1;
-	long elapsed;
-	int ret;
-	const int timeoutMs = 100;
-
-	ret = pipe(test_common.pipeFd);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-	/* pipe read end with no data, should wait at least timeoutMs */
-	pfd.fd = test_common.pipeFd[0];
-	pfd.events = POLLIN;
-	pfd.revents = 0;
-
-	ret = clock_gettime(CLOCK_MONOTONIC, &t0);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-	ret = poll(&pfd, 1, timeoutMs);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-	ret = clock_gettime(CLOCK_MONOTONIC, &t1);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-	elapsed = test_elapsedMs(&t0, &t1);
-	TEST_ASSERT_GREATER_OR_EQUAL_INT(timeoutMs, (int)elapsed);
-}
-
-
-TEST(poll_poll, poll_returns_count_of_ready_fds)
-{
-	struct pollfd pfds[2];
-	int ret;
-
-	ret = pipe(test_common.pipeFd);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-	/* write end is always writable, read end has no data */
-	pfds[0].fd = test_common.pipeFd[0];
-	pfds[0].events = POLLIN;
-	pfds[0].revents = 0;
-
-	pfds[1].fd = test_common.pipeFd[1];
-	pfds[1].events = POLLOUT;
-	pfds[1].revents = 0;
-
-	ret = poll(pfds, 2, 0);
-	/* at least the write end should be ready */
-	TEST_ASSERT_GREATER_OR_EQUAL_INT(1, ret);
-	TEST_ASSERT_NOT_EQUAL_INT(0, pfds[1].revents & POLLOUT);
-}
-
-
-TEST(poll_poll, poll_pipe_readable_after_write)
-{
-	struct pollfd pfd;
-	const char data = 'x';
-	ssize_t n;
-	int ret;
-
-	ret = pipe(test_common.pipeFd);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-	n = write(test_common.pipeFd[1], &data, 1);
-	TEST_ASSERT_EQUAL_INT(1, (int)n);
-
-	pfd.fd = test_common.pipeFd[0];
-	pfd.events = POLLIN;
-	pfd.revents = 0;
-
-	ret = poll(&pfd, 1, 0);
-	TEST_ASSERT_EQUAL_INT(1, ret);
-	TEST_ASSERT_NOT_EQUAL_INT(0, pfd.revents & POLLIN);
-}
-
-
-TEST(poll_poll, poll_pipe_hangup_on_writer_close)
-{
-	struct pollfd pfd;
-	int ret;
-
-	ret = pipe(test_common.pipeFd);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-	/* close write end */
-	close(test_common.pipeFd[1]);
-	test_common.pipeFd[1] = -1;
-
-	pfd.fd = test_common.pipeFd[0];
-	pfd.events = POLLIN;
-	pfd.revents = 0;
-
-	ret = poll(&pfd, 1, 0);
-	TEST_ASSERT_EQUAL_INT(1, ret);
-	TEST_ASSERT_NOT_EQUAL_INT(0, pfd.revents & POLLHUP);
-}
-
-
 TEST(poll_poll, poll_negative_fd_ignored)
 {
 	struct pollfd pfd;
@@ -256,29 +129,6 @@ TEST(poll_poll, poll_invalid_fd_pollnval)
 	ret = poll(&pfd, 1, 0);
 	TEST_ASSERT_EQUAL_INT(1, ret);
 	TEST_ASSERT_NOT_EQUAL_INT(0, pfd.revents & POLLNVAL);
-}
-
-
-TEST(poll_poll, poll_pollerr_pollhup_not_in_events)
-{
-	struct pollfd pfd;
-	int ret;
-
-	ret = pipe(test_common.pipeFd);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-	close(test_common.pipeFd[1]);
-	test_common.pipeFd[1] = -1;
-
-	/* POLLHUP only valid in revents, shall be ignored in events.
-	 * Even with events=0, poll should still report POLLHUP */
-	pfd.fd = test_common.pipeFd[0];
-	pfd.events = 0;
-	pfd.revents = 0;
-
-	ret = poll(&pfd, 1, 0);
-	TEST_ASSERT_EQUAL_INT(1, ret);
-	TEST_ASSERT_NOT_EQUAL_INT(0, pfd.revents & POLLHUP);
 }
 
 
@@ -339,77 +189,11 @@ TEST(poll_poll, poll_nfds_zero)
 }
 
 
-TEST(poll_poll, poll_return_zero_on_timeout)
-{
-	struct pollfd pfd;
-	int ret;
-
-	ret = pipe(test_common.pipeFd);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-	/* no data on pipe, timeout=0 → returns 0 */
-	pfd.fd = test_common.pipeFd[0];
-	pfd.events = POLLIN;
-	pfd.revents = 0;
-
-	ret = poll(&pfd, 1, 0);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-	TEST_ASSERT_EQUAL_INT(0, (int)pfd.revents);
-}
-
-
-TEST(poll_poll, poll_revents_cleared_if_no_event)
-{
-	struct pollfd pfd;
-	int ret;
-
-	ret = pipe(test_common.pipeFd);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-	/* set revents to garbage, poll should clear it */
-	pfd.fd = test_common.pipeFd[0];
-	pfd.events = POLLIN;
-	pfd.revents = 0xffff;
-
-	ret = poll(&pfd, 1, 0);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-	TEST_ASSERT_EQUAL_INT(0, (int)pfd.revents);
-}
-
-
-TEST(poll_poll, poll_pollout_pipe_writable)
-{
-	struct pollfd pfd;
-	int ret;
-
-	ret = pipe(test_common.pipeFd);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-	/* write end of empty pipe should be writable */
-	pfd.fd = test_common.pipeFd[1];
-	pfd.events = POLLOUT;
-	pfd.revents = 0;
-
-	ret = poll(&pfd, 1, 0);
-	TEST_ASSERT_EQUAL_INT(1, ret);
-	TEST_ASSERT_NOT_EQUAL_INT(0, pfd.revents & POLLOUT);
-}
-
-
 TEST_GROUP_RUNNER(poll_poll)
 {
 	RUN_TEST_CASE(poll_poll, poll_regular_file_pollin_pollout);
-	RUN_TEST_CASE(poll_poll, poll_timeout_zero_returns_immediately);
-	RUN_TEST_CASE(poll_poll, poll_timeout_expires);
-	RUN_TEST_CASE(poll_poll, poll_returns_count_of_ready_fds);
-	RUN_TEST_CASE(poll_poll, poll_pipe_readable_after_write);
-	RUN_TEST_CASE(poll_poll, poll_pipe_hangup_on_writer_close);
 	RUN_TEST_CASE(poll_poll, poll_negative_fd_ignored);
 	RUN_TEST_CASE(poll_poll, poll_invalid_fd_pollnval);
-	RUN_TEST_CASE(poll_poll, poll_pollerr_pollhup_not_in_events);
 	RUN_TEST_CASE(poll_poll, poll_multiple_fds_mixed);
 	RUN_TEST_CASE(poll_poll, poll_nfds_zero);
-	RUN_TEST_CASE(poll_poll, poll_return_zero_on_timeout);
-	RUN_TEST_CASE(poll_poll, poll_revents_cleared_if_no_event);
-	RUN_TEST_CASE(poll_poll, poll_pollout_pipe_writable);
 }

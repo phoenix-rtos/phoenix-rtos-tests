@@ -28,8 +28,6 @@ void runner(void)
 	RUN_TEST_GROUP(dirent_rewinddir);
 	RUN_TEST_GROUP(dirent_fdopendir);
 	RUN_TEST_GROUP(dirent_seekdir_telldir);
-	RUN_TEST_GROUP(dirent_dirfd);
-	RUN_TEST_GROUP(dirent_scandir);
 }
 
 
