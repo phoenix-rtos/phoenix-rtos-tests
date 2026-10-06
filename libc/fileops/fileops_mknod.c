@@ -33,6 +33,9 @@
 #define MKNOD_REGFILE_PATH "mknod_regfile"
 #define MKNOD_CHARDEV_PATH "mknod_chardev"
 
+/* Linux allows unprivileged mknod() of a character device 0 (overlayfs whiteout) */
+#define MKNOD_CHARDEV_DEV ((dev_t)1)
+
 #define PERM_BITS 0777
 /* A single path component longer than any NAME_MAX / PATH_MAX limit. */
 #define MKNOD_LONG_LEN 5000
@@ -196,7 +199,7 @@ TEST(fileops_mknod, non_fifo_unprivileged_eperm)
 	}
 
 	errno = 0;
-	TEST_ASSERT_EQUAL_INT(-1, mknod(MKNOD_CHARDEV_PATH, S_IFCHR | 0644, 0));
+	TEST_ASSERT_EQUAL_INT(-1, mknod(MKNOD_CHARDEV_PATH, S_IFCHR | 0644, MKNOD_CHARDEV_DEV));
 	TEST_ASSERT_EQUAL_INT(EPERM, errno);
 }
 
