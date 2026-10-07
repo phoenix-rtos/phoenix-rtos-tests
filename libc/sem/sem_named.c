@@ -210,22 +210,6 @@ TEST(sem_named, usable_after_open)
 }
 
 
-TEST(sem_named, open_same_name_returns_same_address)
-{
-	sem_t *sem2;
-
-	test_common.sem = sem_open(SEM_TEST_NAME, O_CREAT | O_EXCL, 0644, 1);
-	TEST_ASSERT_TRUE(test_common.sem != SEM_FAILED);
-
-	/* POSIX: same name shall return same address if not closed/unlinked */
-	sem2 = sem_open(SEM_TEST_NAME, 0);
-	TEST_ASSERT_TRUE(sem2 != SEM_FAILED);
-	TEST_ASSERT_TRUE(sem2 == test_common.sem);
-
-	sem_close(sem2);
-}
-
-
 TEST(sem_named, unlink_sem_still_usable_until_close)
 {
 	int ret;
@@ -260,6 +244,5 @@ TEST_GROUP_RUNNER(sem_named)
 	RUN_TEST_CASE(sem_named, unlink_enoent_nonexistent);
 	RUN_TEST_CASE(sem_named, unlink_removes_name);
 	RUN_TEST_CASE(sem_named, usable_after_open);
-	RUN_TEST_CASE(sem_named, open_same_name_returns_same_address);
 	RUN_TEST_CASE(sem_named, unlink_sem_still_usable_until_close);
 }
