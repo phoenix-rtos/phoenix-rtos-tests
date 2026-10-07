@@ -162,7 +162,7 @@ TEST(time_clock_nanosleep, clock_nanosleep_einval_invalid_clock)
 	const struct timespec rqtp = { 0, SLEEP_10MS_NS };
 	int ret;
 
-	ret = clock_nanosleep((clockid_t)-99, 0, &rqtp, NULL);
+	ret = clock_nanosleep((clockid_t)7, 0, &rqtp, NULL);
 	TEST_ASSERT_EQUAL_INT(EINVAL, ret);
 }
 
