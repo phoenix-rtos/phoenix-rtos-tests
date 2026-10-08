@@ -30,6 +30,13 @@
 #define SLEEP_EINTR_SEC 3 /* long sleep so an alarm reliably lands mid-sleep */
 #define ALARM_DELAY_SEC 1 /* alarm() granularity is whole seconds */
 
+/* no id is unknown on both: 7 is CLOCK_BOOTTIME on Linux, Phoenix-RTOS treats >= 8 and negative ids as CPU-time clocks */
+#ifdef __phoenix__
+#define INVALID_CLOCK_ID ((clockid_t)7)
+#else
+#define INVALID_CLOCK_ID ((clockid_t)-99)
+#endif
+
 
 TEST_GROUP(time_clock_nanosleep);
 
@@ -158,7 +165,7 @@ TEST(time_clock_nanosleep, clock_nanosleep_einval_invalid_clock)
 	const struct timespec rqtp = { 0, SLEEP_10MS_NS };
 	int ret;
 
-	ret = clock_nanosleep((clockid_t)7, 0, &rqtp, NULL);
+	ret = clock_nanosleep(INVALID_CLOCK_ID, 0, &rqtp, NULL);
 	TEST_ASSERT_EQUAL_INT(EINVAL, ret);
 }
 
