@@ -478,9 +478,8 @@ test:
           kwargs:
             testcase_count: 58
 
-          # 2: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1418
         - name: T.setbuf
-          execute: run-test /tset/ANSI.os/streamio/setbuf/T.setbuf{1,3-5}
+          execute: run-test /tset/ANSI.os/streamio/setbuf/T.setbuf
           kwargs:
             testcase_count: 5
 
