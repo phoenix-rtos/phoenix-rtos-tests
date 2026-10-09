@@ -981,7 +981,6 @@ test:
           kwargs:
             testcase_count: 24
 
-          # 3: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1444
           # 6: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1443
           # 7: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1403
           # 8: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1403
@@ -991,7 +990,7 @@ test:
           # 14: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1462
           # 19: no device to be mounted (VSX_ROFS)
         - name: T.remove
-          execute: run-test /tset/ANSI.os/streamio/remove/T.remove{1-2,4-5,12,15-18,20-25}
+          execute: run-test /tset/ANSI.os/streamio/remove/T.remove{1-5,12,15-18,20-25}
           kwargs:
             testcase_count: 25
 
