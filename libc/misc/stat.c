@@ -964,10 +964,6 @@ TEST(stat_errno, enoent)
 
 TEST(stat_errno, enotdir)
 {
-/* Disabled on Phoenix-RTOS because of #682 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/682*/
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#682 issue");
-#endif
 	struct stat buffer;
 
 	errno = 0;
