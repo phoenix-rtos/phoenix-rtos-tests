@@ -16,6 +16,11 @@
 #ifndef _TEST_SOCKET_COMMON_H
 #define _TEST_SOCKET_COMMON_H
 
+#include <sys/socket.h>
+#include <sys/types.h>
+
+#define TEST_FILE_PATH_TEMPLATE "/tmp/test_file_%zu"
+
 #define MAX_FD_CNT         16
 #define CLOSE_LOOP_CNT     50
 #define SENDMSG_LOOP_CNT   50
@@ -28,6 +33,12 @@
 #else
 #define DATA_SIZE 10000
 #endif
+
+void setup_msg(struct msghdr *msg, struct iovec *iov, void *buf, size_t buflen, void *cbuf, size_t cbuflen);
+
+void pack_fds(struct msghdr *msg, int *fd, size_t fdcnt);
+
+int unpack_fds(struct msghdr *msg, int *fd, size_t *fdcnt);
 
 ssize_t msg_send(int sock, void *buf, size_t len, int *fd, size_t fdcnt);
 
