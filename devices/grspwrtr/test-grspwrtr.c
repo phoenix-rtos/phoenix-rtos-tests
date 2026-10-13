@@ -20,7 +20,7 @@
 #include <sys/platform.h>
 
 
-#include <grspwrtr.h>
+#include <grspwrtr-srv.h>
 #include <unity_fixture.h>
 
 #define TEST_SPWRTR_PATH0 "/dev/spwrtr0"
@@ -53,7 +53,7 @@ TEST_SETUP(test_spwrtr)
 		.oid.id = 0,
 		.oid.port = oid.port,
 	};
-	spwrtr_t *ictl = (spwrtr_t *)msg.i.raw;
+	spwrtr_i_t *ictl = (spwrtr_i_t *)msg.i.raw;
 
 	ictl->type = spwrtr_reset;
 
@@ -100,7 +100,7 @@ TEST(test_spwrtr, spwrtrGetMapping)
 		.oid.id = 0,
 		.oid.port = oid.port,
 	};
-	spwrtr_t *ictl = (spwrtr_t *)msg.i.raw;
+	spwrtr_i_t *ictl = (spwrtr_i_t *)msg.i.raw;
 
 	for (size_t i = 0; i < sizeof(tests) / sizeof(tests[0]); i++) {
 		char info[19];
@@ -131,7 +131,7 @@ TEST(test_spwrtr, spwrtrSetMapping)
 		.oid.id = 0,
 		.oid.port = oid.port,
 	};
-	spwrtr_t *ictl = (spwrtr_t *)msg.i.raw;
+	spwrtr_i_t *ictl = (spwrtr_i_t *)msg.i.raw;
 
 	ictl->type = spwrtr_pmap_set;
 	ictl->task.mapping.port = port;
