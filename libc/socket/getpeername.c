@@ -150,14 +150,9 @@ TEST(socket_api_getpeername, getpeername_success_client)
 	memset(&peerAddr, 0, sizeof(peerAddr));
 	ret = getpeername(test_common.clientFd, (struct sockaddr *)&peerAddr, &addrLen);
 	TEST_ASSERT_EQUAL_INT(0, ret);
-#ifdef __phoenix__
-	/* https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1672 */
-	TEST_IGNORE_MESSAGE("#1672 issue");
-#else
 	TEST_ASSERT_EQUAL_INT(AF_UNIX, peerAddr.sun_family);
 	/* The server's path should be in the peer address */
 	TEST_ASSERT_EQUAL_STRING(GETPEERNAME_SOCK_PATH, peerAddr.sun_path);
-#endif
 }
 
 
@@ -176,13 +171,8 @@ TEST(socket_api_getpeername, getpeername_truncation)
 	memset(&peerAddr, 0xff, sizeof(peerAddr));
 	ret = getpeername(test_common.clientFd, (struct sockaddr *)&peerAddr, &addrLen);
 	TEST_ASSERT_EQUAL_INT(0, ret);
-#ifdef __phoenix__
-	/* https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1672 */
-	TEST_IGNORE_MESSAGE("#1672 issue");
-#else
 	/* addrLen should be updated to actual length (larger than what we passed) */
 	TEST_ASSERT_GREATER_THAN_UINT((unsigned int)sizeof(sa_family_t), (unsigned int)addrLen);
-#endif
 }
 
 
@@ -230,14 +220,8 @@ TEST(socket_api_getpeername, getpeername_enotconn)
 
 	errno = 0;
 	ret = getpeername(test_common.genericFd, (struct sockaddr *)&addr, &addrLen);
-#ifdef __phoenix__
-	(void)ret;
-	/* https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1673 */
-	TEST_IGNORE_MESSAGE("#1673 issue");
-#else
 	TEST_ASSERT_EQUAL_INT(-1, ret);
 	TEST_ASSERT_EQUAL_INT(ENOTCONN, errno);
-#endif
 }
 
 

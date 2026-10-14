@@ -100,9 +100,6 @@ TEST(socket_api_send, zero_length_message)
 
 TEST(socket_api_send, msg_nosignal_flag)
 {
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1635 issue");
-#endif
 	ssize_t n;
 
 	/* Shut down write end of peer so send will get EPIPE */
@@ -174,9 +171,6 @@ TEST(socket_api_send, epipe_after_shutdown_wr)
 	int ret;
 
 	ret = shutdown(test_common.sv[0], SHUT_WR);
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1634 issue");
-#endif
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	/* send on socket shut down for writing shall fail with EPIPE */
@@ -257,9 +251,6 @@ static void test_sigAlarmHandler(int sig)
 
 TEST(socket_api_send, eintr_signal_interrupts)
 {
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1635 issue");
-#endif
 	ssize_t n;
 	struct sigaction sa;
 	int ret;

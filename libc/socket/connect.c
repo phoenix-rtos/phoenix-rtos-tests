@@ -211,11 +211,6 @@ TEST(socket_api_connect, connect_dgram_unspec_resets_peer)
 	ret = connect(test_common.clientFd, &unspecAddr, sizeof(unspecAddr));
 	/* Some implementations return 0, some return -1 with EAFNOSUPPORT but still reset */
 
-#ifdef __phoenix__
-	(void)ret;
-	/* https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1669 */
-	TEST_IGNORE_MESSAGE("#1669 issue");
-#else
 	TEST_ASSERT_TRUE(ret == 0 || (ret == -1 && errno == EAFNOSUPPORT));
 
 	/* After reset, send() without destination should fail */
@@ -223,7 +218,6 @@ TEST(socket_api_connect, connect_dgram_unspec_resets_peer)
 	ret = (int)send(test_common.clientFd, "x", 1, 0);
 	TEST_ASSERT_EQUAL_INT(-1, ret);
 	TEST_ASSERT_TRUE(errno == EDESTADDRREQ || errno == ENOTCONN);
-#endif
 }
 
 
@@ -282,12 +276,7 @@ TEST(socket_api_connect, connect_enoent)
 	errno = 0;
 	ret = connect(test_common.clientFd, (struct sockaddr *)&addr, sizeof(addr));
 	TEST_ASSERT_EQUAL_INT(-1, ret);
-#ifdef __phoenix__
-	/* https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1670 */
-	TEST_IGNORE_MESSAGE("#1670 issue");
-#else
 	TEST_ASSERT_EQUAL_INT(ENOENT, errno);
-#endif
 }
 
 
@@ -335,13 +324,31 @@ TEST(socket_api_connect, connect_eisconn)
 	addr.sun_family = AF_UNIX;
 	strncpy(addr.sun_path, CONNECT_SOCK_PATH, sizeof(addr.sun_path) - 1);
 
-/* https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1016 */
 #ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1016 issue");
+	/* https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1016 */
+	int flags = fcntl(test_common.clientFd, F_GETFL, 0);
+	TEST_ASSERT_GREATER_OR_EQUAL(0, flags);
+    TEST_ASSERT_EQUAL(0, fcntl(test_common.clientFd, F_SETFL, flags | O_NONBLOCK));
 #endif
 
+	errno = 0;
 	ret = connect(test_common.clientFd, (struct sockaddr *)&addr, sizeof(addr));
+
+#ifdef __phoenix__
+	TEST_ASSERT_EQUAL_INT(-1, ret);
+	TEST_ASSERT_EQUAL_INT(EINPROGRESS, errno);
+
+	/* connect on not-yet-connected socket */
+	errno = 0;
+	ret = connect(test_common.clientFd, (struct sockaddr *)&addr, sizeof(addr));
+	TEST_ASSERT_EQUAL_INT(-1, ret);
+	TEST_ASSERT_EQUAL(EALREADY, errno);
+
+	test_common.acceptFd = accept(test_common.listenFd, NULL, NULL);
+	TEST_ASSERT_GREATER_OR_EQUAL(0, test_common.acceptFd);
+#else
 	TEST_ASSERT_EQUAL_INT(0, ret);
+#endif
 
 	/* Second connect on already-connected socket */
 	errno = 0;
@@ -392,13 +399,22 @@ TEST(socket_api_connect, connect_binds_unnamed)
 	addr.sun_family = AF_UNIX;
 	strncpy(addr.sun_path, CONNECT_SOCK_PATH, sizeof(addr.sun_path) - 1);
 
-/* https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1016 */
 #ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1016 issue");
+	/* https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1016 */
+	int flags = fcntl(test_common.clientFd, F_GETFL, 0);
+	TEST_ASSERT_GREATER_OR_EQUAL(0, flags);
+    TEST_ASSERT_EQUAL(0, fcntl(test_common.clientFd, F_SETFL, flags | O_NONBLOCK));
 #endif
 
+	errno = 0;
 	ret = connect(test_common.clientFd, (struct sockaddr *)&addr, sizeof(addr));
+
+#ifdef __phoenix__
+	TEST_ASSERT_EQUAL_INT(-1, ret);
+	TEST_ASSERT_EQUAL_INT(EINPROGRESS, errno);
+#else
 	TEST_ASSERT_EQUAL_INT(0, ret);
+#endif
 
 	/* getsockname should succeed after implicit bind */
 	memset(&localAddr, 0, sizeof(localAddr));

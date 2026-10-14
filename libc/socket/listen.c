@@ -222,10 +222,6 @@ TEST(socket_api_listen, einval_already_connected)
 	int ret;
 	int sv[2];
 
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1649 issue");
-#endif
-
 	ret = socketpair(AF_UNIX, SOCK_STREAM, 0, sv);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 	if (TEST_PROTECT()) {
@@ -254,9 +250,6 @@ TEST(socket_api_listen, listen_called_twice)
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	/* Calling listen again on an already listening socket should succeed */
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1649 issue");
-#endif
 	ret = listen(test_common.fd, LISTEN_BACKLOG + 1);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 }

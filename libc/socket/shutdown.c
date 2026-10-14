@@ -59,9 +59,6 @@ TEST_TEAR_DOWN(socket_api_shutdown)
 
 TEST(socket_api_shutdown, shut_rd_disables_recv)
 {
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1634 issue");
-#endif
 	int *sv = test_common.sv;
 	int ret;
 	ssize_t n;
@@ -89,9 +86,6 @@ TEST(socket_api_shutdown, shut_wr_disables_send)
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	ret = shutdown(sv[0], SHUT_WR);
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1634 issue");
-#endif
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	/* Writing to a socket after SHUT_WR should fail with EPIPE */
@@ -104,9 +98,6 @@ TEST(socket_api_shutdown, shut_wr_disables_send)
 
 TEST(socket_api_shutdown, shut_rdwr_disables_both)
 {
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1634 issue");
-#endif
 	int *sv = test_common.sv;
 	int ret;
 	ssize_t n;
@@ -246,9 +237,7 @@ TEST(socket_api_shutdown, enotconn_unconnected)
 
 	errno = 0;
 	ret = shutdown(test_common.fd, SHUT_RDWR);
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1634 issue");
-#else
+#ifndef __phoenix__
 	TEST_IGNORE_MESSAGE("Linux allows shutdown on unconnected AF_UNIX socket");
 #endif
 	TEST_ASSERT_EQUAL_INT(-1, ret);
@@ -258,9 +247,6 @@ TEST(socket_api_shutdown, enotconn_unconnected)
 
 TEST(socket_api_shutdown, shut_rd_peer_can_still_send)
 {
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1634 issue");
-#endif
 	int *sv = test_common.sv;
 	int ret;
 	ssize_t n;
@@ -314,10 +300,6 @@ TEST(socket_api_shutdown, dgram_shutdown_rdwr)
 	/* Shutdown SOCK_DGRAM for both read and write */
 	ret = shutdown(sv[0], SHUT_RDWR);
 	TEST_ASSERT_EQUAL_INT(0, ret);
-
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1634 issue");
-#endif
 
 	/* Sending on shutdown socket should fail */
 	errno = 0;
