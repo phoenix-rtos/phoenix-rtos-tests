@@ -29,10 +29,6 @@
 #define RECVMSG_BUF_SZ    32
 #define RECVMSG_SOCK_PATH "/tmp/test_recvmsg_sock"
 
-#ifndef MSG_TRUNC
-#define MSG_TRUNC 0x20
-#endif
-
 static struct {
 	int sv[2];
 } test_common;
@@ -409,9 +405,6 @@ TEST(socket_api_recvmsg, dgram_msg_trunc_flag)
 	TEST_ASSERT_GREATER_THAN_INT(0, (int)n);
 	TEST_ASSERT_EQUAL_MEMORY("abcd", buf, 4);
 	/* MSG_TRUNC shall be set when data was truncated */
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1648 issue");
-#endif
 	TEST_ASSERT_TRUE((msg.msg_flags & MSG_TRUNC) != 0);
 }
 
@@ -428,11 +421,6 @@ TEST(socket_api_recvmsg, dgram_source_address)
 	struct msghdr msg;
 	struct iovec iov;
 	const char *cliPath = "/tmp/test_recvmsg_cli_sock";
-
-#ifdef __phoenix__
-	/* https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1665 */
-	TEST_IGNORE_MESSAGE("#1665 issue");
-#endif
 
 	/* Close the default stream pair */
 	close(test_common.sv[0]);

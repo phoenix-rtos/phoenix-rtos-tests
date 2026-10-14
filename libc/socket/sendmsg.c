@@ -329,9 +329,6 @@ TEST(socket_api_sendmsg, epipe_after_shutdown_wr)
 	int ret;
 
 	ret = shutdown(test_common.sv[0], SHUT_WR);
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1634 issue");
-#endif
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	memset(&msg, 0, sizeof(msg));
@@ -419,9 +416,6 @@ TEST(socket_api_sendmsg, connection_mode_ignores_dest_addr)
 
 TEST(socket_api_sendmsg, msg_nosignal_flag)
 {
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1635 issue");
-#endif
 	ssize_t n;
 	struct msghdr msg;
 	struct iovec iov;
@@ -531,9 +525,6 @@ static void test_sigAlarmHandler(int sig)
 
 TEST(socket_api_sendmsg, eintr_signal_interrupts)
 {
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1635 issue");
-#endif
 	ssize_t n;
 	struct msghdr msg;
 	struct iovec iov;

@@ -78,13 +78,8 @@ TEST(socket_api_getsockname, getsockname_unix_bound)
 	ret = getsockname(test_common.fd, (struct sockaddr *)&nameAddr, &addrLen);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 	TEST_ASSERT_EQUAL_INT(0, errno);
-#ifdef __phoenix__
-	/* https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1674 */
-	TEST_IGNORE_MESSAGE("#1674 issue");
-#else
 	TEST_ASSERT_EQUAL_INT(AF_UNIX, nameAddr.sun_family);
 	TEST_ASSERT_EQUAL_STRING(GETSOCKNAME_SOCK_PATH, nameAddr.sun_path);
-#endif
 }
 
 
@@ -168,13 +163,8 @@ TEST(socket_api_getsockname, getsockname_truncation)
 	memset(&smallBuf, 0xff, sizeof(smallBuf));
 	ret = getsockname(test_common.fd, &smallBuf, &addrLen);
 	TEST_ASSERT_EQUAL_INT(0, ret);
-#ifdef __phoenix__
-	/* https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1674 */
-	TEST_IGNORE_MESSAGE("#1674 issue");
-#else
 	/* addrLen updated to actual (larger) size */
 	TEST_ASSERT_GREATER_THAN_UINT((unsigned int)sizeof(sa_family_t), (unsigned int)addrLen);
-#endif
 }
 
 
@@ -264,12 +254,7 @@ TEST(socket_api_getsockname, getsockname_after_connect)
 		addrLen = sizeof(cliAddr);
 		ret = getsockname(cliFd, (struct sockaddr *)&cliAddr, &addrLen);
 		TEST_ASSERT_EQUAL_INT(0, ret);
-#ifdef __phoenix__
-		/* https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1674 */
-		TEST_IGNORE_MESSAGE("#1674 issue");
-#else
 		TEST_ASSERT_EQUAL_INT(AF_UNIX, cliAddr.sun_family);
-#endif
 	}
 	close(cliFd);
 }

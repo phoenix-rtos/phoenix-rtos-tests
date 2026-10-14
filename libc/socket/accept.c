@@ -201,11 +201,6 @@ TEST(socket_api_accept, accept_with_address)
 	struct sockaddr_un peerAddr;
 	socklen_t addrLen = sizeof(peerAddr);
 
-/* https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1666 */
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1666 issue");
-#endif
-
 	test_common.listenFd = test_setupListener();
 	TEST_ASSERT_NOT_EQUAL_INT(-1, test_common.listenFd);
 
