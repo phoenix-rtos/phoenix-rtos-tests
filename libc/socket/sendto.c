@@ -215,9 +215,6 @@ TEST(socket_api_sendto, epipe_after_shutdown_wr)
 	int ret;
 
 	ret = shutdown(test_common.sv[0], SHUT_WR);
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1634 issue");
-#endif
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	errno = 0;
@@ -229,9 +226,6 @@ TEST(socket_api_sendto, epipe_after_shutdown_wr)
 
 TEST(socket_api_sendto, epipe_peer_closed)
 {
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1635 issue");
-#endif
 	ssize_t n;
 
 	close(test_common.sv[1]);
@@ -292,9 +286,6 @@ TEST(socket_api_sendto, enoent_unix_path_missing)
 
 TEST(socket_api_sendto, msg_nosignal_flag)
 {
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1635 issue");
-#endif
 	ssize_t n;
 
 	close(test_common.sv[1]);

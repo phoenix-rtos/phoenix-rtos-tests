@@ -284,10 +284,6 @@ TEST(socket_api_setsockopt, einval_after_shutdown)
 	int ret;
 	int optval;
 
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1634 issue");
-#endif
-
 	if (TEST_PROTECT()) {
 		ret = socketpair(AF_UNIX, SOCK_STREAM, 0, sv);
 		TEST_ASSERT_EQUAL_INT(0, ret);
@@ -298,6 +294,9 @@ TEST(socket_api_setsockopt, einval_after_shutdown)
 		/* Setting option on shut down socket - EINVAL: "the socket has been shut down" */
 		optval = 1;
 		errno = 0;
+#ifdef __phoenix__
+		TEST_IGNORE_MESSAGE("#1644");
+#endif
 		ret = setsockopt(sv[0], SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
 		/* Some implementations allow this; only check if it returns error */
 		if (ret == -1) {
