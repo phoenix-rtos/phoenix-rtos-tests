@@ -14,11 +14,13 @@
  */
 
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <signal.h>
 #include <sys/wait.h>
 #include <sys/mman.h>
@@ -5724,7 +5726,8 @@ enum {
 	xtServerInput,
 	xtServerOutput,
 	xtServerBorrowOutput,
-	xtServerEcho
+	xtServerEcho,
+	xtServerOversize
 };
 
 
@@ -5789,6 +5792,19 @@ static void xt_server(void *arg)
 							(unsigned char)((i ^ 0xa5) & 0xff) :
 							(unsigned char)((i * 3 + 7) & 0xff);
 				}
+			}
+			break;
+
+		case xtServerOversize:
+			/* writes and reports xtState.size bytes, more than the caller asked for */
+			if (msg.o.data == NULL) {
+				result = -6;
+			}
+			else {
+				unsigned char *data = msg.o.data;
+				for (size_t i = 0; i < xtState.size; ++i)
+					data[i] = (unsigned char)((i ^ 0xa5) & 0xff);
+				msg.o.size = xtState.size;
 			}
 			break;
 
@@ -6093,6 +6109,1036 @@ TEST(msg_xfer_types, xfer_map_recv_ipcbuf_too_small)
 }
 
 
+/* A response cannot write back more than the caller's o.size. */
+TEST(msg_xfer_types, xfer_extra_out_oversized_response)
+{
+	const size_t size = 64, bufsz = 1024;
+	uint32_t port;
+	unsigned char *output = malloc(bufsz);
+	msg_t msg = { 0 };
+
+	TEST_ASSERT_NOT_NULL(output);
+	memset(output, 0xcc, bufsz);
+	TEST_ASSERT_EQUAL_INT(0, portCreate(&port));
+	TEST_ASSERT_EQUAL_INT(0, xt_start(port, xtServerOversize, bufsz, 2 * _PAGE_SIZE));
+	msg.o.data = output;
+	msg.o.size = size;
+	TEST_ASSERT_EQUAL_INT(0, msgSend(port, &msg));
+	TEST_ASSERT_EQUAL_INT(0, msg.o.err);
+	TEST_ASSERT_EQUAL_UINT(size, msg.o.size);
+	for (size_t i = 0; i < size; ++i)
+		TEST_ASSERT_EQUAL_HEX8((unsigned char)((i ^ 0xa5) & 0xff), output[i]);
+	for (size_t i = size; i < bufsz; ++i)
+		TEST_ASSERT_EQUAL_HEX8(0xcc, output[i]);
+	xt_join();
+	portDestroy(port);
+	free(output);
+}
+
+
+static struct {
+	char stack[2][4096] __attribute__((aligned(8)));
+	uint32_t port;
+	uint32_t fwdPort;
+	volatile int ready[2];
+	volatile int scribbled;
+	volatile int result[2];
+} xfState;
+
+
+/* Receives into its IPC buffer, forwards, then reuses the buffer. */
+static void xf_server1(void *arg)
+{
+	unsigned char *ipcBuffer = msgSetup(2 * _PAGE_SIZE);
+	msg_t msg = { 0 };
+	msg_rid_t rid;
+
+	(void)arg;
+
+	if (ipcBuffer == NULL) {
+		xfState.result[0] = -1;
+		endthread();
+	}
+	xfState.ready[0] = 1;
+
+	if (msgRecv(xfState.port, &msg, &rid) < 0) {
+		xfState.result[0] = -2;
+		endthread();
+	}
+
+	if (msgForward(xfState.fwdPort, &msg, rid) < 0) {
+		xfState.result[0] = -3;
+		endthread();
+	}
+
+	memset(ipcBuffer, 0x11, 2 * _PAGE_SIZE);
+	xfState.scribbled = 1;
+	endthread();
+}
+
+
+/* Serves the forwarded message only after server1 reused its buffer. */
+static void xf_server2(void *arg)
+{
+	unsigned char *ipcBuffer = msgSetup(2 * _PAGE_SIZE);
+	msg_t msg = { 0 };
+	msg_rid_t rid;
+
+	(void)arg;
+
+	if (ipcBuffer == NULL) {
+		xfState.result[1] = -1;
+		endthread();
+	}
+	memset(ipcBuffer, 0xee, 2 * _PAGE_SIZE);
+	xfState.ready[1] = 1;
+
+	if (msgRecv(xfState.fwdPort, &msg, &rid) < 0) {
+		xfState.result[1] = -2;
+		endthread();
+	}
+
+	while (xfState.scribbled == 0)
+		usleep(1000);
+
+	if (msg.i.data == NULL || msg.o.data == NULL) {
+		xfState.result[1] = -3;
+	}
+	else {
+		const unsigned char *input = msg.i.data;
+		unsigned char *output = msg.o.data;
+		size_t size = msg.i.size < msg.o.size ? msg.i.size : msg.o.size;
+		for (size_t i = 0; i < size; ++i)
+			output[i] = input[i] ^ (unsigned char)((i & 0xff) ^ 0x5a);
+	}
+
+	msg.o.err = msg.type;
+	if (msgRespond(xfState.fwdPort, &msg, rid) < 0)
+		xfState.result[1] = -4;
+	endthread();
+}
+
+
+/* Small data in the first server's IPC buffer follows a forwarded message. */
+TEST(msg_xfer_types, xfer_extra_forward)
+{
+	const size_t size = 256;
+	unsigned char *input = malloc(size);
+	unsigned char *output = malloc(size);
+	handle_t tid[2];
+	msg_t msg = { 0 };
+
+	TEST_ASSERT_NOT_NULL(input);
+	TEST_ASSERT_NOT_NULL(output);
+	for (size_t i = 0; i < size; ++i)
+		input[i] = (unsigned char)((i * 7 + 1) & 0xff);
+	memset(output, 0, size);
+
+	memset((void *)&xfState.ready, 0, sizeof(xfState.ready));
+	memset((void *)&xfState.result, 0, sizeof(xfState.result));
+	xfState.scribbled = 0;
+	TEST_ASSERT_EQUAL_INT(0, portCreate(&xfState.port));
+	TEST_ASSERT_EQUAL_INT(0, portCreate(&xfState.fwdPort));
+	TEST_ASSERT_EQUAL_INT(0, beginthreadex(xf_server2, 4, xfState.stack[1], sizeof(xfState.stack[1]), NULL, &tid[1]));
+	TEST_ASSERT_EQUAL_INT(0, beginthreadex(xf_server1, 4, xfState.stack[0], sizeof(xfState.stack[0]), NULL, &tid[0]));
+	while (xfState.ready[0] == 0 || xfState.ready[1] == 0)
+		usleep(1000);
+	usleep(10 * 1000);
+
+	msg.type = mtWrite;
+	msg.i.data = input;
+	msg.i.size = size;
+	msg.o.data = output;
+	msg.o.size = size;
+	TEST_ASSERT_EQUAL_INT(0, msgSend(xfState.port, &msg));
+	TEST_ASSERT_EQUAL_INT(mtWrite, msg.o.err);
+
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, threadJoin(tid[0], 0));
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, threadJoin(tid[1], 0));
+	TEST_ASSERT_EQUAL_INT(0, xfState.result[0]);
+	TEST_ASSERT_EQUAL_INT(0, xfState.result[1]);
+	for (size_t i = 0; i < size; ++i)
+		input[i] ^= (unsigned char)((i & 0xff) ^ 0x5a);
+	TEST_ASSERT_EQUAL_MEMORY(input, output, size);
+
+	portDestroy(xfState.fwdPort);
+	portDestroy(xfState.port);
+	free(input);
+	free(output);
+}
+
+
+/* A receiver in another process borrows the caller's IPC buffer, both pages of it. */
+TEST(msg_xfer_types, xfer_borrow_cross_process)
+{
+#ifdef NOMMU
+	TEST_IGNORE_MESSAGE("needs fork");
+#else
+	const size_t size = 512;
+	unsigned char *ipcBuffer, *input, *output;
+	char path[64];
+	msg_t msg = { 0 };
+	oid_t oid;
+	pid_t pid;
+
+	make_dev_path(path, sizeof(path), "xt_borrow");
+
+	if ((pid = safe_fork()) == 0) {
+		msg_t req = { 0 };
+		msg_rid_t rid;
+		uint32_t port;
+
+		if (setup_port_dev(path, &port) < 0)
+			exit(3);
+		if (msgRecv(port, &req, &rid) < 0)
+			exit(4);
+		if (req.i.data == NULL || req.o.data == NULL || req.i.size != size || req.o.size != size)
+			exit(5);
+		for (size_t i = 0; i < size; ++i)
+			((unsigned char *)req.o.data)[i] = ((const unsigned char *)req.i.data)[i] ^ (unsigned char)((i & 0xff) ^ 0x5a);
+		req.o.err = req.type;
+		if (msgRespond(port, &req, rid) < 0)
+			exit(6);
+		exit(0);
+	}
+
+	ipcBuffer = msgSetup(2 * _PAGE_SIZE);
+	TEST_ASSERT_NOT_NULL(ipcBuffer);
+	input = ipcBuffer + _PAGE_SIZE + 16;
+	output = ipcBuffer + 100;
+	for (size_t i = 0; i < size; ++i)
+		input[i] = (unsigned char)((i * 5 + 3) & 0xff);
+	memset(output, 0, size);
+
+	while (lookup(path, NULL, &oid) < 0)
+		usleep(10 * 1000);
+
+	msg.type = mtWrite;
+	msg.i.data = input;
+	msg.i.size = size;
+	msg.o.data = output;
+	msg.o.size = size;
+	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
+	TEST_ASSERT_EQUAL_INT(mtWrite, msg.o.err);
+	for (size_t i = 0; i < size; ++i)
+		TEST_ASSERT_EQUAL_HEX8(input[i] ^ (unsigned char)((i & 0xff) ^ 0x5a), output[i]);
+
+	assert_child_exit(pid);
+#endif
+}
+
+
+static struct {
+	char stack[2][4096] __attribute__((aligned(8)));
+	uint32_t port;
+	volatile int ready;
+	volatile int go;
+	volatile int bSending;
+	volatile int result[2];
+} xrState;
+
+
+/* Responds to A, then receives B before A got to run. */
+static void xr_server(void *arg)
+{
+	msg_t msg = { 0 };
+	msg_rid_t rid;
+
+	(void)arg;
+
+	if (msgSetup(2 * _PAGE_SIZE) == NULL) {
+		xrState.result[0] = -1;
+		endthread();
+	}
+	xrState.ready = 1;
+
+	if (msgRecv(xrState.port, &msg, &rid) < 0) {
+		xrState.result[0] = -2;
+		endthread();
+	}
+
+	/* let B queue up on the port */
+	while (xrState.bSending == 0)
+		usleep(1000);
+	usleep(20 * 1000);
+
+	if (msg.o.data == NULL) {
+		xrState.result[0] = -3;
+	}
+	else {
+		for (size_t i = 0; i < msg.o.size; ++i)
+			((unsigned char *)msg.o.data)[i] = (unsigned char)((i ^ 0xa5) & 0xff);
+	}
+	msg.o.err = EOK;
+	if (msgRespond(xrState.port, &msg, rid) < 0)
+		xrState.result[0] = -4;
+
+	if (msgRecv(xrState.port, &msg, &rid) < 0) {
+		xrState.result[0] = -5;
+		endthread();
+	}
+	msg.o.err = EOK;
+	if (msgRespond(xrState.port, &msg, rid) < 0)
+		xrState.result[0] = -6;
+	endthread();
+}
+
+
+static void xr_clientB(void *arg)
+{
+	static unsigned char input[512];
+	msg_t msg = { 0 };
+
+	(void)arg;
+
+	memset(input, 0x77, sizeof(input));
+	while (xrState.go == 0)
+		usleep(1000);
+
+	msg.i.data = input;
+	msg.i.size = sizeof(input);
+	xrState.bSending = 1;
+	if (msgSend(xrState.port, &msg) < 0)
+		xrState.result[1] = -1;
+	endthread();
+}
+
+
+/*
+ * The receiver's IPC buffer is reused for the next message before the
+ * lower-priority caller of the previous one runs; its output must survive.
+ */
+TEST(msg_xfer_types, xfer_extra_out_reused_before_copy)
+{
+	const size_t size = 512;
+	unsigned char *output = malloc(size);
+	int prio = priority(-1);
+	handle_t tid[2];
+	msg_t msg = { 0 };
+
+	TEST_ASSERT_NOT_NULL(output);
+	memset(output, 0, size);
+	memset((void *)&xrState.result, 0, sizeof(xrState.result));
+	xrState.ready = 0;
+	xrState.go = 0;
+	xrState.bSending = 0;
+	TEST_ASSERT_EQUAL_INT(0, portCreate(&xrState.port));
+
+	priority(6);
+	TEST_ASSERT_EQUAL_INT(0, beginthreadex(xr_server, 2, xrState.stack[0], sizeof(xrState.stack[0]), NULL, &tid[0]));
+	while (xrState.ready == 0)
+		usleep(1000);
+	TEST_ASSERT_EQUAL_INT(0, beginthreadex(xr_clientB, 5, xrState.stack[1], sizeof(xrState.stack[1]), NULL, &tid[1]));
+
+	xrState.go = 1;
+	msg.o.data = output;
+	msg.o.size = size;
+	TEST_ASSERT_EQUAL_INT(0, msgSend(xrState.port, &msg));
+	priority(prio);
+
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, threadJoin(tid[0], 0));
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, threadJoin(tid[1], 0));
+	TEST_ASSERT_EQUAL_INT(0, xrState.result[0]);
+	TEST_ASSERT_EQUAL_INT(0, xrState.result[1]);
+	TEST_ASSERT_EQUAL_INT(0, msg.o.err);
+	for (size_t i = 0; i < size; ++i)
+		TEST_ASSERT_EQUAL_HEX8((unsigned char)((i ^ 0xa5) & 0xff), output[i]);
+
+	portDestroy(xrState.port);
+	free(output);
+}
+
+
+/* The receiver exits right after responding, before its lower-priority caller runs. */
+TEST(msg_xfer_types, xfer_extra_out_server_exits)
+{
+#ifdef NOMMU
+	TEST_IGNORE_MESSAGE("needs fork");
+#else
+	const size_t size = 512;
+	unsigned char *output = malloc(size);
+	int prio = priority(-1);
+	char path[64];
+	msg_t msg = { 0 };
+	oid_t oid;
+	pid_t pid;
+
+	TEST_ASSERT_NOT_NULL(output);
+	memset(output, 0, size);
+	make_dev_path(path, sizeof(path), "xt_exit");
+
+	if ((pid = safe_fork()) == 0) {
+		msg_t req = { 0 };
+		msg_rid_t rid;
+		uint32_t port;
+
+		priority(2);
+		if (msgSetup(2 * _PAGE_SIZE) == NULL)
+			exit(2);
+		if (setup_port_dev(path, &port) < 0)
+			exit(3);
+		if (msgRecv(port, &req, &rid) < 0)
+			exit(4);
+		for (size_t i = 0; i < req.o.size; ++i)
+			((unsigned char *)req.o.data)[i] = (unsigned char)((i ^ 0xa5) & 0xff);
+		req.o.err = EOK;
+		msgRespond(port, &req, rid);
+		exit(0);
+	}
+
+	while (lookup(path, NULL, &oid) < 0)
+		usleep(10 * 1000);
+
+	priority(6);
+	msg.o.data = output;
+	msg.o.size = size;
+	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
+	priority(prio);
+	TEST_ASSERT_EQUAL_INT(0, msg.o.err);
+	for (size_t i = 0; i < size; ++i)
+		TEST_ASSERT_EQUAL_HEX8((unsigned char)((i ^ 0xa5) & 0xff), output[i]);
+
+	waitpid(pid, NULL, 0);
+	free(output);
+#endif
+}
+
+
+/* ===================================== */
+/* TEST_GROUP: msg_ctrlc                 */
+/* ^C regression tests: a process tree   */
+/* busy with IPC gets SIGINT at a random */
+/* moment, like psh does on ^C, and has  */
+/* to go away completely while the rest  */
+/* of the system keeps working. A kernel */
+/* assert or fault stops the whole run.  */
+/* ===================================== */
+
+TEST_GROUP(msg_ctrlc);
+
+
+#define CTRLC_ITERS       15
+#define CTRLC_DEADLINE_MS 10000
+
+
+static struct {
+	uint32_t port;
+	char stack[4096] __attribute__((aligned(8)));
+	handle_t tid;
+	volatile int usr1;
+	char tag[48]; /* unique per iteration, so a dead victim's devices are never looked up */
+
+	/* a thread of the test process itself, calling into the victims while they die */
+	void (*survivor)(void);
+	char survivorStack[8192] __attribute__((aligned(8)));
+	volatile int survivorStop;
+	volatile unsigned int survivorGood; /* a check that never ran proves nothing */
+	char survivorError[96];
+} ctrlc_common;
+
+
+static void ctrlc_path(char *buf, size_t bufsz, const char *what)
+{
+	snprintf(buf, bufsz, "%s_%s", ctrlc_common.tag, what);
+}
+
+
+static void ctrlc_survivorThread(void *arg)
+{
+	(void)arg;
+	ctrlc_common.survivor();
+	endthread();
+}
+
+
+/* Answers the liveness check, so a broken scheduler or port layer shows up in the survivor too. */
+static void ctrlc_aliveServer(void *arg)
+{
+	msg_t msg;
+	msg_rid_t rid;
+
+	(void)arg;
+
+	for (;;) {
+		if (msgRecv(ctrlc_common.port, &msg, &rid) < 0) {
+			break;
+		}
+		msg.o.err = msg.type + 1;
+		if (msgRespond(ctrlc_common.port, &msg, rid) < 0) {
+			break;
+		}
+	}
+	endthread();
+}
+
+
+TEST_SETUP(msg_ctrlc)
+{
+#ifdef NOMMU
+	TEST_IGNORE_MESSAGE("needs fork");
+#else
+	TEST_ASSERT_EQUAL_INT(0, portCreate(&ctrlc_common.port));
+	TEST_ASSERT_EQUAL_INT(0, beginthreadex(ctrlc_aliveServer, 4, ctrlc_common.stack, sizeof(ctrlc_common.stack), NULL, &ctrlc_common.tid));
+#endif
+}
+
+
+TEST_TEAR_DOWN(msg_ctrlc)
+{
+#ifndef NOMMU
+	portDestroy(ctrlc_common.port);
+	(void)threadJoin(ctrlc_common.tid, 0);
+#endif
+}
+
+
+static int ctrlc_elapsedMs(const struct timespec *from)
+{
+	struct timespec now;
+
+	clock_gettime(CLOCK_MONOTONIC, &now);
+	return (int)((now.tv_sec - from->tv_sec) * 1000 + (now.tv_nsec - from->tv_nsec) / 1000000);
+}
+
+
+/* The victim and everything it forked has to be gone before the deadline. */
+static void ctrlc_reap(pid_t pid, unsigned int iter)
+{
+	struct timespec start;
+	int victimReaped = 0, status;
+	char msg[96];
+
+	int warned = 0;
+
+	clock_gettime(CLOCK_MONOTONIC, &start);
+	while (ctrlc_elapsedMs(&start) < CTRLC_DEADLINE_MS) {
+		if ((victimReaped == 0) && (waitpid(pid, &status, WNOHANG) == pid)) {
+			victimReaped = 1;
+		}
+		if ((victimReaped != 0) && (kill(-pid, 0) < 0)) {
+			return;
+		}
+		if ((warned == 0) && (ctrlc_elapsedMs(&start) > CTRLC_DEADLINE_MS / 2)) {
+			/*
+			 * A process forked while the group was being signalled misses the
+			 * signal (no fork restart yet), so press ^C again like a user would.
+			 * Whatever the kernel does wrong beyond that still fails below.
+			 */
+			printf("msg_ctrlc: process group %d (victim %s) needed a second ^C\n", (int)pid, (victimReaped != 0) ? "reaped" : "alive");
+			fflush(stdout);
+			(void)kill(-pid, SIGINT);
+			warned = 1;
+		}
+		usleep(10 * 1000);
+	}
+
+	(void)kill(-pid, SIGKILL);
+	snprintf(msg, sizeof(msg), "iteration %u: %s still there after ^C", iter, (victimReaped == 0) ? "victim" : "its process group");
+	TEST_FAIL_MESSAGE(msg);
+}
+
+
+static void ctrlc_alive(void)
+{
+	msg_t msg = { 0 };
+
+	msg.type = 41;
+	TEST_ASSERT_EQUAL_INT(0, msgSend(ctrlc_common.port, &msg));
+	TEST_ASSERT_EQUAL_INT(42, msg.o.err);
+}
+
+
+/* Runs victim in a process group of its own, interrupts it like psh's ^C does, and checks it goes. */
+static void ctrlc_runEx(void (*victim)(void), void (*survivor)(void), unsigned int iters, unsigned int seed)
+{
+	unsigned int iter;
+	handle_t stid = 0;
+	pid_t pid;
+
+	for (iter = 0; iter < iters; iter++) {
+		make_dev_path(ctrlc_common.tag, sizeof(ctrlc_common.tag), "ctrlc");
+		if (survivor != NULL) {
+			ctrlc_common.survivor = survivor;
+			ctrlc_common.survivorStop = 0;
+			ctrlc_common.survivorError[0] = '\0';
+			TEST_ASSERT_EQUAL_INT(0, beginthreadex(ctrlc_survivorThread, 4, ctrlc_common.survivorStack, sizeof(ctrlc_common.survivorStack), NULL, &stid));
+		}
+
+		if ((pid = safe_fork()) == 0) {
+			(void)setpgid(0, 0);
+			victim();
+			_exit(0);
+		}
+		(void)setpgid(pid, pid);
+
+		/* anywhere from setting up to steady state */
+		usleep((5U + (unsigned int)(rand_r(&seed) % 300U)) * 1000U);
+		TEST_ASSERT_EQUAL_INT(0, kill(-pid, SIGINT));
+
+		ctrlc_reap(pid, iter);
+		ctrlc_alive();
+
+		if (survivor != NULL) {
+			ctrlc_common.survivorStop = 1;
+			TEST_ASSERT_GREATER_OR_EQUAL_INT(0, threadJoin(stid, 0));
+			TEST_ASSERT_EQUAL_STRING_MESSAGE("", ctrlc_common.survivorError, ctrlc_common.survivorError);
+		}
+	}
+}
+
+
+static void ctrlc_run(void (*victim)(void), unsigned int seed)
+{
+	ctrlc_runEx(victim, NULL, CTRLC_ITERS, seed);
+}
+
+
+/* Clients in the victim process call port with data, which ends up in the servers' IPC buffers. */
+static void ctrlc_clientThread(void *arg)
+{
+	uint32_t port = (uint32_t)(uintptr_t)arg;
+	unsigned char in[256], out[256];
+	unsigned int seed = (unsigned int)(uintptr_t)&seed;
+
+	for (;;) {
+		msg_t msg = { 0 };
+		size_t sz = 1U + (unsigned int)(rand_r(&seed) % sizeof(in));
+
+		msg.type = mtWrite;
+		msg.i.data = in;
+		msg.i.size = sz;
+		msg.o.data = out;
+		msg.o.size = sz;
+		(void)msgSend(port, &msg);
+	}
+}
+
+
+static void ctrlc_clients(uint32_t port, int count, int prio)
+{
+	static char stacks[6][4096] __attribute__((aligned(8)));
+
+	for (int i = 0; (i < count) && (i < 6); i++) {
+		(void)beginthread(ctrlc_clientThread, prio, stacks[i], sizeof(stacks[i]), (void *)(uintptr_t)port);
+	}
+	ctrlc_clientThread((void *)(uintptr_t)port);
+}
+
+
+static oid_t ctrlc_lookup(const char *path)
+{
+	oid_t oid;
+
+	while (lookup(path, NULL, &oid) < 0) {
+		usleep(1000);
+	}
+	return oid;
+}
+
+
+static uint32_t ctrlc_fwdBackend;
+
+
+static void ctrlc_fwdBackendThread(void *arg)
+{
+	(void)arg;
+	(void)msgSetup(2 * _PAGE_SIZE);
+	server_echo_loop(ctrlc_fwdBackend, 0);
+}
+
+
+/* A server process forwarding everything to a second thread of its own, both with IPC buffers. */
+static void ctrlc_fwdVictim(void)
+{
+	static char stack[8192] __attribute__((aligned(8)));
+	char path[64];
+
+	ctrlc_path(path, sizeof(path), "fwd");
+	if (safe_fork() == 0) {
+		uint32_t port;
+		msg_t msg = { 0 };
+		msg_rid_t rid;
+
+		if ((setup_port_dev(path, &port) < 0) || (portCreate(&ctrlc_fwdBackend) < 0)) {
+			_exit(3);
+		}
+		(void)beginthread(ctrlc_fwdBackendThread, 4, stack, sizeof(stack), NULL);
+		(void)msgSetup(2 * _PAGE_SIZE);
+		for (;;) {
+			if (msgRecv(port, &msg, &rid) < 0) {
+				continue;
+			}
+			if (msgForward(ctrlc_fwdBackend, &msg, rid) < 0) {
+				msg.o.err = -EIO;
+				(void)msgRespond(port, &msg, rid);
+			}
+		}
+	}
+
+	ctrlc_clients(ctrlc_lookup(path).port, 2, 4);
+}
+
+
+/* A respondAndRecv leaf behind a relay that calls it with the clients' data. */
+static void ctrlc_chainVictim(void)
+{
+	char leaf[64], relay[64];
+	oid_t leafOid;
+
+	ctrlc_path(leaf, sizeof(leaf), "leaf");
+	ctrlc_path(relay, sizeof(relay), "relay");
+	if (safe_fork() == 0) {
+		uint32_t port;
+
+		if (setup_port_dev(leaf, &port) < 0) {
+			_exit(3);
+		}
+		(void)msgSetup(2 * _PAGE_SIZE);
+		server_echo_loop(port, 1);
+	}
+
+	leafOid = ctrlc_lookup(leaf);
+	(void)spawn_forwarder(relay, &leafOid);
+	/* more clients than the relay serves, so they boost it while the leaf answers it */
+	ctrlc_clients(ctrlc_lookup(relay).port, 6, 4);
+}
+
+
+static uint32_t ctrlc_prioPort;
+
+
+static void ctrlc_prioServer(void *arg)
+{
+	(void)arg;
+	(void)msgSetup(2 * _PAGE_SIZE);
+	server_echo_loop(ctrlc_prioPort, 0);
+}
+
+
+/* A fast server and clients of different priorities, so dying callers and their copies interleave. */
+static void ctrlc_prioVictim(void)
+{
+	static char stack[8192] __attribute__((aligned(8)));
+	static char cstacks[3][4096] __attribute__((aligned(8)));
+
+	if (portCreate(&ctrlc_prioPort) < 0) {
+		_exit(3);
+	}
+	(void)beginthread(ctrlc_prioServer, 2, stack, sizeof(stack), NULL);
+	for (int i = 0; i < 3; i++) {
+		(void)beginthread(ctrlc_clientThread, 4 + i, cstacks[i], sizeof(cstacks[i]), (void *)(uintptr_t)ctrlc_prioPort);
+	}
+	priority(7);
+	ctrlc_clientThread((void *)(uintptr_t)ctrlc_prioPort);
+}
+
+
+static void ctrlc_forkThread(void *arg)
+{
+	pid_t pid;
+
+	(void)arg;
+
+	for (;;) {
+		if ((pid = fork()) == 0) {
+			_exit(0);
+		}
+		if (pid > 0) {
+			(void)waitpid(pid, NULL, 0);
+		}
+	}
+}
+
+
+/* Forks from several threads at once, so ^C keeps landing between a child's fork() and its release(). */
+static void ctrlc_forkVictim(void)
+{
+	static char stacks[3][8192] __attribute__((aligned(8)));
+
+	for (int i = 0; i < 3; i++) {
+		(void)beginthread(ctrlc_forkThread, 4, stacks[i], sizeof(stacks[i]), NULL);
+	}
+	ctrlc_forkThread(NULL);
+}
+
+
+#define CTRLC_DEV_READ 256
+
+
+/* A device server: open and close succeed, reads return the pattern, some slowly enough to die in the middle. */
+static volatile int ctrlc_devSlow; /* every read takes long, so the server is always busy */
+
+
+static void ctrlc_devServe(uint32_t port)
+{
+	unsigned int seed = port;
+	msg_t msg;
+	msg_rid_t rid;
+
+	for (;;) {
+		if (msgRecv(port, &msg, &rid) < 0) {
+			continue;
+		}
+
+		switch (msg.type) {
+			case mtOpen:
+			case mtClose:
+				msg.o.err = 0;
+				break;
+
+			case mtRead:
+				if ((ctrlc_devSlow != 0) || ((rand_r(&seed) % 3U) == 0U)) {
+					usleep(((ctrlc_devSlow != 0) ? 40 : 20) * 1000);
+				}
+				if (msg.o.data != NULL) {
+					memset(msg.o.data, 0x5a, msg.o.size);
+				}
+				msg.o.err = (int)msg.o.size;
+				break;
+
+			default:
+				msg.o.err = -ENOSYS;
+				break;
+		}
+		(void)msgRespond(port, &msg, rid);
+	}
+}
+
+
+/* Holds a few files of the device open and reads, so the dying group closes them on its way out. */
+static void ctrlc_devOpener(const char *path)
+{
+	char buf[CTRLC_DEV_READ];
+	int fds[3];
+
+	for (int i = 0; i < 3; i++) {
+		while ((fds[i] = open(path, O_RDONLY)) < 0) {
+			usleep(1000);
+		}
+	}
+	for (unsigned int n = 0;; n++) {
+		(void)read(fds[n % 3U], buf, sizeof(buf));
+	}
+}
+
+
+static void ctrlc_devVictim(void)
+{
+	char path[64];
+
+	ctrlc_path(path, sizeof(path), "dev");
+	if (safe_fork() == 0) {
+		uint32_t port;
+
+		if (setup_port_dev(path, &port) < 0) {
+			_exit(3);
+		}
+		ctrlc_devServe(port);
+	}
+	if (safe_fork() == 0) {
+		ctrlc_devOpener(path);
+	}
+	ctrlc_devOpener(path);
+}
+
+
+/* Reads the dying device from outside its group: a read either fails or is a whole served one. */
+static void ctrlc_devSurvivor(void)
+{
+	unsigned char buf[CTRLC_DEV_READ];
+	char path[64];
+	int fd = -1;
+	ssize_t n;
+
+	ctrlc_path(path, sizeof(path), "dev");
+	while (ctrlc_common.survivorStop == 0) {
+		if (fd < 0) {
+			fd = open(path, O_RDONLY);
+			if (fd < 0) {
+				usleep(1000);
+				continue;
+			}
+		}
+
+		memset(buf, 0, sizeof(buf));
+		n = read(fd, buf, sizeof(buf));
+		if (n < 0) {
+			/* the server is gone, which is what a caller has to be told */
+			(void)close(fd);
+			fd = -1;
+			continue;
+		}
+		if ((n != (ssize_t)sizeof(buf)) || (buf[0] != 0x5a) || (buf[sizeof(buf) - 1] != 0x5a)) {
+			snprintf(ctrlc_common.survivorError, sizeof(ctrlc_common.survivorError),
+					"read returned %d without the server answering", (int)n);
+			break;
+		}
+		ctrlc_common.survivorGood++;
+	}
+	if (fd >= 0) {
+		(void)close(fd);
+	}
+}
+
+
+static void ctrlc_vmThread(void *arg)
+{
+	(void)arg;
+
+	for (;;) {
+		void *p = mmap(NULL, 4 * _PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+		if (p != MAP_FAILED) {
+			memset(p, 1, 4 * _PAGE_SIZE);
+			(void)munmap(p, 4 * _PAGE_SIZE);
+		}
+	}
+}
+
+
+/* Threads waiting for the process' memory map lock when the kill comes, next to IPC. */
+static void ctrlc_vmVictim(void)
+{
+	static char stack[8192] __attribute__((aligned(8)));
+	static char vstacks[6][4096] __attribute__((aligned(8)));
+
+	if (portCreate(&ctrlc_prioPort) < 0) {
+		_exit(3);
+	}
+	(void)beginthread(ctrlc_prioServer, 3, stack, sizeof(stack), NULL);
+	for (int i = 0; i < 6; i++) {
+		(void)beginthread(ctrlc_vmThread, 4 + (i % 3), vstacks[i], sizeof(vstacks[i]), NULL);
+	}
+	ctrlc_clientThread((void *)(uintptr_t)ctrlc_prioPort);
+}
+
+
+static void ctrlc_usr1(int sig)
+{
+	(void)sig;
+	ctrlc_common.usr1++;
+}
+
+
+/* Signals keep arriving while the servers are woken through the IPC fastpath. */
+static void ctrlc_signalVictim(void)
+{
+	char path[64];
+	pid_t server;
+
+	ctrlc_path(path, sizeof(path), "sig");
+	if ((server = safe_fork()) == 0) {
+		uint32_t port;
+
+		signal(SIGUSR1, ctrlc_usr1);
+		if (setup_port_dev(path, &port) < 0) {
+			_exit(3);
+		}
+		server_echo_loop(port, 1);
+	}
+
+	if (safe_fork() == 0) {
+		for (;;) {
+			(void)kill(server, SIGUSR1);
+			usleep(1000);
+		}
+	}
+
+	ctrlc_clients(ctrlc_lookup(path).port, 2, 4);
+}
+
+
+TEST(msg_ctrlc, forward)
+{
+	ctrlc_run(ctrlc_fwdVictim, 1);
+}
+
+
+TEST(msg_ctrlc, respond_recv_chain)
+{
+	ctrlc_run(ctrlc_chainVictim, 2);
+}
+
+
+TEST(msg_ctrlc, mixed_priorities)
+{
+	ctrlc_run(ctrlc_prioVictim, 3);
+}
+
+
+TEST(msg_ctrlc, fork_storm)
+{
+	ctrlc_runEx(ctrlc_forkVictim, NULL, 3 * CTRLC_ITERS, 4);
+}
+
+
+TEST(msg_ctrlc, dev_files)
+{
+	ctrlc_common.survivorGood = 0;
+	ctrlc_runEx(ctrlc_devVictim, ctrlc_devSurvivor, CTRLC_ITERS, 6);
+	TEST_ASSERT_GREATER_THAN_UINT_MESSAGE(0, ctrlc_common.survivorGood, "the survivor never read the device");
+}
+
+
+/*
+ * The server outlives its clients by a moment: their files are closed on their
+ * way out while it is busy, then it dies too. Whoever closes those files has
+ * to notice it is gone instead of waiting for it forever.
+ */
+TEST(msg_ctrlc, dev_files_late_server)
+{
+	unsigned int seed = 8, iter;
+	pid_t server, openers;
+	char path[64];
+
+	for (iter = 0; iter < CTRLC_ITERS; iter++) {
+		make_dev_path(ctrlc_common.tag, sizeof(ctrlc_common.tag), "ctrlc");
+		ctrlc_path(path, sizeof(path), "dev");
+
+		if ((server = safe_fork()) == 0) {
+			uint32_t port = 0;
+
+			(void)setpgid(0, 0);
+			ctrlc_devSlow = 1;
+			if (setup_port_dev(path, &port) < 0) {
+				_exit(3);
+			}
+			ctrlc_devServe(port);
+		}
+		(void)setpgid(server, server);
+
+		if ((openers = safe_fork()) == 0) {
+			(void)setpgid(0, 0);
+			if (safe_fork() == 0) {
+				ctrlc_devOpener(path);
+			}
+			ctrlc_devOpener(path);
+		}
+		(void)setpgid(openers, openers);
+
+		usleep((50U + (unsigned int)(rand_r(&seed) % 200U)) * 1000U);
+		TEST_ASSERT_EQUAL_INT(0, kill(-openers, SIGINT));
+		usleep((5U + (unsigned int)(rand_r(&seed) % 60U)) * 1000U);
+		TEST_ASSERT_EQUAL_INT(0, kill(-server, SIGINT));
+
+		ctrlc_reap(openers, iter);
+		ctrlc_reap(server, iter);
+		ctrlc_alive();
+	}
+}
+
+
+TEST(msg_ctrlc, vm_contention)
+{
+	ctrlc_run(ctrlc_vmVictim, 7);
+}
+
+
+TEST(msg_ctrlc, signals_during_ipc)
+{
+	ctrlc_run(ctrlc_signalVictim, 5);
+}
+
+
 /* ===================================== */
 /* Group runners                         */
 /* ===================================== */
@@ -6257,6 +7303,19 @@ TEST_GROUP_RUNNER(msg_respond_recv_chain)
 }
 
 
+TEST_GROUP_RUNNER(msg_ctrlc)
+{
+	RUN_TEST_CASE(msg_ctrlc, forward);
+	RUN_TEST_CASE(msg_ctrlc, respond_recv_chain);
+	RUN_TEST_CASE(msg_ctrlc, mixed_priorities);
+	RUN_TEST_CASE(msg_ctrlc, fork_storm);
+	RUN_TEST_CASE(msg_ctrlc, signals_during_ipc);
+	RUN_TEST_CASE(msg_ctrlc, dev_files);
+	RUN_TEST_CASE(msg_ctrlc, dev_files_late_server);
+	RUN_TEST_CASE(msg_ctrlc, vm_contention);
+}
+
+
 TEST_GROUP_RUNNER(msg_xfer_types)
 {
 	RUN_TEST_CASE(msg_xfer_types, xfer_none);
@@ -6269,6 +7328,11 @@ TEST_GROUP_RUNNER(msg_xfer_types)
 	RUN_TEST_CASE(msg_xfer_types, xfer_borrow_out_offset);
 	RUN_TEST_CASE(msg_xfer_types, xfer_map);
 	RUN_TEST_CASE(msg_xfer_types, xfer_map_recv_ipcbuf_too_small);
+	RUN_TEST_CASE(msg_xfer_types, xfer_extra_out_oversized_response);
+	RUN_TEST_CASE(msg_xfer_types, xfer_extra_forward);
+	RUN_TEST_CASE(msg_xfer_types, xfer_borrow_cross_process);
+	RUN_TEST_CASE(msg_xfer_types, xfer_extra_out_reused_before_copy);
+	RUN_TEST_CASE(msg_xfer_types, xfer_extra_out_server_exits);
 }
 
 
@@ -6294,6 +7358,7 @@ void runner(void)
 	RUN_TEST_GROUP(msg_forward);
 	RUN_TEST_GROUP(msg_respond_recv_chain);
 	RUN_TEST_GROUP(msg_xfer_types);
+	RUN_TEST_GROUP(msg_ctrlc);
 }
 
 
