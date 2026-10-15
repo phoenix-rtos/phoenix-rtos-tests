@@ -32,7 +32,7 @@ endef
 
 $(eval $(call add_test_libc,printf))
 $(eval $(call add_test_libc,scanf-basic))
-$(eval $(call add_test_libc,scanf-advanced))
+$(eval $(call add_test_libc,scanf-advanced, -lpthread))
 $(eval $(call add_test_libc,pthread, -lpthread))
 $(eval $(call add_test_libc,group))
 $(eval $(call add_test_libc,misc))
