@@ -1840,6 +1840,272 @@ TEST(stdio_scanf_rest, m_c)
 }
 
 
+TEST(stdio_scanf_rest, multiline)
+{
+	const char *buff = "abc\ndef";
+	char res1[BUFF_LEN], res2[BUFF_LEN];
+	char c[7];
+	int i;
+
+	/* A conversion has to be able to span a newline, the input is not read line by line */
+
+	fprintf(filep, "%s", buff);
+	rewind(filep);
+
+	memset(res1, 0, sizeof(res1));
+	TEST_ASSERT_EQUAL_INT(1, fscanf(filep, "%[^x]", res1));
+	TEST_ASSERT_EQUAL_STRING(buff, res1);
+
+	rewind(filep);
+
+	memset(c, 0, sizeof(c));
+	TEST_ASSERT_EQUAL_INT(7, fscanf(filep, "%c%c%c%c%c%c%c", &c[0], &c[1], &c[2], &c[3], &c[4], &c[5], &c[6]));
+	for (i = 0; i < 7; i++) {
+		TEST_ASSERT_EQUAL_CHAR(buff[i], c[i]);
+	}
+
+	rewind(filep);
+
+	memset(res1, 0, sizeof(res1));
+	memset(res2, 0, sizeof(res2));
+	TEST_ASSERT_EQUAL_INT(2, fscanf(filep, "%s %s", res1, res2));
+	TEST_ASSERT_EQUAL_STRING("abc", res1);
+	TEST_ASSERT_EQUAL_STRING("def", res2);
+
+	rewind(filep);
+
+	memset(res1, 0, sizeof(res1));
+	memset(res2, 0, sizeof(res2));
+	TEST_ASSERT_EQUAL_INT(2, test_vfscanfWrapper(filep, "%s %s", res1, res2));
+	TEST_ASSERT_EQUAL_STRING("abc", res1);
+	TEST_ASSERT_EQUAL_STRING("def", res2);
+}
+
+
+TEST(stdio_scanf_rest, multiline_mixed)
+{
+	const char *buff = "12\n3.5\nxyz tail";
+	char res[BUFF_LEN], rest[BUFF_LEN];
+	double dbl;
+	int val;
+
+	/* Conversions of different types, each one starting on a new line */
+
+	fprintf(filep, "%s", buff);
+	rewind(filep);
+
+	val = 0;
+	dbl = 0.0;
+	memset(res, 0, sizeof(res));
+	TEST_ASSERT_EQUAL_INT(3, fscanf(filep, "%d %lf %s", &val, &dbl, res));
+	TEST_ASSERT_EQUAL_INT(12, val);
+	TEST_ASSERT_EQUAL_DOUBLE(3.5, dbl);
+	TEST_ASSERT_EQUAL_STRING("xyz", res);
+
+	/* The input that has not been consumed has to be left in the stream */
+	memset(rest, 0, sizeof(rest));
+	TEST_ASSERT_EQUAL_INT(1, fscanf(filep, "%s", rest));
+	TEST_ASSERT_EQUAL_STRING("tail", rest);
+}
+
+
+TEST(stdio_scanf_rest, long_token)
+{
+	char buff[BUFF_LEN], res[BUFF_LEN];
+	size_t len;
+
+	/* A conversion must not be limited by the size of the stream buffer scanf starts with */
+
+	for (len = 1; len < 100; len++) {
+		memset(buff, 'x', len);
+		buff[len] = '\0';
+
+		rewind(filep);
+		fprintf(filep, "%s tail", buff);
+		rewind(filep);
+
+		memset(res, 0, sizeof(res));
+		TEST_ASSERT_EQUAL_INT(1, fscanf(filep, "%s", res));
+		TEST_ASSERT_EQUAL_STRING(buff, res);
+
+		memset(res, 0, sizeof(res));
+		TEST_ASSERT_EQUAL_INT(1, fscanf(filep, "%s", res));
+		TEST_ASSERT_EQUAL_STRING("tail", res);
+	}
+}
+
+
+TEST(stdio_scanf_rest, percent)
+{
+	char res[BUFF_LEN];
+	int val, n;
+
+	/* "%%" is a conversion specification, so it skips leading white space */
+
+	val = 0;
+	TEST_ASSERT_EQUAL_INT(1, sscanf("  %5", "%%%d", &val));
+	TEST_ASSERT_EQUAL_INT(5, val);
+
+	val = 0;
+	TEST_ASSERT_EQUAL_INT(1, sscanf("%5", "%%%d", &val));
+	TEST_ASSERT_EQUAL_INT(5, val);
+
+	n = 0;
+	TEST_ASSERT_EQUAL_INT(0, sscanf("\t\n %", "%%%n", &n));
+	TEST_ASSERT_EQUAL_INT(4, n);
+
+	memset(res, 0, sizeof(res));
+	TEST_ASSERT_EQUAL_INT(1, sscanf("  %abc", "%%%s", res));
+	TEST_ASSERT_EQUAL_STRING("abc", res);
+
+	/* white space alone is not a match, and running out of it is an input failure */
+
+	TEST_ASSERT_EQUAL_INT(0, sscanf("abc", "%%"));
+	TEST_ASSERT_EQUAL_INT(EOF, sscanf("   ", "%%"));
+
+	/* the skipped white space is consumed even when the '%' does not match */
+
+	fprintf(filep, "%s", "  abc");
+	rewind(filep);
+
+	TEST_ASSERT_EQUAL_INT(0, fscanf(filep, "%%"));
+	TEST_ASSERT_EQUAL_INT(2, ftell(filep));
+}
+
+
+TEST(stdio_scanf_rest, matching_failure)
+{
+	char res[BUFF_LEN];
+	int val, val2, n;
+	float flt;
+
+	/*
+	 * A conversion that finds input which does not match returns the number of
+	 * items assigned so far, which may be zero. EOF is only for input that ends
+	 * before the first conversion could complete.
+	 */
+
+	TEST_ASSERT_EQUAL_INT(0, sscanf("abc", "%d", &val));
+	TEST_ASSERT_EQUAL_INT(0, sscanf("-", "%d", &val));
+	TEST_ASSERT_EQUAL_INT(0, sscanf("abc", "%u", &val));
+	TEST_ASSERT_EQUAL_INT(0, sscanf("abc", "%f", &flt));
+
+	val = 0;
+	TEST_ASSERT_EQUAL_INT(1, sscanf("42 abc", "%d %d", &val, &val2));
+	TEST_ASSERT_EQUAL_INT(42, val);
+
+	val = 0;
+	TEST_ASSERT_EQUAL_INT(1, sscanf("42 abc", "%d %f", &val, &flt));
+	TEST_ASSERT_EQUAL_INT(42, val);
+
+	/* input that ends before anything could be converted is EOF */
+
+	TEST_ASSERT_EQUAL_INT(EOF, sscanf("", "%d", &val));
+	TEST_ASSERT_EQUAL_INT(EOF, sscanf("   ", "%d", &val));
+
+	/* the same through a stream, where the unmatched input stays unread */
+
+	fprintf(filep, "%s", "abc");
+	rewind(filep);
+
+	TEST_ASSERT_EQUAL_INT(0, fscanf(filep, "%d", &val));
+	TEST_ASSERT_EQUAL_INT(0, ftell(filep));
+
+	memset(res, 0, sizeof(res));
+	TEST_ASSERT_EQUAL_INT(1, fscanf(filep, "%s", res));
+	TEST_ASSERT_EQUAL_STRING("abc", res);
+
+	/* the stream has run out now, so a further conversion is an input failure */
+
+	TEST_ASSERT_EQUAL_INT(EOF, fscanf(filep, "%d", &val));
+
+	/* `%n` converts nothing, so it does not stop the input failure being reported */
+
+	n = -1;
+	TEST_ASSERT_EQUAL_INT(EOF, sscanf("", "%n%d", &n, &val));
+	TEST_ASSERT_EQUAL_INT(0, n);
+
+	n = -1;
+	TEST_ASSERT_EQUAL_INT(EOF, sscanf("   ", "%n%d", &n, &val));
+	TEST_ASSERT_EQUAL_INT(0, n);
+
+	n = -1;
+	TEST_ASSERT_EQUAL_INT(0, sscanf("abc", "%n%d", &n, &val));
+	TEST_ASSERT_EQUAL_INT(0, n);
+
+	n = -1;
+	val = 0;
+	TEST_ASSERT_EQUAL_INT(1, sscanf("42", "%d%n", &val, &n));
+	TEST_ASSERT_EQUAL_INT(42, val);
+	TEST_ASSERT_EQUAL_INT(2, n);
+
+	rewind(filep);
+	TEST_ASSERT_EQUAL_INT(0, fscanf(filep, "%d %d", &val, &val2));
+}
+
+
+TEST(stdio_scanf_rest, star_int)
+{
+	char res[BUFF_LEN];
+	int n, val;
+
+	/* A suppressed integer conversion has to consume its input like an assigning one */
+
+	n = 0;
+	TEST_ASSERT_EQUAL_INT(0, sscanf("42 abc", "%*d%n", &n));
+	TEST_ASSERT_EQUAL_INT(2, n);
+
+	n = 0;
+	TEST_ASSERT_EQUAL_INT(0, sscanf("-42 abc", "%*d%n", &n));
+	TEST_ASSERT_EQUAL_INT(3, n);
+
+	n = 0;
+	TEST_ASSERT_EQUAL_INT(0, sscanf("0x1f", "%*i%n", &n));
+	TEST_ASSERT_EQUAL_INT(4, n);
+
+	n = 0;
+	TEST_ASSERT_EQUAL_INT(0, sscanf("007", "%*o%n", &n));
+	TEST_ASSERT_EQUAL_INT(3, n);
+
+	/* The field width applies to a suppressed conversion as well */
+
+	memset(res, 0, sizeof(res));
+	TEST_ASSERT_EQUAL_INT(1, sscanf("123456 abc", "%*3d%s", res));
+	TEST_ASSERT_EQUAL_STRING("456", res);
+
+	/* The input left over has to be the input the conversion did not take */
+
+	memset(res, 0, sizeof(res));
+	TEST_ASSERT_EQUAL_INT(1, sscanf("0x1f abc", "%*x %s", res));
+	TEST_ASSERT_EQUAL_STRING("abc", res);
+
+	memset(res, 0, sizeof(res));
+	TEST_ASSERT_EQUAL_INT(1, sscanf("42,abc", "%*d,%s", res));
+	TEST_ASSERT_EQUAL_STRING("abc", res);
+
+	val = 0;
+	TEST_ASSERT_EQUAL_INT(1, sscanf("11 22", "%*d %d", &val));
+	TEST_ASSERT_EQUAL_INT(22, val);
+
+	/* The same through a stream, where the position has to end up right as well */
+
+	fprintf(filep, "%s", "42 abc");
+	rewind(filep);
+
+	memset(res, 0, sizeof(res));
+	TEST_ASSERT_EQUAL_INT(1, fscanf(filep, "%*d %s", res));
+	TEST_ASSERT_EQUAL_STRING("abc", res);
+	TEST_ASSERT_EQUAL_INT(6, ftell(filep));
+
+	rewind(filep);
+
+	n = 0;
+	TEST_ASSERT_EQUAL_INT(0, fscanf(filep, "%*d%n", &n));
+	TEST_ASSERT_EQUAL_INT(2, n);
+	TEST_ASSERT_EQUAL_INT(2, ftell(filep));
+}
+
+
 TEST(stdio_scanf_rest, star)
 {
 	const char *buff = "Lorem Ipsum Dolor 123 SitAmet c 123 0x233";
@@ -2012,6 +2278,12 @@ TEST_GROUP_RUNNER(stdio_scanf_rest)
 	RUN_TEST_CASE(stdio_scanf_rest, m_s);
 	RUN_TEST_CASE(stdio_scanf_rest, m_brackets);
 	RUN_TEST_CASE(stdio_scanf_rest, m_c);
+	RUN_TEST_CASE(stdio_scanf_rest, multiline);
+	RUN_TEST_CASE(stdio_scanf_rest, multiline_mixed);
+	RUN_TEST_CASE(stdio_scanf_rest, long_token);
+	RUN_TEST_CASE(stdio_scanf_rest, matching_failure);
+	RUN_TEST_CASE(stdio_scanf_rest, percent);
+	RUN_TEST_CASE(stdio_scanf_rest, star_int);
 	RUN_TEST_CASE(stdio_scanf_rest, star);
 	RUN_TEST_CASE(stdio_scanf_rest, field_width);
 	remove(TESTFILE_PATH);
