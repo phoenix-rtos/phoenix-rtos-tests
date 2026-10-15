@@ -824,9 +824,7 @@ test:
             testcase_count: 39
           ignore: True
 
-          # 4: TODO: VSX_UID1 option not set
-          # 5: TODO: VSX_GID1 option not set
-          # 7: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1408
+          # 4, 5: system doesn't support users group
           # 8: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1458
           # 9, 10: no permission verification in the system
           # 13: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1258
@@ -918,9 +916,7 @@ test:
           kwargs:
             testcase_count: 31
 
-          # 4: TODO: VSX_UID1 option not set
-          # 5: TODO: VSX_GID1 option not set
-          # 6: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1408
+          # 4, 5: system doesn't support users group
           # 7: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1458
           # 8, 9: no permission verification in the system
           # 16: no device to be mounted (VSX_ROFS)
