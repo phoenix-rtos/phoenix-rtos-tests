@@ -412,7 +412,6 @@ TEST(signal_pending, sigpending_excludes_other_thread_pending)
 }
 
 
-#ifndef __phoenix__
 TEST(signal_pending, sigwait_consumes_pending)
 {
 	sigset_t block, waitSet;
@@ -470,6 +469,168 @@ TEST(signal_pending, sigwaitinfo_returns_signal_number)
 	ret = sigwaitinfo(&waitSet, &info);
 	TEST_ASSERT_EQUAL_INT(SIGUSR2, ret);
 	TEST_ASSERT_EQUAL_INT(SIGUSR2, info.si_signo);
+}
+
+
+struct test_sigsender {
+	pthread_t target;
+	int sigs[2];
+};
+
+
+static void *test_sendLater(void *arg)
+{
+	struct test_sigsender *s = arg;
+	int i;
+
+	for (i = 0; i < 2; i++) {
+		if (s->sigs[i] != 0) {
+			usleep(10000);
+			pthread_kill(s->target, s->sigs[i]);
+		}
+	}
+
+	return NULL;
+}
+
+
+TEST(signal_pending, sigwait_blocks_until_signal)
+{
+	struct test_sigsender sender = { .target = pthread_self(), .sigs = { SIGUSR1, 0 } };
+	sigset_t set;
+	pthread_t thread;
+	int ret, sig = 0;
+
+	sigemptyset(&set);
+	sigaddset(&set, SIGUSR1);
+	TEST_ASSERT_EQUAL_INT(0, sigprocmask(SIG_BLOCK, &set, NULL));
+	TEST_ASSERT_EQUAL_INT(0, pthread_create(&thread, NULL, test_sendLater, &sender));
+
+	ret = sigwait(&set, &sig);
+	pthread_join(thread, NULL);
+
+	TEST_ASSERT_EQUAL_INT(0, ret);
+	TEST_ASSERT_EQUAL_INT(SIGUSR1, sig);
+}
+
+
+TEST(signal_pending, sigwait_not_interrupted_by_handler)
+{
+	struct test_sigsender sender = { .target = pthread_self(), .sigs = { SIGUSR2, SIGUSR1 } };
+	sigset_t set;
+	pthread_t thread;
+	int ret, sig = 0;
+
+	TEST_ASSERT_NOT_EQUAL(SIG_ERR, signal(SIGUSR2, test_sigHandler));
+	sigemptyset(&set);
+	sigaddset(&set, SIGUSR1);
+	TEST_ASSERT_EQUAL_INT(0, sigprocmask(SIG_BLOCK, &set, NULL));
+	TEST_ASSERT_EQUAL_INT(0, pthread_create(&thread, NULL, test_sendLater, &sender));
+
+	ret = sigwait(&set, &sig);
+	pthread_join(thread, NULL);
+
+	TEST_ASSERT_EQUAL_INT(0, ret);
+	TEST_ASSERT_EQUAL_INT(SIGUSR1, sig);
+	TEST_ASSERT_EQUAL_INT(SIGUSR2, test_handlerSig);
+}
+
+
+TEST(signal_pending, sigwaitinfo_eintr_on_handler)
+{
+	struct test_sigsender sender = { .target = pthread_self(), .sigs = { SIGUSR2, 0 } };
+	sigset_t set;
+	siginfo_t info;
+	pthread_t thread;
+	int ret;
+
+	TEST_ASSERT_NOT_EQUAL(SIG_ERR, signal(SIGUSR2, test_sigHandler));
+	sigemptyset(&set);
+	sigaddset(&set, SIGUSR1);
+	TEST_ASSERT_EQUAL_INT(0, sigprocmask(SIG_BLOCK, &set, NULL));
+	TEST_ASSERT_EQUAL_INT(0, pthread_create(&thread, NULL, test_sendLater, &sender));
+
+	errno = 0;
+	ret = sigwaitinfo(&set, &info);
+	pthread_join(thread, NULL);
+
+	TEST_ASSERT_EQUAL_INT(-1, ret);
+	TEST_ASSERT_EQUAL_INT(EINTR, errno);
+	TEST_ASSERT_EQUAL_INT(SIGUSR2, test_handlerSig);
+}
+
+
+struct test_sigwaiter {
+	sigset_t set;
+	sem_t ready;
+	sem_t done;
+	int sig;
+	int ret;
+};
+
+
+static void *test_sigwaitThread(void *arg)
+{
+	struct test_sigwaiter *w = arg;
+
+	sem_post(&w->ready);
+	w->ret = sigwait(&w->set, &w->sig);
+	sem_post(&w->done);
+
+	return NULL;
+}
+
+
+static int test_semWaitSec(sem_t *sem)
+{
+	struct timespec ts;
+
+	clock_gettime(CLOCK_REALTIME, &ts);
+	ts.tv_sec += 1;
+
+	return sem_timedwait(sem, &ts);
+}
+
+
+TEST(signal_pending, sigwait_process_directed_reaches_matching_waiter)
+{
+	static const int sigs[2] = { SIGUSR1, SIGUSR2 };
+	struct test_sigwaiter w[2];
+	pthread_t threads[2];
+	sigset_t block;
+	int i, done[2];
+
+	sigemptyset(&block);
+	sigaddset(&block, SIGUSR1);
+	sigaddset(&block, SIGUSR2);
+	TEST_ASSERT_EQUAL_INT(0, sigprocmask(SIG_BLOCK, &block, NULL));
+
+	for (i = 0; i < 2; i++) {
+		sigemptyset(&w[i].set);
+		sigaddset(&w[i].set, sigs[i]);
+		w[i].sig = 0;
+		w[i].ret = -1;
+		TEST_ASSERT_EQUAL_INT(0, sem_init(&w[i].ready, 0, 0));
+		TEST_ASSERT_EQUAL_INT(0, sem_init(&w[i].done, 0, 0));
+		TEST_ASSERT_EQUAL_INT(0, pthread_create(&threads[i], NULL, test_sigwaitThread, &w[i]));
+		TEST_ASSERT_EQUAL_INT(0, sem_wait(&w[i].ready));
+	}
+	usleep(10000);
+
+	/* Each waiter must get the signal in its own set, whichever thread the kernel checks first */
+	TEST_ASSERT_EQUAL_INT(0, kill(getpid(), SIGUSR2));
+	done[1] = test_semWaitSec(&w[1].done);
+	TEST_ASSERT_EQUAL_INT(0, kill(getpid(), SIGUSR1));
+	done[0] = test_semWaitSec(&w[0].done);
+
+	for (i = 0; i < 2; i++) {
+		TEST_ASSERT_EQUAL_INT(0, done[i]);
+		pthread_join(threads[i], NULL);
+		TEST_ASSERT_EQUAL_INT(0, w[i].ret);
+		TEST_ASSERT_EQUAL_INT(sigs[i], w[i].sig);
+		sem_destroy(&w[i].ready);
+		sem_destroy(&w[i].done);
+	}
 }
 
 
@@ -563,6 +724,71 @@ TEST(signal_pending, sigtimedwait_einval_bad_nsec)
 }
 
 
+TEST(signal_pending, sigtimedwait_einval_negative_sec)
+{
+	struct timespec ts = { .tv_sec = -1, .tv_nsec = 0 };
+	sigset_t set;
+	int ret;
+
+	sigemptyset(&set);
+	sigaddset(&set, SIGUSR1);
+	TEST_ASSERT_EQUAL_INT(0, sigprocmask(SIG_BLOCK, &set, NULL));
+
+	errno = 0;
+	ret = sigtimedwait(&set, NULL, &ts);
+	TEST_ASSERT_EQUAL_INT(-1, ret);
+	TEST_ASSERT_EQUAL_INT(EINVAL, errno);
+}
+
+
+TEST(signal_pending, sigtimedwait_eagain_after_timeout)
+{
+	struct timespec ts = { .tv_sec = 0, .tv_nsec = 50 * 1000 * 1000 };
+	struct timespec start, stop;
+	sigset_t set;
+	long long elapsedUs;
+	int ret;
+
+	sigemptyset(&set);
+	sigaddset(&set, SIGUSR1);
+	TEST_ASSERT_EQUAL_INT(0, sigprocmask(SIG_BLOCK, &set, NULL));
+
+	clock_gettime(CLOCK_MONOTONIC, &start);
+	errno = 0;
+	ret = sigtimedwait(&set, NULL, &ts);
+	clock_gettime(CLOCK_MONOTONIC, &stop);
+
+	elapsedUs = (stop.tv_sec - start.tv_sec) * 1000000LL + (stop.tv_nsec - start.tv_nsec) / 1000;
+	TEST_ASSERT_EQUAL_INT(-1, ret);
+	TEST_ASSERT_EQUAL_INT(EAGAIN, errno);
+	TEST_ASSERT_GREATER_OR_EQUAL(50 * 1000, elapsedUs);
+}
+
+
+TEST(signal_pending, sigtimedwait_receives_during_wait)
+{
+	struct test_sigsender sender = { .target = pthread_self(), .sigs = { SIGUSR1, 0 } };
+	struct timespec ts = { .tv_sec = 5, .tv_nsec = 0 };
+	sigset_t set;
+	siginfo_t info;
+	pthread_t thread;
+	int ret;
+
+	sigemptyset(&set);
+	sigaddset(&set, SIGUSR1);
+	TEST_ASSERT_EQUAL_INT(0, sigprocmask(SIG_BLOCK, &set, NULL));
+	TEST_ASSERT_EQUAL_INT(0, pthread_create(&thread, NULL, test_sendLater, &sender));
+
+	memset(&info, 0, sizeof(info));
+	ret = sigtimedwait(&set, &info, &ts);
+	pthread_join(thread, NULL);
+
+	TEST_ASSERT_EQUAL_INT(SIGUSR1, ret);
+	TEST_ASSERT_EQUAL_INT(SIGUSR1, info.si_signo);
+}
+
+
+#ifndef __phoenix__
 TEST(signal_pending, sigqueue_delivers_signal)
 {
 	sigset_t block, waitSet;
@@ -819,12 +1045,19 @@ TEST_GROUP_RUNNER(signal_pending)
 	RUN_TEST_CASE(signal_pending, sigpending_sig_ign_discards_pending);
 	RUN_TEST_CASE(signal_pending, sigpending_sig_dfl_discards_default_ignored);
 	RUN_TEST_CASE(signal_pending, sigpending_excludes_other_thread_pending);
-#ifndef __phoenix__
 	RUN_TEST_CASE(signal_pending, sigwait_consumes_pending);
 	RUN_TEST_CASE(signal_pending, sigwaitinfo_returns_signal_number);
+	RUN_TEST_CASE(signal_pending, sigwait_blocks_until_signal);
+	RUN_TEST_CASE(signal_pending, sigwait_not_interrupted_by_handler);
+	RUN_TEST_CASE(signal_pending, sigwaitinfo_eintr_on_handler);
+	RUN_TEST_CASE(signal_pending, sigwait_process_directed_reaches_matching_waiter);
 	RUN_TEST_CASE(signal_pending, sigtimedwait_immediate_pending);
 	RUN_TEST_CASE(signal_pending, sigtimedwait_eagain_timeout);
 	RUN_TEST_CASE(signal_pending, sigtimedwait_einval_bad_nsec);
+	RUN_TEST_CASE(signal_pending, sigtimedwait_einval_negative_sec);
+	RUN_TEST_CASE(signal_pending, sigtimedwait_eagain_after_timeout);
+	RUN_TEST_CASE(signal_pending, sigtimedwait_receives_during_wait);
+#ifndef __phoenix__
 	RUN_TEST_CASE(signal_pending, sigqueue_delivers_signal);
 	RUN_TEST_CASE(signal_pending, sigqueue_einval_invalid_signal);
 	RUN_TEST_CASE(signal_pending, sigqueue_esrch_invalid_pid);
