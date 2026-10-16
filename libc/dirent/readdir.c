@@ -438,7 +438,7 @@ TEST(dirent_readdir, large_directory_pagination)
 }
 
 
-TEST(dirent_readdir, unlink_during_iteration)
+TEST(dirent_readdir, unlink_file_during_iteration)
 {
 	DIR *dp = NULL;
 	struct dirent *info;
@@ -476,6 +476,54 @@ TEST(dirent_readdir, unlink_during_iteration)
 }
 
 
+TEST(dirent_readdir, unlink_dir_during_iteration)
+{
+	DIR *dp = NULL;
+	struct dirent *info;
+	const char *dirname = "abcd";
+	size_t namlen;
+
+	if (TEST_PROTECT()) {
+		TEST_ASSERT_EQUAL_INT(0, mkdir(dirname, 0700));
+
+		dp = TEST_OPENDIR_ASSERTED(dirname);
+		TEST_ASSERT_NOT_NULL(dp);
+
+		info = readdir(dp);
+		TEST_ASSERT_NOT_NULL(info);
+		namlen = strlen(info->d_name);
+		if (namlen == 1) {
+			TEST_ASSERT_EQUAL_STRING(".", info->d_name);
+		}
+		else if (namlen == 2) {
+			TEST_ASSERT_EQUAL_STRING("..", info->d_name);
+		}
+		else {
+			char buf[NAME_MAX + 20] = { 0 };
+			snprintf(buf, sizeof(buf), "unexpected dirent: %s", info->d_name);
+			TEST_FAIL_MESSAGE(buf);
+		}
+
+		TEST_ASSERT_EQUAL_INT(0, rmdir(dirname));
+
+		errno = 0;
+		while ((info = readdir(dp)) != NULL) {
+			continue;
+		}
+		TEST_ASSERT_EQUAL_INT(0, errno);
+
+		rewinddir(dp);
+
+		/* "." and ".." shall not be read here */
+		TEST_ASSERT_NULL(readdir(dp));
+	}
+
+	if (dp != NULL)
+		closedir(dp);
+	rmdir(dirname);
+}
+
+
 TEST_GROUP_RUNNER(dirent_readdir)
 {
 	RUN_TEST_CASE(dirent_readdir, basic_listing_count);
@@ -487,5 +535,6 @@ TEST_GROUP_RUNNER(dirent_readdir)
 	RUN_TEST_CASE(dirent_readdir, long_name_directory_check);
 	RUN_TEST_CASE(dirent_readdir, read_past_end_of_stream);
 	RUN_TEST_CASE(dirent_readdir, large_directory_pagination);
-	RUN_TEST_CASE(dirent_readdir, unlink_during_iteration);
+	RUN_TEST_CASE(dirent_readdir, unlink_file_during_iteration);
+	RUN_TEST_CASE(dirent_readdir, unlink_dir_during_iteration);
 }
