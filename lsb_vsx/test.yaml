@@ -1386,12 +1386,10 @@ test:
             testcase_count: 42
           ignore: True
 
-          # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/648
         - name: T.sigpending
           execute: run-test /tset/POSIX.os/procprim/sigpending/T.sigpending
           kwargs:
             testcase_count: 1
-          ignore: True
 
           # 7: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1233
           # 8: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
