@@ -7,6 +7,11 @@ test:
         - name: test_cputime
           type: unity
           execute: test_cputime
+          targets:
+              # only for targets with cputime enabled
+              value: [
+                ia32-generic-qemu,
+              ]
 
         - name: test_priority
           load:
