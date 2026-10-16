@@ -30,6 +30,7 @@ void runner(void)
 	RUN_TEST_GROUP(sched_param);
 	RUN_TEST_GROUP(sched_scheduler);
 	RUN_TEST_GROUP(sched_rr_get_interval);
+	RUN_TEST_GROUP(sched_prio_range);
 }
 
 int main(int argc, char *argv[])

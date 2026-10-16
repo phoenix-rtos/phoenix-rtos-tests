@@ -52,6 +52,7 @@ void runner(void)
 	RUN_TEST_GROUP(pthread_spin);
 	RUN_TEST_GROUP(pthread_sched);
 	RUN_TEST_GROUP(pthread_getcpuclockid);
+	RUN_TEST_GROUP(pthread_prio_range);
 }
 
 
