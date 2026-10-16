@@ -26,6 +26,8 @@
 #include "sig_internal.h"
 
 #include <errno.h>
+#include <pthread.h>
+#include <semaphore.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
@@ -231,7 +233,6 @@ TEST_TEAR_DOWN(signal_pending)
 }
 
 
-#ifndef __phoenix__
 TEST(signal_pending, sigpending_empty_when_none_blocked)
 {
 	sigset_t pending;
@@ -275,6 +276,143 @@ TEST(signal_pending, sigpending_shows_blocked_pending)
 }
 
 
+TEST(signal_pending, sigpending_shows_process_directed_pending)
+{
+	sigset_t block, pending;
+	int ret;
+
+	ret = sigemptyset(&block);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+	ret = sigaddset(&block, SIGUSR2);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+	ret = sigprocmask(SIG_BLOCK, &block, NULL);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+
+	/* kill() makes the signal pending on the process, raise() on the thread */
+	ret = kill(getpid(), SIGUSR2);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+
+	ret = sigpending(&pending);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+	TEST_ASSERT_EQUAL_INT(1, sigismember(&pending, SIGUSR2));
+	TEST_ASSERT_EQUAL_INT(0, sigismember(&pending, SIGUSR1));
+}
+
+
+TEST(signal_pending, sigpending_sig_ign_discards_pending)
+{
+	sigset_t block, pending;
+	struct sigaction act;
+	int ret;
+
+	ret = sigemptyset(&block);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+	ret = sigaddset(&block, SIGUSR1);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+	ret = sigprocmask(SIG_BLOCK, &block, NULL);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+
+	ret = raise(SIGUSR1);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+
+	memset(&act, 0, sizeof(act));
+	act.sa_handler = SIG_IGN;
+	ret = sigaction(SIGUSR1, &act, NULL);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+
+	ret = sigpending(&pending);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+	TEST_ASSERT_EQUAL_INT(0, sigismember(&pending, SIGUSR1));
+}
+
+
+TEST(signal_pending, sigpending_sig_dfl_discards_default_ignored)
+{
+	sigset_t block, pending;
+	struct sigaction act;
+	int ret;
+
+	ret = sigemptyset(&block);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+	ret = sigaddset(&block, SIGCHLD);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+	ret = sigprocmask(SIG_BLOCK, &block, NULL);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+
+	ret = raise(SIGCHLD);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+
+	ret = sigpending(&pending);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+	if (sigismember(&pending, SIGCHLD) == 0) {
+		sigprocmask(SIG_UNBLOCK, &block, NULL);
+		/* "it is unspecified whether the signal is discarded immediately upon generation or remains pending" */
+		TEST_IGNORE_MESSAGE("blocked SIGCHLD is discarded on generation");
+	}
+
+	memset(&act, 0, sizeof(act));
+	act.sa_handler = SIG_DFL;
+	ret = sigaction(SIGCHLD, &act, NULL);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+
+	ret = sigpending(&pending);
+	sigprocmask(SIG_UNBLOCK, &block, NULL);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+	TEST_ASSERT_EQUAL_INT(0, sigismember(&pending, SIGCHLD));
+}
+
+
+static void *test_blockAndWait(void *arg)
+{
+	sigset_t block;
+
+	sigemptyset(&block);
+	sigaddset(&block, SIGUSR1);
+	pthread_sigmask(SIG_BLOCK, &block, NULL);
+	sem_post((sem_t *)arg);
+
+	/* Wait for the main thread to make the signal pending here and check its own set */
+	sem_wait((sem_t *)arg + 1);
+
+	return NULL;
+}
+
+
+TEST(signal_pending, sigpending_excludes_other_thread_pending)
+{
+	sigset_t block, pending;
+	pthread_t thread;
+	sem_t sems[2];
+	int ret;
+
+	ret = sigemptyset(&block);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+	ret = sigaddset(&block, SIGUSR1);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+	ret = sigprocmask(SIG_BLOCK, &block, NULL);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+
+	TEST_ASSERT_EQUAL_INT(0, sem_init(&sems[0], 0, 0));
+	TEST_ASSERT_EQUAL_INT(0, sem_init(&sems[1], 0, 0));
+	TEST_ASSERT_EQUAL_INT(0, pthread_create(&thread, NULL, test_blockAndWait, sems));
+	TEST_ASSERT_EQUAL_INT(0, sem_wait(&sems[0]));
+
+	ret = pthread_kill(thread, SIGUSR1);
+
+	sigemptyset(&pending);
+	sigpending(&pending);
+
+	sem_post(&sems[1]);
+	pthread_join(thread, NULL);
+	sem_destroy(&sems[0]);
+	sem_destroy(&sems[1]);
+
+	TEST_ASSERT_EQUAL_INT(0, ret);
+	TEST_ASSERT_EQUAL_INT(0, sigismember(&pending, SIGUSR1));
+}
+
+
+#ifndef __phoenix__
 TEST(signal_pending, sigwait_consumes_pending)
 {
 	sigset_t block, waitSet;
@@ -675,9 +813,13 @@ TEST(signal_pending, sigaltstack_get_only)
 
 TEST_GROUP_RUNNER(signal_pending)
 {
-#ifndef __phoenix__
 	RUN_TEST_CASE(signal_pending, sigpending_empty_when_none_blocked);
 	RUN_TEST_CASE(signal_pending, sigpending_shows_blocked_pending);
+	RUN_TEST_CASE(signal_pending, sigpending_shows_process_directed_pending);
+	RUN_TEST_CASE(signal_pending, sigpending_sig_ign_discards_pending);
+	RUN_TEST_CASE(signal_pending, sigpending_sig_dfl_discards_default_ignored);
+	RUN_TEST_CASE(signal_pending, sigpending_excludes_other_thread_pending);
+#ifndef __phoenix__
 	RUN_TEST_CASE(signal_pending, sigwait_consumes_pending);
 	RUN_TEST_CASE(signal_pending, sigwaitinfo_returns_signal_number);
 	RUN_TEST_CASE(signal_pending, sigtimedwait_immediate_pending);
