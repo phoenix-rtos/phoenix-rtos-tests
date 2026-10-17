@@ -31,8 +31,27 @@
 #include "common.h"
 #include "dirent_helper_functions.h"
 
+#ifdef __phoenix__
+#include <sys/minmax.h>
+#else
+#define max(a, b) ({ \
+  __typeof__ (a) _a = (a); \
+  __typeof__ (b) _b = (b); \
+  _a > _b ? _a : _b; })
+
+#define min(a, b) ({ \
+	__typeof__(a) _a = (a); \
+	__typeof__(b) _b = (b); \
+	_a > _b ? _b : _a; \
+})
+#endif
+
 #define MAIN_DIR            "test_readdir"
 #define INO_T_TEST_MAX_DIRS 10
+
+
+static char *longDirName, *longDirPath;
+
 
 int d_ino_in(ino_t arg, ino_t *arr, int n)
 {
@@ -73,11 +92,19 @@ TEST_SETUP(dirent_readdir)
 	fd = creat(MAIN_DIR "/file3.json", S_IRUSR);
 	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, fd);
 	TEST_ASSERT_EQUAL_INT(0, close(fd));
+
+	longDirName = NULL;
+	longDirPath = NULL;
 }
 
 
 TEST_TEAR_DOWN(dirent_readdir)
 {
+	free(longDirName);
+	free(longDirPath);
+	longDirName = NULL;
+	longDirPath = NULL;
+
 	rmdir(MAIN_DIR "/dir1/nest1");
 	rmdir(MAIN_DIR "/dir1/nest2");
 
@@ -97,18 +124,30 @@ TEST_TEAR_DOWN(dirent_readdir)
 
 TEST(dirent_readdir, long_name_directory_check)
 {
-	/* issue #1615: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1615 */
-	TEST_IGNORE_MESSAGE("#1615 issue");
 	DIR *dp = NULL;
 	struct dirent *info;
-	char longDirName[NAME_MAX + 1];
-	char longDirPath[NAME_MAX + 2 + sizeof(MAIN_DIR)];
+
+	long path_max = pathconf(MAIN_DIR, _PC_PATH_MAX);
+	TEST_ASSERT_GREATER_THAN(0, path_max);
+	long name_max = pathconf(MAIN_DIR, _PC_NAME_MAX);
+	TEST_ASSERT_GREATER_THAN(0, name_max);
+
+	name_max = min(name_max, NAME_MAX);
+
 	int dir_created = 0;
 	int found = 0;
 
-	memset(longDirName, 'a', NAME_MAX);
-	longDirName[NAME_MAX] = '\0';
-	snprintf(longDirPath, sizeof(longDirPath), MAIN_DIR "/%s", longDirName);
+	const size_t longDirPathSize = min(path_max, name_max + sizeof(MAIN_DIR) + 2) + 1;
+	const size_t longDirNameSize = min(name_max, longDirPathSize - sizeof(MAIN_DIR) - 2 /* '/' and '\0' */);
+
+	longDirName = malloc(longDirNameSize + 1);
+	TEST_ASSERT_NOT_NULL(longDirName);
+	longDirPath = malloc(longDirPathSize + 1);
+	TEST_ASSERT_NOT_NULL(longDirPath);
+
+	memset(longDirName, 'a', longDirNameSize);
+	longDirName[longDirNameSize] = '\0';
+	snprintf(longDirPath, longDirPathSize, MAIN_DIR "/%s", longDirName);
 
 	if (TEST_PROTECT()) {
 		TEST_MKDIR_ASSERTED(longDirPath, S_IRUSR);
@@ -119,7 +158,7 @@ TEST(dirent_readdir, long_name_directory_check)
 		while ((info = readdir(dp)) != NULL) {
 			if (info->d_name[0] == 'a') {
 				TEST_ASSERT_EQUAL_STRING(longDirName, info->d_name);
-				TEST_ASSERT_EQUAL_INT(NAME_MAX, strlen(info->d_name));
+				TEST_ASSERT_EQUAL_INT(longDirNameSize, strlen(info->d_name));
 				found = 1;
 				break;
 			}
