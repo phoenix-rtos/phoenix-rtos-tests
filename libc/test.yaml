@@ -4,8 +4,7 @@ test:
     - name: printf
       execute: test-libc-printf
       targets:
-      # riscv64 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1007
-        exclude: [armv7m4-stm32l4x6-nucleo, riscv64-generic-qemu]
+        exclude: [armv7m4-stm32l4x6-nucleo]
         include: [host-generic-pc]
 
     # Executing test-printf alone on 'armv7m4-stm32l4x6-nucleo' takes ~4 min, because of large amount of test cases.
