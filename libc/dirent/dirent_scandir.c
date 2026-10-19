@@ -27,14 +27,13 @@
 
 #include <unity_fixture.h>
 
-#define SCANDIR_TEST_DIR     "scandir_test_dir"
-#define SCANDIR_FILE_APPLE   "scandir_test_dir/apple"
-#define SCANDIR_FILE_BANANA  "scandir_test_dir/banana"
-#define SCANDIR_FILE_CHERRY  "scandir_test_dir/cherry"
-#define SCANDIR_NUM_FILES    3
-#define SCANDIR_SUBDIR       "scandir_test_dir/subdir"
+#define SCANDIR_TEST_DIR    "scandir_test_dir"
+#define SCANDIR_FILE_APPLE  "scandir_test_dir/apple"
+#define SCANDIR_FILE_BANANA "scandir_test_dir/banana"
+#define SCANDIR_FILE_CHERRY "scandir_test_dir/cherry"
+#define SCANDIR_NUM_FILES   3
+#define SCANDIR_SUBDIR      "scandir_test_dir/subdir"
 
-#ifndef __phoenix__
 
 static struct {
 	struct dirent **namelist;
@@ -241,14 +240,16 @@ TEST(dirent_scandir, enoent_empty_string)
 /* alphasort: returns negative when first < second */
 TEST(dirent_scandir, alphasort_negative)
 {
-	struct dirent d1;
-	struct dirent d2;
-	const struct dirent *p1 = &d1;
-	const struct dirent *p2 = &d2;
+	union {
+		struct dirent entry;
+		char buf[sizeof(struct dirent) + 8];
+	} d1, d2;
+	const struct dirent *p1 = &d1.entry;
+	const struct dirent *p2 = &d2.entry;
 	int res;
 
-	strncpy(d1.d_name, "aaa", sizeof(d1.d_name));
-	strncpy(d2.d_name, "bbb", sizeof(d2.d_name));
+	strcpy(d1.entry.d_name, "aaa");
+	strcpy(d2.entry.d_name, "bbb");
 
 	res = alphasort(&p1, &p2);
 	TEST_ASSERT_TRUE(res < 0);
@@ -258,14 +259,16 @@ TEST(dirent_scandir, alphasort_negative)
 /* alphasort: returns zero for equal names */
 TEST(dirent_scandir, alphasort_zero)
 {
-	struct dirent d1;
-	struct dirent d2;
-	const struct dirent *p1 = &d1;
-	const struct dirent *p2 = &d2;
+	union {
+		struct dirent entry;
+		char buf[sizeof(struct dirent) + 8];
+	} d1, d2;
+	const struct dirent *p1 = &d1.entry;
+	const struct dirent *p2 = &d2.entry;
 	int res;
 
-	strncpy(d1.d_name, "same", sizeof(d1.d_name));
-	strncpy(d2.d_name, "same", sizeof(d2.d_name));
+	strcpy(d1.entry.d_name, "same");
+	strcpy(d2.entry.d_name, "same");
 
 	res = alphasort(&p1, &p2);
 	TEST_ASSERT_EQUAL_INT(0, res);
@@ -275,14 +278,16 @@ TEST(dirent_scandir, alphasort_zero)
 /* alphasort: returns positive when first > second */
 TEST(dirent_scandir, alphasort_positive)
 {
-	struct dirent d1;
-	struct dirent d2;
-	const struct dirent *p1 = &d1;
-	const struct dirent *p2 = &d2;
+	union {
+		struct dirent entry;
+		char buf[sizeof(struct dirent) + 8];
+	} d1, d2;
+	const struct dirent *p1 = &d1.entry;
+	const struct dirent *p2 = &d2.entry;
 	int res;
 
-	strncpy(d1.d_name, "zzz", sizeof(d1.d_name));
-	strncpy(d2.d_name, "aaa", sizeof(d2.d_name));
+	strcpy(d1.entry.d_name, "zzz");
+	strcpy(d2.entry.d_name, "aaa");
 
 	res = alphasort(&p1, &p2);
 	TEST_ASSERT_TRUE(res > 0);
@@ -305,7 +310,3 @@ TEST_GROUP_RUNNER(dirent_scandir)
 	RUN_TEST_CASE(dirent_scandir, alphasort_zero);
 	RUN_TEST_CASE(dirent_scandir, alphasort_positive);
 }
-
-#else
-TEST_GROUP_UNIMPLEMENTED(dirent_scandir, "scandir not implemented")
-#endif

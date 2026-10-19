@@ -401,8 +401,6 @@ TEST(dirent_rewinddir, rewind_large_dir_pagination)
 
 TEST(dirent_rewinddir, rewind_unlinked_dir)
 {
-	/* issue #1663 https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1663 */
-	TEST_IGNORE_MESSAGE("#1663 issue");
 	DIR *dp = NULL;
 	void *ret = NULL;
 	int dir_created = 0;
