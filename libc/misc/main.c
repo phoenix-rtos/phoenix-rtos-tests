@@ -42,6 +42,9 @@ void runner(void)
 	RUN_TEST_GROUP(unistd_setsid);
 	RUN_TEST_GROUP(unistd_fsync);
 	RUN_TEST_GROUP(unistd_usleep);
+	RUN_TEST_GROUP(stropts_isastream);
+	RUN_TEST_GROUP(stropts_fattach);
+	RUN_TEST_GROUP(stropts_fdetach);
 	RUN_TEST_GROUP(sys_procExists);
 #ifdef __phoenix__
 	/* tests libphoenix internal functions */
