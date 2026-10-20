@@ -6,6 +6,7 @@
  *    - <stdio.h>
  * TESTED:
  *    - getchar_unlocked()
+ *    - gets()
  *    - putchar_unlocked()
  *
  * Copyright 2026 Phoenix Systems
@@ -44,6 +45,17 @@
 #define TEST_THREADED_SIZE (TEST_THREADS * TEST_CHUNKS * TEST_CHUNK)
 #define TEST_WRITE_LIMIT   (1024 * 1024)
 #define TEST_FSIZE_LIMIT   1024
+#define TEST_LINE_MAX      1024
+#define TEST_FILL          'X'
+
+
+#ifndef __phoenix__
+/*
+ * gets() is still specified by POSIX.1-2017 (as obsolescent), but glibc declares it only
+ * in pre-C11 compilation modes - it's still provided by the library.
+ */
+char *gets(char *s);
+#endif
 
 
 static struct {
@@ -54,6 +66,7 @@ static struct {
 	struct sigaction oldAct;
 	volatile sig_atomic_t sigCount;
 	uint8_t buf[TEST_THREADED_SIZE + 1];
+	char line[TEST_LINE_MAX + 1];
 } test_common;
 
 
@@ -832,4 +845,213 @@ TEST_GROUP_RUNNER(stdio_putchar_unlocked)
 	RUN_TEST_CASE(stdio_putchar_unlocked, eintr_write_interrupted);
 	RUN_TEST_CASE(stdio_putchar_unlocked, epipe_no_reader);
 	RUN_TEST_CASE(stdio_putchar_unlocked, efbig_file_size_limit);
+}
+
+
+TEST_GROUP(stdio_gets);
+
+TEST_SETUP(stdio_gets)
+{
+	test_commonSetUp();
+	memset(test_common.line, TEST_FILL, sizeof(test_common.line));
+}
+
+
+TEST_TEAR_DOWN(stdio_gets)
+{
+	test_commonTearDown();
+}
+
+
+TEST(stdio_gets, reads_line_discards_newline)
+{
+	const char data[] = "abc\nde\n";
+
+	test_stdinFromData(data, sizeof(data) - 1);
+
+	/* the null byte is placed right after the last byte read, the newline is not stored */
+	TEST_ASSERT_EQUAL_PTR(test_common.line, gets(test_common.line));
+	TEST_ASSERT_EQUAL_STRING("abc", test_common.line);
+	TEST_ASSERT_EQUAL_PTR(test_common.line, gets(test_common.line));
+	TEST_ASSERT_EQUAL_STRING("de", test_common.line);
+	TEST_ASSERT_EQUAL_INT(0, feof(stdin));
+}
+
+
+TEST(stdio_gets, empty_line)
+{
+	const char data[] = "\nx\n";
+
+	test_stdinFromData(data, sizeof(data) - 1);
+
+	TEST_ASSERT_EQUAL_PTR(test_common.line, gets(test_common.line));
+	TEST_ASSERT_EQUAL_STRING("", test_common.line);
+	TEST_ASSERT_EQUAL_PTR(test_common.line, gets(test_common.line));
+	TEST_ASSERT_EQUAL_STRING("x", test_common.line);
+}
+
+
+TEST(stdio_gets, reads_until_eof_without_newline)
+{
+	const char data[] = "abc\nxyz";
+
+	test_stdinFromData(data, sizeof(data) - 1);
+
+	TEST_ASSERT_EQUAL_PTR(test_common.line, gets(test_common.line));
+	TEST_ASSERT_EQUAL_STRING("abc", test_common.line);
+
+	/* the last line is terminated by end-of-file - bytes were read, so it's a success */
+	TEST_ASSERT_EQUAL_PTR(test_common.line, gets(test_common.line));
+	TEST_ASSERT_EQUAL_STRING("xyz", test_common.line);
+	TEST_ASSERT_EQUAL_INT(0, ferror(stdin));
+
+	TEST_ASSERT_NULL(gets(test_common.line));
+	TEST_ASSERT_NOT_EQUAL_INT(0, feof(stdin));
+}
+
+
+TEST(stdio_gets, reads_any_byte_values)
+{
+	const char data[] = "\x01\x7f\x80\xff \t\r\n";
+	const char expected[] = "\x01\x7f\x80\xff \t\r";
+
+	test_stdinFromData(data, sizeof(data) - 1);
+
+	TEST_ASSERT_EQUAL_PTR(test_common.line, gets(test_common.line));
+	TEST_ASSERT_EQUAL_MEMORY(expected, test_common.line, sizeof(expected));
+}
+
+
+TEST(stdio_gets, reads_long_line)
+{
+	size_t i;
+
+	/* longer than BUFSIZ on some implementations - the line spans multiple stream buffer refills */
+	for (i = 0; i < TEST_LINE_MAX - 1; i++) {
+		test_common.buf[i] = (uint8_t)('a' + (i % 26));
+	}
+	test_common.buf[TEST_LINE_MAX - 1] = '\n';
+	test_stdinFromData(test_common.buf, TEST_LINE_MAX);
+
+	TEST_ASSERT_EQUAL_PTR(test_common.line, gets(test_common.line));
+	TEST_ASSERT_EQUAL_INT(TEST_LINE_MAX - 1, strlen(test_common.line));
+	TEST_ASSERT_EQUAL_MEMORY(test_common.buf, test_common.line, TEST_LINE_MAX - 1);
+}
+
+
+TEST(stdio_gets, eof_returns_null_sets_indicator)
+{
+	test_stdinFromData("", 0);
+
+	TEST_ASSERT_NULL(gets(test_common.line));
+	TEST_ASSERT_NOT_EQUAL_INT(0, feof(stdin));
+	TEST_ASSERT_EQUAL_INT(0, ferror(stdin));
+}
+
+
+TEST(stdio_gets, eof_indicator_set_returns_null)
+{
+	const char first[] = "a\n";
+	const char appended[] = "b\n";
+
+	test_stdinFromData(first, sizeof(first) - 1);
+
+	TEST_ASSERT_EQUAL_PTR(test_common.line, gets(test_common.line));
+	TEST_ASSERT_NULL(gets(test_common.line));
+	TEST_ASSERT_NOT_EQUAL_INT(0, feof(stdin));
+
+	/* a next line is now present, but the end-of-file indicator is still set */
+	test_writeFile(appended, sizeof(appended) - 1, O_APPEND);
+	TEST_ASSERT_NULL(gets(test_common.line));
+	TEST_ASSERT_NOT_EQUAL_INT(0, feof(stdin));
+
+	clearerr(stdin);
+	TEST_ASSERT_EQUAL_PTR(test_common.line, gets(test_common.line));
+	TEST_ASSERT_EQUAL_STRING("b", test_common.line);
+}
+
+
+TEST(stdio_gets, marks_atime_for_update)
+{
+	struct stat st;
+	time_t now;
+
+	test_stdinFromData("a\n", 2);
+	now = test_resetFileTimes();
+
+	TEST_ASSERT_EQUAL_PTR(test_common.line, gets(test_common.line));
+	TEST_ASSERT_EQUAL_INT(0, fstat(STDIN_FILENO, &st));
+	TEST_ASSERT_GREATER_OR_EQUAL_INT64((int64_t)now, (int64_t)st.st_atime);
+}
+
+
+TEST(stdio_gets, ebadf_not_open_for_reading)
+{
+	test_writeFile("abc\n", 4, O_TRUNC);
+	test_redirectStdin(open(STDSTREAMS_FILE, O_WRONLY));
+
+	errno = 0;
+	TEST_ASSERT_NULL(gets(test_common.line));
+	TEST_ASSERT_NOT_EQUAL_INT(0, ferror(stdin));
+	TEST_ASSERT_EQUAL_INT(0, feof(stdin));
+	TEST_ASSERT_EQUAL_INT(EBADF, errno);
+}
+
+
+TEST(stdio_gets, eagain_nonblocking_no_data)
+{
+	int fds[2];
+
+	TEST_ASSERT_EQUAL_INT(0, pipe(fds));
+	test_common.pipeWr = fds[1];
+	TEST_ASSERT_EQUAL_INT(0, fcntl(fds[0], F_SETFL, fcntl(fds[0], F_GETFL) | O_NONBLOCK));
+	test_redirectStdin(fds[0]);
+
+	errno = 0;
+	TEST_ASSERT_NULL(gets(test_common.line));
+	TEST_ASSERT_NOT_EQUAL_INT(0, ferror(stdin));
+	TEST_ASSERT_EQUAL_INT(0, feof(stdin));
+	TEST_ASSERT_EQUAL_INT(EAGAIN, errno);
+}
+
+
+TEST(stdio_gets, eintr_read_interrupted)
+{
+	int fds[2];
+
+#ifdef __phoenix__
+	TEST_IGNORE_MESSAGE("#1401 issue");
+#endif
+
+	TEST_ASSERT_EQUAL_INT(0, pipe(fds));
+	test_common.pipeWr = fds[1];
+	test_redirectStdin(fds[0]);
+
+	TEST_ASSERT_EQUAL_INT(0, test_installHandler(SIGALRM));
+	test_common.sigSet = true;
+	alarm(TEST_ALARM_S);
+
+	/* the pipe is empty and its write end is open - the read blocks until SIGALRM arrives */
+	errno = 0;
+	TEST_ASSERT_NULL(gets(test_common.line));
+	TEST_ASSERT_EQUAL_INT(1, test_common.sigCount);
+	TEST_ASSERT_NOT_EQUAL_INT(0, ferror(stdin));
+	TEST_ASSERT_EQUAL_INT(0, feof(stdin));
+	TEST_ASSERT_EQUAL_INT(EINTR, errno);
+}
+
+
+TEST_GROUP_RUNNER(stdio_gets)
+{
+	RUN_TEST_CASE(stdio_gets, reads_line_discards_newline);
+	RUN_TEST_CASE(stdio_gets, empty_line);
+	RUN_TEST_CASE(stdio_gets, reads_until_eof_without_newline);
+	RUN_TEST_CASE(stdio_gets, reads_any_byte_values);
+	RUN_TEST_CASE(stdio_gets, reads_long_line);
+	RUN_TEST_CASE(stdio_gets, eof_returns_null_sets_indicator);
+	RUN_TEST_CASE(stdio_gets, eof_indicator_set_returns_null);
+	RUN_TEST_CASE(stdio_gets, marks_atime_for_update);
+	RUN_TEST_CASE(stdio_gets, ebadf_not_open_for_reading);
+	RUN_TEST_CASE(stdio_gets, eagain_nonblocking_no_data);
+	RUN_TEST_CASE(stdio_gets, eintr_read_interrupted);
 }
