@@ -6,9 +6,7 @@
  *    - <stdio.h>
  * TESTED:
  *    - getc_unlocked()
- *    - getchar_unlocked()
  *    - putc_unlocked()
- *    - putchar_unlocked()
  *    - renameat()
  *    - tempnam()
  *    - tmpnam()
