@@ -626,73 +626,48 @@ TEST(unistd_exit, orphaned_child)
 	/* Test if parent _exit affect child process */
 	pid_t pid;
 	int pipefd[2];
-	struct sigaction sa = { 0 };
+	char c;
 
-	sa.sa_handler = test_dummyHandler;
-	sigemptyset(&sa.sa_mask);
-	sa.sa_flags = 0;
-	sigaction(SIGUSR1, &sa, NULL);
-
-	/* Pipe needed for communication between grandparent and parent (can't use asserts in child) */
 	TEST_ASSERT_EQUAL_INT(0, pipe(pipefd));
+	TEST_ASSERT_EQUAL_INT(-1, access(TEST_EXIT_PATH, F_OK));
 
 	pid = fork();
 	TEST_ASSERT_GREATER_OR_EQUAL(0, pid);
 	if (pid == 0) {
+		/* Second, independent pipe — the fd array is reused on purpose. This one
+		 * signals the grandchild that its parent process has exit'ed, the grandparent's
+		 * pipe is still open here, but its numbers are lost and it will be closed
+		 * implicitly on exit
+		 */
+		pipe(pipefd);
 		pid = fork();
 		/* grandchild */
 		if (pid == 0) {
-			/* Grandchild doesn't need pipe */
-			close(pipefd[0]);
 			close(pipefd[1]);
-
-			pause();
-
+			/* Blocking read to wait until parent ends */
+			read(pipefd[0], &c, 1);
 			creat(TEST_EXIT_PATH, DEFFILEMODE);
 			test_common.test_exitPtr(EXIT_SUCCESS);
 		}
 		/* parent */
 		else {
-			/* Write fork return value from parent to grandparent */
-			close(pipefd[0]);
-			write(pipefd[1], &pid, sizeof(pid_t));
-			close(pipefd[1]);
 			/* Parent exits right away */
 			test_common.test_exitPtr(EXIT_SUCCESS);
 		}
 	}
 	/* grandparent */
 	else {
-		int status, ret, try = 0;
+		int status, ret;
 
 		close(pipefd[1]);
+		TEST_ASSERT_EQUAL_INT(0, read(pipefd[0], &c, 1));
+		TEST_ASSERT_EQUAL_INT(0, access(TEST_EXIT_PATH, F_OK));
+
 		ret = wait(&status);
 		TEST_ASSERT_EQUAL_INT(pid, ret);
 		TEST_ASSERT_EQUAL_INT(EXIT_SUCCESS, WEXITSTATUS(status));
 
-		TEST_ASSERT_EQUAL_INT(sizeof(pid_t), read(pipefd[0], &pid, sizeof(pid_t)));
-		/* Check if fork in parent succeeded */
-		TEST_ASSERT_NOT_EQUAL_INT(-1, pid);
 		close(pipefd[0]);
-
-		/* Check if file exists, if so child was unblocked */
-		TEST_ASSERT_EQUAL_INT(-1, access(TEST_EXIT_PATH, F_OK));
-
-		/* Send signal to grandchild indicating that parent exited */
-		TEST_ASSERT_EQUAL_INT(0, kill(pid, SIGUSR1));
-
-		while (kill(pid, SIGUSR1) == 0 && try <= 100) {
-			usleep(10000);
-			try++;
-		}
-
-		if (try > 100) {
-			kill(pid, SIGKILL);
-			TEST_FAIL_MESSAGE("Grandchild process couldn't exit");
-		}
-
-		TEST_ASSERT_EQUAL_INT(0, access(TEST_EXIT_PATH, F_OK));
-
 		remove(TEST_EXIT_PATH);
 	}
 }
