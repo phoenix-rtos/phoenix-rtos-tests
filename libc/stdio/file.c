@@ -68,8 +68,10 @@ TEST(file, fclose_stdin_ebadf)
 	TEST_ASSERT_EQUAL_INT(-1, fclose(stdin));
 	TEST_ASSERT_EQUAL_INT(EBADF, errno);
 
-	/* reopen the stdin */
+	/* reopen/recreate the stdin - the stream is closed even if fclose() fails */
 	TEST_ASSERT_EQUAL_INT(STDIN_FILENO, dup2(save_stdin, STDIN_FILENO));
+	stdin = fdopen(STDIN_FILENO, "r");
+	TEST_ASSERT_NOT_NULL(stdin);
 
 	/* note: not actually testing if stdin works */
 }
