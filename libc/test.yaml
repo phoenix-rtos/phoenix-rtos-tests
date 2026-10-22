@@ -31,6 +31,11 @@ test:
       targets:
         include: [host-generic-pc]
 
+    - name: group
+      execute: test-libc-group
+      targets:
+        include: [host-generic-pc]
+
     - name: misc
       execute: test-libc-misc
       targets:
