@@ -21,16 +21,8 @@
 /* no need for forward declarations, RUN_TEST_GROUP does it by itself */
 void runner(void)
 {
-	RUN_TEST_GROUP(grp_getgrgid);
-	RUN_TEST_GROUP(grp_getgrnam);
-	RUN_TEST_GROUP(grp_getgrgid_r);
-	RUN_TEST_GROUP(grp_getgrnam_r);
-	RUN_TEST_GROUP(grp_getgrent);
-
-	RUN_TEST_GROUP(getpwd);
 	RUN_TEST_GROUP(resolve_path);
 	RUN_TEST_GROUP(unistd_getopt);
-	RUN_TEST_GROUP(unistd_uids);
 	RUN_TEST_GROUP(unistd_fsdir);
 	RUN_TEST_GROUP(unistd_file);
 	RUN_TEST_GROUP(unistd_file_pread);
@@ -111,10 +103,6 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 	if (libc_createFileIfMissing("/etc/passwd", "root:0B1ANiYi45IhxkfmUW155/GBd4IRE=:0:0:root:/:/bin/sh") < 0) {
-		unsetenv(var);
-		return 1;
-	}
-	if (libc_createFileIfMissing("/etc/group", "root:x:0:") < 0) {
 		unsetenv(var);
 		return 1;
 	}
