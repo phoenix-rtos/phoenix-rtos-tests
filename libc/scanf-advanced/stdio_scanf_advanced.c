@@ -6,18 +6,19 @@
  *    - stdio.h
  * TESTED:
  *    - fscanf()
- *    - sscanf()
  *    - vfscanf()
- *    - vsscanf()
+ *    - scanf()
  *    - vscanf()
+ *    - sscanf()
+ *    - vsscanf()
  *    - For all functions the following conversion specifiers:
  * 		- "%a", "%e", "%f", "%g"
  * 		- "%c", "%s", "%ms", "%["
  * 		- "%p"
  * 		- "%n"
  *
- * Copyright 2023, 2024 Phoenix Systems
- * Author: Damian Modzelewski
+ * Copyright 2023, 2024, 2026 Phoenix Systems
+ * Author: Damian Modzelewski, Adam Greloch
  *
  * This file is part of Phoenix-RTOS.
  *
@@ -47,8 +48,7 @@
 #endif
 
 
-#define TESTFILE_PATH "stdio_fscanf_test"
-#define TEST_STR      "Lorem ipsum dolor sit amet,Vestibulum ante ipsum primis in faucibus orci luctus 123 et ultrices posuere cubilia curae 0x0005"
+#define TEST_STR "Lorem ipsum dolor sit amet,Vestibulum ante ipsum primis in faucibus orci luctus 123 et ultrices posuere cubilia curae 0x0005"
 
 /* Size enough to hold most of data types int/ptrdif/float(in other formats than %f%F and %lf%lF)/str */
 #define BUFF_LEN 300
@@ -76,7 +76,48 @@
 		TEST_ASSERT_EQUAL_FLOAT((FLT_MAX) * -1, negFltMax); \
 	}
 
-static FILE *filep;
+
+/* Reads float limits printed with `printFormat` using `format` */
+static void test_scanfFloatLimits(const char *format, const char *printFormat)
+{
+	char buff[BUFF_LEN] = { 0 };
+	float fltMax, fltMaxH, zero, fltMin, negFltMax, negFltMaxH, negFltMin;
+	test_scanfFunc_t f;
+
+	sprintf(buff, printFormat, FLT_MAX, FLT_MAX / 2, FLT_MIN, 0.f, FLT_MIN * -1, (FLT_MAX / 2) * -1, FLT_MAX * -1);
+	test_scanfSetInput(buff);
+
+	for (f = 0; f < scanf_funcCount; f++) {
+		test_scanfPrepare(f, 0);
+		fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
+		TEST_ASSERT_EQUAL_INT(7, TEST_SCANF(f, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
+		/* This block contains all asserts from min to max for float */
+		TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+	}
+}
+
+
+/* Reads infinities and NaN printed and read with `format` */
+static void test_scanfInfNan(const char *format)
+{
+	char buff[BUFF_LEN] = { 0 };
+	double valInf, valNan, valNegInf;
+	test_scanfFunc_t f;
+
+	sprintf(buff, format, INFINITY, INFINITY * -1, NAN);
+	test_scanfSetInput(buff);
+
+	for (f = 0; f < scanf_funcCount; f++) {
+		test_scanfPrepare(f, 0);
+		valInf = valNan = valNegInf = 1.0;
+		TEST_ASSERT_EQUAL_INT(3, TEST_SCANF(f, format, &valInf, &valNegInf, &valNan));
+
+		TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
+		TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
+		TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
+	}
+}
+
 
 /*
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -95,194 +136,44 @@ TEST_GROUP(stdio_scanf_rest);
 
 TEST_SETUP(stdio_scanf_aefg)
 {
-	filep = fopen(TESTFILE_PATH, "w+");
-	test_stdinRedirect(TESTFILE_PATH);
+	test_scanfSetup();
 }
 
 
 TEST_TEAR_DOWN(stdio_scanf_aefg)
 {
-	fclose(filep);
-	test_stdinRestore();
+	test_scanfTeardown();
 }
 
 
 TEST(stdio_scanf_aefg, f)
 {
-	char buff[BUFF_LEN] = { 0 };
-	float fltMax, fltMaxH, zero, fltMin, negFltMax, negFltMaxH, negFltMin;
-	const char *format = "%f %f %f %f %f %f %f";
-
 	/*
 	 * Specific precision for float numbers following into 0.
 	 * FLT_MAX and FLT_MIN have first digit different by 0 on 38 place after coma
 	 * and to have an accurate reading of this value we read at least 4 digits
 	 */
-	sprintf(buff, "%f %f %.42f %f %.42f %f %f", FLT_MAX, FLT_MAX / 2, FLT_MIN, 0.f, FLT_MIN * -1, (FLT_MAX / 2) * -1, FLT_MAX * -1);
-	fprintf(filep, "%s", buff);
-	rewind(filep);
-
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
-	TEST_ASSERT_EQUAL_INT(7, test_vfscanfWrapper(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
-	/* This block contains all asserts from min to max for float */
-	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
-
-	rewind(stdin);
-
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
-	TEST_ASSERT_EQUAL_INT(7, test_vscanfWrapper(format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
-	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
-
-	rewind(filep);
-
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
-	TEST_ASSERT_EQUAL_INT(7, fscanf(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
-	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
-
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
-	TEST_ASSERT_EQUAL_INT(7, test_vsscanfWrapper(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
-	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
-
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
-	TEST_ASSERT_EQUAL_INT(7, sscanf(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
-	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+	test_scanfFloatLimits("%f %f %f %f %f %f %f", "%f %f %.42f %f %.42f %f %f");
 }
-
-
-/*
-////////////////////////////////////////////////////////////////////////////////////////////////////
-*/
 
 
 TEST(stdio_scanf_aefg, F)
 {
-	char buff[BUFF_LEN] = { 0 };
-	float fltMax, fltMaxH, zero, fltMin, negFltMax, negFltMaxH, negFltMin;
-	const char *format = "%F %F %F %F %F %F %F";
-
-	/*
-	 * Specific precision for float numbers following into 0.
-	 * FLT_MAX and FLT_MIN have first digit different by 0 on 38 place after coma
-	 * and to have an accurate reading of this value we read at least 4 digits
-	 */
-	sprintf(buff, "%f %f %.42f %f %.42f %f %f", FLT_MAX, FLT_MAX / 2, FLT_MIN, 0.f, FLT_MIN * -1, (FLT_MAX / 2) * -1, FLT_MAX * -1);
-	fprintf(filep, "%s", buff);
-	rewind(filep);
-
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
-	TEST_ASSERT_EQUAL_INT(7, test_vfscanfWrapper(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
-	/* This block contains all asserts from min to max for float */
-	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
-
-	rewind(stdin);
-
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
-	TEST_ASSERT_EQUAL_INT(7, test_vscanfWrapper(format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
-	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
-
-	rewind(filep);
-
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
-	TEST_ASSERT_EQUAL_INT(7, fscanf(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
-	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
-
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
-	TEST_ASSERT_EQUAL_INT(7, test_vsscanfWrapper(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
-	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
-
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
-	TEST_ASSERT_EQUAL_INT(7, sscanf(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
-	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+	/* Specific precision for float numbers following into 0 - see the "f" test */
+	test_scanfFloatLimits("%F %F %F %F %F %F %F", "%f %f %.42f %f %.42f %f %f");
 }
-
-
-/*
-////////////////////////////////////////////////////////////////////////////////////////////////////
-*/
 
 
 TEST(stdio_scanf_aefg, a)
 {
-	char buff[BUFF_LEN] = { 0 };
-	float fltMax, fltMaxH, zero, fltMin, negFltMax, negFltMaxH, negFltMin;
-	const char *format = "%a %a %a %a %a %a %a";
-
-	sprintf(buff, format, FLT_MAX, FLT_MAX / 2, FLT_MIN, 0.f, FLT_MIN * -1, (FLT_MAX / 2) * -1, FLT_MAX * -1);
-	fprintf(filep, "%s", buff);
-	rewind(filep);
-
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
-	TEST_ASSERT_EQUAL_INT(7, test_vfscanfWrapper(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
-	/* This block contains all asserts from min to max for float */
-	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
-
-	rewind(stdin);
-
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
-	TEST_ASSERT_EQUAL_INT(7, test_vscanfWrapper(format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
-	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
-
-	rewind(filep);
-
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
-	TEST_ASSERT_EQUAL_INT(7, fscanf(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
-	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
-
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
-	TEST_ASSERT_EQUAL_INT(7, test_vsscanfWrapper(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
-	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
-
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
-	TEST_ASSERT_EQUAL_INT(7, sscanf(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
-	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+	test_scanfFloatLimits("%a %a %a %a %a %a %a", "%a %a %a %a %a %a %a");
 }
-
-
-/*
-////////////////////////////////////////////////////////////////////////////////////////////////////
-*/
 
 
 TEST(stdio_scanf_aefg, A)
 {
-	char buff[BUFF_LEN] = { 0 };
-	float fltMax, fltMaxH, zero, fltMin, negFltMax, negFltMaxH, negFltMin;
-	const char *format = "%A %A %A %A %A %A %A";
-
-	sprintf(buff, format, FLT_MAX, FLT_MAX / 2, FLT_MIN, 0.f, FLT_MIN * -1, (FLT_MAX / 2) * -1, FLT_MAX * -1);
-	fprintf(filep, "%s", buff);
-	rewind(filep);
-
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
-	TEST_ASSERT_EQUAL_INT(7, test_vfscanfWrapper(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
-	/* This block contains all asserts from min to max for float */
-	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
-
-	rewind(stdin);
-
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
-	TEST_ASSERT_EQUAL_INT(7, test_vscanfWrapper(format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
-	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
-
-	rewind(filep);
-
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
-	TEST_ASSERT_EQUAL_INT(7, fscanf(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
-	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
-
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
-	TEST_ASSERT_EQUAL_INT(7, test_vsscanfWrapper(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
-	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
-
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
-	TEST_ASSERT_EQUAL_INT(7, sscanf(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
-	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+	test_scanfFloatLimits("%A %A %A %A %A %A %A", "%A %A %A %A %A %A %A");
 }
-
-
-/*
-////////////////////////////////////////////////////////////////////////////////////////////////////
-*/
 
 
 TEST(stdio_scanf_aefg, e)
@@ -292,44 +183,8 @@ TEST(stdio_scanf_aefg, e)
 	TEST_IGNORE();
 #endif
 
-	char buff[BUFF_LEN] = { 0 };
-	float fltMax, fltMaxH, zero, fltMin, negFltMax, negFltMaxH, negFltMin;
-	const char *format = "%e %e %e %e %e %e %e";
-
-	sprintf(buff, format, FLT_MAX, FLT_MAX / 2, FLT_MIN, 0.f, FLT_MIN * -1, (FLT_MAX / 2) * -1, FLT_MAX * -1);
-	fprintf(filep, "%s", buff);
-	rewind(filep);
-
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
-	TEST_ASSERT_EQUAL_INT(7, test_vfscanfWrapper(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
-	/* This block contains all asserts from min to max for float */
-	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
-
-	rewind(stdin);
-
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
-	TEST_ASSERT_EQUAL_INT(7, test_vscanfWrapper(format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
-	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
-
-	rewind(filep);
-
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
-	TEST_ASSERT_EQUAL_INT(7, fscanf(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
-	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
-
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
-	TEST_ASSERT_EQUAL_INT(7, test_vsscanfWrapper(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
-	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
-
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
-	TEST_ASSERT_EQUAL_INT(7, sscanf(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
-	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+	test_scanfFloatLimits("%e %e %e %e %e %e %e", "%e %e %e %e %e %e %e");
 }
-
-
-/*
-////////////////////////////////////////////////////////////////////////////////////////////////////
-*/
 
 
 TEST(stdio_scanf_aefg, E)
@@ -339,44 +194,8 @@ TEST(stdio_scanf_aefg, E)
 	TEST_IGNORE();
 #endif
 
-	char buff[BUFF_LEN] = { 0 };
-	float fltMax, fltMaxH, zero, fltMin, negFltMax, negFltMaxH, negFltMin;
-	const char *format = "%E %E %E %E %E %E %E";
-
-	sprintf(buff, format, FLT_MAX, FLT_MAX / 2, FLT_MIN, 0.f, FLT_MIN * -1, (FLT_MAX / 2) * -1, FLT_MAX * -1);
-	fprintf(filep, "%s", buff);
-	rewind(filep);
-
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
-	TEST_ASSERT_EQUAL_INT(7, test_vfscanfWrapper(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
-	/* This block contains all asserts from min to max for float */
-	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
-
-	rewind(stdin);
-
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
-	TEST_ASSERT_EQUAL_INT(7, test_vscanfWrapper(format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
-	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
-
-	rewind(filep);
-
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
-	TEST_ASSERT_EQUAL_INT(7, fscanf(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
-	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
-
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
-	TEST_ASSERT_EQUAL_INT(7, test_vsscanfWrapper(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
-	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
-
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
-	TEST_ASSERT_EQUAL_INT(7, sscanf(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
-	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+	test_scanfFloatLimits("%E %E %E %E %E %E %E", "%E %E %E %E %E %E %E");
 }
-
-
-/*
-////////////////////////////////////////////////////////////////////////////////////////////////////
-*/
 
 
 TEST(stdio_scanf_aefg, g)
@@ -386,44 +205,8 @@ TEST(stdio_scanf_aefg, g)
 	TEST_IGNORE();
 #endif
 
-	char buff[BUFF_LEN] = { 0 };
-	float fltMax, fltMaxH, zero, fltMin, negFltMax, negFltMaxH, negFltMin;
-	const char *format = "%g %g %g %g %g %g %g";
-
-	sprintf(buff, format, FLT_MAX, FLT_MAX / 2, FLT_MIN, 0.f, FLT_MIN * -1, (FLT_MAX / 2) * -1, FLT_MAX * -1);
-	fprintf(filep, "%s", buff);
-	rewind(filep);
-
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
-	TEST_ASSERT_EQUAL_INT(7, test_vfscanfWrapper(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
-	/* This block contains all asserts from min to max for float */
-	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
-
-	rewind(stdin);
-
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
-	TEST_ASSERT_EQUAL_INT(7, test_vscanfWrapper(format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
-	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
-
-	rewind(filep);
-
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
-	TEST_ASSERT_EQUAL_INT(7, fscanf(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
-	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
-
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
-	TEST_ASSERT_EQUAL_INT(7, test_vsscanfWrapper(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
-	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
-
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
-	TEST_ASSERT_EQUAL_INT(7, sscanf(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
-	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+	test_scanfFloatLimits("%g %g %g %g %g %g %g", "%g %g %g %g %g %g %g");
 }
-
-
-/*
-////////////////////////////////////////////////////////////////////////////////////////////////////
-*/
 
 
 TEST(stdio_scanf_aefg, G)
@@ -433,262 +216,31 @@ TEST(stdio_scanf_aefg, G)
 	TEST_IGNORE();
 #endif
 
-	char buff[BUFF_LEN] = { 0 };
-	float fltMax, fltMaxH, zero, fltMin, negFltMax, negFltMaxH, negFltMin;
-	const char *format = "%G %G %G %G %G %G %G";
-
-	sprintf(buff, format, FLT_MAX, FLT_MAX / 2, FLT_MIN, 0.f, FLT_MIN * -1, (FLT_MAX / 2) * -1, FLT_MAX * -1);
-	fprintf(filep, "%s", buff);
-	rewind(filep);
-
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
-	TEST_ASSERT_EQUAL_INT(7, test_vfscanfWrapper(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
-	/* This block contains all asserts from min to max for float */
-	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
-
-	rewind(stdin);
-
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
-	TEST_ASSERT_EQUAL_INT(7, test_vscanfWrapper(format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
-	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
-
-	rewind(filep);
-
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
-	TEST_ASSERT_EQUAL_INT(7, fscanf(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
-	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
-
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
-	TEST_ASSERT_EQUAL_INT(7, test_vsscanfWrapper(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
-	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
-
-	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
-	TEST_ASSERT_EQUAL_INT(7, sscanf(buff, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
-	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+	test_scanfFloatLimits("%G %G %G %G %G %G %G", "%G %G %G %G %G %G %G");
 }
-
-
-/*
-////////////////////////////////////////////////////////////////////////////////////////////////////
-*/
 
 
 TEST(stdio_scanf_aefg, inf_nan_f)
 {
-	char buff[BUFF_LEN] = { 0 };
-	double valInf, valNan, valNegInf;
-	const char *format = "%lf %lf %lf";
-
-	sprintf(buff, format, INFINITY, INFINITY * -1, NAN);
-	fprintf(filep, "%s", buff);
-	rewind(filep);
-
-	valInf = valNan = valNegInf = 1.0;
-	TEST_ASSERT_EQUAL_INT(3, test_vfscanfWrapper(filep, format, &valInf, &valNegInf, &valNan));
-
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
-	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
-
-	rewind(stdin);
-
-	valInf = valNan = valNegInf = 1.0;
-	TEST_ASSERT_EQUAL_INT(3, test_vscanfWrapper(format, &valInf, &valNegInf, &valNan));
-
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
-	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
-
-	rewind(filep);
-
-	valInf = valNan = valNegInf = 1.0;
-	TEST_ASSERT_EQUAL_INT(3, fscanf(filep, format, &valInf, &valNegInf, &valNan));
-
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
-	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
-
-	valInf = valNan = valNegInf = 1.0;
-	TEST_ASSERT_EQUAL_INT(3, test_vsscanfWrapper(buff, format, &valInf, &valNegInf, &valNan));
-
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
-	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
-
-	valInf = valNan = valNegInf = 1.0;
-	TEST_ASSERT_EQUAL_INT(3, sscanf(buff, format, &valInf, &valNegInf, &valNan));
-
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
-	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
+	test_scanfInfNan("%lf %lf %lf");
 }
-
-
-/*
-////////////////////////////////////////////////////////////////////////////////////////////////////
-*/
 
 
 TEST(stdio_scanf_aefg, inf_nan_a)
 {
-	char buff[BUFF_LEN] = { 0 };
-	double valInf, valNan, valNegInf;
-	const char *format = "%la %la %la";
-
-	sprintf(buff, format, INFINITY, INFINITY * -1, NAN);
-	fprintf(filep, "%s", buff);
-	rewind(filep);
-
-	valInf = valNan = valNegInf = 1.0;
-	TEST_ASSERT_EQUAL_INT(3, test_vfscanfWrapper(filep, format, &valInf, &valNegInf, &valNan));
-
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
-	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
-
-	rewind(stdin);
-
-	valInf = valNan = valNegInf = 1.0;
-	TEST_ASSERT_EQUAL_INT(3, test_vscanfWrapper(format, &valInf, &valNegInf, &valNan));
-
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
-	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
-
-	rewind(filep);
-
-	valInf = valNan = valNegInf = 1.0;
-	TEST_ASSERT_EQUAL_INT(3, fscanf(filep, format, &valInf, &valNegInf, &valNan));
-
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
-	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
-
-	valInf = valNan = valNegInf = 1.0;
-	TEST_ASSERT_EQUAL_INT(3, test_vsscanfWrapper(buff, format, &valInf, &valNegInf, &valNan));
-
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
-	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
-
-	valInf = valNan = valNegInf = 1.0;
-	TEST_ASSERT_EQUAL_INT(3, sscanf(buff, format, &valInf, &valNegInf, &valNan));
-
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
-	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
+	test_scanfInfNan("%la %la %la");
 }
-
-
-/*
-////////////////////////////////////////////////////////////////////////////////////////////////////
-*/
 
 
 TEST(stdio_scanf_aefg, inf_nan_e)
 {
-	char buff[BUFF_LEN] = { 0 };
-	double valInf, valNan, valNegInf;
-	const char *format = "%le %le %le";
-
-	sprintf(buff, format, INFINITY, INFINITY * -1, NAN);
-	fprintf(filep, "%s", buff);
-	rewind(filep);
-
-	valInf = valNan = valNegInf = 1.0;
-	TEST_ASSERT_EQUAL_INT(3, test_vfscanfWrapper(filep, format, &valInf, &valNegInf, &valNan));
-
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
-	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
-
-	rewind(stdin);
-
-	valInf = valNan = valNegInf = 1.0;
-	TEST_ASSERT_EQUAL_INT(3, test_vscanfWrapper(format, &valInf, &valNegInf, &valNan));
-
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
-	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
-
-	rewind(filep);
-
-	valInf = valNan = valNegInf = 1.0;
-	TEST_ASSERT_EQUAL_INT(3, fscanf(filep, format, &valInf, &valNegInf, &valNan));
-
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
-	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
-
-	valInf = valNan = valNegInf = 1.0;
-	TEST_ASSERT_EQUAL_INT(3, test_vsscanfWrapper(buff, format, &valInf, &valNegInf, &valNan));
-
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
-	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
-
-	valInf = valNan = valNegInf = 1.0;
-	TEST_ASSERT_EQUAL_INT(3, sscanf(buff, format, &valInf, &valNegInf, &valNan));
-
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
-	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
+	test_scanfInfNan("%le %le %le");
 }
-
-
-/*
-////////////////////////////////////////////////////////////////////////////////////////////////////
-*/
 
 
 TEST(stdio_scanf_aefg, inf_nan_g)
 {
-	char buff[BUFF_LEN] = { 0 };
-	double valInf, valNan, valNegInf;
-	const char *format = "%lg %lg %lg";
-
-	sprintf(buff, format, INFINITY, INFINITY * -1, NAN);
-	fprintf(filep, "%s", buff);
-	rewind(filep);
-
-	valInf = valNan = valNegInf = 1.0;
-	TEST_ASSERT_EQUAL_INT(3, test_vfscanfWrapper(filep, format, &valInf, &valNegInf, &valNan));
-
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
-	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
-
-	rewind(stdin);
-
-	valInf = valNan = valNegInf = 1.0;
-	TEST_ASSERT_EQUAL_INT(3, test_vscanfWrapper(format, &valInf, &valNegInf, &valNan));
-
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
-	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
-
-	rewind(filep);
-
-	valInf = valNan = valNegInf = 1.0;
-	TEST_ASSERT_EQUAL_INT(3, fscanf(filep, format, &valInf, &valNegInf, &valNan));
-
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
-	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
-
-	valInf = valNan = valNegInf = 1.0;
-	TEST_ASSERT_EQUAL_INT(3, test_vsscanfWrapper(buff, format, &valInf, &valNegInf, &valNan));
-
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
-	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
-
-	valInf = valNan = valNegInf = 1.0;
-	TEST_ASSERT_EQUAL_INT(3, sscanf(buff, format, &valInf, &valNegInf, &valNan));
-
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
-	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
-	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
+	test_scanfInfNan("%lg %lg %lg");
 }
 
 
@@ -699,15 +251,13 @@ TEST(stdio_scanf_aefg, inf_nan_g)
 
 TEST_SETUP(stdio_scanf_cspn)
 {
-	filep = fopen(TESTFILE_PATH, "w+");
-	test_stdinRedirect(TESTFILE_PATH);
+	test_scanfSetup();
 }
 
 
 TEST_TEAR_DOWN(stdio_scanf_cspn)
 {
-	fclose(filep);
-	test_stdinRestore();
+	test_scanfTeardown();
 }
 
 
@@ -716,43 +266,18 @@ TEST(stdio_scanf_cspn, c)
 	const char *format = "%corem-ips%cm-dolo%c";
 	char buff[BUFF_LEN] = "Lorem-ipsum-dolor";
 	char c1, c2, c3;
+	test_scanfFunc_t f;
 
-	fprintf(filep, "%s", buff);
-	rewind(filep);
+	test_scanfSetInput(buff);
 
-	c1 = c2 = c3 = 0;
-	TEST_ASSERT_EQUAL_INT(3, test_vfscanfWrapper(filep, format, &c1, &c2, &c3));
-	TEST_ASSERT_EQUAL_CHAR('L', c1);
-	TEST_ASSERT_EQUAL_CHAR('u', c2);
-	TEST_ASSERT_EQUAL_CHAR('r', c3);
-
-	rewind(stdin);
-
-	c1 = c2 = c3 = 0;
-	TEST_ASSERT_EQUAL_INT(3, test_vscanfWrapper(format, &c1, &c2, &c3));
-	TEST_ASSERT_EQUAL_CHAR('L', c1);
-	TEST_ASSERT_EQUAL_CHAR('u', c2);
-	TEST_ASSERT_EQUAL_CHAR('r', c3);
-
-	rewind(filep);
-
-	c1 = c2 = c3 = 0;
-	TEST_ASSERT_EQUAL_INT(3, fscanf(filep, format, &c1, &c2, &c3));
-	TEST_ASSERT_EQUAL_CHAR('L', c1);
-	TEST_ASSERT_EQUAL_CHAR('u', c2);
-	TEST_ASSERT_EQUAL_CHAR('r', c3);
-
-	c1 = c2 = c3 = 0;
-	TEST_ASSERT_EQUAL_INT(3, test_vsscanfWrapper(buff, format, &c1, &c2, &c3));
-	TEST_ASSERT_EQUAL_CHAR('L', c1);
-	TEST_ASSERT_EQUAL_CHAR('u', c2);
-	TEST_ASSERT_EQUAL_CHAR('r', c3);
-
-	c1 = c2 = c3 = 0;
-	TEST_ASSERT_EQUAL_INT(3, sscanf(buff, format, &c1, &c2, &c3));
-	TEST_ASSERT_EQUAL_CHAR('L', c1);
-	TEST_ASSERT_EQUAL_CHAR('u', c2);
-	TEST_ASSERT_EQUAL_CHAR('r', c3);
+	for (f = 0; f < scanf_funcCount; f++) {
+		test_scanfPrepare(f, 0);
+		c1 = c2 = c3 = 0;
+		TEST_ASSERT_EQUAL_INT(3, TEST_SCANF(f, format, &c1, &c2, &c3));
+		TEST_ASSERT_EQUAL_CHAR('L', c1);
+		TEST_ASSERT_EQUAL_CHAR('u', c2);
+		TEST_ASSERT_EQUAL_CHAR('r', c3);
+	}
 }
 
 
@@ -761,73 +286,39 @@ TEST(stdio_scanf_cspn, c_ascii)
 	char buff[BUFF_LEN] = { 0 };
 	char c;
 	int i;
+	test_scanfFunc_t f;
 
 	for (i = 1; i < 128; i++) {
 		buff[i - 1] = i;
 	}
 
-	fprintf(filep, "%s", buff);
-	rewind(filep);
+	test_scanfSetInput(buff);
 
 	for (i = 1; i < 128; i++) {
-		c = 0;
-		TEST_ASSERT_EQUAL_INT(1, test_vfscanfWrapper(filep, "%c", &c));
-		TEST_ASSERT_EQUAL_CHAR(i, c);
-
-		fseek(filep, i - 1, SEEK_SET);
-
-		c = 0;
-		TEST_ASSERT_EQUAL_INT(1, fscanf(filep, "%c", &c));
-		TEST_ASSERT_EQUAL_CHAR(i, c);
-
-		fseek(stdin, i - 1, SEEK_SET);
-
-		c = 0;
-		TEST_ASSERT_EQUAL_INT(1, test_vscanfWrapper("%c", &c));
-		TEST_ASSERT_EQUAL_CHAR(i, c);
-
-		c = 0;
-		TEST_ASSERT_EQUAL_INT(1, test_vsscanfWrapper(&buff[i - 1], "%c", &c));
-		TEST_ASSERT_EQUAL_CHAR(i, c);
-
-		c = 0;
-		TEST_ASSERT_EQUAL_INT(1, sscanf(&buff[i - 1], "%c", &c));
-		TEST_ASSERT_EQUAL_CHAR(i, c);
+		for (f = 0; f < scanf_funcCount; f++) {
+			test_scanfPrepare(f, i - 1);
+			c = 0;
+			TEST_ASSERT_EQUAL_INT(1, TEST_SCANF(f, "%c", &c));
+			TEST_ASSERT_EQUAL_CHAR(i, c);
+		}
 	}
 }
 
 
 TEST(stdio_scanf_cspn, s_path)
 {
-	char buff[BUFF_LEN] = TESTFILE_PATH;
+	char buff[BUFF_LEN] = TEST_SCANF_FILE;
 	char res[BUFF_LEN];
+	test_scanfFunc_t f;
 
-	fprintf(filep, "%s", buff);
-	rewind(filep);
+	test_scanfSetInput(buff);
 
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, test_vfscanfWrapper(filep, "%s", res));
-	TEST_ASSERT_EQUAL_STRING(TESTFILE_PATH, res);
-
-	rewind(stdin);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, test_vscanfWrapper("%s", res));
-	TEST_ASSERT_EQUAL_STRING(TESTFILE_PATH, res);
-
-	rewind(filep);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, fscanf(filep, "%s", res));
-	TEST_ASSERT_EQUAL_STRING(TESTFILE_PATH, res);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, test_vsscanfWrapper(buff, "%s", res));
-	TEST_ASSERT_EQUAL_STRING(TESTFILE_PATH, res);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, sscanf(buff, "%s", res));
-	TEST_ASSERT_EQUAL_STRING(TESTFILE_PATH, res);
+	for (f = 0; f < scanf_funcCount; f++) {
+		test_scanfPrepare(f, 0);
+		memset(res, 0, sizeof(res));
+		TEST_ASSERT_EQUAL_INT(1, TEST_SCANF(f, "%s", res));
+		TEST_ASSERT_EQUAL_STRING(TEST_SCANF_FILE, res);
+	}
 }
 
 
@@ -837,62 +328,22 @@ TEST(stdio_scanf_cspn, s_pick)
 	char words[6][MAX_TESTSTR_WORDLEN];
 	const char *format = "%s %s %s %s amet,Vestibulum ante ipsum primis in faucibus orci luctus %s et ultrices posuere cubilia "
 						 "curae %s";
-	fprintf(filep, "%s", buff);
-	rewind(filep);
+	test_scanfFunc_t f;
 
-	memset(words, 0, sizeof(words));
-	TEST_ASSERT_EQUAL_INT(6, test_vfscanfWrapper(filep, format, words[0], words[1], words[2], words[3], words[4], words[5]));
+	test_scanfSetInput(buff);
 
-	TEST_ASSERT_EQUAL_STRING("Lorem", words[0]);
-	TEST_ASSERT_EQUAL_STRING("ipsum", words[1]);
-	TEST_ASSERT_EQUAL_STRING("dolor", words[2]);
-	TEST_ASSERT_EQUAL_STRING("sit", words[3]);
-	TEST_ASSERT_EQUAL_STRING("123", words[4]);
-	TEST_ASSERT_EQUAL_STRING("0x0005", words[5]);
+	for (f = 0; f < scanf_funcCount; f++) {
+		test_scanfPrepare(f, 0);
+		memset(words, 0, sizeof(words));
+		TEST_ASSERT_EQUAL_INT(6, TEST_SCANF(f, format, words[0], words[1], words[2], words[3], words[4], words[5]));
 
-	rewind(stdin);
-
-	memset(words, 0, sizeof(words));
-	TEST_ASSERT_EQUAL_INT(6, test_vscanfWrapper(format, words[0], words[1], words[2], words[3], words[4], words[5]));
-
-	TEST_ASSERT_EQUAL_STRING("Lorem", words[0]);
-	TEST_ASSERT_EQUAL_STRING("ipsum", words[1]);
-	TEST_ASSERT_EQUAL_STRING("dolor", words[2]);
-	TEST_ASSERT_EQUAL_STRING("sit", words[3]);
-	TEST_ASSERT_EQUAL_STRING("123", words[4]);
-	TEST_ASSERT_EQUAL_STRING("0x0005", words[5]);
-
-	rewind(filep);
-
-	memset(words, 0, sizeof(words));
-	TEST_ASSERT_EQUAL_INT(6, fscanf(filep, format, words[0], words[1], words[2], words[3], words[4], words[5]));
-
-	TEST_ASSERT_EQUAL_STRING("Lorem", words[0]);
-	TEST_ASSERT_EQUAL_STRING("ipsum", words[1]);
-	TEST_ASSERT_EQUAL_STRING("dolor", words[2]);
-	TEST_ASSERT_EQUAL_STRING("sit", words[3]);
-	TEST_ASSERT_EQUAL_STRING("123", words[4]);
-	TEST_ASSERT_EQUAL_STRING("0x0005", words[5]);
-
-	memset(words, 0, sizeof(words));
-	TEST_ASSERT_EQUAL_INT(6, test_vsscanfWrapper(buff, format, words[0], words[1], words[2], words[3], words[4], words[5]));
-
-	TEST_ASSERT_EQUAL_STRING("Lorem", words[0]);
-	TEST_ASSERT_EQUAL_STRING("ipsum", words[1]);
-	TEST_ASSERT_EQUAL_STRING("dolor", words[2]);
-	TEST_ASSERT_EQUAL_STRING("sit", words[3]);
-	TEST_ASSERT_EQUAL_STRING("123", words[4]);
-	TEST_ASSERT_EQUAL_STRING("0x0005", words[5]);
-
-	memset(words, 0, sizeof(words));
-	TEST_ASSERT_EQUAL_INT(6, sscanf(buff, format, words[0], words[1], words[2], words[3], words[4], words[5]));
-
-	TEST_ASSERT_EQUAL_STRING("Lorem", words[0]);
-	TEST_ASSERT_EQUAL_STRING("ipsum", words[1]);
-	TEST_ASSERT_EQUAL_STRING("dolor", words[2]);
-	TEST_ASSERT_EQUAL_STRING("sit", words[3]);
-	TEST_ASSERT_EQUAL_STRING("123", words[4]);
-	TEST_ASSERT_EQUAL_STRING("0x0005", words[5]);
+		TEST_ASSERT_EQUAL_STRING("Lorem", words[0]);
+		TEST_ASSERT_EQUAL_STRING("ipsum", words[1]);
+		TEST_ASSERT_EQUAL_STRING("dolor", words[2]);
+		TEST_ASSERT_EQUAL_STRING("sit", words[3]);
+		TEST_ASSERT_EQUAL_STRING("123", words[4]);
+		TEST_ASSERT_EQUAL_STRING("0x0005", words[5]);
+	}
 }
 
 
@@ -900,48 +351,19 @@ TEST(stdio_scanf_cspn, s_torn)
 {
 	char buff[BUFF_LEN] = { 0 };
 	const char *txt = "\4399\0ns";
+	test_scanfFunc_t f;
 
-	fprintf(filep, "%s", txt);
-	rewind(filep);
+	test_scanfSetInput(txt);
 
-	memset(buff, 0, sizeof(buff));
-	TEST_ASSERT_EQUAL_INT(1, test_vfscanfWrapper(filep, "%s", buff));
-	TEST_ASSERT_EQUAL_CHAR(txt[3], buff[3]);
-	TEST_ASSERT_NOT_EQUAL_CHAR(txt[4], buff[4]);
-	TEST_ASSERT_NOT_EQUAL_CHAR(txt[5], buff[5]);
-	TEST_ASSERT_EQUAL_STRING(txt, buff);
-
-	rewind(stdin);
-
-	memset(buff, 0, sizeof(buff));
-	TEST_ASSERT_EQUAL_INT(1, test_vscanfWrapper("%s", buff));
-	TEST_ASSERT_EQUAL_CHAR(txt[3], buff[3]);
-	TEST_ASSERT_NOT_EQUAL_CHAR(txt[4], buff[4]);
-	TEST_ASSERT_NOT_EQUAL_CHAR(txt[5], buff[5]);
-	TEST_ASSERT_EQUAL_STRING(txt, buff);
-
-	rewind(filep);
-
-	memset(buff, 0, sizeof(buff));
-	TEST_ASSERT_EQUAL_INT(1, fscanf(filep, "%s", buff));
-	TEST_ASSERT_EQUAL_CHAR(txt[3], buff[3]);
-	TEST_ASSERT_NOT_EQUAL_CHAR(txt[4], buff[4]);
-	TEST_ASSERT_NOT_EQUAL_CHAR(txt[5], buff[5]);
-	TEST_ASSERT_EQUAL_STRING(txt, buff);
-
-	memset(buff, 0, sizeof(buff));
-	TEST_ASSERT_EQUAL_INT(1, test_vsscanfWrapper(txt, "%s", buff));
-	TEST_ASSERT_EQUAL_CHAR(txt[3], buff[3]);
-	TEST_ASSERT_NOT_EQUAL_CHAR(txt[4], buff[4]);
-	TEST_ASSERT_NOT_EQUAL_CHAR(txt[5], buff[5]);
-	TEST_ASSERT_EQUAL_STRING(txt, buff);
-
-	memset(buff, 0, sizeof(buff));
-	TEST_ASSERT_EQUAL_INT(1, sscanf(txt, "%s", buff));
-	TEST_ASSERT_EQUAL_CHAR(txt[3], buff[3]);
-	TEST_ASSERT_NOT_EQUAL_CHAR(txt[4], buff[4]);
-	TEST_ASSERT_NOT_EQUAL_CHAR(txt[5], buff[5]);
-	TEST_ASSERT_EQUAL_STRING(txt, buff);
+	for (f = 0; f < scanf_funcCount; f++) {
+		test_scanfPrepare(f, 0);
+		memset(buff, 0, sizeof(buff));
+		TEST_ASSERT_EQUAL_INT(1, TEST_SCANF(f, "%s", buff));
+		TEST_ASSERT_EQUAL_CHAR(txt[3], buff[3]);
+		TEST_ASSERT_NOT_EQUAL_CHAR(txt[4], buff[4]);
+		TEST_ASSERT_NOT_EQUAL_CHAR(txt[5], buff[5]);
+		TEST_ASSERT_EQUAL_STRING(txt, buff);
+	}
 }
 
 
@@ -950,6 +372,7 @@ TEST(stdio_scanf_cspn, s_ascii)
 	char buff[BUFF_LEN] = { 0 };
 	char asciiStr[BUFF_LEN] = { 0 };
 	int i;
+	test_scanfFunc_t f;
 
 	/*
 	 * In ASCII table from number 33 starts printable characters
@@ -960,30 +383,14 @@ TEST(stdio_scanf_cspn, s_ascii)
 	}
 	buff[i] = '\0';
 
-	fprintf(filep, "%s", buff);
-	rewind(filep);
+	test_scanfSetInput(buff);
 
-
-	memset(asciiStr, 0, sizeof(asciiStr));
-	TEST_ASSERT_EQUAL_INT(1, fscanf(filep, "%s", asciiStr));
-	TEST_ASSERT_EQUAL_STRING(buff, asciiStr);
-
-	rewind(filep);
-
-	TEST_ASSERT_EQUAL_INT(1, test_vfscanfWrapper(filep, "%s", asciiStr));
-	TEST_ASSERT_EQUAL_STRING(buff, asciiStr);
-
-	rewind(stdin);
-
-	memset(asciiStr, 0, sizeof(asciiStr));
-	TEST_ASSERT_EQUAL_INT(1, test_vscanfWrapper("%s", asciiStr));
-	TEST_ASSERT_EQUAL_STRING(buff, asciiStr);
-
-	TEST_ASSERT_EQUAL_INT(1, test_vsscanfWrapper(buff, "%s", asciiStr));
-	TEST_ASSERT_EQUAL_STRING(buff, asciiStr);
-
-	TEST_ASSERT_EQUAL_INT(1, sscanf(buff, "%s", asciiStr));
-	TEST_ASSERT_EQUAL_STRING(buff, asciiStr);
+	for (f = 0; f < scanf_funcCount; f++) {
+		test_scanfPrepare(f, 0);
+		memset(asciiStr, 0, sizeof(asciiStr));
+		TEST_ASSERT_EQUAL_INT(1, TEST_SCANF(f, "%s", asciiStr));
+		TEST_ASSERT_EQUAL_STRING(buff, asciiStr);
+	}
 }
 
 
@@ -993,44 +400,18 @@ TEST(stdio_scanf_cspn, percent)
 	char correct[BUFF_LEN] = { 0 };
 	char wrong[BUFF_LEN] = { 0 };
 	const char *format = "%%%s%%--- %% %s";
+	test_scanfFunc_t f;
 
-	fprintf(filep, "%s", buff);
+	test_scanfSetInput(buff);
 
-	rewind(filep);
-
-	memset(correct, 0, sizeof(correct));
-	memset(wrong, 0, sizeof(wrong));
-	TEST_ASSERT_EQUAL_INT(1, test_vfscanfWrapper(filep, format, correct, wrong));
-	TEST_ASSERT_EQUAL_STRING("yes", correct);
-	TEST_ASSERT_EQUAL_STRING("", wrong);
-
-	rewind(stdin);
-
-	memset(correct, 0, sizeof(correct));
-	memset(wrong, 0, sizeof(wrong));
-	TEST_ASSERT_EQUAL_INT(1, test_vscanfWrapper(format, correct, wrong));
-	TEST_ASSERT_EQUAL_STRING("yes", correct);
-	TEST_ASSERT_EQUAL_STRING("", wrong);
-
-	rewind(filep);
-
-	memset(correct, 0, sizeof(correct));
-	memset(wrong, 0, sizeof(wrong));
-	TEST_ASSERT_EQUAL_INT(1, fscanf(filep, format, correct, wrong));
-	TEST_ASSERT_EQUAL_STRING("yes", correct);
-	TEST_ASSERT_EQUAL_STRING("", wrong);
-
-	memset(correct, 0, sizeof(correct));
-	memset(wrong, 0, sizeof(wrong));
-	TEST_ASSERT_EQUAL_INT(1, test_vsscanfWrapper(buff, format, correct, wrong));
-	TEST_ASSERT_EQUAL_STRING("yes", correct);
-	TEST_ASSERT_EQUAL_STRING("", wrong);
-
-	memset(correct, 0, sizeof(correct));
-	memset(wrong, 0, sizeof(wrong));
-	TEST_ASSERT_EQUAL_INT(1, sscanf(buff, format, correct, wrong));
-	TEST_ASSERT_EQUAL_STRING("yes", correct);
-	TEST_ASSERT_EQUAL_STRING("", wrong);
+	for (f = 0; f < scanf_funcCount; f++) {
+		test_scanfPrepare(f, 0);
+		memset(correct, 0, sizeof(correct));
+		memset(wrong, 0, sizeof(wrong));
+		TEST_ASSERT_EQUAL_INT(1, TEST_SCANF(f, format, correct, wrong));
+		TEST_ASSERT_EQUAL_STRING("yes", correct);
+		TEST_ASSERT_EQUAL_STRING("", wrong);
+	}
 }
 
 
@@ -1043,49 +424,20 @@ TEST(stdio_scanf_cspn, ptr)
 	void *const expPtrMax = (void *)INTPTR_MAX;
 	void *const expPtrMin = (void *)INTPTR_MIN;
 	void *ptrVal, *ptrValZero, *ptrValMax, *ptrValMin;
+	test_scanfFunc_t f;
 
 	sprintf(buff, format, expPtr, expPtrZero, expPtrMax, expPtrMin);
-	fprintf(filep, "%s", buff);
-	rewind(filep);
+	test_scanfSetInput(buff);
 
-	ptrVal = ptrValZero = ptrValMax = ptrValMin = (void *)1;
-	TEST_ASSERT_EQUAL_INT(4, test_vfscanfWrapper(filep, format, &ptrVal, &ptrValZero, &ptrValMax, &ptrValMin));
-	TEST_ASSERT_EQUAL_PTR(expPtr, ptrVal);
-	TEST_ASSERT_EQUAL_PTR(expPtrZero, ptrValZero);
-	TEST_ASSERT_EQUAL_PTR(expPtrMax, ptrValMax);
-	TEST_ASSERT_EQUAL_PTR(expPtrMin, ptrValMin);
-
-	rewind(stdin);
-
-	ptrVal = ptrValZero = ptrValMax = ptrValMin = (void *)1;
-	TEST_ASSERT_EQUAL_INT(4, test_vscanfWrapper(format, &ptrVal, &ptrValZero, &ptrValMax, &ptrValMin));
-	TEST_ASSERT_EQUAL_PTR(expPtr, ptrVal);
-	TEST_ASSERT_EQUAL_PTR(expPtrZero, ptrValZero);
-	TEST_ASSERT_EQUAL_PTR(expPtrMax, ptrValMax);
-	TEST_ASSERT_EQUAL_PTR(expPtrMin, ptrValMin);
-
-	rewind(filep);
-
-	ptrVal = ptrValZero = ptrValMax = ptrValMin = (void *)1;
-	TEST_ASSERT_EQUAL_INT(4, fscanf(filep, format, &ptrVal, &ptrValZero, &ptrValMax, &ptrValMin));
-	TEST_ASSERT_EQUAL_PTR(expPtr, ptrVal);
-	TEST_ASSERT_EQUAL_PTR(expPtrZero, ptrValZero);
-	TEST_ASSERT_EQUAL_PTR(expPtrMax, ptrValMax);
-	TEST_ASSERT_EQUAL_PTR(expPtrMin, ptrValMin);
-
-	ptrVal = ptrValZero = ptrValMax = ptrValMin = (void *)1;
-	TEST_ASSERT_EQUAL_INT(4, test_vsscanfWrapper(buff, format, &ptrVal, &ptrValZero, &ptrValMax, &ptrValMin));
-	TEST_ASSERT_EQUAL_PTR(expPtr, ptrVal);
-	TEST_ASSERT_EQUAL_PTR(expPtrZero, ptrValZero);
-	TEST_ASSERT_EQUAL_PTR(expPtrMax, ptrValMax);
-	TEST_ASSERT_EQUAL_PTR(expPtrMin, ptrValMin);
-
-	ptrVal = ptrValZero = ptrValMax = ptrValMin = (void *)1;
-	TEST_ASSERT_EQUAL_INT(4, sscanf(buff, format, &ptrVal, &ptrValZero, &ptrValMax, &ptrValMin));
-	TEST_ASSERT_EQUAL_PTR(expPtr, ptrVal);
-	TEST_ASSERT_EQUAL_PTR(expPtrZero, ptrValZero);
-	TEST_ASSERT_EQUAL_PTR(expPtrMax, ptrValMax);
-	TEST_ASSERT_EQUAL_PTR(expPtrMin, ptrValMin);
+	for (f = 0; f < scanf_funcCount; f++) {
+		test_scanfPrepare(f, 0);
+		ptrVal = ptrValZero = ptrValMax = ptrValMin = (void *)1;
+		TEST_ASSERT_EQUAL_INT(4, TEST_SCANF(f, format, &ptrVal, &ptrValZero, &ptrValMax, &ptrValMin));
+		TEST_ASSERT_EQUAL_PTR(expPtr, ptrVal);
+		TEST_ASSERT_EQUAL_PTR(expPtrZero, ptrValZero);
+		TEST_ASSERT_EQUAL_PTR(expPtrMax, ptrValMax);
+		TEST_ASSERT_EQUAL_PTR(expPtrMin, ptrValMin);
+	}
 }
 
 
@@ -1095,35 +447,18 @@ TEST(stdio_scanf_cspn, n)
 	char res[BUFF_LEN] = { 0 };
 	const char *format = "%s %n";
 	int counter;
+	test_scanfFunc_t f;
 
 	memset(buff, 'a', sizeof(buff) - 1);
 
-	fprintf(filep, "%s", buff);
-	rewind(filep);
+	test_scanfSetInput(buff);
 
-	counter = 1;
-	test_vfscanfWrapper(filep, format, res, &counter);
-	TEST_ASSERT_EQUAL_INT(sizeof(buff) - 1, counter);
-
-	rewind(stdin);
-
-	counter = 1;
-	test_vscanfWrapper(format, res, &counter);
-	TEST_ASSERT_EQUAL_INT(sizeof(buff) - 1, counter);
-
-	rewind(filep);
-
-	counter = 1;
-	TEST_ASSERT_EQUAL_INT(1, fscanf(filep, format, res, &counter));
-	TEST_ASSERT_EQUAL_INT(sizeof(buff) - 1, counter);
-
-	counter = 1;
-	TEST_ASSERT_EQUAL_INT(1, test_vsscanfWrapper(buff, format, res, &counter));
-	TEST_ASSERT_EQUAL_INT(sizeof(buff) - 1, counter);
-
-	counter = 1;
-	TEST_ASSERT_EQUAL_INT(1, sscanf(buff, format, res, &counter));
-	TEST_ASSERT_EQUAL_INT(sizeof(buff) - 1, counter);
+	for (f = 0; f < scanf_funcCount; f++) {
+		test_scanfPrepare(f, 0);
+		counter = 1;
+		TEST_ASSERT_EQUAL_INT(1, TEST_SCANF(f, format, res, &counter));
+		TEST_ASSERT_EQUAL_INT(sizeof(buff) - 1, counter);
+	}
 }
 
 
@@ -1134,15 +469,13 @@ TEST(stdio_scanf_cspn, n)
 
 TEST_SETUP(stdio_scanf_squareBrackets)
 {
-	filep = fopen(TESTFILE_PATH, "w+");
-	test_stdinRedirect(TESTFILE_PATH);
+	test_scanfSetup();
 }
 
 
 TEST_TEAR_DOWN(stdio_scanf_squareBrackets)
 {
-	fclose(filep);
-	test_stdinRestore();
+	test_scanfTeardown();
 }
 
 
@@ -1151,145 +484,64 @@ TEST(stdio_scanf_squareBrackets, simple)
 	char buff[BUFF_LEN] = "Loremipsumdolorsit";
 	char res[BUFF_LEN];
 	char *format = "%[Lore]";
+	test_scanfFunc_t f;
 
-	fprintf(filep, "%s", buff);
-	rewind(filep);
+	test_scanfSetInput(buff);
 
-	memset(res, 0, sizeof(res));
 	/* Read input until what is inside brackets match */
-	TEST_ASSERT_EQUAL_INT(1, test_vfscanfWrapper(filep, format, res));
-	TEST_ASSERT_EQUAL_STRING("Lore", res);
+	for (f = 0; f < scanf_funcCount; f++) {
+		test_scanfPrepare(f, 0);
+		memset(res, 0, sizeof(res));
+		TEST_ASSERT_EQUAL_INT(1, TEST_SCANF(f, format, res));
+		TEST_ASSERT_EQUAL_STRING("Lore", res);
+	}
 
-	rewind(stdin);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, test_vscanfWrapper(format, res));
-	TEST_ASSERT_EQUAL_STRING("Lore", res);
-
-	rewind(filep);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, fscanf(filep, format, res));
-	TEST_ASSERT_EQUAL_STRING("Lore", res);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, test_vsscanfWrapper(buff, format, res));
-	TEST_ASSERT_EQUAL_STRING("Lore", res);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, sscanf(buff, format, res));
-	TEST_ASSERT_EQUAL_STRING("Lore", res);
-
-	rewind(filep);
-	format = "%[Lori]";
 	/*
-	 * Scanf will read filep until elements between brackets and filep match
+	 * Scanf will read the input until elements between brackets and the input match
 	 * If it finds incompatibility between them it will stop at the point where it occurred
 	 */
+	format = "%[Lori]";
+	for (f = 0; f < scanf_funcCount; f++) {
+		test_scanfPrepare(f, 0);
+		memset(res, 0, sizeof(res));
+		TEST_ASSERT_EQUAL_INT(1, TEST_SCANF(f, format, res));
+		TEST_ASSERT_EQUAL_STRING("Lor", res);
+	}
 
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, test_vfscanfWrapper(filep, format, res));
-	TEST_ASSERT_EQUAL_STRING("Lor", res);
-
-	rewind(stdin);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, test_vscanfWrapper(format, res));
-	TEST_ASSERT_EQUAL_STRING("Lor", res);
-
-	rewind(filep);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, fscanf(filep, format, res));
-	TEST_ASSERT_EQUAL_STRING("Lor", res);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, test_vsscanfWrapper(buff, format, res));
-	TEST_ASSERT_EQUAL_STRING("Lor", res);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, sscanf(buff, format, res));
-	TEST_ASSERT_EQUAL_STRING("Lor", res);
-
-	rewind(filep);
-	format = "%[Loremipsumdolorsit]";
 	/*
-	 * Scanf will read filep until the sequence of signs in brackets matches,
+	 * Scanf will read the input until the sequence of signs in brackets matches,
 	 * in this case, it read the whole string.
 	 */
+	format = "%[Loremipsumdolorsit]";
+	for (f = 0; f < scanf_funcCount; f++) {
+		test_scanfPrepare(f, 0);
+		memset(res, 0, sizeof(res));
+		TEST_ASSERT_EQUAL_INT(1, TEST_SCANF(f, format, res));
+		TEST_ASSERT_EQUAL_STRING("Loremipsumdolorsit", res);
+	}
 
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, test_vfscanfWrapper(filep, format, res));
-	TEST_ASSERT_EQUAL_STRING("Loremipsumdolorsit", res);
-
-	rewind(stdin);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, test_vscanfWrapper(format, res));
-	TEST_ASSERT_EQUAL_STRING("Loremipsumdolorsit", res);
-
-	rewind(filep);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, fscanf(filep, format, res));
-	TEST_ASSERT_EQUAL_STRING("Loremipsumdolorsit", res);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, test_vsscanfWrapper(buff, format, res));
-	TEST_ASSERT_EQUAL_STRING("Loremipsumdolorsit", res);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, sscanf(buff, format, res));
-	TEST_ASSERT_EQUAL_STRING("Loremipsumdolorsit", res);
-
-	rewind(filep);
-	format = "%[x]";
 	/*
-	 * In this case, scanf is unable to read anything from filep to res
+	 * In this case, scanf is unable to read anything from the input to res
 	 * because of 0% coverage what's between brackets and string
 	 */
+	format = "%[x]";
+	for (f = 0; f < scanf_funcCount; f++) {
+		test_scanfPrepare(f, 0);
+		memset(res, 0, sizeof(res));
+		TEST_ASSERT_EQUAL_INT(0, TEST_SCANF(f, format, res));
+	}
 
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(0, test_vfscanfWrapper(filep, format, res));
-
-	rewind(stdin);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(0, test_vscanfWrapper(format, res));
-
-	rewind(filep);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(0, fscanf(filep, format, res));
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(0, test_vsscanfWrapper(buff, format, res));
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(0, sscanf(buff, format, res));
-
-	rewind(filep);
-	format = "%[t]";
 	/*
-	 * In this case, scanf is unable to read anything from filep to res
+	 * In this case, scanf is unable to read anything from the input to res
 	 * because of 0% coverage what's between brackets and string
 	 * "t" is used to check if the read pointer doesn't go over some elements of the string
 	 */
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(0, test_vfscanfWrapper(filep, format, res));
-
-	rewind(stdin);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(0, test_vscanfWrapper(format, res));
-
-	rewind(filep);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(0, fscanf(filep, format, res));
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(0, test_vsscanfWrapper(buff, format, res));
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(0, sscanf(buff, format, res));
+	format = "%[t]";
+	for (f = 0; f < scanf_funcCount; f++) {
+		test_scanfPrepare(f, 0);
+		memset(res, 0, sizeof(res));
+		TEST_ASSERT_EQUAL_INT(0, TEST_SCANF(f, format, res));
+	}
 }
 
 
@@ -1298,118 +550,48 @@ TEST(stdio_scanf_squareBrackets, crircumflex)
 	char buff[BUFF_LEN] = "Loremipsumdolorsit";
 	char res[BUFF_LEN];
 	char *format = "%[^x]";
+	test_scanfFunc_t f;
 
-	fprintf(filep, "%s", buff);
-	rewind(filep);
+	test_scanfSetInput(buff);
 
 	/*
 	 * Thanks the circumflex scanf will read everything until find "x"
 	 * and store it into res without what was in brackets
 	 */
+	for (f = 0; f < scanf_funcCount; f++) {
+		test_scanfPrepare(f, 0);
+		memset(res, 0, sizeof(res));
+		TEST_ASSERT_EQUAL_INT(1, TEST_SCANF(f, format, res));
+		TEST_ASSERT_EQUAL_STRING(buff, res);
+	}
 
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, test_vfscanfWrapper(filep, format, res));
-	TEST_ASSERT_EQUAL_STRING(buff, res);
-
-	rewind(stdin);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, test_vscanfWrapper(format, res));
-	TEST_ASSERT_EQUAL_STRING(buff, res);
-
-	rewind(filep);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, fscanf(filep, format, res));
-	TEST_ASSERT_EQUAL_STRING(buff, res);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, test_vsscanfWrapper(buff, format, res));
-	TEST_ASSERT_EQUAL_STRING(buff, res);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, sscanf(buff, format, res));
-	TEST_ASSERT_EQUAL_STRING(buff, res);
-
-	rewind(filep);
 	format = "%[^s]";
+	for (f = 0; f < scanf_funcCount; f++) {
+		test_scanfPrepare(f, 0);
+		memset(res, 0, sizeof(res));
+		TEST_ASSERT_EQUAL_INT(1, TEST_SCANF(f, format, res));
+		TEST_ASSERT_EQUAL_STRING("Loremip", res);
+	}
 
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, test_vfscanfWrapper(filep, format, res));
-	TEST_ASSERT_EQUAL_STRING("Loremip", res);
-
-	rewind(stdin);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, test_vscanfWrapper(format, res));
-	TEST_ASSERT_EQUAL_STRING("Loremip", res);
-
-	rewind(filep);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, fscanf(filep, format, res));
-	TEST_ASSERT_EQUAL_STRING("Loremip", res);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, test_vsscanfWrapper(buff, format, res));
-	TEST_ASSERT_EQUAL_STRING("Loremip", res);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, sscanf(buff, format, res));
-	TEST_ASSERT_EQUAL_STRING("Loremip", res);
-
-	rewind(filep);
+	/* Scanf will read the input until it doesn't find a letter in the brackets */
 	format = "%[^t]";
-
-	memset(res, 0, sizeof(res));
-	/* Scanf will read filep until it doesn't find a letter in the brackets */
-	TEST_ASSERT_EQUAL_INT(1, test_vfscanfWrapper(filep, format, res));
-	TEST_ASSERT_EQUAL_CHAR_ARRAY(buff, res, strlen(buff) - 1);
-
-	rewind(stdin);
-
-	TEST_ASSERT_EQUAL_INT(1, test_vscanfWrapper(format, res));
-	TEST_ASSERT_EQUAL_CHAR_ARRAY(buff, res, strlen(buff) - 1);
-
-	rewind(filep);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, fscanf(filep, format, res));
-	TEST_ASSERT_EQUAL_CHAR_ARRAY(buff, res, strlen(buff) - 1);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, test_vsscanfWrapper(buff, format, res));
-	TEST_ASSERT_EQUAL_CHAR_ARRAY(buff, res, strlen(buff) - 1);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, sscanf(buff, format, res));
-	TEST_ASSERT_EQUAL_CHAR_ARRAY(buff, res, strlen(buff) - 1);
-
-	rewind(filep);
-	format = "%[^Loremipsumdolorsit]";
+	for (f = 0; f < scanf_funcCount; f++) {
+		test_scanfPrepare(f, 0);
+		memset(res, 0, sizeof(res));
+		TEST_ASSERT_EQUAL_INT(1, TEST_SCANF(f, format, res));
+		TEST_ASSERT_EQUAL_CHAR_ARRAY(buff, res, strlen(buff) - 1);
+	}
 
 	/*
-	 * In this case, scanf is unable to read anything from filep to res
+	 * In this case, scanf is unable to read anything from the input to res
 	 * because of 100% coverage what's between brackets with option to discard and string
 	 */
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(0, test_vfscanfWrapper(filep, format, res));
-
-	rewind(stdin);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(0, test_vscanfWrapper(format, res));
-
-	rewind(filep);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(0, fscanf(filep, format, res));
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(0, test_vsscanfWrapper(buff, format, res));
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(0, sscanf(buff, format, res));
-
-	rewind(filep);
+	format = "%[^Loremipsumdolorsit]";
+	for (f = 0; f < scanf_funcCount; f++) {
+		test_scanfPrepare(f, 0);
+		memset(res, 0, sizeof(res));
+		TEST_ASSERT_EQUAL_INT(0, TEST_SCANF(f, format, res));
+	}
 }
 
 
@@ -1419,91 +601,37 @@ TEST(stdio_scanf_squareBrackets, pos)
 	char res[BUFF_LEN] = { 0 };
 	char res2[BUFF_LEN] = { 0 };
 	char *format = "%[^psu]%s";
+	test_scanfFunc_t f;
 
-	fprintf(filep, "%s", buff);
-	rewind(filep);
+	test_scanfSetInput(buff);
 
 	/*
 	 * Scanf will read the string and match word "psu" as a point of stop and save this in res
 	 * After that it will set the file position indicator before "psu"
 	 * anything else after that will be saved to "res2"
 	 */
-	memset(res, 0, sizeof(res));
-	memset(res2, 0, sizeof(res2));
-	TEST_ASSERT_EQUAL_INT(2, test_vfscanfWrapper(filep, format, res, res2));
-	TEST_ASSERT_EQUAL_STRING("Loremi", res);
-	TEST_ASSERT_EQUAL_STRING("psumdolorsit", res2);
-
-	rewind(stdin);
-
-	memset(res, 0, sizeof(res));
-	memset(res2, 0, sizeof(res2));
-	TEST_ASSERT_EQUAL_INT(2, test_vscanfWrapper(format, res, res2));
-	TEST_ASSERT_EQUAL_STRING("Loremi", res);
-	TEST_ASSERT_EQUAL_STRING("psumdolorsit", res2);
-
-	rewind(filep);
-
-	memset(res, 0, sizeof(res));
-	memset(res2, 0, sizeof(res2));
-	TEST_ASSERT_EQUAL_INT(2, fscanf(filep, format, res, res2));
-	TEST_ASSERT_EQUAL_STRING("Loremi", res);
-	TEST_ASSERT_EQUAL_STRING("psumdolorsit", res2);
-
-	memset(res, 0, sizeof(res));
-	memset(res2, 0, sizeof(res2));
-	TEST_ASSERT_EQUAL_INT(2, test_vsscanfWrapper(buff, format, res, res2));
-	TEST_ASSERT_EQUAL_STRING("Loremi", res);
-	TEST_ASSERT_EQUAL_STRING("psumdolorsit", res2);
-
-	memset(res, 0, sizeof(res));
-	memset(res2, 0, sizeof(res2));
-	TEST_ASSERT_EQUAL_INT(2, sscanf(buff, format, res, res2));
-	TEST_ASSERT_EQUAL_STRING("Loremi", res);
-	TEST_ASSERT_EQUAL_STRING("psumdolorsit", res2);
-
-	rewind(filep);
-	memset(res, 0, sizeof(res));
-	memset(res2, 0, sizeof(res2));
-	format = "Lor%[^do]%s";
+	for (f = 0; f < scanf_funcCount; f++) {
+		test_scanfPrepare(f, 0);
+		memset(res, 0, sizeof(res));
+		memset(res2, 0, sizeof(res2));
+		TEST_ASSERT_EQUAL_INT(2, TEST_SCANF(f, format, res, res2));
+		TEST_ASSERT_EQUAL_STRING("Loremi", res);
+		TEST_ASSERT_EQUAL_STRING("psumdolorsit", res2);
+	}
 
 	/*
 	 * Scanf will try to find elements after "Lor" and save them to res until first
 	 * occurrence of "do" everything after that with the content of [] will be saved to "res2"
 	 */
-	memset(res, 0, sizeof(res));
-	memset(res2, 0, sizeof(res2));
-	TEST_ASSERT_EQUAL_INT(2, test_vfscanfWrapper(filep, format, res, res2));
-	TEST_ASSERT_EQUAL_STRING("emipsum", res);
-	TEST_ASSERT_EQUAL_STRING("dolorsit", res2);
-
-	rewind(stdin);
-
-	memset(res, 0, sizeof(res));
-	memset(res2, 0, sizeof(res2));
-	TEST_ASSERT_EQUAL_INT(2, test_vscanfWrapper(format, res, res2));
-	TEST_ASSERT_EQUAL_STRING("emipsum", res);
-	TEST_ASSERT_EQUAL_STRING("dolorsit", res2);
-
-	rewind(filep);
-
-	memset(res, 0, sizeof(res));
-	memset(res2, 0, sizeof(res2));
-	TEST_ASSERT_EQUAL_INT(2, fscanf(filep, format, res, res2));
-	TEST_ASSERT_EQUAL_STRING("emipsum", res);
-	TEST_ASSERT_EQUAL_STRING("dolorsit", res2);
-
-	memset(res, 0, sizeof(res));
-	memset(res2, 0, sizeof(res2));
-	TEST_ASSERT_EQUAL_INT(2, test_vsscanfWrapper(buff, format, res, res2));
-	TEST_ASSERT_EQUAL_STRING("emipsum", res);
-	TEST_ASSERT_EQUAL_STRING("dolorsit", res2);
-
-	memset(res, 0, sizeof(res));
-	memset(res2, 0, sizeof(res2));
-	TEST_ASSERT_EQUAL_INT(2, sscanf(buff, format, res, res2));
-	TEST_ASSERT_EQUAL_STRING("emipsum", res);
-	TEST_ASSERT_EQUAL_STRING("dolorsit", res2);
+	format = "Lor%[^do]%s";
+	for (f = 0; f < scanf_funcCount; f++) {
+		test_scanfPrepare(f, 0);
+		memset(res, 0, sizeof(res));
+		memset(res2, 0, sizeof(res2));
+		TEST_ASSERT_EQUAL_INT(2, TEST_SCANF(f, format, res, res2));
+		TEST_ASSERT_EQUAL_STRING("emipsum", res);
+		TEST_ASSERT_EQUAL_STRING("dolorsit", res2);
+	}
 }
 
 
@@ -1512,75 +640,36 @@ TEST(stdio_scanf_squareBrackets, white_spaces)
 	char buff[BUFF_LEN] = "Lorem Ipsum Dolor SitAmet ,VESTIBULUM123ANTEIPSUMPRIMIS/0x0005";
 	char buffMod[25] = "\n\t\v\f\r";
 	char *format = "%[^\n-\t-\v-\f-\r]%*c";
-
 	char res[BUFF_LEN] = { 0 };
+	test_scanfFunc_t f;
 
-	fprintf(filep, "%s", buff);
-	rewind(filep);
+	test_scanfSetInput(buff);
 
 	/*
 	 * Scanf will try to find an occurrence of [] content and store it in res
 	 * After that it will discard all chars after [] content
 	 */
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, test_vfscanfWrapper(filep, format, res));
-	TEST_ASSERT_EQUAL_STRING(buff, res);
-
-	rewind(stdin);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, test_vscanfWrapper(format, res));
-	TEST_ASSERT_EQUAL_STRING(buff, res);
-
-	rewind(filep);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, fscanf(filep, format, res));
-	TEST_ASSERT_EQUAL_STRING(buff, res);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, test_vsscanfWrapper(buff, format, res));
-	TEST_ASSERT_EQUAL_STRING(buff, res);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, sscanf(buff, format, res));
-	TEST_ASSERT_EQUAL_STRING(buff, res);
+	for (f = 0; f < scanf_funcCount; f++) {
+		test_scanfPrepare(f, 0);
+		memset(res, 0, sizeof(res));
+		TEST_ASSERT_EQUAL_INT(1, TEST_SCANF(f, format, res));
+		TEST_ASSERT_EQUAL_STRING(buff, res);
+	}
 
 /* Test disabled because of issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/679 */
 #ifdef __phoenix__
 	TEST_IGNORE();
 #endif
 
-	fclose(filep);
-	filep = fopen(TESTFILE_PATH, "w+");
 	format = "%[\n\t\v\f\r]";
+	test_scanfSetInput(buffMod);
 
-	fprintf(filep, "%s", buffMod);
-	rewind(filep);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, test_vfscanfWrapper(filep, format, res));
-	TEST_ASSERT_EQUAL_CHAR_ARRAY(buffMod, res, 5);
-
-	rewind(stdin);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, test_vscanfWrapper(format, res));
-	TEST_ASSERT_EQUAL_CHAR_ARRAY(buffMod, res, 5);
-
-	rewind(filep);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, fscanf(filep, format, res));
-	TEST_ASSERT_EQUAL_CHAR_ARRAY(buffMod, res, 5);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, test_vsscanfWrapper(buffMod, format, res));
-	TEST_ASSERT_EQUAL_CHAR_ARRAY(buffMod, res, 5);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, sscanf(buffMod, format, res));
-	TEST_ASSERT_EQUAL_CHAR_ARRAY(buffMod, res, 5);
+	for (f = 0; f < scanf_funcCount; f++) {
+		test_scanfPrepare(f, 0);
+		memset(res, 0, sizeof(res));
+		TEST_ASSERT_EQUAL_INT(1, TEST_SCANF(f, format, res));
+		TEST_ASSERT_EQUAL_CHAR_ARRAY(buffMod, res, 5);
+	}
 }
 
 
@@ -1590,6 +679,7 @@ TEST(stdio_scanf_squareBrackets, ascii)
 	char format[BUFF_LEN] = "%[^\n]%*c";
 	char res[BUFF_LEN];
 	int i;
+	test_scanfFunc_t f;
 
 	for (i = 1; i < 127; i++) {
 		if (i == 10) {
@@ -1602,45 +692,21 @@ TEST(stdio_scanf_squareBrackets, ascii)
 
 	buff[i] = '\0';
 
-	fprintf(filep, "%s", buff);
-	rewind(filep);
+	test_scanfSetInput(buff);
 
 	/*
 	 * Scanf will try to find an occurrence of [] content and store it in res
 	 * After that it will discard all chars after [] content
 	 */
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, test_vfscanfWrapper(filep, format, res));
-	TEST_ASSERT_EQUAL_STRING(buff, res);
-
-	rewind(stdin);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, test_vscanfWrapper(format, res));
-	TEST_ASSERT_EQUAL_STRING(buff, res);
-
-	rewind(filep);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, fscanf(filep, format, res));
-	TEST_ASSERT_EQUAL_STRING(buff, res);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, test_vsscanfWrapper(buff, format, res));
-	TEST_ASSERT_EQUAL_STRING(buff, res);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, sscanf(buff, format, res));
-	TEST_ASSERT_EQUAL_STRING(buff, res);
-
-
-	fclose(filep);
-	filep = fopen(TESTFILE_PATH, "w+");
-
+	for (f = 0; f < scanf_funcCount; f++) {
+		test_scanfPrepare(f, 0);
+		memset(res, 0, sizeof(res));
+		TEST_ASSERT_EQUAL_INT(1, TEST_SCANF(f, format, res));
+		TEST_ASSERT_EQUAL_STRING(buff, res);
+	}
 
 	memset(format, 0, sizeof(format));
 	memset(buff, 0, sizeof(buff));
-	memset(res, 0, sizeof(res));
 	for (i = 1; i < 127; i++) {
 		/* Bypass "]" because this sign end brackets formatension */
 		if (i == 93) {
@@ -1659,38 +725,19 @@ TEST(stdio_scanf_squareBrackets, ascii)
 		}
 	}
 
-	fprintf(filep, "%s", buff);
-	rewind(filep);
-
 	sprintf(format, "%%[%s]", buff);
+	test_scanfSetInput(buff);
 
 	/*
-	 * Scanf will try to find all elements of ascii table in filep
+	 * Scanf will try to find all elements of ascii table in the input
 	 * (Without ] sign because it equals the end of format) and store it in res
 	 */
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, test_vfscanfWrapper(filep, format, res));
-	TEST_ASSERT_EQUAL_STRING(buff, res);
-
-	rewind(stdin);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, test_vscanfWrapper(format, res));
-	TEST_ASSERT_EQUAL_STRING(buff, res);
-
-	rewind(filep);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, fscanf(filep, format, res));
-	TEST_ASSERT_EQUAL_STRING(buff, res);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, test_vsscanfWrapper(buff, format, res));
-	TEST_ASSERT_EQUAL_STRING(buff, res);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(1, sscanf(buff, format, res));
-	TEST_ASSERT_EQUAL_STRING(buff, res);
+	for (f = 0; f < scanf_funcCount; f++) {
+		test_scanfPrepare(f, 0);
+		memset(res, 0, sizeof(res));
+		TEST_ASSERT_EQUAL_INT(1, TEST_SCANF(f, format, res));
+		TEST_ASSERT_EQUAL_STRING(buff, res);
+	}
 }
 
 
@@ -1700,9 +747,9 @@ TEST(stdio_scanf_squareBrackets, ranges)
 	const char *buff2 = "123loremIPSUM IPSUMdolor123 dolor123SitAmet";
 	char res[4][BUFF_LEN / 3];
 	char *format = "%[A-z] %[A-Z] %[a-z] %[A-z]";
+	test_scanfFunc_t f;
 
-	fprintf(filep, "%s", buff);
-	rewind(filep);
+	test_scanfSetInput(buff);
 
 	/*
 	 * In this situation scanf will search all elements in the range declared
@@ -1711,90 +758,28 @@ TEST(stdio_scanf_squareBrackets, ranges)
 	 * it will continue matching and stop right after the nonmatching element. The cursor will be placed
 	 * on the last white space to match further part of the pattern)
 	 */
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(4, fscanf(filep, format, res[0], res[1], res[2], res[3]));
-	TEST_ASSERT_EQUAL_STRING("loremIPSUM", res[0]);
-	TEST_ASSERT_EQUAL_STRING("IPSUM", res[1]);
-	TEST_ASSERT_EQUAL_STRING("dolor", res[2]);
-	TEST_ASSERT_EQUAL_STRING("dolorSitAmet", res[3]);
+	for (f = 0; f < scanf_funcCount; f++) {
+		test_scanfPrepare(f, 0);
+		memset(res, 0, sizeof(res));
+		TEST_ASSERT_EQUAL_INT(4, TEST_SCANF(f, format, res[0], res[1], res[2], res[3]));
+		TEST_ASSERT_EQUAL_STRING("loremIPSUM", res[0]);
+		TEST_ASSERT_EQUAL_STRING("IPSUM", res[1]);
+		TEST_ASSERT_EQUAL_STRING("dolor", res[2]);
+		TEST_ASSERT_EQUAL_STRING("dolorSitAmet", res[3]);
+	}
 
-	rewind(filep);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(4, test_vfscanfWrapper(filep, format, res[0], res[1], res[2], res[3]));
-	TEST_ASSERT_EQUAL_STRING("loremIPSUM", res[0]);
-	TEST_ASSERT_EQUAL_STRING("IPSUM", res[1]);
-	TEST_ASSERT_EQUAL_STRING("dolor", res[2]);
-	TEST_ASSERT_EQUAL_STRING("dolorSitAmet", res[3]);
-
-	rewind(stdin);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(4, test_vscanfWrapper(format, res[0], res[1], res[2], res[3]));
-	TEST_ASSERT_EQUAL_STRING("loremIPSUM", res[0]);
-	TEST_ASSERT_EQUAL_STRING("IPSUM", res[1]);
-	TEST_ASSERT_EQUAL_STRING("dolor", res[2]);
-	TEST_ASSERT_EQUAL_STRING("dolorSitAmet", res[3]);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(4, test_vsscanfWrapper(buff, format, res[0], res[1], res[2], res[3]));
-	TEST_ASSERT_EQUAL_STRING("loremIPSUM", res[0]);
-	TEST_ASSERT_EQUAL_STRING("IPSUM", res[1]);
-	TEST_ASSERT_EQUAL_STRING("dolor", res[2]);
-	TEST_ASSERT_EQUAL_STRING("dolorSitAmet", res[3]);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(4, sscanf(buff, format, res[0], res[1], res[2], res[3]));
-	TEST_ASSERT_EQUAL_STRING("loremIPSUM", res[0]);
-	TEST_ASSERT_EQUAL_STRING("IPSUM", res[1]);
-	TEST_ASSERT_EQUAL_STRING("dolor", res[2]);
-	TEST_ASSERT_EQUAL_STRING("dolorSitAmet", res[3]);
-
-	fclose(filep);
-
-	filep = fopen(TESTFILE_PATH, "w+");
 	format = "%[1-9] %[^1-9] %[1-9] %[A-z1-9]";
-	fprintf(filep, "%s", buff2);
-	rewind(filep);
+	test_scanfSetInput(buff2);
 
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(4, fscanf(filep, format, res[0], res[1], res[2], res[3]));
-	TEST_ASSERT_EQUAL_STRING("123", res[0]);
-	TEST_ASSERT_EQUAL_STRING("loremIPSUM IPSUMdolor", res[1]);
-	TEST_ASSERT_EQUAL_STRING("123", res[2]);
-	TEST_ASSERT_EQUAL_STRING("dolor123SitAmet", res[3]);
-
-	rewind(filep);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(4, test_vfscanfWrapper(filep, format, res[0], res[1], res[2], res[3]));
-	TEST_ASSERT_EQUAL_STRING("123", res[0]);
-	TEST_ASSERT_EQUAL_STRING("loremIPSUM IPSUMdolor", res[1]);
-	TEST_ASSERT_EQUAL_STRING("123", res[2]);
-	TEST_ASSERT_EQUAL_STRING("dolor123SitAmet", res[3]);
-
-	rewind(stdin);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(4, test_vscanfWrapper(format, res[0], res[1], res[2], res[3]));
-	TEST_ASSERT_EQUAL_STRING("123", res[0]);
-	TEST_ASSERT_EQUAL_STRING("loremIPSUM IPSUMdolor", res[1]);
-	TEST_ASSERT_EQUAL_STRING("123", res[2]);
-	TEST_ASSERT_EQUAL_STRING("dolor123SitAmet", res[3]);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(4, test_vsscanfWrapper(buff2, format, res[0], res[1], res[2], res[3]));
-	TEST_ASSERT_EQUAL_STRING("123", res[0]);
-	TEST_ASSERT_EQUAL_STRING("loremIPSUM IPSUMdolor", res[1]);
-	TEST_ASSERT_EQUAL_STRING("123", res[2]);
-	TEST_ASSERT_EQUAL_STRING("dolor123SitAmet", res[3]);
-
-	memset(res, 0, sizeof(res));
-	TEST_ASSERT_EQUAL_INT(4, sscanf(buff2, format, res[0], res[1], res[2], res[3]));
-	TEST_ASSERT_EQUAL_STRING("123", res[0]);
-	TEST_ASSERT_EQUAL_STRING("loremIPSUM IPSUMdolor", res[1]);
-	TEST_ASSERT_EQUAL_STRING("123", res[2]);
-	TEST_ASSERT_EQUAL_STRING("dolor123SitAmet", res[3]);
+	for (f = 0; f < scanf_funcCount; f++) {
+		test_scanfPrepare(f, 0);
+		memset(res, 0, sizeof(res));
+		TEST_ASSERT_EQUAL_INT(4, TEST_SCANF(f, format, res[0], res[1], res[2], res[3]));
+		TEST_ASSERT_EQUAL_STRING("123", res[0]);
+		TEST_ASSERT_EQUAL_STRING("loremIPSUM IPSUMdolor", res[1]);
+		TEST_ASSERT_EQUAL_STRING("123", res[2]);
+		TEST_ASSERT_EQUAL_STRING("dolor123SitAmet", res[3]);
+	}
 }
 
 
@@ -1805,15 +790,13 @@ TEST(stdio_scanf_squareBrackets, ranges)
 
 TEST_SETUP(stdio_scanf_rest)
 {
-	filep = fopen(TESTFILE_PATH, "w+");
-	test_stdinRedirect(TESTFILE_PATH);
+	test_scanfSetup();
 }
 
 
 TEST_TEAR_DOWN(stdio_scanf_rest)
 {
-	fclose(filep);
-	test_stdinRestore();
+	test_scanfTeardown();
 }
 
 
@@ -1829,117 +812,33 @@ TEST(stdio_scanf_rest, modifiers_mix)
 	char strTab[4][MAX_TESTSTR_WORDLEN] = { 0 };
 	const char *str = "~~1`2l 0.1!_2@lorem#0x233$ 1.2e-5 % nowy 1.200020e-5 nal^ 132 *{}:|?><[]',./5/123456/+56-a(loremipsum\0)";
 	const char *format = "~~%d`%ul %f!_%x@%[lorem]#%p$%a %% %s %e nal^ %i *{}:|?><[]',./%o/%lld/+%hhx-%c(%[^ipsum]%s)";
+	test_scanfFunc_t f;
 
-	fprintf(filep, "%s", str);
-	rewind(filep);
+	test_scanfSetInput(str);
 
-	ptr1 = int1 = int2 = int3 = int4 = res2 = flt1 = flt2 = flt3 = llint1 = char1 = uchar1 = 1;
-	memset(strTab, 0, sizeof(strTab));
-	TEST_ASSERT_EQUAL_INT(16, sscanf(str, format, &int1, &res2, &flt1, &int2, strTab[0], &ptr1, &flt2, strTab[1], &flt3, &int3, &int4, &llint1, &uchar1, &char1, strTab[2], strTab[3]));
+	for (f = 0; f < scanf_funcCount; f++) {
+		test_scanfPrepare(f, 0);
+		ptr1 = int1 = int2 = int3 = int4 = res2 = flt1 = flt2 = flt3 = llint1 = char1 = uchar1 = 1;
+		memset(strTab, 0, sizeof(strTab));
+		TEST_ASSERT_EQUAL_INT(16, TEST_SCANF(f, format, &int1, &res2, &flt1, &int2, strTab[0], &ptr1, &flt2, strTab[1], &flt3, &int3, &int4, &llint1, &uchar1, &char1, strTab[2], strTab[3]));
 
-	TEST_ASSERT_EQUAL_INT(1, int1);
-	TEST_ASSERT_EQUAL_UINT(2, res2);
-	TEST_ASSERT_EQUAL_FLOAT(0.1, flt1);
-	TEST_ASSERT_EQUAL_HEX(2, int2);
-	TEST_ASSERT_EQUAL_STRING("lorem", strTab[0]);
-	TEST_ASSERT_EQUAL_INT64(563, ptr1);
-	TEST_ASSERT_EQUAL_FLOAT(1.200000e-05, flt2);
-	TEST_ASSERT_EQUAL_STRING("nowy", strTab[1]);
-	TEST_ASSERT_EQUAL_FLOAT(1.200020e-05, flt3);
-	TEST_ASSERT_EQUAL_UINT(132, int3);
-	TEST_ASSERT_EQUAL_INT(5, int4);
-	TEST_ASSERT_EQUAL_INT64(123456, llint1);
-	TEST_ASSERT_EQUAL_HEX8(0x56, uchar1);
-	TEST_ASSERT_EQUAL_CHAR('a', char1);
-	TEST_ASSERT_EQUAL_STRING("lore", strTab[2]);
-	TEST_ASSERT_EQUAL_STRING("mipsum", strTab[3]);
-
-	ptr1 = int1 = int2 = int3 = int4 = res2 = flt1 = flt2 = flt3 = llint1 = char1 = 1;
-	memset(strTab, 0, sizeof(strTab));
-	TEST_ASSERT_EQUAL_INT(16, fscanf(filep, format, &int1, &res2, &flt1, &int2, strTab[0], &ptr1, &flt2, strTab[1], &flt3, &int3, &int4, &llint1, &uchar1, &char1, strTab[2], strTab[3]));
-
-	TEST_ASSERT_EQUAL_INT(1, int1);
-	TEST_ASSERT_EQUAL_UINT(2, res2);
-	TEST_ASSERT_EQUAL_FLOAT(0.1, flt1);
-	TEST_ASSERT_EQUAL_HEX(2, int2);
-	TEST_ASSERT_EQUAL_STRING("lorem", strTab[0]);
-	TEST_ASSERT_EQUAL_INT64(563, ptr1);
-	TEST_ASSERT_EQUAL_FLOAT(1.200000e-05, flt2);
-	TEST_ASSERT_EQUAL_STRING("nowy", strTab[1]);
-	TEST_ASSERT_EQUAL_FLOAT(1.200020e-05, flt3);
-	TEST_ASSERT_EQUAL_UINT(132, int3);
-	TEST_ASSERT_EQUAL_INT(5, int4);
-	TEST_ASSERT_EQUAL_INT64(123456, llint1);
-	TEST_ASSERT_EQUAL_HEX8(0x56, uchar1);
-	TEST_ASSERT_EQUAL_CHAR('a', char1);
-	TEST_ASSERT_EQUAL_STRING("lore", strTab[2]);
-	TEST_ASSERT_EQUAL_STRING("mipsum", strTab[3]);
-
-	ptr1 = int1 = int2 = int3 = int4 = res2 = flt1 = flt2 = flt3 = llint1 = char1 = uchar1 = 1;
-	memset(strTab, 0, sizeof(strTab));
-	rewind(filep);
-	TEST_ASSERT_EQUAL_INT(16, test_vfscanfWrapper(filep, format, &int1, &res2, &flt1, &int2, strTab[0], &ptr1, &flt2, strTab[1], &flt3, &int3, &int4, &llint1, &uchar1, &char1, strTab[2], strTab[3]));
-
-	TEST_ASSERT_EQUAL_INT(1, int1);
-	TEST_ASSERT_EQUAL_UINT(2, res2);
-	TEST_ASSERT_EQUAL_FLOAT(0.1, flt1);
-	TEST_ASSERT_EQUAL_HEX(2, int2);
-	TEST_ASSERT_EQUAL_STRING("lorem", strTab[0]);
-	TEST_ASSERT_EQUAL_INT64(563, ptr1);
-	TEST_ASSERT_EQUAL_FLOAT(1.200000e-05, flt2);
-	TEST_ASSERT_EQUAL_STRING("nowy", strTab[1]);
-	TEST_ASSERT_EQUAL_FLOAT(1.200020e-05, flt3);
-	TEST_ASSERT_EQUAL_UINT(132, int3);
-	TEST_ASSERT_EQUAL_INT(5, int4);
-	TEST_ASSERT_EQUAL_INT64(123456, llint1);
-	TEST_ASSERT_EQUAL_HEX8(0x56, uchar1);
-	TEST_ASSERT_EQUAL_CHAR('a', char1);
-	TEST_ASSERT_EQUAL_STRING("lore", strTab[2]);
-	TEST_ASSERT_EQUAL_STRING("mipsum", strTab[3]);
-
-	rewind(stdin);
-
-	ptr1 = int1 = int2 = int3 = int4 = res2 = flt1 = flt2 = flt3 = llint1 = char1 = uchar1 = 1;
-	memset(strTab, 0, sizeof(strTab));
-	TEST_ASSERT_EQUAL_INT(16, test_vscanfWrapper(format, &int1, &res2, &flt1, &int2, strTab[0], &ptr1, &flt2, strTab[1], &flt3, &int3, &int4, &llint1, &uchar1, &char1, strTab[2], strTab[3]));
-
-	TEST_ASSERT_EQUAL_INT(1, int1);
-	TEST_ASSERT_EQUAL_UINT(2, res2);
-	TEST_ASSERT_EQUAL_FLOAT(0.1, flt1);
-	TEST_ASSERT_EQUAL_HEX(2, int2);
-	TEST_ASSERT_EQUAL_STRING("lorem", strTab[0]);
-	TEST_ASSERT_EQUAL_INT64(563, ptr1);
-	TEST_ASSERT_EQUAL_FLOAT(1.200000e-05, flt2);
-	TEST_ASSERT_EQUAL_STRING("nowy", strTab[1]);
-	TEST_ASSERT_EQUAL_FLOAT(1.200020e-05, flt3);
-	TEST_ASSERT_EQUAL_UINT(132, int3);
-	TEST_ASSERT_EQUAL_INT(5, int4);
-	TEST_ASSERT_EQUAL_INT64(123456, llint1);
-	TEST_ASSERT_EQUAL_HEX8(0x56, uchar1);
-	TEST_ASSERT_EQUAL_CHAR('a', char1);
-	TEST_ASSERT_EQUAL_STRING("lore", strTab[2]);
-	TEST_ASSERT_EQUAL_STRING("mipsum", strTab[3]);
-
-	ptr1 = int1 = int2 = int3 = int4 = res2 = flt1 = flt2 = flt3 = llint1 = char1 = uchar1 = 1;
-	memset(strTab, 0, sizeof(strTab));
-	TEST_ASSERT_EQUAL_INT(16, test_vsscanfWrapper(str, format, &int1, &res2, &flt1, &int2, strTab[0], &ptr1, &flt2, strTab[1], &flt3, &int3, &int4, &llint1, &uchar1, &char1, strTab[2], strTab[3]));
-
-	TEST_ASSERT_EQUAL_INT(1, int1);
-	TEST_ASSERT_EQUAL_UINT(2, res2);
-	TEST_ASSERT_EQUAL_FLOAT(0.1, flt1);
-	TEST_ASSERT_EQUAL_HEX(2, int2);
-	TEST_ASSERT_EQUAL_STRING("lorem", strTab[0]);
-	TEST_ASSERT_EQUAL_INT64(563, ptr1);
-	TEST_ASSERT_EQUAL_FLOAT(1.200000e-05, flt2);
-	TEST_ASSERT_EQUAL_STRING("nowy", strTab[1]);
-	TEST_ASSERT_EQUAL_FLOAT(1.200020e-05, flt3);
-	TEST_ASSERT_EQUAL_UINT(132, int3);
-	TEST_ASSERT_EQUAL_INT(5, int4);
-	TEST_ASSERT_EQUAL_INT64(123456, llint1);
-	TEST_ASSERT_EQUAL_HEX8(0x56, uchar1);
-	TEST_ASSERT_EQUAL_CHAR('a', char1);
-	TEST_ASSERT_EQUAL_STRING("lore", strTab[2]);
-	TEST_ASSERT_EQUAL_STRING("mipsum", strTab[3]);
+		TEST_ASSERT_EQUAL_INT(1, int1);
+		TEST_ASSERT_EQUAL_UINT(2, res2);
+		TEST_ASSERT_EQUAL_FLOAT(0.1, flt1);
+		TEST_ASSERT_EQUAL_HEX(2, int2);
+		TEST_ASSERT_EQUAL_STRING("lorem", strTab[0]);
+		TEST_ASSERT_EQUAL_INT64(563, ptr1);
+		TEST_ASSERT_EQUAL_FLOAT(1.200000e-05, flt2);
+		TEST_ASSERT_EQUAL_STRING("nowy", strTab[1]);
+		TEST_ASSERT_EQUAL_FLOAT(1.200020e-05, flt3);
+		TEST_ASSERT_EQUAL_UINT(132, int3);
+		TEST_ASSERT_EQUAL_INT(5, int4);
+		TEST_ASSERT_EQUAL_INT64(123456, llint1);
+		TEST_ASSERT_EQUAL_HEX8(0x56, uchar1);
+		TEST_ASSERT_EQUAL_CHAR('a', char1);
+		TEST_ASSERT_EQUAL_STRING("lore", strTab[2]);
+		TEST_ASSERT_EQUAL_STRING("mipsum", strTab[3]);
+	}
 }
 
 
@@ -1954,68 +853,32 @@ TEST(stdio_scanf_rest, m_s)
 	char *res, chrArray[BUFF_LEN];
 	int i;
 	const char *format = "%ms";
+	test_scanfFunc_t f;
 
 	for (i = 0; i < BUFF_LEN - 1; i++) {
 		chrArray[i] = 'a';
 	}
 	chrArray[i] = '\0';
 
-	fprintf(filep, "%s", lorem);
-	rewind(filep);
+	test_scanfSetInput(lorem);
 
-	TEST_ASSERT_EQUAL_INT(1, fscanf(filep, format, &res));
-	TEST_ASSERT_EQUAL_STRING(lorem, res);
-	free(res);
+	for (f = 0; f < scanf_funcCount; f++) {
+		test_scanfPrepare(f, 0);
+		res = NULL;
+		TEST_ASSERT_EQUAL_INT(1, TEST_SCANF(f, format, &res));
+		TEST_ASSERT_EQUAL_STRING(lorem, res);
+		free(res);
+	}
 
-	TEST_ASSERT_EQUAL_INT(1, sscanf(lorem, format, &res));
-	TEST_ASSERT_EQUAL_STRING(lorem, res);
-	free(res);
+	test_scanfSetInput(chrArray);
 
-	rewind(filep);
-
-	test_vfscanfWrapper(filep, format, &res);
-	TEST_ASSERT_EQUAL_STRING(lorem, res);
-	free(res);
-
-	rewind(stdin);
-
-	test_vscanfWrapper(format, &res);
-	TEST_ASSERT_EQUAL_STRING(lorem, res);
-	free(res);
-
-	TEST_ASSERT_EQUAL_INT(1, test_vsscanfWrapper(lorem, format, &res));
-	TEST_ASSERT_EQUAL_STRING(lorem, res);
-	free(res);
-
-	fclose(filep);
-	filep = fopen(TESTFILE_PATH, "w+");
-
-	fprintf(filep, "%s", chrArray);
-	rewind(filep);
-
-	TEST_ASSERT_EQUAL_INT(1, fscanf(filep, format, &res));
-	TEST_ASSERT_EQUAL_STRING(chrArray, res);
-	free(res);
-
-	TEST_ASSERT_EQUAL_INT(1, sscanf(chrArray, format, &res));
-	TEST_ASSERT_EQUAL_STRING(chrArray, res);
-	free(res);
-
-	rewind(filep);
-
-	TEST_ASSERT_EQUAL_INT(1, test_vfscanfWrapper(filep, format, &res));
-	TEST_ASSERT_EQUAL_STRING(chrArray, res);
-	free(res);
-
-	rewind(stdin);
-
-	TEST_ASSERT_EQUAL_INT(1, test_vscanfWrapper(format, &res));
-	TEST_ASSERT_EQUAL_STRING(chrArray, res);
-	free(res);
-
-	TEST_ASSERT_EQUAL_INT(1, test_vsscanfWrapper(chrArray, format, &res));
-	TEST_ASSERT_EQUAL_STRING(chrArray, res);
-	free(res);
+	for (f = 0; f < scanf_funcCount; f++) {
+		test_scanfPrepare(f, 0);
+		res = NULL;
+		TEST_ASSERT_EQUAL_INT(1, TEST_SCANF(f, format, &res));
+		TEST_ASSERT_EQUAL_STRING(chrArray, res);
+		free(res);
+	}
 }
 
 
@@ -2030,104 +893,36 @@ TEST(stdio_scanf_rest, m_brackets)
 	const char *buff2 = "123loremIPSUM IPSUMdolor123 dolor123SitAmet";
 	char *res1, *res2, *res3;
 	char *format = "%m[A-z] %m[A-Z] %m[a-z]";
+	test_scanfFunc_t f;
 
-	fprintf(filep, "%s", buff);
-	rewind(filep);
+	test_scanfSetInput(buff);
 
-	TEST_ASSERT_EQUAL_INT(3, fscanf(filep, format, &res1, &res2, &res3));
-	TEST_ASSERT_EQUAL_STRING("loremIPSUM", res1);
-	TEST_ASSERT_EQUAL_STRING("IPSUM", res2);
-	TEST_ASSERT_EQUAL_STRING("dolor", res3);
-	free(res1);
-	free(res2);
-	free(res3);
+	for (f = 0; f < scanf_funcCount; f++) {
+		test_scanfPrepare(f, 0);
+		res1 = res2 = res3 = NULL;
+		TEST_ASSERT_EQUAL_INT(3, TEST_SCANF(f, format, &res1, &res2, &res3));
+		TEST_ASSERT_EQUAL_STRING("loremIPSUM", res1);
+		TEST_ASSERT_EQUAL_STRING("IPSUM", res2);
+		TEST_ASSERT_EQUAL_STRING("dolor", res3);
+		free(res1);
+		free(res2);
+		free(res3);
+	}
 
-	rewind(filep);
-
-	TEST_ASSERT_EQUAL_INT(3, test_vfscanfWrapper(filep, format, &res1, &res2, &res3));
-	TEST_ASSERT_EQUAL_STRING("loremIPSUM", res1);
-	TEST_ASSERT_EQUAL_STRING("IPSUM", res2);
-	TEST_ASSERT_EQUAL_STRING("dolor", res3);
-	free(res1);
-	free(res2);
-	free(res3);
-
-	rewind(stdin);
-
-	TEST_ASSERT_EQUAL_INT(3, test_vscanfWrapper(format, &res1, &res2, &res3));
-	TEST_ASSERT_EQUAL_STRING("loremIPSUM", res1);
-	TEST_ASSERT_EQUAL_STRING("IPSUM", res2);
-	TEST_ASSERT_EQUAL_STRING("dolor", res3);
-	free(res1);
-	free(res2);
-	free(res3);
-
-	TEST_ASSERT_EQUAL_INT(3, test_vsscanfWrapper(buff, format, &res1, &res2, &res3));
-	TEST_ASSERT_EQUAL_STRING("loremIPSUM", res1);
-	TEST_ASSERT_EQUAL_STRING("IPSUM", res2);
-	TEST_ASSERT_EQUAL_STRING("dolor", res3);
-	free(res1);
-	free(res2);
-	free(res3);
-
-	TEST_ASSERT_EQUAL_INT(3, sscanf(buff, format, &res1, &res2, &res3));
-	TEST_ASSERT_EQUAL_STRING("loremIPSUM", res1);
-	TEST_ASSERT_EQUAL_STRING("IPSUM", res2);
-	TEST_ASSERT_EQUAL_STRING("dolor", res3);
-	free(res1);
-	free(res2);
-	free(res3);
-
-	fclose(filep);
-	filep = fopen(TESTFILE_PATH, "w+");
 	format = "%m[1-9] %m[^1-9] %m[1-9]";
+	test_scanfSetInput(buff2);
 
-	fprintf(filep, "%s", buff2);
-	rewind(filep);
-
-	TEST_ASSERT_EQUAL_INT(3, fscanf(filep, format, &res1, &res2, &res3));
-	TEST_ASSERT_EQUAL_STRING("123", res1);
-	TEST_ASSERT_EQUAL_STRING("loremIPSUM IPSUMdolor", res2);
-	TEST_ASSERT_EQUAL_STRING("123", res3);
-	free(res1);
-	free(res2);
-	free(res3);
-
-	rewind(filep);
-
-	TEST_ASSERT_EQUAL_INT(3, test_vfscanfWrapper(filep, format, &res1, &res2, &res3));
-	TEST_ASSERT_EQUAL_STRING("123", res1);
-	TEST_ASSERT_EQUAL_STRING("loremIPSUM IPSUMdolor", res2);
-	TEST_ASSERT_EQUAL_STRING("123", res3);
-	free(res1);
-	free(res2);
-	free(res3);
-
-	rewind(stdin);
-
-	TEST_ASSERT_EQUAL_INT(3, test_vscanfWrapper(format, &res1, &res2, &res3));
-	TEST_ASSERT_EQUAL_STRING("123", res1);
-	TEST_ASSERT_EQUAL_STRING("loremIPSUM IPSUMdolor", res2);
-	TEST_ASSERT_EQUAL_STRING("123", res3);
-	free(res1);
-	free(res2);
-	free(res3);
-
-	TEST_ASSERT_EQUAL_INT(3, test_vsscanfWrapper(buff2, format, &res1, &res2, &res3));
-	TEST_ASSERT_EQUAL_STRING("123", res1);
-	TEST_ASSERT_EQUAL_STRING("loremIPSUM IPSUMdolor", res2);
-	TEST_ASSERT_EQUAL_STRING("123", res3);
-	free(res1);
-	free(res2);
-	free(res3);
-
-	TEST_ASSERT_EQUAL_INT(3, sscanf(buff2, format, &res1, &res2, &res3));
-	TEST_ASSERT_EQUAL_STRING("123", res1);
-	TEST_ASSERT_EQUAL_STRING("loremIPSUM IPSUMdolor", res2);
-	TEST_ASSERT_EQUAL_STRING("123", res3);
-	free(res1);
-	free(res2);
-	free(res3);
+	for (f = 0; f < scanf_funcCount; f++) {
+		test_scanfPrepare(f, 0);
+		res1 = res2 = res3 = NULL;
+		TEST_ASSERT_EQUAL_INT(3, TEST_SCANF(f, format, &res1, &res2, &res3));
+		TEST_ASSERT_EQUAL_STRING("123", res1);
+		TEST_ASSERT_EQUAL_STRING("loremIPSUM IPSUMdolor", res2);
+		TEST_ASSERT_EQUAL_STRING("123", res3);
+		free(res1);
+		free(res2);
+		free(res3);
+	}
 }
 
 
@@ -2147,28 +942,28 @@ TEST(stdio_scanf_rest, m_c)
 #endif
 
 	const char buff[] = "Lor";
-	char *res1 = NULL, *res2 = NULL, *res3 = NULL;
+	char *res1, *res2, *res3;
+	test_scanfFunc_t f;
 
-	fprintf(filep, "%s", buff);
-	rewind(filep);
+	test_scanfSetInput(buff);
 
-	TEST_ASSERT_NULL(res1);
-	TEST_ASSERT_NULL(res2);
-	TEST_ASSERT_NULL(res3);
+	for (f = 0; f < scanf_funcCount; f++) {
+		test_scanfPrepare(f, 0);
+		res1 = res2 = res3 = NULL;
+		TEST_ASSERT_EQUAL_INT(3, TEST_SCANF(f, "%mc%mc%mc", &res1, &res2, &res3));
 
-	TEST_ASSERT_EQUAL_INT(3, sscanf(buff, "%mc%mc%mc", &res1, &res2, &res3));
+		TEST_ASSERT_NOT_NULL(res1);
+		TEST_ASSERT_NOT_NULL(res2);
+		TEST_ASSERT_NOT_NULL(res3);
 
-	TEST_ASSERT_NOT_NULL(res1);
-	TEST_ASSERT_NOT_NULL(res2);
-	TEST_ASSERT_NOT_NULL(res3);
+		TEST_ASSERT_EQUAL_CHAR(buff[0], res1[0]);
+		TEST_ASSERT_EQUAL_CHAR(buff[1], res2[0]);
+		TEST_ASSERT_EQUAL_CHAR(buff[2], res3[0]);
 
-	TEST_ASSERT_EQUAL_CHAR(buff[0], res1[0]);
-	TEST_ASSERT_EQUAL_CHAR(buff[1], res2[0]);
-	TEST_ASSERT_EQUAL_CHAR(buff[2], res3[0]);
-
-	free(res1);
-	free(res2);
-	free(res3);
+		free(res1);
+		free(res2);
+		free(res3);
+	}
 }
 
 
@@ -2178,49 +973,21 @@ TEST(stdio_scanf_rest, star)
 	char res1[MAX_TESTSTR_WORDLEN], res;
 	int val;
 	const char *format = "%*s %*s %s %d %*s %c %*d %*x";
+	test_scanfFunc_t f;
 
-	fprintf(filep, "%s", buff);
-	rewind(filep);
+	test_scanfSetInput(buff);
 
-	res = val = 0;
-	memset(res1, 0, sizeof(res1));
-	TEST_ASSERT_EQUAL_INT(3, fscanf(filep, format, res1, &val, &res));
-	TEST_ASSERT_EQUAL_STRING("Dolor", res1);
-	TEST_ASSERT_EQUAL_INT(123, val);
-	TEST_ASSERT_EQUAL_CHAR('c', res);
-
-	rewind(filep);
-
-	res = val = 0;
-	memset(res1, 0, sizeof(res1));
-	TEST_ASSERT_EQUAL_INT(3, test_vfscanfWrapper(filep, format, res1, &val, &res));
-	TEST_ASSERT_EQUAL_STRING("Dolor", res1);
-	TEST_ASSERT_EQUAL_INT(123, val);
-	TEST_ASSERT_EQUAL_CHAR('c', res);
-
-	rewind(stdin);
-
-	res = val = 0;
-	memset(res1, 0, sizeof(res1));
-	TEST_ASSERT_EQUAL_INT(3, test_vscanfWrapper(format, res1, &val, &res));
-	TEST_ASSERT_EQUAL_STRING("Dolor", res1);
-	TEST_ASSERT_EQUAL_INT(123, val);
-	TEST_ASSERT_EQUAL_CHAR('c', res);
-
-	res = val = 0;
-	memset(res1, 0, sizeof(res1));
-	TEST_ASSERT_EQUAL_INT(3, sscanf(buff, format, res1, &val, &res));
-	TEST_ASSERT_EQUAL_STRING("Dolor", res1);
-	TEST_ASSERT_EQUAL_INT(123, val);
-	TEST_ASSERT_EQUAL_CHAR('c', res);
-
-	res = val = 0;
-	memset(res1, 0, sizeof(res1));
-	TEST_ASSERT_EQUAL_INT(3, test_vsscanfWrapper(buff, format, res1, &val, &res));
-	TEST_ASSERT_EQUAL_STRING("Dolor", res1);
-	TEST_ASSERT_EQUAL_INT(123, val);
-	TEST_ASSERT_EQUAL_CHAR('c', res);
+	for (f = 0; f < scanf_funcCount; f++) {
+		test_scanfPrepare(f, 0);
+		res = val = 0;
+		memset(res1, 0, sizeof(res1));
+		TEST_ASSERT_EQUAL_INT(3, TEST_SCANF(f, format, res1, &val, &res));
+		TEST_ASSERT_EQUAL_STRING("Dolor", res1);
+		TEST_ASSERT_EQUAL_INT(123, val);
+		TEST_ASSERT_EQUAL_CHAR('c', res);
+	}
 }
+
 
 TEST(stdio_scanf_rest, field_width)
 {
@@ -2228,90 +995,31 @@ TEST(stdio_scanf_rest, field_width)
 	int intMax = 2147483647, intMin = -2147483647, valIntMin, valIntMax;
 	float fltMax = 3.40282347e+7F, fltMin = 3.40282347e-4F, valFltMin, valFltMax;
 	char *format = "%4s %*s %5d %*d %5d %*d %5f %*f %f";
+	test_scanfFunc_t f;
 
 	sprintf(buff, "%s %d %d %f %f", str, intMax, intMin, fltMax, fltMin);
-	fprintf(filep, "%s", buff);
-	rewind(filep);
+	test_scanfSetInput(buff);
 
-	memset(valStr, 0, sizeof(valStr));
-	valIntMin = valIntMax = 1;
-	valFltMin = valFltMax = 1.0;
-	TEST_ASSERT_EQUAL_INT(5, fscanf(filep, format, valStr, &valIntMax, &valIntMin, &valFltMax, &valFltMin));
-	TEST_ASSERT_EQUAL_CHAR_ARRAY(str, valStr, strlen(valStr));
-	TEST_ASSERT_EQUAL_INT(21474, valIntMax);
-	TEST_ASSERT_EQUAL_INT(-2147, valIntMin);
-	TEST_ASSERT_EQUAL_FLOAT(34028.000000, valFltMax);
-	TEST_ASSERT_EQUAL_FLOAT(0.000340, valFltMin);
+	for (f = 0; f < scanf_funcCount; f++) {
+		test_scanfPrepare(f, 0);
+		memset(valStr, 0, sizeof(valStr));
+		valIntMin = valIntMax = 1;
+		valFltMin = valFltMax = 1.0;
+		TEST_ASSERT_EQUAL_INT(5, TEST_SCANF(f, format, valStr, &valIntMax, &valIntMin, &valFltMax, &valFltMin));
+		TEST_ASSERT_EQUAL_CHAR_ARRAY(str, valStr, strlen(valStr));
+		TEST_ASSERT_EQUAL_INT(21474, valIntMax);
+		TEST_ASSERT_EQUAL_INT(-2147, valIntMin);
+		TEST_ASSERT_EQUAL_FLOAT(34028.000000, valFltMax);
+		TEST_ASSERT_EQUAL_FLOAT(0.000340, valFltMin);
+	}
 
-	rewind(filep);
-	memset(valStr, 0, sizeof(valStr));
-	valIntMin = valIntMax = 1;
-	valFltMin = valFltMax = 1.0;
-	TEST_ASSERT_EQUAL_INT(5, test_vfscanfWrapper(filep, format, valStr, &valIntMax, &valIntMin, &valFltMax, &valFltMin));
-	TEST_ASSERT_EQUAL_CHAR_ARRAY(str, valStr, strlen(valStr));
-	TEST_ASSERT_EQUAL_INT(21474, valIntMax);
-	TEST_ASSERT_EQUAL_INT(-2147, valIntMin);
-	TEST_ASSERT_EQUAL_FLOAT(34028.000000, valFltMax);
-	TEST_ASSERT_EQUAL_FLOAT(0.000340, valFltMin);
-
-	rewind(stdin);
-
-	memset(valStr, 0, sizeof(valStr));
-	valIntMin = valIntMax = 1;
-	valFltMin = valFltMax = 1.0;
-	TEST_ASSERT_EQUAL_INT(5, test_vscanfWrapper(format, valStr, &valIntMax, &valIntMin, &valFltMax, &valFltMin));
-	TEST_ASSERT_EQUAL_CHAR_ARRAY(str, valStr, strlen(valStr));
-	TEST_ASSERT_EQUAL_INT(21474, valIntMax);
-	TEST_ASSERT_EQUAL_INT(-2147, valIntMin);
-	TEST_ASSERT_EQUAL_FLOAT(34028.000000, valFltMax);
-	TEST_ASSERT_EQUAL_FLOAT(0.000340, valFltMin);
-
-	memset(valStr, 0, sizeof(valStr));
-	valIntMin = valIntMax = 1;
-	valFltMin = valFltMax = 1.0;
-	TEST_ASSERT_EQUAL_INT(5, sscanf(buff, format, valStr, &valIntMax, &valIntMin, &valFltMax, &valFltMin));
-	TEST_ASSERT_EQUAL_CHAR_ARRAY(str, valStr, strlen(valStr));
-	TEST_ASSERT_EQUAL_INT(21474, valIntMax);
-	TEST_ASSERT_EQUAL_INT(-2147, valIntMin);
-	TEST_ASSERT_EQUAL_FLOAT(34028.000000, valFltMax);
-	TEST_ASSERT_EQUAL_FLOAT(0.000340, valFltMin);
-
-	memset(valStr, 0, sizeof(valStr));
-	valIntMin = valIntMax = 1;
-	valFltMin = valFltMax = 1.0;
-	TEST_ASSERT_EQUAL_INT(5, test_vsscanfWrapper(buff, format, valStr, &valIntMax, &valIntMin, &valFltMax, &valFltMin));
-	TEST_ASSERT_EQUAL_CHAR_ARRAY(str, valStr, strlen(valStr));
-	TEST_ASSERT_EQUAL_INT(21474, valIntMax);
-	TEST_ASSERT_EQUAL_INT(-2147, valIntMin);
-	TEST_ASSERT_EQUAL_FLOAT(34028.000000, valFltMax);
-	TEST_ASSERT_EQUAL_FLOAT(0.000340, valFltMin);
-
-	rewind(filep);
 	format = "%*4s %s";
-
-	memset(valStr, 0, sizeof(valStr));
-	TEST_ASSERT_EQUAL_INT(1, fscanf(filep, format, valStr));
-	TEST_ASSERT_EQUAL_STRING("IpsumDolorSitAmet", valStr);
-
-	rewind(filep);
-
-	memset(valStr, 0, sizeof(valStr));
-	TEST_ASSERT_EQUAL_INT(1, test_vfscanfWrapper(filep, format, valStr));
-	TEST_ASSERT_EQUAL_STRING("IpsumDolorSitAmet", valStr);
-
-	rewind(stdin);
-
-	memset(valStr, 0, sizeof(valStr));
-	TEST_ASSERT_EQUAL_INT(1, test_vscanfWrapper(format, valStr));
-	TEST_ASSERT_EQUAL_STRING("IpsumDolorSitAmet", valStr);
-
-	memset(valStr, 0, sizeof(valStr));
-	TEST_ASSERT_EQUAL_INT(1, sscanf(buff, format, valStr));
-	TEST_ASSERT_EQUAL_STRING("IpsumDolorSitAmet", valStr);
-
-	memset(valStr, 0, sizeof(valStr));
-	TEST_ASSERT_EQUAL_INT(1, test_vsscanfWrapper(buff, format, valStr));
-	TEST_ASSERT_EQUAL_STRING("IpsumDolorSitAmet", valStr);
+	for (f = 0; f < scanf_funcCount; f++) {
+		test_scanfPrepare(f, 0);
+		memset(valStr, 0, sizeof(valStr));
+		TEST_ASSERT_EQUAL_INT(1, TEST_SCANF(f, format, valStr));
+		TEST_ASSERT_EQUAL_STRING("IpsumDolorSitAmet", valStr);
+	}
 }
 
 
@@ -2334,7 +1042,6 @@ TEST_GROUP_RUNNER(stdio_scanf_aefg)
 	RUN_TEST_CASE(stdio_scanf_aefg, inf_nan_a);
 	RUN_TEST_CASE(stdio_scanf_aefg, inf_nan_e);
 	RUN_TEST_CASE(stdio_scanf_aefg, inf_nan_g);
-	remove(TESTFILE_PATH);
 }
 
 
@@ -2349,7 +1056,6 @@ TEST_GROUP_RUNNER(stdio_scanf_cspn)
 	RUN_TEST_CASE(stdio_scanf_cspn, percent);
 	RUN_TEST_CASE(stdio_scanf_cspn, n);
 	RUN_TEST_CASE(stdio_scanf_cspn, ptr);
-	remove(TESTFILE_PATH);
 }
 
 
@@ -2361,7 +1067,6 @@ TEST_GROUP_RUNNER(stdio_scanf_squareBrackets)
 	RUN_TEST_CASE(stdio_scanf_squareBrackets, white_spaces);
 	RUN_TEST_CASE(stdio_scanf_squareBrackets, ascii);
 	RUN_TEST_CASE(stdio_scanf_squareBrackets, ranges)
-	remove(TESTFILE_PATH);
 }
 
 
@@ -2373,7 +1078,6 @@ TEST_GROUP_RUNNER(stdio_scanf_rest)
 	RUN_TEST_CASE(stdio_scanf_rest, m_c);
 	RUN_TEST_CASE(stdio_scanf_rest, star);
 	RUN_TEST_CASE(stdio_scanf_rest, field_width);
-	remove(TESTFILE_PATH);
 }
 
 void runner(void)
