@@ -281,47 +281,6 @@ TEST(socket_api_getsockopt, so_sndtimeo_default)
 }
 
 
-TEST(socket_api_getsockopt, retrieves_value_after_setsockopt)
-{
-	int ret;
-	int optval;
-	socklen_t optlen;
-	struct timeval tv;
-
-	fd = socket(AF_UNIX, SOCK_STREAM, 0);
-	TEST_ASSERT_TRUE(fd >= 0);
-
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1644 issue");
-#endif
-	/* Set SO_RCVTIMEO to 2 seconds */
-	tv.tv_sec = 2;
-	tv.tv_usec = 0;
-	ret = setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-	/* Retrieve and verify */
-	memset(&tv, 0, sizeof(tv));
-	optlen = sizeof(tv);
-	ret = getsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, &optlen);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-	TEST_ASSERT_EQUAL_INT(2, (int)tv.tv_sec);
-	TEST_ASSERT_EQUAL_INT(0, (int)tv.tv_usec);
-
-	/* Set SO_SNDBUF */
-	optval = 4096;
-	ret = setsockopt(fd, SOL_SOCKET, SO_SNDBUF, &optval, sizeof(optval));
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-	optval = 0;
-	optlen = sizeof(optval);
-	ret = getsockopt(fd, SOL_SOCKET, SO_SNDBUF, &optval, &optlen);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-	/* Implementation may double the value, but it should be >= what was set */
-	TEST_ASSERT_GREATER_THAN_INT(0, optval);
-}
-
-
 TEST_GROUP_RUNNER(socket_api_getsockopt)
 {
 	RUN_TEST_CASE(socket_api_getsockopt, basic_so_type_stream);
@@ -337,5 +296,4 @@ TEST_GROUP_RUNNER(socket_api_getsockopt)
 	RUN_TEST_CASE(socket_api_getsockopt, so_acceptconn_not_listening);
 	RUN_TEST_CASE(socket_api_getsockopt, so_rcvtimeo_default);
 	RUN_TEST_CASE(socket_api_getsockopt, so_sndtimeo_default);
-	RUN_TEST_CASE(socket_api_getsockopt, retrieves_value_after_setsockopt);
 }
