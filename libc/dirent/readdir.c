@@ -97,8 +97,6 @@ TEST_TEAR_DOWN(dirent_readdir)
 
 TEST(dirent_readdir, long_name_directory_check)
 {
-	/* issue #1615: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1615 */
-	TEST_IGNORE_MESSAGE("#1615 issue");
 	DIR *dp = NULL;
 	struct dirent *info;
 	char longDirName[NAME_MAX + 1];
@@ -106,8 +104,14 @@ TEST(dirent_readdir, long_name_directory_check)
 	int dir_created = 0;
 	int found = 0;
 
-	memset(longDirName, 'a', NAME_MAX);
-	longDirName[NAME_MAX] = '\0';
+	/* pathconf() may return -1 (no limit or unsupported) or a filesystem limit above NAME_MAX, which mkdir() rejects */
+	long name_max = pathconf(MAIN_DIR, _PC_NAME_MAX);
+	if ((name_max < 0) || (name_max > NAME_MAX)) {
+		name_max = NAME_MAX;
+	}
+
+	memset(longDirName, 'a', name_max);
+	longDirName[name_max] = '\0';
 	snprintf(longDirPath, sizeof(longDirPath), MAIN_DIR "/%s", longDirName);
 
 	if (TEST_PROTECT()) {
@@ -119,7 +123,7 @@ TEST(dirent_readdir, long_name_directory_check)
 		while ((info = readdir(dp)) != NULL) {
 			if (info->d_name[0] == 'a') {
 				TEST_ASSERT_EQUAL_STRING(longDirName, info->d_name);
-				TEST_ASSERT_EQUAL_INT(NAME_MAX, strlen(info->d_name));
+				TEST_ASSERT_EQUAL_INT(name_max, strlen(info->d_name));
 				found = 1;
 				break;
 			}
