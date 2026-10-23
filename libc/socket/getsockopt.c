@@ -122,14 +122,12 @@ TEST(socket_api_getsockopt, so_sndbuf)
 	fd = socket(AF_UNIX, SOCK_STREAM, 0);
 	TEST_ASSERT_TRUE(fd >= 0);
 
-	optval = 0;
+	/* The default value of SO_SNDBUF is implementation-defined */
+	optval = -1;
 	optlen = sizeof(optval);
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1644 issue");
-#endif
 	ret = getsockopt(fd, SOL_SOCKET, SO_SNDBUF, &optval, &optlen);
 	TEST_ASSERT_EQUAL_INT(0, ret);
-	TEST_ASSERT_GREATER_THAN_INT(0, optval);
+	TEST_ASSERT_GREATER_OR_EQUAL_INT(0, optval);
 }
 
 

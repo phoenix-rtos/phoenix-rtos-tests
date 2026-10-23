@@ -301,14 +301,9 @@ TEST(socket_api_sendto, msg_nosignal_flag)
 
 TEST(socket_api_sendto, emsgsize_dgram_too_large)
 {
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1644");
-#endif
 	int *sv = test_common.sv;
 	int ret;
 	ssize_t n;
-	int sndbuf;
-	socklen_t optlen;
 	static char bigBuf[262144];
 
 	close(sv[0]);
@@ -317,13 +312,10 @@ TEST(socket_api_sendto, emsgsize_dgram_too_large)
 	ret = socketpair(AF_UNIX, SOCK_DGRAM, 0, sv);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
-	optlen = sizeof(sndbuf);
-	ret = getsockopt(sv[0], SOL_SOCKET, SO_SNDBUF, &sndbuf, &optlen);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
+	/* The datagram exceeds the default socket buffers, so it can't be sent all at once */
 	memset(bigBuf, 'Z', sizeof(bigBuf));
 	errno = 0;
-	n = sendto(sv[0], bigBuf, (size_t)sndbuf + 1U > sizeof(bigBuf) ? sizeof(bigBuf) : (size_t)sndbuf + 1U, 0, NULL, 0);
+	n = sendto(sv[0], bigBuf, sizeof(bigBuf), 0, NULL, 0);
 	TEST_ASSERT_EQUAL_INT(-1, (int)n);
 	TEST_ASSERT_EQUAL_INT(EMSGSIZE, errno);
 }
