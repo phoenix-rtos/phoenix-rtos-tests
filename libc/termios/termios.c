@@ -36,6 +36,7 @@
 #include "unity_fixture.h"
 
 #define TERMIOS_TEST_FILE "/tmp/test_termios_notty"
+#define PTMX_PATH "/dev/ptmx"
 
 static struct {
 	int masterFd;
@@ -46,11 +47,15 @@ static struct {
 
 static void test_openPty(void)
 {
-	#ifndef __phoenix__
 	int ret;
 	char slaveName[256];
 
+#ifdef __phoenix__
+	/* posix_openpt() is not available, open the pseudo-terminal multiplexer directly */
+	test_common.masterFd = open(PTMX_PATH, O_RDWR | O_NOCTTY);
+#else
 	test_common.masterFd = posix_openpt(O_RDWR | O_NOCTTY);
+#endif
 	TEST_ASSERT_TRUE(test_common.masterFd >= 0);
 
 	ret = grantpt(test_common.masterFd);
@@ -64,9 +69,6 @@ static void test_openPty(void)
 
 	test_common.slaveFd = open(slaveName, O_RDWR | O_NOCTTY);
 	TEST_ASSERT_TRUE(test_common.slaveFd >= 0);
-	#else
-	TEST_IGNORE_MESSAGE("posix_openpt not implemented");
-	#endif
 }
 
 
