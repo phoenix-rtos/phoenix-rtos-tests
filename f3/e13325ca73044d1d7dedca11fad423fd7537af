@@ -1,0 +1,25 @@
+Makefile
+  s_70d3c9a27c8213::t_a7771fa7745a81 33
+  h_02b407815a79bd 22,35
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "f3e13325ca73044d1d7dedca11fad423fd7537af",
+  "prompts": {},
+  "humans": {
+    "h_02b407815a79bd": {
+      "author": "Łukasz Kruszyński <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  },
+  "sessions": {
+    "s_70d3c9a27c8213": {
+      "agent_id": {
+        "tool": "github-copilot-tab",
+        "id": "ai_tab-1778069162780",
+        "model": "default"
+      },
+      "human_author": "Łukasz Kruszyński <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  }
+}

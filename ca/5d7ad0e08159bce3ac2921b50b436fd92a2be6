@@ -1,0 +1,35 @@
+libc/dirent/dirent_dir.c
+  s_b87312b9498761::t_e7f76d07c18d05 1-12,14-26,28-31,36-312,314-327,329-346,349-364,366-378,380-388,392-399,401-405,407-411,413-418,420-455,35
+  h_3689a52f3dab5f 13,313,328,347-348,365,379,389-391,400,406,412,419
+  s_b87312b9498761::t_d4854cc6bfc65b 27
+  s_be33c58a76d038::t_bada453e3c21f8 32-34
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "ca5d7ad0e08159bce3ac2921b50b436fd92a2be6",
+  "prompts": {},
+  "humans": {
+    "h_3689a52f3dab5f": {
+      "author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    }
+  },
+  "sessions": {
+    "s_b87312b9498761": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "d62509e7-89b1-4e5b-9aa1-8b794f366be8",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    },
+    "s_be33c58a76d038": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "8bb51abd-fee0-45d5-99f7-69f61ada8f37",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    }
+  }
+}

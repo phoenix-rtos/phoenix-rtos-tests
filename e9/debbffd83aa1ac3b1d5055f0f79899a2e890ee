@@ -1,0 +1,24 @@
+libc/dirent/dirent_dir.c
+  s_be33c58a76d038::t_bada453e3c21f8 32-35
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "e9debbffd83aa1ac3b1d5055f0f79899a2e890ee",
+  "prompts": {},
+  "humans": {
+    "h_3689a52f3dab5f": {
+      "author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    }
+  },
+  "sessions": {
+    "s_be33c58a76d038": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "8bb51abd-fee0-45d5-99f7-69f61ada8f37",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    }
+  }
+}

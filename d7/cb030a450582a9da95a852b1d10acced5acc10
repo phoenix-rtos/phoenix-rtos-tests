@@ -1,0 +1,14 @@
+trunner/harness/__init__.py
+  h_02b407815a79bd 50
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "d7cb030a450582a9da95a852b1d10acced5acc10",
+  "prompts": {},
+  "humans": {
+    "h_02b407815a79bd": {
+      "author": "Łukasz Kruszyński <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  }
+}

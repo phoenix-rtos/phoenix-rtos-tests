@@ -1,0 +1,14 @@
+libc/test.yaml
+  h_9f2d068a164dcf 92,102-104
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "56987f0b4572a98cc6d513cd3e7968bc339fa87a",
+  "prompts": {},
+  "humans": {
+    "h_9f2d068a164dcf": {
+      "author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  }
+}

@@ -1,0 +1,100 @@
+libc/socket/main.c
+  s_7cf731c9f23b03::t_d65a380967d7b9 57
+libc/proc/coverage.md
+  s_7cf731c9f23b03::t_3721af93c68a87 1-104
+libc/termios/coverage.md
+  s_7cf731c9f23b03::t_5997a6f08f620e 1-92
+libc/termios/termios.c
+  h_3689a52f3dab5f 18,780
+  s_7cf731c9f23b03::t_5acb15e3031f13 1-17,19-24,27-779,781-785
+  s_7cf731c9f23b03::t_cd7889b4348199 25-26
+libc/time/timer.c
+  s_7cf731c9f23b03::t_f45ca69f356db2 293
+  s_7cf731c9f23b03::t_325e5d8ec58cf4 1-17,19-292,294-502
+  h_3689a52f3dab5f 18
+libc/fileops/fileops_chmod.c
+  h_3689a52f3dab5f 13
+  s_7cf731c9f23b03::t_af0f754839e8df 1-12,14-259
+libc/test.yaml
+  s_7cf731c9f23b03::t_ea3f3dfc5c95f6 122
+  h_3689a52f3dab5f 59-63,97,101,108-109,113-114,117-121,123-124,128-129,132-136
+  s_7cf731c9f23b03::t_d309600b8b09b7 112,115-116
+  s_7cf731c9f23b03::t_fa9fda623edbe0 127,130-131
+libc/proc/proc_fork.c
+  s_7cf731c9f23b03::t_b2730492d490bb 1-12,14-103,107-144,148-181,185-229,233-278,282-387,391-405,409-477
+  h_3689a52f3dab5f 13,104-106,145-147,182-184,230-232,279-281,388-390,406-408
+libc/proc/proc_fexecve.c
+  s_7cf731c9f23b03::t_cd98dece2e5b6c 163-164
+  h_3689a52f3dab5f 11
+  s_7cf731c9f23b03::t_a024c767347245 1-10,12-162,165-274
+libc/fileops/coverage.md
+  s_7cf731c9f23b03::t_6b23a6993ac693 1-152
+libc/uio/coverage.md
+  s_7cf731c9f23b03::t_21245c7f6b6fd6 1-34
+libc/uio/main.c
+  h_3689a52f3dab5f 12
+  s_7cf731c9f23b03::t_53d018f9d771b1 1-11,13-41
+libc/socket/coverage.md
+  s_7cf731c9f23b03::t_f69b7a87db1de8 273-285
+libc/time/coverage.md
+  s_7cf731c9f23b03::t_0916075022910c 1-77
+libc/fileops/fileops_dir.c
+  s_7cf731c9f23b03::t_c0f9d77fda22e5 1-15,17-76,80-522
+  h_3689a52f3dab5f 16,77-79
+libc/fileops/fileops_time.c
+  h_3689a52f3dab5f 13
+  s_7cf731c9f23b03::t_fdfe5297406068 1-12,14-391
+libc/time/main.c
+  s_7cf731c9f23b03::t_860b3cca866895 30-35
+libc/fileops/main.c
+  h_3689a52f3dab5f 24
+  s_7cf731c9f23b03::t_5586bf784fcd00 1-23,25-63
+libc/termios/main.c
+  s_7cf731c9f23b03::t_173862586b9172 1-17,19-52
+  h_3689a52f3dab5f 18
+libc/uio/readv_writev.c
+  s_7cf731c9f23b03::t_18bd673078e29b 1-11,13-554
+  h_3689a52f3dab5f 12
+libc/proc/main.c
+  s_7cf731c9f23b03::t_ab05ac69c82215 1-11,13-21,23-44,46-58
+  s_7cf731c9f23b03::t_97466886f82558 12
+  h_3689a52f3dab5f 22
+  s_7cf731c9f23b03::t_a7b3e37222e6b6 45
+libc/fileops/fileops_misc.c
+  h_3689a52f3dab5f 14,196-198
+  s_7cf731c9f23b03::t_568ad3420735f0 1-13,15-195,199-371
+libc/proc/proc_basic.c
+  h_3689a52f3dab5f 17
+  s_7cf731c9f23b03::t_880fc9a07cd25e 1-16,18-342,346-612
+  s_7cf731c9f23b03::t_5d6321f400d419 343-345
+libc/socket/sockatmark.c
+  s_7cf731c9f23b03::t_eca2ef4ac580e0 1-10,12-110
+  h_3689a52f3dab5f 11
+libc/Makefile
+  s_7cf731c9f23b03::t_d65a380967d7b9 48
+  s_7cf731c9f23b03::t_4622d1efe20ae8 52
+  h_3689a52f3dab5f 53
+  s_7cf731c9f23b03::t_e2a12050075f18 54
+  s_7cf731c9f23b03::t_919733c10aa6ab 55
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "586d37a7baa860d5f7e59674a0401f8f914bd53e",
+  "prompts": {},
+  "humans": {
+    "h_3689a52f3dab5f": {
+      "author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    }
+  },
+  "sessions": {
+    "s_7cf731c9f23b03": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "0c563759-78f5-4ce3-812c-d13b1dc55b6f",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    }
+  }
+}
