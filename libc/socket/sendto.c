@@ -17,6 +17,8 @@
 
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
@@ -29,11 +31,46 @@
 #define SENDTO_MSG_LEN   11
 #define SENDTO_BUF_SZ    64
 #define SENDTO_SOCK_PATH "/tmp/test_sendto_sock"
+#define UNUSED_PORT      19998
 
 static struct {
 	int sv[2];
 	int fd;
 } test_common;
+
+/* Connects sv[0] to sv[1] over TCP on the loopback interface */
+static void test_connectTcp(int *sv, int *listenFd)
+{
+	struct sockaddr_in addr;
+	socklen_t len = sizeof(addr);
+	int ret;
+
+	*listenFd = socket(AF_INET, SOCK_STREAM, 0);
+	TEST_ASSERT_NOT_EQUAL_INT(-1, *listenFd);
+
+	memset(&addr, 0, sizeof(addr));
+	addr.sin_family = AF_INET;
+	addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+	addr.sin_port = 0;
+	ret = bind(*listenFd, (struct sockaddr *)&addr, sizeof(addr));
+	TEST_ASSERT_EQUAL_INT(0, ret);
+
+	ret = listen(*listenFd, 1);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+
+	ret = getsockname(*listenFd, (struct sockaddr *)&addr, &len);
+	TEST_ASSERT_EQUAL_INT(0, ret);
+
+	sv[0] = socket(AF_INET, SOCK_STREAM, 0);
+	TEST_ASSERT_NOT_EQUAL_INT(-1, sv[0]);
+
+	ret = connect(sv[0], (struct sockaddr *)&addr, sizeof(addr));
+	TEST_ASSERT_EQUAL_INT(0, ret);
+
+	sv[1] = accept(*listenFd, NULL, NULL);
+	TEST_ASSERT_NOT_EQUAL_INT(-1, sv[1]);
+}
+
 
 TEST_GROUP(socket_api_sendto);
 
@@ -139,19 +176,24 @@ TEST(socket_api_sendto, connection_mode_ignores_dest_addr)
 {
 	ssize_t n;
 	char buf[SENDTO_BUF_SZ];
-	struct sockaddr_un addr;
+	struct sockaddr_in addr;
 
-	/* For connection-mode socket, dest_addr shall be ignored */
+	/*
+	 * AF_UNIX connection-mode sockets fail with EISCONN when a destination address is given,
+	 * both on Linux and on Phoenix-RTOS, so a TCP connection is used
+	 */
+	close(test_common.sv[0]);
+	close(test_common.sv[1]);
+	test_common.sv[0] = -1;
+	test_common.sv[1] = -1;
+	test_connectTcp(test_common.sv, &test_common.fd);
+
+	/* For connection-mode socket, dest_addr shall be ignored - nothing listens on this address */
 	memset(&addr, 0, sizeof(addr));
-	addr.sun_family = AF_UNIX;
-	strncpy(addr.sun_path, "/tmp/nonexistent_path", sizeof(addr.sun_path) - 1);
+	addr.sin_family = AF_INET;
+	addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+	addr.sin_port = htons(UNUSED_PORT);
 
-/* Linux returns EISCONN instead of ignoring dest_addr on connected socket */
-#ifndef __phoenix__
-	TEST_IGNORE();
-#else
-	TEST_IGNORE_MESSAGE("#1640 issue");
-#endif
 	n = sendto(test_common.sv[0], SENDTO_MSG, SENDTO_MSG_LEN, 0,
 			(struct sockaddr *)&addr, sizeof(addr));
 	TEST_ASSERT_EQUAL_INT(SENDTO_MSG_LEN, (int)n);
