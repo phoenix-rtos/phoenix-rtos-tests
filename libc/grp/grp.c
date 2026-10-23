@@ -102,7 +102,7 @@ TEST(grp_getgrgid, returns_null_nonexistent_gid)
 /* getgrgid: shall return NULL for very large nonexistent gid */
 TEST(grp_getgrgid, returns_null_very_large_gid)
 {
-#ifndef __phoenix_
+#ifndef __phoenix__
 	/* Linux is not POSIX compliant here */
 	TEST_IGNORE();
 #endif
@@ -224,7 +224,7 @@ TEST(grp_getgrnam, gr_mem_not_null)
 /* getgrnam: shall return NULL for nonexistent name, errno unchanged */
 TEST(grp_getgrnam, returns_null_nonexistent_name)
 {
-#ifndef __phoenix_
+#ifndef __phoenix__
 	/* Linux is not POSIX compliant here */
 	TEST_IGNORE();
 #endif
@@ -240,7 +240,7 @@ TEST(grp_getgrnam, returns_null_nonexistent_name)
 /* getgrnam: empty string shall return NULL */
 TEST(grp_getgrnam, returns_null_empty_string)
 {
-#ifndef __phoenix_
+#ifndef __phoenix__
 	/* Linux is not POSIX compliant here */
 	TEST_IGNORE();
 #endif
