@@ -22,6 +22,7 @@
 void runner(void)
 {
 	RUN_TEST_GROUP(resolve_path);
+	RUN_TEST_GROUP(stdlib_realpath);
 	RUN_TEST_GROUP(unistd_getopt);
 	RUN_TEST_GROUP(unistd_fsdir);
 	RUN_TEST_GROUP(unistd_fchdir);

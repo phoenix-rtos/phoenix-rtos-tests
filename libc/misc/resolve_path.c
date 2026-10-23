@@ -5,6 +5,9 @@
  *
  * Testing path resolving (with symlink support)
  *
+ * TESTED:
+ *    - realpath()
+ *
  * Copyright 2021 Phoenix Systems
  * Author: Marek Bialowas
  *
@@ -39,6 +42,7 @@ static char testWorkDir[PATH_MAX];
  */
 
 TEST_GROUP(resolve_path);
+TEST_GROUP(stdlib_realpath);
 
 TEST_SETUP(resolve_path)
 {
@@ -53,6 +57,20 @@ TEST_TEAR_DOWN(resolve_path)
 	TEST_ASSERT_EQUAL_INT(0, chdir(testWorkDir));
 
 	/* TODO: all tests should use common test dir to be recursively removed here */
+}
+
+
+TEST_SETUP(stdlib_realpath)
+{
+	/* save the test working diectory */
+	TEST_ASSERT_NOT_NULL(getcwd(testWorkDir, sizeof(testWorkDir)));
+}
+
+
+TEST_TEAR_DOWN(stdlib_realpath)
+{
+	/* go back to the test working directory and assert it */
+	TEST_ASSERT_EQUAL_INT(0, chdir(testWorkDir));
 }
 
 
@@ -98,7 +116,7 @@ TEST(resolve_path, canonicalize_pwd_simple)
 
 
 /* note canonicalize_path_name(path) == realpath(path, NULL) so no need for separate tests */
-TEST(resolve_path, realpath_abs_noalloc)
+TEST(stdlib_realpath, realpath_abs_noalloc)
 {
 	char result[PATH_MAX];
 
@@ -122,7 +140,7 @@ TEST(resolve_path, realpath_abs_noalloc)
 }
 
 
-TEST(resolve_path, realpath_pwd_noalloc)
+TEST(stdlib_realpath, realpath_pwd_noalloc)
 {
 	char result[PATH_MAX];
 
@@ -142,7 +160,7 @@ TEST(resolve_path, realpath_pwd_noalloc)
 
 
 /* failures due to different reasons */
-TEST(resolve_path, realpath_errno)
+TEST(stdlib_realpath, realpath_errno)
 {
 	char toolong[PATH_MAX + 10];
 
@@ -512,7 +530,7 @@ TEST(resolve_path, symlink_rename)
 
 
 /* check if path temporarily longer than PATH_MAX while resolving won't crash */
-TEST(resolve_path, symlink_long_resolution)
+TEST(stdlib_realpath, symlink_long_resolution)
 {
 	char symNameLong[NAME_MAX / 2];
 	char resolved[PATH_MAX + 1];
@@ -558,10 +576,6 @@ TEST_GROUP_RUNNER(resolve_path)
 	RUN_TEST_CASE(resolve_path, canonicalize_abs_simple);
 	RUN_TEST_CASE(resolve_path, canonicalize_pwd_simple);
 
-	RUN_TEST_CASE(resolve_path, realpath_abs_noalloc);
-	RUN_TEST_CASE(resolve_path, realpath_pwd_noalloc);
-
-	RUN_TEST_CASE(resolve_path, realpath_errno);
 	RUN_TEST_CASE(resolve_path, realpath_max_path);
 
 #ifdef __phoenix__
@@ -575,5 +589,13 @@ TEST_GROUP_RUNNER(resolve_path)
 	RUN_TEST_CASE(resolve_path, symlink_dir);
 	RUN_TEST_CASE(resolve_path, symlink_loop);
 	RUN_TEST_CASE(resolve_path, symlink_rename);
-	RUN_TEST_CASE(resolve_path, symlink_long_resolution);
+}
+
+
+TEST_GROUP_RUNNER(stdlib_realpath)
+{
+	RUN_TEST_CASE(stdlib_realpath, realpath_abs_noalloc);
+	RUN_TEST_CASE(stdlib_realpath, realpath_pwd_noalloc);
+	RUN_TEST_CASE(stdlib_realpath, realpath_errno);
+	RUN_TEST_CASE(stdlib_realpath, symlink_long_resolution);
 }
