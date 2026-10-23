@@ -154,11 +154,7 @@ TEST(fcntl_open, open_creat_new_file)
 	ret = fstat(test_common.fd, &st);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 	/* 0666 & ~0022 = 0644 */
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1628 issue");
-#else
 	TEST_ASSERT_EQUAL_INT(0644, (int)(st.st_mode & 0777));
-#endif
 
 	umask(prevMask);
 }
@@ -198,14 +194,10 @@ TEST(fcntl_open, open_creat_excl_existing_eexist)
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	(void)fd;
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#200 issue");
-#else
 	errno = 0;
 	fd = open(OPEN_TEST_FILE, O_WRONLY | O_CREAT | O_EXCL, 0644);
 	TEST_ASSERT_EQUAL_INT(-1, fd);
 	TEST_ASSERT_EQUAL_INT(EEXIST, errno);
-#endif
 }
 
 

@@ -196,9 +196,6 @@ TEST(proc_fork, fork_child_inherits_fd)
 
 TEST(proc_fork, fork_child_pending_signals_empty)
 {
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("sigpending not implemented");
-#else
 	pid_t childPid;
 	int pipeFds[2];
 	int ret;
@@ -254,7 +251,6 @@ TEST(proc_fork, fork_child_pending_signals_empty)
 		sigprocmask(SIG_UNBLOCK, &blockSet, NULL);
 		sigaction(SIGUSR1, &oldAct, NULL);
 	}
-#endif
 }
 
 

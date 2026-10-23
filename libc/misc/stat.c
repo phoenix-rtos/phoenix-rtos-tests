@@ -550,14 +550,11 @@ TEST(stat_mode, sock_type)
 	/* Bind the socket to the address. */
 	TEST_ASSERT_EQUAL_INT(0, bind(sfd, (struct sockaddr *)&addr, sizeof(struct sockaddr_un)));
 
-/* Disabled on Phoenix-RTOS because of #749 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/749 */
-#ifndef __phoenix__
 	TEST_ASSERT_EQUAL_INT(0, stat(socketPath, &buffer));
 	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFSOCK);
 
 	TEST_ASSERT_EQUAL_INT(0, lstat(socketPath, &buffer));
 	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFSOCK);
-#endif
 
 	TEST_ASSERT_EQUAL_INT(0, fstat(sfd, &buffer));
 	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFSOCK);

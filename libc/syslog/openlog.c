@@ -206,12 +206,8 @@ TEST(syslog_openlog, openlog_setlogmask_persists_across_openlog)
 
 	openlog("new-ident", LOG_NDELAY, LOG_LOCAL0);
 
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1647 issue");
-#else
 	int mask = setlogmask(0);
 	TEST_ASSERT_EQUAL_INT(LOG_MASK(LOG_ERR), mask);
-#endif
 }
 
 
