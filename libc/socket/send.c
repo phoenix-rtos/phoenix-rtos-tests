@@ -299,15 +299,10 @@ TEST(socket_api_send, eintr_signal_interrupts)
 
 TEST(socket_api_send, emsgsize_dgram_too_large)
 {
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1644");
-#endif
 	int *sv = test_common.sv;
 	int ret;
 	ssize_t n;
-	int sndbuf = 4096;
-	socklen_t optlen;
-	static char bigBuf[65536];
+	static char bigBuf[262144];
 
 	close(sv[0]);
 	close(sv[1]);
@@ -315,19 +310,10 @@ TEST(socket_api_send, emsgsize_dgram_too_large)
 	ret = socketpair(AF_UNIX, SOCK_DGRAM, 0, sv);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
-	ret = setsockopt(sv[0], SOL_SOCKET, SO_SNDBUF, &sndbuf, sizeof(sndbuf));
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-	/* Read back the effective limit (the kernel may round or double it) */
-	optlen = sizeof(sndbuf);
-	ret = getsockopt(sv[0], SOL_SOCKET, SO_SNDBUF, &sndbuf, &optlen);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-	TEST_ASSERT_TRUE((size_t)sndbuf < sizeof(bigBuf));
-
-	/* Single datagram exceeding buffer limit */
+	/* The datagram exceeds the default socket buffers, so it can't be sent all at once */
 	memset(bigBuf, 'Y', sizeof(bigBuf));
 	errno = 0;
-	n = send(sv[0], bigBuf, (size_t)sndbuf + 1U, 0);
+	n = send(sv[0], bigBuf, sizeof(bigBuf), 0);
 	TEST_ASSERT_EQUAL_INT(-1, (int)n);
 	TEST_ASSERT_EQUAL_INT(EMSGSIZE, errno);
 }

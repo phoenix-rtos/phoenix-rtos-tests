@@ -581,16 +581,11 @@ TEST(socket_api_sendmsg, eintr_signal_interrupts)
 
 TEST(socket_api_sendmsg, emsgsize_dgram_too_large)
 {
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1644");
-#endif
 	int ret;
 	ssize_t n;
 	struct msghdr msg;
 	struct iovec iov;
-	int sndbuf = 4096;
-	socklen_t optlen;
-	static char bigBuf[65536];
+	static char bigBuf[262144];
 
 	close(test_common.sv[0]);
 	close(test_common.sv[1]);
@@ -598,19 +593,12 @@ TEST(socket_api_sendmsg, emsgsize_dgram_too_large)
 	ret = socketpair(AF_UNIX, SOCK_DGRAM, 0, test_common.sv);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
-	ret = setsockopt(test_common.sv[0], SOL_SOCKET, SO_SNDBUF, &sndbuf, sizeof(sndbuf));
-	TEST_ASSERT_EQUAL_INT(0, ret);
-
-	optlen = sizeof(sndbuf);
-	ret = getsockopt(test_common.sv[0], SOL_SOCKET, SO_SNDBUF, &sndbuf, &optlen);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-	TEST_ASSERT_TRUE((size_t)sndbuf < sizeof(bigBuf));
-
+	/* The datagram exceeds the default socket buffers, so it can't be sent all at once */
 	memset(bigBuf, 'E', sizeof(bigBuf));
 	memset(&msg, 0, sizeof(msg));
 
 	iov.iov_base = bigBuf;
-	iov.iov_len = (size_t)sndbuf + 1U;
+	iov.iov_len = sizeof(bigBuf);
 	msg.msg_iov = &iov;
 	msg.msg_iovlen = 1;
 
