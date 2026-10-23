@@ -24,6 +24,8 @@ void runner(void)
 	RUN_TEST_GROUP(resolve_path);
 	RUN_TEST_GROUP(unistd_getopt);
 	RUN_TEST_GROUP(unistd_fsdir);
+	RUN_TEST_GROUP(unistd_fchdir);
+	RUN_TEST_GROUP(unistd_fchown);
 	RUN_TEST_GROUP(unistd_file);
 	RUN_TEST_GROUP(unistd_file_pread);
 	RUN_TEST_GROUP(wchar_wcscmp);

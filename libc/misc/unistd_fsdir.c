@@ -35,6 +35,8 @@ static char buf[PATH_MAX];
 static char toolongpath[PATH_MAX + 16];
 
 TEST_GROUP(unistd_fsdir);
+TEST_GROUP(unistd_fchdir);
+TEST_GROUP(unistd_fchown);
 
 TEST_SETUP(unistd_fsdir)
 {
@@ -60,6 +62,26 @@ TEST_TEAR_DOWN(unistd_fsdir)
 	/* go back to the test working directory */
 	TEST_ASSERT_EQUAL_INT(0, chdir(testWorkDir));
 	TEST_ASSERT_EQUAL_INT(0, remove(FNAME));
+}
+
+
+TEST_SETUP(unistd_fchdir)
+{
+}
+
+
+TEST_TEAR_DOWN(unistd_fchdir)
+{
+}
+
+
+TEST_SETUP(unistd_fchown)
+{
+}
+
+
+TEST_TEAR_DOWN(unistd_fchown)
+{
 }
 
 
@@ -238,7 +260,7 @@ TEST(unistd_fsdir, rmdir_notempty)
 }
 
 
-IGNORE_TEST(unistd_fsdir, fchdir)
+IGNORE_TEST(unistd_fchdir, fchdir)
 {
 	/*
 		Declared but unimplemented in libphoenix
@@ -247,7 +269,7 @@ IGNORE_TEST(unistd_fsdir, fchdir)
 }
 
 
-IGNORE_TEST(unistd_fsdir, fchown)
+IGNORE_TEST(unistd_fchown, fchown)
 {
 	/*
 		Unimplemented in libphoenix
@@ -274,7 +296,16 @@ TEST_GROUP_RUNNER(unistd_fsdir)
 	RUN_TEST_CASE(unistd_fsdir, rmdir_emptystring);
 	RUN_TEST_CASE(unistd_fsdir, rmdir_file);
 	RUN_TEST_CASE(unistd_fsdir, rmdir_notempty);
+}
 
-	RUN_TEST_CASE(unistd_fsdir, fchdir);
-	RUN_TEST_CASE(unistd_fsdir, fchown);
+
+TEST_GROUP_RUNNER(unistd_fchdir)
+{
+	RUN_TEST_CASE(unistd_fchdir, fchdir);
+}
+
+
+TEST_GROUP_RUNNER(unistd_fchown)
+{
+	RUN_TEST_CASE(unistd_fchown, fchown);
 }
