@@ -20,6 +20,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "unity_fixture.h"
@@ -27,6 +28,10 @@
 #define SOCKETPAIR_MSG     "hello"
 #define SOCKETPAIR_MSG_LEN 5
 #define SOCKETPAIR_BUF_SZ  32
+
+/* Initial and maximal number of descriptors used to exhaust the descriptor table */
+#define SOCKETPAIR_FDS_INIT 16U
+#define SOCKETPAIR_FDS_MAX  65536U
 
 TEST_GROUP(socket_api_socketpair);
 
@@ -277,53 +282,60 @@ TEST(socket_api_socketpair, protocol_zero_default)
 
 TEST(socket_api_socketpair, emfile_resource_exhaustion)
 {
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("setrlimit(RLIMIT_NOFILE) not enforced");
-#endif
 	int *sv = test_common.sv;
 	int ret;
 	struct rlimit rl;
-	int dupfds[16];
-	int i;
+	size_t fdCap = SOCKETPAIR_FDS_INIT;
+	size_t fdCount = 0;
+	size_t i;
+	int fd;
+	int *dupfds, *newfds;
 
-	for (i = 0; i < 16; i++) {
-		dupfds[i] = -1;
-	}
-
-	/* Lower RLIMIT_NOFILE to a small value to exhaust fd table quickly */
+	/* Lower RLIMIT_NOFILE where it is enforced, to exhaust the fd table quickly */
 	ret = getrlimit(RLIMIT_NOFILE, &test_common.oldrl);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
-	/* Set soft limit to current fd count + 1 so no room for a pair */
 	rl.rlim_cur = 4;
 	rl.rlim_max = test_common.oldrl.rlim_max;
-	ret = setrlimit(RLIMIT_NOFILE, &rl);
-	if (ret != 0) {
-		/* If we can't set rlimit, exhaust by duping */
-		TEST_IGNORE_MESSAGE("Cannot set RLIMIT_NOFILE, skipping EMFILE test");
+	if (setrlimit(RLIMIT_NOFILE, &rl) == 0) {
+		test_common.rlimit_changed = 1;
 	}
-	test_common.rlimit_changed = 1;
+
+	/* sysconf(_SC_OPEN_MAX) may report an indeterminate limit, so the array grows as needed */
+	dupfds = malloc(fdCap * sizeof(*dupfds));
+	TEST_ASSERT_NOT_NULL(dupfds);
 
 	if (TEST_PROTECT()) {
-		/* Use up remaining slots by duping */
-		for (i = 0; i < 16; i++) {
-			dupfds[i] = dup(STDIN_FILENO);
-			if (dupfds[i] < 0) {
+		/* Use up all remaining descriptors */
+		errno = 0;
+		while (fdCount < SOCKETPAIR_FDS_MAX) {
+			fd = dup(STDIN_FILENO);
+			if (fd < 0) {
 				break;
 			}
+			if (fdCount == fdCap) {
+				newfds = realloc(dupfds, 2U * fdCap * sizeof(*dupfds));
+				if (newfds == NULL) {
+					close(fd);
+					TEST_FAIL_MESSAGE("out of memory");
+				}
+				dupfds = newfds;
+				fdCap *= 2U;
+			}
+			dupfds[fdCount++] = fd;
 		}
+		TEST_ASSERT_EQUAL_INT(EMFILE, errno);
 
 		errno = 0;
 		ret = socketpair(AF_UNIX, SOCK_STREAM, 0, sv);
 		TEST_ASSERT_EQUAL_INT(-1, ret);
 		TEST_ASSERT_EQUAL_INT(EMFILE, errno);
 	}
-	/* Cleanup */
-	for (i = 0; i < 16; i++) {
-		if (dupfds[i] >= 0) {
-			close(dupfds[i]);
-		}
+
+	for (i = 0; i < fdCount; i++) {
+		close(dupfds[i]);
 	}
+	free(dupfds);
 }
 
 
