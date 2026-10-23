@@ -9,6 +9,7 @@
  *    - sscanf()
  *    - vfscanf()
  *    - vsscanf()
+ *    - vscanf()
  *    - For all functions: "%d", "%i", "%u", "%o", "%x" conversion specifiers
  *
  * Copyright 2023, 2024 Phoenix Systems
@@ -32,6 +33,7 @@
 #include <unity_fixture.h>
 
 #include "common.h"
+#include "stdio_scanf_common.h"
 
 
 /* Checking for define NL_ARGMAX*/
@@ -46,32 +48,6 @@
 #define BUFF_LEN 300
 
 static FILE *filep;
-
-static int test_vsscanfWrapper(const char *str, const char *format, ...)
-{
-	int rc;
-	va_list arg_ptr;
-
-	va_start(arg_ptr, format);
-	rc = vsscanf(str, format, arg_ptr);
-	va_end(arg_ptr);
-
-	return rc;
-}
-
-
-static int test_vfscanfWrapper(FILE *stream, const char *format, ...)
-{
-	int rc;
-	va_list arg_ptr;
-
-	va_start(arg_ptr, format);
-	rc = vfscanf(stream, format, arg_ptr);
-	va_end(arg_ptr);
-
-	return rc;
-}
-
 
 /*
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -93,12 +69,14 @@ TEST_GROUP(stdio_scanf_x);
 TEST_SETUP(stdio_scanf_d)
 {
 	filep = fopen(TESTFILE_PATH, "w+");
+	test_stdinRedirect(TESTFILE_PATH);
 }
 
 
 TEST_TEAR_DOWN(stdio_scanf_d)
 {
 	fclose(filep);
+	test_stdinRestore();
 }
 
 
@@ -115,6 +93,16 @@ TEST(stdio_scanf_d, d)
 
 	max = min = zero = hmin = hmax = 1;
 	test_vfscanfWrapper(filep, format, &max, &hmax, &zero, &hmin, &min);
+	TEST_ASSERT_EQUAL_INT(INT_MIN, min);
+	TEST_ASSERT_EQUAL_INT(INT_MAX, max);
+	TEST_ASSERT_EQUAL_INT(0, zero);
+	TEST_ASSERT_EQUAL_INT(INT_MIN / 2, hmin);
+	TEST_ASSERT_EQUAL_INT(INT_MAX / 2, hmax);
+
+	rewind(stdin);
+
+	max = min = zero = hmin = hmax = 1;
+	test_vscanfWrapper(format, &max, &hmax, &zero, &hmin, &min);
 	TEST_ASSERT_EQUAL_INT(INT_MIN, min);
 	TEST_ASSERT_EQUAL_INT(INT_MAX, max);
 	TEST_ASSERT_EQUAL_INT(0, zero);
@@ -164,6 +152,17 @@ TEST(stdio_scanf_d, hhd)
 
 	max = min = zero = hmin = hmax = 1;
 	TEST_ASSERT_EQUAL_INT(5, test_vfscanfWrapper(filep, format, &max, &hmax, &zero, &hmin, &min));
+
+	TEST_ASSERT_EQUAL_INT8(CHAR_MIN, min);
+	TEST_ASSERT_EQUAL_INT8(CHAR_MAX, max);
+	TEST_ASSERT_EQUAL_INT8(0, zero);
+	TEST_ASSERT_EQUAL_INT8(CHAR_MIN / 2, hmin);
+	TEST_ASSERT_EQUAL_INT8(CHAR_MAX / 2, hmax);
+
+	rewind(stdin);
+
+	max = min = zero = hmin = hmax = 1;
+	TEST_ASSERT_EQUAL_INT(5, test_vscanfWrapper(format, &max, &hmax, &zero, &hmin, &min));
 
 	TEST_ASSERT_EQUAL_INT8(CHAR_MIN, min);
 	TEST_ASSERT_EQUAL_INT8(CHAR_MAX, max);
@@ -221,6 +220,17 @@ TEST(stdio_scanf_d, hd)
 	TEST_ASSERT_EQUAL_INT16(SHRT_MIN / 2, hmin);
 	TEST_ASSERT_EQUAL_INT16(SHRT_MAX / 2, hmax);
 
+	rewind(stdin);
+
+	max = min = zero = hmin = hmax = 1;
+	TEST_ASSERT_EQUAL_INT(5, test_vscanfWrapper(format, &max, &hmax, &zero, &hmin, &min));
+
+	TEST_ASSERT_EQUAL_INT16(SHRT_MIN, min);
+	TEST_ASSERT_EQUAL_INT16(SHRT_MAX, max);
+	TEST_ASSERT_EQUAL_INT16(0, zero);
+	TEST_ASSERT_EQUAL_INT16(SHRT_MIN / 2, hmin);
+	TEST_ASSERT_EQUAL_INT16(SHRT_MAX / 2, hmax);
+
 	rewind(filep);
 
 	max = min = zero = hmin = hmax = 1;
@@ -264,6 +274,17 @@ TEST(stdio_scanf_d, ld)
 
 	max = min = zero = hmin = hmax = 1;
 	TEST_ASSERT_EQUAL_INT(5, test_vfscanfWrapper(filep, format, &max, &hmax, &zero, &hmin, &min));
+
+	TEST_ASSERT_EQUAL_INT64(LONG_MIN, min);
+	TEST_ASSERT_EQUAL_INT64(LONG_MAX, max);
+	TEST_ASSERT_EQUAL_INT64(0, zero);
+	TEST_ASSERT_EQUAL_INT64(LONG_MIN / 2, hmin);
+	TEST_ASSERT_EQUAL_INT64(LONG_MAX / 2, hmax);
+
+	rewind(stdin);
+
+	max = min = zero = hmin = hmax = 1;
+	TEST_ASSERT_EQUAL_INT(5, test_vscanfWrapper(format, &max, &hmax, &zero, &hmin, &min));
 
 	TEST_ASSERT_EQUAL_INT64(LONG_MIN, min);
 	TEST_ASSERT_EQUAL_INT64(LONG_MAX, max);
@@ -321,6 +342,17 @@ TEST(stdio_scanf_d, lld)
 	TEST_ASSERT_EQUAL_INT64(LLONG_MIN / 2, hmin);
 	TEST_ASSERT_EQUAL_INT64(LLONG_MAX / 2, hmax);
 
+	rewind(stdin);
+
+	max = min = zero = hmin = hmax = 1;
+	TEST_ASSERT_EQUAL_INT(5, test_vscanfWrapper(format, &max, &hmax, &zero, &hmin, &min));
+
+	TEST_ASSERT_EQUAL_INT64(LLONG_MIN, min);
+	TEST_ASSERT_EQUAL_INT64(LLONG_MAX, max);
+	TEST_ASSERT_EQUAL_INT64(0, zero);
+	TEST_ASSERT_EQUAL_INT64(LLONG_MIN / 2, hmin);
+	TEST_ASSERT_EQUAL_INT64(LLONG_MAX / 2, hmax);
+
 	rewind(filep);
 
 	max = min = zero = hmin = hmax = 1;
@@ -365,6 +397,16 @@ TEST(stdio_scanf_d, jd)
 	max = min = zero = hmin = hmax = 1;
 	TEST_ASSERT_EQUAL_INT(5, test_vfscanfWrapper(filep, format, &max, &hmax, &zero, &hmin, &min));
 	rewind(filep);
+	TEST_ASSERT_EQUAL_INT64(INTMAX_MIN, min);
+	TEST_ASSERT_EQUAL_INT64(INTMAX_MAX, max);
+	TEST_ASSERT_EQUAL_INT64(0, zero);
+	TEST_ASSERT_EQUAL_INT64(INTMAX_MIN / 2, hmin);
+	TEST_ASSERT_EQUAL_INT64(INTMAX_MAX / 2, hmax);
+
+	rewind(stdin);
+
+	max = min = zero = hmin = hmax = 1;
+	TEST_ASSERT_EQUAL_INT(5, test_vscanfWrapper(format, &max, &hmax, &zero, &hmin, &min));
 	TEST_ASSERT_EQUAL_INT64(INTMAX_MIN, min);
 	TEST_ASSERT_EQUAL_INT64(INTMAX_MAX, max);
 	TEST_ASSERT_EQUAL_INT64(0, zero);
@@ -419,6 +461,15 @@ TEST(stdio_scanf_d, zd)
 	TEST_ASSERT_EQUAL_INT64(0, zero);
 	TEST_ASSERT_EQUAL_INT64(SSIZE_MAX / 2, hmax);
 
+	rewind(stdin);
+
+	max = zero = hmax = 1;
+	TEST_ASSERT_EQUAL_INT(3, test_vscanfWrapper(format, &max, &hmax, &zero));
+
+	TEST_ASSERT_EQUAL_INT64(SSIZE_MAX, max);
+	TEST_ASSERT_EQUAL_INT64(0, zero);
+	TEST_ASSERT_EQUAL_INT64(SSIZE_MAX / 2, hmax);
+
 	rewind(filep);
 
 	max = zero = hmax = 1;
@@ -465,6 +516,17 @@ TEST(stdio_scanf_d, td)
 	TEST_ASSERT_EQUAL_INT64(PTRDIFF_MIN / 2, hmin);
 	TEST_ASSERT_EQUAL_INT64(PTRDIFF_MAX / 2, hmax);
 
+	rewind(stdin);
+
+	max = zero = hmax = 1;
+	TEST_ASSERT_EQUAL_INT(5, test_vscanfWrapper(format, &max, &hmax, &zero, &hmin, &min));
+
+	TEST_ASSERT_EQUAL_INT64(PTRDIFF_MIN, min);
+	TEST_ASSERT_EQUAL_INT64(PTRDIFF_MAX, max);
+	TEST_ASSERT_EQUAL_INT64(0, zero);
+	TEST_ASSERT_EQUAL_INT64(PTRDIFF_MIN / 2, hmin);
+	TEST_ASSERT_EQUAL_INT64(PTRDIFF_MAX / 2, hmax);
+
 	rewind(filep);
 
 	max = zero = hmax = 1;
@@ -504,12 +566,14 @@ TEST(stdio_scanf_d, td)
 TEST_SETUP(stdio_scanf_i)
 {
 	filep = fopen(TESTFILE_PATH, "w+");
+	test_stdinRedirect(TESTFILE_PATH);
 }
 
 
 TEST_TEAR_DOWN(stdio_scanf_i)
 {
 	fclose(filep);
+	test_stdinRestore();
 }
 
 
@@ -526,6 +590,17 @@ TEST(stdio_scanf_i, i)
 
 	max = min = zero = hmin = hmax = 1;
 	TEST_ASSERT_EQUAL_INT(5, test_vfscanfWrapper(filep, format, &max, &hmax, &zero, &hmin, &min));
+
+	TEST_ASSERT_EQUAL_INT(INT_MIN, min);
+	TEST_ASSERT_EQUAL_INT(INT_MAX, max);
+	TEST_ASSERT_EQUAL_INT(0, zero);
+	TEST_ASSERT_EQUAL_INT(INT_MIN / 2, hmin);
+	TEST_ASSERT_EQUAL_INT(INT_MAX / 2, hmax);
+
+	rewind(stdin);
+
+	max = min = zero = hmin = hmax = 1;
+	TEST_ASSERT_EQUAL_INT(5, test_vscanfWrapper(format, &max, &hmax, &zero, &hmin, &min));
 
 	TEST_ASSERT_EQUAL_INT(INT_MIN, min);
 	TEST_ASSERT_EQUAL_INT(INT_MAX, max);
@@ -576,6 +651,17 @@ TEST(stdio_scanf_i, hhi)
 
 	max = min = zero = hmin = hmax = 1;
 	TEST_ASSERT_EQUAL_INT(5, test_vfscanfWrapper(filep, format, &max, &hmax, &zero, &hmin, &min));
+
+	TEST_ASSERT_EQUAL_INT8(CHAR_MIN, min);
+	TEST_ASSERT_EQUAL_INT8(CHAR_MAX, max);
+	TEST_ASSERT_EQUAL_INT8(0, zero);
+	TEST_ASSERT_EQUAL_INT8(CHAR_MIN / 2, hmin);
+	TEST_ASSERT_EQUAL_INT8(CHAR_MAX / 2, hmax);
+
+	rewind(stdin);
+
+	max = min = zero = hmin = hmax = 1;
+	TEST_ASSERT_EQUAL_INT(5, test_vscanfWrapper(format, &max, &hmax, &zero, &hmin, &min));
 
 	TEST_ASSERT_EQUAL_INT8(CHAR_MIN, min);
 	TEST_ASSERT_EQUAL_INT8(CHAR_MAX, max);
@@ -634,6 +720,17 @@ TEST(stdio_scanf_i, hi)
 	TEST_ASSERT_EQUAL_INT16(SHRT_MIN / 2, hmin);
 	TEST_ASSERT_EQUAL_INT16(SHRT_MAX / 2, hmax);
 
+	rewind(stdin);
+
+	max = min = zero = hmin = hmax = 1;
+	TEST_ASSERT_EQUAL_INT(5, test_vscanfWrapper(format, &max, &hmax, &zero, &hmin, &min));
+
+	TEST_ASSERT_EQUAL_INT16(SHRT_MIN, min);
+	TEST_ASSERT_EQUAL_INT16(SHRT_MAX, max);
+	TEST_ASSERT_EQUAL_INT16(0, zero);
+	TEST_ASSERT_EQUAL_INT16(SHRT_MIN / 2, hmin);
+	TEST_ASSERT_EQUAL_INT16(SHRT_MAX / 2, hmax);
+
 	rewind(filep);
 
 	max = min = zero = hmin = hmax = 1;
@@ -678,6 +775,17 @@ TEST(stdio_scanf_i, li)
 
 	max = min = zero = hmin = hmax = 1;
 	TEST_ASSERT_EQUAL_INT(5, test_vfscanfWrapper(filep, format, &max, &hmax, &zero, &hmin, &min));
+
+	TEST_ASSERT_EQUAL_INT64(LONG_MIN, min);
+	TEST_ASSERT_EQUAL_INT64(LONG_MAX, max);
+	TEST_ASSERT_EQUAL_INT64(0, zero);
+	TEST_ASSERT_EQUAL_INT64(LONG_MIN / 2, hmin);
+	TEST_ASSERT_EQUAL_INT64(LONG_MAX / 2, hmax);
+
+	rewind(stdin);
+
+	max = min = zero = hmin = hmax = 1;
+	TEST_ASSERT_EQUAL_INT(5, test_vscanfWrapper(format, &max, &hmax, &zero, &hmin, &min));
 
 	TEST_ASSERT_EQUAL_INT64(LONG_MIN, min);
 	TEST_ASSERT_EQUAL_INT64(LONG_MAX, max);
@@ -736,6 +844,17 @@ TEST(stdio_scanf_i, lli)
 	TEST_ASSERT_EQUAL_INT64(LLONG_MIN / 2, hmin);
 	TEST_ASSERT_EQUAL_INT64(LLONG_MAX / 2, hmax);
 
+	rewind(stdin);
+
+	max = min = zero = hmin = hmax = 1;
+	TEST_ASSERT_EQUAL_INT(5, test_vscanfWrapper(format, &max, &hmax, &zero, &hmin, &min));
+
+	TEST_ASSERT_EQUAL_INT64(LLONG_MIN, min);
+	TEST_ASSERT_EQUAL_INT64(LLONG_MAX, max);
+	TEST_ASSERT_EQUAL_INT64(0, zero);
+	TEST_ASSERT_EQUAL_INT64(LLONG_MIN / 2, hmin);
+	TEST_ASSERT_EQUAL_INT64(LLONG_MAX / 2, hmax);
+
 	rewind(filep);
 
 	max = min = zero = hmin = hmax = 1;
@@ -780,6 +899,16 @@ TEST(stdio_scanf_i, ji)
 	max = min = zero = hmin = hmax = 1;
 	TEST_ASSERT_EQUAL_INT(5, test_vfscanfWrapper(filep, format, &max, &hmax, &zero, &hmin, &min));
 	rewind(filep);
+	TEST_ASSERT_EQUAL_INT64(INTMAX_MIN, min);
+	TEST_ASSERT_EQUAL_INT64(INTMAX_MAX, max);
+	TEST_ASSERT_EQUAL_INT64(0, zero);
+	TEST_ASSERT_EQUAL_INT64(INTMAX_MIN / 2, hmin);
+	TEST_ASSERT_EQUAL_INT64(INTMAX_MAX / 2, hmax);
+
+	rewind(stdin);
+
+	max = min = zero = hmin = hmax = 1;
+	TEST_ASSERT_EQUAL_INT(5, test_vscanfWrapper(format, &max, &hmax, &zero, &hmin, &min));
 	TEST_ASSERT_EQUAL_INT64(INTMAX_MIN, min);
 	TEST_ASSERT_EQUAL_INT64(INTMAX_MAX, max);
 	TEST_ASSERT_EQUAL_INT64(0, zero);
@@ -834,6 +963,15 @@ TEST(stdio_scanf_i, zi)
 	TEST_ASSERT_EQUAL_INT64(0, zero);
 	TEST_ASSERT_EQUAL_INT64(SSIZE_MAX / 2, hmax);
 
+	rewind(stdin);
+
+	max = zero = hmax = 1;
+	TEST_ASSERT_EQUAL_INT(3, test_vscanfWrapper(format, &max, &hmax, &zero));
+
+	TEST_ASSERT_EQUAL_INT64(SSIZE_MAX, max);
+	TEST_ASSERT_EQUAL_INT64(0, zero);
+	TEST_ASSERT_EQUAL_INT64(SSIZE_MAX / 2, hmax);
+
 	rewind(filep);
 
 	max = zero = hmax = 1;
@@ -880,6 +1018,17 @@ TEST(stdio_scanf_i, ti)
 	TEST_ASSERT_EQUAL_INT64(PTRDIFF_MIN / 2, hmin);
 	TEST_ASSERT_EQUAL_INT64(PTRDIFF_MAX / 2, hmax);
 
+	rewind(stdin);
+
+	max = min = zero = hmin = hmax = 1;
+	TEST_ASSERT_EQUAL_INT(5, test_vscanfWrapper(format, &max, &hmax, &zero, &hmin, &min));
+
+	TEST_ASSERT_EQUAL_INT64(PTRDIFF_MIN, min);
+	TEST_ASSERT_EQUAL_INT64(PTRDIFF_MAX, max);
+	TEST_ASSERT_EQUAL_INT64(0, zero);
+	TEST_ASSERT_EQUAL_INT64(PTRDIFF_MIN / 2, hmin);
+	TEST_ASSERT_EQUAL_INT64(PTRDIFF_MAX / 2, hmax);
+
 	rewind(filep);
 
 	max = min = zero = hmin = hmax = 1;
@@ -919,12 +1068,14 @@ TEST(stdio_scanf_i, ti)
 TEST_SETUP(stdio_scanf_u)
 {
 	filep = fopen(TESTFILE_PATH, "w+");
+	test_stdinRedirect(TESTFILE_PATH);
 }
 
 
 TEST_TEAR_DOWN(stdio_scanf_u)
 {
 	fclose(filep);
+	test_stdinRestore();
 }
 
 
@@ -941,6 +1092,15 @@ TEST(stdio_scanf_u, u)
 
 	max = zero = hmax = 1;
 	TEST_ASSERT_EQUAL_INT(3, test_vfscanfWrapper(filep, format, &max, &hmax, &zero));
+
+	TEST_ASSERT_EQUAL_UINT(UINT_MAX, max);
+	TEST_ASSERT_EQUAL_UINT(UINT_MAX / 2, hmax);
+	TEST_ASSERT_EQUAL_UINT(0, zero);
+
+	rewind(stdin);
+
+	max = zero = hmax = 1;
+	TEST_ASSERT_EQUAL_INT(3, test_vscanfWrapper(format, &max, &hmax, &zero));
 
 	TEST_ASSERT_EQUAL_UINT(UINT_MAX, max);
 	TEST_ASSERT_EQUAL_UINT(UINT_MAX / 2, hmax);
@@ -989,6 +1149,15 @@ TEST(stdio_scanf_u, hhu)
 	TEST_ASSERT_EQUAL_UINT8(UCHAR_MAX / 2, hmax);
 	TEST_ASSERT_EQUAL_UINT8(0, zero);
 
+	rewind(stdin);
+
+	max = zero = hmax = 1;
+	TEST_ASSERT_EQUAL_INT(3, test_vscanfWrapper(format, &max, &hmax, &zero));
+
+	TEST_ASSERT_EQUAL_UINT8(UCHAR_MAX, max);
+	TEST_ASSERT_EQUAL_UINT8(UCHAR_MAX / 2, hmax);
+	TEST_ASSERT_EQUAL_UINT8(0, zero);
+
 	rewind(filep);
 
 	max = zero = hmax = 1;
@@ -1027,6 +1196,15 @@ TEST(stdio_scanf_u, hu)
 
 	max = zero = hmax = 1;
 	TEST_ASSERT_EQUAL_INT(3, test_vfscanfWrapper(filep, format, &max, &hmax, &zero));
+
+	TEST_ASSERT_EQUAL_UINT16(USHRT_MAX, max);
+	TEST_ASSERT_EQUAL_UINT16(USHRT_MAX / 2, hmax);
+	TEST_ASSERT_EQUAL_UINT16(0, zero);
+
+	rewind(stdin);
+
+	max = zero = hmax = 1;
+	TEST_ASSERT_EQUAL_INT(3, test_vscanfWrapper(format, &max, &hmax, &zero));
 
 	TEST_ASSERT_EQUAL_UINT16(USHRT_MAX, max);
 	TEST_ASSERT_EQUAL_UINT16(USHRT_MAX / 2, hmax);
@@ -1075,6 +1253,15 @@ TEST(stdio_scanf_u, lu)
 	TEST_ASSERT_EQUAL_UINT64(ULONG_MAX / 2, hmax);
 	TEST_ASSERT_EQUAL_UINT64(0, zero);
 
+	rewind(stdin);
+
+	max = zero = hmax = 1;
+	TEST_ASSERT_EQUAL_INT(3, test_vscanfWrapper(format, &max, &hmax, &zero));
+
+	TEST_ASSERT_EQUAL_UINT64(ULONG_MAX, max);
+	TEST_ASSERT_EQUAL_UINT64(ULONG_MAX / 2, hmax);
+	TEST_ASSERT_EQUAL_UINT64(0, zero);
+
 	rewind(filep);
 
 	max = zero = hmax = 1;
@@ -1113,6 +1300,15 @@ TEST(stdio_scanf_u, llu)
 
 	max = zero = hmax = 1;
 	TEST_ASSERT_EQUAL_INT(3, test_vfscanfWrapper(filep, format, &max, &hmax, &zero));
+
+	TEST_ASSERT_EQUAL_UINT64(ULLONG_MAX, max);
+	TEST_ASSERT_EQUAL_UINT64(ULLONG_MAX / 2, hmax);
+	TEST_ASSERT_EQUAL_UINT64(0, zero);
+
+	rewind(stdin);
+
+	max = zero = hmax = 1;
+	TEST_ASSERT_EQUAL_INT(3, test_vscanfWrapper(format, &max, &hmax, &zero));
 
 	TEST_ASSERT_EQUAL_UINT64(ULLONG_MAX, max);
 	TEST_ASSERT_EQUAL_UINT64(ULLONG_MAX / 2, hmax);
@@ -1161,6 +1357,15 @@ TEST(stdio_scanf_u, ju)
 	TEST_ASSERT_EQUAL_UINT64(UINTMAX_MAX / 2, hmax);
 	TEST_ASSERT_EQUAL_UINT64(0, zero);
 
+	rewind(stdin);
+
+	max = zero = hmax = 1;
+	TEST_ASSERT_EQUAL_INT(3, test_vscanfWrapper(format, &max, &hmax, &zero));
+
+	TEST_ASSERT_EQUAL_UINT64(UINTMAX_MAX, max);
+	TEST_ASSERT_EQUAL_UINT64(UINTMAX_MAX / 2, hmax);
+	TEST_ASSERT_EQUAL_UINT64(0, zero);
+
 	rewind(filep);
 
 	max = zero = hmax = 1;
@@ -1199,6 +1404,15 @@ TEST(stdio_scanf_u, zu)
 
 	max = zero = hmax = 1;
 	TEST_ASSERT_EQUAL_INT(3, test_vfscanfWrapper(filep, format, &max, &hmax, &zero));
+
+	TEST_ASSERT_EQUAL_UINT64(SIZE_MAX, max);
+	TEST_ASSERT_EQUAL_UINT64(0, zero);
+	TEST_ASSERT_EQUAL_UINT64(SIZE_MAX / 2, hmax);
+
+	rewind(stdin);
+
+	max = zero = hmax = 1;
+	TEST_ASSERT_EQUAL_INT(3, test_vscanfWrapper(format, &max, &hmax, &zero));
 
 	TEST_ASSERT_EQUAL_UINT64(SIZE_MAX, max);
 	TEST_ASSERT_EQUAL_UINT64(0, zero);
@@ -1247,6 +1461,15 @@ TEST(stdio_scanf_u, tu)
 	TEST_ASSERT_EQUAL_UINT64(PTRDIFF_MAX / 2, hmax);
 	TEST_ASSERT_EQUAL_UINT64(0, zero);
 
+	rewind(stdin);
+
+	max = zero = hmax = 1;
+	TEST_ASSERT_EQUAL_INT(3, test_vscanfWrapper(format, &max, &hmax, &zero));
+
+	TEST_ASSERT_EQUAL_UINT64(PTRDIFF_MAX, max);
+	TEST_ASSERT_EQUAL_UINT64(PTRDIFF_MAX / 2, hmax);
+	TEST_ASSERT_EQUAL_UINT64(0, zero);
+
 	rewind(filep);
 
 	max = zero = hmax = 1;
@@ -1280,12 +1503,14 @@ TEST(stdio_scanf_u, tu)
 TEST_SETUP(stdio_scanf_o)
 {
 	filep = fopen(TESTFILE_PATH, "w+");
+	test_stdinRedirect(TESTFILE_PATH);
 }
 
 
 TEST_TEAR_DOWN(stdio_scanf_o)
 {
 	fclose(filep);
+	test_stdinRestore();
 }
 
 
@@ -1302,6 +1527,15 @@ TEST(stdio_scanf_o, o)
 
 	max = zero = hmax = 1;
 	TEST_ASSERT_EQUAL_INT(3, test_vfscanfWrapper(filep, format, &max, &hmax, &zero));
+
+	TEST_ASSERT_EQUAL_INT(UINT_MAX, max);
+	TEST_ASSERT_EQUAL_INT(UINT_MAX / 2, hmax);
+	TEST_ASSERT_EQUAL_INT(0, zero);
+
+	rewind(stdin);
+
+	max = zero = hmax = 1;
+	TEST_ASSERT_EQUAL_INT(3, test_vscanfWrapper(format, &max, &hmax, &zero));
 
 	TEST_ASSERT_EQUAL_INT(UINT_MAX, max);
 	TEST_ASSERT_EQUAL_INT(UINT_MAX / 2, hmax);
@@ -1345,6 +1579,18 @@ TEST(stdio_scanf_o, hho)
 
 	max = min = zero = hmin = hmax = 1;
 	TEST_ASSERT_EQUAL_INT(6, test_vfscanfWrapper(filep, format, &max, &hmax, &zero, &hmin, &min, &umax));
+
+	TEST_ASSERT_EQUAL_INT8(CHAR_MIN, min);
+	TEST_ASSERT_EQUAL_INT8(CHAR_MAX, max);
+	TEST_ASSERT_EQUAL_INT8(0, zero);
+	TEST_ASSERT_EQUAL_INT8(CHAR_MIN / 2, hmin);
+	TEST_ASSERT_EQUAL_INT8(CHAR_MAX / 2, hmax);
+	TEST_ASSERT_EQUAL_UINT8(UCHAR_MAX, umax);
+
+	rewind(stdin);
+
+	max = min = zero = hmin = hmax = 1;
+	TEST_ASSERT_EQUAL_INT(6, test_vscanfWrapper(format, &max, &hmax, &zero, &hmin, &min, &umax));
 
 	TEST_ASSERT_EQUAL_INT8(CHAR_MIN, min);
 	TEST_ASSERT_EQUAL_INT8(CHAR_MAX, max);
@@ -1409,6 +1655,18 @@ TEST(stdio_scanf_o, ho)
 	TEST_ASSERT_EQUAL_INT16(SHRT_MAX / 2, hmax);
 	TEST_ASSERT_EQUAL_UINT16(USHRT_MAX, umax);
 
+	rewind(stdin);
+
+	max = min = zero = hmin = hmax = 1;
+	TEST_ASSERT_EQUAL_INT(6, test_vscanfWrapper(format, &max, &hmax, &zero, &hmin, &min, &umax));
+
+	TEST_ASSERT_EQUAL_INT16(SHRT_MIN, min);
+	TEST_ASSERT_EQUAL_INT16(SHRT_MAX, max);
+	TEST_ASSERT_EQUAL_INT16(0, zero);
+	TEST_ASSERT_EQUAL_INT16(SHRT_MIN / 2, hmin);
+	TEST_ASSERT_EQUAL_INT16(SHRT_MAX / 2, hmax);
+	TEST_ASSERT_EQUAL_UINT16(USHRT_MAX, umax);
+
 	rewind(filep);
 
 	max = min = zero = hmin = hmax = 1;
@@ -1457,6 +1715,18 @@ TEST(stdio_scanf_o, lo)
 
 	max = min = zero = hmin = hmax = 1;
 	TEST_ASSERT_EQUAL_INT(6, test_vfscanfWrapper(filep, format, &max, &hmax, &zero, &hmin, &min, &umax));
+
+	TEST_ASSERT_EQUAL_INT64(LONG_MIN, min);
+	TEST_ASSERT_EQUAL_INT64(LONG_MAX, max);
+	TEST_ASSERT_EQUAL_INT64(0, zero);
+	TEST_ASSERT_EQUAL_INT64(LONG_MIN / 2, hmin);
+	TEST_ASSERT_EQUAL_INT64(LONG_MAX / 2, hmax);
+	TEST_ASSERT_EQUAL_UINT64(ULONG_MAX, umax);
+
+	rewind(stdin);
+
+	max = min = zero = hmin = hmax = 1;
+	TEST_ASSERT_EQUAL_INT(6, test_vscanfWrapper(format, &max, &hmax, &zero, &hmin, &min, &umax));
 
 	TEST_ASSERT_EQUAL_INT64(LONG_MIN, min);
 	TEST_ASSERT_EQUAL_INT64(LONG_MAX, max);
@@ -1521,6 +1791,18 @@ TEST(stdio_scanf_o, llo)
 	TEST_ASSERT_EQUAL_INT64(LLONG_MAX / 2, hmax);
 	TEST_ASSERT_EQUAL_UINT64(ULLONG_MAX, umax);
 
+	rewind(stdin);
+
+	max = min = zero = hmin = hmax = 1;
+	TEST_ASSERT_EQUAL_INT(6, test_vscanfWrapper(format, &max, &hmax, &zero, &hmin, &min, &umax));
+
+	TEST_ASSERT_EQUAL_INT64(LLONG_MIN, min);
+	TEST_ASSERT_EQUAL_INT64(LLONG_MAX, max);
+	TEST_ASSERT_EQUAL_INT64(0, zero);
+	TEST_ASSERT_EQUAL_INT64(LLONG_MIN / 2, hmin);
+	TEST_ASSERT_EQUAL_INT64(LLONG_MAX / 2, hmax);
+	TEST_ASSERT_EQUAL_UINT64(ULLONG_MAX, umax);
+
 	rewind(filep);
 
 	max = min = zero = hmin = hmax = 1;
@@ -1572,6 +1854,15 @@ TEST(stdio_scanf_o, jo)
 	TEST_ASSERT_EQUAL_UINT64(UINTMAX_MAX / 2, uhmax);
 	TEST_ASSERT_EQUAL_UINT64(0, uzero);
 
+	rewind(stdin);
+
+	umax = uzero = uhmax = 1;
+	TEST_ASSERT_EQUAL_INT(3, test_vscanfWrapper(format, &umax, &uhmax, &uzero));
+
+	TEST_ASSERT_EQUAL_UINT64(UINTMAX_MAX, umax);
+	TEST_ASSERT_EQUAL_UINT64(UINTMAX_MAX / 2, uhmax);
+	TEST_ASSERT_EQUAL_UINT64(0, uzero);
+
 	rewind(filep);
 	TEST_ASSERT_EQUAL_INT(3, fscanf(filep, format, &umax, &uhmax, &uzero));
 
@@ -1606,6 +1897,15 @@ TEST(stdio_scanf_o, zo)
 
 	max = zero = hmax = 1;
 	TEST_ASSERT_EQUAL_INT(3, test_vfscanfWrapper(filep, format, &max, &hmax, &zero));
+
+	TEST_ASSERT_EQUAL_INT64(SIZE_MAX, max);
+	TEST_ASSERT_EQUAL_INT64(0, zero);
+	TEST_ASSERT_EQUAL_INT64(SIZE_MAX / 2, hmax);
+
+	rewind(stdin);
+
+	max = zero = hmax = 1;
+	TEST_ASSERT_EQUAL_INT(3, test_vscanfWrapper(format, &max, &hmax, &zero));
 
 	TEST_ASSERT_EQUAL_INT64(SIZE_MAX, max);
 	TEST_ASSERT_EQUAL_INT64(0, zero);
@@ -1657,6 +1957,17 @@ TEST(stdio_scanf_o, to)
 	TEST_ASSERT_EQUAL_INT64(PTRDIFF_MIN / 2, hmin);
 	TEST_ASSERT_EQUAL_INT64(PTRDIFF_MAX / 2, hmax);
 
+	rewind(stdin);
+
+	max = min = zero = hmin = hmax = 1;
+	TEST_ASSERT_EQUAL_INT(5, test_vscanfWrapper(format, &max, &hmax, &zero, &hmin, &min));
+
+	TEST_ASSERT_EQUAL_INT64(PTRDIFF_MIN, min);
+	TEST_ASSERT_EQUAL_INT64(PTRDIFF_MAX, max);
+	TEST_ASSERT_EQUAL_INT64(0, zero);
+	TEST_ASSERT_EQUAL_INT64(PTRDIFF_MIN / 2, hmin);
+	TEST_ASSERT_EQUAL_INT64(PTRDIFF_MAX / 2, hmax);
+
 	rewind(filep);
 
 	max = min = zero = hmin = hmax = 1;
@@ -1696,12 +2007,14 @@ TEST(stdio_scanf_o, to)
 TEST_SETUP(stdio_scanf_x)
 {
 	filep = fopen(TESTFILE_PATH, "w+");
+	test_stdinRedirect(TESTFILE_PATH);
 }
 
 
 TEST_TEAR_DOWN(stdio_scanf_x)
 {
 	fclose(filep);
+	test_stdinRestore();
 }
 
 
@@ -1718,6 +2031,15 @@ TEST(stdio_scanf_x, x)
 
 	max = zero = hmax = 1;
 	TEST_ASSERT_EQUAL_INT(3, test_vfscanfWrapper(filep, format, &max, &hmax, &zero));
+
+	TEST_ASSERT_EQUAL_HEX(UINT_MAX, max);
+	TEST_ASSERT_EQUAL_HEX(UINT_MAX / 2, hmax);
+	TEST_ASSERT_EQUAL_HEX(0, zero);
+
+	rewind(stdin);
+
+	max = zero = hmax = 1;
+	TEST_ASSERT_EQUAL_INT(3, test_vscanfWrapper(format, &max, &hmax, &zero));
 
 	TEST_ASSERT_EQUAL_HEX(UINT_MAX, max);
 	TEST_ASSERT_EQUAL_HEX(UINT_MAX / 2, hmax);
@@ -1761,6 +2083,18 @@ TEST(stdio_scanf_x, hhx)
 
 	max = min = zero = hmin = hmax = 1;
 	TEST_ASSERT_EQUAL_INT(6, test_vfscanfWrapper(filep, format, &max, &hmax, &zero, &hmin, &min, &umax));
+
+	TEST_ASSERT_EQUAL_HEX8(CHAR_MIN, min);
+	TEST_ASSERT_EQUAL_HEX8(CHAR_MAX, max);
+	TEST_ASSERT_EQUAL_HEX8(0, zero);
+	TEST_ASSERT_EQUAL_HEX8(CHAR_MIN / 2, hmin);
+	TEST_ASSERT_EQUAL_HEX8(CHAR_MAX / 2, hmax);
+	TEST_ASSERT_EQUAL_HEX8(UCHAR_MAX, umax);
+
+	rewind(stdin);
+
+	max = min = zero = hmin = hmax = 1;
+	TEST_ASSERT_EQUAL_INT(6, test_vscanfWrapper(format, &max, &hmax, &zero, &hmin, &min, &umax));
 
 	TEST_ASSERT_EQUAL_HEX8(CHAR_MIN, min);
 	TEST_ASSERT_EQUAL_HEX8(CHAR_MAX, max);
@@ -1825,6 +2159,18 @@ TEST(stdio_scanf_x, hx)
 	TEST_ASSERT_EQUAL_HEX16(SHRT_MAX / 2, hmax);
 	TEST_ASSERT_EQUAL_HEX16(USHRT_MAX, umax);
 
+	rewind(stdin);
+
+	max = min = zero = hmin = hmax = 1;
+	TEST_ASSERT_EQUAL_INT(6, test_vscanfWrapper(format, &max, &hmax, &zero, &hmin, &min, &umax));
+
+	TEST_ASSERT_EQUAL_HEX16(SHRT_MIN, min);
+	TEST_ASSERT_EQUAL_HEX16(SHRT_MAX, max);
+	TEST_ASSERT_EQUAL_HEX16(0, zero);
+	TEST_ASSERT_EQUAL_HEX16(SHRT_MIN / 2, hmin);
+	TEST_ASSERT_EQUAL_HEX16(SHRT_MAX / 2, hmax);
+	TEST_ASSERT_EQUAL_HEX16(USHRT_MAX, umax);
+
 	rewind(filep);
 
 	max = min = zero = hmin = hmax = 1;
@@ -1881,6 +2227,18 @@ TEST(stdio_scanf_x, lx)
 	TEST_ASSERT_EQUAL_HEX64(LONG_MAX / 2, hmax);
 	TEST_ASSERT_EQUAL_HEX64(ULONG_MAX, umax);
 
+	rewind(stdin);
+
+	max = min = zero = hmin = hmax = 1;
+	TEST_ASSERT_EQUAL_INT(6, test_vscanfWrapper(format, &max, &hmax, &zero, &hmin, &min, &umax));
+
+	TEST_ASSERT_EQUAL_HEX64(LONG_MIN, min);
+	TEST_ASSERT_EQUAL_HEX64(LONG_MAX, max);
+	TEST_ASSERT_EQUAL_HEX64(0, zero);
+	TEST_ASSERT_EQUAL_HEX64(LONG_MIN / 2, hmin);
+	TEST_ASSERT_EQUAL_HEX64(LONG_MAX / 2, hmax);
+	TEST_ASSERT_EQUAL_HEX64(ULONG_MAX, umax);
+
 	rewind(filep);
 
 	max = min = zero = hmin = hmax = 1;
@@ -1929,6 +2287,18 @@ TEST(stdio_scanf_x, llx)
 
 	max = min = zero = hmin = hmax = 1;
 	TEST_ASSERT_EQUAL_INT(6, test_vfscanfWrapper(filep, format, &max, &hmax, &zero, &hmin, &min, &umax));
+
+	TEST_ASSERT_EQUAL_HEX64(LLONG_MIN, min);
+	TEST_ASSERT_EQUAL_HEX64(LLONG_MAX, max);
+	TEST_ASSERT_EQUAL_HEX64(0, zero);
+	TEST_ASSERT_EQUAL_HEX64(LLONG_MIN / 2, hmin);
+	TEST_ASSERT_EQUAL_HEX64(LLONG_MAX / 2, hmax);
+	TEST_ASSERT_EQUAL_HEX64(ULLONG_MAX, umax);
+
+	rewind(stdin);
+
+	max = min = zero = hmin = hmax = 1;
+	TEST_ASSERT_EQUAL_INT(6, test_vscanfWrapper(format, &max, &hmax, &zero, &hmin, &min, &umax));
 
 	TEST_ASSERT_EQUAL_HEX64(LLONG_MIN, min);
 	TEST_ASSERT_EQUAL_HEX64(LLONG_MAX, max);
@@ -1994,6 +2364,17 @@ TEST(stdio_scanf_x, jx)
 	TEST_ASSERT_EQUAL_UINT64(INTMAX_MIN / 2, hmin);
 	TEST_ASSERT_EQUAL_UINT64(INTMAX_MIN, min);
 
+	rewind(stdin);
+
+	max = hmax = zero = hmin = min = 1;
+	TEST_ASSERT_EQUAL_INT(5, test_vscanfWrapper(format, &max, &hmax, &zero, &hmin, &min));
+
+	TEST_ASSERT_EQUAL_UINT64(INTMAX_MAX, max);
+	TEST_ASSERT_EQUAL_UINT64(INTMAX_MAX / 2, hmax);
+	TEST_ASSERT_EQUAL_UINT64(0, zero);
+	TEST_ASSERT_EQUAL_UINT64(INTMAX_MIN / 2, hmin);
+	TEST_ASSERT_EQUAL_UINT64(INTMAX_MIN, min);
+
 	rewind(filep);
 	max = hmax = zero = hmin = min = 1;
 	TEST_ASSERT_EQUAL_INT(5, fscanf(filep, format, &max, &hmax, &zero, &hmin, &min));
@@ -2031,6 +2412,15 @@ TEST(stdio_scanf_x, jx)
 
 	umax = uhmax = uzero = 1;
 	TEST_ASSERT_EQUAL_INT(3, test_vfscanfWrapper(filep, uformat, &umax, &uhmax, &uzero));
+
+	TEST_ASSERT_EQUAL_UINT64(UINTMAX_MAX, umax);
+	TEST_ASSERT_EQUAL_UINT64(UINTMAX_MAX / 2, uhmax);
+	TEST_ASSERT_EQUAL_UINT64(0, uzero);
+
+	rewind(stdin);
+
+	umax = uhmax = uzero = 1;
+	TEST_ASSERT_EQUAL_INT(3, test_vscanfWrapper(uformat, &umax, &uhmax, &uzero));
 
 	TEST_ASSERT_EQUAL_UINT64(UINTMAX_MAX, umax);
 	TEST_ASSERT_EQUAL_UINT64(UINTMAX_MAX / 2, uhmax);
@@ -2078,6 +2468,15 @@ TEST(stdio_scanf_x, zx)
 	TEST_ASSERT_EQUAL_HEX64(0, zero);
 	TEST_ASSERT_EQUAL_HEX64(SSIZE_MAX / 2, hmax);
 
+	rewind(stdin);
+
+	max = hmax = zero = 1;
+	TEST_ASSERT_EQUAL_INT(3, test_vscanfWrapper(format, &max, &hmax, &zero));
+
+	TEST_ASSERT_EQUAL_HEX64(SSIZE_MAX, max);
+	TEST_ASSERT_EQUAL_HEX64(0, zero);
+	TEST_ASSERT_EQUAL_HEX64(SSIZE_MAX / 2, hmax);
+
 	rewind(filep);
 
 	max = hmax = zero = 1;
@@ -2117,6 +2516,17 @@ TEST(stdio_scanf_x, tx)
 
 	max = min = zero = hmin = hmax = 1;
 	TEST_ASSERT_EQUAL_INT(5, test_vfscanfWrapper(filep, format, &max, &hmax, &zero, &hmin, &min));
+
+	TEST_ASSERT_EQUAL_HEX64(PTRDIFF_MIN, min);
+	TEST_ASSERT_EQUAL_HEX64(PTRDIFF_MAX, max);
+	TEST_ASSERT_EQUAL_HEX64(0, zero);
+	TEST_ASSERT_EQUAL_HEX64(PTRDIFF_MIN / 2, hmin);
+	TEST_ASSERT_EQUAL_HEX64(PTRDIFF_MAX / 2, hmax);
+
+	rewind(stdin);
+
+	max = min = zero = hmin = hmax = 1;
+	TEST_ASSERT_EQUAL_INT(5, test_vscanfWrapper(format, &max, &hmax, &zero, &hmin, &min));
 
 	TEST_ASSERT_EQUAL_HEX64(PTRDIFF_MIN, min);
 	TEST_ASSERT_EQUAL_HEX64(PTRDIFF_MAX, max);
@@ -2178,6 +2588,15 @@ TEST(stdio_scanf_x, X)
 	TEST_ASSERT_EQUAL_HEX(UINT_MAX / 2, hmax);
 	TEST_ASSERT_EQUAL_HEX(0, zero);
 
+	rewind(stdin);
+
+	max = min = zero = hmin = hmax = 1;
+	TEST_ASSERT_EQUAL_INT(3, test_vscanfWrapper(format, &max, &hmax, &zero, &hmin, &min));
+
+	TEST_ASSERT_EQUAL_HEX(UINT_MAX, max);
+	TEST_ASSERT_EQUAL_HEX(UINT_MAX / 2, hmax);
+	TEST_ASSERT_EQUAL_HEX(0, zero);
+
 	rewind(filep);
 
 	max = min = zero = hmin = hmax = 1;
@@ -2215,6 +2634,17 @@ TEST(stdio_scanf_x, hhX)
 
 	max = min = zero = hmin = hmax = 1;
 	TEST_ASSERT_EQUAL_INT(5, test_vfscanfWrapper(filep, format, &max, &hmax, &zero, &hmin, &min));
+
+	TEST_ASSERT_EQUAL_HEX8(CHAR_MIN, min);
+	TEST_ASSERT_EQUAL_HEX8(CHAR_MAX, max);
+	TEST_ASSERT_EQUAL_HEX8(0, zero);
+	TEST_ASSERT_EQUAL_HEX8(CHAR_MIN / 2, hmin);
+	TEST_ASSERT_EQUAL_HEX8(CHAR_MAX / 2, hmax);
+
+	rewind(stdin);
+
+	max = min = zero = hmin = hmax = 1;
+	TEST_ASSERT_EQUAL_INT(5, test_vscanfWrapper(format, &max, &hmax, &zero, &hmin, &min));
 
 	TEST_ASSERT_EQUAL_HEX8(CHAR_MIN, min);
 	TEST_ASSERT_EQUAL_HEX8(CHAR_MAX, max);
@@ -2273,6 +2703,17 @@ TEST(stdio_scanf_x, hX)
 	TEST_ASSERT_EQUAL_HEX16(SHRT_MIN / 2, hmin);
 	TEST_ASSERT_EQUAL_HEX16(SHRT_MAX / 2, hmax);
 
+	rewind(stdin);
+
+	max = min = zero = hmin = hmax = 1;
+	TEST_ASSERT_EQUAL_INT(5, test_vscanfWrapper(format, &max, &hmax, &zero, &hmin, &min));
+
+	TEST_ASSERT_EQUAL_HEX16(SHRT_MIN, min);
+	TEST_ASSERT_EQUAL_HEX16(SHRT_MAX, max);
+	TEST_ASSERT_EQUAL_HEX16(0, zero);
+	TEST_ASSERT_EQUAL_HEX16(SHRT_MIN / 2, hmin);
+	TEST_ASSERT_EQUAL_HEX16(SHRT_MAX / 2, hmax);
+
 	rewind(filep);
 
 	max = min = zero = hmin = hmax = 1;
@@ -2317,6 +2758,17 @@ TEST(stdio_scanf_x, lX)
 
 	max = min = zero = hmin = hmax = 1;
 	TEST_ASSERT_EQUAL_INT(5, test_vfscanfWrapper(filep, format, &max, &hmax, &zero, &hmin, &min));
+
+	TEST_ASSERT_EQUAL_HEX64(LONG_MIN, min);
+	TEST_ASSERT_EQUAL_HEX64(LONG_MAX, max);
+	TEST_ASSERT_EQUAL_HEX64(0, zero);
+	TEST_ASSERT_EQUAL_HEX64(LONG_MIN / 2, hmin);
+	TEST_ASSERT_EQUAL_HEX64(LONG_MAX / 2, hmax);
+
+	rewind(stdin);
+
+	max = min = zero = hmin = hmax = 1;
+	TEST_ASSERT_EQUAL_INT(5, test_vscanfWrapper(format, &max, &hmax, &zero, &hmin, &min));
 
 	TEST_ASSERT_EQUAL_HEX64(LONG_MIN, min);
 	TEST_ASSERT_EQUAL_HEX64(LONG_MAX, max);
@@ -2375,6 +2827,17 @@ TEST(stdio_scanf_x, llX)
 	TEST_ASSERT_EQUAL_HEX64(LLONG_MIN / 2, hmin);
 	TEST_ASSERT_EQUAL_HEX64(LLONG_MAX / 2, hmax);
 
+	rewind(stdin);
+
+	max = min = zero = hmin = hmax = 1;
+	TEST_ASSERT_EQUAL_INT(5, test_vscanfWrapper(format, &max, &hmax, &zero, &hmin, &min));
+
+	TEST_ASSERT_EQUAL_HEX64(LLONG_MIN, min);
+	TEST_ASSERT_EQUAL_HEX64(LLONG_MAX, max);
+	TEST_ASSERT_EQUAL_HEX64(0, zero);
+	TEST_ASSERT_EQUAL_HEX64(LLONG_MIN / 2, hmin);
+	TEST_ASSERT_EQUAL_HEX64(LLONG_MAX / 2, hmax);
+
 	rewind(filep);
 
 	max = min = zero = hmin = hmax = 1;
@@ -2424,6 +2887,15 @@ TEST(stdio_scanf_x, jX)
 	TEST_ASSERT_EQUAL_UINT64(INTMAX_MAX / 2, hmax);
 	TEST_ASSERT_EQUAL_UINT64(0, zero);
 
+	rewind(stdin);
+
+	max = zero = hmax = 1;
+	TEST_ASSERT_EQUAL_INT(3, test_vscanfWrapper(format, &max, &hmax, &zero));
+
+	TEST_ASSERT_EQUAL_UINT64(INTMAX_MAX, max);
+	TEST_ASSERT_EQUAL_UINT64(INTMAX_MAX / 2, hmax);
+	TEST_ASSERT_EQUAL_UINT64(0, zero);
+
 	rewind(filep);
 	max = zero = hmax = 1;
 	TEST_ASSERT_EQUAL_INT(3, fscanf(filep, format, &max, &hmax, &zero));
@@ -2455,6 +2927,15 @@ TEST(stdio_scanf_x, jX)
 
 	umax = uzero = uhmax = 1;
 	TEST_ASSERT_EQUAL_INT(3, test_vfscanfWrapper(filep, format, &umax, &uhmax, &uzero));
+
+	TEST_ASSERT_EQUAL_UINT64(UINTMAX_MAX, umax);
+	TEST_ASSERT_EQUAL_UINT64(UINTMAX_MAX / 2, uhmax);
+	TEST_ASSERT_EQUAL_UINT64(0, uzero);
+
+	rewind(stdin);
+
+	umax = uzero = uhmax = 1;
+	TEST_ASSERT_EQUAL_INT(3, test_vscanfWrapper(format, &umax, &uhmax, &uzero));
 
 	TEST_ASSERT_EQUAL_UINT64(UINTMAX_MAX, umax);
 	TEST_ASSERT_EQUAL_UINT64(UINTMAX_MAX / 2, uhmax);
@@ -2502,6 +2983,15 @@ TEST(stdio_scanf_x, zX)
 	TEST_ASSERT_EQUAL_HEX64(0, zero);
 	TEST_ASSERT_EQUAL_HEX64(SSIZE_MAX / 2, hmax);
 
+	rewind(stdin);
+
+	max = zero = hmax = 1;
+	TEST_ASSERT_EQUAL_INT(3, test_vscanfWrapper(format, &max, &hmax, &zero));
+
+	TEST_ASSERT_EQUAL_HEX64(SSIZE_MAX, max);
+	TEST_ASSERT_EQUAL_HEX64(0, zero);
+	TEST_ASSERT_EQUAL_HEX64(SSIZE_MAX / 2, hmax);
+
 	rewind(filep);
 
 	max = zero = hmax = 1;
@@ -2541,6 +3031,17 @@ TEST(stdio_scanf_x, tX)
 
 	max = min = zero = hmin = hmax = 1;
 	TEST_ASSERT_EQUAL_INT(5, test_vfscanfWrapper(filep, format, &max, &hmax, &zero, &hmin, &min));
+
+	TEST_ASSERT_EQUAL_HEX64(PTRDIFF_MIN, min);
+	TEST_ASSERT_EQUAL_HEX64(PTRDIFF_MAX, max);
+	TEST_ASSERT_EQUAL_HEX64(0, zero);
+	TEST_ASSERT_EQUAL_HEX64(PTRDIFF_MIN / 2, hmin);
+	TEST_ASSERT_EQUAL_HEX64(PTRDIFF_MAX / 2, hmax);
+
+	rewind(stdin);
+
+	max = min = zero = hmin = hmax = 1;
+	TEST_ASSERT_EQUAL_INT(5, test_vscanfWrapper(format, &max, &hmax, &zero, &hmin, &min));
 
 	TEST_ASSERT_EQUAL_HEX64(PTRDIFF_MIN, min);
 	TEST_ASSERT_EQUAL_HEX64(PTRDIFF_MAX, max);

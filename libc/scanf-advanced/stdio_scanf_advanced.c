@@ -9,6 +9,7 @@
  *    - sscanf()
  *    - vfscanf()
  *    - vsscanf()
+ *    - vscanf()
  *    - For all functions the following conversion specifiers:
  * 		- "%a", "%e", "%f", "%g"
  * 		- "%c", "%s", "%ms", "%["
@@ -37,6 +38,7 @@
 #include <unity_fixture.h>
 
 #include "common.h"
+#include "stdio_scanf_common.h"
 
 
 /* Checking for define NL_ARGMAX*/
@@ -76,32 +78,6 @@
 
 static FILE *filep;
 
-static int test_vsscanfWrapper(const char *str, const char *format, ...)
-{
-	int rc;
-	va_list arg_ptr;
-
-	va_start(arg_ptr, format);
-	rc = vsscanf(str, format, arg_ptr);
-	va_end(arg_ptr);
-
-	return rc;
-}
-
-
-static int test_vfscanfWrapper(FILE *stream, const char *format, ...)
-{
-	int rc;
-	va_list arg_ptr;
-
-	va_start(arg_ptr, format);
-	rc = vfscanf(stream, format, arg_ptr);
-	va_end(arg_ptr);
-
-	return rc;
-}
-
-
 /*
 ///////////////////////////////////////////////////////////////////////////////////////////////
 */
@@ -120,12 +96,14 @@ TEST_GROUP(stdio_scanf_rest);
 TEST_SETUP(stdio_scanf_aefg)
 {
 	filep = fopen(TESTFILE_PATH, "w+");
+	test_stdinRedirect(TESTFILE_PATH);
 }
 
 
 TEST_TEAR_DOWN(stdio_scanf_aefg)
 {
 	fclose(filep);
+	test_stdinRestore();
 }
 
 
@@ -147,6 +125,12 @@ TEST(stdio_scanf_aefg, f)
 	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
 	TEST_ASSERT_EQUAL_INT(7, test_vfscanfWrapper(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
 	/* This block contains all asserts from min to max for float */
+	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+
+	rewind(stdin);
+
+	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
+	TEST_ASSERT_EQUAL_INT(7, test_vscanfWrapper(format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
 	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
 
 	rewind(filep);
@@ -190,6 +174,12 @@ TEST(stdio_scanf_aefg, F)
 	/* This block contains all asserts from min to max for float */
 	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
 
+	rewind(stdin);
+
+	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
+	TEST_ASSERT_EQUAL_INT(7, test_vscanfWrapper(format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
+	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+
 	rewind(filep);
 
 	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
@@ -226,6 +216,12 @@ TEST(stdio_scanf_aefg, a)
 	/* This block contains all asserts from min to max for float */
 	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
 
+	rewind(stdin);
+
+	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
+	TEST_ASSERT_EQUAL_INT(7, test_vscanfWrapper(format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
+	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+
 	rewind(filep);
 
 	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
@@ -260,6 +256,12 @@ TEST(stdio_scanf_aefg, A)
 	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
 	TEST_ASSERT_EQUAL_INT(7, test_vfscanfWrapper(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
 	/* This block contains all asserts from min to max for float */
+	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+
+	rewind(stdin);
+
+	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
+	TEST_ASSERT_EQUAL_INT(7, test_vscanfWrapper(format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
 	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
 
 	rewind(filep);
@@ -303,6 +305,12 @@ TEST(stdio_scanf_aefg, e)
 	/* This block contains all asserts from min to max for float */
 	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
 
+	rewind(stdin);
+
+	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
+	TEST_ASSERT_EQUAL_INT(7, test_vscanfWrapper(format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
+	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+
 	rewind(filep);
 
 	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
@@ -342,6 +350,12 @@ TEST(stdio_scanf_aefg, E)
 	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
 	TEST_ASSERT_EQUAL_INT(7, test_vfscanfWrapper(filep, format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
 	/* This block contains all asserts from min to max for float */
+	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+
+	rewind(stdin);
+
+	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
+	TEST_ASSERT_EQUAL_INT(7, test_vscanfWrapper(format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
 	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
 
 	rewind(filep);
@@ -385,6 +399,12 @@ TEST(stdio_scanf_aefg, g)
 	/* This block contains all asserts from min to max for float */
 	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
 
+	rewind(stdin);
+
+	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
+	TEST_ASSERT_EQUAL_INT(7, test_vscanfWrapper(format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
+	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+
 	rewind(filep);
 
 	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
@@ -426,6 +446,12 @@ TEST(stdio_scanf_aefg, G)
 	/* This block contains all asserts from min to max for float */
 	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
 
+	rewind(stdin);
+
+	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
+	TEST_ASSERT_EQUAL_INT(7, test_vscanfWrapper(format, &fltMax, &fltMaxH, &fltMin, &zero, &negFltMin, &negFltMaxH, &negFltMax));
+	TEST_ASSERT_FLOAT_SET(fltMax, fltMaxH, fltMin, zero, negFltMin, negFltMaxH, negFltMax);
+
 	rewind(filep);
 
 	fltMax = fltMaxH = zero = fltMin = negFltMax = negFltMaxH = negFltMin = 1.0;
@@ -459,6 +485,15 @@ TEST(stdio_scanf_aefg, inf_nan_f)
 
 	valInf = valNan = valNegInf = 1.0;
 	TEST_ASSERT_EQUAL_INT(3, test_vfscanfWrapper(filep, format, &valInf, &valNegInf, &valNan));
+
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
+	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
+
+	rewind(stdin);
+
+	valInf = valNan = valNegInf = 1.0;
+	TEST_ASSERT_EQUAL_INT(3, test_vscanfWrapper(format, &valInf, &valNegInf, &valNan));
 
 	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
 	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
@@ -511,6 +546,15 @@ TEST(stdio_scanf_aefg, inf_nan_a)
 	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
 	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
 
+	rewind(stdin);
+
+	valInf = valNan = valNegInf = 1.0;
+	TEST_ASSERT_EQUAL_INT(3, test_vscanfWrapper(format, &valInf, &valNegInf, &valNan));
+
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
+	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
+
 	rewind(filep);
 
 	valInf = valNan = valNegInf = 1.0;
@@ -553,6 +597,15 @@ TEST(stdio_scanf_aefg, inf_nan_e)
 
 	valInf = valNan = valNegInf = 1.0;
 	TEST_ASSERT_EQUAL_INT(3, test_vfscanfWrapper(filep, format, &valInf, &valNegInf, &valNan));
+
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
+	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
+
+	rewind(stdin);
+
+	valInf = valNan = valNegInf = 1.0;
+	TEST_ASSERT_EQUAL_INT(3, test_vscanfWrapper(format, &valInf, &valNegInf, &valNan));
 
 	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
 	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
@@ -605,6 +658,15 @@ TEST(stdio_scanf_aefg, inf_nan_g)
 	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
 	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
 
+	rewind(stdin);
+
+	valInf = valNan = valNegInf = 1.0;
+	TEST_ASSERT_EQUAL_INT(3, test_vscanfWrapper(format, &valInf, &valNegInf, &valNan));
+
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY, valInf);
+	TEST_ASSERT_EQUAL_DOUBLE(INFINITY * -1, valNegInf);
+	TEST_ASSERT_EQUAL_DOUBLE(NAN, valNan);
+
 	rewind(filep);
 
 	valInf = valNan = valNegInf = 1.0;
@@ -638,12 +700,14 @@ TEST(stdio_scanf_aefg, inf_nan_g)
 TEST_SETUP(stdio_scanf_cspn)
 {
 	filep = fopen(TESTFILE_PATH, "w+");
+	test_stdinRedirect(TESTFILE_PATH);
 }
 
 
 TEST_TEAR_DOWN(stdio_scanf_cspn)
 {
 	fclose(filep);
+	test_stdinRestore();
 }
 
 
@@ -658,6 +722,14 @@ TEST(stdio_scanf_cspn, c)
 
 	c1 = c2 = c3 = 0;
 	TEST_ASSERT_EQUAL_INT(3, test_vfscanfWrapper(filep, format, &c1, &c2, &c3));
+	TEST_ASSERT_EQUAL_CHAR('L', c1);
+	TEST_ASSERT_EQUAL_CHAR('u', c2);
+	TEST_ASSERT_EQUAL_CHAR('r', c3);
+
+	rewind(stdin);
+
+	c1 = c2 = c3 = 0;
+	TEST_ASSERT_EQUAL_INT(3, test_vscanfWrapper(format, &c1, &c2, &c3));
 	TEST_ASSERT_EQUAL_CHAR('L', c1);
 	TEST_ASSERT_EQUAL_CHAR('u', c2);
 	TEST_ASSERT_EQUAL_CHAR('r', c3);
@@ -708,6 +780,12 @@ TEST(stdio_scanf_cspn, c_ascii)
 		TEST_ASSERT_EQUAL_INT(1, fscanf(filep, "%c", &c));
 		TEST_ASSERT_EQUAL_CHAR(i, c);
 
+		fseek(stdin, i - 1, SEEK_SET);
+
+		c = 0;
+		TEST_ASSERT_EQUAL_INT(1, test_vscanfWrapper("%c", &c));
+		TEST_ASSERT_EQUAL_CHAR(i, c);
+
 		c = 0;
 		TEST_ASSERT_EQUAL_INT(1, test_vsscanfWrapper(&buff[i - 1], "%c", &c));
 		TEST_ASSERT_EQUAL_CHAR(i, c);
@@ -729,6 +807,12 @@ TEST(stdio_scanf_cspn, s_path)
 
 	memset(res, 0, sizeof(res));
 	TEST_ASSERT_EQUAL_INT(1, test_vfscanfWrapper(filep, "%s", res));
+	TEST_ASSERT_EQUAL_STRING(TESTFILE_PATH, res);
+
+	rewind(stdin);
+
+	memset(res, 0, sizeof(res));
+	TEST_ASSERT_EQUAL_INT(1, test_vscanfWrapper("%s", res));
 	TEST_ASSERT_EQUAL_STRING(TESTFILE_PATH, res);
 
 	rewind(filep);
@@ -758,6 +842,18 @@ TEST(stdio_scanf_cspn, s_pick)
 
 	memset(words, 0, sizeof(words));
 	TEST_ASSERT_EQUAL_INT(6, test_vfscanfWrapper(filep, format, words[0], words[1], words[2], words[3], words[4], words[5]));
+
+	TEST_ASSERT_EQUAL_STRING("Lorem", words[0]);
+	TEST_ASSERT_EQUAL_STRING("ipsum", words[1]);
+	TEST_ASSERT_EQUAL_STRING("dolor", words[2]);
+	TEST_ASSERT_EQUAL_STRING("sit", words[3]);
+	TEST_ASSERT_EQUAL_STRING("123", words[4]);
+	TEST_ASSERT_EQUAL_STRING("0x0005", words[5]);
+
+	rewind(stdin);
+
+	memset(words, 0, sizeof(words));
+	TEST_ASSERT_EQUAL_INT(6, test_vscanfWrapper(format, words[0], words[1], words[2], words[3], words[4], words[5]));
 
 	TEST_ASSERT_EQUAL_STRING("Lorem", words[0]);
 	TEST_ASSERT_EQUAL_STRING("ipsum", words[1]);
@@ -810,6 +906,15 @@ TEST(stdio_scanf_cspn, s_torn)
 
 	memset(buff, 0, sizeof(buff));
 	TEST_ASSERT_EQUAL_INT(1, test_vfscanfWrapper(filep, "%s", buff));
+	TEST_ASSERT_EQUAL_CHAR(txt[3], buff[3]);
+	TEST_ASSERT_NOT_EQUAL_CHAR(txt[4], buff[4]);
+	TEST_ASSERT_NOT_EQUAL_CHAR(txt[5], buff[5]);
+	TEST_ASSERT_EQUAL_STRING(txt, buff);
+
+	rewind(stdin);
+
+	memset(buff, 0, sizeof(buff));
+	TEST_ASSERT_EQUAL_INT(1, test_vscanfWrapper("%s", buff));
 	TEST_ASSERT_EQUAL_CHAR(txt[3], buff[3]);
 	TEST_ASSERT_NOT_EQUAL_CHAR(txt[4], buff[4]);
 	TEST_ASSERT_NOT_EQUAL_CHAR(txt[5], buff[5]);
@@ -868,6 +973,12 @@ TEST(stdio_scanf_cspn, s_ascii)
 	TEST_ASSERT_EQUAL_INT(1, test_vfscanfWrapper(filep, "%s", asciiStr));
 	TEST_ASSERT_EQUAL_STRING(buff, asciiStr);
 
+	rewind(stdin);
+
+	memset(asciiStr, 0, sizeof(asciiStr));
+	TEST_ASSERT_EQUAL_INT(1, test_vscanfWrapper("%s", asciiStr));
+	TEST_ASSERT_EQUAL_STRING(buff, asciiStr);
+
 	TEST_ASSERT_EQUAL_INT(1, test_vsscanfWrapper(buff, "%s", asciiStr));
 	TEST_ASSERT_EQUAL_STRING(buff, asciiStr);
 
@@ -890,6 +1001,14 @@ TEST(stdio_scanf_cspn, percent)
 	memset(correct, 0, sizeof(correct));
 	memset(wrong, 0, sizeof(wrong));
 	TEST_ASSERT_EQUAL_INT(1, test_vfscanfWrapper(filep, format, correct, wrong));
+	TEST_ASSERT_EQUAL_STRING("yes", correct);
+	TEST_ASSERT_EQUAL_STRING("", wrong);
+
+	rewind(stdin);
+
+	memset(correct, 0, sizeof(correct));
+	memset(wrong, 0, sizeof(wrong));
+	TEST_ASSERT_EQUAL_INT(1, test_vscanfWrapper(format, correct, wrong));
 	TEST_ASSERT_EQUAL_STRING("yes", correct);
 	TEST_ASSERT_EQUAL_STRING("", wrong);
 
@@ -936,6 +1055,15 @@ TEST(stdio_scanf_cspn, ptr)
 	TEST_ASSERT_EQUAL_PTR(expPtrMax, ptrValMax);
 	TEST_ASSERT_EQUAL_PTR(expPtrMin, ptrValMin);
 
+	rewind(stdin);
+
+	ptrVal = ptrValZero = ptrValMax = ptrValMin = (void *)1;
+	TEST_ASSERT_EQUAL_INT(4, test_vscanfWrapper(format, &ptrVal, &ptrValZero, &ptrValMax, &ptrValMin));
+	TEST_ASSERT_EQUAL_PTR(expPtr, ptrVal);
+	TEST_ASSERT_EQUAL_PTR(expPtrZero, ptrValZero);
+	TEST_ASSERT_EQUAL_PTR(expPtrMax, ptrValMax);
+	TEST_ASSERT_EQUAL_PTR(expPtrMin, ptrValMin);
+
 	rewind(filep);
 
 	ptrVal = ptrValZero = ptrValMax = ptrValMin = (void *)1;
@@ -976,6 +1104,13 @@ TEST(stdio_scanf_cspn, n)
 	counter = 1;
 	test_vfscanfWrapper(filep, format, res, &counter);
 	TEST_ASSERT_EQUAL_INT(sizeof(buff) - 1, counter);
+
+	rewind(stdin);
+
+	counter = 1;
+	test_vscanfWrapper(format, res, &counter);
+	TEST_ASSERT_EQUAL_INT(sizeof(buff) - 1, counter);
+
 	rewind(filep);
 
 	counter = 1;
@@ -1000,12 +1135,14 @@ TEST(stdio_scanf_cspn, n)
 TEST_SETUP(stdio_scanf_squareBrackets)
 {
 	filep = fopen(TESTFILE_PATH, "w+");
+	test_stdinRedirect(TESTFILE_PATH);
 }
 
 
 TEST_TEAR_DOWN(stdio_scanf_squareBrackets)
 {
 	fclose(filep);
+	test_stdinRestore();
 }
 
 
@@ -1021,6 +1158,12 @@ TEST(stdio_scanf_squareBrackets, simple)
 	memset(res, 0, sizeof(res));
 	/* Read input until what is inside brackets match */
 	TEST_ASSERT_EQUAL_INT(1, test_vfscanfWrapper(filep, format, res));
+	TEST_ASSERT_EQUAL_STRING("Lore", res);
+
+	rewind(stdin);
+
+	memset(res, 0, sizeof(res));
+	TEST_ASSERT_EQUAL_INT(1, test_vscanfWrapper(format, res));
 	TEST_ASSERT_EQUAL_STRING("Lore", res);
 
 	rewind(filep);
@@ -1048,6 +1191,12 @@ TEST(stdio_scanf_squareBrackets, simple)
 	TEST_ASSERT_EQUAL_INT(1, test_vfscanfWrapper(filep, format, res));
 	TEST_ASSERT_EQUAL_STRING("Lor", res);
 
+	rewind(stdin);
+
+	memset(res, 0, sizeof(res));
+	TEST_ASSERT_EQUAL_INT(1, test_vscanfWrapper(format, res));
+	TEST_ASSERT_EQUAL_STRING("Lor", res);
+
 	rewind(filep);
 
 	memset(res, 0, sizeof(res));
@@ -1073,6 +1222,12 @@ TEST(stdio_scanf_squareBrackets, simple)
 	TEST_ASSERT_EQUAL_INT(1, test_vfscanfWrapper(filep, format, res));
 	TEST_ASSERT_EQUAL_STRING("Loremipsumdolorsit", res);
 
+	rewind(stdin);
+
+	memset(res, 0, sizeof(res));
+	TEST_ASSERT_EQUAL_INT(1, test_vscanfWrapper(format, res));
+	TEST_ASSERT_EQUAL_STRING("Loremipsumdolorsit", res);
+
 	rewind(filep);
 
 	memset(res, 0, sizeof(res));
@@ -1096,6 +1251,12 @@ TEST(stdio_scanf_squareBrackets, simple)
 
 	memset(res, 0, sizeof(res));
 	TEST_ASSERT_EQUAL_INT(0, test_vfscanfWrapper(filep, format, res));
+
+	rewind(stdin);
+
+	memset(res, 0, sizeof(res));
+	TEST_ASSERT_EQUAL_INT(0, test_vscanfWrapper(format, res));
+
 	rewind(filep);
 
 	memset(res, 0, sizeof(res));
@@ -1115,6 +1276,11 @@ TEST(stdio_scanf_squareBrackets, simple)
 
 	memset(res, 0, sizeof(res));
 	TEST_ASSERT_EQUAL_INT(0, test_vfscanfWrapper(filep, format, res));
+
+	rewind(stdin);
+
+	memset(res, 0, sizeof(res));
+	TEST_ASSERT_EQUAL_INT(0, test_vscanfWrapper(format, res));
 
 	rewind(filep);
 
@@ -1145,6 +1311,12 @@ TEST(stdio_scanf_squareBrackets, crircumflex)
 	TEST_ASSERT_EQUAL_INT(1, test_vfscanfWrapper(filep, format, res));
 	TEST_ASSERT_EQUAL_STRING(buff, res);
 
+	rewind(stdin);
+
+	memset(res, 0, sizeof(res));
+	TEST_ASSERT_EQUAL_INT(1, test_vscanfWrapper(format, res));
+	TEST_ASSERT_EQUAL_STRING(buff, res);
+
 	rewind(filep);
 
 	memset(res, 0, sizeof(res));
@@ -1164,6 +1336,12 @@ TEST(stdio_scanf_squareBrackets, crircumflex)
 
 	memset(res, 0, sizeof(res));
 	TEST_ASSERT_EQUAL_INT(1, test_vfscanfWrapper(filep, format, res));
+	TEST_ASSERT_EQUAL_STRING("Loremip", res);
+
+	rewind(stdin);
+
+	memset(res, 0, sizeof(res));
+	TEST_ASSERT_EQUAL_INT(1, test_vscanfWrapper(format, res));
 	TEST_ASSERT_EQUAL_STRING("Loremip", res);
 
 	rewind(filep);
@@ -1186,6 +1364,11 @@ TEST(stdio_scanf_squareBrackets, crircumflex)
 	memset(res, 0, sizeof(res));
 	/* Scanf will read filep until it doesn't find a letter in the brackets */
 	TEST_ASSERT_EQUAL_INT(1, test_vfscanfWrapper(filep, format, res));
+	TEST_ASSERT_EQUAL_CHAR_ARRAY(buff, res, strlen(buff) - 1);
+
+	rewind(stdin);
+
+	TEST_ASSERT_EQUAL_INT(1, test_vscanfWrapper(format, res));
 	TEST_ASSERT_EQUAL_CHAR_ARRAY(buff, res, strlen(buff) - 1);
 
 	rewind(filep);
@@ -1211,6 +1394,11 @@ TEST(stdio_scanf_squareBrackets, crircumflex)
 	 */
 	memset(res, 0, sizeof(res));
 	TEST_ASSERT_EQUAL_INT(0, test_vfscanfWrapper(filep, format, res));
+
+	rewind(stdin);
+
+	memset(res, 0, sizeof(res));
+	TEST_ASSERT_EQUAL_INT(0, test_vscanfWrapper(format, res));
 
 	rewind(filep);
 
@@ -1246,6 +1434,14 @@ TEST(stdio_scanf_squareBrackets, pos)
 	TEST_ASSERT_EQUAL_STRING("Loremi", res);
 	TEST_ASSERT_EQUAL_STRING("psumdolorsit", res2);
 
+	rewind(stdin);
+
+	memset(res, 0, sizeof(res));
+	memset(res2, 0, sizeof(res2));
+	TEST_ASSERT_EQUAL_INT(2, test_vscanfWrapper(format, res, res2));
+	TEST_ASSERT_EQUAL_STRING("Loremi", res);
+	TEST_ASSERT_EQUAL_STRING("psumdolorsit", res2);
+
 	rewind(filep);
 
 	memset(res, 0, sizeof(res));
@@ -1278,6 +1474,14 @@ TEST(stdio_scanf_squareBrackets, pos)
 	memset(res, 0, sizeof(res));
 	memset(res2, 0, sizeof(res2));
 	TEST_ASSERT_EQUAL_INT(2, test_vfscanfWrapper(filep, format, res, res2));
+	TEST_ASSERT_EQUAL_STRING("emipsum", res);
+	TEST_ASSERT_EQUAL_STRING("dolorsit", res2);
+
+	rewind(stdin);
+
+	memset(res, 0, sizeof(res));
+	memset(res2, 0, sizeof(res2));
+	TEST_ASSERT_EQUAL_INT(2, test_vscanfWrapper(format, res, res2));
 	TEST_ASSERT_EQUAL_STRING("emipsum", res);
 	TEST_ASSERT_EQUAL_STRING("dolorsit", res2);
 
@@ -1322,6 +1526,12 @@ TEST(stdio_scanf_squareBrackets, white_spaces)
 	TEST_ASSERT_EQUAL_INT(1, test_vfscanfWrapper(filep, format, res));
 	TEST_ASSERT_EQUAL_STRING(buff, res);
 
+	rewind(stdin);
+
+	memset(res, 0, sizeof(res));
+	TEST_ASSERT_EQUAL_INT(1, test_vscanfWrapper(format, res));
+	TEST_ASSERT_EQUAL_STRING(buff, res);
+
 	rewind(filep);
 
 	memset(res, 0, sizeof(res));
@@ -1350,6 +1560,12 @@ TEST(stdio_scanf_squareBrackets, white_spaces)
 
 	memset(res, 0, sizeof(res));
 	TEST_ASSERT_EQUAL_INT(1, test_vfscanfWrapper(filep, format, res));
+	TEST_ASSERT_EQUAL_CHAR_ARRAY(buffMod, res, 5);
+
+	rewind(stdin);
+
+	memset(res, 0, sizeof(res));
+	TEST_ASSERT_EQUAL_INT(1, test_vscanfWrapper(format, res));
 	TEST_ASSERT_EQUAL_CHAR_ARRAY(buffMod, res, 5);
 
 	rewind(filep);
@@ -1396,6 +1612,13 @@ TEST(stdio_scanf_squareBrackets, ascii)
 	memset(res, 0, sizeof(res));
 	TEST_ASSERT_EQUAL_INT(1, test_vfscanfWrapper(filep, format, res));
 	TEST_ASSERT_EQUAL_STRING(buff, res);
+
+	rewind(stdin);
+
+	memset(res, 0, sizeof(res));
+	TEST_ASSERT_EQUAL_INT(1, test_vscanfWrapper(format, res));
+	TEST_ASSERT_EQUAL_STRING(buff, res);
+
 	rewind(filep);
 
 	memset(res, 0, sizeof(res));
@@ -1449,6 +1672,12 @@ TEST(stdio_scanf_squareBrackets, ascii)
 	TEST_ASSERT_EQUAL_INT(1, test_vfscanfWrapper(filep, format, res));
 	TEST_ASSERT_EQUAL_STRING(buff, res);
 
+	rewind(stdin);
+
+	memset(res, 0, sizeof(res));
+	TEST_ASSERT_EQUAL_INT(1, test_vscanfWrapper(format, res));
+	TEST_ASSERT_EQUAL_STRING(buff, res);
+
 	rewind(filep);
 
 	memset(res, 0, sizeof(res));
@@ -1498,6 +1727,15 @@ TEST(stdio_scanf_squareBrackets, ranges)
 	TEST_ASSERT_EQUAL_STRING("dolor", res[2]);
 	TEST_ASSERT_EQUAL_STRING("dolorSitAmet", res[3]);
 
+	rewind(stdin);
+
+	memset(res, 0, sizeof(res));
+	TEST_ASSERT_EQUAL_INT(4, test_vscanfWrapper(format, res[0], res[1], res[2], res[3]));
+	TEST_ASSERT_EQUAL_STRING("loremIPSUM", res[0]);
+	TEST_ASSERT_EQUAL_STRING("IPSUM", res[1]);
+	TEST_ASSERT_EQUAL_STRING("dolor", res[2]);
+	TEST_ASSERT_EQUAL_STRING("dolorSitAmet", res[3]);
+
 	memset(res, 0, sizeof(res));
 	TEST_ASSERT_EQUAL_INT(4, test_vsscanfWrapper(buff, format, res[0], res[1], res[2], res[3]));
 	TEST_ASSERT_EQUAL_STRING("loremIPSUM", res[0]);
@@ -1535,6 +1773,15 @@ TEST(stdio_scanf_squareBrackets, ranges)
 	TEST_ASSERT_EQUAL_STRING("123", res[2]);
 	TEST_ASSERT_EQUAL_STRING("dolor123SitAmet", res[3]);
 
+	rewind(stdin);
+
+	memset(res, 0, sizeof(res));
+	TEST_ASSERT_EQUAL_INT(4, test_vscanfWrapper(format, res[0], res[1], res[2], res[3]));
+	TEST_ASSERT_EQUAL_STRING("123", res[0]);
+	TEST_ASSERT_EQUAL_STRING("loremIPSUM IPSUMdolor", res[1]);
+	TEST_ASSERT_EQUAL_STRING("123", res[2]);
+	TEST_ASSERT_EQUAL_STRING("dolor123SitAmet", res[3]);
+
 	memset(res, 0, sizeof(res));
 	TEST_ASSERT_EQUAL_INT(4, test_vsscanfWrapper(buff2, format, res[0], res[1], res[2], res[3]));
 	TEST_ASSERT_EQUAL_STRING("123", res[0]);
@@ -1559,12 +1806,14 @@ TEST(stdio_scanf_squareBrackets, ranges)
 TEST_SETUP(stdio_scanf_rest)
 {
 	filep = fopen(TESTFILE_PATH, "w+");
+	test_stdinRedirect(TESTFILE_PATH);
 }
 
 
 TEST_TEAR_DOWN(stdio_scanf_rest)
 {
 	fclose(filep);
+	test_stdinRestore();
 }
 
 
@@ -1648,6 +1897,29 @@ TEST(stdio_scanf_rest, modifiers_mix)
 	TEST_ASSERT_EQUAL_STRING("lore", strTab[2]);
 	TEST_ASSERT_EQUAL_STRING("mipsum", strTab[3]);
 
+	rewind(stdin);
+
+	ptr1 = int1 = int2 = int3 = int4 = res2 = flt1 = flt2 = flt3 = llint1 = char1 = uchar1 = 1;
+	memset(strTab, 0, sizeof(strTab));
+	TEST_ASSERT_EQUAL_INT(16, test_vscanfWrapper(format, &int1, &res2, &flt1, &int2, strTab[0], &ptr1, &flt2, strTab[1], &flt3, &int3, &int4, &llint1, &uchar1, &char1, strTab[2], strTab[3]));
+
+	TEST_ASSERT_EQUAL_INT(1, int1);
+	TEST_ASSERT_EQUAL_UINT(2, res2);
+	TEST_ASSERT_EQUAL_FLOAT(0.1, flt1);
+	TEST_ASSERT_EQUAL_HEX(2, int2);
+	TEST_ASSERT_EQUAL_STRING("lorem", strTab[0]);
+	TEST_ASSERT_EQUAL_INT64(563, ptr1);
+	TEST_ASSERT_EQUAL_FLOAT(1.200000e-05, flt2);
+	TEST_ASSERT_EQUAL_STRING("nowy", strTab[1]);
+	TEST_ASSERT_EQUAL_FLOAT(1.200020e-05, flt3);
+	TEST_ASSERT_EQUAL_UINT(132, int3);
+	TEST_ASSERT_EQUAL_INT(5, int4);
+	TEST_ASSERT_EQUAL_INT64(123456, llint1);
+	TEST_ASSERT_EQUAL_HEX8(0x56, uchar1);
+	TEST_ASSERT_EQUAL_CHAR('a', char1);
+	TEST_ASSERT_EQUAL_STRING("lore", strTab[2]);
+	TEST_ASSERT_EQUAL_STRING("mipsum", strTab[3]);
+
 	ptr1 = int1 = int2 = int3 = int4 = res2 = flt1 = flt2 = flt3 = llint1 = char1 = uchar1 = 1;
 	memset(strTab, 0, sizeof(strTab));
 	TEST_ASSERT_EQUAL_INT(16, test_vsscanfWrapper(str, format, &int1, &res2, &flt1, &int2, strTab[0], &ptr1, &flt2, strTab[1], &flt3, &int3, &int4, &llint1, &uchar1, &char1, strTab[2], strTab[3]));
@@ -1705,6 +1977,12 @@ TEST(stdio_scanf_rest, m_s)
 	TEST_ASSERT_EQUAL_STRING(lorem, res);
 	free(res);
 
+	rewind(stdin);
+
+	test_vscanfWrapper(format, &res);
+	TEST_ASSERT_EQUAL_STRING(lorem, res);
+	free(res);
+
 	TEST_ASSERT_EQUAL_INT(1, test_vsscanfWrapper(lorem, format, &res));
 	TEST_ASSERT_EQUAL_STRING(lorem, res);
 	free(res);
@@ -1726,6 +2004,12 @@ TEST(stdio_scanf_rest, m_s)
 	rewind(filep);
 
 	TEST_ASSERT_EQUAL_INT(1, test_vfscanfWrapper(filep, format, &res));
+	TEST_ASSERT_EQUAL_STRING(chrArray, res);
+	free(res);
+
+	rewind(stdin);
+
+	TEST_ASSERT_EQUAL_INT(1, test_vscanfWrapper(format, &res));
 	TEST_ASSERT_EQUAL_STRING(chrArray, res);
 	free(res);
 
@@ -1768,6 +2052,16 @@ TEST(stdio_scanf_rest, m_brackets)
 	free(res2);
 	free(res3);
 
+	rewind(stdin);
+
+	TEST_ASSERT_EQUAL_INT(3, test_vscanfWrapper(format, &res1, &res2, &res3));
+	TEST_ASSERT_EQUAL_STRING("loremIPSUM", res1);
+	TEST_ASSERT_EQUAL_STRING("IPSUM", res2);
+	TEST_ASSERT_EQUAL_STRING("dolor", res3);
+	free(res1);
+	free(res2);
+	free(res3);
+
 	TEST_ASSERT_EQUAL_INT(3, test_vsscanfWrapper(buff, format, &res1, &res2, &res3));
 	TEST_ASSERT_EQUAL_STRING("loremIPSUM", res1);
 	TEST_ASSERT_EQUAL_STRING("IPSUM", res2);
@@ -1802,6 +2096,16 @@ TEST(stdio_scanf_rest, m_brackets)
 	rewind(filep);
 
 	TEST_ASSERT_EQUAL_INT(3, test_vfscanfWrapper(filep, format, &res1, &res2, &res3));
+	TEST_ASSERT_EQUAL_STRING("123", res1);
+	TEST_ASSERT_EQUAL_STRING("loremIPSUM IPSUMdolor", res2);
+	TEST_ASSERT_EQUAL_STRING("123", res3);
+	free(res1);
+	free(res2);
+	free(res3);
+
+	rewind(stdin);
+
+	TEST_ASSERT_EQUAL_INT(3, test_vscanfWrapper(format, &res1, &res2, &res3));
 	TEST_ASSERT_EQUAL_STRING("123", res1);
 	TEST_ASSERT_EQUAL_STRING("loremIPSUM IPSUMdolor", res2);
 	TEST_ASSERT_EQUAL_STRING("123", res3);
@@ -1894,6 +2198,15 @@ TEST(stdio_scanf_rest, star)
 	TEST_ASSERT_EQUAL_INT(123, val);
 	TEST_ASSERT_EQUAL_CHAR('c', res);
 
+	rewind(stdin);
+
+	res = val = 0;
+	memset(res1, 0, sizeof(res1));
+	TEST_ASSERT_EQUAL_INT(3, test_vscanfWrapper(format, res1, &val, &res));
+	TEST_ASSERT_EQUAL_STRING("Dolor", res1);
+	TEST_ASSERT_EQUAL_INT(123, val);
+	TEST_ASSERT_EQUAL_CHAR('c', res);
+
 	res = val = 0;
 	memset(res1, 0, sizeof(res1));
 	TEST_ASSERT_EQUAL_INT(3, sscanf(buff, format, res1, &val, &res));
@@ -1941,6 +2254,18 @@ TEST(stdio_scanf_rest, field_width)
 	TEST_ASSERT_EQUAL_FLOAT(34028.000000, valFltMax);
 	TEST_ASSERT_EQUAL_FLOAT(0.000340, valFltMin);
 
+	rewind(stdin);
+
+	memset(valStr, 0, sizeof(valStr));
+	valIntMin = valIntMax = 1;
+	valFltMin = valFltMax = 1.0;
+	TEST_ASSERT_EQUAL_INT(5, test_vscanfWrapper(format, valStr, &valIntMax, &valIntMin, &valFltMax, &valFltMin));
+	TEST_ASSERT_EQUAL_CHAR_ARRAY(str, valStr, strlen(valStr));
+	TEST_ASSERT_EQUAL_INT(21474, valIntMax);
+	TEST_ASSERT_EQUAL_INT(-2147, valIntMin);
+	TEST_ASSERT_EQUAL_FLOAT(34028.000000, valFltMax);
+	TEST_ASSERT_EQUAL_FLOAT(0.000340, valFltMin);
+
 	memset(valStr, 0, sizeof(valStr));
 	valIntMin = valIntMax = 1;
 	valFltMin = valFltMax = 1.0;
@@ -1972,6 +2297,12 @@ TEST(stdio_scanf_rest, field_width)
 
 	memset(valStr, 0, sizeof(valStr));
 	TEST_ASSERT_EQUAL_INT(1, test_vfscanfWrapper(filep, format, valStr));
+	TEST_ASSERT_EQUAL_STRING("IpsumDolorSitAmet", valStr);
+
+	rewind(stdin);
+
+	memset(valStr, 0, sizeof(valStr));
+	TEST_ASSERT_EQUAL_INT(1, test_vscanfWrapper(format, valStr));
 	TEST_ASSERT_EQUAL_STRING("IpsumDolorSitAmet", valStr);
 
 	memset(valStr, 0, sizeof(valStr));
