@@ -1055,14 +1055,16 @@ test:
           kwargs:
             testcase_count: 10
 
-          # TODO: PIPE_BUF is unsupported, but many tests don't use pipe
+          # PIPE_BUF is not defined, so pathconf(_PC_PIPE_BUF)
+          # reports no limit - every testcase fails in its preparation
         - name: T.read
           execute: run-test /tset/POSIX.os/ioprim/read/T.read
           kwargs:
             testcase_count: 23
           ignore: True
 
-          # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/647
+          # PIPE_BUF is not defined, so pathconf(_PC_PIPE_BUF)
+          # reports no limit - every testcase fails in its preparation
         - name: T.write
           execute: run-test /tset/POSIX.os/ioprim/write/T.write
           kwargs:
@@ -1382,18 +1384,17 @@ test:
           kwargs:
             testcase_count: 1
 
-          # 7: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1233
-          # 8: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
+          # 8: accepted POSIX deviation (see sigprocmask() in phoenix-rtos-doc): job control is not supported in lightweight
+          # Phoenix-RTOS - SIGSTOP doesn't stop the process
         - name: T.sigprocmas
-          execute: run-test /tset/POSIX.os/procprim/sigprocmas/T.sigprocmas{1-6,9-10}
+          execute: run-test /tset/POSIX.os/procprim/sigprocmas/T.sigprocmas{1-7,9-10}
           kwargs:
             testcase_count: 10
 
-          # 1, 4: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1233
-          # 2, 3: can't run them because testcase 1 call prepare_test() which set nsigs
-          # 5: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
+          # 5: accepted POSIX deviation (see sigsuspend() in phoenix-rtos-doc): job control is not supported in lightweight
+          # Phoenix-RTOS - SIGSTOP doesn't stop the process
         - name: T.sigsuspend
-          execute: run-test /tset/POSIX.os/procprim/sigsuspend/T.sigsuspend{6}
+          execute: run-test /tset/POSIX.os/procprim/sigsuspend/T.sigsuspend{1-4,6}
           kwargs:
             testcase_count: 6
 
