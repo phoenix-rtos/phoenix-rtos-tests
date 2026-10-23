@@ -1324,11 +1324,10 @@ test:
           kwargs:
             testcase_count: 21
 
-          # 1: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1233
           # 12, 16, 17: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
-          # 15: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1775
+          # 15: system doesn't verify permission to send a signal, https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1776
         - name: T.kill
-          execute: run-test /tset/POSIX.os/procprim/kill/T.kill{2-11,13-14,18}
+          execute: run-test /tset/POSIX.os/procprim/kill/T.kill{1-11,13-14,18}
           kwargs:
             testcase_count: 18
 
