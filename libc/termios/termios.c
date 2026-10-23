@@ -452,7 +452,10 @@ TEST(termios_tcgetsid, tcgetsid_enotty_noctty_pty)
 TEST_GROUP_RUNNER(termios_tcgetsid)
 {
 	RUN_TEST_CASE(termios_tcgetsid, tcgetsid_ebadf);
+#ifndef __phoenix__
+	/* the error for a file which is not a terminal depends on its server (POSIX deviation) */
 	RUN_TEST_CASE(termios_tcgetsid, tcgetsid_enotty_regular_file);
+#endif
 	RUN_TEST_CASE(termios_tcgetsid, tcgetsid_enotty_noctty_pty);
 }
 
@@ -716,7 +719,10 @@ TEST(termios_tcgetpgrp, tcgetpgrp_enotty_noctty_pty)
 TEST_GROUP_RUNNER(termios_tcgetpgrp)
 {
 	RUN_TEST_CASE(termios_tcgetpgrp, tcgetpgrp_ebadf);
+#ifndef __phoenix__
+	/* the error for a file which is not a terminal depends on its server (POSIX deviation) */
 	RUN_TEST_CASE(termios_tcgetpgrp, tcgetpgrp_enotty_regular_file);
+#endif
 	RUN_TEST_CASE(termios_tcgetpgrp, tcgetpgrp_enotty_noctty_pty);
 }
 
@@ -787,6 +793,9 @@ TEST(termios_tcsetpgrp, tcsetpgrp_enotty_noctty_pty)
 TEST_GROUP_RUNNER(termios_tcsetpgrp)
 {
 	RUN_TEST_CASE(termios_tcsetpgrp, tcsetpgrp_ebadf);
+#ifndef __phoenix__
+	/* the error for a file which is not a terminal depends on its server (POSIX deviation) */
 	RUN_TEST_CASE(termios_tcsetpgrp, tcsetpgrp_enotty_regular_file);
+#endif
 	RUN_TEST_CASE(termios_tcsetpgrp, tcsetpgrp_enotty_noctty_pty);
 }

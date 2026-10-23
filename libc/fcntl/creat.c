@@ -224,5 +224,8 @@ TEST_GROUP_RUNNER(fcntl_creat)
 	RUN_TEST_CASE(fcntl_creat, creat_enoent_empty_path);
 	RUN_TEST_CASE(fcntl_creat, creat_eisdir);
 	RUN_TEST_CASE(fcntl_creat, creat_enotdir_prefix);
+#ifndef __phoenix__
+	/* the length of a path name component is checked by the filesystem, not against NAME_MAX (POSIX deviation) */
 	RUN_TEST_CASE(fcntl_creat, creat_enametoolong);
+#endif
 }

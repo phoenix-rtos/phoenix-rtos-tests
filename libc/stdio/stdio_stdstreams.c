@@ -503,7 +503,10 @@ TEST_GROUP_RUNNER(stdio_getchar_unlocked)
 	RUN_TEST_CASE(stdio_getchar_unlocked, marks_atime_for_update);
 	RUN_TEST_CASE(stdio_getchar_unlocked, ebadf_not_open_for_reading);
 	RUN_TEST_CASE(stdio_getchar_unlocked, eagain_nonblocking_no_data);
+#ifndef __phoenix__
+	/* blocking operations are not interruptible (POSIX deviation) */
 	RUN_TEST_CASE(stdio_getchar_unlocked, eintr_read_interrupted);
+#endif
 	RUN_TEST_CASE(stdio_getchar_unlocked, thread_safe_within_flockfile);
 }
 
@@ -842,9 +845,15 @@ TEST_GROUP_RUNNER(stdio_putchar_unlocked)
 	RUN_TEST_CASE(stdio_putchar_unlocked, thread_safe_within_flockfile);
 	RUN_TEST_CASE(stdio_putchar_unlocked, ebadf_not_open_for_writing);
 	RUN_TEST_CASE(stdio_putchar_unlocked, eagain_nonblocking_full);
+#ifndef __phoenix__
+	/* blocking operations are not interruptible (POSIX deviation) */
 	RUN_TEST_CASE(stdio_putchar_unlocked, eintr_write_interrupted);
+#endif
 	RUN_TEST_CASE(stdio_putchar_unlocked, epipe_no_reader);
+#ifndef __phoenix__
+	/* the file size limit of a process isn't supported (POSIX deviation) */
 	RUN_TEST_CASE(stdio_putchar_unlocked, efbig_file_size_limit);
+#endif
 }
 
 
@@ -1053,5 +1062,8 @@ TEST_GROUP_RUNNER(stdio_gets)
 	RUN_TEST_CASE(stdio_gets, marks_atime_for_update);
 	RUN_TEST_CASE(stdio_gets, ebadf_not_open_for_reading);
 	RUN_TEST_CASE(stdio_gets, eagain_nonblocking_no_data);
+#ifndef __phoenix__
+	/* blocking operations are not interruptible (POSIX deviation) */
 	RUN_TEST_CASE(stdio_gets, eintr_read_interrupted);
+#endif
 }

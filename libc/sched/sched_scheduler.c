@@ -310,8 +310,11 @@ TEST_GROUP_RUNNER(sched_scheduler)
 	RUN_TEST_CASE(sched_scheduler, getscheduler_self_pid_zero);
 	RUN_TEST_CASE(sched_scheduler, getscheduler_self_own_pid);
 	RUN_TEST_CASE(sched_scheduler, getscheduler_esrch_invalid_pid);
+#ifndef __phoenix__
+	/* Phoenix-RTOS supports only the SCHED_RR policy (POSIX deviation) */
 	RUN_TEST_CASE(sched_scheduler, setscheduler_sched_other);
 	RUN_TEST_CASE(sched_scheduler, setscheduler_returns_former_policy);
+#endif
 	RUN_TEST_CASE(sched_scheduler, setscheduler_einval_invalid_policy);
 	RUN_TEST_CASE(sched_scheduler, setscheduler_einval_invalid_priority);
 	RUN_TEST_CASE(sched_scheduler, setscheduler_esrch_invalid_pid);

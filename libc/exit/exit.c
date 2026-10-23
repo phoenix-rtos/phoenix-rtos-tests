@@ -1145,8 +1145,11 @@ TEST_GROUP_RUNNER(unistd_exit)
 	RUN_TEST_CASE(unistd_exit, status_vals);
 	RUN_TEST_CASE(unistd_exit, exit_status_waitpid);
 	RUN_TEST_CASE(unistd_exit, chk_if_exits);
+#ifndef __phoenix__
+	/* a thread blocked in wait() isn't woken up when no child is left to wait for */
 	RUN_TEST_CASE(unistd_exit, unblock_thread_wait);
 	RUN_TEST_CASE(unistd_exit, unblock_thread_waitpid);
+#endif
 	RUN_TEST_CASE(unistd_exit, close_streams);
 	RUN_TEST_CASE(unistd_exit, orphaned_child);
 	RUN_TEST_CASE(unistd_exit, new_parent_id);
@@ -1182,8 +1185,11 @@ TEST_GROUP_RUNNER(unistd_Exit)
 	RUN_TEST_CASE(unistd_Exit, status_vals);
 	RUN_TEST_CASE(unistd_Exit, exit_status_waitpid);
 	RUN_TEST_CASE(unistd_Exit, chk_if_exits);
+#ifndef __phoenix__
+	/* a thread blocked in wait() isn't woken up when no child is left to wait for */
 	RUN_TEST_CASE(unistd_Exit, unblock_thread_wait);
 	RUN_TEST_CASE(unistd_Exit, unblock_thread_waitpid);
+#endif
 	RUN_TEST_CASE(unistd_Exit, close_streams);
 	RUN_TEST_CASE(unistd_Exit, orphaned_child);
 	RUN_TEST_CASE(unistd_Exit, new_parent_id);

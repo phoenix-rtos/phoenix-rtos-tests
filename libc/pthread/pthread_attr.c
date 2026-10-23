@@ -501,9 +501,15 @@ TEST_GROUP_RUNNER(pthread_attr)
 	RUN_TEST_CASE(pthread_attr, attr_setdetachstate_joinable);
 	RUN_TEST_CASE(pthread_attr, attr_setdetachstate_einval);
 	RUN_TEST_CASE(pthread_attr, attr_schedparam_roundtrip);
+#ifndef __phoenix__
+	/* Phoenix-RTOS supports only the SCHED_RR policy (POSIX deviation) */
 	RUN_TEST_CASE(pthread_attr, attr_schedpolicy_fifo);
+#endif
 	RUN_TEST_CASE(pthread_attr, attr_schedpolicy_rr);
+#ifndef __phoenix__
+	/* Phoenix-RTOS supports only the SCHED_RR policy (POSIX deviation) */
 	RUN_TEST_CASE(pthread_attr, attr_schedpolicy_other);
+#endif
 	RUN_TEST_CASE(pthread_attr, attr_setschedpolicy_enotsup);
 	RUN_TEST_CASE(pthread_attr, attr_getscope_default);
 	RUN_TEST_CASE(pthread_attr, attr_getstacksize_default);

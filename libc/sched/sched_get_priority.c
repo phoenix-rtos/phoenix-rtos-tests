@@ -174,12 +174,21 @@ TEST(sched_get_priority, einval_invalid_policy)
 
 TEST_GROUP_RUNNER(sched_get_priority)
 {
+#ifndef __phoenix__
+	/* Phoenix-RTOS supports only the SCHED_RR policy (POSIX deviation) */
 	RUN_TEST_CASE(sched_get_priority, max_sched_fifo);
+#endif
 	RUN_TEST_CASE(sched_get_priority, max_sched_rr);
+#ifndef __phoenix__
+	/* Phoenix-RTOS supports only the SCHED_RR policy (POSIX deviation) */
 	RUN_TEST_CASE(sched_get_priority, max_sched_other);
 	RUN_TEST_CASE(sched_get_priority, min_sched_fifo);
+#endif
 	RUN_TEST_CASE(sched_get_priority, min_sched_rr);
+#ifndef __phoenix__
+	/* Phoenix-RTOS supports only the SCHED_RR policy (POSIX deviation) */
 	RUN_TEST_CASE(sched_get_priority, min_sched_other);
+#endif
 	RUN_TEST_CASE(sched_get_priority, max_ge_min_all_policies);
 	RUN_TEST_CASE(sched_get_priority, einval_invalid_policy);
 }

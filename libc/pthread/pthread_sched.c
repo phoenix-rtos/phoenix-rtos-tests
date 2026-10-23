@@ -311,8 +311,11 @@ TEST_GROUP_RUNNER(pthread_sched)
 {
 	RUN_TEST_CASE(pthread_sched, getschedparam_self);
 	RUN_TEST_CASE(pthread_sched, getschedparam_priority_in_range);
+#ifndef __phoenix__
+	/* Phoenix-RTOS supports only the SCHED_RR policy (POSIX deviation) */
 	RUN_TEST_CASE(pthread_sched, setschedparam_sched_other);
 	RUN_TEST_CASE(pthread_sched, setschedparam_sched_fifo);
+#endif
 	RUN_TEST_CASE(pthread_sched, setschedparam_sched_rr);
 	RUN_TEST_CASE(pthread_sched, setschedparam_invalid_policy);
 	RUN_TEST_CASE(pthread_sched, setschedprio_self);

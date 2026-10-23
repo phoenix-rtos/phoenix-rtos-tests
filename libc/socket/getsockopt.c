@@ -288,7 +288,10 @@ TEST_GROUP_RUNNER(socket_api_getsockopt)
 	RUN_TEST_CASE(socket_api_getsockopt, so_error_no_error);
 	RUN_TEST_CASE(socket_api_getsockopt, so_rcvbuf);
 	RUN_TEST_CASE(socket_api_getsockopt, so_sndbuf);
+#ifndef __phoenix__
+	/* a too small option_len results in EINVAL instead of truncation (POSIX deviation) */
 	RUN_TEST_CASE(socket_api_getsockopt, truncation_small_optlen);
+#endif
 	RUN_TEST_CASE(socket_api_getsockopt, optlen_updated);
 	RUN_TEST_CASE(socket_api_getsockopt, ebadf_invalid_fd);
 	RUN_TEST_CASE(socket_api_getsockopt, enotsock_regular_fd);

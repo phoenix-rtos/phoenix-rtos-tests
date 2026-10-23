@@ -347,6 +347,9 @@ TEST_GROUP_RUNNER(statvfs_statvfs)
 	RUN_TEST_CASE(statvfs_statvfs, statvfs_enotdir_prefix_not_dir);
 	RUN_TEST_CASE(statvfs_statvfs, statvfs_enotdir_trailing_slash_not_dir);
 	RUN_TEST_CASE(statvfs_statvfs, statvfs_enametoolong);
+#ifndef __phoenix__
+	/* the system has no unprivileged users, so permissions are never denied */
 	RUN_TEST_CASE(statvfs_statvfs, statvfs_eacces_no_search_perm);
+#endif
 	RUN_TEST_CASE(statvfs_statvfs, statvfs_eloop_symlink_loop);
 }

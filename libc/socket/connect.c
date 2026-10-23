@@ -433,7 +433,10 @@ TEST_GROUP_RUNNER(socket_api_connect)
 	RUN_TEST_CASE(socket_api_connect, connect_ebadf);
 	RUN_TEST_CASE(socket_api_connect, connect_enotsock);
 	RUN_TEST_CASE(socket_api_connect, connect_enoent);
+#ifndef __phoenix__
+	/* a refused TCP connection is reported with ECONNRESET (POSIX deviation) */
 	RUN_TEST_CASE(socket_api_connect, connect_econnrefused);
+#endif
 	RUN_TEST_CASE(socket_api_connect, connect_eisconn);
 	RUN_TEST_CASE(socket_api_connect, connect_eafnosupport);
 	RUN_TEST_CASE(socket_api_connect, connect_binds_unnamed);

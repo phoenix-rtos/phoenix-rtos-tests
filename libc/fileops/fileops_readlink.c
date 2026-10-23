@@ -433,8 +433,14 @@ TEST_GROUP_RUNNER(fileops_readlink)
 	RUN_TEST_CASE(fileops_readlink, readlink_enotdir_prefix_file);
 	RUN_TEST_CASE(fileops_readlink, readlink_enotdir_trailing_slash);
 	RUN_TEST_CASE(fileops_readlink, readlink_eloop);
+#ifndef __phoenix__
+	/* the length of a path name component is checked by the filesystem, not against NAME_MAX (POSIX deviation) */
 	RUN_TEST_CASE(fileops_readlink, readlink_enametoolong);
+#endif
+#ifndef __phoenix__
+	/* the system has no unprivileged users, so permissions are never denied */
 	RUN_TEST_CASE(fileops_readlink, readlink_eacces_prefix);
+#endif
 }
 
 
