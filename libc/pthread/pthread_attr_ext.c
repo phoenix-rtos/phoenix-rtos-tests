@@ -359,7 +359,9 @@ TEST(pthread_attr_setscope, set_process)
 
 	ret = pthread_attr_setscope(&attr, PTHREAD_SCOPE_PROCESS);
 	if (ret == ENOTSUP) {
-		TEST_IGNORE_MESSAGE("PTHREAD_SCOPE_PROCESS not supported");
+		/* An implementation may support only one of the contention scopes */
+		pthread_attr_destroy(&attr);
+		return;
 	}
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
