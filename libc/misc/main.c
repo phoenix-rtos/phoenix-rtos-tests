@@ -31,6 +31,9 @@ void runner(void)
 	RUN_TEST_GROUP(stat_mode);
 	RUN_TEST_GROUP(stat_nlink_size_blk_tim);
 	RUN_TEST_GROUP(stat_errno);
+	RUN_TEST_GROUP(fstat_st_mode);
+	RUN_TEST_GROUP(fstat_st_nlink_size_blk_tim);
+	RUN_TEST_GROUP(fstat_errors);
 	RUN_TEST_GROUP(misc_umask);
 	RUN_TEST_GROUP(unistd_gethostid);
 	RUN_TEST_GROUP(unistd_gethostname);

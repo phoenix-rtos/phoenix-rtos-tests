@@ -8,7 +8,6 @@
  * TESTED:
  *    - stat()
  *    - lstat()
- *    - fstat()
  *
  * UNTESTED:
  *    - fstatat(), because its not implemented yet
@@ -99,9 +98,6 @@ TEST(stat_mode, none)
 	TEST_ASSERT_EQUAL_INT(0, lstat(path, &buffer));
 	TEST_ASSERT_EQUAL_INT(NONE_MODE, buffer.st_mode);
 
-	TEST_ASSERT_EQUAL_INT(0, fstat(fd, &buffer));
-	TEST_ASSERT_EQUAL_INT(NONE_MODE, buffer.st_mode);
-
 	close(fd);
 	remove(path);
 }
@@ -117,9 +113,6 @@ TEST(stat_mode, gid)
 	TEST_ASSERT_EQUAL_INT(NONE_MODE | S_ISGID, buffer.st_mode);
 
 	TEST_ASSERT_EQUAL_INT(0, lstat(path, &buffer));
-	TEST_ASSERT_EQUAL_INT(NONE_MODE | S_ISGID, buffer.st_mode);
-
-	TEST_ASSERT_EQUAL_INT(0, fstat(fd, &buffer));
 	TEST_ASSERT_EQUAL_INT(NONE_MODE | S_ISGID, buffer.st_mode);
 
 	close(fd);
@@ -139,9 +132,6 @@ TEST(stat_mode, uid)
 	TEST_ASSERT_EQUAL_INT(0, lstat(path, &buffer));
 	TEST_ASSERT_EQUAL_INT(NONE_MODE | S_ISUID, buffer.st_mode);
 
-	TEST_ASSERT_EQUAL_INT(0, fstat(fd, &buffer));
-	TEST_ASSERT_EQUAL_INT(NONE_MODE | S_ISUID, buffer.st_mode);
-
 	close(fd);
 	remove(path);
 }
@@ -159,9 +149,6 @@ TEST(stat_mode, uid_gid)
 	TEST_ASSERT_EQUAL_INT(0, lstat(path, &buffer));
 	TEST_ASSERT_EQUAL_INT(NONE_MODE | S_ISUID | S_ISGID, buffer.st_mode);
 
-	TEST_ASSERT_EQUAL_INT(0, fstat(fd, &buffer));
-	TEST_ASSERT_EQUAL_INT(NONE_MODE | S_ISUID | S_ISGID, buffer.st_mode);
-
 	close(fd);
 	remove(path);
 }
@@ -177,9 +164,6 @@ TEST(stat_mode, vtx)
 	TEST_ASSERT_EQUAL_INT(NONE_MODE | S_ISVTX, buffer.st_mode);
 
 	TEST_ASSERT_EQUAL_INT(0, lstat(path, &buffer));
-	TEST_ASSERT_EQUAL_INT(NONE_MODE | S_ISVTX, buffer.st_mode);
-
-	TEST_ASSERT_EQUAL_INT(0, fstat(fd, &buffer));
 	TEST_ASSERT_EQUAL_INT(NONE_MODE | S_ISVTX, buffer.st_mode);
 
 	close(fd);
@@ -206,9 +190,6 @@ TEST(stat_mode, permissions_all)
 	TEST_ASSERT_EQUAL_INT(permissions_set, buffer.st_mode);
 
 	TEST_ASSERT_EQUAL_INT(0, lstat(path, &buffer));
-	TEST_ASSERT_EQUAL_INT(permissions_set, buffer.st_mode);
-
-	TEST_ASSERT_EQUAL_INT(0, fstat(fd, &buffer));
 	TEST_ASSERT_EQUAL_INT(permissions_set, buffer.st_mode);
 
 	close(fd);
@@ -239,10 +220,6 @@ TEST(stat_mode, reg_type)
 	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFREG);
 	TEST_ASSERT_EQUAL_INT(permissions_set, buffer.st_mode);
 
-	TEST_ASSERT_EQUAL_INT(0, fstat(fd, &buffer));
-	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFREG);
-	TEST_ASSERT_EQUAL_INT(permissions_set, buffer.st_mode);
-
 	close(fd);
 	remove(path);
 
@@ -258,10 +235,6 @@ TEST(stat_mode, reg_type)
 	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFREG);
 	TEST_ASSERT_EQUAL_INT(permissions_set, buffer.st_mode);
 
-	TEST_ASSERT_EQUAL_INT(0, fstat(fd, &buffer));
-	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFREG);
-	TEST_ASSERT_EQUAL_INT(permissions_set, buffer.st_mode);
-
 	close(fd);
 	remove(path);
 }
@@ -269,7 +242,6 @@ TEST(stat_mode, reg_type)
 
 TEST(stat_mode, dir_type)
 {
-	int dir_fd;
 	struct stat buffer;
 
 	TEST_ASSERT_EQUAL_INT(0, mkdir(tempPath, 0777));
@@ -280,14 +252,9 @@ TEST(stat_mode, dir_type)
 	TEST_ASSERT_EQUAL_INT(0, lstat(tempPath, &buffer));
 	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFDIR);
 
-	dir_fd = open(tempPath, O_RDONLY);
-	TEST_ASSERT_EQUAL_INT(0, fstat(dir_fd, &buffer));
-	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFDIR);
-
-	close(dir_fd);
 	remove(tempPath);
 
-	/* Testing with the lowest possible permissions, have to be 0400 to be accessible by fstat() */
+	/* Testing with the lowest possible permissions */
 	TEST_ASSERT_EQUAL_INT(0, mkdir(tempPath, 0400));
 
 	TEST_ASSERT_EQUAL_INT(0, stat(tempPath, &buffer));
@@ -296,18 +263,12 @@ TEST(stat_mode, dir_type)
 	TEST_ASSERT_EQUAL_INT(0, lstat(tempPath, &buffer));
 	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFDIR);
 
-	dir_fd = open(tempPath, O_RDONLY);
-	TEST_ASSERT_EQUAL_INT(0, fstat(dir_fd, &buffer));
-	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFDIR);
-
-	close(dir_fd);
 	remove(tempPath);
 }
 
 
 TEST(stat_mode, symlink_type)
 {
-	int sym_fd;
 	struct stat buffer;
 	int permissions_set;
 	mode_t mask;
@@ -329,17 +290,11 @@ TEST(stat_mode, symlink_type)
 	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFREG);
 	TEST_ASSERT_EQUAL_INT(permissions_set, buffer.st_mode);
 
-	sym_fd = open(symPath, O_RDONLY);
-	TEST_ASSERT_EQUAL_INT(0, fstat(sym_fd, &buffer));
-	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFREG);
-	TEST_ASSERT_EQUAL_INT(permissions_set, buffer.st_mode);
-
-	close(sym_fd);
 	unlink(symPath);
 	close(fd);
 	remove(path);
 
-	/* Testing with the lowest possible permissions, have to be 0400 to be accessible by fstat() */
+	/* Testing with the lowest possible permissions */
 	fd = open(path, O_CREAT, 0400);
 
 	permissions_set = (NONE_MODE | 0400) & ~mask;
@@ -350,12 +305,6 @@ TEST(stat_mode, symlink_type)
 	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFREG);
 	TEST_ASSERT_EQUAL_INT(permissions_set, buffer.st_mode);
 
-	sym_fd = open(symPath, O_RDONLY);
-	TEST_ASSERT_EQUAL_INT(0, fstat(sym_fd, &buffer));
-	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFREG);
-	TEST_ASSERT_EQUAL_INT(permissions_set, buffer.st_mode);
-
-	close(sym_fd);
 	unlink(symPath);
 	close(fd);
 	remove(path);
@@ -453,10 +402,6 @@ TEST(stat_mode, symloop_max)
 	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFLNK);
 	TEST_ASSERT_EQUAL_INT(strlen(target), buffer.st_size);
 
-	TEST_ASSERT_EQUAL_INT(0, fstat(fd, &buffer));
-	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFREG);
-	TEST_ASSERT_EQUAL_INT(0, buffer.st_size);
-
 	for (i = 0; i < SYMLOOP_MAX; i++) {
 		sprintf(link_name, "link%d", i);
 
@@ -474,7 +419,6 @@ TEST(stat_mode, fifo_type)
 	/* Disabled on MCXN947, ZYNQMP because of issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1338 */
 	TEST_IGNORE();
 #endif
-	int fifo_fd;
 	struct stat buffer;
 
 	TEST_ASSERT_EQUAL_INT(0, mkfifo(tempPath, 0777));
@@ -485,11 +429,6 @@ TEST(stat_mode, fifo_type)
 	TEST_ASSERT_EQUAL_INT(0, lstat(tempPath, &buffer));
 	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFIFO);
 
-	fifo_fd = open(tempPath, O_NONBLOCK);
-	TEST_ASSERT_EQUAL_INT(0, fstat(fifo_fd, &buffer));
-	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFIFO);
-
-	close(fifo_fd);
 	remove(tempPath);
 
 	TEST_ASSERT_EQUAL_INT(0, mkfifo(tempPath, 0600));
@@ -500,12 +439,6 @@ TEST(stat_mode, fifo_type)
 	TEST_ASSERT_EQUAL_INT(0, lstat(tempPath, &buffer));
 	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFIFO);
 
-	fifo_fd = open(tempPath, O_RDONLY | O_NONBLOCK);
-	TEST_ASSERT_NOT_EQUAL_INT(-1, fifo_fd);
-	TEST_ASSERT_EQUAL_INT(0, fstat(fifo_fd, &buffer));
-	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFIFO);
-
-	close(fifo_fd);
 	remove(tempPath);
 }
 
@@ -513,20 +446,11 @@ TEST(stat_mode, fifo_type)
 TEST(stat_mode, chr_type)
 {
 	struct stat buffer;
-	int chr_fd;
 
 	TEST_ASSERT_EQUAL_INT(0, stat(chrPath, &buffer));
 	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFCHR);
 	TEST_ASSERT_EQUAL_INT(0, lstat(chrPath, &buffer));
 	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFCHR);
-
-	/* Disabled on Phoenix-RTOS because of #764 issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/764 */
-	TEST_IGNORE_MESSAGE("#764 issue");
-
-	chr_fd = open(chrPath, O_RDWR);
-	TEST_ASSERT_EQUAL_INT(0, fstat(chr_fd, &buffer));
-	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFCHR);
-	close(chr_fd);
 }
 
 
@@ -554,9 +478,6 @@ TEST(stat_mode, sock_type)
 	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFSOCK);
 
 	TEST_ASSERT_EQUAL_INT(0, lstat(socketPath, &buffer));
-	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFSOCK);
-
-	TEST_ASSERT_EQUAL_INT(0, fstat(sfd, &buffer));
 	TEST_ASSERT_TRUE((buffer.st_mode & S_IFMT) == S_IFSOCK);
 
 	close(sfd);
@@ -588,8 +509,6 @@ TEST(stat_nlink_size_blk_tim, nlink)
 	TEST_ASSERT_EQUAL_INT(0, lstat(path, &buffer));
 	TEST_ASSERT_EQUAL_INT(1, buffer.st_nlink);
 
-	TEST_ASSERT_EQUAL_INT(0, fstat(fd, &buffer));
-	TEST_ASSERT_EQUAL_INT(1, buffer.st_nlink);
 
 
 	TEST_ASSERT_EQUAL_INT(0, link(path, symPath));
@@ -603,18 +522,12 @@ TEST(stat_nlink_size_blk_tim, nlink)
 	TEST_ASSERT_EQUAL_INT(0, lstat(path, &buffer));
 	TEST_ASSERT_EQUAL_INT(4, buffer.st_nlink);
 
-	TEST_ASSERT_EQUAL_INT(0, fstat(fd, &buffer));
-	TEST_ASSERT_EQUAL_INT(4, buffer.st_nlink);
-
 	unlink(symPath);
 
 	TEST_ASSERT_EQUAL_INT(0, stat(path, &buffer));
 	TEST_ASSERT_EQUAL_INT(3, buffer.st_nlink);
 
 	TEST_ASSERT_EQUAL_INT(0, lstat(path, &buffer));
-	TEST_ASSERT_EQUAL_INT(3, buffer.st_nlink);
-
-	TEST_ASSERT_EQUAL_INT(0, fstat(fd, &buffer));
 	TEST_ASSERT_EQUAL_INT(3, buffer.st_nlink);
 
 	unlink(tempPath);
@@ -625,9 +538,6 @@ TEST(stat_nlink_size_blk_tim, nlink)
 	TEST_ASSERT_EQUAL_INT(0, lstat(path, &buffer));
 	TEST_ASSERT_EQUAL_INT(2, buffer.st_nlink);
 
-	TEST_ASSERT_EQUAL_INT(0, fstat(fd, &buffer));
-	TEST_ASSERT_EQUAL_INT(2, buffer.st_nlink);
-
 	unlink(anotherPath);
 }
 
@@ -636,7 +546,7 @@ TEST(stat_nlink_size_blk_tim, nlink_symloop_max)
 {
 	struct stat buffer;
 	char source[16], target[16];
-	int i, sym_fd;
+	int i;
 
 	for (i = 1; i < SYMLOOP_MAX; i++) {
 		sprintf(target, "link%d", i);
@@ -648,10 +558,6 @@ TEST(stat_nlink_size_blk_tim, nlink_symloop_max)
 	TEST_ASSERT_EQUAL_INT(SYMLOOP_MAX, buffer.st_nlink);
 
 	TEST_ASSERT_EQUAL_INT(0, lstat(path, &buffer));
-	TEST_ASSERT_EQUAL_INT(SYMLOOP_MAX, buffer.st_nlink);
-
-	sym_fd = open(path, O_RDONLY);
-	TEST_ASSERT_EQUAL_INT(0, fstat(sym_fd, &buffer));
 	TEST_ASSERT_EQUAL_INT(SYMLOOP_MAX, buffer.st_nlink);
 
 	for (i = 1; i < SYMLOOP_MAX; i++) {
@@ -689,10 +595,6 @@ TEST(stat_nlink_size_blk_tim, size_blk_blocks)
 	TEST_ASSERT_GREATER_THAN_INT(0, buffer.st_blksize);
 	TEST_ASSERT_GREATER_THAN_INT(1, buffer.st_blocks);
 
-	TEST_ASSERT_EQUAL_INT(0, fstat(fd, &buffer));
-	TEST_ASSERT_EQUAL_INT(size, buffer.st_size);
-	TEST_ASSERT_GREATER_THAN_INT(0, buffer.st_blksize);
-	TEST_ASSERT_GREATER_THAN_INT(1, buffer.st_blocks);
 }
 
 
@@ -711,10 +613,6 @@ TEST(stat_nlink_size_blk_tim, size_blk_blocks_zero)
 	TEST_ASSERT_GREATER_THAN_INT(0, buffer.st_blksize);
 	TEST_ASSERT_EQUAL_INT(0, buffer.st_blocks);
 
-	TEST_ASSERT_EQUAL_INT(0, fstat(fd, &buffer));
-	TEST_ASSERT_EQUAL_INT(0, buffer.st_size);
-	TEST_ASSERT_GREATER_THAN_INT(0, buffer.st_blksize);
-	TEST_ASSERT_EQUAL_INT(0, buffer.st_blocks);
 }
 
 
@@ -736,10 +634,6 @@ TEST(stat_nlink_size_blk_tim, size_blk_blocks_big)
 	TEST_ASSERT_GREATER_THAN_INT(0, buffer.st_blksize);
 	TEST_ASSERT_GREATER_OR_EQUAL(0, buffer.st_blocks);
 
-	TEST_ASSERT_EQUAL_INT(0, fstat(fd, &buffer));
-	TEST_ASSERT_EQUAL_INT(INT_MAX / 2, buffer.st_size);
-	TEST_ASSERT_GREATER_THAN_INT(0, buffer.st_blksize);
-	TEST_ASSERT_GREATER_OR_EQUAL(0, buffer.st_blocks);
 }
 
 
@@ -776,11 +670,6 @@ TEST(stat_nlink_size_blk_tim, tim)
 	TEST_ASSERT_INT_WITHIN(1, currentTime, buffer.st_mtim.tv_sec);
 
 	TEST_ASSERT_EQUAL_INT(0, lstat(tempPath, &buffer));
-	TEST_ASSERT_INT_WITHIN(1, currentTime, buffer.st_ctim.tv_sec);
-	TEST_ASSERT_INT_WITHIN(1, currentTime, buffer.st_atim.tv_sec);
-	TEST_ASSERT_INT_WITHIN(1, currentTime, buffer.st_mtim.tv_sec);
-
-	TEST_ASSERT_EQUAL_INT(0, fstat(temp_fd, &buffer));
 	TEST_ASSERT_INT_WITHIN(1, currentTime, buffer.st_ctim.tv_sec);
 	TEST_ASSERT_INT_WITHIN(1, currentTime, buffer.st_atim.tv_sec);
 	TEST_ASSERT_INT_WITHIN(1, currentTime, buffer.st_mtim.tv_sec);
@@ -827,11 +716,6 @@ TEST(stat_nlink_size_blk_tim, a_m_tim_mod)
 	TEST_ASSERT_EQUAL_INT(access_time.tv_sec, buffer.st_atim.tv_sec);
 	TEST_ASSERT_EQUAL_INT(modification_time.tv_sec, buffer.st_mtim.tv_sec);
 
-	TEST_ASSERT_EQUAL_INT(0, fstat(temp_fd, &buffer));
-	TEST_ASSERT_INT_WITHIN(1, currentTime, buffer.st_ctim.tv_sec);
-	TEST_ASSERT_EQUAL_INT(access_time.tv_sec, buffer.st_atim.tv_sec);
-	TEST_ASSERT_EQUAL_INT(modification_time.tv_sec, buffer.st_mtim.tv_sec);
-
 	close(temp_fd);
 	remove(tempPath);
 }
@@ -855,9 +739,6 @@ TEST(stat_nlink_size_blk_tim, st_dev_ino)
 	TEST_ASSERT_GREATER_THAN_INT(0, buffer.st_dev);
 	TEST_ASSERT_GREATER_THAN_INT(0, buffer.st_ino);
 
-	TEST_ASSERT_EQUAL_INT(0, fstat(fd, &buffer));
-	TEST_ASSERT_GREATER_THAN_INT(0, buffer.st_dev);
-	TEST_ASSERT_GREATER_THAN_INT(0, buffer.st_ino);
 }
 
 
@@ -871,26 +752,6 @@ TEST_TEAR_DOWN(stat_errno)
 {
 	close(fd);
 	remove(path);
-}
-
-
-TEST(stat_errno, ebadf)
-{
-	/* EBADF only occur for fstat() */
-	struct stat buffer;
-	int fd_invaild = open("never_existed.txt", O_RDONLY);
-
-	errno = 0;
-	TEST_ASSERT_EQUAL_INT(-1, fstat(INT_MAX, &buffer));
-	TEST_ASSERT_EQUAL_INT(EBADF, errno);
-
-	errno = 0;
-	TEST_ASSERT_EQUAL_INT(-1, fstat(-1, &buffer));
-	TEST_ASSERT_EQUAL_INT(EBADF, errno);
-
-	errno = 0;
-	TEST_ASSERT_EQUAL_INT(-1, fstat(fd_invaild, &buffer));
-	TEST_ASSERT_EQUAL_INT(EBADF, errno);
 }
 
 
@@ -1020,12 +881,7 @@ TEST_GROUP_RUNNER(stat_errno)
 {
 	/*
 	 * There's not EIO, EACCESS, EOVERFLOW cases because of reproduction difficulties
-	 *
-	 * fstat() only have following errnos: EBADF, EIO, EOVEFLOW
-	 * So fstat() is not tested in other cases
-	 *
 	 */
-	RUN_TEST_CASE(stat_errno, ebadf);
 	RUN_TEST_CASE(stat_errno, eloop);
 	RUN_TEST_CASE(stat_errno, enametoolong);
 	RUN_TEST_CASE(stat_errno, enoent);
