@@ -458,13 +458,12 @@ test:
           kwargs:
             testcase_count: 4
 
-          # 6, 20, 39, 45: scanf() fails to parse the input
           # 47, 48: pseudo languages
           # 53: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1401 (same problem with EINTR)
           # 54, 55: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
           # 56: no device to be mounted (VSX_ROFS)
         - name: T.scanf
-          execute: run-test /tset/ANSI.os/streamio/scanf/T.scanf{1-5,7-19,21-38,40-44,46,49-52,57-58}
+          execute: run-test /tset/ANSI.os/streamio/scanf/T.scanf{1-46,49-52,57-58}
           kwargs:
             testcase_count: 58
 
@@ -1176,10 +1175,8 @@ test:
             testcase_count: 2
           ignore: True
 
-          # 3: tms_utime returned by times() does not change
-          # 5: depends on testcase 3
         - name: T.times
-          execute: run-test /tset/POSIX.os/procenv/times/T.times{1-2,4,6-7}
+          execute: run-test /tset/POSIX.os/procenv/times/T.times
           kwargs:
             testcase_count: 7
 
