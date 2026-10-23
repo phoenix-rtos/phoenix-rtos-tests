@@ -339,16 +339,12 @@ TEST(signal_pending, sigpending_sig_dfl_discards_default_ignored)
 	ret = sigprocmask(SIG_BLOCK, &block, NULL);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
+	/*
+	 * "it is unspecified whether the signal is discarded immediately upon generation or remains pending",
+	 * in both cases it is not pending once the action is set to SIG_DFL
+	 */
 	ret = raise(SIGCHLD);
 	TEST_ASSERT_EQUAL_INT(0, ret);
-
-	ret = sigpending(&pending);
-	TEST_ASSERT_EQUAL_INT(0, ret);
-	if (sigismember(&pending, SIGCHLD) == 0) {
-		sigprocmask(SIG_UNBLOCK, &block, NULL);
-		/* "it is unspecified whether the signal is discarded immediately upon generation or remains pending" */
-		TEST_IGNORE_MESSAGE("blocked SIGCHLD is discarded on generation");
-	}
 
 	memset(&act, 0, sizeof(act));
 	act.sa_handler = SIG_DFL;
