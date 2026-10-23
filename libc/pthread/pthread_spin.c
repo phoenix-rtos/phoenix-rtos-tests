@@ -295,7 +295,10 @@ TEST(pthread_spin, trylock_thread_ebusy)
 TEST_GROUP_RUNNER(pthread_spin)
 {
 	RUN_TEST_CASE(pthread_spin, init_private);
+#if defined(_POSIX_THREAD_PROCESS_SHARED) && (_POSIX_THREAD_PROCESS_SHARED > 0)
+	/* Process-shared synchronization objects are a POSIX option (TSH) */
 	RUN_TEST_CASE(pthread_spin, init_shared);
+#endif
 	RUN_TEST_CASE(pthread_spin, destroy_success);
 	RUN_TEST_CASE(pthread_spin, lock_unlocked);
 	RUN_TEST_CASE(pthread_spin, trylock_unlocked);

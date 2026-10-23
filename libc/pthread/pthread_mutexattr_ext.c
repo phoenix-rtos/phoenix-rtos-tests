@@ -25,6 +25,7 @@
 #include <pthread.h>
 #include <errno.h>
 #include <sched.h>
+#include <unistd.h>
 
 #include "unity_fixture.h"
 #include "libc_features.h"
@@ -432,7 +433,10 @@ TEST_GROUP_RUNNER(pthread_mutexattr_pshared)
 {
 	RUN_TEST_CASE(pthread_mutexattr_pshared, get_default_private);
 	RUN_TEST_CASE(pthread_mutexattr_pshared, set_private);
+#if defined(_POSIX_THREAD_PROCESS_SHARED) && (_POSIX_THREAD_PROCESS_SHARED > 0)
+	/* Process-shared synchronization objects are a POSIX option (TSH) */
 	RUN_TEST_CASE(pthread_mutexattr_pshared, set_shared);
+#endif
 	RUN_TEST_CASE(pthread_mutexattr_pshared, set_invalid_einval);
 }
 

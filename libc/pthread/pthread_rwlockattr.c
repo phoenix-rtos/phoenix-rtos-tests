@@ -20,6 +20,7 @@
 
 #include <pthread.h>
 #include <errno.h>
+#include <unistd.h>
 
 #include "unity_fixture.h"
 #include "libc_features.h"
@@ -239,8 +240,13 @@ TEST_GROUP_RUNNER(pthread_rwlockattr)
 	RUN_TEST_CASE(pthread_rwlockattr, destroy_success);
 	RUN_TEST_CASE(pthread_rwlockattr, getpshared_default_private);
 	RUN_TEST_CASE(pthread_rwlockattr, setpshared_private);
+#if defined(_POSIX_THREAD_PROCESS_SHARED) && (_POSIX_THREAD_PROCESS_SHARED > 0)
+	/* Process-shared synchronization objects are a POSIX option (TSH) */
 	RUN_TEST_CASE(pthread_rwlockattr, setpshared_shared);
+#endif
 	RUN_TEST_CASE(pthread_rwlockattr, setpshared_invalid_einval);
+#if defined(_POSIX_THREAD_PROCESS_SHARED) && (_POSIX_THREAD_PROCESS_SHARED > 0)
 	RUN_TEST_CASE(pthread_rwlockattr, setpshared_roundtrip);
+#endif
 	RUN_TEST_CASE(pthread_rwlockattr, usable_with_rwlock_init);
 }
