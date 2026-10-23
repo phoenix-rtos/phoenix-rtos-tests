@@ -163,9 +163,6 @@ TEST(socket_api_listen, marks_socket_accepting)
 	/* Verify socket is now accepting connections via SO_ACCEPTCONN */
 	optval = 0;
 	optlen = sizeof(optval);
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1644 issue");
-#endif
 	ret = getsockopt(test_common.fd, SOL_SOCKET, SO_ACCEPTCONN, &optval, &optlen);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 	TEST_ASSERT_NOT_EQUAL_INT(0, optval);

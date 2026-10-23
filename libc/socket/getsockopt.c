@@ -46,9 +46,6 @@ TEST_TEAR_DOWN(socket_api_getsockopt)
 
 TEST(socket_api_getsockopt, basic_so_type_stream)
 {
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1644 issue");
-#endif
 	int ret;
 	int optval;
 	socklen_t optlen;
@@ -76,9 +73,6 @@ TEST(socket_api_getsockopt, basic_so_type_dgram)
 
 	optval = -1;
 	optlen = sizeof(optval);
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1644 issue");
-#endif
 	ret = getsockopt(fd, SOL_SOCKET, SO_TYPE, &optval, &optlen);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 	TEST_ASSERT_EQUAL_INT(SOCK_DGRAM, optval);
@@ -96,9 +90,6 @@ TEST(socket_api_getsockopt, so_error_no_error)
 
 	optval = -1;
 	optlen = sizeof(optval);
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1644 issue");
-#endif
 	ret = getsockopt(fd, SOL_SOCKET, SO_ERROR, &optval, &optlen);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 	TEST_ASSERT_EQUAL_INT(0, optval);
@@ -155,7 +146,7 @@ TEST(socket_api_getsockopt, truncation_small_optlen)
 	optval = 0;
 	optlen = 1;
 #ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1644 issue");
+	TEST_IGNORE_MESSAGE("phoenix limitation: too small option_len results in EINVAL instead of truncation");
 #endif
 	ret = getsockopt(fd, SOL_SOCKET, SO_RCVBUF, &optval, &optlen);
 	TEST_ASSERT_EQUAL_INT(0, ret);
@@ -175,9 +166,6 @@ TEST(socket_api_getsockopt, optlen_updated)
 	/* optlen larger than needed - shall be modified to indicate actual length */
 	optval = 0;
 	optlen = 128;
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1644 issue");
-#endif
 	ret = getsockopt(fd, SOL_SOCKET, SO_TYPE, &optval, &optlen);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 	TEST_ASSERT_EQUAL_INT((socklen_t)sizeof(int), optlen);
@@ -252,9 +240,6 @@ TEST(socket_api_getsockopt, so_acceptconn_not_listening)
 
 	optval = -1;
 	optlen = sizeof(optval);
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1644 issue");
-#endif
 	ret = getsockopt(fd, SOL_SOCKET, SO_ACCEPTCONN, &optval, &optlen);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 	TEST_ASSERT_EQUAL_INT(0, optval);
@@ -272,9 +257,6 @@ TEST(socket_api_getsockopt, so_rcvtimeo_default)
 
 	memset(&tv, 0xff, sizeof(tv));
 	optlen = sizeof(tv);
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1644 issue");
-#endif
 	ret = getsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, &optlen);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 	/* Default timeout should be 0 (infinite/no timeout) */
@@ -294,9 +276,6 @@ TEST(socket_api_getsockopt, so_sndtimeo_default)
 
 	memset(&tv, 0xff, sizeof(tv));
 	optlen = sizeof(tv);
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1644 issue");
-#endif
 	ret = getsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &tv, &optlen);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 	TEST_ASSERT_EQUAL_INT(0, (int)tv.tv_sec);

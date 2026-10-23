@@ -257,9 +257,6 @@ TEST(socket_api_socketpair, seqpacket_success)
 
 TEST(socket_api_socketpair, protocol_zero_default)
 {
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1644");
-#endif
 	/* Specifying a protocol of 0 causes socketpair() to use an unspecified default
 	 * protocol appropriate for the requested socket type */
 	int *sv = test_common.sv;
