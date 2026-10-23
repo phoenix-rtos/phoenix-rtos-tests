@@ -5,13 +5,13 @@ test:
       value: [ia32-generic-qemu]
 
     # Each test by default runs all testcases, but if it ends with bracet list like {1,2,4-6},
-    # it will only execute the specified ones in this case, 1, 2, 4, 5, and 6, remaining testcases will be skipped.
+    # it will only execute the specified ones in this case, 1, 2, 4, 5, and 6, remaining testcases are not reported.
 
     # If a particular testcase is not executed, there should be a comment above the test name
     # indicating its number and an explanation for example, a link to an issue or a short note/hint
     # explaining why it is not being run. If all testcases cause errors, the entire test should be ignored.
 
-    # Each test has a testcase_count argument used by the harness and this argument should never be modified.
+    # Each test has a testcase_count argument with the number of its testcases and this argument should never be modified.
 
     tests:
           # 1: pseudo languages

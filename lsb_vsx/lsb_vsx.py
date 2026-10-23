@@ -41,20 +41,12 @@ def harness(dut: Dut, ctx: TestContext, result: TestResult, **kwargs) -> TestRes
     substatus = None
     testcmd = kwargs.get("cmd")
     testname = testcmd.split("/")[-1]
-    subtests_count = kwargs.get("testcase_count")
     subtests_numbers = get_subtests_numbers(testname)
     curr_subtest_idx = next(subtests_numbers)
-    prev_subtest_idx = 0
 
     while True:
         idx = dut.expect([start, tc_start, status, tc_end, final, msg_line, vsx_error], timeout=2000)
         parsed = dut.match.groupdict()
-
-        # start
-        if idx == 0:
-            for i in range(prev_subtest_idx + 1, curr_subtest_idx):
-                subname = f"testcase {i}"
-                result.add_subresult(subname, status=Status.SKIP, msg="")
 
         # tc_start
         if idx == 1:
@@ -76,12 +68,7 @@ def harness(dut: Dut, ctx: TestContext, result: TestResult, **kwargs) -> TestRes
             result.add_subresult(subname, substatus, msg)
             get_msg, msg = False, ""
 
-            prev_subtest_idx = curr_subtest_idx
-            curr_subtest_idx = next(subtests_numbers, subtests_count + 1)
-
-            for i in range(prev_subtest_idx + 1, curr_subtest_idx):
-                subname = f"testcase {i}"
-                result.add_subresult(subname, status=Status.SKIP, msg="")
+            curr_subtest_idx = next(subtests_numbers, None)
 
         # final
         elif idx == 4:
