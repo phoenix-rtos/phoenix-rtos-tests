@@ -656,10 +656,6 @@ TEST(stdio_scanf_squareBrackets, white_spaces)
 		TEST_ASSERT_EQUAL_STRING(buff, res);
 	}
 
-/* Test disabled because of issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/679 */
-#ifdef __phoenix__
-	TEST_IGNORE();
-#endif
 
 	format = "%[\n\t\v\f\r]";
 	test_scanfSetInput(buffMod);
@@ -844,10 +840,6 @@ TEST(stdio_scanf_rest, modifiers_mix)
 
 TEST(stdio_scanf_rest, m_s)
 {
-/* Disabled because of issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/667 */
-#ifdef __phoenix__
-	TEST_IGNORE();
-#endif
 
 	const char *lorem = "LoremIpsumDolorSitAmet,Vestibulum";
 	char *res, chrArray[BUFF_LEN];
@@ -884,10 +876,6 @@ TEST(stdio_scanf_rest, m_s)
 
 TEST(stdio_scanf_rest, m_brackets)
 {
-/* Disabled because of issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/667 */
-#ifdef __phoenix__
-	TEST_IGNORE();
-#endif
 
 	const char *buff = "loremIPSUM IPSUMdolor dolorSitAmet";
 	const char *buff2 = "123loremIPSUM IPSUMdolor123 dolor123SitAmet";
@@ -929,10 +917,6 @@ TEST(stdio_scanf_rest, m_brackets)
 __attribute__((no_sanitize_address))
 TEST(stdio_scanf_rest, m_c)
 {
-/* Disabled because of issue: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/667 */
-#ifdef __phoenix__
-	TEST_IGNORE();
-#endif
 
 	/* Address sanitizer used on Ubuntu 22.04 fails in such cases, because of the following issue:
 	 * https://github.com/llvm/llvm-project/issues/61768

@@ -369,11 +369,7 @@ TEST(fileops_readlink, readlink_enotdir_prefix_file)
 /* ENOTDIR: path ends with a trailing slash and names a regular file. */
 TEST(fileops_readlink, readlink_enotdir_trailing_slash)
 {
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1723 issue");
-#else
 	test_checkError(RL_FILE "/", RL_FILE_NAME "/", ENOTDIR);
-#endif
 }
 
 
