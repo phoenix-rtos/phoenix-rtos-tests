@@ -306,10 +306,9 @@ test:
           # 6: POSIX no longer strictly requires fclose() on open STREAMS when abort() is called
           # 13: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1401
           # 14: ulimit() is POSIX XSI extension
-          # 15, 16: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/733
           # 17: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
         - name: T.fclose
-          execute: run-test /tset/ANSI.os/streamio/fclose/T.fclose{1-5,7-12,18-21}
+          execute: run-test /tset/ANSI.os/streamio/fclose/T.fclose{1-5,7-12,15-16,18-21}
           kwargs:
             testcase_count: 21
 
@@ -338,10 +337,9 @@ test:
 
           # 8: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1401
           # 9: ulimit() is POSIX XSI extension
-          # 10, 11: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/733
           # 12: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
         - name: T.fflush
-          execute: run-test /tset/ANSI.os/streamio/fflush/T.fflush{1-7,13-15}
+          execute: run-test /tset/ANSI.os/streamio/fflush/T.fflush{1-7,10-11,13-15}
           kwargs:
             testcase_count: 15
 
@@ -355,10 +353,9 @@ test:
 
           # 6: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1401
           # 7: ulimit() is POSIX XSI extension
-          # 8, 9: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/733
           # 10: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
         - name: T.fputs
-          execute: run-test /tset/ANSI.os/streamio/fputs/T.fputs{1-5,11-13}
+          execute: run-test /tset/ANSI.os/streamio/fputs/T.fputs{1-5,8-9,11-13}
           kwargs:
             testcase_count: 13
 
@@ -382,11 +379,12 @@ test:
             testcase_count: 16
 
           # 2, 14: ulimit() is POSIX XSI extension
+          # 12: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1401
           # 13: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1401
-          # 15, 16: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/733
+          # 16: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
           # 17: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
         - name: T.fwrite
-          execute: run-test /tset/ANSI.os/streamio/fwrite/T.fwrite{1,3-4,6-11,17-19}
+          execute: run-test /tset/ANSI.os/streamio/fwrite/T.fwrite{1,3-11,15,17-19}
           kwargs:
             testcase_count: 19
 
@@ -403,12 +401,13 @@ test:
           kwargs:
             testcase_count: 7
 
-          # gets() is a stub
+          # 9: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1401
+          # 10, 11: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
+          # 12: no device to be mounted (VSX_ROFS)
         - name: T.gets
-          execute: run-test /tset/ANSI.os/streamio/gets/T.gets
+          execute: run-test /tset/ANSI.os/streamio/gets/T.gets{1-8,13-14}
           kwargs:
             testcase_count: 14
-          ignore: True
 
           # pseudo languages
         - name: T.perror
@@ -419,44 +418,38 @@ test:
           # 23, 25, 26: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/277 (%n specifier)
           # 33, 35, 36: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/277 (dynamic negative width)
           # 57, 58: pseudo languages
-          # 60, 61, 62, 65, 66: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1416
           # 63: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1401
           # 64: ulimit() is POSIX XSI extension
-          # 65, 66: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/733
-          # 67: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1458
+          # 67: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
         - name: T.printf
-          execute: run-test /tset/ANSI.os/streamio/printf/T.printf{1-22,24,27-32,34,37-56,59,68-70}
+          execute: run-test /tset/ANSI.os/streamio/printf/T.printf{1-22,24,27-32,34,37-56,59-62,65-66,68-70}
           kwargs:
             testcase_count: 70
 
           # 23, 25, 26: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/277 (%n specifier)
           # 33, 35, 36: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/277 (dynamic negative width)
           # 57, 58: pseudo languages
-          # 60, 61, 62, 65, 66: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1416
           # 63: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1401
           # 64: ulimit() is POSIX XSI extension
-          # 65, 66: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/733
-          # 67: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1458
+          # 67: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
         - name: T.vprintf
-          execute: run-test /tset/ANSI.os/streamio/vprintf/T.vprintf{1-22,24,27-32,34,37-56,59,68-70}
+          execute: run-test /tset/ANSI.os/streamio/vprintf/T.vprintf{1-22,24,27-32,34,37-56,59-62,65-66,68-70}
           kwargs:
             testcase_count: 70
 
           # 6: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1401
           # 7: ulimit() is POSIX XSI extension
-          # 8, 9: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/733
           # 10: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
         - name: T.putc
-          execute: run-test /tset/ANSI.os/streamio/putc/T.putc{1-5,11-13}
+          execute: run-test /tset/ANSI.os/streamio/putc/T.putc{1-5,8-9,11-13}
           kwargs:
             testcase_count: 13
 
           # 6: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1401
           # 7: ulimit() is POSIX XSI extension
-          # 8, 9: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/733
           # 10: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
         - name: T.puts
-          execute: run-test /tset/ANSI.os/streamio/puts/T.puts{1-5,11-13}
+          execute: run-test /tset/ANSI.os/streamio/puts/T.puts{1-5,8-9,11-13}
           kwargs:
             testcase_count: 13
 
@@ -465,11 +458,10 @@ test:
           kwargs:
             testcase_count: 4
 
-          # 6, 20, 39: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/679
-          # 45: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1419
+          # 6, 20, 39, 45: scanf() fails to parse the input
           # 47, 48: pseudo languages
           # 53: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1401 (same problem with EINTR)
-          # 54, 55: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1458
+          # 54, 55: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
           # 56: no device to be mounted (VSX_ROFS)
         - name: T.scanf
           execute: run-test /tset/ANSI.os/streamio/scanf/T.scanf{1-5,7-19,21-38,40-44,46,49-52,57-58}
@@ -717,10 +709,9 @@ test:
             testcase_count: 6
           ignore: True
 
-          # 2, 7: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1432
           # 3: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
         - name: T.i_ctty
-          execute: run-test /tset/POSIX.os/devclass/i_ctty/T.i_ctty{1,4-6,8-10}
+          execute: run-test /tset/POSIX.os/devclass/i_ctty/T.i_ctty{1-2,4-10}
           kwargs:
             testcase_count: 10
 
@@ -738,9 +729,8 @@ test:
           ignore: True
 
           # 7, 8: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1401
-          # 9: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1433
         - name: T.i_noncanon
-          execute: run-test /tset/POSIX.os/devclass/i_noncanon/T.i_noncanon{1-6,10-15}
+          execute: run-test /tset/POSIX.os/devclass/i_noncanon/T.i_noncanon{1-6,9-15}
           kwargs:
             testcase_count: 15
 
@@ -786,11 +776,10 @@ test:
             testcase_count: 19
           ignore: True
 
-          # 3: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1436
           # 5: this testcase assumes that tcgetpgrp() is not supported
           # 6, 7: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
         - name: T.tcgetpgrp
-          execute: run-test /tset/POSIX.os/devclass/tcgetpgrp/T.tcgetpgrp{1-2,4}
+          execute: run-test /tset/POSIX.os/devclass/tcgetpgrp/T.tcgetpgrp{1-4}
           kwargs:
             testcase_count: 7
 
@@ -804,6 +793,7 @@ test:
             testcase_count: 10
 
           # 1, 2, 3, 4, 5, 6, 9, 10, 11, 12, 13: can't be tested using pseudo ttys
+          # 8: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1435
           # 13: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
         - name: T.tcsendbrea
           execute: run-test /tset/POSIX.os/devclass/tcsendbrea/T.tcsendbrea{7}
@@ -825,7 +815,7 @@ test:
           ignore: True
 
           # 4, 5: system doesn't support users group
-          # 8: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1458
+          # 8: getgroups() doesn't return NGROUPS_MAX - system doesn't support supplementary groups
           # 9, 10: no permission verification in the system
           # 13: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1258
           # 14: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1462
@@ -835,8 +825,9 @@ test:
           kwargs:
             testcase_count: 27
 
-          # 4: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1458
+          # 4: getgroups() doesn't return NGROUPS_MAX - system doesn't support supplementary groups
           # 5: no permission verification in the system
+          # 6, 7: path of 256 or more characters is not handled correctly
         - name: T.chdir
           execute: run-test /tset/POSIX.os/files/chdir/T.chdir{1-3,8-15}
           kwargs:
@@ -852,7 +843,7 @@ test:
           # 3, 10, 17: setuid() is a stub
           # 4: system doesn't support users, so privileged chown doesn't make sense
           # 5, 6, 7: system doesn't support special mode bits like S_ISUID and S_ISGID (VSX_SET_ID_MODES_SUPP)
-          # 9: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1458
+          # 9: getgroups() doesn't return NGROUPS_MAX - system doesn't support supplementary groups
           # 11: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1258
           # 12: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1462
           # 18: no device to be mounted (VSX_ROFS)
@@ -871,9 +862,10 @@ test:
           # 4: LINK_MAX is not defined
           # 6: MAX_CANON is not defined
           # 8: MAX_INPUT is not defined
+          # 10: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1258
           # 14: PIPE_BUF is not defined
           # 16: _POSIX_CHOWN_RESTRICTED is not defined
-          # 19: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1458
+          # 19: getgroups() doesn't return NGROUPS_MAX - system doesn't support supplementary groups
           # 20: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1412
         - name: T.pathconf
           execute: run-test /tset/POSIX.os/files/pathconf/T.pathconf{1-3,5,7,9,11-13,15,17-18,21-43}
@@ -907,7 +899,7 @@ test:
           # 7, 22: links to directory not supported
           # 8: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1443
           # 9: link can't be used across filesystems (VSX_LINK_FILESYS_SUPP)
-          # 10, 11: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1458
+          # 10, 11: getgroups() doesn't return NGROUPS_MAX - system doesn't support supplementary groups
           # 16: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1258
           # 17: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1462
           # 23, 24, 25: no device to be mounted (VSX_ROFS, VSX_MOUNT_DEV)
@@ -917,11 +909,12 @@ test:
             testcase_count: 31
 
           # 4, 5: system doesn't support users group
-          # 7: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1458
+          # 7: getgroups() doesn't return NGROUPS_MAX - system doesn't support supplementary groups
           # 8, 9: no permission verification in the system
+          # 12: path of 256 or more characters is not handled correctly
           # 16: no device to be mounted (VSX_ROFS)
         - name: T.mkfifo
-          execute: run-test /tset/POSIX.os/files/mkfifo/T.mkfifo{1-3,6,10,13-15,17}
+          execute: run-test /tset/POSIX.os/files/mkfifo/T.mkfifo{1-3,6,10-11,13-15,17}
           kwargs:
             testcase_count: 17
 
@@ -932,8 +925,9 @@ test:
             testcase_count: 56
           ignore: True
 
-          # 5: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1458
+          # 5: getgroups() doesn't return NGROUPS_MAX - system doesn't support supplementary groups
           # 7, 8: no permission verification in the system
+          # 9, 10: path of 256 or more characters is not handled correctly
           # 13: opendir() doesn't detect EMFILE and ENFILE
         - name: T.opendir
           execute: run-test /tset/POSIX.os/files/opendir/T.opendir{1-4,6,11-12,14-18}
@@ -949,7 +943,7 @@ test:
           # 1, 3, 10, 12, 35: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1273
           # 5, 6, 7, 8, 11, 13, 22, 25, 32: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/409
           # 14: link() can't be used across file systems
-          # 15, 16: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1458
+          # 15, 16: getgroups() doesn't return NGROUPS_MAX - system doesn't support supplementary groups
           # 18, 19, 20: no permission verification in the system
           # 21: rename() doesn't detect EBUSY
           # 26: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1258
@@ -967,7 +961,7 @@ test:
             testcase_count: 2
 
           # 7: TODO: VSX_MOUNT_DEV option not set
-          # 8: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1458
+          # 8: getgroups() doesn't return NGROUPS_MAX - system doesn't support supplementary groups
           # 10, 11: no permission verification in the system
           # 12: rmdir() doesn't detect EBUSY
           # 14: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1258
@@ -980,7 +974,7 @@ test:
 
           # 6: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1443
           # 7: TODO: VSX_MOUNT_DEV option not set
-          # 8: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1458
+          # 8: getgroups() doesn't return NGROUPS_MAX - system doesn't support supplementary groups
           # 9, 10: no permission verification in the system
           # 11: remove() doesn't detect EBUSY
           # 13: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1258
@@ -1006,7 +1000,7 @@ test:
 
           # 6: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1443
           # 7, 20: no device to be mounted (VSX_ROFS, VSX_MOUNT_DEV)
-          # 8: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1458
+          # 8: getgroups() doesn't return NGROUPS_MAX - system doesn't support supplementary groups
           # 10, 11, 17: setuid() is a stub
           # 12: removing a busy directory doesn't give EBUSY (VSX_REMOVE_DIR_EBUSY)
           # 13: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1258
@@ -1019,11 +1013,11 @@ test:
 
           # 3, 4, 5, 10, 11, 18: setuid() is a stub
           # 6, 7: no permission verification in the system
-          # 9: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1458
-          # 12, 13, 14, 15, 16, 17: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1447
+          # 9: getgroups() doesn't return NGROUPS_MAX - system doesn't support supplementary groups
+          # 12, 13: utime() fails for paths longer than 255 characters
           # 19: no device to be mounted (VSX_ROFS)
         - name: T.utime
-          execute: run-test /tset/POSIX.os/files/utime/T.utime{1-2,8,20-29}
+          execute: run-test /tset/POSIX.os/files/utime/T.utime{1-2,8,14-17,20-29}
           kwargs:
             testcase_count: 29
 
@@ -1040,7 +1034,7 @@ test:
 
           # 3: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1235
         - name: T.dup2
-          execute: run-test /tset/POSIX.os/ioprim/dup2/T.dup2{1-2,4-6}
+          execute: run-test /tset/POSIX.os/ioprim/dup2/T.dup2{1-2,4-7}
           kwargs:
             testcase_count: 7
 
@@ -1150,17 +1144,15 @@ test:
             testcase_count: 6
           ignore: True
 
-          # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1458
+          # VSX_SETPGID_SUPPORTED is set to 'N' in the VSX configuration
         - name: setpgid
           execute: run-test /tset/POSIX.os/procenv/setpgid/T.setpgid
           kwargs:
             testcase_count: 13
           ignore: True
 
-          # 3: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1432
-          # 6: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1458
         - name: T.setsid
-          execute: run-test /tset/POSIX.os/procenv/setsid/T.setsid{1-2,4-5}
+          execute: run-test /tset/POSIX.os/procenv/setsid/T.setsid
           kwargs:
             testcase_count: 6
 
@@ -1171,10 +1163,9 @@ test:
             testcase_count: 6
           ignore: True
 
-          # 1, 2, 4, 6, 7, 9, 10, 11, 12: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1458
           # 3: CLK_TCK not defined
         - name: T.sysconf
-          execute: run-test /tset/POSIX.os/procenv/sysconf/T.sysconf{5,8,13}
+          execute: run-test /tset/POSIX.os/procenv/sysconf/T.sysconf{1-2,4-13}
           kwargs:
             testcase_count: 13
 
@@ -1185,12 +1176,12 @@ test:
             testcase_count: 2
           ignore: True
 
-          # times() is a stub
+          # 3: tms_utime returned by times() does not change
+          # 5: depends on testcase 3
         - name: T.times
-          execute: run-test /tset/POSIX.os/procenv/times/T.times
+          execute: run-test /tset/POSIX.os/procenv/times/T.times{1-2,4,6-7}
           kwargs:
             testcase_count: 7
-          ignore: True
 
           # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/650
         - name: T.ctermid
@@ -1213,18 +1204,16 @@ test:
             testcase_count: 2
 
           # 2: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1235
-          # 3: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1448
           # 7, 8, 9, 10: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
         - name: T.exit
-          execute: run-test /tset/ANSI.os/genuts/exit/T.exit{1,4-6,11-12}
+          execute: run-test /tset/ANSI.os/genuts/exit/T.exit{1,3-6,11-12}
           kwargs:
             testcase_count: 12
 
           # 2: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1235
-          # 3: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1448
           # 7, 8, 9, 10: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
         - name: T._exit
-          execute: run-test /tset/POSIX.os/procprim/_exit/T._exit{1,4-6,11-12}
+          execute: run-test /tset/POSIX.os/procprim/_exit/T._exit{1,3-6,11-12}
           kwargs:
             testcase_count: 12
 
@@ -1233,110 +1222,116 @@ test:
           kwargs:
             testcase_count: 5
 
-          # 15, 16, 29, 30, 32, 34: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1458
+          # 16: child process is terminated by SIGSEGV when exec is given an argument list of ARG_MAX bytes
           # 21: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1235
-          # 23: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1464
           # 25, 26, 42: system does not support users or groups; only root exists
           # 27, 28: system doesn't support special mode bits like S_ISUID and S_ISGID (VSX_SET_ID_MODES_SUPP)
+          # 29: system doesn't support saved set-user-ID and set-group-ID
+          # 30: pending alarm is cleared by exec
+          # 32: getgroups() doesn't return NGROUPS_MAX - system doesn't support supplementary groups
+          # 34: exec with an argument list longer than ARG_MAX doesn't fail with E2BIG
           # 35, 36: no permission verification in the system
           # 37: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1462
           # 38: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1258
-          # 40: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1463
         - name: T.execv
-          execute: run-test /tset/POSIX.os/procprim/exec/T.execv{1-14,17-20,22,24,31,33,39,41,43-50}
+          execute: run-test /tset/POSIX.os/procprim/exec/T.execv{1-15,17-20,22-24,31,33,39-41,43-50}
           kwargs:
             testcase_count: 50
 
-          # 15, 16, 29, 30, 32, 34: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1458
+          # 16: child process is terminated by SIGSEGV when exec is given an argument list of ARG_MAX bytes
           # 21: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1235
-          # 23: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1464
           # 25, 26, 42: system does not support users or groups; only root exists
           # 27, 28: system doesn't support special mode bits like S_ISUID and S_ISGID (VSX_SET_ID_MODES_SUPP)
+          # 29: system doesn't support saved set-user-ID and set-group-ID
+          # 30: pending alarm is cleared by exec
+          # 32: getgroups() doesn't return NGROUPS_MAX - system doesn't support supplementary groups
+          # 34: exec with an argument list longer than ARG_MAX doesn't fail with E2BIG
           # 35, 36: no permission verification in the system
           # 37: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1462
           # 38: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1258
-          # 40: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1463
         - name: T.execve
-          execute: run-test /tset/POSIX.os/procprim/exec/T.execve{1-14,17-20,22,24,31,33,39,41,43-50}
+          execute: run-test /tset/POSIX.os/procprim/exec/T.execve{1-15,17-20,22-24,31,33,39-41,43-50}
           kwargs:
             testcase_count: 50
 
-          # 15, 16, 29, 30, 32, 34: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1458
+          # 16: child process is terminated by SIGSEGV when exec is given an argument list of ARG_MAX bytes
           # 21: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1235
-          # 23: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1464
           # 25, 26: system does not support users or groups; only root exists
           # 27, 28: system doesn't support special mode bits like S_ISUID and S_ISGID (VSX_SET_ID_MODES_SUPP)
+          # 29: system doesn't support saved set-user-ID and set-group-ID
+          # 30: pending alarm is cleared by exec
+          # 32: getgroups() doesn't return NGROUPS_MAX - system doesn't support supplementary groups
+          # 34: exec with an argument list longer than ARG_MAX doesn't fail with E2BIG
           # 35, 36: no permission verification in the system
           # 37: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1462
           # 38: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1258
-          # 40: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1463
         - name: T.execvp
-          execute: run-test /tset/POSIX.os/procprim/exec/T.execvp{1-14,17-20,22,24,31,33,39,41-50}
+          execute: run-test /tset/POSIX.os/procprim/exec/T.execvp{1-15,17-20,22-24,31,33,39-50}
           kwargs:
             testcase_count: 50
 
-          # 15, 16, 29, 30, 32, 34: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1458
+          # 16: child process is terminated by SIGSEGV when exec is given an argument list of ARG_MAX bytes
           # 21: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1235
-          # 23: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1464
           # 25, 26, 42: system does not support users or groups; only root exists
           # 27, 28: system doesn't support special mode bits like S_ISUID and S_ISGID (VSX_SET_ID_MODES_SUPP)
+          # 29: system doesn't support saved set-user-ID and set-group-ID
+          # 30: pending alarm is cleared by exec
+          # 32: getgroups() doesn't return NGROUPS_MAX - system doesn't support supplementary groups
+          # 34: exec with an argument list longer than ARG_MAX doesn't fail with E2BIG
           # 35, 36: no permission verification in the system
           # 37: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1462
           # 38: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1258
-          # 40: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1463
         - name: T.execl
-          execute: run-test /tset/POSIX.os/procprim/exec/T.execl{1-14,17-20,22,24,31,33,39,41,43-50}
+          execute: run-test /tset/POSIX.os/procprim/exec/T.execl{1-15,17-20,22-24,31,33,39-41,43-50}
           kwargs:
             testcase_count: 50
 
-          # 15, 16, 29, 30, 32, 34: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1458
+          # 16: child process is terminated by SIGSEGV when exec is given an argument list of ARG_MAX bytes
           # 21: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1235
-          # 23: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1464
           # 25, 26, 42: system does not support users or groups; only root exists
           # 27, 28: system doesn't support special mode bits like S_ISUID and S_ISGID (VSX_SET_ID_MODES_SUPP)
+          # 29: system doesn't support saved set-user-ID and set-group-ID
+          # 30: pending alarm is cleared by exec
+          # 32: getgroups() doesn't return NGROUPS_MAX - system doesn't support supplementary groups
+          # 34: exec with an argument list longer than ARG_MAX doesn't fail with E2BIG
           # 35, 36: no permission verification in the system
           # 37: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1462
           # 38: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1258
-          # 40: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1463
         - name: T.execle
-          execute: run-test /tset/POSIX.os/procprim/exec/T.execle{1-14,17-20,22,24,31,33,39,41,43-50}
+          execute: run-test /tset/POSIX.os/procprim/exec/T.execle{1-15,17-20,22-24,31,33,39-41,43-50}
           kwargs:
             testcase_count: 50
 
-          # 15, 16, 29, 30, 32, 34: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1458
+          # 16: child process is terminated by SIGSEGV when exec is given an argument list of ARG_MAX bytes
           # 21: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1235
-          # 23: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1464
           # 25, 26: system does not support users or groups; only root exists
           # 27, 28: system doesn't support special mode bits like S_ISUID and S_ISGID (VSX_SET_ID_MODES_SUPP)
+          # 29: system doesn't support saved set-user-ID and set-group-ID
+          # 30: pending alarm is cleared by exec
+          # 32: getgroups() doesn't return NGROUPS_MAX - system doesn't support supplementary groups
+          # 34: exec with an argument list longer than ARG_MAX doesn't fail with E2BIG
           # 35, 36: no permission verification in the system
           # 37: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1462
           # 38: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1258
-          # 40: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1463
         - name: T.execlp
-          execute: run-test /tset/POSIX.os/procprim/exec/T.execlp{1-14,17-20,22,24,31,33,39,41-50}
+          execute: run-test /tset/POSIX.os/procprim/exec/T.execlp{1-15,17-20,22-24,31,33,39-50}
           kwargs:
             testcase_count: 50
 
-          # 5: times() is a stub
-          # 7: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1455
           # 8: TODO: investigate why blocked signal arrives
           # 11: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1776
           # 12: system doesn't support saved set-user-ID and set-group-ID
-          # 13, 21: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1458
-          # 17: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1456
+          # 21: CHILD_MAX is greater than PCTS_CHILD_MAX or -1
         - name: T.fork
-          execute: run-test /tset/POSIX.os/procprim/fork/T.fork{1-4,6,9-10,14-16,18-20}
+          execute: run-test /tset/POSIX.os/procprim/fork/T.fork{1-7,9-10,13-20}
           kwargs:
             testcase_count: 21
 
           # 1: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1233
-          # 2: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1432
-          # 9: kill() doesn't support 0 and -1 pid values
           # 12, 16, 17: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
-          # 14: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1453
           # 15: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1775
         - name: T.kill
-          execute: run-test /tset/POSIX.os/procprim/kill/T.kill{3-8,10-11,13,18}
+          execute: run-test /tset/POSIX.os/procprim/kill/T.kill{2-11,13-14,18}
           kwargs:
             testcase_count: 18
 
@@ -1411,35 +1406,33 @@ test:
           kwargs:
             testcase_count: 1
 
-          # 7: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1448
           # 8, 9: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1233
           # 10: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
         - name: T.wait
-          execute: run-test /tset/POSIX.os/procprim/wait/T.wait{1-6,11-12}
+          execute: run-test /tset/POSIX.os/procprim/wait/T.wait{1-7,11-12}
           kwargs:
             testcase_count: 12
 
           # 8, 15, 16, 17: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
-          # 12: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1448
           # 13, 14: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1233
         - name: T.waitpid
-          execute: run-test /tset/POSIX.os/procprim/waitpid/T.waitpid{1-7,9-11,18-24}
+          execute: run-test /tset/POSIX.os/procprim/waitpid/T.waitpid{1-7,9-12,18-24}
           kwargs:
             testcase_count: 24
 
-          # getgrgid() is a stub
+          # 1: group VSX_GID0 (2000) doesn't exist in /etc/group
+          # 2: VSX_UNUSED_GID and VSX_INVALID_GID are not configured
         - name: T.getgrgid
           execute: run-test /tset/POSIX.os/sysdb/getgrgid/T.getgrgid
           kwargs:
             testcase_count: 2
           ignore: True
 
-          # getgrnam() is a stub
+          # 1: group VSX_GID0 (2000) doesn't exist in /etc/group
         - name: T.getgrnam
-          execute: run-test /tset/POSIX.os/sysdb/getgrnam/T.getgrnam
+          execute: run-test /tset/POSIX.os/sysdb/getgrnam/T.getgrnam{2}
           kwargs:
             testcase_count: 2
-          ignore: True
 
         - name: T.getpwnam
           execute: run-test /tset/POSIX.os/sysdb/getpwnam/T.getpwnam
