@@ -242,10 +242,6 @@ TEST(statvfs_statvfs, statvfs_enotdir_prefix_not_dir)
 
 TEST(statvfs_statvfs, statvfs_enotdir_trailing_slash_not_dir)
 {
-/* issue #1723: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1723 */
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1723 issue");
-#endif
 	struct statvfs buf;
 	int ret;
 
