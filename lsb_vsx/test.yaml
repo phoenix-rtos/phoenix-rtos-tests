@@ -1225,14 +1225,11 @@ test:
           kwargs:
             testcase_count: 5
 
-          # 16: child process is terminated by SIGSEGV when exec is given an argument list of ARG_MAX bytes
           # 21: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1235
           # 25, 26, 42: system does not support users or groups; only root exists
           # 27, 28: system doesn't support special mode bits like S_ISUID and S_ISGID (VSX_SET_ID_MODES_SUPP)
           # 29: system doesn't support saved set-user-ID and set-group-ID
-          # 30: pending alarm is cleared by exec
           # 32: getgroups() doesn't return NGROUPS_MAX - system doesn't support supplementary groups
-          # 34: exec with an argument list longer than ARG_MAX doesn't fail with E2BIG
           # 35, 36: no permission verification in the system
           # 37: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1462
           # 38: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1258
@@ -1240,15 +1237,13 @@ test:
           execute: run-test /tset/POSIX.os/procprim/exec/T.execv{1-15,17-20,22-24,31,33,39-41,43-50}
           kwargs:
             testcase_count: 50
+            tested_function_issue_skips: {16: "#1810 issue", 30: "#1811, #1812, #1813 issues", 34: "#1810 issue"}
 
-          # 16: child process is terminated by SIGSEGV when exec is given an argument list of ARG_MAX bytes
           # 21: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1235
           # 25, 26, 42: system does not support users or groups; only root exists
           # 27, 28: system doesn't support special mode bits like S_ISUID and S_ISGID (VSX_SET_ID_MODES_SUPP)
           # 29: system doesn't support saved set-user-ID and set-group-ID
-          # 30: pending alarm is cleared by exec
           # 32: getgroups() doesn't return NGROUPS_MAX - system doesn't support supplementary groups
-          # 34: exec with an argument list longer than ARG_MAX doesn't fail with E2BIG
           # 35, 36: no permission verification in the system
           # 37: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1462
           # 38: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1258
@@ -1256,15 +1251,13 @@ test:
           execute: run-test /tset/POSIX.os/procprim/exec/T.execve{1-15,17-20,22-24,31,33,39-41,43-50}
           kwargs:
             testcase_count: 50
+            tested_function_issue_skips: {16: "#1810 issue", 30: "#1811, #1812, #1813 issues", 34: "#1810 issue"}
 
-          # 16: child process is terminated by SIGSEGV when exec is given an argument list of ARG_MAX bytes
           # 21: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1235
           # 25, 26: system does not support users or groups; only root exists
           # 27, 28: system doesn't support special mode bits like S_ISUID and S_ISGID (VSX_SET_ID_MODES_SUPP)
           # 29: system doesn't support saved set-user-ID and set-group-ID
-          # 30: pending alarm is cleared by exec
           # 32: getgroups() doesn't return NGROUPS_MAX - system doesn't support supplementary groups
-          # 34: exec with an argument list longer than ARG_MAX doesn't fail with E2BIG
           # 35, 36: no permission verification in the system
           # 37: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1462
           # 38: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1258
@@ -1272,15 +1265,13 @@ test:
           execute: run-test /tset/POSIX.os/procprim/exec/T.execvp{1-15,17-20,22-24,31,33,39-50}
           kwargs:
             testcase_count: 50
+            tested_function_issue_skips: {16: "#1810 issue", 30: "#1811, #1812, #1813 issues", 34: "#1810 issue"}
 
-          # 16: child process is terminated by SIGSEGV when exec is given an argument list of ARG_MAX bytes
           # 21: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1235
           # 25, 26, 42: system does not support users or groups; only root exists
           # 27, 28: system doesn't support special mode bits like S_ISUID and S_ISGID (VSX_SET_ID_MODES_SUPP)
           # 29: system doesn't support saved set-user-ID and set-group-ID
-          # 30: pending alarm is cleared by exec
           # 32: getgroups() doesn't return NGROUPS_MAX - system doesn't support supplementary groups
-          # 34: exec with an argument list longer than ARG_MAX doesn't fail with E2BIG
           # 35, 36: no permission verification in the system
           # 37: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1462
           # 38: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1258
@@ -1288,15 +1279,13 @@ test:
           execute: run-test /tset/POSIX.os/procprim/exec/T.execl{1-15,17-20,22-24,31,33,39-41,43-50}
           kwargs:
             testcase_count: 50
+            tested_function_issue_skips: {16: "#1810 issue", 30: "#1811, #1812, #1813 issues", 34: "#1810 issue"}
 
-          # 16: child process is terminated by SIGSEGV when exec is given an argument list of ARG_MAX bytes
           # 21: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1235
           # 25, 26, 42: system does not support users or groups; only root exists
           # 27, 28: system doesn't support special mode bits like S_ISUID and S_ISGID (VSX_SET_ID_MODES_SUPP)
           # 29: system doesn't support saved set-user-ID and set-group-ID
-          # 30: pending alarm is cleared by exec
           # 32: getgroups() doesn't return NGROUPS_MAX - system doesn't support supplementary groups
-          # 34: exec with an argument list longer than ARG_MAX doesn't fail with E2BIG
           # 35, 36: no permission verification in the system
           # 37: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1462
           # 38: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1258
@@ -1304,15 +1293,13 @@ test:
           execute: run-test /tset/POSIX.os/procprim/exec/T.execle{1-15,17-20,22-24,31,33,39-41,43-50}
           kwargs:
             testcase_count: 50
+            tested_function_issue_skips: {16: "#1810 issue", 30: "#1811, #1812, #1813 issues", 34: "#1810 issue"}
 
-          # 16: child process is terminated by SIGSEGV when exec is given an argument list of ARG_MAX bytes
           # 21: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1235
           # 25, 26: system does not support users or groups; only root exists
           # 27, 28: system doesn't support special mode bits like S_ISUID and S_ISGID (VSX_SET_ID_MODES_SUPP)
           # 29: system doesn't support saved set-user-ID and set-group-ID
-          # 30: pending alarm is cleared by exec
           # 32: getgroups() doesn't return NGROUPS_MAX - system doesn't support supplementary groups
-          # 34: exec with an argument list longer than ARG_MAX doesn't fail with E2BIG
           # 35, 36: no permission verification in the system
           # 37: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1462
           # 38: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1258
@@ -1320,6 +1307,7 @@ test:
           execute: run-test /tset/POSIX.os/procprim/exec/T.execlp{1-15,17-20,22-24,31,33,39-50}
           kwargs:
             testcase_count: 50
+            tested_function_issue_skips: {16: "#1810 issue", 30: "#1811, #1812, #1813 issues", 34: "#1810 issue"}
 
           # 8: TODO: investigate why blocked signal arrives
           # 11: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1776
