@@ -43,6 +43,13 @@ def harness(dut: Dut, ctx: TestContext, result: TestResult, **kwargs) -> TestRes
     testname = testcmd.split("/")[-1]
     subtests_numbers = get_subtests_numbers(testname)
     curr_subtest_idx = next(subtests_numbers)
+    # Testcases excluded from the selection because of an issue of the tested function, reported as skipped
+    skipped = sorted((int(num), str(reason)) for num, reason in kwargs.get("tested_function_issue_skips", {}).items())
+
+    def add_skipped(until: float) -> None:
+        while skipped and skipped[0][0] < until:
+            num, reason = skipped.pop(0)
+            result.add_subresult(f"testcase {num}", Status.SKIP, reason)
 
     while True:
         idx = dut.expect([start, tc_start, status, tc_end, final, msg_line, vsx_error], timeout=2000)
@@ -64,6 +71,7 @@ def harness(dut: Dut, ctx: TestContext, result: TestResult, **kwargs) -> TestRes
 
         # tc_end
         elif idx == 3:
+            add_skipped(curr_subtest_idx)
             subname = f"testcase {curr_subtest_idx}"
             result.add_subresult(subname, substatus, msg)
             get_msg, msg = False, ""
@@ -72,6 +80,7 @@ def harness(dut: Dut, ctx: TestContext, result: TestResult, **kwargs) -> TestRes
 
         # final
         elif idx == 4:
+            add_skipped(float("inf"))
             break
 
         # msg_line

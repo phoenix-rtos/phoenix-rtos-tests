@@ -13,6 +13,10 @@ test:
 
     # Each test has a testcase_count argument with the number of its testcases and this argument should never be modified.
 
+    # Testcases not executed because of a known issue of the tested function are listed in the
+    # tested_function_issue_skips argument with the issue, e.g. tested_function_issue_skips: {3: "#123 issue"},
+    # so that they are reported as skipped with this reason.
+
     tests:
           # 1: pseudo languages
         - name: T.isalnum
