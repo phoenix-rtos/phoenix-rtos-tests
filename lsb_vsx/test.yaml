@@ -751,12 +751,14 @@ test:
             testcase_count: 12
           ignore: True
 
-          # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/647
+          # 6, 7, 8, 14, 15, 16: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
+          # 11: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1435
         - name: T.tcflow
-          execute: run-test /tset/POSIX.os/devclass/tcflow/T.tcflow
+          execute: run-test /tset/POSIX.os/devclass/tcflow/T.tcflow{1,9-10}
           kwargs:
             testcase_count: 16
-          ignore: True
+            tested_function_issue_skips: {2: "#647 issue", 3: "#647 issue", 4: "#647 issue", 5: "#647 issue",
+                                          12: "#647 issue", 13: "#647 issue"}
 
           # https://github.com/phoenix-rtos/phoenix-rtos-project/issues/647
         - name: T.tcflush
