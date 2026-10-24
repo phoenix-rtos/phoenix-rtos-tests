@@ -154,8 +154,6 @@ TEST_GROUP_RUNNER(termios_tcdrain)
 }
 
 
-#ifndef __phoenix__
-
 TEST_GROUP(termios_tcflow);
 
 TEST_SETUP(termios_tcflow)
@@ -183,12 +181,17 @@ TEST(termios_tcflow, tcflow_tcooff)
 
 	test_openPty();
 
+#ifdef __phoenix__
+	(void)ret;
+	TEST_IGNORE_MESSAGE("#647 issue");
+#else
 	ret = tcflow(test_common.slaveFd, TCOOFF);
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	/* Restore */
 	ret = tcflow(test_common.slaveFd, TCOON);
 	TEST_ASSERT_EQUAL_INT(0, ret);
+#endif
 }
 
 
@@ -198,8 +201,13 @@ TEST(termios_tcflow, tcflow_tcoon)
 
 	test_openPty();
 
+#ifdef __phoenix__
+	(void)ret;
+	TEST_IGNORE_MESSAGE("#647 issue");
+#else
 	ret = tcflow(test_common.slaveFd, TCOON);
 	TEST_ASSERT_EQUAL_INT(0, ret);
+#endif
 }
 
 
@@ -209,8 +217,13 @@ TEST(termios_tcflow, tcflow_tcioff)
 
 	test_openPty();
 
+#ifdef __phoenix__
+	(void)ret;
+	TEST_IGNORE_MESSAGE("#647 issue");
+#else
 	ret = tcflow(test_common.slaveFd, TCIOFF);
 	TEST_ASSERT_EQUAL_INT(0, ret);
+#endif
 }
 
 
@@ -220,8 +233,13 @@ TEST(termios_tcflow, tcflow_tcion)
 
 	test_openPty();
 
+#ifdef __phoenix__
+	(void)ret;
+	TEST_IGNORE_MESSAGE("#647 issue");
+#else
 	ret = tcflow(test_common.slaveFd, TCION);
 	TEST_ASSERT_EQUAL_INT(0, ret);
+#endif
 }
 
 
@@ -270,11 +288,11 @@ TEST_GROUP_RUNNER(termios_tcflow)
 	RUN_TEST_CASE(termios_tcflow, tcflow_tcion);
 	RUN_TEST_CASE(termios_tcflow, tcflow_ebadf);
 	RUN_TEST_CASE(termios_tcflow, tcflow_einval_bad_action);
+#ifndef __phoenix__
+	/* the error for a file which is not a terminal depends on its server (POSIX deviation) */
 	RUN_TEST_CASE(termios_tcflow, tcflow_enotty_regular_file);
-}
-#else
-TEST_GROUP_UNIMPLEMENTED(termios_tcflow, "tcflow not implemented")
 #endif
+}
 
 
 TEST_GROUP(termios_tcflush);
