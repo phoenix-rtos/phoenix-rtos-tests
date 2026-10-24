@@ -39,6 +39,8 @@ void runner(void)
 	RUN_TEST_GROUP(stdio_getchar_unlocked);
 	RUN_TEST_GROUP(stdio_putchar_unlocked);
 	RUN_TEST_GROUP(stdio_gets);
+	RUN_TEST_GROUP(stdio_popen);
+	RUN_TEST_GROUP(stdio_pclose);
 	RUN_TEST_GROUP(stdio_renameat);
 	RUN_TEST_GROUP(stdio_tmpnam);
 	RUN_TEST_GROUP(stdio_vdprintf);
