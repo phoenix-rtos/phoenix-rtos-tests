@@ -30,6 +30,7 @@
 #define CREAT_TEST_SYMLINK "/tmp/test_creat_symlink"
 #define CREAT_TEST_DIR     "/tmp/test_creat_dir"
 #define CREAT_TEST_DATA    "existing data"
+#define CREAT_FS_NAME_MAX  255 /* name length limit of the Phoenix-RTOS filesystems */
 
 
 static struct {
@@ -201,15 +202,10 @@ TEST(fcntl_creat, creat_enametoolong)
 	memset(longName, 'b', NAME_MAX + 1);
 	longName[NAME_MAX + 1] = '\0';
 
-	(void)fd;
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1258 issue");
-#else
 	errno = 0;
 	fd = creat(longName, 0644);
 	TEST_ASSERT_EQUAL_INT(-1, fd);
 	TEST_ASSERT_EQUAL_INT(ENAMETOOLONG, errno);
-#endif
 }
 
 
@@ -224,8 +220,11 @@ TEST_GROUP_RUNNER(fcntl_creat)
 	RUN_TEST_CASE(fcntl_creat, creat_enoent_empty_path);
 	RUN_TEST_CASE(fcntl_creat, creat_eisdir);
 	RUN_TEST_CASE(fcntl_creat, creat_enotdir_prefix);
-#ifndef __phoenix__
-	/* the length of a path name component is checked by the filesystem, not against NAME_MAX (POSIX deviation) */
+#if !defined(__phoenix__) || (NAME_MAX >= CREAT_FS_NAME_MAX)
+	/*
+	 * On Phoenix-RTOS the length of a name is checked by the filesystem, so on targets where NAME_MAX is lower
+	 * than the name length limit of the filesystem longer names are accepted (POSIX deviation)
+	 */
 	RUN_TEST_CASE(fcntl_creat, creat_enametoolong);
 #endif
 }
