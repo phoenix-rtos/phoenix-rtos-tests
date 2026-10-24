@@ -1,0 +1,658 @@
+# Foundation API campaign - lsb_vsx tests of the selected Foundation API functions.
+# The tests are copied from lsb_vsx/test.yaml together with the selected testcases.
+# Testcases failing because of a reported issue of the tested function are listed in the
+# tested_function_issue_skips argument with the issue number and reported as skipped.
+
+test:
+    harness: ../lsb_vsx/lsb_vsx.py
+    nightly: true
+    targets:
+      value: [ia32-generic-qemu]
+
+    tests:
+          # 2: the test uses fcntl() record locks, which are not supported (POSIX deviation)
+          # 6, 7, 8, 9: job control is not supported (POSIX deviation)
+          # 12: not in use in the VSX configuration (NOTINUSE)
+        - name: T.abort
+          execute: run-test /tset/ANSI.os/genuts/abort/T.abort{1,3-5,10-11}
+          kwargs:
+            testcase_count: 12
+
+        - name: T.clearerr
+          execute: run-test /tset/ANSI.os/streamio/clearerr/T.clearerr
+          kwargs:
+            testcase_count: 1
+
+        - name: T.feof
+          execute: run-test /tset/ANSI.os/streamio/feof/T.feof
+          kwargs:
+            testcase_count: 2
+
+        - name: T.ferror
+          execute: run-test /tset/ANSI.os/streamio/ferror/T.ferror
+          kwargs:
+            testcase_count: 2
+
+          # 6: POSIX no longer strictly requires fclose() on open STREAMS when abort() is called
+          # 13: blocking operations are not interruptible (POSIX deviation)
+          # 14: ulimit() is POSIX XSI extension
+          # 17: job control is not supported (POSIX deviation)
+          # 4: no test in POSIX and XPG4 modes
+          # 18: no device without free space (VSX_NOSPC_DEV)
+          # 19, 20, 21: not in use in the VSX configuration (NOTINUSE)
+        - name: T.fclose
+          execute: run-test /tset/ANSI.os/streamio/fclose/T.fclose{1-3,5,7-12,15-16}
+          kwargs:
+            testcase_count: 21
+
+          # 2, 33: geteuid() always returns 0 - only the root user exists
+          # 19, 20, 21: no permission verification in the system
+          # 23: no device to be mounted (VSX_ROFS)
+          # 25: a path which isn't in canonical form is checked against PATH_MAX before it is canonicalized
+          # 26: a path name component near the name length limit of the filesystem is not handled correctly
+          # 27: blocking operations are not interruptible (POSIX deviation)
+          # 28: detection of EMFILE is not supported, while FOPEN_MAX is defined but unused
+          # 29: VSX_SYS_OPEN_MAX is not configured
+          # 30: no device without free space (VSX_NOSPC_DEV)
+          # 36, 37, 38, 39, 40, 41, 42, 43, 44: not in use in the VSX configuration (NOTINUSE)
+        - name: T.fopen
+          execute: run-test /tset/ANSI.os/streamio/fopen/T.fopen{1,3-18,22,24,31-32,34-35}
+          kwargs:
+            testcase_count: 44
+
+          # 2, 37: geteuid() always returns 0 - only the root user exists
+          # 21, 22, 23: no permission verification in the system
+          # 25: no device to be mounted (VSX_ROFS)
+          # 26: a path which isn't in canonical form is checked against PATH_MAX before it is canonicalized
+          # 27: a path name component near the name length limit of the filesystem is not handled correctly
+          # 28: blocking operations are not interruptible (POSIX deviation)
+          # 29: VSX_SYS_OPEN_MAX is not configured
+          # 30: no device without free space (VSX_NOSPC_DEV)
+          # 40, 41, 42, 43, 44, 45, 46, 47, 48, 49: not in use in the VSX configuration (NOTINUSE)
+        - name: T.freopen
+          execute: run-test /tset/ANSI.os/streamio/freopen/T.freopen{1,3-20,24,31-36,38-39}
+          kwargs:
+            testcase_count: 49
+
+          # 8: blocking operations are not interruptible (POSIX deviation)
+          # 9: ulimit() is POSIX XSI extension
+          # 12: job control is not supported (POSIX deviation)
+          # 2, 14, 15: not in use in the VSX configuration (NOTINUSE)
+          # 13: no device without free space (VSX_NOSPC_DEV)
+        - name: T.fflush
+          execute: run-test /tset/ANSI.os/streamio/fflush/T.fflush{1,3-7,10-11}
+          kwargs:
+            testcase_count: 15
+
+          # 9: blocking operations are not interruptible (POSIX deviation)
+          # 10, 11: job control is not supported (POSIX deviation)
+          # 12: no device to be mounted (VSX_ROFS)
+          # 13, 14: not in use in the VSX configuration (NOTINUSE)
+        - name: T.fgets
+          execute: run-test /tset/ANSI.os/streamio/fgets/T.fgets{1-8}
+          kwargs:
+            testcase_count: 14
+
+          # 6: blocking operations are not interruptible (POSIX deviation)
+          # 7: ulimit() is POSIX XSI extension
+          # 10: job control is not supported (POSIX deviation)
+          # 11: no device without free space (VSX_NOSPC_DEV)
+          # 12, 13: not in use in the VSX configuration (NOTINUSE)
+        - name: T.fputs
+          execute: run-test /tset/ANSI.os/streamio/fputs/T.fputs{1-5,8-9}
+          kwargs:
+            testcase_count: 13
+
+          # 11: ulimit() is POSIX XSI extension
+          # 15: no device without free space (VSX_NOSPC_DEV)
+          # 16, 17: not in use in the VSX configuration (NOTINUSE)
+        - name: T.fseek
+          execute: run-test /tset/ANSI.os/streamio/fseek/T.fseek{1-10,12-14}
+          kwargs:
+            testcase_count: 17
+
+        - name: T.ftell
+          execute: run-test /tset/ANSI.os/streamio/ftell/T.ftell
+          kwargs:
+            testcase_count: 4
+
+          # 11: blocking operations are not interruptible (POSIX deviation)
+          # 12, 13: job control is not supported (POSIX deviation)
+          # 14: no device to be mounted (VSX_ROFS)
+          # 15, 16: not in use in the VSX configuration (NOTINUSE)
+        - name: T.fread
+          execute: run-test /tset/ANSI.os/streamio/fread/T.fread{1-10}
+          kwargs:
+            testcase_count: 16
+
+          # 2, 14: ulimit() is POSIX XSI extension
+          # 12: blocking operations are not interruptible (POSIX deviation)
+          # 13: blocking operations are not interruptible (POSIX deviation)
+          # 16: job control is not supported (POSIX deviation)
+          # 17: job control is not supported (POSIX deviation)
+          # 3: the file size limit of a process can't be set
+          # 17: no device without free space (VSX_NOSPC_DEV)
+          # 18, 19: not in use in the VSX configuration (NOTINUSE)
+        - name: T.fwrite
+          execute: run-test /tset/ANSI.os/streamio/fwrite/T.fwrite{1,4-11,15}
+          kwargs:
+            testcase_count: 19
+
+          # 8: blocking operations are not interruptible (POSIX deviation)
+          # 9, 10: job control is not supported (POSIX deviation)
+          # 11: no device to be mounted (VSX_ROFS)
+          # 12, 13: not in use in the VSX configuration (NOTINUSE)
+        - name: T.getc
+          execute: run-test /tset/ANSI.os/streamio/getc/T.getc{1-7}
+          kwargs:
+            testcase_count: 13
+
+          # 7: not in use in the VSX configuration (NOTINUSE)
+        - name: T.ungetc
+          execute: run-test /tset/ANSI.os/streamio/ungetc/T.ungetc{1-6}
+          kwargs:
+            testcase_count: 7
+
+          # 9: blocking operations are not interruptible (POSIX deviation)
+          # 10, 11: job control is not supported (POSIX deviation)
+          # 12: no device to be mounted (VSX_ROFS)
+          # 13, 14: not in use in the VSX configuration (NOTINUSE)
+        - name: T.gets
+          execute: run-test /tset/ANSI.os/streamio/gets/T.gets{1-8}
+          kwargs:
+            testcase_count: 14
+
+          # locales other than C/POSIX (pseudo languages) are not supported
+        - name: T.perror
+          execute: run-test /tset/ANSI.os/streamio/perror/T.perror{2,3}
+          kwargs:
+            testcase_count: 3
+
+          # 6: blocking operations are not interruptible (POSIX deviation)
+          # 7: ulimit() is POSIX XSI extension
+          # 10: job control is not supported (POSIX deviation)
+          # 11: no device without free space (VSX_NOSPC_DEV)
+          # 12, 13: not in use in the VSX configuration (NOTINUSE)
+        - name: T.putc
+          execute: run-test /tset/ANSI.os/streamio/putc/T.putc{1-5,8-9}
+          kwargs:
+            testcase_count: 13
+
+          # 6: blocking operations are not interruptible (POSIX deviation)
+          # 7: ulimit() is POSIX XSI extension
+          # 10: job control is not supported (POSIX deviation)
+          # 11: no device without free space (VSX_NOSPC_DEV)
+          # 12, 13: not in use in the VSX configuration (NOTINUSE)
+        - name: T.puts
+          execute: run-test /tset/ANSI.os/streamio/puts/T.puts{1-5,8-9}
+          kwargs:
+            testcase_count: 13
+
+        - name: T.rewind
+          execute: run-test /tset/ANSI.os/streamio/rewind/T.rewind
+          kwargs:
+            testcase_count: 4
+
+          # 47, 48: locales other than C/POSIX (pseudo languages) are not supported
+          # 53: blocking operations are not interruptible (POSIX deviation)
+          # 54, 55: job control is not supported (POSIX deviation)
+          # 56: no device to be mounted (VSX_ROFS)
+          # 25, 26, 27, 28, 31, 34, 43, 57, 58: not in use in the VSX configuration (NOTINUSE)
+        - name: T.scanf
+          execute: run-test /tset/ANSI.os/streamio/scanf/T.scanf{1-24,29-30,32-33,35-42,44-46,49-52}
+          kwargs:
+            testcase_count: 58
+
+        - name: T.setbuf
+          execute: run-test /tset/ANSI.os/streamio/setbuf/T.setbuf
+          kwargs:
+            testcase_count: 5
+
+          # 2: system does not support users or groups; only root exists
+          # 8: VSX_SYS_OPEN_MAX is not configured
+        - name: T.tmpfile
+          execute: run-test /tset/ANSI.os/streamio/tmpfile/T.tmpfile{1,3-7}
+          kwargs:
+            testcase_count: 8
+
+        - name: T.tmpnam
+          execute: run-test /tset/ANSI.os/streamio/tmpnam/T.tmpnam
+          kwargs:
+            testcase_count: 3
+
+        - name: T.fdopen
+          execute: run-test /tset/POSIX.os/Csupport/fdopen/T.fdopen
+          kwargs:
+            testcase_count: 16
+
+        - name: T.fileno
+          execute: run-test /tset/POSIX.os/Csupport/fileno/T.fileno
+          kwargs:
+            testcase_count: 5
+
+        - name: T.cfgetispee
+          execute: run-test /tset/POSIX.os/devclass/cfgetispee/T.cfgetispee
+          kwargs:
+            testcase_count: 1
+
+        - name: T.cfgetospee
+          execute: run-test /tset/POSIX.os/devclass/cfgetospee/T.cfgetospee
+          kwargs:
+            testcase_count: 1
+
+          # 3: can't be tested using pseudo ttys - their terminal loopback differs
+        - name: T.cfsetispee
+          execute: run-test /tset/POSIX.os/devclass/cfsetispee/T.cfsetispee{1-2}
+          kwargs:
+            testcase_count: 3
+
+          # 2: can't be tested using pseudo ttys - their terminal loopback differs
+          # 3: can't be tested using pseudo ttys
+        - name: T.cfsetospee
+          execute: run-test /tset/POSIX.os/devclass/cfsetospee/T.cfsetospee{1}
+          kwargs:
+            testcase_count: 3
+
+          # 6, 7, 8, 14, 15, 16: job control is not supported (POSIX deviation)
+          # 11: the error for a file which is not a terminal depends on its server (POSIX deviation)
+        - name: T.tcflow
+          execute: run-test /tset/POSIX.os/devclass/tcflow/T.tcflow{1,9-10}
+          kwargs:
+            testcase_count: 16
+            tested_function_issue_skips: {2: "#647 issue", 3: "#647 issue", 4: "#647 issue", 5: "#647 issue",
+                                          12: "#647 issue", 13: "#647 issue"}
+
+          # 5: this testcase assumes that tcgetpgrp() is not supported
+          # 6, 7: job control is not supported (POSIX deviation)
+        - name: T.tcgetpgrp
+          execute: run-test /tset/POSIX.os/devclass/tcgetpgrp/T.tcgetpgrp{1-4}
+          kwargs:
+            testcase_count: 7
+
+          # 2, 3, 4: job control is not supported (POSIX deviation)
+          # 6, 8, 10: job control is not supported (POSIX deviation)
+          # 7: this testcase assumes that tcsetpgrp() is not supported
+          # 9: the error for a file which is not a terminal depends on its server (POSIX deviation)
+        - name: T.tcsetpgrp
+          execute: run-test /tset/POSIX.os/devclass/tcsetpgrp/T.tcsetpgrp{1,5}
+          kwargs:
+            testcase_count: 10
+
+          # 4, 5: system doesn't support users group
+          # 8: getgroups() doesn't return NGROUPS_MAX - system doesn't support supplementary groups
+          # 9, 10: no permission verification in the system
+          # 13: the length of a path name component is checked by the filesystem, not against NAME_MAX (POSIX deviation)
+          # 14: a path which isn't in canonical form is checked against PATH_MAX before it is canonicalized
+          # 18: no device to be mounted (VSX_ROFS)
+          # 19: no device without free space (VSX_NOSPC_DEV)
+          # 20, 21, 22, 23, 24, 25, 26, 27: not in use in the VSX configuration (NOTINUSE)
+        - name: T.mkdir
+          execute: run-test /tset/POSIX.os/files/mkdir/T.mkdir{1-3,6-7,11-12,15-17}
+          kwargs:
+            testcase_count: 27
+
+          # 2: DIR is not implemented using a file descriptor
+          # 3: closedir() doesn't detect EBADF (optional - "may fail")
+        - name: T.closedir
+          execute: run-test /tset/POSIX.os/files/closedir/T.closedir{1}
+          kwargs:
+            testcase_count: 3
+
+        - name: T.getcwd
+          execute: run-test /tset/POSIX.os/files/getcwd/T.getcwd
+          kwargs:
+            testcase_count: 5
+
+          # 4, 5: system doesn't support users group
+          # 7: getgroups() doesn't return NGROUPS_MAX - system doesn't support supplementary groups
+          # 8, 9: no permission verification in the system
+          # 12: path of 256 or more characters is not handled correctly
+          # 16: no device to be mounted (VSX_ROFS)
+          # 17: no device without free space (VSX_NOSPC_DEV)
+        - name: T.mkfifo
+          execute: run-test /tset/POSIX.os/files/mkfifo/T.mkfifo{1-3,6,10-11,13-15}
+          kwargs:
+            testcase_count: 17
+
+          # 5: getgroups() doesn't return NGROUPS_MAX - system doesn't support supplementary groups
+          # 7, 8: no permission verification in the system
+          # 9, 10: path of 256 or more characters is not handled correctly
+          # 13: directory streams don't use file descriptors, EMFILE and ENFILE are never reported (POSIX deviation)
+          # 15, 16, 17, 18: not in use in the VSX configuration (NOTINUSE)
+        - name: T.opendir
+          execute: run-test /tset/POSIX.os/files/opendir/T.opendir{1-4,6,11-12,14}
+          kwargs:
+            testcase_count: 18
+
+          # 10: readdir() doesn't detect EBADF (optional - "may fail")
+          # 11, 12: not in use in the VSX configuration (NOTINUSE)
+        - name: T.readdir
+          execute: run-test /tset/POSIX.os/files/readdir/T.readdir{1-9}
+          kwargs:
+            testcase_count: 12
+
+        - name: T.rewinddir
+          execute: run-test /tset/POSIX.os/files/rewinddir/T.rewinddir
+          kwargs:
+            testcase_count: 2
+
+          # 7: no device to be mounted (VSX_MOUNT_DEV)
+          # 8: getgroups() doesn't return NGROUPS_MAX - system doesn't support supplementary groups
+          # 10, 11: no permission verification in the system
+          # 12: rmdir() doesn't detect EBUSY
+          # 14: the length of a path name component is checked by the filesystem, not against NAME_MAX (POSIX deviation)
+          # 15: a path which isn't in canonical form is checked against PATH_MAX before it is canonicalized
+          # 20: no device to be mounted (VSX_ROFS)
+          # 9: no device without free space (VSX_NOSPC_DEV)
+          # 21, 22, 23, 24: not in use in the VSX configuration (NOTINUSE)
+        - name: T.rmdir
+          execute: run-test /tset/POSIX.os/files/rmdir/T.rmdir{1-6,13,16-19}
+          kwargs:
+            testcase_count: 24
+
+          # 7: no permission verification in the system
+          # 8: the length of a path name component is checked by the filesystem, not against NAME_MAX (POSIX deviation)
+          # 9: a path which isn't in canonical form is checked against PATH_MAX before it is canonicalized
+          # 14, 15, 16, 17: not in use in the VSX configuration (NOTINUSE)
+        - name: T.stat
+          execute: run-test /tset/POSIX.os/files/stat/T.stat{1-6,10-13}
+          kwargs:
+            testcase_count: 17
+
+        - name: T.umask
+          execute: run-test /tset/POSIX.os/files/umask/T.umask{1-3}
+          kwargs:
+            testcase_count: 3
+
+          # 6: not in use in the VSX configuration (NOTINUSE)
+        - name: T.close
+          execute: run-test /tset/POSIX.os/ioprim/close/T.close{1-5}
+          kwargs:
+            testcase_count: 6
+
+          # 2: the test uses fcntl() record locks, which are not supported (POSIX deviation)
+        - name: T.dup
+          execute: run-test /tset/POSIX.os/ioprim/dup/T.dup{1,3-5}
+          kwargs:
+            testcase_count: 5
+
+          # 3: the test uses fcntl() record locks, which are not supported (POSIX deviation)
+        - name: T.dup2
+          execute: run-test /tset/POSIX.os/ioprim/dup2/T.dup2{1-2,4-7}
+          kwargs:
+            testcase_count: 7
+
+        - name: T.lseek
+          execute: run-test /tset/POSIX.os/ioprim/lseek/T.lseek
+          kwargs:
+            testcase_count: 9
+
+          # 7: timestamps of a pipe are not updated by I/O operations (POSIX deviation)
+          # 10: VSX_SYS_OPEN_MAX is not configured
+        - name: T.pipe
+          execute: run-test /tset/POSIX.os/ioprim/pipe/T.pipe{1-6,8-9}
+          kwargs:
+            testcase_count: 10
+
+        - name: T.getenv
+          execute: run-test /tset/POSIX.os/procenv/getenv/T.getenv
+          kwargs:
+            testcase_count: 4
+
+        - name: T.getpgrp
+          execute: run-test /tset/POSIX.os/procenv/getpgrp/T.getpgrp
+          kwargs:
+            testcase_count: 1
+
+        - name: T.getpid
+          execute: run-test /tset/POSIX.os/procenv/getpid/T.getpid
+          kwargs:
+            testcase_count: 1
+
+        - name: getppid
+          execute: run-test /tset/POSIX.os/procenv/getppid/T.getppid
+          kwargs:
+            testcase_count: 1
+
+        - name: T.isatty
+          execute: run-test /tset/POSIX.os/procenv/isatty/T.isatty
+          kwargs:
+            testcase_count: 2
+
+          # 6: job control is not supported (POSIX deviation)
+        - name: T.setsid
+          execute: run-test /tset/POSIX.os/procenv/setsid/T.setsid{1-5}
+          kwargs:
+            testcase_count: 6
+
+          # 3: CLK_TCK is no longer defined by POSIX
+        - name: T.sysconf
+          execute: run-test /tset/POSIX.os/procenv/sysconf/T.sysconf{1-2,4-13}
+          kwargs:
+            testcase_count: 13
+
+        - name: T.times
+          execute: run-test /tset/POSIX.os/procenv/times/T.times
+          kwargs:
+            testcase_count: 7
+
+          # 1: the node name is empty - no hostname is set in the test environment
+        - name: T.uname
+          execute: run-test /tset/POSIX.os/procenv/uname/T.uname{2}
+          kwargs:
+            testcase_count: 2
+
+          # 2: the test uses fcntl() record locks, which are not supported (POSIX deviation)
+          # 7, 8, 9, 10: job control is not supported (POSIX deviation)
+          # 12: not in use in the VSX configuration (NOTINUSE)
+        - name: T.exit
+          execute: run-test /tset/ANSI.os/genuts/exit/T.exit{1,3-6,11}
+          kwargs:
+            testcase_count: 12
+
+          # 2: the test uses fcntl() record locks, which are not supported (POSIX deviation)
+          # 7, 8, 9, 10: job control is not supported (POSIX deviation)
+          # 11, 12: not in use in the VSX configuration (NOTINUSE)
+        - name: T._exit
+          execute: run-test /tset/POSIX.os/procprim/_exit/T._exit{1,3-6}
+          kwargs:
+            testcase_count: 12
+
+        - name: T.alarm
+          execute: run-test /tset/POSIX.os/procprim/alarm/T.alarm
+          kwargs:
+            testcase_count: 5
+
+          # 6, 7, 8, 9, 10, 11, 12: not in use in the VSX configuration (NOTINUSE)
+          # 21: the test uses fcntl() record locks, which are not supported (POSIX deviation)
+          # 25, 26, 42: system does not support users or groups; only root exists
+          # 27, 28: system doesn't support special mode bits like S_ISUID and S_ISGID (VSX_SET_ID_MODES_SUPP)
+          # 29: system doesn't support saved set-user-ID and set-group-ID
+          # 32: getgroups() doesn't return NGROUPS_MAX - system doesn't support supplementary groups
+          # 33: DIR is not implemented using a file descriptor
+          # 35, 36: no permission verification in the system
+          # 37: a path which isn't in canonical form is checked against PATH_MAX before it is canonicalized
+          # 38: the length of a path name component is checked by the filesystem, not against NAME_MAX (POSIX deviation)
+          # 44, 45, 46, 47, 48, 49, 50: not in use in the VSX configuration (NOTINUSE)
+        - name: T.execv
+          execute: run-test /tset/POSIX.os/procprim/exec/T.execv{1-5,13-15,17-20,22-24,31,39-41,43}
+          kwargs:
+            testcase_count: 50
+            tested_function_issue_skips: {16: "#1810 issue", 30: "#1811, #1812, #1813 issues", 34: "#1810 issue"}
+
+          # 6, 7, 8, 9, 10, 11, 12: not in use in the VSX configuration (NOTINUSE)
+          # 21: the test uses fcntl() record locks, which are not supported (POSIX deviation)
+          # 25, 26, 42: system does not support users or groups; only root exists
+          # 27, 28: system doesn't support special mode bits like S_ISUID and S_ISGID (VSX_SET_ID_MODES_SUPP)
+          # 29: system doesn't support saved set-user-ID and set-group-ID
+          # 32: getgroups() doesn't return NGROUPS_MAX - system doesn't support supplementary groups
+          # 33: DIR is not implemented using a file descriptor
+          # 35, 36: no permission verification in the system
+          # 37: a path which isn't in canonical form is checked against PATH_MAX before it is canonicalized
+          # 38: the length of a path name component is checked by the filesystem, not against NAME_MAX (POSIX deviation)
+          # 44, 45, 46, 47, 48, 49, 50: not in use in the VSX configuration (NOTINUSE)
+        - name: T.execve
+          execute: run-test /tset/POSIX.os/procprim/exec/T.execve{1-5,13-15,17-20,22-24,31,39-41,43}
+          kwargs:
+            testcase_count: 50
+            tested_function_issue_skips: {16: "#1810 issue", 30: "#1811, #1812, #1813 issues", 34: "#1810 issue"}
+
+          # 21: the test uses fcntl() record locks, which are not supported (POSIX deviation)
+          # 25, 26: system does not support users or groups; only root exists
+          # 27, 28: system doesn't support special mode bits like S_ISUID and S_ISGID (VSX_SET_ID_MODES_SUPP)
+          # 29: system doesn't support saved set-user-ID and set-group-ID
+          # 32: getgroups() doesn't return NGROUPS_MAX - system doesn't support supplementary groups
+          # 33: DIR is not implemented using a file descriptor
+          # 35, 36: no permission verification in the system
+          # 37: a path which isn't in canonical form is checked against PATH_MAX before it is canonicalized
+          # 38: the length of a path name component is checked by the filesystem, not against NAME_MAX (POSIX deviation)
+          # 42, 44, 45, 46, 47, 48, 49, 50: not in use in the VSX configuration (NOTINUSE)
+        - name: T.execvp
+          execute: run-test /tset/POSIX.os/procprim/exec/T.execvp{1-15,17-20,22-24,31,39-41,43}
+          kwargs:
+            testcase_count: 50
+            tested_function_issue_skips: {16: "#1810 issue", 30: "#1811, #1812, #1813 issues", 34: "#1810 issue"}
+
+          # 6, 7, 8, 9, 10, 11, 12: not in use in the VSX configuration (NOTINUSE)
+          # 21: the test uses fcntl() record locks, which are not supported (POSIX deviation)
+          # 25, 26, 42: system does not support users or groups; only root exists
+          # 27, 28: system doesn't support special mode bits like S_ISUID and S_ISGID (VSX_SET_ID_MODES_SUPP)
+          # 29: system doesn't support saved set-user-ID and set-group-ID
+          # 32: getgroups() doesn't return NGROUPS_MAX - system doesn't support supplementary groups
+          # 33: DIR is not implemented using a file descriptor
+          # 35, 36: no permission verification in the system
+          # 37: a path which isn't in canonical form is checked against PATH_MAX before it is canonicalized
+          # 38: the length of a path name component is checked by the filesystem, not against NAME_MAX (POSIX deviation)
+          # 44, 45, 46, 47, 48, 49, 50: not in use in the VSX configuration (NOTINUSE)
+        - name: T.execl
+          execute: run-test /tset/POSIX.os/procprim/exec/T.execl{1-5,13-15,17-20,22-24,31,39-41,43}
+          kwargs:
+            testcase_count: 50
+            tested_function_issue_skips: {16: "#1810 issue", 30: "#1811, #1812, #1813 issues", 34: "#1810 issue"}
+
+          # 6, 7, 8, 9, 10, 11, 12: not in use in the VSX configuration (NOTINUSE)
+          # 21: the test uses fcntl() record locks, which are not supported (POSIX deviation)
+          # 25, 26, 42: system does not support users or groups; only root exists
+          # 27, 28: system doesn't support special mode bits like S_ISUID and S_ISGID (VSX_SET_ID_MODES_SUPP)
+          # 29: system doesn't support saved set-user-ID and set-group-ID
+          # 32: getgroups() doesn't return NGROUPS_MAX - system doesn't support supplementary groups
+          # 33: DIR is not implemented using a file descriptor
+          # 35, 36: no permission verification in the system
+          # 37: a path which isn't in canonical form is checked against PATH_MAX before it is canonicalized
+          # 38: the length of a path name component is checked by the filesystem, not against NAME_MAX (POSIX deviation)
+          # 44, 45, 46, 47, 48, 49, 50: not in use in the VSX configuration (NOTINUSE)
+        - name: T.execle
+          execute: run-test /tset/POSIX.os/procprim/exec/T.execle{1-5,13-15,17-20,22-24,31,39-41,43}
+          kwargs:
+            testcase_count: 50
+            tested_function_issue_skips: {16: "#1810 issue", 30: "#1811, #1812, #1813 issues", 34: "#1810 issue"}
+
+          # 21: the test uses fcntl() record locks, which are not supported (POSIX deviation)
+          # 25, 26: system does not support users or groups; only root exists
+          # 27, 28: system doesn't support special mode bits like S_ISUID and S_ISGID (VSX_SET_ID_MODES_SUPP)
+          # 29: system doesn't support saved set-user-ID and set-group-ID
+          # 32: getgroups() doesn't return NGROUPS_MAX - system doesn't support supplementary groups
+          # 33: DIR is not implemented using a file descriptor
+          # 35, 36: no permission verification in the system
+          # 37: a path which isn't in canonical form is checked against PATH_MAX before it is canonicalized
+          # 38: the length of a path name component is checked by the filesystem, not against NAME_MAX (POSIX deviation)
+          # 42, 44, 45, 46, 47, 48, 49, 50: not in use in the VSX configuration (NOTINUSE)
+        - name: T.execlp
+          execute: run-test /tset/POSIX.os/procprim/exec/T.execlp{1-15,17-20,22-24,31,39-41,43}
+          kwargs:
+            testcase_count: 50
+            tested_function_issue_skips: {16: "#1810 issue", 30: "#1811, #1812, #1813 issues", 34: "#1810 issue"}
+
+          # 12, 16, 17: job control is not supported (POSIX deviation)
+          # 15: permission to send a signal is not verified (POSIX deviation)
+        - name: T.kill
+          execute: run-test /tset/POSIX.os/procprim/kill/T.kill{1-11,13-14,18}
+          kwargs:
+            testcase_count: 18
+
+        - name: T.pause
+          execute: run-test /tset/POSIX.os/procprim/pause/T.pause
+          kwargs:
+            testcase_count: 4
+
+          # 4: not in use in the VSX configuration (NOTINUSE)
+          # 9, 10, 14, 17: job control is not supported (POSIX deviation)
+        - name: T.sigaction
+          execute: run-test /tset/POSIX.os/procprim/sigaction/T.sigaction{1-3,5-8,11-13,15-16}
+          kwargs:
+            testcase_count: 17
+
+        - name: T.sigaddset
+          execute: run-test /tset/POSIX.os/procprim/sigaddset/T.sigaddset
+          kwargs:
+            testcase_count: 2
+
+        - name: T.sigdelset
+          execute: run-test /tset/POSIX.os/procprim/sigdelset/T.sigdelset
+          kwargs:
+            testcase_count: 2
+
+        - name: T.sigemptyse
+          execute: run-test /tset/POSIX.os/procprim/sigemptyse/T.sigemptyse
+          kwargs:
+            testcase_count: 1
+
+        - name: T.sigfillset
+          execute: run-test /tset/POSIX.os/procprim/sigfillset/T.sigfillset
+          kwargs:
+            testcase_count: 1
+
+        - name: T.sigismembe
+          execute: run-test /tset/POSIX.os/procprim/sigismembe/T.sigismembe
+          kwargs:
+            testcase_count: 2
+
+        - name: T.sigpending
+          execute: run-test /tset/POSIX.os/procprim/sigpending/T.sigpending
+          kwargs:
+            testcase_count: 1
+
+          # 8: job control is not supported (POSIX deviation)
+        - name: T.sigprocmas
+          execute: run-test /tset/POSIX.os/procprim/sigprocmas/T.sigprocmas{1-7,9-10}
+          kwargs:
+            testcase_count: 10
+
+          # 5: job control is not supported (POSIX deviation)
+        - name: T.sigsuspend
+          execute: run-test /tset/POSIX.os/procprim/sigsuspend/T.sigsuspend{1-4,6}
+          kwargs:
+            testcase_count: 6
+
+        - name: T.sleep
+          execute: run-test /tset/POSIX.os/procprim/sleep/T.sleep
+          kwargs:
+            testcase_count: 1
+
+          # 10: job control is not supported (POSIX deviation)
+        - name: T.wait
+          execute: run-test /tset/POSIX.os/procprim/wait/T.wait{1-9,11-12}
+          kwargs:
+            testcase_count: 12
+
+          # 8, 15, 16, 17: job control is not supported (POSIX deviation)
+        - name: T.waitpid
+          execute: run-test /tset/POSIX.os/procprim/waitpid/T.waitpid{1-7,9-14,18-24}
+          kwargs:
+            testcase_count: 24
+
+          # 1: group VSX_GID0 (2000) doesn't exist in /etc/group
+        - name: T.getgrnam
+          execute: run-test /tset/POSIX.os/sysdb/getgrnam/T.getgrnam{2}
+          kwargs:
+            testcase_count: 2
+
+        - name: T.getpwnam
+          execute: run-test /tset/POSIX.os/sysdb/getpwnam/T.getpwnam
+          kwargs:
+            testcase_count: 2
+
+        - name: T.getpwuid
+          execute: run-test /tset/POSIX.os/sysdb/getpwuid/T.getpwuid
+          kwargs:
+            testcase_count: 2

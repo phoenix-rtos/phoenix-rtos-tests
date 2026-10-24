@@ -1,0 +1,471 @@
+# Foundation API campaign - libc tests of the selected Foundation API functions.
+# Only the test groups of these functions are run: the Unity group filter (-g) selects every
+# group whose name contains the given string. Cases failing because of a reported issue of the
+# tested function are skipped with the issue number.
+test:
+  type: unity
+  nightly: true
+  targets:
+    value: [ia32-generic-qemu]
+
+  tests:
+    - name: dirent-dirent_opendir
+      execute: test-libc-dirent -g dirent_opendir
+
+    - name: dirent-dirent_closedir
+      execute: test-libc-dirent -g dirent_closedir
+
+    - name: dirent-dirent_readdir
+      execute: test-libc-dirent -g dirent_readdir
+
+    - name: dirent-dirent_rewinddir
+      execute: test-libc-dirent -g dirent_rewinddir
+
+    - name: dirent-dirent_fdopendir
+      execute: test-libc-dirent -g dirent_fdopendir
+
+    - name: dirent-dirent_seekdir_telldir
+      execute: test-libc-dirent -g dirent_seekdir_telldir
+
+    - name: dirent-dirent_scandir
+      execute: test-libc-dirent -g dirent_scandir
+
+    - name: exit-unistd_exit
+      execute: test-libc-exit -g unistd_exit
+
+    - name: exit-unistd_Exit
+      execute: test-libc-exit -g unistd_Exit
+
+    - name: exit-stdlib_exit
+      execute: test-libc-exit -g stdlib_exit
+
+    - name: exit-stdlib_at_quick_exit
+      execute: test-libc-exit -g stdlib_at_quick_exit
+
+    - name: exit-stdlib_quick_exit
+      execute: test-libc-exit -g stdlib_quick_exit
+
+    - name: fcntl-fcntl_creat
+      execute: test-libc-fcntl -g fcntl_creat
+
+    - name: fcntl-fcntl_fcntl
+      execute: test-libc-fcntl -g fcntl_fcntl
+
+    # the name filter excludes the fcntl_openat group
+    - name: fcntl-fcntl_open
+      execute: test-libc-fcntl -g fcntl_open -n open_
+
+    # the name filter excludes the fileops_readlinkat group
+    - name: fileops-fileops_readlink
+      execute: test-libc-fileops -g fileops_readlink -n readlink_
+
+    - name: group-getpwd
+      execute: test-libc-group -g getpwd
+
+    # the filter also selects grp_getgrgid_r
+    - name: group-grp_getgrgid
+      execute: test-libc-group -g grp_getgrgid
+
+    # the filter also selects grp_getgrnam_r
+    - name: group-grp_getgrnam
+      execute: test-libc-group -g grp_getgrnam
+
+    # the filter also selects grp_getgrgid_r
+    - name: grp-grp_getgrgid
+      execute: test-libc-grp -g grp_getgrgid
+
+    # the filter also selects grp_getgrnam_r
+    - name: grp-grp_getgrnam
+      execute: test-libc-grp -g grp_getgrnam
+
+    # ioctl() is tested by the binaries of the ioctl directory, outside of the libc tests
+    - name: ioctl-test-ioctl
+      execute: test-ioctl
+
+    - name: ioctl-test-ioctl-nested
+      execute: test-ioctl-nested
+
+    - name: mman-mman_mmap
+      execute: test-libc-mman -g mman_mmap
+
+    - name: mman-mman_munmap
+      execute: test-libc-mman -g mman_munmap
+
+    - name: misc-stdlib_realpath
+      execute: test-libc-misc -g stdlib_realpath
+
+    - name: misc-unistd_getopt
+      execute: test-libc-misc -g unistd_getopt
+
+    - name: misc-unistd_fsdir
+      execute: test-libc-misc -g unistd_fsdir
+
+    # the filter also selects unistd_file_pread, unistd_file_safe and unistd_file_safe_pread
+    - name: misc-unistd_file
+      execute: test-libc-misc -g unistd_file
+
+    - name: misc-stat_mode
+      execute: test-libc-misc -g stat_mode
+
+    - name: misc-stat_nlink_size_blk_tim
+      execute: test-libc-misc -g stat_nlink_size_blk_tim
+
+    - name: misc-stat_errno
+      execute: test-libc-misc -g stat_errno
+
+    - name: misc-misc_umask
+      execute: test-libc-misc -g misc_umask
+
+    - name: misc-unistd_gethostid
+      execute: test-libc-misc -g unistd_gethostid
+
+    - name: misc-unistd_gethostname
+      execute: test-libc-misc -g unistd_gethostname
+
+    - name: misc-unistd_getpgid
+      execute: test-libc-misc -g unistd_getpgid
+
+    - name: misc-unistd_getpgrp
+      execute: test-libc-misc -g unistd_getpgrp
+
+    - name: misc-unistd_getsid
+      execute: test-libc-misc -g unistd_getsid
+
+    - name: misc-unistd_setpgrp
+      execute: test-libc-misc -g unistd_setpgrp
+
+    - name: misc-unistd_setpgid
+      execute: test-libc-misc -g unistd_setpgid
+
+    - name: misc-unistd_setsid
+      execute: test-libc-misc -g unistd_setsid
+
+    - name: misc-unistd_fsync
+      execute: test-libc-misc -g unistd_fsync
+
+    - name: misc-unistd_usleep
+      execute: test-libc-misc -g unistd_usleep
+
+    - name: poll-test_poll
+      execute: test-libc-poll -g test_poll
+
+    - name: posixsrv-tmpfile
+      execute: test-libc-posixsrv -g tmpfile
+
+    - name: posixsrv-tmpnames
+      execute: test-libc-posixsrv -g tmpnames
+
+    - name: proc-proc_alarm
+      execute: test-libc-proc -g proc_alarm
+
+    - name: proc-proc_pause
+      execute: test-libc-proc -g proc_pause
+
+    - name: proc-proc_sleep
+      execute: test-libc-proc -g proc_sleep
+
+    - name: proc-proc_nice
+      execute: test-libc-proc -g proc_nice
+
+    - name: proc-proc_setsid
+      execute: test-libc-proc -g proc_setsid
+
+    - name: proc-proc_times
+      execute: test-libc-proc -g proc_times
+
+    - name: proc-proc_waitpid_group
+      execute: test-libc-proc -g proc_waitpid_group
+
+    # the filter selects all pthread_attr* groups
+    - name: pthread-pthread_attr
+      execute: test-libc-pthread -g pthread_attr
+
+    # the filter selects all pthread_mutex* groups
+    - name: pthread-pthread_mutex
+      execute: test-libc-pthread -g pthread_mutex
+
+    # the filter selects all pthread_cond* and test_pthread_cond groups
+    - name: pthread-pthread_cond
+      execute: test-libc-pthread -g pthread_cond
+
+    - name: pthread-test_pthread_cleanup
+      execute: test-libc-pthread -g test_pthread_cleanup
+
+    - name: pthread-pthread_lifecycle
+      execute: test-libc-pthread -g pthread_lifecycle
+
+    - name: pthread-pthread_once
+      execute: test-libc-pthread -g pthread_once
+
+    - name: pthread-pthread_key
+      execute: test-libc-pthread -g pthread_key
+
+    # the filter also selects the pthread_cancel_type group, the name filter leaves its testcancel_ cases only
+    # and excludes the pthread_setcanceltype() cases
+    - name: pthread-pthread_cancel
+      execute: test-libc-pthread -g pthread_cancel -n cancel_
+
+    - name: pthread-pthread_cancel_setcancelstate
+      execute: test-libc-pthread -g pthread_cancel -n setcancelstate_
+
+    - name: pthread-pthread_atfork
+      execute: test-libc-pthread -g pthread_atfork
+
+    - name: pthread-pthread_kill
+      execute: test-libc-pthread -g pthread_kill
+
+    - name: pthread-pthread_sigmask
+      execute: test-libc-pthread -g pthread_sigmask
+
+    # the filter selects all pthread_rwlock* groups
+    - name: pthread-pthread_rwlock
+      execute: test-libc-pthread -g pthread_rwlock
+
+    - name: pthread-pthread_spin
+      execute: test-libc-pthread -g pthread_spin
+
+    - name: pthread-pthread_sched
+      execute: test-libc-pthread -g pthread_sched
+
+    - name: pthread-pthread_getcpuclockid
+      execute: test-libc-pthread -g pthread_getcpuclockid
+
+    - name: pthread-pthread_prio_range
+      execute: test-libc-pthread -g pthread_prio_range
+
+    - name: pwd-pwd_getpwent
+      execute: test-libc-pwd -g pwd_getpwent
+
+    - name: pwd-pwd_getpwnam_r
+      execute: test-libc-pwd -g pwd_getpwnam_r
+
+    - name: pwd-pwd_getpwuid_r
+      execute: test-libc-pwd -g pwd_getpwuid_r
+
+    - name: resource-resource_priority
+      execute: test-libc-resource -g resource_priority
+
+    - name: scanf-basic
+      execute: test-libc-scanf-basic
+
+    - name: scanf-advanced
+      execute: test-libc-scanf-advanced
+
+    - name: sched-sched_get_priority
+      execute: test-libc-sched -g sched_get_priority
+
+    - name: sched-sched_yield
+      execute: test-libc-sched -g sched_yield
+
+    - name: sched-sched_param
+      execute: test-libc-sched -g sched_param
+
+    - name: sched-sched_scheduler
+      execute: test-libc-sched -g sched_scheduler
+
+    - name: sched-sched_rr_get_interval
+      execute: test-libc-sched -g sched_rr_get_interval
+
+    - name: sched-sched_prio_range
+      execute: test-libc-sched -g sched_prio_range
+
+    - name: sem-sem_unnamed
+      execute: test-libc-sem -g sem_unnamed
+
+    - name: sem-sem_named
+      execute: test-libc-sem -g sem_named
+
+    - name: semaphore-sem_unnamed
+      execute: test-libc-semaphore -g sem_unnamed
+
+    - name: semaphore-sem_named
+      execute: test-libc-semaphore -g sem_named
+
+    - name: signal-mask
+      execute: test-libc-signal -g mask
+
+    - name: signal-sigsuspend
+      execute: test-libc-signal -g sigsuspend
+
+    - name: signal-signal_raise
+      execute: test-libc-signal -g signal_raise
+
+    - name: signal-signal_pending
+      execute: test-libc-signal -g signal_pending
+
+    - name: signal-signal_killgroup
+      execute: test-libc-signal -g signal_killgroup
+
+    # the filter selects the sigaction and signal_sigaction groups
+    - name: signal-sigaction
+      execute: test-libc-signal -g sigaction
+
+    - name: socket-socket_api_accept
+      execute: test-libc-socket -g socket_api_accept
+
+    - name: socket-socket_api_bind
+      execute: test-libc-socket -g socket_api_bind
+
+    - name: socket-socket_api_connect
+      execute: test-libc-socket -g socket_api_connect
+
+    - name: socket-socket_api_getpeername
+      execute: test-libc-socket -g socket_api_getpeername
+
+    - name: socket-socket_api_getsockname
+      execute: test-libc-socket -g socket_api_getsockname
+
+    - name: socket-socket_api_getsockopt
+      execute: test-libc-socket -g socket_api_getsockopt
+
+    - name: socket-socket_api_listen
+      execute: test-libc-socket -g socket_api_listen
+
+    # the filter selects socket_api_recv, socket_api_recvfrom and socket_api_recvmsg
+    - name: socket-socket_api_recv
+      execute: test-libc-socket -g socket_api_recv
+
+    # the filter selects socket_api_send, socket_api_sendto and socket_api_sendmsg
+    - name: socket-socket_api_send
+      execute: test-libc-socket -g socket_api_send
+
+    - name: socket-socket_api_shutdown
+      execute: test-libc-socket -g socket_api_shutdown
+
+    - name: socket-socket_api_socketpair
+      execute: test-libc-socket -g socket_api_socketpair
+
+    - name: unix-socket
+      execute: test-libc-unix-socket
+
+    - name: inet-socket
+      execute: test-libc-inet-socket
+
+    - name: statvfs-statvfs_statvfs
+      execute: test-libc-statvfs -g statvfs_statvfs
+
+    - name: statvfs-statvfs_fstatvfs
+      execute: test-libc-statvfs -g statvfs_fstatvfs
+
+    - name: stdio-stdio_fopenfclose
+      execute: test-libc-stdio -g stdio_fopenfclose
+
+    - name: stdio-stdio_line
+      execute: test-libc-stdio -g stdio_line
+
+    - name: stdio-stdio_getput
+      execute: test-libc-stdio -g stdio_getput
+
+    - name: stdio-stdio_fileseek
+      execute: test-libc-stdio -g stdio_fileseek
+
+    - name: stdio-stdio_fileop
+      execute: test-libc-stdio -g stdio_fileop
+
+    - name: stdio-stdio_bufs
+      execute: test-libc-stdio -g stdio_bufs
+
+    - name: stdio-stdio_fread
+      execute: test-libc-stdio -g stdio_fread
+
+    - name: stdio-stdio_fwrite
+      execute: test-libc-stdio -g stdio_fwrite
+
+    - name: stdio-stdio_fflush
+      execute: test-libc-stdio -g stdio_fflush
+
+    - name: stdio-stdio_feof
+      execute: test-libc-stdio -g stdio_feof
+
+    - name: stdio-stdio_ftell
+      execute: test-libc-stdio -g stdio_ftell
+
+    - name: stdio-stdio_getdelim
+      execute: test-libc-stdio -g stdio_getdelim
+
+    - name: stdio-stdio_fgetpos
+      execute: test-libc-stdio -g stdio_fgetpos
+
+    - name: stdio-stdio_fsetpos
+      execute: test-libc-stdio -g stdio_fsetpos
+
+    - name: stdio-stdio_unlocked
+      execute: test-libc-stdio -g stdio_unlocked
+
+    - name: stdio-stdio_getchar_unlocked
+      execute: test-libc-stdio -g stdio_getchar_unlocked
+
+    - name: stdio-stdio_putchar_unlocked
+      execute: test-libc-stdio -g stdio_putchar_unlocked
+
+    - name: stdio-stdio_gets
+      execute: test-libc-stdio -g stdio_gets
+
+    - name: stdio-stdio_popen
+      execute: test-libc-stdio -g stdio_popen
+
+    - name: stdio-stdio_pclose
+      execute: test-libc-stdio -g stdio_pclose
+
+    - name: stdio-stdio_tmpnam
+      execute: test-libc-stdio -g stdio_tmpnam
+
+    - name: stdlib-stdlib_env
+      execute: test-libc-stdlib -g stdlib_env
+
+    - name: stdlib-stdlib_mkdtemp
+      execute: test-libc-stdlib -g stdlib_mkdtemp
+
+    - name: stdlib-stdlib_mkstemp
+      execute: test-libc-stdlib -g stdlib_mkstemp
+
+    - name: stdlib-stdlib_system
+      execute: test-libc-stdlib -g stdlib_system
+
+    - name: syslog-syslog_openlog
+      execute: test-libc-syslog -g syslog_openlog
+
+    - name: syslog-syslog_closelog
+      execute: test-libc-syslog -g syslog_closelog
+
+    - name: syslog-syslog_setlogmask
+      execute: test-libc-syslog -g syslog_setlogmask
+
+    - name: syslog-syslog_syslog
+      execute: test-libc-syslog -g syslog_syslog
+
+    - name: termios-termios_tcflow
+      execute: test-libc-termios -g termios_tcflow
+
+    - name: termios-termios_tcgetsid
+      execute: test-libc-termios -g termios_tcgetsid
+
+    - name: termios-termios_tcgetpgrp
+      execute: test-libc-termios -g termios_tcgetpgrp
+
+    - name: termios-termios_tcsetpgrp
+      execute: test-libc-termios -g termios_tcsetpgrp
+
+    - name: termios-termios_ctty
+      execute: test-libc-termios -g termios_ctty
+
+    - name: time-test_utimes
+      execute: test-libc-time -g test_utimes
+
+    - name: time-time_clock_gettime
+      execute: test-libc-time -g time_clock_gettime
+
+    - name: time-time_clock_settime
+      execute: test-libc-time -g time_clock_settime
+
+    - name: time-time_clock_nanosleep
+      execute: test-libc-time -g time_clock_nanosleep
+
+    - name: time-time_nanosleep
+      execute: test-libc-time -g time_nanosleep
+
+    - name: time-time_clock_getcpuclockid
+      execute: test-libc-time -g time_clock_getcpuclockid
+
+    - name: time-time_clock_getres
+      execute: test-libc-time -g time_clock_getres
