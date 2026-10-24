@@ -1656,7 +1656,10 @@ TEST_GROUP_RUNNER(termios_ctty)
 	RUN_TEST_CASE(termios_ctty, open_acquires_ctty_for_session_leader);
 	RUN_TEST_CASE(termios_ctty, open_with_noctty_does_not_acquire);
 	RUN_TEST_CASE(termios_ctty, open_does_not_acquire_ctty_for_non_leader);
+#ifndef __phoenix__
+	/* SIGHUP is not sent to the foreground process group on termination of a controlling process (POSIX deviation) */
 	RUN_TEST_CASE(termios_ctty, sighup_to_foreground_group_when_controlling_process_exits);
+#endif
 #ifdef __phoenix__
 	RUN_TEST_CASE(termios_ctty, tcsetpgrp_eperm_pgid_without_any_process);
 #endif

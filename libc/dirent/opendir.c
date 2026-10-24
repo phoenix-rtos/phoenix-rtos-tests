@@ -519,7 +519,10 @@ TEST_GROUP_RUNNER(dirent_opendir)
 	RUN_TEST_CASE(dirent_opendir, not_a_directory);
 	RUN_TEST_CASE(dirent_opendir, creating_dirs_in_closed_and_open_directories);
 	RUN_TEST_CASE(dirent_opendir, open_small_enough_number_of_directories);
+#ifndef __phoenix__
+	/* directory streams don't use file descriptors, EMFILE is never reported (POSIX deviation) */
 	RUN_TEST_CASE(dirent_opendir, open_enough_dirs_to_force_error);
+#endif
 	RUN_TEST_CASE(dirent_opendir, open_same_dir_multiple_times);
 	RUN_TEST_CASE(dirent_opendir, open_inside_open_directory);
 	RUN_TEST_CASE(dirent_opendir, symlink_loop);
