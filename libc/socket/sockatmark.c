@@ -51,7 +51,7 @@ TEST(socket_api_sockatmark, sockatmark_not_at_mark)
 	TEST_ASSERT_TRUE(testSock >= 0);
 
 #ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("sockatmark is not implemented");
+	TEST_IGNORE_MESSAGE("#1815 issue");
 #else
 	int ret;
 
@@ -64,24 +64,17 @@ TEST(socket_api_sockatmark, sockatmark_not_at_mark)
 
 TEST(socket_api_sockatmark, sockatmark_ebadf)
 {
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("sockatmark is not implemented");
-#else
 	int ret;
 
 	errno = 0;
 	ret = sockatmark(-1);
 	TEST_ASSERT_EQUAL_INT(-1, ret);
 	TEST_ASSERT_EQUAL_INT(EBADF, errno);
-#endif
 }
 
 
 TEST(socket_api_sockatmark, sockatmark_enotty_not_socket)
 {
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("sockatmark is not implemented");
-#else
 	int ret;
 	int fd;
 
@@ -96,15 +89,11 @@ TEST(socket_api_sockatmark, sockatmark_enotty_not_socket)
 		TEST_ASSERT_EQUAL_INT(ENOTTY, errno);
 	}
 	close(fd);
-#endif
 }
 
 
 TEST(socket_api_sockatmark, sockatmark_udp_socket)
 {
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("sockatmark is not implemented");
-#else
 	int ret;
 
 	/* UDP doesn't support OOB; sockatmark should still not crash */
@@ -114,7 +103,6 @@ TEST(socket_api_sockatmark, sockatmark_udp_socket)
 	ret = sockatmark(testSock);
 	/* Implementation-defined for non-stream sockets, just verify no crash */
 	TEST_ASSERT_TRUE(ret == 0 || ret == -1);
-#endif
 }
 
 
@@ -122,6 +110,9 @@ TEST_GROUP_RUNNER(socket_api_sockatmark)
 {
 	RUN_TEST_CASE(socket_api_sockatmark, sockatmark_not_at_mark);
 	RUN_TEST_CASE(socket_api_sockatmark, sockatmark_ebadf);
+#ifndef __phoenix__
+	/* the error for a file which is not a socket depends on its server (POSIX deviation) */
 	RUN_TEST_CASE(socket_api_sockatmark, sockatmark_enotty_not_socket);
+#endif
 	RUN_TEST_CASE(socket_api_sockatmark, sockatmark_udp_socket);
 }
