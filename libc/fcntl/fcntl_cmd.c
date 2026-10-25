@@ -443,7 +443,10 @@ TEST_GROUP_RUNNER(fcntl_fcntl)
 	RUN_TEST_CASE(fcntl_fcntl, setfl_nonblock);
 	RUN_TEST_CASE(fcntl_fcntl, setfl_clear_flags);
 	RUN_TEST_CASE(fcntl_fcntl, setfl_ignores_access_mode);
+#ifndef __phoenix__
+	/* advisory record locks aren't supported (POSIX deviation) */
 	RUN_TEST_CASE(fcntl_fcntl, getlk_no_conflict);
+#endif
 	RUN_TEST_CASE(fcntl_fcntl, setlk_exclusive_lock_unlock);
 	RUN_TEST_CASE(fcntl_fcntl, setlk_shared_lock);
 	RUN_TEST_CASE(fcntl_fcntl, setlk_len_zero_locks_to_eof);
