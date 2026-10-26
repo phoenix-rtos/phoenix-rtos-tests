@@ -106,7 +106,7 @@ TEST(fcntl_openat, create_relative_to_dirfd)
 
 
 /* openat: open existing file for reading */
-TEST(fcntl_openat, open_existing_rdonly)
+TEST(fcntl_openat, rdonly_existing)
 {
 	#ifndef __phoenix__
 	ssize_t n;
@@ -126,7 +126,7 @@ TEST(fcntl_openat, open_existing_rdonly)
 
 
 /* openat: open file for read-write */
-TEST(fcntl_openat, open_rdwr)
+TEST(fcntl_openat, rdwr_existing)
 {
 #ifndef __phoenix__
 	ssize_t n;
@@ -398,8 +398,8 @@ TEST(fcntl_openat, o_directory_on_file_enotdir)
 TEST_GROUP_RUNNER(fcntl_openat)
 {
 	RUN_TEST_CASE(fcntl_openat, create_relative_to_dirfd);
-	RUN_TEST_CASE(fcntl_openat, open_existing_rdonly);
-	RUN_TEST_CASE(fcntl_openat, open_rdwr);
+	RUN_TEST_CASE(fcntl_openat, rdonly_existing);
+	RUN_TEST_CASE(fcntl_openat, rdwr_existing);
 	RUN_TEST_CASE(fcntl_openat, creat_excl_exists);
 	RUN_TEST_CASE(fcntl_openat, trunc_existing);
 	RUN_TEST_CASE(fcntl_openat, append_writes_at_end);
