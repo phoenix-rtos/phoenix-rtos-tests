@@ -212,7 +212,7 @@ TEST(fcntl_open, open_creat_excl_symlink_eexist)
 	/* O_CREAT|O_EXCL on symlink shall fail with EEXIST regardless of target */
 	(void)fd;
 #ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#200 issue");
+	TEST_IGNORE_MESSAGE("#1817 issue");
 #else
 	errno = 0;
 	fd = open(OPEN_TEST_SYMLINK, O_WRONLY | O_CREAT | O_EXCL, 0644);
