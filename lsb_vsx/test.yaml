@@ -1332,12 +1332,12 @@ test:
           kwargs:
             testcase_count: 4
 
-          # 1, 3: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/844
           # 9, 10, 14, 17: https://github.com/phoenix-rtos/phoenix-rtos-project/issues/1341
         - name: T.sigaction
           execute: run-test /tset/POSIX.os/procprim/sigaction/T.sigaction{2,4-8,11-13,15-16}
           kwargs:
             testcase_count: 17
+            tested_function_issue_skips: {1: "#844 issue", 3: "#844 issue"}
 
         - name: T.sigaddset
           execute: run-test /tset/POSIX.os/procprim/sigaddset/T.sigaddset
