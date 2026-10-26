@@ -432,15 +432,10 @@ TEST(fcntl_open, open_enametoolong)
 	memset(longName, 'a', NAME_MAX + 1);
 	longName[NAME_MAX + 1] = '\0';
 
-	(void)fd;
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1258 issue");
-#else
 	errno = 0;
 	fd = open(longName, O_RDONLY);
 	TEST_ASSERT_EQUAL_INT(-1, fd);
 	TEST_ASSERT_EQUAL_INT(ENAMETOOLONG, errno);
-#endif
 }
 
 
@@ -568,7 +563,13 @@ TEST_GROUP_RUNNER(fcntl_open)
 	RUN_TEST_CASE(fcntl_open, open_eisdir_wronly);
 	RUN_TEST_CASE(fcntl_open, open_eisdir_rdwr);
 	RUN_TEST_CASE(fcntl_open, open_enotdir_prefix);
+#ifndef __phoenix__
+	/*
+	 * On Phoenix-RTOS the length of a name is checked by the filesystem, which may report ENOENT when a too long
+	 * name is looked up (POSIX deviation)
+	 */
 	RUN_TEST_CASE(fcntl_open, open_enametoolong);
+#endif
 	RUN_TEST_CASE(fcntl_open, open_offset_at_beginning);
 	RUN_TEST_CASE(fcntl_open, open_returns_lowest_fd);
 	RUN_TEST_CASE(fcntl_open, open_nonblock_fifo_rdonly);
