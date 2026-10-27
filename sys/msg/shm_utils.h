@@ -29,14 +29,14 @@ static inline char *shm_init(char *path, bool creat, int bufsz)
 	TEST_IGNORE_MESSAGE("shm_utils.h not supported on NOMMU");
 	return NULL;
 #else
-	int ret;
-	int flags = O_RDWR;
+	int ret, fd, tries;
 
-	if (creat) {
-		flags |= O_CREAT;
+	(void)creat;
+
+	/* The forked server creates the device, so O_CREAT here would race it and make a plain file instead */
+	for (tries = 0; ((fd = open(path, O_RDWR)) < 0) && (errno == ENOENT) && (tries < 5000); tries++) {
+		usleep(1000);
 	}
-
-	int fd = open(path, flags);
 	if (fd < 0) {
 		fprintf(stderr, "open failed: %d\n", errno);
 		return NULL;
@@ -58,7 +58,11 @@ static inline char *shm_init(char *path, bool creat, int bufsz)
 	size_t fileSize = s.st_size;
 	// fprintf(stderr, "size=%zu\n", fileSize);
 
-	assert(fileSize == bufsz);
+	/* not assert(), which NDEBUG builds drop */
+	if (fileSize != (size_t)bufsz) {
+		fprintf(stderr, "shm size %zu, expected %d\n", fileSize, bufsz);
+		return NULL;
+	}
 
 	// fprintf(stderr, "fd=%d\n", fd);
 	char *v = mmap(NULL, fileSize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);

@@ -164,7 +164,8 @@ enum {
 	peerInput,
 	peerOutput,
 	peerRawOid,
-	peerAsymmetric
+	peerAsymmetric,
+	peerPartial
 };
 
 
@@ -183,6 +184,26 @@ typedef struct {
 	char path[64];
 #endif
 } msg_peer_t;
+
+
+/* What a peerPartial request carries in i.raw, see xfer_map_partial_pages. */
+typedef struct {
+	unsigned int seed;
+	size_t ofs; /* of o.data in its buffer */
+} msg_partial_t;
+
+
+static unsigned char partial_in(size_t i, unsigned int seed)
+{
+	return (unsigned char)((i * 7U + seed) & 0xffU);
+}
+
+
+/* The caller's bytes in the output buffer, by position in it. */
+static unsigned char partial_out(size_t pos)
+{
+	return (unsigned char)((pos * 13U + 1U) & 0xffU);
+}
 
 
 static void peer_serve(msg_peer_t *peer)
@@ -254,6 +275,30 @@ static void peer_serve(msg_peer_t *peer)
 				}
 				msg.o.err = peer->result;
 				break;
+
+			case peerPartial: {
+				const unsigned char *input = msg.i.data;
+				unsigned char *output = msg.o.data;
+				msg_partial_t req;
+
+				memcpy(&req, msg.i.raw, sizeof(req));
+				if ((input == NULL) || (output == NULL) || (msg.i.size != msg.o.size))
+					peer->result = -7;
+				for (size_t i = 0; (i < msg.i.size) && (peer->result == 0); ++i) {
+					if (input[i] != partial_in(i, req.seed))
+						peer->result = -7;
+				}
+				/* the output must show what the caller left there */
+				for (size_t i = 0; (i < msg.o.size) && (peer->result == 0); ++i) {
+					if (output[i] != partial_out(req.ofs + i))
+						peer->result = -8;
+				}
+				/* every other byte, so a copy back of the rest would show */
+				for (size_t i = 0; (i < msg.o.size) && (peer->result == 0); i += 2)
+					output[i] = input[i] ^ 0x5aU;
+				msg.o.err = peer->result;
+				break;
+			}
 		}
 
 		if (request + 1 == peer->count) {
@@ -6109,6 +6154,84 @@ TEST(msg_xfer_types, xfer_map_recv_ipcbuf_too_small)
 }
 
 
+/*
+ * With an MMU the peer is another process: it gets a copy of each page the data
+ * covers only in part, and the caller's own pages for the rest. Every layout of
+ * those has to deliver the input, show the output as the caller left it, and
+ * write back exactly the bytes the receiver wrote.
+ */
+TEST(msg_xfer_types, xfer_map_partial_pages)
+{
+	static const struct {
+		size_t ofs; /* from the start of a page */
+		size_t size;
+	} layouts[] = {
+		{ 0, _PAGE_SIZE }, /* whole pages only */
+		{ 0, 3 * _PAGE_SIZE },
+		{ 0, _PAGE_SIZE / 4 }, /* a part of the last page only */
+		{ 0, 3 * _PAGE_SIZE + 7 },
+		{ _PAGE_SIZE / 8, _PAGE_SIZE / 4 }, /* a part of the first page only */
+		{ _PAGE_SIZE / 8, _PAGE_SIZE - _PAGE_SIZE / 8 },
+		{ 5, 3 * _PAGE_SIZE - 5 },
+		{ _PAGE_SIZE / 4, _PAGE_SIZE + _PAGE_SIZE / 8 }, /* parts of the first and last page */
+		{ _PAGE_SIZE / 8, 3 * _PAGE_SIZE + _PAGE_SIZE / 2 },
+		{ _PAGE_SIZE + 17, 2 * _PAGE_SIZE + 9 },
+		{ _PAGE_SIZE / 4, _PAGE_SIZE }, /* the two parts would fit in one page */
+		{ 3 * _PAGE_SIZE / 4, _PAGE_SIZE - _PAGE_SIZE / 8 },
+		{ 3 * _PAGE_SIZE / 4, 3 * _PAGE_SIZE - _PAGE_SIZE / 8 },
+		{ _PAGE_SIZE - 1, 2 },
+	};
+	const size_t count = sizeof(layouts) / sizeof(layouts[0]), bufsz = 4 * _PAGE_SIZE;
+	unsigned char *input, *output, *expected;
+	static msg_peer_t peer;
+	msg_partial_t req;
+	char what[48];
+	msg_t msg;
+
+	input = mmap(NULL, bufsz, PROT_READ | PROT_WRITE, MAP_ANONYMOUS, -1, 0);
+	output = mmap(NULL, bufsz, PROT_READ | PROT_WRITE, MAP_ANONYMOUS, -1, 0);
+	expected = malloc(bufsz);
+	TEST_ASSERT_TRUE(input != MAP_FAILED);
+	TEST_ASSERT_TRUE(output != MAP_FAILED);
+	TEST_ASSERT_NOT_NULL(expected);
+
+	/* without msgSetup() the peer has no IPC buffer, so all of this is mapped */
+	peer_start(&peer, "xt_partial", peerPartial, REPS * (int)count, 0, 0);
+	for (unsigned int rep = 0; rep < REPS; ++rep) {
+		for (size_t l = 0; l < count; ++l) {
+			const size_t ofs = layouts[l].ofs, size = layouts[l].size;
+
+			req.seed = rep * 31U + (unsigned int)l;
+			req.ofs = ofs;
+			for (size_t i = 0; i < size; ++i)
+				input[ofs + i] = partial_in(i, req.seed);
+			for (size_t pos = 0; pos < bufsz; ++pos)
+				output[pos] = partial_out(pos);
+			memcpy(expected, output, bufsz);
+			for (size_t i = 0; i < size; i += 2)
+				expected[ofs + i] = partial_in(i, req.seed) ^ 0x5aU;
+
+			memset(&msg, 0, sizeof(msg));
+			memcpy(msg.i.raw, &req, sizeof(req));
+			msg.type = mtWrite;
+			msg.i.data = input + ofs;
+			msg.i.size = size;
+			msg.o.data = output + ofs;
+			msg.o.size = size;
+			snprintf(what, sizeof(what), "ofs %zu size %zu", ofs, size);
+			TEST_ASSERT_EQUAL_INT_MESSAGE(0, msgSend(peer.port, &msg), what);
+			TEST_ASSERT_EQUAL_INT_MESSAGE(0, msg.o.err, what);
+			TEST_ASSERT_EQUAL_MEMORY_MESSAGE(expected, output, bufsz, what);
+		}
+	}
+	peer_stop(&peer);
+
+	free(expected);
+	munmap(output, bufsz);
+	munmap(input, bufsz);
+}
+
+
 /* A response cannot write back more than the caller's o.size. */
 TEST(msg_xfer_types, xfer_extra_out_oversized_response)
 {
@@ -6534,6 +6657,10 @@ static struct {
 	volatile int survivorStop;
 	volatile unsigned int survivorGood; /* a check that never ran proves nothing */
 	char survivorError[96];
+
+	/* victim process groups still alive, killed if the test itself ends early */
+	volatile pid_t groups[2];
+	pid_t self; /* victims inherit the handler, only the test itself kills */
 } ctrlc_common;
 
 
@@ -6556,11 +6683,21 @@ static void ctrlc_aliveServer(void *arg)
 {
 	msg_t msg;
 	msg_rid_t rid;
+	int err;
 
 	(void)arg;
 
 	for (;;) {
-		if (msgRecv(ctrlc_common.port, &msg, &rid) < 0) {
+		err = msgRecv(ctrlc_common.port, &msg, &rid);
+		if (err == -EINTR) {
+			/*
+			 * A signal for this process, SIGCHLD of a victim most often: it comes
+			 * here while the main thread masks it in its own handler. The
+			 * teardown closes the port, and the next receive then fails.
+			 */
+			continue;
+		}
+		if (err < 0) {
 			break;
 		}
 		msg.o.err = msg.type + 1;
@@ -6572,11 +6709,70 @@ static void ctrlc_aliveServer(void *arg)
 }
 
 
+/*
+ * Victims run in process groups of their own, so a ^C meant for the test does
+ * not reach them. Left running, they would load the CPU for good and starve
+ * whatever runs next, so the test kills them on its way out.
+ */
+static void ctrlc_groupAdd(pid_t pgid)
+{
+	for (size_t i = 0; i < sizeof(ctrlc_common.groups) / sizeof(ctrlc_common.groups[0]); i++) {
+		if (ctrlc_common.groups[i] == 0) {
+			ctrlc_common.groups[i] = pgid;
+			return;
+		}
+	}
+	FAIL("too many victim groups");
+}
+
+
+static void ctrlc_groupDone(pid_t pgid)
+{
+	for (size_t i = 0; i < sizeof(ctrlc_common.groups) / sizeof(ctrlc_common.groups[0]); i++) {
+		if (ctrlc_common.groups[i] == pgid) {
+			ctrlc_common.groups[i] = 0;
+		}
+	}
+}
+
+
+static void ctrlc_killGroups(void)
+{
+	for (size_t i = 0; i < sizeof(ctrlc_common.groups) / sizeof(ctrlc_common.groups[0]); i++) {
+		if (ctrlc_common.groups[i] != 0) {
+			(void)kill(-ctrlc_common.groups[i], SIGKILL);
+			ctrlc_common.groups[i] = 0;
+		}
+	}
+}
+
+
+/* Victims die of ^C the plain way. */
+static void ctrlc_victimSignals(void)
+{
+	(void)signal(SIGINT, SIG_DFL);
+	(void)signal(SIGTERM, SIG_DFL);
+}
+
+
+static void ctrlc_onExitSignal(int sig)
+{
+	if (getpid() == ctrlc_common.self) {
+		ctrlc_killGroups();
+	}
+	(void)signal(sig, SIG_DFL);
+	(void)raise(sig);
+}
+
+
 TEST_SETUP(msg_ctrlc)
 {
 #ifdef NOMMU
 	TEST_IGNORE_MESSAGE("needs fork");
 #else
+	ctrlc_common.self = getpid();
+	(void)signal(SIGINT, ctrlc_onExitSignal);
+	(void)signal(SIGTERM, ctrlc_onExitSignal);
 	TEST_ASSERT_EQUAL_INT(0, portCreate(&ctrlc_common.port));
 	TEST_ASSERT_EQUAL_INT(0, beginthreadex(ctrlc_aliveServer, 4, ctrlc_common.stack, sizeof(ctrlc_common.stack), NULL, &ctrlc_common.tid));
 #endif
@@ -6586,6 +6782,10 @@ TEST_SETUP(msg_ctrlc)
 TEST_TEAR_DOWN(msg_ctrlc)
 {
 #ifndef NOMMU
+	/* a failed check leaves its victims running */
+	ctrlc_killGroups();
+	(void)signal(SIGINT, SIG_DFL);
+	(void)signal(SIGTERM, SIG_DFL);
 	portDestroy(ctrlc_common.port);
 	(void)threadJoin(ctrlc_common.tid, 0);
 #endif
@@ -6665,10 +6865,12 @@ static void ctrlc_runEx(void (*victim)(void), void (*survivor)(void), unsigned i
 		}
 
 		if ((pid = safe_fork()) == 0) {
+			ctrlc_victimSignals();
 			(void)setpgid(0, 0);
 			victim();
 			_exit(0);
 		}
+		ctrlc_groupAdd(pid);
 		(void)setpgid(pid, pid);
 
 		/* anywhere from setting up to steady state */
@@ -6676,6 +6878,7 @@ static void ctrlc_runEx(void (*victim)(void), void (*survivor)(void), unsigned i
 		TEST_ASSERT_EQUAL_INT(0, kill(-pid, SIGINT));
 
 		ctrlc_reap(pid, iter);
+		ctrlc_groupDone(pid);
 		ctrlc_alive();
 
 		if (survivor != NULL) {
@@ -7097,6 +7300,7 @@ TEST(msg_ctrlc, dev_files_late_server)
 		if ((server = safe_fork()) == 0) {
 			uint32_t port = 0;
 
+			ctrlc_victimSignals();
 			(void)setpgid(0, 0);
 			ctrlc_devSlow = 1;
 			if (setup_port_dev(path, &port) < 0) {
@@ -7104,15 +7308,18 @@ TEST(msg_ctrlc, dev_files_late_server)
 			}
 			ctrlc_devServe(port);
 		}
+		ctrlc_groupAdd(server);
 		(void)setpgid(server, server);
 
 		if ((openers = safe_fork()) == 0) {
+			ctrlc_victimSignals();
 			(void)setpgid(0, 0);
 			if (safe_fork() == 0) {
 				ctrlc_devOpener(path);
 			}
 			ctrlc_devOpener(path);
 		}
+		ctrlc_groupAdd(openers);
 		(void)setpgid(openers, openers);
 
 		usleep((50U + (unsigned int)(rand_r(&seed) % 200U)) * 1000U);
@@ -7121,7 +7328,9 @@ TEST(msg_ctrlc, dev_files_late_server)
 		TEST_ASSERT_EQUAL_INT(0, kill(-server, SIGINT));
 
 		ctrlc_reap(openers, iter);
+		ctrlc_groupDone(openers);
 		ctrlc_reap(server, iter);
+		ctrlc_groupDone(server);
 		ctrlc_alive();
 	}
 }
@@ -7142,6 +7351,375 @@ TEST(msg_ctrlc, signals_during_ipc)
 /* ===================================== */
 /* Group runners                         */
 /* ===================================== */
+
+
+/*
+ * A killed server's callers and queued senders must not wait for the reaper to
+ * get the CPU at its own priority. Each test kills a priority 6 server while a
+ * priority 3 thread spins, and requires the priority 1 and 2 clients to be
+ * released long before the spin ends.
+ */
+TEST_GROUP(msg_reap);
+
+#define REAP_SPIN_MS  500
+#define REAP_KILL_MS  100
+#define REAP_BOUND_US (REAP_SPIN_MS * 1000 / 4)
+#define REAP_STACK    4096
+
+static struct {
+	char stack[4][REAP_STACK] __attribute__((aligned(8)));
+	handle_t tid[4];
+	char obuf[3][16 * 1024];
+	pid_t server;
+	uint32_t port;
+	volatile long long killedAt;
+
+	/* the queued sender */
+	volatile int senderErr;
+	volatile long long senderAt;
+
+	/* lock_owner_ends, in the server process */
+	handle_t lock;
+	volatile int got[3];
+} reap_common;
+
+
+static long long reap_nowUs(void)
+{
+	struct timespec ts;
+
+	clock_gettime(CLOCK_MONOTONIC, &ts);
+	return (long long)ts.tv_sec * 1000000LL + ts.tv_nsec / 1000;
+}
+
+
+static void reap_spinner(void *arg)
+{
+	long long until;
+
+	(void)arg;
+	usleep(REAP_KILL_MS * 1000 / 2);
+	until = reap_nowUs() + REAP_SPIN_MS * 1000LL;
+	while (reap_nowUs() < until) {
+	}
+	endthread();
+}
+
+
+static void reap_killer(void *arg)
+{
+	(void)arg;
+	usleep(REAP_KILL_MS * 1000);
+	reap_common.killedAt = reap_nowUs();
+	(void)kill(reap_common.server, SIGKILL);
+	endthread();
+}
+
+
+/* Serves one call and then never answers. */
+static void reap_serveOne(const char *path)
+{
+	uint32_t port;
+	msg_t msg;
+	msg_rid_t rid;
+
+	priority(6);
+	if (setup_port_dev(path, &port) < 0) {
+		exit(3);
+	}
+	(void)msgRecv(port, &msg, &rid);
+	for (;;) {
+		usleep(1000 * 1000);
+	}
+}
+
+
+static void reap_lookup(const char *path)
+{
+	oid_t oid;
+
+	while (lookup(path, NULL, &oid) < 0) {
+		usleep(10 * 1000);
+	}
+	reap_common.port = oid.port;
+}
+
+
+/* The killer runs at the top priority, so the spinner cannot delay the kill itself. */
+static void reap_startKill(void)
+{
+	reap_common.killedAt = 0;
+	TEST_ASSERT_EQUAL_INT(0, beginthreadex(reap_spinner, 3, reap_common.stack[0], REAP_STACK, NULL, &reap_common.tid[0]));
+	TEST_ASSERT_EQUAL_INT(0, beginthreadex(reap_killer, 0, reap_common.stack[1], REAP_STACK, NULL, &reap_common.tid[1]));
+}
+
+
+static void reap_finishKill(void)
+{
+	(void)threadJoin(reap_common.tid[0], 0);
+	(void)threadJoin(reap_common.tid[1], 0);
+	(void)waitpid(reap_common.server, NULL, 0);
+}
+
+
+static int reap_call(int i)
+{
+	msg_t msg = { 0 };
+
+	msg.type = mtRead;
+	msg.o.data = reap_common.obuf[i];
+	msg.o.size = sizeof(reap_common.obuf[i]);
+	return msgSend(reap_common.port, &msg);
+}
+
+
+TEST_SETUP(msg_reap)
+{
+}
+
+
+TEST_TEAR_DOWN(msg_reap)
+{
+}
+
+
+TEST(msg_reap, caller_not_delayed)
+{
+	char path[64];
+	int prio = priority(-1), err;
+	long long lat;
+
+	make_dev_path(path, sizeof(path), "reap_call");
+	if ((reap_common.server = safe_fork()) == 0) {
+		reap_serveOne(path);
+	}
+	reap_lookup(path);
+
+	reap_startKill();
+	priority(1);
+	err = reap_call(0);
+	lat = reap_nowUs() - reap_common.killedAt;
+	priority(prio);
+	reap_finishKill();
+
+	TEST_ASSERT_EQUAL_INT(-EPIPE, err);
+	TEST_ASSERT_LESS_THAN_INT_MESSAGE(REAP_BOUND_US, (int)lat, "the caller waited for the spinner");
+}
+
+
+static void reap_sender(void *arg)
+{
+	(void)arg;
+	/* after the main thread's call is being served, so this one waits in the queue */
+	usleep(REAP_KILL_MS * 1000 / 4);
+	reap_common.senderErr = reap_call(1);
+	reap_common.senderAt = reap_nowUs();
+	endthread();
+}
+
+
+TEST(msg_reap, queued_senders_not_delayed)
+{
+	char path[64];
+	int prio = priority(-1), err;
+	long long lat;
+
+	make_dev_path(path, sizeof(path), "reap_queue");
+	if ((reap_common.server = safe_fork()) == 0) {
+		reap_serveOne(path);
+	}
+	reap_lookup(path);
+
+	reap_common.senderErr = 1;
+	TEST_ASSERT_EQUAL_INT(0, beginthreadex(reap_sender, 2, reap_common.stack[2], REAP_STACK, NULL, &reap_common.tid[2]));
+	reap_startKill();
+	priority(1);
+	err = reap_call(0);
+	lat = reap_nowUs() - reap_common.killedAt;
+	(void)threadJoin(reap_common.tid[2], 0);
+	priority(prio);
+	reap_finishKill();
+
+	TEST_ASSERT_EQUAL_INT(-EPIPE, err);
+	TEST_ASSERT_LESS_THAN_INT_MESSAGE(REAP_BOUND_US, (int)lat, "the caller waited for the spinner");
+	TEST_ASSERT_LESS_THAN_INT(0, reap_common.senderErr);
+	TEST_ASSERT_LESS_THAN_INT_MESSAGE(REAP_BOUND_US, (int)(reap_common.senderAt - reap_common.killedAt), "the queued sender waited for the spinner");
+}
+
+
+static void reap_lockWaiter(void *arg)
+{
+	int i = (int)(long)arg;
+
+	reap_common.got[i] = (mutexLock(reap_common.lock) == 0) ? 1 : -1;
+	(void)mutexUnlock(reap_common.lock);
+	endthread();
+}
+
+
+/* Ends while it holds a mutex with three waiters and owes a response. */
+static void reap_lockOwner(void *arg)
+{
+	static const unsigned int prios[3] = { 2, 3, 5 };
+	msg_t msg;
+	msg_rid_t rid;
+
+	(void)arg;
+	(void)mutexLock(reap_common.lock);
+	for (int i = 0; i < 3; i++) {
+		if (beginthreadex(reap_lockWaiter, prios[i], reap_common.stack[1 + i], REAP_STACK, (void *)(long)i, NULL) < 0) {
+			exit(4);
+		}
+	}
+	usleep(20 * 1000);
+	(void)msgRecv(reap_common.port, &msg, &rid);
+	endthread();
+}
+
+
+TEST(msg_reap, lock_owner_ends)
+{
+	char path[64];
+	int prio = priority(-1), err, status = -1;
+
+	make_dev_path(path, sizeof(path), "reap_lock");
+	if ((reap_common.server = safe_fork()) == 0) {
+		long long until = reap_nowUs() + 5000000LL;
+
+		priority(6);
+		if ((mutexCreate(&reap_common.lock) < 0) || (setup_port_dev(path, &reap_common.port) < 0)) {
+			exit(3);
+		}
+		if (beginthreadex(reap_lockOwner, 6, reap_common.stack[0], REAP_STACK, NULL, NULL) < 0) {
+			exit(4);
+		}
+		while ((reap_common.got[0] == 0) || (reap_common.got[1] == 0) || (reap_common.got[2] == 0)) {
+			if (reap_nowUs() > until) {
+				exit(5);
+			}
+			usleep(10 * 1000);
+		}
+		exit(((reap_common.got[0] == 1) && (reap_common.got[1] == 1) && (reap_common.got[2] == 1)) ? 0 : 6);
+	}
+	reap_lookup(path);
+
+	priority(1);
+	err = reap_call(0);
+	priority(prio);
+	(void)waitpid(reap_common.server, &status, 0);
+
+	TEST_ASSERT_EQUAL_INT(-EPIPE, err);
+	TEST_ASSERT_EQUAL_INT_MESSAGE(0, WEXITSTATUS(status), "a lock waiter did not get the mutex");
+}
+
+
+/*
+ * Two receivers serve one port. A queued priority 1 sender boosts the one of
+ * lower priority, which then ends without answering. The sender has to move
+ * its boost to the other receiver, which reports the best priority it ran at.
+ */
+enum { reap_msgHoldEnd = 1,
+	reap_msgWork,
+	reap_msgQuick };
+
+
+static void reap_twoServer(void *arg)
+{
+	msg_t msg;
+	msg_rid_t rid;
+	long long until;
+	int best;
+
+	(void)arg;
+	for (;;) {
+		if (msgRecv(reap_common.port, &msg, &rid) < 0) {
+			continue;
+		}
+		switch (msg.type) {
+			case reap_msgHoldEnd:
+				usleep(REAP_KILL_MS * 1000);
+				endthread();
+				break;
+
+			case reap_msgWork:
+				best = priority(-1);
+				until = reap_nowUs() + 3 * REAP_KILL_MS * 1000LL;
+				while (reap_nowUs() < until) {
+					if (priority(-1) < best) {
+						best = priority(-1);
+					}
+				}
+				msg.o.err = best;
+				break;
+
+			default:
+				msg.o.err = 0;
+				break;
+		}
+		(void)msgRespond(reap_common.port, &msg, rid);
+	}
+}
+
+
+static volatile int reap_twoErr[2], reap_twoRes[2];
+
+
+static void reap_twoClient(void *arg)
+{
+	int i = (int)(long)arg;
+	msg_t msg = { 0 };
+
+	msg.type = (i == 0) ? reap_msgHoldEnd : reap_msgWork;
+	reap_twoErr[i] = msgSend(reap_common.port, &msg);
+	reap_twoRes[i] = msg.o.err;
+	endthread();
+}
+
+
+TEST(msg_reap, boost_moves_to_live_receiver)
+{
+	char path[64];
+	int prio = priority(-1), err;
+	msg_t msg = { 0 };
+
+	make_dev_path(path, sizeof(path), "reap_two");
+	if ((reap_common.server = safe_fork()) == 0) {
+		priority(6);
+		if (setup_port_dev(path, &reap_common.port) < 0) {
+			exit(3);
+		}
+		for (int i = 0; i < 2; i++) {
+			if (beginthreadex(reap_twoServer, 6, reap_common.stack[i], REAP_STACK, NULL, NULL) < 0) {
+				exit(4);
+			}
+		}
+		for (;;) {
+			usleep(1000 * 1000);
+		}
+	}
+	reap_lookup(path);
+
+	/* one receiver per call, the second one of better priority */
+	TEST_ASSERT_EQUAL_INT(0, beginthreadex(reap_twoClient, 6, reap_common.stack[2], REAP_STACK, (void *)0L, &reap_common.tid[2]));
+	usleep(REAP_KILL_MS * 1000 / 5);
+	TEST_ASSERT_EQUAL_INT(0, beginthreadex(reap_twoClient, 5, reap_common.stack[3], REAP_STACK, (void *)1L, &reap_common.tid[3]));
+	usleep(REAP_KILL_MS * 1000 / 5);
+
+	priority(1);
+	msg.type = reap_msgQuick;
+	err = msgSend(reap_common.port, &msg);
+	priority(prio);
+
+	(void)threadJoin(reap_common.tid[2], 0);
+	(void)threadJoin(reap_common.tid[3], 0);
+	(void)kill(reap_common.server, SIGKILL);
+	(void)waitpid(reap_common.server, NULL, 0);
+
+	TEST_ASSERT_EQUAL_INT(0, err);
+	TEST_ASSERT_EQUAL_INT(-EPIPE, reap_twoErr[0]);
+	TEST_ASSERT_EQUAL_INT(0, reap_twoErr[1]);
+	TEST_ASSERT_EQUAL_INT_MESSAGE(1, reap_twoRes[1], "the queued sender did not boost the receiver left");
+}
 
 
 TEST_GROUP_RUNNER(msg_errnos)
@@ -7328,11 +7906,21 @@ TEST_GROUP_RUNNER(msg_xfer_types)
 	RUN_TEST_CASE(msg_xfer_types, xfer_borrow_out_offset);
 	RUN_TEST_CASE(msg_xfer_types, xfer_map);
 	RUN_TEST_CASE(msg_xfer_types, xfer_map_recv_ipcbuf_too_small);
+	RUN_TEST_CASE(msg_xfer_types, xfer_map_partial_pages);
 	RUN_TEST_CASE(msg_xfer_types, xfer_extra_out_oversized_response);
 	RUN_TEST_CASE(msg_xfer_types, xfer_extra_forward);
 	RUN_TEST_CASE(msg_xfer_types, xfer_borrow_cross_process);
 	RUN_TEST_CASE(msg_xfer_types, xfer_extra_out_reused_before_copy);
 	RUN_TEST_CASE(msg_xfer_types, xfer_extra_out_server_exits);
+}
+
+
+TEST_GROUP_RUNNER(msg_reap)
+{
+	RUN_TEST_CASE(msg_reap, caller_not_delayed);
+	RUN_TEST_CASE(msg_reap, queued_senders_not_delayed);
+	RUN_TEST_CASE(msg_reap, lock_owner_ends);
+	RUN_TEST_CASE(msg_reap, boost_moves_to_live_receiver);
 }
 
 
@@ -7358,6 +7946,7 @@ void runner(void)
 	RUN_TEST_GROUP(msg_forward);
 	RUN_TEST_GROUP(msg_respond_recv_chain);
 	RUN_TEST_GROUP(msg_xfer_types);
+	RUN_TEST_GROUP(msg_reap);
 	RUN_TEST_GROUP(msg_ctrlc);
 }
 
