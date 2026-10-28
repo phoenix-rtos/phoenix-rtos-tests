@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
+#include <stdint.h>
 #include <unistd.h>
 #include <sys/sched.h>
 #include <sys/threads.h>
@@ -391,8 +392,8 @@ TEST(mutex_multithreaded, type_recursive_try)
  */
 
 
-#define PRIO_MUTEXES 1
-#define PRIO_THREADS 2
+#define PRIO_MUTEXES 3
+#define PRIO_THREADS 4
 
 
 static struct {
@@ -480,6 +481,24 @@ static int prio_start(void (*start)(void *), int prio, void *arg)
  */
 
 
+/* Holds mutex[0] until released */
+static void prio_holdThread(void *arg)
+{
+	if (mutexLock(prio_common.mutex[0]) < 0) {
+		prio_common.thrErrors++;
+		endthread();
+	}
+
+	prio_common.step = 1;
+
+	while (prio_common.release == 0) {
+	}
+
+	mutexUnlock(prio_common.mutex[0]);
+	endthread();
+}
+
+
 /* Holds mutex[0], raises itself above its waiter, lowers itself below it, then unlocks mutex[0] */
 static void prio_lowerThread(void *arg)
 {
@@ -509,6 +528,28 @@ static void prio_lowerThread(void *arg)
 }
 
 
+/* Holds mutex[i] while waiting for mutex[i - 1] */
+static void prio_chainThread(void *arg)
+{
+	unsigned int i = (unsigned int)(uintptr_t)arg;
+
+	if (mutexLock(prio_common.mutex[i]) < 0) {
+		prio_common.thrErrors++;
+		endthread();
+	}
+
+	if (mutexLock(prio_common.mutex[i - 1]) < 0) {
+		prio_common.thrErrors++;
+	}
+	else {
+		mutexUnlock(prio_common.mutex[i - 1]);
+	}
+
+	mutexUnlock(prio_common.mutex[i]);
+	endthread();
+}
+
+
 static void prio_lockThread(void *arg)
 {
 	handle_t mutex = *(handle_t *)arg;
@@ -519,6 +560,19 @@ static void prio_lockThread(void *arg)
 	}
 
 	mutexUnlock(mutex);
+	endthread();
+}
+
+
+static void prio_timedLockThread(void *arg)
+{
+	handle_t mutex = *(handle_t *)arg;
+
+	if (mutexLockClockWait(mutex, 500 * 1000, PH_CLOCK_RELATIVE) != -ETIME) {
+		prio_common.thrErrors++;
+		mutexUnlock(mutex);
+	}
+
 	endthread();
 }
 
@@ -591,6 +645,88 @@ TEST(mutex_priority, lower_keeps_inherited)
 
 
 /*
+ * A chain of three mutexes, each owner blocked on the next mutex down: only the holder can run.
+ * Only the direct owner used to inherit: the holder stayed at 5, and any ready thread at 3 or 4
+ * kept it, and with it the top waiter at 2, off the CPU.
+ */
+TEST(mutex_priority, chain)
+{
+	/* 1. The holder (tid[0], priority 6) locks mutex[0] */
+	ASSERT_EQUAL_OR_RELEASE(0, prio_start(prio_holdThread, 6, NULL));
+	ASSERT_EQUAL_OR_RELEASE(1, prio_waitStep(1));
+
+	/* 2. chain#1 (tid[1], priority 5) locks mutex[1] and blocks on mutex[0]: the holder inherits 5 */
+	ASSERT_EQUAL_OR_RELEASE(0, prio_start(prio_chainThread, 5, (void *)(uintptr_t)1));
+	ASSERT_EQUAL_OR_RELEASE(5, prio_wait(prio_common.tid[0], 5));
+
+	/* 3. chain#2 (tid[2], priority 4) locks mutex[2] and blocks on mutex[1]: chain#1 and the holder inherit 4 */
+	ASSERT_EQUAL_OR_RELEASE(0, prio_start(prio_chainThread, 4, (void *)(uintptr_t)2));
+	ASSERT_EQUAL_OR_RELEASE(4, prio_wait(prio_common.tid[1], 4));
+	ASSERT_EQUAL_OR_RELEASE(4, prio_get(prio_common.tid[0]));
+
+	/* 4. The top waiter (tid[3], priority 2) blocks on mutex[2]: chain#2, chain#1 and the holder inherit 2 */
+	ASSERT_EQUAL_OR_RELEASE(0, prio_start(prio_lockThread, 2, &prio_common.mutex[2]));
+	ASSERT_EQUAL_OR_RELEASE(2, prio_wait(prio_common.tid[2], 2));
+	ASSERT_EQUAL_OR_RELEASE(2, prio_get(prio_common.tid[1]));
+	ASSERT_EQUAL_OR_RELEASE(2, prio_get(prio_common.tid[0]));
+}
+
+
+/*
+ * The top waiter of a chain times out: the priority it lent must be withdrawn from every owner
+ * down the chain, or the holder keeps running at 2 with nobody at 2 waiting for it.
+ */
+TEST(mutex_priority, chain_timeout)
+{
+	/* 1. The holder (tid[0], priority 6) locks mutex[0] */
+	ASSERT_EQUAL_OR_RELEASE(0, prio_start(prio_holdThread, 6, NULL));
+	ASSERT_EQUAL_OR_RELEASE(1, prio_waitStep(1));
+
+	/* 2. chain#1 (tid[1], priority 5) locks mutex[1] and blocks on mutex[0]: the holder inherits 5 */
+	ASSERT_EQUAL_OR_RELEASE(0, prio_start(prio_chainThread, 5, (void *)(uintptr_t)1));
+	ASSERT_EQUAL_OR_RELEASE(5, prio_wait(prio_common.tid[0], 5));
+
+	/* 3. The top waiter (tid[2], priority 2) blocks on mutex[1] for 500 ms: chain#1 and the holder inherit 2 */
+	ASSERT_EQUAL_OR_RELEASE(0, prio_start(prio_timedLockThread, 2, &prio_common.mutex[1]));
+	ASSERT_EQUAL_OR_RELEASE(2, prio_wait(prio_common.tid[1], 2));
+	ASSERT_EQUAL_OR_RELEASE(2, prio_get(prio_common.tid[0]));
+
+	/* 4. The top waiter times out: chain#1 and the holder go back to 5 */
+	ASSERT_EQUAL_OR_RELEASE(5, prio_wait(prio_common.tid[1], 5));
+	ASSERT_EQUAL_OR_RELEASE(5, prio_wait(prio_common.tid[0], 5));
+}
+
+
+/*
+ * Another thread changes the priority of a blocked waiter with schedSet(): the owner of the
+ * mutex must follow. The owner used to keep the waiter's old priority.
+ */
+TEST(mutex_priority, waiter_raised)
+{
+	sched_params_t params = { .priorityBase = 2 };
+
+	/* 1. The holder (tid[0], priority 6) locks mutex[0] */
+	ASSERT_EQUAL_OR_RELEASE(0, prio_start(prio_holdThread, 6, NULL));
+	ASSERT_EQUAL_OR_RELEASE(1, prio_waitStep(1));
+
+	/* 2. The waiter (tid[1], priority 5) blocks on mutex[0]: the holder inherits 5 */
+	ASSERT_EQUAL_OR_RELEASE(0, prio_start(prio_lockThread, 5, &prio_common.mutex[0]));
+	ASSERT_EQUAL_OR_RELEASE(5, prio_wait(prio_common.tid[0], 5));
+
+	/* 3. schedSet() raises the waiter to 2: the holder inherits 2 */
+	ASSERT_EQUAL_OR_RELEASE(0, schedSet(0, prio_common.tid[1], SCHED_RR, &params));
+	ASSERT_EQUAL_OR_RELEASE(2, prio_get(prio_common.tid[1]));
+	ASSERT_EQUAL_OR_RELEASE(2, prio_get(prio_common.tid[0]));
+
+	/* 4. schedSet() lowers the waiter back to 5: the holder goes back to 5 */
+	params.priorityBase = 5;
+	ASSERT_EQUAL_OR_RELEASE(0, schedSet(0, prio_common.tid[1], SCHED_RR, &params));
+	ASSERT_EQUAL_OR_RELEASE(5, prio_get(prio_common.tid[1]));
+	ASSERT_EQUAL_OR_RELEASE(5, prio_get(prio_common.tid[0]));
+}
+
+
+/*
 ///////////////////////////////////////////////////////////////////////////////////////////////
 */
 
@@ -625,6 +761,9 @@ TEST_GROUP_RUNNER(mutex_multithreaded)
 TEST_GROUP_RUNNER(mutex_priority)
 {
 	RUN_TEST_CASE(mutex_priority, lower_keeps_inherited);
+	RUN_TEST_CASE(mutex_priority, chain);
+	RUN_TEST_CASE(mutex_priority, chain_timeout);
+	RUN_TEST_CASE(mutex_priority, waiter_raised);
 }
 
 
