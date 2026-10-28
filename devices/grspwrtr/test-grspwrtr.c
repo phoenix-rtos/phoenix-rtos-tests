@@ -23,6 +23,8 @@
 #include <grspwrtr-srv.h>
 #include <unity_fixture.h>
 
+#include <libgrspw-srv.h>
+
 #define TEST_SPWRTR_PATH0 "/dev/spwrtr0"
 
 
@@ -63,6 +65,33 @@ TEST_SETUP(test_spwrtr)
 
 
 TEST_TEAR_DOWN(test_spwrtr)
+{
+}
+
+
+TEST_GROUP(test_spwrsrv);
+
+
+TEST_SETUP(test_spwrsrv)
+{
+	oid_t oid = test_getOid(TEST_SPWRTR_PATH0);
+	msg_t msg = {
+		.type = mtDevCtl,
+		.i = { .data = NULL, .size = 0 },
+		.o = { .data = NULL, .size = 0 },
+		.oid.id = 0,
+		.oid.port = oid.port,
+	};
+	spwrtr_i_t *ictl = (spwrtr_i_t *)msg.i.raw;
+
+	ictl->type = spwrtr_reset;
+
+	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
+	TEST_ASSERT_EQUAL_INT(0, msg.o.err);
+}
+
+
+TEST_TEAR_DOWN(test_spwrsrv)
 {
 }
 
@@ -151,15 +180,150 @@ TEST(test_spwrtr, spwrtrSetMapping)
 }
 
 
+TEST(test_spwrtr, spwrtrSet2ndMapping)
+{
+	uint8_t port = 34u;
+	uint32_t enPorts = 1u << 4;
+
+	oid_t oid = test_getOid(TEST_SPWRTR_PATH0);
+	msg_t msg = {
+		.type = mtDevCtl,
+		.i = { .data = NULL, .size = 0 },
+		.o = { .data = NULL, .size = 0 },
+		.oid.id = 0,
+		.oid.port = oid.port,
+	};
+	spwrtr_i_t *ictl = (spwrtr_i_t *)msg.i.raw;
+
+	ictl->type = spwrtr_route_set;
+	ictl->task.mapping.port = port;
+	ictl->task.mapping.enPorts = enPorts;
+
+	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
+	TEST_ASSERT_EQUAL_INT(0, msg.o.err);
+
+	ictl->type = spwrtr_route_get;
+	ictl->task.mapping.port = port;
+
+	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
+	TEST_ASSERT_EQUAL_INT(0, msg.o.err);
+
+	spwrtr_o_t *octl = (spwrtr_o_t *)msg.o.raw;
+	TEST_ASSERT_EQUAL_UINT(enPorts, octl->val);
+}
+
+
+TEST(test_spwrtr, spwrtrSetRouting)
+{
+	uint8_t port = 33u;
+	uint32_t enPorts = 1u << 3;
+
+	oid_t oid = test_getOid(TEST_SPWRTR_PATH0);
+	msg_t msg = {
+		.type = mtDevCtl,
+		.i = { .data = NULL, .size = 0 },
+		.o = { .data = NULL, .size = 0 },
+		.oid.id = 0,
+		.oid.port = oid.port,
+	};
+	spwrtr_i_t *ictl = (spwrtr_i_t *)msg.i.raw;
+
+	ictl->type = spwrtr_route_set;
+	ictl->task.mapping.port = port;
+	ictl->task.mapping.enPorts = enPorts;
+	ictl->task.route.ctrl = 0x5;
+
+	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
+	TEST_ASSERT_EQUAL_INT(0, msg.o.err);
+
+	ictl->type = spwrtr_route_get;
+	ictl->task.mapping.port = port;
+
+	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
+	TEST_ASSERT_EQUAL_INT(0, msg.o.err);
+
+	spwrtr_o_t *octl = (spwrtr_o_t *)msg.o.raw;
+	TEST_ASSERT_EQUAL_UINT(enPorts, octl->val);
+}
+
+
+TEST(test_spwrtr, spwrtrSet2ndRouting)
+{
+	uint8_t port = 34u;
+	uint32_t enPorts = 1u << 4;
+
+	oid_t oid = test_getOid(TEST_SPWRTR_PATH0);
+	msg_t msg = {
+		.type = mtDevCtl,
+		.i = { .data = NULL, .size = 0 },
+		.o = { .data = NULL, .size = 0 },
+		.oid.id = 0,
+		.oid.port = oid.port,
+	};
+	spwrtr_i_t *ictl = (spwrtr_i_t *)msg.i.raw;
+
+	ictl->type = spwrtr_route_set;
+	ictl->task.mapping.port = port;
+	ictl->task.mapping.enPorts = enPorts;
+	ictl->task.route.ctrl = 0x5;
+
+	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
+	TEST_ASSERT_EQUAL_INT(0, msg.o.err);
+
+	ictl->type = spwrtr_route_get;
+	ictl->task.mapping.port = port;
+
+	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
+	TEST_ASSERT_EQUAL_INT(0, msg.o.err);
+
+	spwrtr_o_t *octl = (spwrtr_o_t *)msg.o.raw;
+	TEST_ASSERT_EQUAL_UINT(enPorts, octl->val);
+}
+
+
+TEST(test_spwrsrv, spwrtrSetInvalidPort)
+{
+	uint8_t validAddr = 32u;
+	uint32_t invalidEnPorts = (1u << 31);
+
+	oid_t oid = test_getOid(TEST_SPWRTR_PATH0);
+	msg_t msg = {
+		.type = mtDevCtl,
+		.i = { .data = NULL, .size = 0 },
+		.o = { .data = NULL, .size = 0 },
+		.oid.id = 0,
+		.oid.port = oid.port,
+	};
+	spwrtr_i_t *ictl = (spwrtr_i_t *)msg.i.raw;
+
+	ictl->type = spwrtr_pmap_set;
+	ictl->task.mapping.port = validAddr;
+	ictl->task.mapping.enPorts = invalidEnPorts;
+
+	TEST_ASSERT_EQUAL_INT(0, msgSend(oid.port, &msg));
+	TEST_ASSERT_NOT_EQUAL_INT(0, msg.o.err);
+}
+
+
 TEST_GROUP_RUNNER(test_spwrtr)
 {
 	RUN_TEST_CASE(test_spwrtr, spwrtrGetMapping);
 	RUN_TEST_CASE(test_spwrtr, spwrtrSetMapping);
+	RUN_TEST_CASE(test_spwrtr, spwrtrSet2ndMapping);
+	RUN_TEST_CASE(test_spwrtr, spwrtrSetRouting);
+	RUN_TEST_CASE(test_spwrtr, spwrtrSet2ndRouting);
+}
+
+
+TEST_GROUP_RUNNER(test_spwrsrv)
+{
+	RUN_TEST_CASE(test_spwrsrv, spwrtrSetInvalidPort);
 }
 
 
 void runner(void)
 {
+	// RUN_TEST_GROUP(test_spwrsrv);
 	RUN_TEST_GROUP(test_spwrtr);
 }
 
