@@ -18,6 +18,7 @@
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/sched.h>
 #include <sys/threads.h>
 
 #include <unity_fixture.h>
@@ -31,6 +32,7 @@
 TEST_GROUP(mutex_invalid_params);
 TEST_GROUP(mutex_single_thread);
 TEST_GROUP(mutex_multithreaded);
+TEST_GROUP(mutex_priority);
 
 
 /*
@@ -385,6 +387,210 @@ TEST(mutex_multithreaded, type_recursive_try)
 
 
 /*
+ *--------------------------------- PRIORITY INHERITANCE TESTS ----------------------------*
+ */
+
+
+#define PRIO_MUTEXES 1
+#define PRIO_THREADS 2
+
+
+static struct {
+	handle_t mutex[PRIO_MUTEXES];
+	handle_t tid[PRIO_THREADS];
+	int mutexes;
+	int threads;
+	int mainPrio;
+	volatile int step;
+	volatile int release;
+	volatile int thrErrors;
+	char stack[PRIO_THREADS][4096] __attribute__((aligned(8)));
+} prio_common;
+
+
+/*
+ * TEST_ASSERT_EQUAL_INT that releases the spinning lock owners first on a failure:
+ * an owner left at a raised priority could starve the console printing the failure.
+ */
+#define ASSERT_EQUAL_OR_RELEASE(expected, actual) \
+	do { \
+		int value = (actual); \
+		if (value != (expected)) { \
+			prio_common.release = 1; \
+		} \
+		TEST_ASSERT_EQUAL_INT((expected), value); \
+	} while (0)
+
+
+static int prio_get(handle_t tid)
+{
+	sched_params_t params;
+
+	ASSERT_EQUAL_OR_RELEASE(0, schedGet(0, tid, &params));
+
+	return params.priority;
+}
+
+
+/* Waits up to 2 s for the thread to reach the priority, returns the last one seen */
+static int prio_wait(handle_t tid, int expected)
+{
+	int prio = prio_get(tid);
+
+	for (int i = 0; (i < 2000) && (prio != expected); i++) {
+		usleep(1000);
+		prio = prio_get(tid);
+	}
+
+	return prio;
+}
+
+
+static int prio_waitStep(int step)
+{
+	for (int i = 0; (i < 2000) && (prio_common.step < step) && (prio_common.release == 0); i++) {
+		usleep(1000);
+	}
+
+	return prio_common.step;
+}
+
+
+static int prio_start(void (*start)(void *), int prio, void *arg)
+{
+	int i = prio_common.threads;
+	int err;
+
+	if (i >= PRIO_THREADS) {
+		return -ENOMEM;
+	}
+
+	err = beginthreadex(start, prio, prio_common.stack[i], sizeof(prio_common.stack[i]), arg, &prio_common.tid[i]);
+	if (err == 0) {
+		prio_common.threads++;
+	}
+
+	return err;
+}
+
+
+/*
+ * Lock owners spin instead of sleeping: any syscall releasing a kernel lock
+ * recomputes the caller's priority, which would hide a stale one.
+ */
+
+
+/* Holds mutex[0], raises itself above its waiter, lowers itself below it, then unlocks mutex[0] */
+static void prio_lowerThread(void *arg)
+{
+	if (mutexLock(prio_common.mutex[0]) < 0) {
+		prio_common.thrErrors++;
+		endthread();
+	}
+
+	prio_common.step = 1;
+
+	if (prio_waitStep(2) >= 2) {
+		setPriority(2);
+		setPriority(6);
+		prio_common.step = 3;
+	}
+
+	while ((prio_common.step < 4) && (prio_common.release == 0)) {
+	}
+
+	mutexUnlock(prio_common.mutex[0]);
+	prio_common.step = 5;
+
+	while (prio_common.release == 0) {
+	}
+
+	endthread();
+}
+
+
+static void prio_lockThread(void *arg)
+{
+	handle_t mutex = *(handle_t *)arg;
+
+	if (mutexLock(mutex) < 0) {
+		prio_common.thrErrors++;
+		endthread();
+	}
+
+	mutexUnlock(mutex);
+	endthread();
+}
+
+
+TEST_SETUP(mutex_priority)
+{
+	memset(&prio_common, 0, sizeof(prio_common));
+
+	/* Observe the spinning threads from above */
+	prio_common.mainPrio = getPriority();
+	setPriority(0);
+
+	for (int i = 0; i < PRIO_MUTEXES; i++) {
+		TEST_ASSERT_EQUAL_INT(0, mutexCreate(&prio_common.mutex[i]));
+		prio_common.mutexes++;
+	}
+}
+
+
+TEST_TEAR_DOWN(mutex_priority)
+{
+	int errors = 0;
+
+	prio_common.release = 1;
+	for (int i = 0; i < prio_common.threads; i++) {
+		if (threadJoin(prio_common.tid[i], 0) != prio_common.tid[i]) {
+			errors++;
+		}
+	}
+
+	setPriority(prio_common.mainPrio);
+
+	for (int i = 0; i < prio_common.mutexes; i++) {
+		if (resourceDestroy(prio_common.mutex[i]) != 0) {
+			errors++;
+		}
+	}
+
+	TEST_ASSERT_EQUAL_INT(0, errors);
+	TEST_ASSERT_EQUAL_INT(0, prio_common.thrErrors);
+}
+
+
+/*
+ * A mutex owner raises and then lowers its own priority while a better thread waits for the mutex.
+ * The owner used to keep the raised priority (2) instead of the inherited one (3).
+ */
+TEST(mutex_priority, lower_keeps_inherited)
+{
+	/* 1. The owner (tid[0], priority 5) locks mutex[0] */
+	ASSERT_EQUAL_OR_RELEASE(0, prio_start(prio_lowerThread, 5, NULL));
+	ASSERT_EQUAL_OR_RELEASE(1, prio_waitStep(1));
+
+	/* 2. The waiter (tid[1], priority 3) blocks on mutex[0]: the owner inherits 3 */
+	ASSERT_EQUAL_OR_RELEASE(0, prio_start(prio_lockThread, 3, &prio_common.mutex[0]));
+	ASSERT_EQUAL_OR_RELEASE(3, prio_wait(prio_common.tid[0], 3));
+
+	/* 3. The owner calls setPriority(2), then setPriority(6) */
+	prio_common.step = 2;
+	ASSERT_EQUAL_OR_RELEASE(3, prio_waitStep(3));
+
+	/* 4. The owner must run at the waiter's 3, which is better than its new base 6 */
+	ASSERT_EQUAL_OR_RELEASE(3, prio_get(prio_common.tid[0]));
+
+	/* 5. The owner unlocks mutex[0]: it goes back to its base 6 */
+	prio_common.step = 4;
+	ASSERT_EQUAL_OR_RELEASE(5, prio_waitStep(5));
+	ASSERT_EQUAL_OR_RELEASE(6, prio_get(prio_common.tid[0]));
+}
+
+
+/*
 ///////////////////////////////////////////////////////////////////////////////////////////////
 */
 
@@ -416,11 +622,18 @@ TEST_GROUP_RUNNER(mutex_multithreaded)
 }
 
 
+TEST_GROUP_RUNNER(mutex_priority)
+{
+	RUN_TEST_CASE(mutex_priority, lower_keeps_inherited);
+}
+
+
 void runner(void)
 {
 	RUN_TEST_GROUP(mutex_invalid_params);
 	RUN_TEST_GROUP(mutex_single_thread);
 	RUN_TEST_GROUP(mutex_multithreaded);
+	RUN_TEST_GROUP(mutex_priority);
 }
 
 
