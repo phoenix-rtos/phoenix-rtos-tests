@@ -577,6 +577,58 @@ static void prio_timedLockThread(void *arg)
 }
 
 
+/* Locks mutex[0], then mutex[1]: the opposite order to prio_cycleTimedThread */
+static void prio_cycleThread(void *arg)
+{
+	if (mutexLock(prio_common.mutex[0]) < 0) {
+		prio_common.thrErrors++;
+		endthread();
+	}
+
+	prio_common.step = 1;
+
+	while ((prio_common.step < 2) && (prio_common.release == 0)) {
+	}
+
+	prio_common.step = 3;
+
+	if (mutexLock(prio_common.mutex[1]) < 0) {
+		prio_common.thrErrors++;
+	}
+	else {
+		mutexUnlock(prio_common.mutex[1]);
+	}
+
+	mutexUnlock(prio_common.mutex[0]);
+	endthread();
+}
+
+
+/* Locks mutex[1], waits 1.5 s for mutex[0], then holds mutex[1] until step 5 */
+static void prio_cycleTimedThread(void *arg)
+{
+	if (mutexLock(prio_common.mutex[1]) < 0) {
+		prio_common.thrErrors++;
+		endthread();
+	}
+
+	prio_common.step = 2;
+
+	if (mutexLockClockWait(prio_common.mutex[0], 1500 * 1000, PH_CLOCK_RELATIVE) != -ETIME) {
+		prio_common.thrErrors++;
+		mutexUnlock(prio_common.mutex[0]);
+	}
+
+	prio_common.step = 4;
+
+	while ((prio_common.step < 5) && (prio_common.release == 0)) {
+	}
+
+	mutexUnlock(prio_common.mutex[1]);
+	endthread();
+}
+
+
 TEST_SETUP(mutex_priority)
 {
 	memset(&prio_common, 0, sizeof(prio_common));
@@ -727,6 +779,42 @@ TEST(mutex_priority, waiter_raised)
 
 
 /*
+ * Two threads lock two mutexes in opposite order and wait for each other until one wait times out.
+ * The priority walk must stop when it comes back round the cycle, and both must recover their priorities.
+ */
+TEST(mutex_priority, cycle)
+{
+	/* 1. A (tid[0], priority 6) locks mutex[0] */
+	ASSERT_EQUAL_OR_RELEASE(0, prio_start(prio_cycleThread, 6, NULL));
+	ASSERT_EQUAL_OR_RELEASE(1, prio_waitStep(1));
+
+	/* 2. B (tid[1], priority 5) locks mutex[1] and blocks on mutex[0] for 1.5 s: A inherits 5 */
+	ASSERT_EQUAL_OR_RELEASE(0, prio_start(prio_cycleTimedThread, 5, NULL));
+	ASSERT_EQUAL_OR_RELEASE(5, prio_wait(prio_common.tid[0], 5));
+
+	/* 3. A blocks on mutex[1]: A and B wait for each other */
+	ASSERT_EQUAL_OR_RELEASE(3, prio_waitStep(3));
+
+	/*
+	 * 4. H (tid[2], priority 2) blocks on mutex[0] for 500 ms: A and B inherit 2. The walk goes
+	 * from A to B and back to A, where it must stop.
+	 */
+	ASSERT_EQUAL_OR_RELEASE(0, prio_start(prio_timedLockThread, 2, &prio_common.mutex[0]));
+	ASSERT_EQUAL_OR_RELEASE(2, prio_wait(prio_common.tid[0], 2));
+	ASSERT_EQUAL_OR_RELEASE(2, prio_wait(prio_common.tid[1], 2));
+
+	/*
+	 * 5. B's wait times out, which breaks the cycle: A goes back to 6 and B to 5. H's timeout alone
+	 * does not lower them: while both are blocked, each one's inherited 2 comes from the other.
+	 */
+	ASSERT_EQUAL_OR_RELEASE(4, prio_waitStep(4));
+	ASSERT_EQUAL_OR_RELEASE(6, prio_get(prio_common.tid[0]));
+	ASSERT_EQUAL_OR_RELEASE(5, prio_get(prio_common.tid[1]));
+	prio_common.step = 5;
+}
+
+
+/*
 ///////////////////////////////////////////////////////////////////////////////////////////////
 */
 
@@ -764,6 +852,7 @@ TEST_GROUP_RUNNER(mutex_priority)
 	RUN_TEST_CASE(mutex_priority, chain);
 	RUN_TEST_CASE(mutex_priority, chain_timeout);
 	RUN_TEST_CASE(mutex_priority, waiter_raised);
+	RUN_TEST_CASE(mutex_priority, cycle);
 }
 
 
