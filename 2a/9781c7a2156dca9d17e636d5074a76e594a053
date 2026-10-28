@@ -1,0 +1,16 @@
+trunner/config.py
+  h_02b407815a79bd 93-94,316
+trunner/harness/pytest.py
+  h_02b407815a79bd 8,45,81,113,121-134,137,139,205,307
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "2a9781c7a2156dca9d17e636d5074a76e594a053",
+  "prompts": {},
+  "humans": {
+    "h_02b407815a79bd": {
+      "author": "Łukasz Kruszyński <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  }
+}

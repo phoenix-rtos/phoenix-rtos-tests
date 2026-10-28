@@ -1,0 +1,9 @@
+libc/socket/coverage.md
+  ai_agent 1-285
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "3eb4cb0584bb7e7f645d1b32fff4d64b19d9791d",
+  "prompts": {}
+}

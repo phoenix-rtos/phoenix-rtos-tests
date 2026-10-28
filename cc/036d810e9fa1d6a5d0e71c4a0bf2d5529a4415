@@ -1,0 +1,43 @@
+libc/pthread/pthread_mutex.c
+  h_3689a52f3dab5f 333
+  s_db8552e67248b1::t_9fc441f601ee57 332,334,343
+libc/pthread/pthread_lifecycle.c
+  s_db8552e67248b1::t_60272ba989383c 238
+  s_db8552e67248b1::t_9df1a36f4b8906 237,240,251
+  h_3689a52f3dab5f 239
+libc/pthread/pthread_key.c
+  h_3689a52f3dab5f 51-53,56,73-75,78,111,258,337,383,428
+  s_db8552e67248b1::t_ab2e9c4f560204 382,384,387
+  s_db8552e67248b1::t_77af102655fe5a 257,259,262
+  s_db8552e67248b1::t_331f4f4bddf4a8 110,112,115
+  s_db8552e67248b1::t_b9808e1789b612 336,338,341
+  s_db8552e67248b1::t_ee0d7a1e331828 427,429,432
+libc/pthread/pthread_attr.c
+  s_db8552e67248b1::t_c3fff6ffd56bca 420,422,424
+  s_db8552e67248b1::t_86debec192a59b 465,469,479
+  h_3689a52f3dab5f 126-129,136,152-155,165,224-227,234,271-274,281,421,466-468
+libc/pthread/pthread_cancel.c
+  s_db8552e67248b1::t_fba68ab6e6e9ee 179,181,183
+  h_3689a52f3dab5f 180
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "cc036d810e9fa1d6a5d0e71c4a0bf2d5529a4415",
+  "prompts": {},
+  "humans": {
+    "h_3689a52f3dab5f": {
+      "author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    }
+  },
+  "sessions": {
+    "s_db8552e67248b1": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "5396a0c8-d9e4-47b2-8708-9fa745cd61a6",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    }
+  }
+}

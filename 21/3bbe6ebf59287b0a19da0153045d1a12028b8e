@@ -1,0 +1,26 @@
+libc/syslog/main.c
+  h_9f2d068a164dcf 11,33
+libc/syslog/closelog.c
+  s_839ffa95c902aa::t_aef15d7b7e8d2c 1-133
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "213bbe6ebf59287b0a19da0153045d1a12028b8e",
+  "prompts": {},
+  "humans": {
+    "h_9f2d068a164dcf": {
+      "author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  },
+  "sessions": {
+    "s_839ffa95c902aa": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "f601179e-4d2b-46a2-8849-75f9a1d8cf5c",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  }
+}

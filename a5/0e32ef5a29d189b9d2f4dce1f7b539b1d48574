@@ -1,0 +1,16 @@
+libc/fcntl/creat.c
+  h_3689a52f3dab5f 92-94,96,208-211,216
+libc/fcntl/open.c
+  h_3689a52f3dab5f 157-159,161,200-203,208,221-224,229,306,332,335,352,443-446,451,566,569-570,572
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "a50e32ef5a29d189b9d2f4dce1f7b539b1d48574",
+  "prompts": {},
+  "humans": {
+    "h_3689a52f3dab5f": {
+      "author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    }
+  }
+}

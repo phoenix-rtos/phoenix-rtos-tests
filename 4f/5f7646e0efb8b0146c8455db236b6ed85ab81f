@@ -1,0 +1,14 @@
+foundation-api/test-lsb_vsx.yaml
+  h_3689a52f3dab5f 2,5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "4f5f7646e0efb8b0146c8455db236b6ed85ab81f",
+  "prompts": {},
+  "humans": {
+    "h_3689a52f3dab5f": {
+      "author": "Damian Loewnau <damian.loewnau@phoenix-rtos.com>"
+    }
+  }
+}

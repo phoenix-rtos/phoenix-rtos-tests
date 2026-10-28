@@ -1,0 +1,26 @@
+libc/test.yaml
+  s_a7ea12e74321a6::t_df9ef7772b2fe4 10,18,23,28,33,38,43,48,53,58,63,76,81,87,92,95,97,90,100,102,105
+  s_a7ea12e74321a6::t_f23f4d0ed3ed1e 96
+  h_9f2d068a164dcf 88,106
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.4.2",
+  "base_commit_sha": "235ba0a58042962ebae9a218eb4f13e4433c1e9e",
+  "prompts": {},
+  "humans": {
+    "h_9f2d068a164dcf": {
+      "author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  },
+  "sessions": {
+    "s_a7ea12e74321a6": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "c7011d54-bc44-417d-ad99-6003e983fdc5",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "lukkrusz <lukasz.kruszynski@phoenix-rtos.com>"
+    }
+  }
+}

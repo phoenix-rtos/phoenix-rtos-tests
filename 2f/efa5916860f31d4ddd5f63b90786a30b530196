@@ -1,0 +1,16 @@
+devices/grspw2/test-grspw2.c
+  h_fc26ad17182140 26
+devices/grlib-multi/test-grlib-multi.c
+  h_fc26ad17182140 34
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.18",
+  "base_commit_sha": "2fefa5916860f31d4ddd5f63b90786a30b530196",
+  "prompts": {},
+  "humans": {
+    "h_fc26ad17182140": {
+      "author": "Lukasz Leczkowski <lukasz.leczkowski@phoenix-rtos.com>"
+    }
+  }
+}
