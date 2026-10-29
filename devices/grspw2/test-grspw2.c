@@ -25,10 +25,12 @@
 
 #include <libgrspw-srv.h>
 #include <unity_fixture.h>
+#include <time.h>
 
 #include <stdint.h>
 #include <stddef.h>
 #include <math.h>
+
 
 #define TEST_SPW_ID0 id_spw0
 #define TEST_SPW_ID1 id_spw1
@@ -55,6 +57,12 @@
 #define TEST_DATA_PAYLOAD_1KB (1024)
 #define TEST_DATA_PAYLOAD_1MB (1024 * 1024)
 
+#define LINK_FREQUENCY 10
+
+#define STR_HELPER(x) #x
+#define STR(x)        STR_HELPER(x)
+
+
 /* helper functions */
 
 
@@ -79,6 +87,15 @@ static uint8_t *test_spwAllocPatternBuffer(size_t size)
 	}
 
 	return buf;
+}
+
+
+static uint64_t get_time_us(void)
+{
+	struct timespec ts;
+
+	clock_gettime(CLOCK_MONOTONIC, &ts);
+	return (uint64_t)ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
 }
 
 
@@ -344,71 +361,103 @@ static void test_spwRxTx_1KB(const size_t nPackets, bool async)
 
 static void test_spwRxTx_1MB(const size_t nPackets, bool async)
 {
-	TEST_ASSERT_GREATER_THAN(0, nPackets);
+    TEST_ASSERT_GREATER_THAN(0, nPackets);
 
-	oid_t rxOid = test_getOid(TEST_SPW_PATH0);
-	unsigned int firstDesc = test_spwConfigureRx(rxOid, nPackets);
+    oid_t rxOid = test_getOid(TEST_SPW_PATH0);
+    oid_t txOid = test_getOid(TEST_SPW_PATH1);
 
-	oid_t txOid = test_getOid(TEST_SPW_PATH1);
-
-	const size_t totalDataSz = TEST_DATA_PAYLOAD_1KB * 10;
-	uint8_t *data = test_spwAllocPatternBuffer(totalDataSz);
+    const size_t totalDataSz = TEST_DATA_PAYLOAD_1MB;
+    uint8_t *data = test_spwAllocPatternBuffer(totalDataSz);
 
 #if TEST_SPW_LOOPBACK
-	/* Routing: AMBA -> Port 1 -> (loopback) -> Port 2 -> AMBA */
-	static const uint8_t hdr[] = { 0x1, TEST_SPW_ADDR0, /* protocol ID */ 0x5 };
-	const size_t consumedHdrBytes = 2;
+    /* Routing: AMBA -> Port 1 -> (loopback) -> Port 2 -> AMBA */
+    static const uint8_t hdr[] = { 0x1, TEST_SPW_ADDR0, /* protocol ID */ 0x5 };
+    const size_t consumedHdrBytes = 2;
 #else
-	static const uint8_t hdr[] = { TEST_SPW_ADDR0, /* protocol ID */ 0x5 };
-	const size_t consumedHdrBytes = 1;
+    static const uint8_t hdr[] = { TEST_SPW_ADDR0, /* protocol ID */ 0x5 };
+    const size_t consumedHdrBytes = 1;
 #endif
 
-	const size_t hdrSz = sizeof(hdr);
-	const size_t remainingHdrSz = hdrSz - consumedHdrBytes;
+    const size_t hdrSz = sizeof(hdr);
+    const size_t remainingHdrSz = hdrSz - consumedHdrBytes;
 
-	const size_t txBufsz = (SPW_TX_MIN_BUFSZ + hdrSz) * nPackets + totalDataSz;
-	uint8_t *txBuf = malloc(txBufsz);
-	TEST_ASSERT_NOT_NULL(txBuf);
+    const size_t TRANSMISSION_SZ = 10 * 1024;
 
-	const size_t baseChunkSz = totalDataSz / nPackets;
-	const size_t remainder = totalDataSz % nPackets;
+    const size_t txBufsz = (SPW_TX_MIN_BUFSZ + hdrSz) * nPackets + TRANSMISSION_SZ;
+    uint8_t *txBuf = malloc(txBufsz);
+    TEST_ASSERT_NOT_NULL(txBuf);
 
-	size_t size = 0;
-	size_t dataOffset = 0;
-	for (size_t i = 0; i < nPackets; i++) {
-		const size_t currentChunkSz = baseChunkSz + ((i == nPackets - 1) ? remainder : 0);
-		const uint8_t *chunkPtr = data + dataOffset;
+    const size_t rxBufsz = (SPW_RX_MIN_BUFSZ + hdrSz) * nPackets + TRANSMISSION_SZ;
+    uint8_t *rxBuf = malloc(rxBufsz);
+    TEST_ASSERT_NOT_NULL(rxBuf);
 
-		size_t ret = spw_serializeTxMsg(SPW_TX_FLG_HDR_LEN(hdrSz), currentChunkSz, hdr, chunkPtr,
-				txBuf + size, txBufsz - size);
-		TEST_ASSERT_NOT_EQUAL(0, ret);
-		size += ret;
-		dataOffset += currentChunkSz;
-	}
-	test_spwTx(txOid, txBuf, size, nPackets, async);
+    spw_rxPacket_t packets[nPackets];
 
-	const size_t rxBufsz = (SPW_RX_MIN_BUFSZ + hdrSz) * nPackets + totalDataSz;
-	uint8_t *rxBuf = malloc(rxBufsz);
-	TEST_ASSERT_NOT_NULL(rxBuf);
+	uint64_t tStart = get_time_us();
 
-	spw_rxPacket_t packets[nPackets];
-	test_spwRxRead(rxOid, firstDesc, rxBuf, rxBufsz, packets, nPackets);
+    for (size_t sentBytes = 0; sentBytes < totalDataSz; sentBytes += TRANSMISSION_SZ) {
+        const size_t currentTransmissionSz = (sentBytes + TRANSMISSION_SZ <= totalDataSz)
+                                                 ? TRANSMISSION_SZ
+                                                 : (totalDataSz - sentBytes);
 
-	dataOffset = 0;
-	for (size_t i = 0; i < nPackets; i++) {
-		const size_t currentChunkSz = baseChunkSz + ((i == nPackets - 1) ? remainder : 0);
-		const uint8_t *expectedData = data + dataOffset;
+        unsigned int firstDesc = test_spwConfigureRx(rxOid, nPackets);
 
-		TEST_ASSERT_EQUAL(remainingHdrSz + currentChunkSz, packets[i].flags & SPW_RX_LEN_MSK);
-		TEST_ASSERT_EQUAL(hdr[consumedHdrBytes], packets[i].buf[0]);
-		TEST_ASSERT_EQUAL_HEX8_ARRAY(expectedData, packets[i].buf + remainingHdrSz, currentChunkSz);
+        const size_t baseChunkSz = currentTransmissionSz / nPackets;
+        const size_t remainder = currentTransmissionSz % nPackets;
 
-		dataOffset += currentChunkSz;
-	}
+        size_t txPayloadLen = 0;
+        size_t chunkOffset = 0;
 
-	free(data);
-	free(txBuf);
-	free(rxBuf);
+        for (size_t i = 0; i < nPackets; i++) {
+            const size_t currentChunkSz = baseChunkSz + ((i == nPackets - 1) ? remainder : 0);
+            const uint8_t *chunkPtr = data + sentBytes + chunkOffset;
+
+            size_t ret = spw_serializeTxMsg(SPW_TX_FLG_HDR_LEN(hdrSz), currentChunkSz, hdr, chunkPtr,
+                    txBuf + txPayloadLen, txBufsz - txPayloadLen);
+            TEST_ASSERT_NOT_EQUAL(0, ret);
+
+            txPayloadLen += ret;
+            chunkOffset += currentChunkSz;
+        }
+
+        test_spwTx(txOid, txBuf, txPayloadLen, nPackets, async);
+
+        test_spwRxRead(rxOid, firstDesc, rxBuf, rxBufsz, packets, nPackets);
+
+        chunkOffset = 0;
+        for (size_t i = 0; i < nPackets; i++) {
+            const size_t currentChunkSz = baseChunkSz + ((i == nPackets - 1) ? remainder : 0);
+            const uint8_t *expectedData = data + sentBytes + chunkOffset;
+
+            TEST_ASSERT_EQUAL(remainingHdrSz + currentChunkSz, packets[i].flags & SPW_RX_LEN_MSK);
+            TEST_ASSERT_EQUAL(hdr[consumedHdrBytes], packets[i].buf[0]);
+            TEST_ASSERT_EQUAL_HEX8_ARRAY(expectedData, packets[i].buf + remainingHdrSz, currentChunkSz);
+
+            chunkOffset += currentChunkSz;
+        }
+    }
+
+	uint64_t tEnd = get_time_us();
+	uint64_t timeUs = tEnd - tStart;
+
+	if (timeUs > 0) {
+        double timeSec = (double)timeUs / 1000000.0;
+        double throughputMBs = ((double)totalDataSz / (1024.0 * 1024.0)) / timeSec;
+        double throughputMbits = ((double)totalDataSz * 8.0 / 1000000.0) / timeSec;
+
+        char msg[128];
+        snprintf(msg, sizeof(msg),
+                 "[SpaceWire Throughput] Time: %llu us (%.3f s) | %.2f MiB/s | %.2f Mbit/s",
+                 (unsigned long long)timeUs, timeSec, throughputMBs, throughputMbits);
+
+		UNITY_PRINT_EOL();
+        UnityPrint(msg);
+		UNITY_PRINT_EOL();
+    }
+
+    free(data);
+    free(txBuf);
+    free(rxBuf);
 }
 
 
@@ -1001,5 +1050,9 @@ void runner(void)
 
 int main(int argc, char *argv[])
 {
+	UNITY_PRINT_EOL();
+	UnityPrint("Executing tests with LINK_FREQUENCY = " STR(LINK_FREQUENCY) " MHz");
+	UNITY_PRINT_EOL();
+
 	return (UnityMain(argc, (const char **)argv, runner) == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
