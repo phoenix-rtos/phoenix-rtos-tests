@@ -2,3 +2,7 @@
 ifeq ($(TARGET), riscv64-gr765-cubesat)
 DEFAULT_COMPONENTS += test-grspw2 test-grspwrtr
 endif
+
+ifeq ($(TARGET), riscv64-gr765-cubesat)
+DEFAULT_COMPONENTS += test-grspw2 test-grspwrtr
+endif
