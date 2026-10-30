@@ -53,11 +53,19 @@ class RISCV64Gr765(TargetBase):
     part_rofs = "part_rofs.img"
     part_rofs_offset = 0x40000000
 
-    def __init__(self, host: Host, port: str | None = None, baudrate: int = 115200, vibemon: bool = False):
+    def __init__(
+        self,
+        host: Host,
+        port: str | None = None,
+        baudrate: int = 115200,
+        vibemon: bool = False,
+        jtag_cfg: str | None = None,
+    ):
         if port is None:
             port = find_port("USB2")
 
         self.vibemon = vibemon
+        self.jtag_cfg = jtag_cfg
         self.host = host
         self.dut = SerialDut(port, baudrate, encoding="utf-8", codec_errors="ignore")
         super().__init__()
@@ -70,7 +78,11 @@ class RISCV64Gr765(TargetBase):
         if "vibemon" in _.kwargs and _.kwargs["vibemon"] == "True":
             vibemon = True
 
-        return cls(_.host, _.port, _.baudrate, vibemon)
+        jtag_cfg = None
+        if "jtag_cfg" in _.kwargs:
+            jtag_cfg = _.kwargs["jtag_cfg"]
+
+        return cls(_.host, _.port, _.baudrate, vibemon=vibemon, jtag_cfg=jtag_cfg)
 
     def _mnt_rofs(self):
         mnt = self.rofs_mnt_point
@@ -94,22 +106,22 @@ class RISCV64Gr765(TargetBase):
 
     def flash_dut(self, host_log: TextIO):
         if self.vibemon:
-            with VibemonProcess(host_log=host_log, cwd=self.boot_dir()).run() as vibemon:
+            with VibemonProcess(host_log=host_log, cwd=self.project_dir).run() as vibemon:
                 try:
-                    vibemon.load(self.sbi_file)
-                    vibemon.load(self.part_kernel, binary=True, offset=self.part_kernel_offset)
+                    vibemon.load(f"{self.boot_dir()}/{self.sbi_file}")
+                    vibemon.load(f"{self.boot_dir()}/{self.part_kernel}", binary=True, offset=self.part_kernel_offset)
                     if self.rofs:
-                        vibemon.load(self.part_rofs, binary=True, offset=self.part_rofs_offset)
+                        vibemon.load(f"{self.boot_dir()}/{self.part_rofs}", binary=True, offset=self.part_rofs_offset)
                     vibemon.run_and_resume()
                 except VibemonError as e:
                     raise FlashError(msg=str(e)) from e
         else:
-            with GrmonProcess(host_log=host_log, cwd=self.boot_dir()).run() as grmon:
+            with GrmonProcess(host_log=host_log, cwd=self.project_dir, jtag_cfg=self.jtag_cfg).run() as grmon:
                 try:
-                    grmon.load(self.sbi_file)
-                    grmon.load(self.part_kernel, binary=True, offset=self.part_kernel_offset)
+                    grmon.load(f"{self.boot_dir()}/{self.sbi_file}")
+                    grmon.load(f"{self.boot_dir()}/{self.part_kernel}", binary=True, offset=self.part_kernel_offset)
                     if self.rofs:
-                        grmon.load(self.part_rofs, binary=True, offset=self.part_rofs_offset)
+                        grmon.load(f"{self.boot_dir()}/{self.part_rofs}", binary=True, offset=self.part_rofs_offset)
                     grmon.detach()
                 except GrmonError as e:
                     raise FlashError(msg=str(e)) from e
