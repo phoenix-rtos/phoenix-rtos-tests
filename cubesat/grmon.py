@@ -22,11 +22,13 @@ class GrmonProcess:
         self,
         extra_args: list[str] | None = None,
         host_log: TextIO | None = None,
-        cwd: Path | str = ".",
+        cwd: str = ".",
+        jtag_cfg: str | None = None,
     ):
         self.extra_args = extra_args
         self.host_log = host_log if host_log is not None else io.StringIO()
         self.cwd = cwd
+        self.jtag_cfg = jtag_cfg
         self.proc = None
         self.output = ""
 
@@ -40,7 +42,10 @@ class GrmonProcess:
             raise GrmonError("Failed to read a prompt", output=self.host_log.getvalue()) from e
 
     def _start(self):
-        self.proc = pexpect.spawn("grmon -digilent", encoding="ascii", logfile=self.host_log, cwd=self.cwd)
+        cmd = "grmon -digilent"
+        if self.jtag_cfg:
+            cmd += f" -jtagcfg {self.jtag_cfg}"
+        self.proc = pexpect.spawn(cmd, encoding="ascii", logfile=self.host_log, cwd=self.cwd)
         self._expect_prompt()
 
     def _close(self):
