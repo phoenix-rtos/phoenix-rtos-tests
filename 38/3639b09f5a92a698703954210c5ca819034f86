@@ -1,0 +1,57 @@
+Makefile
+  s_cad972159e663d::t_bc2e3a3fb369af 31-34
+thread-local/Makefile
+  s_cad972159e663d::t_c141cc48aad8d8 5
+sys/Makefile
+  s_cad972159e663d::t_c141cc48aad8d8 16
+  s_cad972159e663d::t_e5b49a3b932850 1
+libc/harness/Makefile
+  s_cad972159e663d::t_c141cc48aad8d8 5
+setjmp/Makefile
+  s_cad972159e663d::t_c141cc48aad8d8 5
+waitpid/Makefile
+  s_cad972159e663d::t_c141cc48aad8d8 5
+initfini/Makefile
+  s_cad972159e663d::t_c141cc48aad8d8 4
+sample/pytest/Makefile
+  s_cad972159e663d::t_c141cc48aad8d8 3
+libtrace/Makefile
+  s_cad972159e663d::t_c141cc48aad8d8 6
+libuuid/Makefile
+  s_cad972159e663d::t_c141cc48aad8d8 7
+micropython/Makefile
+  s_cad972159e663d::t_c141cc48aad8d8 4
+sample/helloworld/Makefile
+  s_cad972159e663d::t_c141cc48aad8d8 3
+lsb_vsx/Makefile
+  s_cad972159e663d::t_c141cc48aad8d8 4
+busybox/Makefile
+  s_cad972159e663d::t_c141cc48aad8d8 4
+libalgo/Makefile
+  s_cad972159e663d::t_c141cc48aad8d8 5
+libc/Makefile
+  s_cad972159e663d::t_e5b49a3b932850 1
+  s_cad972159e663d::t_c141cc48aad8d8 17,30
+libcache/Makefile
+  s_cad972159e663d::t_c141cc48aad8d8 13
+libtinyaes/Makefile
+  s_cad972159e663d::t_c141cc48aad8d8 6
+mem/Makefile
+  s_cad972159e663d::t_c141cc48aad8d8 19,25
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "383639b09f5a92a698703954210c5ca819034f86",
+  "prompts": {},
+  "sessions": {
+    "s_cad972159e663d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "146002b0-a47c-43c2-b86f-75a537b3e3c1",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Marek Białowąs <marek.bialowas@phoenix-rtos.com>"
+    }
+  }
+}
