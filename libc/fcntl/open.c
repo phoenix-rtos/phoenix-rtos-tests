@@ -210,15 +210,10 @@ TEST(fcntl_open, open_creat_excl_symlink_eexist)
 	TEST_ASSERT_EQUAL_INT(0, ret);
 
 	/* O_CREAT|O_EXCL on symlink shall fail with EEXIST regardless of target */
-	(void)fd;
-#ifdef __phoenix__
-	TEST_IGNORE_MESSAGE("#1817 issue");
-#else
 	errno = 0;
 	fd = open(OPEN_TEST_SYMLINK, O_WRONLY | O_CREAT | O_EXCL, 0644);
 	TEST_ASSERT_EQUAL_INT(-1, fd);
 	TEST_ASSERT_EQUAL_INT(EEXIST, errno);
-#endif
 }
 
 
