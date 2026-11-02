@@ -1,4 +1,5 @@
 from collections.abc import Callable
+import time
 from typing import TextIO
 
 import pexpect
@@ -12,7 +13,7 @@ from trunner.harness import (
     ShellHarness,
     TestStartRunningHarness,
 )
-from trunner.harness.base import FlashError, IntermediateHarness
+from trunner.harness.base import FlashError, IntermediateHarness, VoidHarness
 from trunner.host import Host
 from trunner.target import TargetBase
 from trunner.target.base import find_port
@@ -43,6 +44,21 @@ class ResetHangHarness(IntermediateHarness):
         return self.next_harness(result)
 
 
+class SlowSerialDut(SerialDut):
+    def __init__(self, port, baudrate, delay, *args, **kwargs):
+        super().__init__(port, baudrate, *args, **kwargs)
+        self.delay = delay
+
+    def sendline(self, text):
+        """Sends text one character at a time with a delay."""
+        for char in text:
+            self.send(char)
+            time.sleep(self.delay)
+
+        self.send("\n")
+        time.sleep(self.delay)
+
+
 class RISCV64Gr765(TargetBase):
     rootfs = False
     sbi_file = "sbi-gr765.elf"
@@ -67,7 +83,7 @@ class RISCV64Gr765(TargetBase):
         self.vibemon = vibemon
         self.jtag_cfg = jtag_cfg
         self.host = host
-        self.dut = SerialDut(port, baudrate, encoding="utf-8", codec_errors="ignore")
+        self.dut = SlowSerialDut(port, baudrate, delay=0.05, encoding="utf-8", codec_errors="ignore")
         super().__init__()
 
     @classmethod
@@ -89,16 +105,18 @@ class RISCV64Gr765(TargetBase):
         try:
             self.dut.expect_exact(self.shell_prompt)
             self.dut.sendline(f"sysexec -d rofs {self.part_rofs_offset}:{mnt}")
-            self.dut.expect_exact(f"rofs: mounted at {mnt}")
+            self.dut.expect_exact(f"rofs: mounted at {mnt}", timeout=120)
+            self.dut.send("\n")
+            self.dut.expect_exact(self.shell_prompt)
             self.dut.sendline(f"mkdir var")
             self.dut.expect_exact(self.shell_prompt)
             self.dut.sendline(f"mkdir tmp")
             self.dut.expect_exact(self.shell_prompt)
             self.dut.sendline(f"mkdir bin")
             self.dut.expect_exact(self.shell_prompt)
-            self.dut.sendline(f"mkdir etc")
+            self.dut.sendline(f"mkdir usr")
             self.dut.expect_exact(self.shell_prompt)
-            self.dut.sendline(f"ln -s {mnt}/root/etc/model_data etc/model_data")
+            self.dut.sendline(f"ln -s {mnt}/root/etc etc")
             self.dut.expect_exact(self.shell_prompt)
             self.dut.sendline("dmesg")
         except (pexpect.TIMEOUT, pexpect.EOF) as e:
