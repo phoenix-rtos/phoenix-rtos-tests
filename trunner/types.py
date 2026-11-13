@@ -110,6 +110,7 @@ class TestType(str, Enum):
     HARNESS = auto()
     PYTEST = auto()
     UNITY = auto()
+    LIBTEST = auto()
     EMPTY = auto()
     UNSUPPORTED = auto()
 

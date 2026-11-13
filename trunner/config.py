@@ -1,4 +1,5 @@
 import importlib.util
+import os
 import shlex
 import sys
 from dataclasses import dataclass
@@ -7,7 +8,8 @@ from typing import Dict, List, Optional, Tuple, Set
 
 import yaml
 from trunner.ctx import TestContext
-from trunner.harness import PyHarness, unity_harness, pytest_harness
+from trunner.harness import PyHarness, libtest_harness, unity_harness, pytest_harness
+from trunner.harness.libtest import LIBTEST_ARGS
 from trunner.types import AppOptions, BootloaderOptions, FileOptions, TestOptions, ShellOptions, TestType
 
 
@@ -44,6 +46,7 @@ class ConfigParser:
         type: Optional[str] = None
         ignore: bool = False
         nightly: bool = False
+        requires: Optional[List[str]] = None
 
     def __init__(self, ctx: TestContext):
         self.ctx = ctx
@@ -62,6 +65,8 @@ class ConfigParser:
             self._parse_pytest(config)
         elif t_type is TestType.UNITY:
             self._parse_unity()
+        elif t_type is TestType.LIBTEST:
+            self._parse_libtest()
         else:
             raise ParserError(f"unknown test type: {test_type}")
 
@@ -107,6 +112,12 @@ class ConfigParser:
 
     def _parse_unity(self):
         self.test.harness = PyHarness(self.ctx.target.dut, self.ctx, unity_harness, self.test.kwargs)
+
+    def _parse_libtest(self):
+        if self.test.shell is not None and self.test.shell.binary is not None:
+            self.test.shell.cmd += LIBTEST_ARGS
+
+        self.test.harness = PyHarness(self.ctx.target.dut, self.ctx, libtest_harness, self.test.kwargs)
 
     def _parse_app(self, item: dict) -> AppOptions:
         """Parse a single app entry from the load section into AppOptions."""
@@ -237,6 +248,15 @@ class ConfigParser:
 
         self.test.ignore = ignore
 
+    def _requirements_met(self, config: dict) -> bool:
+        """`requires: [RUST_ENABLE]` - build options (environment variables) that must be "y"."""
+        requires = config.get("requires", self.main.requires) or []
+
+        if not isinstance(requires, list) or not all(isinstance(r, str) for r in requires):
+            raise ParserError(f"requires must be a list of build option names not {requires}")
+
+        return all(os.environ.get(option) == "y" for option in requires)
+
     def _parse_nightly(self, config: dict) -> None:
         nightly = config.get("nightly", self.main.nightly)
 
@@ -303,6 +323,10 @@ class ConfigParser:
             self.test = None
             return
 
+        if not self._requirements_met(config):
+            self.test = None
+            return
+
         self._parse_nightly(config)
         if self.test.nightly and not self.ctx.nightly:
             self.test = None
@@ -345,6 +369,7 @@ class ConfigParser:
 
         self.main.ignore = config.get("ignore", False)
         self.main.nightly = config.get("nightly", False)
+        self.main.requires = config.get("requires", None)
 
     def _get_absolute_path(self, path: str) -> Path:
         resolved_path = self.yaml_path.parent / Path(path)
