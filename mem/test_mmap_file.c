@@ -18,6 +18,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <sys/file.h>
 #include <sys/mman.h>
@@ -327,6 +328,41 @@ TEST(mmap_file, concurrent)
 }
 
 
+/*
+ * Regression: munmap() of a contiguous mapping made the kernel forget all file objects,
+ * the next mapping of an already mapped file got separate pages.
+ */
+TEST(mmap_file, contiguous_keeps_file_objects)
+{
+	int fd = create_file(2U * page_size);
+	TEST_ASSERT_GREATER_OR_EQUAL(0, fd);
+
+	uint8_t *first = mmap(NULL, 2U * page_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	TEST_ASSERT_NOT_EQUAL(MAP_FAILED, first);
+
+	uint8_t *area = mmap(NULL, 2U * page_size, PROT_READ | PROT_WRITE, MAP_CONTIGUOUS | MAP_ANONYMOUS, -1, 0);
+	TEST_ASSERT_NOT_EQUAL(MAP_FAILED, area);
+	memset(area, 0xff, 2U * page_size);
+	TEST_ASSERT_EQUAL(0, munmap(area, 2U * page_size));
+
+	uint8_t *second = mmap(NULL, 2U * page_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	TEST_ASSERT_NOT_EQUAL(MAP_FAILED, second);
+
+	/* Both mappings share the pages of one file object */
+	first[0] = (uint8_t)~pattern(0);
+	first[page_size] = (uint8_t)~pattern(page_size);
+	uint8_t got0 = second[0];
+	uint8_t got1 = second[page_size];
+
+	TEST_ASSERT_EQUAL(0, munmap(second, 2U * page_size));
+	TEST_ASSERT_EQUAL(0, munmap(first, 2U * page_size));
+	TEST_ASSERT_EQUAL(0, close(fd));
+
+	TEST_ASSERT_EQUAL_HEX8((uint8_t)~pattern(0), got0);
+	TEST_ASSERT_EQUAL_HEX8((uint8_t)~pattern(page_size), got1);
+}
+
+
 TEST_GROUP_RUNNER(mmap_file)
 {
 	RUN_TEST_CASE(mmap_file, size_one_byte);
@@ -342,6 +378,8 @@ TEST_GROUP_RUNNER(mmap_file)
 	RUN_TEST_CASE(mmap_file, offset);
 	RUN_TEST_CASE(mmap_file, partially_loaded);
 	RUN_TEST_CASE(mmap_file, concurrent);
+	/* Keep it last, without the fix the kernel state is damaged afterwards */
+	RUN_TEST_CASE(mmap_file, contiguous_keeps_file_objects);
 }
 
 
