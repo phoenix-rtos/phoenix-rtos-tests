@@ -40,6 +40,9 @@
 /* Two full chunks and a partial one */
 #define BIG_PAGES (2U * CHUNK_PAGES + 9U)
 
+/* Amount of free memory filled with non-zero bytes */
+#define DIRTY_SIZE (16U * 1024U * 1024U)
+
 
 static size_t page_size;
 
@@ -80,6 +83,19 @@ static long check_pattern(const uint8_t *map, size_t offs, size_t len)
 }
 
 
+/* Returns offset of the first non-zero byte or -1 */
+static long check_zero(const uint8_t *map, size_t offs, size_t len)
+{
+	for (size_t i = 0; i < len; i++) {
+		if (map[i] != 0U) {
+			return (long)(offs + i);
+		}
+	}
+
+	return -1;
+}
+
+
 static int create_file(size_t size)
 {
 	static uint8_t buf[4096];
@@ -103,6 +119,49 @@ static int create_file(size_t size)
 	}
 
 	return fd;
+}
+
+
+/* Leaves non-zero content in the free memory */
+static void dirty_free_memory(void)
+{
+	for (size_t size = DIRTY_SIZE; size >= page_size; size /= 2U) {
+		void *area = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+		if (area != MAP_FAILED) {
+			memset(area, 0xa5, size);
+			munmap(area, size);
+			break;
+		}
+	}
+}
+
+
+/* Maps files with a partial last page and checks that the rest of the page is zeroed */
+static void check_tails(int (*open_file)(size_t size))
+{
+	const size_t sizes[] = { 1U, 100U, page_size - 1U, page_size + 1U, CHUNK_PAGES * page_size - 1U, CHUNK_PAGES * page_size + 1U };
+
+	for (size_t i = 0; i < sizeof(sizes) / sizeof(sizes[0]); i++) {
+		size_t len = round_up(sizes[i]);
+
+		int fd = open_file(sizes[i]);
+		TEST_ASSERT_GREATER_OR_EQUAL(0, fd);
+
+		/* Repeated as the outcome depends on which free pages the kernel takes, the last munmap() drops the pages */
+		for (int iter = 0; iter < 3; iter++) {
+			dirty_free_memory();
+
+			uint8_t *map = mmap(NULL, len, PROT_READ, MAP_PRIVATE, fd, 0);
+			TEST_ASSERT_NOT_EQUAL(MAP_FAILED, map);
+
+			long bad = check_zero(map + sizes[i], sizes[i], len - sizes[i]);
+
+			TEST_ASSERT_EQUAL(0, munmap(map, len));
+			TEST_ASSERT_EQUAL_MESSAGE(-1, bad, "non-zero byte after the end of file at this offset");
+		}
+
+		TEST_ASSERT_EQUAL(0, close(fd));
+	}
 }
 
 
@@ -334,6 +393,13 @@ TEST(mmap_file, concurrent)
 }
 
 
+/* A short read at the end of file must not expose what the page contained before */
+TEST(mmap_file, tail_zeroed)
+{
+	check_tails(create_file);
+}
+
+
 /*
  * Regression: munmap() of a contiguous mapping made the kernel forget all file objects,
  * the next mapping of an already mapped file got separate pages.
@@ -384,6 +450,7 @@ TEST_GROUP_RUNNER(mmap_file)
 	RUN_TEST_CASE(mmap_file, offset);
 	RUN_TEST_CASE(mmap_file, partially_loaded);
 	RUN_TEST_CASE(mmap_file, concurrent);
+	RUN_TEST_CASE(mmap_file, tail_zeroed);
 	/* Keep it last, without the fix the kernel state is damaged afterwards */
 	RUN_TEST_CASE(mmap_file, contiguous_keeps_file_objects);
 }
@@ -510,10 +577,18 @@ TEST(mmap_file_srv, read_error)
 }
 
 
+/* As mmap_file.tail_zeroed, but independent of what the filesystem does with the rest of the read buffer */
+TEST(mmap_file_srv, tail_zeroed)
+{
+	check_tails(srv_open);
+}
+
+
 TEST_GROUP_RUNNER(mmap_file_srv)
 {
 	RUN_TEST_CASE(mmap_file_srv, content);
 	RUN_TEST_CASE(mmap_file_srv, read_error);
+	RUN_TEST_CASE(mmap_file_srv, tail_zeroed);
 }
 
 
