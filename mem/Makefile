@@ -25,3 +25,9 @@ DEP_LIBS := unity
 include $(binary.mk)
 
 $(eval $(call add_unity_test, test_mmap_new))
+
+NAME := test-mmap-file
+LOCAL_SRCS := test_mmap_file.c
+DEP_LIBS := unity
+
+include $(binary.mk)
