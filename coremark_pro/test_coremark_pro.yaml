@@ -1,7 +1,7 @@
 test:
     type: harness
     harness: coremark_pro.py
-    nightly: true
+    nightly: false
 
     targets:
       exclude: [host-generic-pc, sparcv8leon-generic-qemu, armv7r5f-zynqmp-qemu]
