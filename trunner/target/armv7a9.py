@@ -1,10 +1,11 @@
 from abc import abstractmethod
 import subprocess
+import sys
 import time
 from typing import Callable, Optional, TextIO
 
 from trunner.ctx import TestContext
-from trunner.dut import Dut, SerialDut
+from trunner.dut import Dut, PortNotFound, SerialDut
 from trunner.harness import (
     HarnessBuilder,
     PloInterface,
@@ -26,6 +27,8 @@ from .base import TargetBase, find_port
 
 class ARMv7A9TargetRebooter(Rebooter):
     # TODO add text mode reboot
+
+    SMT2_REBOOT_ATTEMPTS = 5
 
     def __call__(self, flash=False, hard=False):
         """Sets flash mode and perform hard or soft & debugger reboot based on `hard` flag."""
@@ -57,16 +60,31 @@ class ARMv7A9TargetRebooter(Rebooter):
         self._reboot_hard()
 
     def _reboot_hard(self):
+        # WORKAROUND: sometimes smt2 device doesn't enumerate after power cycle (root cause unknown),
+        # so retry the power cycle a few times before giving up
+        for attempt in range(1, self.SMT2_REBOOT_ATTEMPTS + 1):
+            self.host.set_power(False)
+            # optimal power off time to prevent sustaining chips, e.g. flash memory, related to #540 issue
+            time.sleep(0.75)
+            self.dut.clear_buffer()
+            self.host.set_power(True)
+            # needed to make sure that smt2 debugger device has disappeared
+            time.sleep(0.5)
+            # after reboot, we need to wait for starting the smt2 device
+            try:
+                wait_for_vid_pid(vid=0x0403, pid=0x6014, device="smt2", timeout=5)
+                break
+            except PortNotFound as e:
+                if attempt == self.SMT2_REBOOT_ATTEMPTS:
+                    raise
 
-        self.host.set_power(False)
-        # optimal power off time to prevent sustaining chips, e.g. flash memory, related to #540 issue
-        time.sleep(0.75)
-        self.dut.clear_buffer()
-        self.host.set_power(True)
-        # needed to make sure that smt2 debugger device has disappeared
-        time.sleep(0.5)
-        # after reboot, we need to wait for starting the smt2 device
-        wait_for_vid_pid(vid=0x0403, pid=0x6014, device="smt2", timeout=5)
+                print(
+                    f"smt2 device not found after power cycle (attempt {attempt}/{self.SMT2_REBOOT_ATTEMPTS}): {e}, "
+                    "retrying",
+                    file=sys.stderr,
+                    flush=True,
+                )
+
         # after power off it is necessary to wait more time to free all resources
         time.sleep(2)
 
