@@ -90,7 +90,7 @@ aarch64a53-zynqmp-qemu:
   nnet_test: [3, 150]
   sha-test: [3, 20]
   linear_alg-mid-100x100-sp: [3, 50]
-  parser-125k: [3, 20]
+  parser-125k: [10, 20]
   zip-test: [300, 20]
 
 # established by running coremark on 5x gh-hosted runners and taking 150% of the
