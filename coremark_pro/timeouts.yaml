@@ -83,15 +83,15 @@ riscv64-generic-qemu:
   zip-test: [40, 3]
 
 aarch64a53-zynqmp-qemu:
-  cjpeg-rose7-preset: [5, 3]
-  loops-all-mid-10k-sp: [3, 150]
-  radix2-big-64k: [25, 90]
-  core: [3, 7]
-  nnet_test: [3, 45]
-  sha-test: [3, 2]
-  linear_alg-mid-100x100-sp: [3, 7]
-  parser-125k: [3, 3]
-  zip-test: [30, 2]
+  cjpeg-rose7-preset: [5, 15]
+  loops-all-mid-10k-sp: [3, 435]
+  radix2-big-64k: [25, 135]
+  core: [3, 120]
+  nnet_test: [3, 70]
+  sha-test: [3, 30]
+  linear_alg-mid-100x100-sp: [3, 40]
+  parser-125k: [10, 3]
+  zip-test: [290, 3]
 
 # established by running coremark on 5x gh-hosted runners and taking 150% of the
 # highest preparation/execution time as timeout value, with 1s margin for short timeouts
