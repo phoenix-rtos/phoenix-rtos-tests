@@ -1,0 +1,30 @@
+mem/test_mmap_file.c
+  s_83e9d671be5755::t_612b8d8c892f9e 624
+  s_03a5a2571f2f9f::t_242d11762cae2d 35-38,101,354-357,391-392
+  s_03a5a2571f2f9f::t_e5868292260606 144-145,147-151,162-163
+  s_03a5a2571f2f9f::t_026bf4a58c4770 32,49-51,104,218,608-610
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b6ff7cf09a294908427b14efc39939c113d578ad",
+  "prompts": {},
+  "sessions": {
+    "s_03a5a2571f2f9f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7f07ec87-ac58-4a97-a86b-cb13c98f7bc4",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Marek Białowąs <marek.bialowas@phoenix-rtos.com>"
+    },
+    "s_83e9d671be5755": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9b7f336b-eb76-453e-af60-f321df23324c",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Marek Białowąs <marek.bialowas@phoenix-rtos.com>"
+    }
+  }
+}
