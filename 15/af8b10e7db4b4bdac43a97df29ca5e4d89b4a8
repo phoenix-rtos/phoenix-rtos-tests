@@ -1,0 +1,19 @@
+mem/test_mmap_file.c
+  s_03a5a2571f2f9f::t_b49de757fea2a5 36-37,58-59,493-495,497,526-527,560-574,610-625,629,632
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "15af8b10e7db4b4bdac43a97df29ca5e4d89b4a8",
+  "prompts": {},
+  "sessions": {
+    "s_03a5a2571f2f9f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7f07ec87-ac58-4a97-a86b-cb13c98f7bc4",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Marek Białowąs <marek.bialowas@phoenix-rtos.com>"
+    }
+  }
+}
