@@ -20,6 +20,7 @@
 #include <time.h>
 #include <errno.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <limits.h>
 
 #include "unity_fixture.h"
@@ -112,11 +113,65 @@ TEST(test_tls, test_tls_check_errno)
 	}
 }
 
+/* Checks the TLS of new threads without unity (to be run in a forked child), returns the number of failures.
+ * Static arrays: on an early return, threads already started keep using them until the child exits. */
+static int tls_threadsFailed(void)
+{
+	static tls_check_t vars[THREAD_NUM];
+	static tls_errno_check_t errnos[THREAD_NUM];
+	static pthread_t threads[2 * THREAD_NUM];
+	int failed = 0;
+
+	for (int i = 0; i < THREAD_NUM; i++) {
+		vars[i].expected_tbss_value = i;
+		vars[i].expected_tdata_value = 2 * i;
+		errnos[i].expected_tls_errno = -ETIME;
+		if ((pthread_create(&threads[i], NULL, tls_change_variables, &vars[i]) != 0) ||
+				(pthread_create(&threads[THREAD_NUM + i], NULL, tls_check_errno, &errnos[i]) != 0)) {
+			return 1;
+		}
+	}
+	for (int i = 0; i < 2 * THREAD_NUM; i++) {
+		if (pthread_join(threads[i], NULL) != 0) {
+			failed++;
+		}
+	}
+	for (int i = 0; i < THREAD_NUM; i++) {
+		if ((vars[i].passed != CHECKS) || (errnos[i].passed != ERRNO_CHECKS)) {
+			failed++;
+		}
+	}
+
+	return failed;
+}
+
+
+/* A forked child inherits the TLS layout of the parent process, the threads it creates need it */
+TEST(test_tls, test_tls_threads_in_forked_child)
+{
+	int status = 0;
+	pid_t pid = fork();
+
+	if ((pid < 0) && (errno == ENOSYS)) {
+		TEST_IGNORE_MESSAGE("fork() not supported");
+	}
+	TEST_ASSERT_GREATER_OR_EQUAL(0, pid);
+
+	if (pid == 0) {
+		_exit((tls_threadsFailed() == 0) ? EXIT_SUCCESS : EXIT_FAILURE);
+	}
+
+	TEST_ASSERT_EQUAL(pid, waitpid(pid, &status, 0));
+	TEST_ASSERT_TRUE_MESSAGE(WIFEXITED(status), "child killed");
+	TEST_ASSERT_EQUAL_MESSAGE(EXIT_SUCCESS, WEXITSTATUS(status), "TLS checks failed in the child's threads");
+}
+
 TEST_GROUP_RUNNER(test_tls)
 {
 	RUN_TEST_CASE(test_tls, test_tls_defaults);
 	RUN_TEST_CASE(test_tls, test_tls_set_tls_variables);
 	RUN_TEST_CASE(test_tls, test_tls_check_errno);
+	RUN_TEST_CASE(test_tls, test_tls_threads_in_forked_child);
 }
 
 void runner(void)
