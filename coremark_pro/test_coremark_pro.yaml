@@ -4,6 +4,7 @@ test:
     nightly: true
 
     targets:
+      value: [] # Exclude from all targets: benchmarks hardware rather than the OS
       exclude: [host-generic-pc, sparcv8leon-generic-qemu, armv7r5f-zynqmp-qemu]
 
     tests:
