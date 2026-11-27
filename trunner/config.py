@@ -258,13 +258,13 @@ class ConfigParser:
         if targets and (not isinstance(targets, dict) or not is_array(targets)):
             raise ParserError('"targets" should be a dict with "value", "include", "exclude" keys.')
 
-        if not targets and not self.main.targets:
+        if not targets and self.main.targets is None:
             targets = set()
             if not self.ctx.target.experimental:
                 targets.add(self.ctx.target.name)
         elif not targets:
             targets = self.main.targets
-        elif not self.main.targets or "value" in targets:
+        elif self.main.targets is None or "value" in targets:
             targets = self._build_targets(targets)
         else:
             targets["value"] = list(self.main.targets)
